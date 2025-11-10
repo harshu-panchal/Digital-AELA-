@@ -1,0 +1,482 @@
+/* eslint-disable react-refresh/only-export-components */
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import { toast } from "react-toastify";
+import { useUser } from "./UserContext";
+
+const BlogContext = createContext(null);
+
+const now = new Date();
+
+const seededBlogs = [
+  {
+    id: "blog-public-speaking-masterclass",
+    title: "Finding Your Voice: Public Speaking Confidence in 2025",
+    excerpt:
+      "A step-by-step framework used inside Digital AELA to help learners remove stage fear and present like leaders.",
+    banner:
+      "https://images.unsplash.com/photo-1522199710521-72d69614c702?auto=format&fit=crop&w=1600&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=800&q=80",
+    tags: ["Communication", "Soft Skills", "Leadership"],
+    category: "Communication",
+    readTime: 8,
+    content:
+      "<h2>Start with clarity</h2><p>Before you step in front of the spotlight, rehearse the first 60 seconds until it feels like breathing.\nAt Digital AELA we break every talk into 3 frames — Hook, Story, Impact.</p><blockquote><strong>Coach Insight:</strong> Confidence loves structure. Build a map, then add emotion.</blockquote><p>Use community practice rooms to receive fast feedback and track your progress after each milestone.</p>",
+    likes: 264,
+    views: 5940,
+    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    author: {
+      id: "author-imran-khan",
+      name: "Imran Khan",
+      avatar: "https://i.pravatar.cc/150?img=12",
+      bio: "Founder · Digital AELA | Public Speaking Coach",
+      role: "Founder",
+      social: {
+        platform: "LinkedIn",
+        url: "https://linkedin.com/in/digitalaela",
+      },
+      followers: 18240,
+    },
+    comments: [
+      {
+        id: "comment-fatima-1",
+        author: {
+          name: "Fatima Hassan",
+          avatar: "https://i.pravatar.cc/150?img=47",
+        },
+        message: "These structure prompts helped me win my last debate. Highly recommend!",
+        createdAt: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
+        likes: 12,
+      },
+      {
+        id: "comment-omar-1",
+        author: {
+          name: "Omar Al Farsi",
+          avatar: "https://i.pravatar.cc/150?img=15",
+        },
+        message: "The 3-frame format makes storytelling so much easier.",
+        createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
+        likes: 5,
+      },
+    ],
+  },
+  {
+    id: "blog-ai-personalized-learning",
+    title: "How AI Journaling Builds Daily Speaking Momentum",
+    excerpt:
+      "Turning reflective practice into a competitive advantage with Digital AELA's AI-powered speaking journals.",
+    banner:
+      "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?auto=format&fit=crop&w=1600&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1522204507449-d27c8ad37000?auto=format&fit=crop&w=800&q=80",
+    tags: ["AI", "Learning", "Productivity"],
+    category: "Technology",
+    readTime: 6,
+    content:
+      "<p>Aim for daily momentum, not perfection. Our AI prompts analyze tone and suggest improvements while tracking your consistency.</p><ul><li>Schedule 10 minutes each evening.</li><li>Record quick reflections.</li><li>Track growth in the analytics dashboard.</li></ul><p>Use the insights to plan your next presentation or coaching session.</p>",
+    likes: 198,
+    views: 3720,
+    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    author: {
+      id: "author-priya-sharma",
+      name: "Priya Sharma",
+      avatar: "https://i.pravatar.cc/150?img=32",
+      bio: "Content Strategist · Toastmasters Winner",
+      role: "Lead Mentor",
+      social: {
+        platform: "Instagram",
+        url: "https://instagram.com/digitalaela",
+      },
+      followers: 10980,
+    },
+    comments: [
+      {
+        id: "comment-sara-1",
+        author: {
+          name: "Sara Malik",
+          avatar: "https://i.pravatar.cc/150?img=21",
+        },
+        message: "The daily prompts increased my speaking streak to 28 days!",
+        createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 10).toISOString(),
+        likes: 7,
+      },
+    ],
+  },
+  {
+    id: "blog-mentor-playbook",
+    title: "Mentor Playbook: Designing Impactful Speaking Challenges",
+    excerpt:
+      "A behind-the-scenes look at how mentors craft high-engagement speaking challenges that build confidence.",
+    banner:
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=1600&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80",
+    tags: ["Mentoring", "Challenges", "Community"],
+    category: "Mentorship",
+    readTime: 9,
+    content:
+      "<p>Challenges spark accountability. Design yours with three levels, each building on the previous one.</p><p>Inside the mentor dashboard we track participation, completion, and ratings to tailor next week's theme.</p>",
+    likes: 156,
+    views: 2850,
+    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    author: {
+      id: "author-omar-al-farsi",
+      name: "Omar Al Farsi",
+      avatar: "https://i.pravatar.cc/150?img=15",
+      bio: "Career Coach · TEDx Speaker",
+      role: "Community Mentor",
+      social: {
+        platform: "LinkedIn",
+        url: "https://linkedin.com/in/omaralfarsi",
+      },
+      followers: 8640,
+    },
+    comments: [],
+  },
+];
+
+const formatBlog = (blog) => ({
+  ...blog,
+  likeCount: blog.likes ?? 0,
+  commentCount: blog.comments?.length ?? 0,
+});
+
+export const useBlogs = () => {
+  const context = useContext(BlogContext);
+  if (!context) {
+    throw new Error("useBlogs must be used within a BlogProvider");
+  }
+  return context;
+};
+
+export const BlogProvider = ({ children }) => {
+  const { profile } = useUser();
+
+  const [blogs, setBlogs] = useState(() => seededBlogs.map(formatBlog));
+  const [drafts, setDrafts] = useState([]);
+  const [followingAuthors, setFollowingAuthors] = useState(() => new Set());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState({
+    tags: [],
+    category: "all",
+    sort: "trending",
+  });
+
+  const saveDraft = useCallback((draft) => {
+    setDrafts((prev) => {
+      const existingIndex = prev.findIndex((item) => item.id === draft.id);
+      if (existingIndex !== -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          ...draft,
+          updatedAt: new Date().toISOString(),
+        };
+        return updated;
+      }
+      return [
+        {
+          id: draft.id ?? crypto.randomUUID(),
+          title: draft.title,
+          thumbnail: draft.thumbnail,
+          content: draft.content ?? "",
+          tags: draft.tags ?? [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: "draft",
+        },
+        ...prev,
+      ];
+    });
+    toast.info("Draft saved", {
+      toastId: "blog-draft-saved",
+    });
+  }, []);
+
+  const publishBlog = useCallback(
+    (blog) => {
+      const referenceId = blog.id ?? crypto.randomUUID();
+      const newBlog = formatBlog({
+        id: referenceId,
+        title: blog.title,
+        excerpt: blog.excerpt ?? blog.description ?? blog.content?.slice(0, 160) ?? "",
+        banner: blog.banner ?? blog.thumbnail,
+        thumbnail:
+          blog.thumbnail ??
+          "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80",
+        tags: blog.tags ?? [],
+        category: blog.category ?? "General",
+        readTime: blog.readTime ?? Math.max(3, Math.round((blog.content?.length ?? 800) / 250)),
+        content: blog.content ?? "",
+        likes: blog.likes ?? 0,
+        views: blog.views ?? 0,
+        publishedAt: new Date().toISOString(),
+        author: blog.author ?? {
+          id: profile.id,
+          name: profile.name,
+          avatar: profile.avatar,
+          bio: profile.bio,
+          role: profile.title,
+          social: profile.socialLinks?.[0],
+          followers: profile.followers,
+        },
+        comments: blog.comments ?? [],
+      });
+
+      setBlogs((prev) => [newBlog, ...prev]);
+      setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
+      toast.success("Blog published successfully!", {
+        toastId: `blog-published-${newBlog.id}`,
+      });
+      return newBlog;
+    },
+    [profile]
+  );
+
+  const updateBlog = useCallback((blogId, updates) => {
+    setBlogs((prev) =>
+      prev.map((blog) =>
+        blog.id === blogId
+          ? formatBlog({
+              ...blog,
+              ...updates,
+              updatedAt: new Date().toISOString(),
+            })
+          : blog
+      )
+    );
+  }, []);
+
+  const deleteBlog = useCallback((blogId) => {
+    setBlogs((prev) => prev.filter((blog) => blog.id !== blogId));
+    setDrafts((prev) => prev.filter((blog) => blog.id !== blogId));
+  }, []);
+
+  const toggleLike = useCallback(
+    (blogId, actorName = profile.name) => {
+      setBlogs((prev) =>
+        prev.map((blog) => {
+          if (blog.id !== blogId) return blog;
+          const alreadyLiked = blog.likedBy?.includes(profile.id);
+          const nextLikes = alreadyLiked ? blog.likeCount - 1 : blog.likeCount + 1;
+          const likedBy = alreadyLiked
+            ? blog.likedBy.filter((id) => id !== profile.id)
+            : [...(blog.likedBy ?? []), profile.id];
+          toast.success(alreadyLiked ? "Like removed" : "You liked this blog", {
+            toastId: `blog-like-${blogId}`,
+          });
+          return {
+            ...blog,
+            likeCount: Math.max(0, nextLikes),
+            likedBy,
+            lastInteractedBy: actorName,
+          };
+        })
+      );
+    },
+    [profile.id, profile.name]
+  );
+
+  const addComment = useCallback(
+    (blogId, message) => {
+      if (!message?.trim()) return;
+      const newComment = {
+        id: crypto.randomUUID(),
+        message,
+        createdAt: new Date().toISOString(),
+        author: {
+          id: profile.id,
+          name: profile.name,
+          avatar: profile.avatar,
+        },
+      };
+      setBlogs((prev) =>
+        prev.map((blog) => {
+          if (blog.id !== blogId) return blog;
+          const updatedComments = [newComment, ...blog.comments];
+          toast.success("Comment added", {
+            toastId: `blog-comment-${blogId}`,
+          });
+          return {
+            ...blog,
+            comments: updatedComments,
+            commentCount: updatedComments.length,
+          };
+        })
+      );
+    },
+    [profile.avatar, profile.id, profile.name]
+  );
+
+  const followAuthor = useCallback((authorId) => {
+    setFollowingAuthors((prev) => {
+      const next = new Set(prev);
+      if (next.has(authorId)) {
+        next.delete(authorId);
+        toast.info("You unfollowed the author", {
+          toastId: `follow-${authorId}`,
+        });
+      } else {
+        next.add(authorId);
+        toast.success("You are now following this author", {
+          toastId: `follow-${authorId}`,
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  const registerView = useCallback((blogId) => {
+    setBlogs((prev) =>
+      prev.map((blog) => {
+        if (blog.id !== blogId) return blog;
+        return {
+          ...blog,
+          views: blog.views + 1,
+        };
+      })
+    );
+  }, []);
+
+  const filteredBlogs = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return blogs
+      .filter((blog) => {
+        const matchesSearch =
+          !term ||
+          blog.title.toLowerCase().includes(term) ||
+          blog.excerpt.toLowerCase().includes(term) ||
+          blog.author.name.toLowerCase().includes(term) ||
+          blog.tags.some((tag) => tag.toLowerCase().includes(term));
+
+        const matchesCategory =
+          activeFilters.category === "all" || blog.category === activeFilters.category;
+
+        const matchesTags =
+          activeFilters.tags.length === 0 || activeFilters.tags.every((tag) => blog.tags.includes(tag));
+
+        return matchesSearch && matchesCategory && matchesTags;
+      })
+      .sort((a, b) => {
+        switch (activeFilters.sort) {
+          case "recent":
+            return new Date(b.publishedAt) - new Date(a.publishedAt);
+          case "popular":
+            return b.likeCount - a.likeCount;
+          case "views":
+            return b.views - a.views;
+          default:
+            return b.likeCount * 1.5 + b.views * 0.5 - (a.likeCount * 1.5 + a.views * 0.5);
+        }
+      });
+  }, [activeFilters, blogs, searchTerm]);
+
+  const trendingBlogs = useMemo(
+    () => filteredBlogs.slice(0, 6),
+    [filteredBlogs]
+  );
+
+  const recentBlogs = useMemo(
+    () =>
+      [...blogs]
+        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+        .slice(0, 6),
+    [blogs]
+  );
+
+  const analytics = useMemo(() => {
+    const authoredBlogs = blogs.filter((blog) => blog.author.id === profile.id);
+    const totalLikes = authoredBlogs.reduce((acc, blog) => acc + blog.likeCount, 0);
+    const totalViews = authoredBlogs.reduce((acc, blog) => acc + blog.views, 0);
+    const totalComments = authoredBlogs.reduce((acc, blog) => acc + blog.commentCount, 0);
+
+    return {
+      totalBlogs: authoredBlogs.length,
+      totalViews,
+      totalLikes,
+      totalComments,
+    };
+  }, [blogs, profile.id]);
+
+  const formatTimestamp = useCallback((isoDate) => {
+    try {
+      const date = new Date(isoDate);
+      const diffMs = Date.now() - date.getTime();
+      const units = [
+        { label: "year", ms: 1000 * 60 * 60 * 24 * 365 },
+        { label: "month", ms: 1000 * 60 * 60 * 24 * 30 },
+        { label: "week", ms: 1000 * 60 * 60 * 24 * 7 },
+        { label: "day", ms: 1000 * 60 * 60 * 24 },
+        { label: "hour", ms: 1000 * 60 * 60 },
+        { label: "minute", ms: 1000 * 60 },
+        { label: "second", ms: 1000 },
+      ];
+      for (const unit of units) {
+        if (diffMs >= unit.ms) {
+          const value = Math.floor(diffMs / unit.ms);
+          return `${value} ${unit.label}${value > 1 ? "s" : ""} ago`;
+        }
+      }
+      return "just now";
+    } catch {
+      return "moments ago";
+    }
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      blogs,
+      drafts,
+      filteredBlogs,
+      trendingBlogs,
+      recentBlogs,
+      analytics,
+      saveDraft,
+      publishBlog,
+      updateBlog,
+      deleteBlog,
+      toggleLike,
+      addComment,
+      followAuthor,
+      registerView,
+      followingAuthors,
+      isFollowing: (authorId) => followingAuthors.has(authorId),
+      searchTerm,
+      setSearchTerm,
+      activeFilters,
+      setActiveFilters,
+      formatTimestamp,
+      isAuthenticated: true,
+    }),
+    [
+      blogs,
+      drafts,
+      filteredBlogs,
+      trendingBlogs,
+      recentBlogs,
+      analytics,
+      saveDraft,
+      publishBlog,
+      updateBlog,
+      deleteBlog,
+      toggleLike,
+      addComment,
+      followAuthor,
+      registerView,
+      followingAuthors,
+      searchTerm,
+      activeFilters,
+      formatTimestamp,
+    ]
+  );
+
+  return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
+};
+
+
