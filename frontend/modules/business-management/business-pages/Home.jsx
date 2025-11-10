@@ -14,34 +14,29 @@ import bookConfidenceBuildingImg from "../../../src/assets/images/books/confiden
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
 import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
-import clientLogo6375Image from "../../../src/assets/images/client-logos/6375Image.jpg";
-import clientLogoDownload1Jpeg from "../../../src/assets/images/client-logos/download (1).jpeg";
-import clientLogoDownload1Png from "../../../src/assets/images/client-logos/download (1).png";
-import clientLogoDownload10Png from "../../../src/assets/images/client-logos/download (10).png";
-import clientLogoDownload11Png from "../../../src/assets/images/client-logos/download (11).png";
-import clientLogoDownload12Png from "../../../src/assets/images/client-logos/download (12).png";
-import clientLogoDownload13Png from "../../../src/assets/images/client-logos/download (13).png";
-import clientLogoDownload14Png from "../../../src/assets/images/client-logos/download (14).png";
-import clientLogoDownload15Png from "../../../src/assets/images/client-logos/download (15).png";
-import clientLogoDownload16Png from "../../../src/assets/images/client-logos/download (16).png";
-import clientLogoDownload17Png from "../../../src/assets/images/client-logos/download (17).png";
-import clientLogoDownload18Png from "../../../src/assets/images/client-logos/download (18).png";
-import clientLogoDownload19Png from "../../../src/assets/images/client-logos/download (19).png";
-import clientLogoDownload2Jpeg from "../../../src/assets/images/client-logos/download (2).jpeg";
-import clientLogoDownload2Png from "../../../src/assets/images/client-logos/download (2).png";
-import clientLogoDownload20Png from "../../../src/assets/images/client-logos/download (20).png";
-import clientLogoDownload21Png from "../../../src/assets/images/client-logos/download (21).png";
-import clientLogoDownload22Png from "../../../src/assets/images/client-logos/download (22).png";
-import clientLogoDownload3Png from "../../../src/assets/images/client-logos/download (3).png";
-import clientLogoDownload4Png from "../../../src/assets/images/client-logos/download (4).png";
-import clientLogoDownload5Png from "../../../src/assets/images/client-logos/download (5).png";
-import clientLogoDownload6Png from "../../../src/assets/images/client-logos/download (6).png";
-import clientLogoDownload7Png from "../../../src/assets/images/client-logos/download (7).png";
-import clientLogoDownload8Png from "../../../src/assets/images/client-logos/download (8).png";
-import clientLogoDownloadJpeg from "../../../src/assets/images/client-logos/download.jpeg";
-import clientLogoDownloadPng from "../../../src/assets/images/client-logos/download.png";
-import clientLogoImagePng from "../../../src/assets/images/client-logos/image.png";
-import clientLogoImagesPng from "../../../src/assets/images/client-logos/images.png";
+import clientLogo1 from "../../../src/assets/images/client-logos/1.png";
+import clientLogo2 from "../../../src/assets/images/client-logos/2.png";
+import clientLogo3 from "../../../src/assets/images/client-logos/3.png";
+import clientLogo4 from "../../../src/assets/images/client-logos/4.png";
+import clientLogo5 from "../../../src/assets/images/client-logos/5.png";
+import clientLogo6 from "../../../src/assets/images/client-logos/6.png";
+import clientLogo7 from "../../../src/assets/images/client-logos/7.png";
+import clientLogo8 from "../../../src/assets/images/client-logos/8.png";
+import clientLogo11 from "../../../src/assets/images/client-logos/11.png";
+import clientLogo12 from "../../../src/assets/images/client-logos/12.png";
+import clientLogo13 from "../../../src/assets/images/client-logos/13.png";
+import clientLogo14 from "../../../src/assets/images/client-logos/14.png";
+import clientLogo17 from "../../../src/assets/images/client-logos/17.png";
+import clientLogo19 from "../../../src/assets/images/client-logos/19.png";
+import clientLogo23 from "../../../src/assets/images/client-logos/23.png";
+import clientLogo25 from "../../../src/assets/images/client-logos/25.png";
+import clientLogo26 from "../../../src/assets/images/client-logos/26.png";
+import clientLogo28 from "../../../src/assets/images/client-logos/28.png";
+import clientLogo29 from "../../../src/assets/images/client-logos/29.png";
+import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
+import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
+import { useBlogs } from "../../../src/contexts/BlogContext";
+import DonateButton from "../common/DonateButton";
 
 const MotionLink = motion(Link);
 
@@ -49,6 +44,8 @@ const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [activeCertificate, setActiveCertificate] = useState(0);
+  const { trendingBlogs } = useBlogs();
+  const topBlogs = trendingBlogs.slice(0, 3);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -98,6 +95,9 @@ const Home = () => {
         "Build a strong foundation in English grammar, vocabulary, and everyday communication with engaging practice sessions.",
       duration: "8 weeks",
       format: "In-person / Online",
+      price: "₹7,499",
+      buyLink: "/contact/book-demo",
+      donateLink: "/contact/business-collaboration",
       features: [
         "Grammar fundamentals",
         "Vocabulary building",
@@ -114,6 +114,9 @@ const Home = () => {
         "Enhance fluency, sentence structure, and professional communication to bridge the gap between basics and mastery.",
       duration: "10 weeks",
       format: "Hybrid | Online",
+      price: "₹9,499",
+      buyLink: "/contact/book-demo",
+      donateLink: "/contact/business-collaboration",
       features: [
         "Fluency drills",
         "Sentence structuring",
@@ -130,6 +133,9 @@ const Home = () => {
         "Master business communication, presentation skills, and global-ready fluency for senior roles and international goals.",
       duration: "12 weeks",
       format: "In-person / Online",
+      price: "₹11,999",
+      buyLink: "/contact/book-demo",
+      donateLink: "/contact/business-collaboration",
       features: [
         "Business communication",
         "Presentation mastery",
@@ -283,133 +289,30 @@ const Home = () => {
   ];
 
   const clientLogosTopRow = [
-    { id: "client-logo-1", name: "Client Logo 1", src: clientLogo6375Image },
-    {
-      id: "client-logo-2",
-      name: "Client Logo 2",
-      src: clientLogoDownload1Jpeg,
-    },
-    { id: "client-logo-3", name: "Client Logo 3", src: clientLogoDownload1Png },
-    {
-      id: "client-logo-4",
-      name: "Client Logo 4",
-      src: clientLogoDownload10Png,
-    },
-    {
-      id: "client-logo-5",
-      name: "Client Logo 5",
-      src: clientLogoDownload11Png,
-    },
-    {
-      id: "client-logo-6",
-      name: "Client Logo 6",
-      src: clientLogoDownload12Png,
-    },
-    {
-      id: "client-logo-7",
-      name: "Client Logo 7",
-      src: clientLogoDownload13Png,
-    },
-    {
-      id: "client-logo-8",
-      name: "Client Logo 8",
-      src: clientLogoDownload14Png,
-    },
-    {
-      id: "client-logo-9",
-      name: "Client Logo 9",
-      src: clientLogoDownload15Png,
-    },
-    {
-      id: "client-logo-10",
-      name: "Client Logo 10",
-      src: clientLogoDownload16Png,
-    },
-    {
-      id: "client-logo-11",
-      name: "Client Logo 11",
-      src: clientLogoDownload17Png,
-    },
-    {
-      id: "client-logo-12",
-      name: "Client Logo 12",
-      src: clientLogoDownload18Png,
-    },
-    {
-      id: "client-logo-13",
-      name: "Client Logo 13",
-      src: clientLogoDownload19Png,
-    },
-    {
-      id: "client-logo-14",
-      name: "Client Logo 14",
-      src: clientLogoDownload2Jpeg,
-    },
+    { id: "client-logo-1", name: "Aurora Corp", src: clientLogo1 },
+    { id: "client-logo-2", name: "Nimble Retail", src: clientLogo2 },
+    { id: "client-logo-3", name: "Swift Foods", src: clientLogo3 },
+    { id: "client-logo-4", name: "Blue Horizon", src: clientLogo4 },
+    { id: "client-logo-5", name: "Nova Services", src: clientLogo5 },
+    { id: "client-logo-6", name: "Zenith Labs", src: clientLogo6 },
+    { id: "client-logo-7", name: "Urban Motors", src: clientLogo7 },
+    { id: "client-logo-8", name: "Metro Banking", src: clientLogo8 },
+    { id: "client-logo-9", name: "Allied Healthcare", src: clientLogo11 },
+    { id: "client-logo-10", name: "EduSpark", src: clientLogo12 },
+    { id: "client-logo-11", name: "Vertex Analytics", src: clientLogo13 },
+    { id: "client-logo-12", name: "Globe Logistics", src: clientLogo14 },
   ];
 
   const clientLogosBottomRow = [
-    {
-      id: "client-logo-15",
-      name: "Client Logo 15",
-      src: clientLogoDownload2Png,
-    },
-    {
-      id: "client-logo-16",
-      name: "Client Logo 16",
-      src: clientLogoDownload20Png,
-    },
-    {
-      id: "client-logo-17",
-      name: "Client Logo 17",
-      src: clientLogoDownload21Png,
-    },
-    {
-      id: "client-logo-18",
-      name: "Client Logo 18",
-      src: clientLogoDownload22Png,
-    },
-    {
-      id: "client-logo-19",
-      name: "Client Logo 19",
-      src: clientLogoDownload3Png,
-    },
-    {
-      id: "client-logo-20",
-      name: "Client Logo 20",
-      src: clientLogoDownload4Png,
-    },
-    {
-      id: "client-logo-21",
-      name: "Client Logo 21",
-      src: clientLogoDownload5Png,
-    },
-    {
-      id: "client-logo-22",
-      name: "Client Logo 22",
-      src: clientLogoDownload6Png,
-    },
-    {
-      id: "client-logo-23",
-      name: "Client Logo 23",
-      src: clientLogoDownload7Png,
-    },
-    {
-      id: "client-logo-24",
-      name: "Client Logo 24",
-      src: clientLogoDownload8Png,
-    },
-    {
-      id: "client-logo-25",
-      name: "Client Logo 25",
-      src: clientLogoDownloadJpeg,
-    },
-    {
-      id: "client-logo-26",
-      name: "Client Logo 26",
-      src: clientLogoDownloadPng,
-    },
-    { id: "client-logo-27", name: "Client Logo 27", src: clientLogoImagePng },
-    { id: "client-logo-28", name: "Client Logo 28", src: clientLogoImagesPng },
+    { id: "client-logo-13", name: "Momentum Retail", src: clientLogo17 },
+    { id: "client-logo-14", name: "Pulse Media", src: clientLogo19 },
+    { id: "client-logo-15", name: "Evergreen Estates", src: clientLogo23 },
+    { id: "client-logo-16", name: "Bright Learning", src: clientLogo25 },
+    { id: "client-logo-17", name: "Pioneer Systems", src: clientLogo26 },
+    { id: "client-logo-18", name: "Prime Distribution", src: clientLogo28 },
+    { id: "client-logo-19", name: "Connect Tech", src: clientLogo29 },
+    { id: "client-logo-20", name: "Axis Consulting", src: clientLogo30 },
+    { id: "client-logo-21", name: "Spectrum Finance", src: clientLogo31 },
   ];
 
   // Auto-slide testimonials every 3 seconds
@@ -593,6 +496,39 @@ const Home = () => {
           and map a clear career roadmap.
         </p>
       ),
+    },
+  ];
+
+  const galleryItems = [
+    {
+      id: "gallery-workshop",
+      image:
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80",
+    },
+    {
+      id: "gallery-stage",
+      image:
+        "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80",
+    },
+    {
+      id: "gallery-corporate",
+      image:
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80",
+    },
+    {
+      id: "gallery-mentors",
+      image:
+        "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=1600&q=80",
+    },
+    {
+      id: "gallery-celebration",
+      image:
+        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80",
+    },
+    {
+      id: "gallery-organisation",
+      image:
+        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1600&q=80",
     },
   ];
 
@@ -835,12 +771,12 @@ const Home = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <span className="text-white text-sm md:text-base font-medium">
                 Our Clients
               </span>
               <svg
-                className="w-4 h-4 text-[#D4AF37]"
+                className="w-2 h-2 text-[#D4AF37]"
                 fill="currentColor"
                 viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -853,7 +789,7 @@ const Home = () => {
 
           {/* White Ribbon Container */}
           <div
-            className="relative rounded-2xl p-6 md:p-8 shadow-xl overflow-hidden"
+            className="relative rounded-2xl p-1 md:p-1 shadow-xl overflow-hidden"
             style={{
               backgroundImage:
                 "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(50% - 3px), #000000 calc(50% - 3px), #000000 calc(50% + 3px), #ffffff calc(50% + 3px), #ffffff 100%)",
@@ -861,18 +797,15 @@ const Home = () => {
             {/* Client Logos - Top Row (Right to Left) */}
             <div className="pb-6 overflow-hidden">
               <div className="flex animate-scroll-left">
-                {[
-                  ...clientLogosTopRow.slice(0, 8),
-                  ...clientLogosTopRow.slice(0, 8),
-                ].map((client, index) => (
+                {clientLogosTopRow.map((client, index) => (
                   <div
                     key={`${client.id}-${index}`}
-                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm p-4 md:p-5 flex items-center justify-center mx-1.5 md:mx-2 w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
+                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
                     <img
                       src={client.src}
                       alt={client.name}
                       loading="lazy"
-                      className="h-10 md:h-12 lg:h-14 w-auto object-contain max-w-full"
+                      className="h-30 md:h-1 lg:h-30 w-auto object-contain max-w-full"
                     />
                   </div>
                 ))}
@@ -882,18 +815,15 @@ const Home = () => {
             {/* Client Logos - Bottom Row (Left to Right) */}
             <div className="overflow-hidden">
               <div className="flex animate-scroll-right">
-                {[
-                  ...clientLogosBottomRow.slice(0, 8),
-                  ...clientLogosBottomRow.slice(0, 8),
-                ].map((client, index) => (
+                {clientLogosBottomRow.map((client, index) => (
                   <div
                     key={`${client.id}-${index}`}
-                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm p-1 md:p-1 flex items-center justify-center mx-1.5 md:mx-2 w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
+                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
                     <img
                       src={client.src}
                       alt={client.name}
                       loading="lazy"
-                      className="h-10 md:h-12 lg:h-14 w-auto object-contain max-w-full"
+                      className="h-30 md:h-1 lg:h-30 w-auto object-contain max-w-full"
                     />
                   </div>
                 ))}
@@ -1004,6 +934,27 @@ const Home = () => {
                         </li>
                       ))}
                     </ul>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between text-sm text-gray-300">
+                      <span>Course Fee</span>
+                      <span className="text-lg font-semibold text-[#F5D26A]">
+                        {course.price}
+                      </span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Link
+                        to={course.buyLink || "/contact/book-demo"}
+                        className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                        Buy Now
+                      </Link>
+                      <DonateButton
+                        className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                        size="sm">
+                        Donate
+                      </DonateButton>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -1379,17 +1330,24 @@ const Home = () => {
                     </span>
                   </div>
 
-                  {/* Buy Now Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/books/1/payment`;
-                    }}
-                    className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                    Buy Now
-                  </motion.button>
+                  {/* Actions */}
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/books/1/payment`;
+                      }}
+                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                      Buy Now
+                    </motion.button>
+                    <DonateButton
+                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                      size="sm">
+                      Donate
+                    </DonateButton>
+                  </div>
                 </div>
               </Link>
             </motion.div>
@@ -1475,16 +1433,23 @@ const Home = () => {
                   </div>
 
                   {/* Buy Now Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/books/2/payment`;
-                    }}
-                    className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                    Buy Now
-                  </motion.button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/books/2/payment`;
+                      }}
+                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                      Buy Now
+                    </motion.button>
+                    <DonateButton
+                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                      size="sm">
+                      Donate
+                    </DonateButton>
+                  </div>
                 </div>
               </Link>
             </motion.div>
@@ -1568,16 +1533,23 @@ const Home = () => {
                   </div>
 
                   {/* Buy Now Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/books/3/payment`;
-                    }}
-                    className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                    Buy Now
-                  </motion.button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/books/3/payment`;
+                      }}
+                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                      Buy Now
+                    </motion.button>
+                    <DonateButton
+                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                      size="sm">
+                      Donate
+                    </DonateButton>
+                  </div>
                 </div>
               </Link>
             </motion.div>
@@ -1661,16 +1633,23 @@ const Home = () => {
                   </div>
 
                   {/* Buy Now Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/books/4/payment`;
-                    }}
-                    className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                    Buy Now
-                  </motion.button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/books/4/payment`;
+                      }}
+                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                      Buy Now
+                    </motion.button>
+                    <DonateButton
+                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                      size="sm">
+                      Donate
+                    </DonateButton>
+                  </div>
                 </div>
               </Link>
             </motion.div>
@@ -1876,6 +1855,170 @@ const Home = () => {
           </div>
         </div>
       </motion.section>
+
+      {topBlogs.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="py-12 bg-[#090909]">
+          <div className="layout-container">
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="text-center mb-12">
+              <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
+                • BLOGS •
+              </p>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+                Latest Stories from the{" "}
+                <span className="text-[#D4AF37]">AELA Community</span>
+              </h2>
+              <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Quick reads curated by our mentors and learners. Dive into
+                frameworks, wins, and behind-the-scenes playbooks powering the
+                After Life movement.
+              </p>
+            </motion.div>
+
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {topBlogs.map((blog, index) => (
+                <motion.article
+                  key={blog.id}
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  whileHover={{ y: -6 }}
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_24px_60px_rgba(8,8,8,0.45)] transition-all duration-300">
+                  <Link
+                    to={`/blogs/${blog.id}`}
+                    className="flex h-full flex-col">
+                    <div className="relative h-56 w-full overflow-hidden">
+                      <img
+                        src={blog.thumbnail}
+                        alt={blog.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
+                      <span className="absolute top-3 left-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#F5D26A]">
+                        {blog.category}
+                      </span>
+                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-semibold text-white/90">
+                        {blog.readTime} min read
+                      </span>
+                    </div>
+                    <div className="flex flex-1 flex-col p-6">
+                      <div className="mb-4 flex items-center gap-3 text-xs text-gray-400">
+                        <span className="inline-flex items-center gap-2">
+                          <img
+                            src={blog.author.avatar}
+                            alt={blog.author.name}
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                          <span className="font-semibold text-white/90">
+                            {blog.author.name}
+                          </span>
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-gray-600" />
+                        <span>
+                          {new Date(blog.publishedAt).toLocaleDateString(
+                            "en-GB"
+                          )}
+                        </span>
+                      </div>
+                      <h3 className="mb-3 text-xl font-semibold text-white font-display leading-tight group-hover:text-[#F5D26A]">
+                        {blog.title}
+                      </h3>
+                      <p className="flex-1 text-sm text-gray-300 leading-relaxed line-clamp-3">
+                        {blog.excerpt}
+                      </p>
+                      <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
+                        Read Story
+                        <FaArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
+                  </Link>
+                </motion.article>
+              ))}
+            </div>
+
+            <div className="mt-10 flex justify-center">
+              <Link
+                to="/blogs"
+                className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#0f0f0f] px-6 py-3 text-sm font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:text-[#FFE28A]">
+                Explore All Blogs
+                <FaArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {galleryItems.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="py-12 bg-[#080808]">
+          <div className="layout-container">
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="text-center mb-12">
+              <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
+                • AELA GALLERY •
+              </p>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+                Highlights from Our{" "}
+                <span className="text-[#D4AF37]">Community & Partners</span>
+              </h2>
+              <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Celebrate wins from community hubs, partner organisations, and
+                learners who are shaping the After Life movement across cities.
+              </p>
+            </motion.div>
+
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {galleryItems.map((item, index) => (
+                <motion.figure
+                  key={item.id}
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.04,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  whileHover={{ y: -6 }}
+                  className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-[0_28px_70px_rgba(8,8,8,0.45)]">
+                  <div className="relative h-56 w-full overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt="AELA community gallery"
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
+                  </div>
+                </motion.figure>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Testimonials Section */}
       <motion.section

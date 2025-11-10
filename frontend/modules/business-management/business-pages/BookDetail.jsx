@@ -16,6 +16,7 @@ import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
 import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
 import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
+import DonateButton from "../common/DonateButton";
 
 const BookDetail = () => {
   const { id } = useParams();
@@ -418,16 +419,22 @@ const BookDetail = () => {
                 </div>
               )}
 
-              {/* Buy Now Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  window.location.href = `/books/${book.id}/payment`;
-                }}
-                className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200 mb-4">
-                Buy Now - ₹{book.price}
-              </motion.button>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    window.location.href = `/books/${book.id}/payment`;
+                  }}
+                  className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+                  Buy Now - ₹{book.price}
+                </motion.button>
+                <DonateButton
+                  className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black"
+                  size="lg">
+                  Donate
+                </DonateButton>
+              </div>
 
               {/* Additional Info */}
               <p className="text-xs text-gray-500 text-center">

@@ -21,6 +21,7 @@ import EnglishLanguageCourses from "../modules/business-management/cources-pages
 import Books from "../modules/business-management/business-pages/Books";
 import BookDetail from "../modules/business-management/business-pages/BookDetail";
 import BookPayment from "../modules/business-management/business-pages/BookPayment";
+import DonatePayment from "../modules/business-management/donate-pages/DonatePayment";
 import OurStory from "../modules/business-management/business-pages/OurStory";
 import MissionVision from "../modules/business-management/business-pages/MissionVision";
 import MeetTheFounder from "../modules/business-management/business-pages/MeetTheFounder";
@@ -90,6 +91,7 @@ export const App = () => {
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetail />} />
         <Route path="/books/:id/payment" element={<BookPayment />} />
+        <Route path="/donate/payment" element={<DonatePayment />} />
         <Route path="/about/our-story" element={<OurStory />} />
         <Route path="/about/mission-vision" element={<MissionVision />} />
         <Route path="/about/founder" element={<MeetTheFounder />} />

@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
+import DonateButton from "../common/DonateButton";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -9,6 +10,10 @@ const EnglishLanguageCourses = () => {
     "Hello! I'm interested in English Language courses."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+  const buildWhatsAppLink = (courseTitle) =>
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+      `Hello! I'd like to enroll in the ${courseTitle} course at Digital AELA.`
+    )}`;
 
   // English Language Courses
   const courses = [
@@ -20,6 +25,7 @@ const EnglishLanguageCourses = () => {
         "Digital AELA's Basic English Course is designed for beginners who want to build a strong foundation in grammar, vocabulary, and everyday communication. With interactive lessons and practical exercises, this course ensures you gain confidence to speak and write English in daily life, study, and work situations.",
       duration: "8 weeks",
       format: "In-person / Online",
+      price: "₹7,499",
       features: [
         "Grammar fundamentals",
         "Vocabulary building",
@@ -37,6 +43,7 @@ const EnglishLanguageCourses = () => {
         "Take your English skills to the next level with our Intermediate English Course. Focused on enhancing fluency, sentence structuring, and professional communication, this course bridges the gap between basic knowledge and advanced mastery. Ideal for students, professionals, and job seekers.",
       duration: "10 weeks",
       format: "In-person / Online",
+      price: "₹8,999",
       features: [
         "Fluency enhancement",
         "Sentence structuring",
@@ -54,6 +61,7 @@ const EnglishLanguageCourses = () => {
         "Master the art of fluent and confident English communication with Digital AELA's Advanced English Course. Covering advanced grammar, business communication, presentations, and academic writing, this course is perfect for career growth and international opportunities.",
       duration: "12 weeks",
       format: "In-person / Online",
+      price: "₹11,499",
       features: [
         "Advanced grammar",
         "Business communication",
@@ -71,6 +79,7 @@ const EnglishLanguageCourses = () => {
         "Our Personalised English Speaking Course offers one-to-one customized lessons tailored to your goals—whether it's job interviews, corporate presentations, or social confidence. Learn at your own pace with dedicated mentors guiding you step by step.",
       duration: "Customized",
       format: "One-on-One",
+      price: "₹1,499/session",
       features: [
         "One-to-one sessions",
         "Customized curriculum",
@@ -88,6 +97,7 @@ const EnglishLanguageCourses = () => {
         "Build your child's confidence with our Kids English Speaking Program. Focused on pronunciation, storytelling, and interactive games, this course helps children develop strong communication skills from an early age.",
       duration: "8 weeks",
       format: "In-person / Online",
+      price: "₹6,999",
       features: [
         "Pronunciation practice",
         "Storytelling skills",
@@ -105,6 +115,7 @@ const EnglishLanguageCourses = () => {
         "Crack your dream exams with Digital AELA's Exam Preparation Courses. From IELTS & TOEFL for international studies to SSC, Bank PO, and other competitive exams, we provide structured guidance, practice tests, and proven strategies to help you succeed.",
       duration: "10 weeks",
       format: "In-person / Online",
+      price: "₹9,999",
       features: [
         "IELTS & TOEFL prep",
         "SSC & Bank PO prep",
@@ -122,6 +133,7 @@ const EnglishLanguageCourses = () => {
         "Our NCERT English Literature Coaching supports students of class 11th and 12th with in-depth analysis of prose, poetry, and grammar. Designed to score high in board exams while improving overall comprehension skills.",
       duration: "12 weeks",
       format: "In-person / Online",
+      price: "₹10,499",
       features: [
         "Prose analysis",
         "Poetry comprehension",
@@ -139,6 +151,7 @@ const EnglishLanguageCourses = () => {
         "Become a certified English trainer with Digital AELA's Teacher Training Course. Learn modern teaching methodologies, classroom management, and digital tools to kick-start or enhance your teaching career globally.",
       duration: "12 weeks",
       format: "In-person / Online",
+      price: "₹12,999",
       features: [
         "Teaching methodologies",
         "Classroom management",
@@ -274,86 +287,115 @@ const EnglishLanguageCourses = () => {
 
           {/* Courses Grid */}
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
-            {courses.map((course, index) => (
-              <motion.div
-                key={course.id}
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6 }}
-                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer">
-                <div className="h-40 w-full overflow-hidden">
-                  <img
-                    src={course.image}
-                    alt={course.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                      {course.description}
-                    </p>
-                  </div>
+            {courses.map((course, index) => {
+              const buyLink = course.buyLink || buildWhatsAppLink(course.title);
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {course.duration}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                      {course.format}
-                    </span>
+              return (
+                <motion.div
+                  key={course.id}
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.25,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  whileHover={{ y: -6 }}
+                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
+                  <div className="h-40 w-full overflow-hidden">
+                    <img
+                      src={course.image}
+                      alt={course.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
+                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                    <div>
+                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                        {course.title}
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                        {course.description}
+                      </p>
+                    </div>
 
-                  <div className="border-t border-[#D4AF37]/15 pt-4">
-                    <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
-                      Key Highlights
-                    </p>
-                    <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                      {course.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {course.duration}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                        {course.format}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-[#D4AF37]/15 pt-4">
+                      <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
+                        Key Highlights
+                      </p>
+                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                        {course.features.map((feature) => (
+                          <li key={feature} className="flex items-center gap-2">
+                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between text-sm text-gray-300">
+                        <span>Course Fee</span>
+                        <span className="text-lg font-semibold text-[#F5D26A]">
+                          {course.price || "On Request"}
+                        </span>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <motion.a
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          whileTap={{ scale: 0.97 }}
+                          href={buyLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                          Buy Now
+                        </motion.a>
+                        <DonateButton
+                          className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                          size="sm">
+                          Donate
+                        </DonateButton>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* CTA Button */}
