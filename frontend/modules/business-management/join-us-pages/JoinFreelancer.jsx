@@ -10,19 +10,23 @@ const JoinFreelancer = () => {
       benefits={[
         {
           title: "Mission-driven briefs",
-          description: "Deliver projects that impact thousands of learners and professionals every month.",
+          description:
+            "Deliver projects that impact thousands of learners and professionals every month.",
         },
         {
           title: "Flexible engagements",
-          description: "Choose from sprints, retainers, or outcome-based collaborations that fit your schedule.",
+          description:
+            "Choose from sprints, retainers, or outcome-based collaborations that fit your schedule.",
         },
         {
           title: "Global recognition",
-          description: "Feature your work across our community showcases, events, and partner newsletters.",
+          description:
+            "Feature your work across our community showcases, events, and partner newsletters.",
         },
         {
           title: "Trusted partner network",
-          description: "Join a curated circle of creatives, strategists, and builders shaping the future of learning.",
+          description:
+            "Join a curated circle of creatives, strategists, and builders shaping the future of learning.",
         },
       ]}
       formConfig={[
@@ -66,7 +70,8 @@ const JoinFreelancer = () => {
           label: "Signature Skills & Tools",
           type: "textarea",
           rows: 3,
-          placeholder: "Figma, Webflow, React, Social storytelling, CRM automations...",
+          placeholder:
+            "Figma, Webflow, React, Social storytelling, CRM automations...",
           required: true,
         },
         {
@@ -80,7 +85,12 @@ const JoinFreelancer = () => {
           name: "availability",
           label: "Availability",
           type: "select",
-          options: ["5 - 10 hrs / week", "10 - 20 hrs / week", "20 - 30 hrs / week", "Full-time contract"],
+          options: [
+            "5 - 10 hrs / week",
+            "10 - 20 hrs / week",
+            "20 - 30 hrs / week",
+            "Full-time contract",
+          ],
           required: true,
         },
         {
@@ -101,7 +111,8 @@ const JoinFreelancer = () => {
           label: "Recent Project Highlights",
           type: "textarea",
           rows: 4,
-          placeholder: "Share outcomes, metrics, or testimonials that describe your best work.",
+          placeholder:
+            "Share outcomes, metrics, or testimonials that describe your best work.",
         },
       ]}
       ctaLabel="Submit Freelancer Profile"
@@ -111,4 +122,3 @@ const JoinFreelancer = () => {
 };
 
 export default JoinFreelancer;
-

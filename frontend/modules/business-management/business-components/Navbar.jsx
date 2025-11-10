@@ -130,7 +130,7 @@ const Navbar = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-              className="relative z-[60] border-b border-white/10 bg-white/10 px-3 py-2 backdrop-blur-lg supports-[backdrop-filter]:bg-white/15 sm:px-4">
+              className="relative z-60 border-b border-white/10 bg-white/10 px-3 py-2 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-4">
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 text-xs text-slate-100/85 sm:flex-row sm:items-center sm:text-sm">
                   <a
@@ -197,7 +197,9 @@ const Navbar = () => {
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
+                      onClick={() =>
+                        setLanguageDropdownOpen(!languageDropdownOpen)
+                      }
                       className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[#F5D26A] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] transition duration-300 hover:border-[#F5D26A]/40 hover:bg-white/15 hover:text-[#FFE28A]">
                       <svg
                         className="h-4 w-4"
@@ -237,32 +239,34 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute right-0 top-full z-[65] mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/15">
-                          {Object.entries(languages).map(([code, name], index) => (
-                            <motion.button
-                              key={code}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{
-                                duration: 0.2,
-                                delay: index * 0.03,
-                              }}
-                              onClick={() => {
-                                changeLanguage(code);
-                                setLanguageDropdownOpen(false);
-                              }}
-                              whileHover={{
-                                backgroundColor: "rgba(212,175,55,0.08)",
-                                x: 5,
-                              }}
-                              className={`w-full border-b border-white/10 px-4 py-3 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
-                                language === code
-                                  ? "bg-white/20 text-[#FFE28A]"
-                                  : "text-slate-100 hover:bg-white/10 hover:text-[#FFE28A]"
-                              }`}>
-                              {name}
-                            </motion.button>
-                          ))}
+                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-backdrop-filter:bg-white/15">
+                          {Object.entries(languages).map(
+                            ([code, name], index) => (
+                              <motion.button
+                                key={code}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{
+                                  duration: 0.2,
+                                  delay: index * 0.03,
+                                }}
+                                onClick={() => {
+                                  changeLanguage(code);
+                                  setLanguageDropdownOpen(false);
+                                }}
+                                whileHover={{
+                                  backgroundColor: "rgba(212,175,55,0.08)",
+                                  x: 5,
+                                }}
+                                className={`w-full border-b border-white/10 px-4 py-3 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
+                                  language === code
+                                    ? "bg-white/20 text-[#FFE28A]"
+                                    : "text-slate-100 hover:bg-white/10 hover:text-[#FFE28A]"
+                                }`}>
+                                {name}
+                              </motion.button>
+                            )
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -276,8 +280,12 @@ const Navbar = () => {
         <motion.nav
           initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1], delay: 0.05 }}
-          className="relative overflow-visible border-b border-white/10 bg-white/10 px-3 py-1 backdrop-blur-xl supports-[backdrop-filter]:bg-white/15 sm:px-4 sm:py-1.5">
+          transition={{
+            duration: 0.45,
+            ease: [0.25, 0.1, 0.25, 1],
+            delay: 0.05,
+          }}
+          className="relative overflow-visible border-b border-white/10 bg-white/10 px-3 py-1 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-4 sm:py-1.5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(226,232,255,0.35),transparent_55%)] opacity-70" />
           <div className="pointer-events-none absolute inset-x-4 top-1/2 h-24 -translate-y-1/2 rounded-[48px] border border-white/15 bg-white/5 blur-3xl" />
           <div className="layout-container relative z-10 flex items-center justify-between gap-4">
@@ -324,7 +332,7 @@ const Navbar = () => {
                         className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
                         {item.label}
                         <motion.div
-                          className="absolute bottom-0 left-0 h-px w-0 bg-gradient-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
                           whileHover={{ width: "100%" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         />
@@ -339,7 +347,7 @@ const Navbar = () => {
                         className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
                         {item.label}
                         <motion.div
-                          className="absolute bottom-0 left-0 h-px w-0 bg-gradient-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
                           whileHover={{ width: "100%" }}
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         />
@@ -356,7 +364,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/15">
+                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-backdrop-filter:bg-white/10">
                           {item.dropdown.map((dropdownItem, dropIndex) => (
                             <Link
                               key={dropdownItem.label}

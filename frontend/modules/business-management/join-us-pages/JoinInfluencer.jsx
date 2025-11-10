@@ -10,19 +10,23 @@ const JoinInfluencer = () => {
       benefits={[
         {
           title: "Launch exclusive challenges",
-          description: "Design bespoke learning challenges with our team and reward your audience with AELA coins.",
+          description:
+            "Design bespoke learning challenges with our team and reward your audience with AELA coins.",
         },
         {
           title: "Co-create content",
-          description: "Host live conversations, workshops, and social campaigns amplified across our platforms.",
+          description:
+            "Host live conversations, workshops, and social campaigns amplified across our platforms.",
         },
         {
           title: "Grow your influence",
-          description: "Tap into 100K+ community members, data-driven dashboards, and performance-based payouts.",
+          description:
+            "Tap into 100K+ community members, data-driven dashboards, and performance-based payouts.",
         },
         {
           title: "Premium partner toolkit",
-          description: "Access creative assets, engagement scripts, and analytics to keep your community inspired.",
+          description:
+            "Access creative assets, engagement scripts, and analytics to keep your community inspired.",
         },
       ]}
       formConfig={[
@@ -44,7 +48,14 @@ const JoinInfluencer = () => {
           name: "primaryPlatform",
           label: "Primary Platform",
           type: "select",
-          options: ["Instagram", "YouTube", "LinkedIn", "TikTok", "Podcast", "Other"],
+          options: [
+            "Instagram",
+            "YouTube",
+            "LinkedIn",
+            "TikTok",
+            "Podcast",
+            "Other",
+          ],
           required: true,
         },
         {
@@ -72,7 +83,8 @@ const JoinInfluencer = () => {
           label: "Content Themes / Niche",
           type: "textarea",
           rows: 3,
-          placeholder: "Public speaking, communication hacks, professional storytelling, creator economy...",
+          placeholder:
+            "Public speaking, communication hacks, professional storytelling, creator economy...",
           required: true,
         },
         {
@@ -80,7 +92,8 @@ const JoinInfluencer = () => {
           label: "What type of collaboration excites you?",
           type: "textarea",
           rows: 4,
-          placeholder: "Tell us about your vision—co-branded workshops, challenge series, mentorship live streams, etc.",
+          placeholder:
+            "Tell us about your vision—co-branded workshops, challenge series, mentorship live streams, etc.",
           required: true,
         },
         {
@@ -88,7 +101,8 @@ const JoinInfluencer = () => {
           label: "Notable Brand Collaborations",
           type: "textarea",
           rows: 3,
-          placeholder: "List recent partnerships, campaigns, or case studies that highlight your impact.",
+          placeholder:
+            "List recent partnerships, campaigns, or case studies that highlight your impact.",
         },
         {
           name: "country",
@@ -105,4 +119,3 @@ const JoinInfluencer = () => {
 };
 
 export default JoinInfluencer;
-

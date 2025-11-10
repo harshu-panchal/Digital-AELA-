@@ -10,19 +10,23 @@ const JoinAsTeacher = () => {
       benefits={[
         {
           title: "Global class rooms",
-          description: "Engage with motivated learners across 30+ countries in flexible time slots.",
+          description:
+            "Engage with motivated learners across 30+ countries in flexible time slots.",
         },
         {
           title: "Curriculum support",
-          description: "Access digital toolkits, lesson templates, and coaching playbooks designed by our team.",
+          description:
+            "Access digital toolkits, lesson templates, and coaching playbooks designed by our team.",
         },
         {
           title: "Earn & grow",
-          description: "Competitive compensation, bonuses, and visibility across our Learn & Earn ecosystem.",
+          description:
+            "Competitive compensation, bonuses, and visibility across our Learn & Earn ecosystem.",
         },
         {
           title: "Creator community",
-          description: "Collaborate with public speakers, language experts, and master mentors.",
+          description:
+            "Collaborate with public speakers, language experts, and master mentors.",
         },
       ]}
       formConfig={[
@@ -51,7 +55,12 @@ const JoinAsTeacher = () => {
           name: "experience",
           label: "Years of Teaching Experience",
           type: "select",
-          options: ["Less than 2 years", "2 - 5 years", "6 - 10 years", "10+ years"],
+          options: [
+            "Less than 2 years",
+            "2 - 5 years",
+            "6 - 10 years",
+            "10+ years",
+          ],
           required: true,
         },
         {
@@ -73,7 +82,8 @@ const JoinAsTeacher = () => {
           label: "Certifications / Credentials",
           type: "textarea",
           rows: 3,
-          placeholder: "Share notable certifications, awards, or teaching licenses.",
+          placeholder:
+            "Share notable certifications, awards, or teaching licenses.",
         },
         {
           name: "sessionFormat",
@@ -92,7 +102,12 @@ const JoinAsTeacher = () => {
           name: "availability",
           label: "Weekly Availability",
           type: "select",
-          options: ["Up to 5 hours", "5 - 10 hours", "10 - 20 hours", "20+ hours"],
+          options: [
+            "Up to 5 hours",
+            "5 - 10 hours",
+            "10 - 20 hours",
+            "20+ hours",
+          ],
           required: true,
         },
         {
@@ -100,14 +115,16 @@ const JoinAsTeacher = () => {
           label: "Portfolio / LinkedIn / Session Recording",
           type: "text",
           placeholder: "https://linkedin.com/in/yourprofile",
-          helperText: "Add any link that showcases your teaching style or impact.",
+          helperText:
+            "Add any link that showcases your teaching style or impact.",
         },
         {
           name: "motivation",
           label: "Why do you want to teach with us?",
           type: "textarea",
           rows: 4,
-          placeholder: "Tell us about your mission, teaching philosophy, and the impact you want to create.",
+          placeholder:
+            "Tell us about your mission, teaching philosophy, and the impact you want to create.",
           required: true,
         },
       ]}
@@ -118,4 +135,3 @@ const JoinAsTeacher = () => {
 };
 
 export default JoinAsTeacher;
-

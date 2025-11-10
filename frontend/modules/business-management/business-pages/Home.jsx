@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../../../src/components/SEO";
-import { FaStar, FaBook, FaDownload } from "react-icons/fa";
+import {
+  FaStar,
+  FaBook,
+  FaDownload,
+  FaArrowLeft,
+  FaArrowRight,
+} from "react-icons/fa";
 import founderImage from "../../../src/assets/Founder.png";
+import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
+import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
+import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
+import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import clientLogo6375Image from "../../../src/assets/images/client-logos/6375Image.jpg";
 import clientLogoDownload1Jpeg from "../../../src/assets/images/client-logos/download (1).jpeg";
 import clientLogoDownload1Png from "../../../src/assets/images/client-logos/download (1).png";
@@ -39,6 +48,7 @@ const MotionLink = motion(Link);
 const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
+  const [activeCertificate, setActiveCertificate] = useState(0);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -48,6 +58,26 @@ const Home = () => {
     setCurrentTestimonial(
       (prev) => (prev - 1 + testimonials.length) % testimonials.length
     );
+  };
+
+  const nextCertificate = () => {
+    if (totalCertificateSlides <= 0) return;
+    setActiveCertificate((prev) => (prev + 1) % totalCertificateSlides);
+  };
+
+  const prevCertificate = () => {
+    if (totalCertificateSlides <= 0) return;
+    setActiveCertificate(
+      (prev) => (prev - 1 + totalCertificateSlides) % totalCertificateSlides
+    );
+  };
+
+  const goToCertificate = (index) => {
+    if (totalCertificateSlides <= 0) return;
+    const normalizedIndex =
+      ((index % totalCertificateSlides) + totalCertificateSlides) %
+      totalCertificateSlides;
+    setActiveCertificate(normalizedIndex);
   };
 
   // WhatsApp integration
@@ -134,6 +164,121 @@ const Home = () => {
       image: "👩",
       text: "Learning English has never been this engaging. The instructors are patient, and the materials are practical and relevant.",
       rating: 5,
+    },
+  ];
+
+  const certificates = [
+    {
+      id: "certificate-1",
+      image:
+        "https://images.unsplash.com/photo-1588075607487-1b2a43b871d7?auto=format&fit=crop&w=1200&q=80",
+      alt: "Stack of certificates with elegant pen on desk",
+    },
+    {
+      id: "certificate-2",
+      image:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+      alt: "Instructor presenting certification to a learner",
+    },
+    {
+      id: "certificate-3",
+      image:
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+      alt: "Team celebrating achievement with certificates",
+    },
+    {
+      id: "certificate-4",
+      image:
+        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80",
+      alt: "Close-up of a certification folder on a table",
+    },
+    {
+      id: "certificate-5",
+      image:
+        "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80",
+      alt: "Graduates holding framed certificates",
+    },
+    {
+      id: "certificate-6",
+      image:
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+      alt: "Certificate placed beside laptop and notebook",
+    },
+    {
+      id: "certificate-7",
+      image:
+        "https://images.unsplash.com/photo-1484417894907-623942c8ee29?auto=format&fit=crop&w=1200&q=80",
+      alt: "Elegant award certificate with golden seal",
+    },
+    {
+      id: "certificate-8",
+      image:
+        "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80",
+      alt: "Business partners exchanging certification folder",
+    },
+    {
+      id: "certificate-9",
+      image:
+        "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80",
+      alt: "Professional signing diploma certificate",
+    },
+    {
+      id: "certificate-10",
+      image:
+        "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
+      alt: "Certificate with ribbon placed on workspace",
+    },
+    {
+      id: "certificate-11",
+      image:
+        "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80",
+      alt: "Mentor congratulating student with certificate",
+    },
+    {
+      id: "certificate-12",
+      image:
+        "https://images.unsplash.com/photo-1523475472560-753a17d8d7d7?auto=format&fit=crop&w=1200&q=80",
+      alt: "Framed certifications displayed on wall",
+    },
+  ];
+
+  const certificatesPerSlide = 3;
+  const totalCertificateSlides = Math.ceil(
+    certificates.length / certificatesPerSlide
+  );
+  const certificateSlides = Array.from(
+    { length: totalCertificateSlides },
+    (_, slideIndex) =>
+      certificates.slice(
+        slideIndex * certificatesPerSlide,
+        (slideIndex + 1) * certificatesPerSlide
+      )
+  );
+
+  const storyVideos = [
+    {
+      id: "story-1",
+      title: "How Digital AELA Transforms Careers",
+      youtubeId: "I9_RD7b2oz4",
+      thumbnail: "https://img.youtube.com/vi/I9_RD7b2oz4/hqdefault.jpg",
+    },
+    {
+      id: "story-2",
+      title: "Learner Spotlight: Speak with Confidence",
+      youtubeId: "ItgBWtaLSVQ",
+      thumbnail: "https://img.youtube.com/vi/ItgBWtaLSVQ/hqdefault.jpg",
+    },
+    {
+      id: "story-3",
+      title: "Inside Our English Labs",
+      youtubeId: "GaKTXGdmahI",
+      thumbnail: "https://img.youtube.com/vi/GaKTXGdmahI/hqdefault.jpg",
+    },
+    {
+      id: "story-4",
+      title: "Mentors Inspiring The After Life Movement",
+      youtubeId: "DMLVWteuQJI",
+      thumbnail: "https://img.youtube.com/vi/DMLVWteuQJI/hqdefault.jpg",
     },
   ];
 
@@ -275,6 +420,16 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [testimonials.length]);
+
+  useEffect(() => {
+    if (totalCertificateSlides <= 1) return;
+
+    const certificateInterval = setInterval(() => {
+      setActiveCertificate((prev) => (prev + 1) % totalCertificateSlides);
+    }, 5000);
+
+    return () => clearInterval(certificateInterval);
+  }, [totalCertificateSlides]);
 
   const faqItems = [
     {
@@ -1158,8 +1313,14 @@ const Home = () => {
               className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
               <Link to="/books/1">
                 {/* Book Image */}
-                <div className="w-full h-48 bg-linear-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                  <div className="text-6xl">📚</div>
+                <div className="relative h-48 w-full overflow-hidden">
+                  <img
+                    src={bookGrammarImg}
+                    alt="English Grammar Mastery cover"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                   {/* Format Badge */}
                   <div className="absolute top-2 right-2">
                     <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -1247,8 +1408,14 @@ const Home = () => {
               className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
               <Link to="/books/2">
                 {/* Book Image */}
-                <div className="w-full h-48 bg-linear-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                  <div className="text-6xl">📖</div>
+                <div className="relative h-48 w-full overflow-hidden">
+                  <img
+                    src={bookVocabularyImg}
+                    alt="Vocabulary Builder Pro cover"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                   {/* Format Badge */}
                   <div className="absolute top-2 right-2">
                     <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -1336,8 +1503,14 @@ const Home = () => {
               className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
               <Link to="/books/3">
                 {/* Book Image */}
-                <div className="w-full h-48 bg-linear-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                  <div className="text-6xl">📕</div>
+                <div className="relative h-48 w-full overflow-hidden">
+                  <img
+                    src={bookIELTSVocabularyImg}
+                    alt="IELTS Preparation Guide cover"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                   {/* Format Badge */}
                   <div className="absolute top-2 right-2">
                     <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -1423,8 +1596,14 @@ const Home = () => {
               className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
               <Link to="/books/4">
                 {/* Book Image */}
-                <div className="w-full h-48 bg-linear-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                  <div className="text-6xl">🗣️</div>
+                <div className="relative h-48 w-full overflow-hidden">
+                  <img
+                    src={bookConfidenceBuildingImg}
+                    alt="Speaking Fluency Course handbook"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                   {/* Format Badge */}
                   <div className="absolute top-2 right-2">
                     <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -1526,6 +1705,175 @@ const Home = () => {
               </motion.button>
             </Link>
           </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Certificate Showcase Section */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="py-12 bg-black">
+        <div className="layout-container">
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="text-center mb-12">
+            <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
+              • ACCREDITED & TRUSTED •
+            </p>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+              Internationally Recognised{" "}
+              <span className="text-[#D4AF37]">Certificates</span>
+            </h2>
+            <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Our programmes are backed by global awarding bodies, ensuring
+              every learner receives verifiable credentials that open doors
+              worldwide.
+            </p>
+          </motion.div>
+
+          <div className="relative">
+            <div className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/5 backdrop-blur supports-backdrop-filter:bg-white/10">
+              <ul
+                className="flex transition-transform duration-700 ease-[cubic-bezier(0.65,0.05,0.36,1)]"
+                style={{
+                  transform: `translateX(-${activeCertificate * 100}%)`,
+                }}>
+                {certificateSlides.map((slide, slideIndex) => (
+                  <li
+                    key={`certificate-slide-${slideIndex}`}
+                    className="min-w-full bg-[#080808]/60">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                      {slide.map((certificate) => (
+                        <figure
+                          key={certificate.id}
+                          className="group relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505]/40 shadow-[0_16px_40px_rgba(8,8,8,0.55)]">
+                          <img
+                            src={certificate.image}
+                            alt={certificate.alt}
+                            loading="lazy"
+                            className="h-56 w-full object-cover transition duration-700 ease-out group-hover:scale-105"
+                          />
+                          <figcaption className="sr-only">
+                            {certificate.alt}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 sm:px-6 pointer-events-none">
+              <button
+                type="button"
+                onClick={prevCertificate}
+                className="pointer-events-auto hidden sm:inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-black/60 p-3 text-[#F5D26A] shadow-lg transition hover:border-[#D4AF37]/60 hover:bg-black/80"
+                aria-label="Previous certificates">
+                <FaArrowLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={nextCertificate}
+                className="pointer-events-auto hidden sm:inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-black/60 p-3 text-[#F5D26A] shadow-lg transition hover:border-[#D4AF37]/60 hover:bg-black/80"
+                aria-label="Next certificates">
+                <FaArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-center gap-2">
+              {certificateSlides.map((_, index) => (
+                <button
+                  key={`certificate-indicator-${index}`}
+                  type="button"
+                  onClick={() => goToCertificate(index)}
+                  className={`h-2.5 w-8 rounded-full transition-all duration-300 ${
+                    index === activeCertificate
+                      ? "bg-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.6)]"
+                      : "bg-white/25 hover:bg-white/40"
+                  }`}
+                  aria-label={`View certificate slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Watch Our Stories Section */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="py-12 bg-black">
+        <div className="layout-container">
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="text-center mb-12">
+            <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
+              • WATCH OUR STORIES •
+            </p>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+              Step Inside the{" "}
+              <span className="text-[#D4AF37]">Digital AELA</span> Experience
+            </h2>
+            <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Hear from our learners, mentors, and community as they share
+              milestones, transformations, and the heart behind the After Life
+              movement.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {storyVideos.map((video, index) => (
+              <motion.article
+                key={video.id}
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.3,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ y: -6, scale: 1.01 }}
+                className="rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_20px_50px_rgba(8,8,8,0.45)] overflow-hidden">
+                <div className="relative aspect-9/16 w-full overflow-hidden bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1&showinfo=0`}
+                    title={video.title}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="absolute inset-0 h-full w-full border-0"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
+                </div>
+                <div className="p-5">
+                  <h3 className="text-lg font-semibold text-white mb-2 font-display line-clamp-2">
+                    {video.title}
+                  </h3>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 hover:text-[#FFE28A]">
+                    Watch on YouTube
+                    <FaArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+              </motion.article>
+            ))}
+          </div>
         </div>
       </motion.section>
 

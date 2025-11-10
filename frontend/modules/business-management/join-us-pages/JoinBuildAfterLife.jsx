@@ -10,6 +10,12 @@ import {
   FaGlobe,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
+import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
+import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
+import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
+import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
+import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
+import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 
 const courseCatalog = [
   {
@@ -52,54 +58,78 @@ const bookLibrary = [
     title: "Advanced English Grammar",
     author: "Dr. Sarah Johnson",
     price: 499,
+    originalPrice: 699,
     rating: 4.8,
+    reviews: 125,
     category: "Grammar",
     badge: "Physical",
+    image: bookGrammarImg,
+    imageAlt: "Advanced English Grammar cover",
   },
   {
     id: 2,
     title: "Vocabulary Builder Pro",
     author: "Prof. Michael Chen",
     price: 299,
+    originalPrice: 399,
     rating: 4.6,
+    reviews: 89,
     category: "Vocabulary",
     badge: "E-Book",
+    image: bookVocabularyImg,
+    imageAlt: "Vocabulary Builder Pro cover",
   },
   {
     id: 3,
     title: "Self Help: Confidence Building",
     author: "Dr. Priya Sharma",
     price: 399,
+    originalPrice: 599,
     rating: 4.9,
+    reviews: 203,
     category: "Self Help",
     badge: "Physical",
+    image: bookConfidenceBuildingImg,
+    imageAlt: "Self Help Confidence Building cover",
   },
   {
     id: 4,
     title: "English Sentence Structures",
     author: "Dr. Robert Williams",
     price: 349,
+    originalPrice: 499,
     rating: 4.7,
+    reviews: 156,
     category: "Structures",
     badge: "E-Book",
+    image: bookSentenceStructureImg,
+    imageAlt: "English Sentence Structures cover",
   },
   {
     id: 5,
     title: "Business English Essentials",
     author: "Dr. Sarah Johnson",
     price: 449,
+    originalPrice: 649,
     rating: 4.8,
+    reviews: 178,
     category: "Business",
     badge: "Physical",
+    image: bookAdvancedEnglishImg,
+    imageAlt: "Business English Essentials cover",
   },
   {
     id: 6,
     title: "IELTS Vocabulary Master",
     author: "Prof. Michael Chen",
     price: 379,
+    originalPrice: 549,
     rating: 4.9,
+    reviews: 267,
     category: "IELTS",
     badge: "E-Book",
+    image: bookIELTSVocabularyImg,
+    imageAlt: "IELTS Vocabulary Master cover",
   },
 ];
 
@@ -116,7 +146,7 @@ const JoinBuildAfterLife = () => {
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 left-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-[#F5D26A]/15 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[32rem] w-[32rem] translate-x-1/3 rounded-full bg-[#0E1635]/80 blur-[140px]" />
+        <div className="absolute bottom-0 right-0 h-128 w-lg translate-x-1/3 rounded-full bg-[#0E1635]/80 blur-[140px]" />
         <div className="absolute top-1/3 left-0 hidden h-80 w-80 -translate-x-1/2 rounded-full bg-[#103350]/40 blur-[110px] md:block" />
       </div>
 
@@ -146,7 +176,7 @@ const JoinBuildAfterLife = () => {
                 initial={{ opacity: 0, y: 26 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-                className="mt-6 h-2 bg-gradient-to-r from-transparent via-[#F5D26A]/40 to-transparent rounded-full" />
+                className="mt-6 h-2 bg-linear-to-r from-transparent via-[#F5D26A]/40 to-transparent rounded-full" />
             </div>
           </div>
         </section>
@@ -267,7 +297,7 @@ const JoinBuildAfterLife = () => {
 
         {/* Books */}
         <section className="relative overflow-hidden py-16 sm:py-20">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0C1328]/50 via-transparent to-[#020409]" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#0C1328]/50 via-transparent to-[#020409]" />
           <div className="layout-container relative">
             <div className="flex flex-col gap-6 pb-8 text-center md:flex-row md:items-end md:justify-between md:text-left">
               <div className="max-w-xl">
@@ -306,8 +336,14 @@ const JoinBuildAfterLife = () => {
                   whileHover={{ y: -6, scale: 1.02 }}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group">
                   <Link to={`/books/${book.id}`}>
-                    <div className="w-full h-48 bg-linear-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                      <div className="text-6xl">{book.emoji}</div>
+                    <div className="relative h-48 w-full overflow-hidden">
+                      <img
+                        src={book.image}
+                        alt={book.imageAlt || `${book.title} cover`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                       <div className="absolute top-2 right-2">
                         <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                           {book.badge === "E-Book" ? (

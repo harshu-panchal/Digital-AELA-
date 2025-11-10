@@ -4,6 +4,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { FaSearch, FaStar, FaBook, FaDownload } from "react-icons/fa";
+import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
+import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
+import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
+import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
+import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
+import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 
 const Books = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,11 +22,13 @@ const Books = () => {
       author: "Dr. Sarah Johnson",
       price: 499,
       originalPrice: 699,
-      image: "📚",
+      image: bookGrammarImg,
+      imageAlt: "Advanced English Grammar cover",
       rating: 4.8,
       reviews: 125,
       format: "physical", // "physical" or "ebook"
-      description: "Comprehensive guide to advanced English grammar with practical examples and exercises.",
+      description:
+        "Comprehensive guide to advanced English grammar with practical examples and exercises.",
       category: "Grammar",
       pages: 350,
       language: "English",
@@ -32,11 +40,13 @@ const Books = () => {
       author: "Prof. Michael Chen",
       price: 299,
       originalPrice: 399,
-      image: "📖",
+      image: bookVocabularyImg,
+      imageAlt: "Vocabulary Builder Pro cover",
       rating: 4.6,
       reviews: 89,
       format: "ebook",
-      description: "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
+      description:
+        "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
       category: "Vocabulary",
       pages: 280,
       language: "English",
@@ -48,11 +58,13 @@ const Books = () => {
       author: "Dr. Priya Sharma",
       price: 399,
       originalPrice: 599,
-      image: "📘",
+      image: bookConfidenceBuildingImg,
+      imageAlt: "Self Help Confidence Building cover",
       rating: 4.9,
       reviews: 203,
       format: "physical",
-      description: "Transform your life with proven confidence-building techniques and strategies.",
+      description:
+        "Transform your life with proven confidence-building techniques and strategies.",
       category: "Self Help",
       pages: 320,
       language: "English",
@@ -64,11 +76,13 @@ const Books = () => {
       author: "Dr. Robert Williams",
       price: 349,
       originalPrice: 499,
-      image: "📕",
+      image: bookSentenceStructureImg,
+      imageAlt: "English Sentence Structures cover",
       rating: 4.7,
       reviews: 156,
       format: "ebook",
-      description: "Master English sentence structures with detailed explanations and practice exercises.",
+      description:
+        "Master English sentence structures with detailed explanations and practice exercises.",
       category: "Structures",
       pages: 240,
       language: "English",
@@ -80,11 +94,13 @@ const Books = () => {
       author: "Dr. Sarah Johnson",
       price: 449,
       originalPrice: 649,
-      image: "📗",
+      image: bookAdvancedEnglishImg,
+      imageAlt: "Business English Essentials cover",
       rating: 4.8,
       reviews: 178,
       format: "physical",
-      description: "Essential business English for professionals working in international environments.",
+      description:
+        "Essential business English for professionals working in international environments.",
       category: "Grammar",
       pages: 380,
       language: "English",
@@ -96,11 +112,13 @@ const Books = () => {
       author: "Prof. Michael Chen",
       price: 379,
       originalPrice: 549,
-      image: "📙",
+      image: bookIELTSVocabularyImg,
+      imageAlt: "IELTS Vocabulary Master cover",
       rating: 4.9,
       reviews: 267,
       format: "ebook",
-      description: "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
+      description:
+        "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
       category: "Vocabulary",
       pages: 420,
       language: "English",
@@ -216,8 +234,14 @@ const Books = () => {
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
                   <Link to={`/books/${book.id}`}>
                     {/* Book Image */}
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative overflow-hidden">
-                      <div className="text-6xl">{book.image}</div>
+                    <div className="relative h-48 w-full overflow-hidden">
+                      <img
+                        src={book.image}
+                        alt={book.imageAlt || `${book.title} cover`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                       {/* Format Badge */}
                       <div className="absolute top-2 right-2">
                         {book.format === "ebook" ? (
@@ -258,7 +282,9 @@ const Books = () => {
                       </h3>
 
                       {/* Author */}
-                      <p className="text-xs text-gray-400 mb-2">by {book.author}</p>
+                      <p className="text-xs text-gray-400 mb-2">
+                        by {book.author}
+                      </p>
 
                       {/* Rating */}
                       <div className="flex items-center gap-1.5 mb-3">
@@ -336,4 +362,3 @@ const Books = () => {
 };
 
 export default Books;
-
