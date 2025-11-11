@@ -222,7 +222,8 @@ const Home = () => {
       id: 1,
       name: "Sarah Anderson",
       role: "Business Professional",
-      image: "👩‍💼",
+      avatar:
+        "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=300&q=80",
       text: "The coaching transformed my English skills. Within 3 months, I was confidently presenting to international teams!",
       rating: 5,
     },
@@ -230,7 +231,8 @@ const Home = () => {
       id: 2,
       name: "Mohammed Ali",
       role: "IELTS Student",
-      image: "👨‍🎓",
+      avatar:
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80",
       text: "Thanks to Digital AELA's IELTS preparation, I achieved a band 7.5! The personalized feedback made all the difference.",
       rating: 5,
     },
@@ -238,7 +240,8 @@ const Home = () => {
       id: 3,
       name: "Fatima Hassan",
       role: "General English Learner",
-      image: "👩",
+      avatar:
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
       text: "Learning English has never been this engaging. The instructors are patient, and the materials are practical and relevant.",
       rating: 5,
     },
@@ -2199,8 +2202,13 @@ const Home = () => {
 
                 {/* Author Information */}
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-2xl overflow-hidden">
-                    {testimonials[currentTestimonial].image}
+                  <div className="w-14 h-14 rounded-full overflow-hidden border border-[#D4AF37]/50 shadow-[0_6px_18px_rgba(12,12,12,0.55)]">
+                    <img
+                      src={testimonials[currentTestimonial].avatar}
+                      alt={testimonials[currentTestimonial].name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
                   <div>
                     <h4 className="font-bold text-white text-lg">

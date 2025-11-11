@@ -230,169 +230,173 @@ const DonateButton = ({
           document.body
         )}
 
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
-              className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-[#05070E] shadow-[0_30px_120px_rgba(5,7,14,0.85)]">
-              <div className="absolute inset-0 bg-linear-to-br from-white/5 via-white/0 to-white/10" />
-              <div className="relative p-6 sm:p-7">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#D4AF37]/80">
-                      Dedicate your donation
-                    </p>
-                    <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
-                      Recipient details
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:border-white/40 hover:text-white">
-                    <span className="sr-only">Close donate form</span>
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <form onSubmit={handleDonateNearOne} className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        User ID*
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.userId}
-                        onChange={(event) => handleFormChange("userId", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Recipient user ID"
-                      />
-                      {errors.userId && (
-                        <p className="mt-1 text-xs text-red-400">{errors.userId}</p>
-                      )}
+      {typeof window !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {showForm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.92, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+                  className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-[#05070E] shadow-[0_30px_120px_rgba(5,7,14,0.85)]">
+                  <div className="absolute inset-0 bg-linear-to-br from-white/5 via-white/0 to-white/10" />
+                  <div className="relative p-6 sm:p-7">
+                    <div className="mb-6 flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#D4AF37]/80">
+                          Dedicate your donation
+                        </p>
+                        <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                          Recipient details
+                        </h2>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:border-white/40 hover:text-white">
+                        <span className="sr-only">Close donate form</span>
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        Full name*
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.fullName}
-                        onChange={(event) => handleFormChange("fullName", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Recipient name"
-                      />
-                      {errors.fullName && (
-                        <p className="mt-1 text-xs text-red-400">{errors.fullName}</p>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(event) => handleFormChange("email", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Recipient email"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(event) => handleFormChange("phone", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Contact number"
-                      />
-                    </div>
-                  </div>
+                    <form onSubmit={handleDonateNearOne} className="space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            User ID*
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.userId}
+                            onChange={(event) => handleFormChange("userId", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Recipient user ID"
+                          />
+                          {errors.userId && (
+                            <p className="mt-1 text-xs text-red-400">{errors.userId}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            Full name*
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.fullName}
+                            onChange={(event) => handleFormChange("fullName", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Recipient name"
+                          />
+                          {errors.fullName && (
+                            <p className="mt-1 text-xs text-red-400">{errors.fullName}</p>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        Relation
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.relation}
-                        onChange={(event) => handleFormChange("relation", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Parent, friend, mentor…"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                        City / Country
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.messageLocation || ""}
-                        onChange={(event) => handleFormChange("messageLocation", event.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                        placeholder="Where are they based?"
-                      />
-                    </div>
-                  </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(event) => handleFormChange("email", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Recipient email"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            Phone
+                          </label>
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(event) => handleFormChange("phone", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Contact number"
+                          />
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                      Message (optional)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.message}
-                      onChange={(event) => handleFormChange("message", event.target.value)}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
-                      placeholder="Add instructions or a note for our team"
-                    />
-                  </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            Relation
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.relation}
+                            onChange={(event) => handleFormChange("relation", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Parent, friend, mentor…"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                            City / Country
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.messageLocation || ""}
+                            onChange={(event) => handleFormChange("messageLocation", event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                            placeholder="Where are they based?"
+                          />
+                        </div>
+                      </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowForm(false);
-                        setStep("choice");
-                        setErrors({});
-                      }}
-                      className="inline-flex items-center justify-center rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/40 hover:text-white">
-                      ← Back
-                    </button>
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                          Message (optional)
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={formData.message}
+                          onChange={(event) => handleFormChange("message", event.target.value)}
+                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-[#D4AF37]/70 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+                          placeholder="Add instructions or a note for our team"
+                        />
+                      </div>
 
-                    <motion.button
-                      type="submit"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-2 text-sm font-bold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                      Continue to payment
-                    </motion.button>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForm(false);
+                            setStep("choice");
+                            setErrors({});
+                          }}
+                          className="inline-flex items-center justify-center rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/40 hover:text-white">
+                          ← Back
+                        </button>
+
+                        <motion.button
+                          type="submit"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-2 text-sm font-bold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                          Continue to payment
+                        </motion.button>
+                      </div>
+                    </form>
                   </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 };
