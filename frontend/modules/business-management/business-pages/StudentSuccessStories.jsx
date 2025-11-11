@@ -31,7 +31,8 @@ const StudentSuccessStories = () => {
       position: "HR Executive, TCS",
       story:
         "From hesitation to fluent communication, Aditi's transformation shows that with AELA, growth is inevitable.",
-      image: "👩‍💼",
+      avatar:
+        "https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=400&q=80",
     },
     {
       id: 2,
@@ -39,7 +40,8 @@ const StudentSuccessStories = () => {
       position: "Software Developer, Dubai",
       story:
         "Started with zero confidence in English. Now leading client calls and working internationally with confidence.",
-      image: "👨‍💻",
+      avatar:
+        "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?auto=format&fit=crop&w=400&q=80",
     },
     {
       id: 3,
@@ -47,7 +49,8 @@ const StudentSuccessStories = () => {
       position: "Marketing Manager, MNC",
       story:
         "Overcame her fear of public speaking. Now presenting to global teams and leading marketing campaigns.",
-      image: "👩‍💼",
+      avatar:
+        "https://images.unsplash.com/photo-1524253482453-3fed8d2fe12b?auto=format&fit=crop&w=400&q=80",
     },
     {
       id: 4,
@@ -55,7 +58,8 @@ const StudentSuccessStories = () => {
       position: "Business Analyst, Fortune 500",
       story:
         "From struggling with interviews to securing a dream job. AELA's training made all the difference.",
-      image: "👨‍💼",
+      avatar:
+        "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80",
     },
   ];
 
@@ -209,7 +213,14 @@ const StudentSuccessStories = () => {
                 }}
                 whileHover={{ y: -8, scale: 1.02 }}
                 className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
-                <div className="text-5xl mb-4 text-center">{story.image}</div>
+                <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 shadow-[0_12px_35px_rgba(12,12,12,0.55)]">
+                  <img
+                    src={story.avatar}
+                    alt={story.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
                 <h3 className="text-lg md:text-xl font-bold text-white mb-2 font-display text-center">
                   {story.name}
                 </h3>
