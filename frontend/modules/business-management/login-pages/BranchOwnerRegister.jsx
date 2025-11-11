@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const BranchOwnerRegister = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +15,8 @@ const BranchOwnerRegister = () => {
     confirmPassword: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { register: registerUser, getRoleHome } = useAuth();
 
   motion.div;
 
@@ -20,12 +25,34 @@ const BranchOwnerRegister = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match. Please confirm your password.");
+      return;
+    }
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const { email, password, confirmPassword, fullName, phone, region, ...rest } = formData;
+      void confirmPassword;
+      const newUser = await registerUser({
+        email,
+        password,
+        role: "branch-owner",
+        profile: {
+          fullName,
+          phone,
+          region,
+          additionalDetails: rest,
+        },
+      });
+      toast.success("Branch owner application received. Welcome aboard!");
+      navigate(getRoleHome(newUser.role), { replace: true });
+    } catch (error) {
+      toast.error(error.message || "We couldn't submit your application. Please try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 900);
+    }
   };
 
   return (

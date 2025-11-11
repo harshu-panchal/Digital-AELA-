@@ -1,37 +1,126 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  MIN_PASSWORD_LENGTH,
+  isValidEmail,
+  validatePasswordPair,
+  splitLocation,
+  safeString,
+} from "../../../src/utils/registrationHelpers";
+
+const createInitialFormState = () => ({
+  fullName: "",
+  email: "",
+  phone: "",
+  country: "",
+  ageGroup: "",
+  currentStatus: "",
+  preferredProgram: "",
+  referralSource: "",
+  goals: "",
+  message: "",
+  password: "",
+  confirmPassword: "",
+});
 
 const StudentRegister = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    country: "",
-    ageGroup: "",
-    currentStatus: "",
-    preferredProgram: "",
-    referralSource: "",
-    goals: "",
-    message: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState(createInitialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { register: registerUser, getRoleHome } = useAuth();
 
   motion.div;
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    const trimmedName = safeString(formData.fullName);
+    const trimmedPhone = safeString(formData.phone);
+    const trimmedGoals = safeString(formData.goals);
+    const trimmedMessage = safeString(formData.message);
+    const email = safeString(formData.email).toLowerCase();
+    const password = safeString(formData.password);
+    const confirmPassword = safeString(formData.confirmPassword);
+
+    if (!trimmedName) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    const passwordError = validatePasswordPair(
+      password,
+      confirmPassword,
+      MIN_PASSWORD_LENGTH
+    );
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
+    if (!trimmedPhone) {
+      toast.error("Please provide your contact number.");
+      return;
+    }
+
+    if (!formData.preferredProgram) {
+      toast.error("Please select your preferred program.");
+      return;
+    }
+
+    const { city, country } = splitLocation(formData.country);
+    if (!country) {
+      toast.error("Please specify your country or city in the location field.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const profilePayload = {
+        fullName: trimmedName,
+        phone: trimmedPhone,
+        country,
+        city,
+        ageGroup: formData.ageGroup || null,
+        currentStatus: formData.currentStatus || null,
+        preferredProgram: formData.preferredProgram || null,
+        referralSource: formData.referralSource || null,
+        goals: trimmedGoals,
+        message: trimmedMessage,
+        bio: trimmedMessage || trimmedGoals,
+      };
+
+      const newUser = await registerUser({
+        email,
+        password,
+        role: "student",
+        profile: profilePayload,
+      });
+      toast.success("Welcome to Digital AELA! Your student account is ready.");
+      setFormData(createInitialFormState());
+      navigate(getRoleHome(newUser.role), { replace: true });
+    } catch (error) {
+      toast.error(
+        error.message || "We couldn't create your account. Please try again."
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 900);
+    }
   };
 
   return (
@@ -59,16 +148,21 @@ const StudentRegister = () => {
               className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#F5D26A]">
               Join as a Student
             </motion.span>
-            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Create Your Digital AELA Account</h1>
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">
+              Create Your Digital AELA Account
+            </h1>
             <p className="text-sm text-slate-300/80">
-              Enrol in live cohorts, access premium study rooms, and track your progress toward certification.
+              Enrol in live cohorts, access premium study rooms, and track your
+              progress toward certification.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-7">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Full Name</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Full Name
+                </span>
                 <input
                   type="text"
                   name="fullName"
@@ -80,7 +174,9 @@ const StudentRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Email</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Email
+                </span>
                 <input
                   type="email"
                   name="email"
@@ -95,7 +191,9 @@ const StudentRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Phone Number</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Phone Number
+                </span>
                 <input
                   type="tel"
                   name="phone"
@@ -107,7 +205,9 @@ const StudentRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Country / City</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Country / City
+                </span>
                 <input
                   type="text"
                   name="country"
@@ -122,7 +222,9 @@ const StudentRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Age Group</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Age Group
+                </span>
                 <select
                   name="ageGroup"
                   value={formData.ageGroup}
@@ -136,7 +238,9 @@ const StudentRegister = () => {
                 </select>
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Current Status</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Current Status
+                </span>
                 <select
                   name="currentStatus"
                   value={formData.currentStatus}
@@ -145,7 +249,9 @@ const StudentRegister = () => {
                   <option value="">Tell us about you</option>
                   <option value="school-student">School Student</option>
                   <option value="college-graduate">College / University</option>
-                  <option value="working-professional">Working Professional</option>
+                  <option value="working-professional">
+                    Working Professional
+                  </option>
                   <option value="career-switcher">Career Switcher</option>
                 </select>
               </label>
@@ -153,21 +259,33 @@ const StudentRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Preferred Program</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Preferred Program
+                </span>
                 <select
                   name="preferredProgram"
                   value={formData.preferredProgram}
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
                   <option value="">Select a program</option>
-                  <option value="english-language">English Language Labs</option>
-                  <option value="digital-marketing">Digital Marketing Cohort</option>
-                  <option value="corporate-training">Corporate Training Tracks</option>
-                  <option value="career-counselling">Career Counselling + Placement</option>
+                  <option value="english-language">
+                    English Language Labs
+                  </option>
+                  <option value="digital-marketing">
+                    Digital Marketing Cohort
+                  </option>
+                  <option value="corporate-training">
+                    Corporate Training Tracks
+                  </option>
+                  <option value="career-counselling">
+                    Career Counselling + Placement
+                  </option>
                 </select>
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">How did you hear about us?</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  How did you hear about us?
+                </span>
                 <select
                   name="referralSource"
                   value={formData.referralSource}
@@ -184,7 +302,9 @@ const StudentRegister = () => {
             </div>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Your Goals</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Your Goals
+              </span>
               <textarea
                 name="goals"
                 rows={4}
@@ -198,7 +318,9 @@ const StudentRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Password
+                </span>
                 <input
                   type="password"
                   name="password"
@@ -210,7 +332,9 @@ const StudentRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Confirm Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Confirm Password
+                </span>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -224,7 +348,9 @@ const StudentRegister = () => {
             </div>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Anything else we should know?</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Anything else we should know?
+              </span>
               <textarea
                 name="message"
                 rows={3}

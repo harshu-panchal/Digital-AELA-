@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,8 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { toast } from "react-toastify";
 import logo from "../../../src/assets/MainLogo.png";
 
 const Navbar = () => {
@@ -35,7 +37,9 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = [
+  const { user, logout, getRoleLabel, getRoleHome } = useAuth();
+
+  const baseNavItems = [
     {
       label: "Courses",
       path: "/courses",
@@ -98,17 +102,46 @@ const Navbar = () => {
         },
       ],
     },
-    {
-      label: "Login",
-      path: "/login",
-      dropdown: [
-        { label: "Teacher Login", path: "/login/teacher" },
-        { label: "Student Login", path: "/login/student" },
-        { label: "Recruiter Login", path: "/login/recruiter" },
-        { label: "Branch Owner Login", path: "/login/branch-owner" },
-      ],
-    },
   ];
+
+  const handleLogout = useCallback(() => {
+    logout();
+    setActiveDropdown(null);
+    setMobileMenuOpen(false);
+    toast.info("You’ve been signed out.", { toastId: "navbar-logout" });
+  }, [logout]);
+
+  const authNavItem = useMemo(() => {
+    if (!user) {
+      return {
+        label: "Login",
+        path: "/login",
+        dropdown: [
+          { label: "Teacher Login", path: "/login/teacher" },
+          { label: "Student Login", path: "/login/student" },
+          { label: "Recruiter Login", path: "/login/recruiter" },
+          { label: "Branch Owner Login", path: "/login/branch-owner" },
+        ],
+      };
+    }
+
+    const displayName = user.fullName
+      ? user.fullName.split(" ")[0]
+      : user.email;
+    const roleLabel = getRoleLabel(user.role);
+    const defaultLanding = getRoleHome(user.role);
+
+    return {
+      label: displayName || "Account",
+      dropdown: [
+        { label: `${roleLabel} Dashboard`, path: defaultLanding },
+        { label: `Signed in as ${roleLabel}`, disabled: true },
+        { label: "Logout", onClick: handleLogout },
+      ],
+    };
+  }, [user, getRoleLabel, getRoleHome, handleLogout]);
+
+  const navItems = [...baseNavItems, authNavItem];
 
   const handleMouseEnter = (index) => {
     if (navItems[index].dropdown) {
@@ -421,30 +454,71 @@ const Navbar = () => {
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
-                          {item.dropdown.map((dropdownItem, dropIndex) =>
-                            dropdownItem.external ? (
-                              <a
-                                key={dropdownItem.label}
-                                href={dropdownItem.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block">
-                                <motion.div
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{
-                                    duration: 0.2,
-                                    delay: dropIndex * 0.03,
-                                  }}
-                                  whileHover={{
-                                    backgroundColor: "rgba(212,175,55,0.08)",
-                                    x: 5,
-                                  }}
-                                  className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                          {item.dropdown.map((dropdownItem, dropIndex) => {
+                            if (dropdownItem.disabled) {
+                              return (
+                                <div
+                                  key={dropdownItem.label}
+                                  className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFE28A]/70 last:border-b-0">
                                   {dropdownItem.label}
-                                </motion.div>
-                              </a>
-                            ) : (
+                                </div>
+                              );
+                            }
+
+                            if (dropdownItem.onClick) {
+                              return (
+                                <button
+                                  key={dropdownItem.label}
+                                  type="button"
+                                  onClick={() => {
+                                    dropdownItem.onClick();
+                                  }}
+                                  className="block w-full text-left">
+                                  <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      duration: 0.2,
+                                      delay: dropIndex * 0.03,
+                                    }}
+                                    whileHover={{
+                                      backgroundColor: "rgba(212,175,55,0.08)",
+                                      x: 5,
+                                    }}
+                                    className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                    {dropdownItem.label}
+                                  </motion.div>
+                                </button>
+                              );
+                            }
+
+                            if (dropdownItem.external) {
+                              return (
+                                <a
+                                  key={dropdownItem.label}
+                                  href={dropdownItem.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block">
+                                  <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      duration: 0.2,
+                                      delay: dropIndex * 0.03,
+                                    }}
+                                    whileHover={{
+                                      backgroundColor: "rgba(212,175,55,0.08)",
+                                      x: 5,
+                                    }}
+                                    className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                    {dropdownItem.label}
+                                  </motion.div>
+                                </a>
+                              );
+                            }
+
+                            return (
                               <Link
                                 key={dropdownItem.label}
                                 to={dropdownItem.path}
@@ -464,8 +538,8 @@ const Navbar = () => {
                                   {dropdownItem.label}
                                 </motion.div>
                               </Link>
-                            )
-                          )}
+                            );
+                          })}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -585,18 +659,47 @@ const Navbar = () => {
                     )}
                     {item.dropdown && (
                       <div className="ml-4 mt-2 space-y-1">
-                        {item.dropdown.map((dropdownItem) =>
-                          dropdownItem.external ? (
-                            <a
-                              key={dropdownItem.label}
-                              href={dropdownItem.href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                              {dropdownItem.label}
-                            </a>
-                          ) : (
+                        {item.dropdown.map((dropdownItem) => {
+                          if (dropdownItem.disabled) {
+                            return (
+                              <span
+                                key={dropdownItem.label}
+                                className="block text-[#FFE28A]/70 text-[11px] uppercase tracking-[0.28em] py-1">
+                                {dropdownItem.label}
+                              </span>
+                            );
+                          }
+
+                          if (dropdownItem.onClick) {
+                            return (
+                              <button
+                                key={dropdownItem.label}
+                                type="button"
+                                onClick={() => {
+                                  dropdownItem.onClick();
+                                  setMobileMenuOpen(false);
+                                }}
+                                className="block text-left text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1 w-full">
+                                {dropdownItem.label}
+                              </button>
+                            );
+                          }
+
+                          if (dropdownItem.external) {
+                            return (
+                              <a
+                                key={dropdownItem.label}
+                                href={dropdownItem.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
+                                {dropdownItem.label}
+                              </a>
+                            );
+                          }
+
+                          return (
                             <Link
                               key={dropdownItem.label}
                               to={dropdownItem.path}
@@ -604,8 +707,8 @@ const Navbar = () => {
                               className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
                               {dropdownItem.label}
                             </Link>
-                          )
-                        )}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

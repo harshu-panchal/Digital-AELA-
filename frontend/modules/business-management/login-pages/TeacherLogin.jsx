@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const TeacherLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, user, getRoleHome, getRoleLabel } = useAuth();
+
+  const redirectTo = useMemo(() => location.state?.from, [location.state]);
 
   // Touch motion to satisfy eslint no-unused-vars when using motion.* in JSX
   motion.div;
@@ -14,13 +22,44 @@ const TeacherLogin = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const authenticatedUser = await login({
+        email: formData.email,
+        password: formData.password,
+        role: "teacher",
+      });
+      toast.success(
+        `Welcome back${
+          authenticatedUser.fullName
+            ? `, ${authenticatedUser.fullName.split(" ")[0]}`
+            : ""
+        }!`
+      );
+      const destination = redirectTo || getRoleHome(authenticatedUser.role);
+      navigate(destination, { replace: true });
+    } catch (error) {
+      toast.error(
+        error.message || "We couldn't sign you in. Please try again."
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 800);
+    }
   };
+
+  useEffect(() => {
+    if (user && user.role === "teacher") {
+      const destination = redirectTo || getRoleHome(user.role);
+      navigate(destination, { replace: true });
+    } else if (user && user.role !== "teacher") {
+      toast.info(`You're currently signed in as ${getRoleLabel(user.role)}.`, {
+        toastId: "teacher-login-role-info",
+      });
+      navigate(getRoleHome(user.role), { replace: true });
+    }
+  }, [user, redirectTo, getRoleHome, navigate, getRoleLabel]);
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">

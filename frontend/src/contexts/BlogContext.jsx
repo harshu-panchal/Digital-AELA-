@@ -8,6 +8,7 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
+import { useAuth } from "./AuthContext";
 
 const BlogContext = createContext(null);
 
@@ -157,6 +158,7 @@ export const useBlogs = () => {
 
 export const BlogProvider = ({ children }) => {
   const { profile } = useUser();
+  const { user: authUser } = useAuth();
 
   const [blogs, setBlogs] = useState(() => seededBlogs.map(formatBlog));
   const [drafts, setDrafts] = useState([]);
@@ -452,7 +454,7 @@ export const BlogProvider = ({ children }) => {
       activeFilters,
       setActiveFilters,
       formatTimestamp,
-      isAuthenticated: true,
+      isAuthenticated: Boolean(authUser),
     }),
     [
       blogs,
@@ -473,6 +475,7 @@ export const BlogProvider = ({ children }) => {
       searchTerm,
       activeFilters,
       formatTimestamp,
+      authUser,
     ]
   );
 

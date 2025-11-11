@@ -1,37 +1,125 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  MIN_PASSWORD_LENGTH,
+  isValidEmail,
+  validatePasswordPair,
+  safeString,
+  parseCommaSeparated,
+  sanitizeUrl,
+} from "../../../src/utils/registrationHelpers";
+
+const createInitialFormState = () => ({
+  fullName: "",
+  email: "",
+  phone: "",
+  experienceYears: "",
+  primarySubjects: "",
+  certifications: "",
+  portfolioLink: "",
+  preferredDelivery: "online",
+  timeZones: "Gulf Standard Time (GST)",
+  password: "",
+  confirmPassword: "",
+  message: "",
+});
 
 const TeacherRegister = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    experienceYears: "",
-    primarySubjects: "",
-    certifications: "",
-    portfolioLink: "",
-    preferredDelivery: "online",
-    timeZones: "Gulf Standard Time (GST)",
-    password: "",
-    confirmPassword: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState(createInitialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { register: registerUser, getRoleHome } = useAuth();
 
   motion.div;
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    const trimmedName = safeString(formData.fullName);
+    const trimmedPhone = safeString(formData.phone);
+    const trimmedMessage = safeString(formData.message);
+    const email = safeString(formData.email).toLowerCase();
+    const password = safeString(formData.password);
+    const confirmPassword = safeString(formData.confirmPassword);
+    const experienceYears = Number.parseInt(formData.experienceYears, 10);
+
+    if (!trimmedName) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    const passwordError = validatePasswordPair(
+      password,
+      confirmPassword,
+      MIN_PASSWORD_LENGTH
+    );
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
+    if (!trimmedPhone) {
+      toast.error("Please provide your contact number.");
+      return;
+    }
+
+    if (Number.isNaN(experienceYears) || experienceYears < 0) {
+      toast.error(
+        "Please provide your teaching experience in years (0 or more)."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const primarySubjects = parseCommaSeparated(formData.primarySubjects);
+      const certifications = parseCommaSeparated(formData.certifications);
+      const safePortfolio = sanitizeUrl(formData.portfolioLink);
+
+      const newUser = await registerUser({
+        email,
+        password,
+        role: "teacher",
+        profile: {
+          fullName: trimmedName,
+          phone: trimmedPhone,
+          experienceYears,
+          primarySubjects,
+          certifications,
+          portfolioLink: safePortfolio,
+          preferredDelivery: formData.preferredDelivery,
+          timeZones: formData.timeZones,
+          message: trimmedMessage,
+          bio: trimmedMessage,
+        },
+      });
+      toast.success("Your mentor account has been created successfully.");
+      setFormData(createInitialFormState());
+      navigate(getRoleHome(newUser.role), { replace: true });
+    } catch (error) {
+      toast.error(
+        error.message ||
+          "We couldn't complete your registration. Please try again."
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 900);
+    }
   };
 
   return (
@@ -59,16 +147,21 @@ const TeacherRegister = () => {
               className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#F5D26A]">
               Become a Mentor
             </motion.span>
-            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Join the Digital AELA Faculty</h1>
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">
+              Join the Digital AELA Faculty
+            </h1>
             <p className="text-sm text-slate-300/80">
-              Complete the form to begin onboarding. Our academic team will reach out with next steps and teaching opportunities.
+              Complete the form to begin onboarding. Our academic team will
+              reach out with next steps and teaching opportunities.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-7">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Full Name</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Full Name
+                </span>
                 <input
                   type="text"
                   name="fullName"
@@ -80,7 +173,9 @@ const TeacherRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Email</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Email
+                </span>
                 <input
                   type="email"
                   name="email"
@@ -95,7 +190,9 @@ const TeacherRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Phone Number</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Phone Number
+                </span>
                 <input
                   type="tel"
                   name="phone"
@@ -107,7 +204,9 @@ const TeacherRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Teaching Experience (years)</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Teaching Experience (years)
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -123,7 +222,9 @@ const TeacherRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Preferred Delivery Mode</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Preferred Delivery Mode
+                </span>
                 <select
                   name="preferredDelivery"
                   value={formData.preferredDelivery}
@@ -135,7 +236,9 @@ const TeacherRegister = () => {
                 </select>
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Time Zone Preference</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Time Zone Preference
+                </span>
                 <select
                   name="timeZones"
                   value={formData.timeZones}
@@ -150,7 +253,9 @@ const TeacherRegister = () => {
             </div>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Primary Subjects & Audience</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Primary Subjects & Audience
+              </span>
               <textarea
                 name="primarySubjects"
                 rows={3}
@@ -164,7 +269,9 @@ const TeacherRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Teaching Certifications</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Teaching Certifications
+                </span>
                 <input
                   type="text"
                   name="certifications"
@@ -175,7 +282,9 @@ const TeacherRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Portfolio / Demo Link</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Portfolio / Demo Link
+                </span>
                 <input
                   type="url"
                   name="portfolioLink"
@@ -189,7 +298,9 @@ const TeacherRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Password
+                </span>
                 <input
                   type="password"
                   name="password"
@@ -201,7 +312,9 @@ const TeacherRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Confirm Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Confirm Password
+                </span>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -215,7 +328,9 @@ const TeacherRegister = () => {
             </div>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Tell us about your teaching philosophy</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Tell us about your teaching philosophy
+              </span>
               <textarea
                 name="message"
                 rows={4}

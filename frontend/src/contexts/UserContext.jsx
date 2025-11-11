@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePoints } from "./PointsContext";
+import { useAuth } from "./AuthContext";
 
 const UserContext = createContext(null);
 
@@ -298,6 +299,7 @@ const defaultRatings = {
 
 export const UserProvider = ({ children }) => {
   const { aelaPoints, addPoints, redeemPoints, totalEarned, totalRedeemed } = usePoints();
+  const { user: authUser, updateUserMetadata, getRoleLabel } = useAuth();
 
   const [profile, setProfile] = useState(defaultProfile);
   const [followers, setFollowers] = useState(defaultFollowers);
@@ -314,9 +316,76 @@ export const UserProvider = ({ children }) => {
     setProfile((prev) => ({ ...prev, coins: aelaPoints }));
   }, [aelaPoints]);
 
+  useEffect(() => {
+    if (!authUser) {
+      setProfile(defaultProfile);
+      return;
+    }
+
+    const metadata = authUser.metadata ?? {};
+
+    setProfile((prev) => ({
+      ...defaultProfile,
+      ...prev,
+      id: authUser.id ?? defaultProfile.id,
+      name: authUser.fullName ?? defaultProfile.name,
+      title:
+        metadata.title ??
+        (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
+      bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
+      country: metadata.country ?? metadata.region ?? defaultProfile.country,
+      city: metadata.city ?? defaultProfile.city,
+      profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
+      experience:
+        metadata.experience ??
+        (metadata.experienceYears
+          ? `${metadata.experienceYears} years of experience`
+          : defaultProfile.experience),
+      maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
+      interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
+      avatar: metadata.avatar ?? prev.avatar ?? defaultProfile.avatar,
+      bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
+      coins: aelaPoints,
+      metadata,
+      role: authUser.role,
+      contact: {
+        email: authUser.email,
+        phone: metadata.phone,
+        whatsapp: metadata.whatsapp,
+      },
+    }));
+  }, [authUser, aelaPoints, getRoleLabel]);
+
   const updateProfile = useCallback((updates) => {
     setProfile((prev) => ({ ...prev, ...updates }));
-  }, []);
+
+    if (!authUser) {
+      return;
+    }
+
+    const metadataUpdates = Object.fromEntries(
+      Object.entries(updates).filter(
+        ([key]) =>
+          ![
+            "id",
+            "coins",
+            "followers",
+            "following",
+            "badges",
+            "socialLinks",
+            "metadata",
+          ].includes(key)
+      )
+    );
+
+    updateUserMetadata({
+      fullName: typeof updates.name === "string" ? updates.name : undefined,
+      metadata: {
+        ...metadataUpdates,
+        ...(updates.metadata ?? {}),
+      },
+    });
+  }, [authUser, updateUserMetadata]);
 
   const markConversationRead = useCallback((conversationId) => {
     setMessages((prev) =>

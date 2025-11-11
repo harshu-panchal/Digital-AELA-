@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "../modules/business-management/business-components/Navbar";
 import Footer from "../modules/business-management/business-components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "../modules/business-management/business-pages/Home";
 import LearnEarnLayout from "../modules/learn-earn/layout/LearnEarnLayout";
 import DashboardOverview from "../modules/learn-earn/pages/DashboardOverview";
@@ -66,7 +67,18 @@ export const App = () => {
         <Route path="/home" element={<Home />} />
         <Route
           path="/learn-earn"
-          element={<LearnEarnLayout />}
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <LearnEarnLayout />
+            </ProtectedRoute>
+          }
           key="learn-earn">
           <Route index element={<DashboardOverview />} />
           <Route path="dashboard" element={<DashboardOverview />} />
@@ -76,7 +88,14 @@ export const App = () => {
           <Route path="activities" element={<ActivitiesHub />} />
           <Route path="wallet" element={<WalletDashboard />} />
           <Route path="ratings" element={<RatingsReviews />} />
-          <Route path="admin" element={<AdminControl />} />
+          <Route
+            path="admin"
+            element={
+              <ProtectedRoute roles={["super-admin"]}>
+                <AdminControl />
+              </ProtectedRoute>
+            }
+          />
         </Route>
         <Route
           path="/courses/corporate-training"
@@ -92,8 +111,38 @@ export const App = () => {
         />
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetail />} />
-        <Route path="/books/:id/payment" element={<BookPayment />} />
-        <Route path="/donate/payment" element={<DonatePayment />} />
+        <Route
+          path="/books/:id/payment"
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "recruiter",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <BookPayment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/donate/payment"
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "recruiter",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <DonatePayment />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/free-library" element={<FreeLibrary />} />
         <Route path="/free-library/:bookId" element={<FreeLibraryReader />} />
         <Route path="/about/our-story" element={<OurStory />} />
@@ -113,9 +162,39 @@ export const App = () => {
           element={<FranchiseInquiry />}
         />
         <Route path="/blogs" element={<BlogsHome />} />
-        <Route path="/blogs/create" element={<CreateBlog />} />
+        <Route
+          path="/blogs/create"
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "recruiter",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <CreateBlog />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/blogs/:id" element={<BlogDetails />} />
-        <Route path="/my-blogs" element={<MyBlogs />} />
+        <Route
+          path="/my-blogs"
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "recruiter",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <MyBlogs />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/join-us/teacher" element={<JoinAsTeacher />} />
         <Route path="/join-us/influencer" element={<JoinInfluencer />} />
         <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
@@ -123,15 +202,76 @@ export const App = () => {
         <Route
           path="/explore-jobs/*"
           element={
-            <ExploreJobsProvider>
-              <ExploreJobsLayout />
-            </ExploreJobsProvider>
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "recruiter",
+                "influencer",
+                "freelancer",
+                "super-admin",
+              ]}>
+              <ExploreJobsProvider>
+                <ExploreJobsLayout />
+              </ExploreJobsProvider>
+            </ProtectedRoute>
           }>
           <Route index element={<ExploreFeed />} />
-          <Route path="recruiter-dashboard" element={<RecruiterDashboard />} />
-          <Route path="seeker-dashboard" element={<SeekerDashboard />} />
-          <Route path="profile/:username" element={<ExploreProfilePage />} />
-          <Route path="post/:id" element={<ExplorePostDetailPage />} />
+          <Route
+            path="recruiter-dashboard"
+            element={
+              <ProtectedRoute roles={["recruiter", "super-admin"]}>
+                <RecruiterDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="seeker-dashboard"
+            element={
+              <ProtectedRoute
+                roles={[
+                  "student",
+                  "influencer",
+                  "freelancer",
+                  "teacher",
+                  "super-admin",
+                ]}>
+                <SeekerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile/:username"
+            element={
+              <ProtectedRoute
+                roles={[
+                  "student",
+                  "teacher",
+                  "recruiter",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <ExploreProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="post/:id"
+            element={
+              <ProtectedRoute
+                roles={[
+                  "student",
+                  "teacher",
+                  "recruiter",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <ExplorePostDetailPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
         <Route path="/login/teacher" element={<TeacherLogin />} />
         <Route path="/register/teacher" element={<TeacherRegister />} />

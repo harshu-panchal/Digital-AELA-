@@ -1,16 +1,29 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  MIN_PASSWORD_LENGTH,
+  isValidEmail,
+  validatePasswordPair,
+  safeString,
+} from "../../../src/utils/registrationHelpers";
+
+const createInitialFormState = () => ({
+  fullName: "",
+  company: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+});
 
 const RecruiterRegister = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    company: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState(createInitialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { register: registerUser, getRoleHome } = useAuth();
 
   motion.div;
 
@@ -19,12 +32,58 @@ const RecruiterRegister = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match. Please confirm your password.");
+      return;
+    }
+    const trimmedName = safeString(formData.fullName);
+    const trimmedCompany = safeString(formData.company);
+    const email = safeString(formData.email).toLowerCase();
+    const password = safeString(formData.password);
+    const confirmPassword = safeString(formData.confirmPassword);
+
+    if (!trimmedName) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    if (!trimmedCompany) {
+      toast.error("Please provide your company or organisation name.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid work email address.");
+      return;
+    }
+
+    const passwordError = validatePasswordPair(password, confirmPassword, MIN_PASSWORD_LENGTH);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const newUser = await registerUser({
+        email,
+        password,
+        role: "recruiter",
+        profile: {
+          fullName: trimmedName,
+          companyName: trimmedCompany,
+        },
+      });
+      toast.success("Recruiter account created successfully.");
+      setFormData(createInitialFormState());
+      navigate(getRoleHome(newUser.role), { replace: true });
+    } catch (error) {
+      toast.error(error.message || "We couldn't create the account. Please try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 900);
+    }
   };
 
   return (

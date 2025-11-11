@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const BranchOwnerLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, user, getRoleHome, getRoleLabel } = useAuth();
+
+  const redirectTo = useMemo(() => location.state?.from, [location.state]);
 
   motion.div;
 
@@ -13,13 +21,44 @@ const BranchOwnerLogin = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const authenticatedUser = await login({
+        email: formData.email,
+        password: formData.password,
+        role: "branch-owner",
+      });
+      toast.success(
+        `Welcome back${
+          authenticatedUser.fullName
+            ? `, ${authenticatedUser.fullName.split(" ")[0]}`
+            : ""
+        }!`
+      );
+      const destination = redirectTo || getRoleHome(authenticatedUser.role);
+      navigate(destination, { replace: true });
+    } catch (error) {
+      toast.error(
+        error.message || "We couldn't sign you in. Please try again."
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 800);
+    }
   };
+
+  useEffect(() => {
+    if (user && user.role === "branch-owner") {
+      const destination = redirectTo || getRoleHome(user.role);
+      navigate(destination, { replace: true });
+    } else if (user && user.role !== "branch-owner") {
+      toast.info(`You're currently signed in as ${getRoleLabel(user.role)}.`, {
+        toastId: "branch-owner-login-role-info",
+      });
+      navigate(getRoleHome(user.role), { replace: true });
+    }
+  }, [user, redirectTo, getRoleHome, navigate, getRoleLabel]);
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
@@ -46,15 +85,20 @@ const BranchOwnerLogin = () => {
               className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#F5D26A]">
               Branch Owner Portal
             </motion.span>
-            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Lead Your Digital AELA Centre</h1>
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">
+              Lead Your Digital AELA Centre
+            </h1>
             <p className="text-sm text-slate-300/80">
-              Sign in to track enrolments, mentor performance, finances, and local campaigns tailored to your region.
+              Sign in to track enrolments, mentor performance, finances, and
+              local campaigns tailored to your region.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Email</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Email
+              </span>
               <input
                 type="email"
                 name="email"
@@ -67,7 +111,9 @@ const BranchOwnerLogin = () => {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Password</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Password
+              </span>
               <input
                 type="password"
                 name="password"
@@ -81,10 +127,15 @@ const BranchOwnerLogin = () => {
 
             <div className="flex items-center justify-between text-xs text-slate-400/80">
               <label className="inline-flex items-center gap-2">
-                <input type="checkbox" className="h-4 w-4 rounded border-white/25 bg-white/10 text-[#F5D26A] focus:ring-[#F5D26A]/40" />
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/25 bg-white/10 text-[#F5D26A] focus:ring-[#F5D26A]/40"
+                />
                 Keep me signed in
               </label>
-              <button type="button" className="text-[#F5D26A] transition hover:text-[#FFE28A]">
+              <button
+                type="button"
+                className="text-[#F5D26A] transition hover:text-[#FFE28A]">
                 Need help?
               </button>
             </div>
