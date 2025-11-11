@@ -446,7 +446,7 @@ const Navbar = () => {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="lg:hidden mt-4 border-t border-[#D4AF37]/40 pt-4">
+              className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-black/95 shadow-[0_25px_80px_rgba(6,9,18,0.55)]">
               <div className="flex max-h-[calc(100vh-160px)] flex-col gap-2 overflow-y-auto px-2 pr-1 sm:px-4 sm:pr-2">
                 {navItems.map((item) => (
                   <div key={item.label}>
@@ -501,7 +501,7 @@ const Navbar = () => {
                 ))}
 
                 {/* Language Selection in Mobile Menu */}
-                <div className="mt-4 pt-4 border-t border-[#D4AF37]/30">
+                <div className="mt-4 border-t border-white/10 pt-4">
                   <p className="text-[#B8831A] text-sm font-semibold mb-2 font-accent px-2">
                     Language
                   </p>
