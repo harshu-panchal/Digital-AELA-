@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../../../src/components/SEO";
@@ -41,11 +41,82 @@ import DonateButton from "../common/DonateButton";
 const MotionLink = motion(Link);
 
 const Home = () => {
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [activeCertificate, setActiveCertificate] = useState(0);
   const { trendingBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
+
+  const heroSlides = useMemo(
+    () => [
+      {
+        id: "ambition-action",
+        badge: "Where ambition meets action",
+        title: "We build cities of opportunity",
+        highlight: "Launch your Digital AELA centre",
+        description:
+          "Grow from learner to leader through guided cohorts, paid projects, and a global network cheering for you.",
+        primaryCta: "Start Your Journey",
+        primaryLink: "/join-us/after-life",
+        secondaryCta: "See Success Stories",
+        secondaryLink: "/about/success-stories",
+        image:
+          "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80",
+      },
+      {
+        id: "learn-earn",
+        badge: "Learn & Earn",
+        title: "Upgrade skills. Unlock income.",
+        highlight: "Learning that pays every month",
+        description:
+          "Access micro-batches, freelance gigs, and recruiter dashboards built to accelerate your earning curve.",
+        primaryCta: "Explore Learn & Earn",
+        primaryLink: "/learn-earn",
+        secondaryCta: "Browse Job Feed",
+        secondaryLink: "/explore-jobs",
+        image:
+          "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?auto=format&fit=crop&w=1400&q=80",
+      },
+      {
+        id: "gift-future",
+        badge: "Gift a future",
+        title: "Build your After Life centre",
+        highlight: "Sponsor a classroom. Transform a city",
+        description:
+          "Dedicate scholarships, sponsor labs, and co-create hubs that keep learners future-ready across continents.",
+        primaryCta: "Gift a Scholarship",
+        primaryLink: "/donate/payment?type=anyone",
+        secondaryCta: "Build After Life",
+        secondaryLink: "/join-us/after-life",
+        image:
+          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80",
+      },
+      {
+        id: "read-grow",
+        badge: "Read • Reflect • Rise",
+        title: "Free library books online",
+        highlight: "Grow 1% every day with curated titles",
+        description:
+          "Dive into grammar guides, leadership playbooks, and digital marketing handbooks ready to read right now.",
+        primaryCta: "Read Free Library",
+        primaryLink: "/books",
+        secondaryCta: "See Featured Reads",
+        secondaryLink: "/join-us/after-life",
+        image:
+          "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
+      },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (heroSlides.length <= 1) return undefined;
+    const timer = setInterval(() => {
+      setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, [heroSlides.length]);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -545,91 +616,145 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative min-h-screen flex items-center justify-center pt-[120px] pb-20 md:pt-[140px] md:pb-32 overflow-hidden">
-        {/* Subtle Background Elements */}
-        <div className="absolute inset-0 bg-black"></div>
+        className="relative min-h-screen flex items-center pt-[120px] pb-20 md:pt-[140px] md:pb-28 overflow-hidden">
+        <div className="absolute inset-0 bg-black" />
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10 blur-[220px]"
+        />
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
+          className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]"
+        />
 
-        <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 text-center">
-          {/* Welcome Badge */}
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-            className="inline-block mb-6">
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-linear-to-r from-[#95928a] to-[#E5C158] text-black px-4 py-2 rounded-full text-sm font-semibold">
-              Welcome to Excellence
-            </motion.span>
-          </motion.div>
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-16 xl:pl-[12%]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={heroSlides[activeHeroSlide].id}
+              initial={{ opacity: 0, x: 120 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -120 }}
+              transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
+              className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
+              <div className="order-2 text-left lg:order-1">
+                <motion.span
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
+                  {heroSlides[activeHeroSlide].badge}
+                </motion.span>
 
-          {/* Main Heading */}
-          <motion.h1
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-            className="clamp-heading font-bold text-white mb-6 leading-tight font-display tracking-tight text-balance">
-            <motion.span
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              className="block">
-              Where Ambition
-            </motion.span>
-            <motion.span
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25, ease: "easeOut" }}
-              className="block bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-transparent">
-              Meet Action
-            </motion.span>
-          </motion.h1>
+                <motion.h1
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+                  className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-[2.8rem] font-display">
+                  {heroSlides[activeHeroSlide].title}
+                </motion.h1>
 
-          {/* Descriptive Paragraph */}
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.35, ease: "easeOut" }}
-            className="text-base sm:text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed text-balance">
-            A single platform to build skills and discover career opportunities
-            — Digital AELA brings together expert-led courses and a powerful job
-            portal in one place.
-          </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.18, ease: "easeOut" }}
+                  className="mt-3 text-lg font-semibold text-[#F5D26A]">
+                  {heroSlides[activeHeroSlide].highlight}
+                </motion.p>
 
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <motion.a
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              href="#lead-magnets"
-              className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-8 py-4 rounded-lg font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
-              Join Free Class
-            </motion.a>
-            <MotionLink
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              to="/explore-jobs"
-              className="bg-black text-white px-8 py-4 rounded-lg font-bold text-lg border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37] transition-all duration-200 shadow-lg hover:shadow-xl">
-              Explore Jobs
-            </MotionLink>
-          </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.26, ease: "easeOut" }}
+                  className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
+                  {heroSlides[activeHeroSlide].description}
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.34, ease: "easeOut" }}
+                  className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <MotionLink
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    to={heroSlides[activeHeroSlide].primaryLink}
+                    className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                    {heroSlides[activeHeroSlide].primaryCta}
+                  </MotionLink>
+                  <MotionLink
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    to={heroSlides[activeHeroSlide].secondaryLink}
+                    className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10">
+                    {heroSlides[activeHeroSlide].secondaryCta}
+                  </MotionLink>
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+                className="order-1 flex items-center justify-center lg:order-2">
+                <div className="relative w-full max-w-[320px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+                  <div className="relative aspect-3/4 w-full">
+                    <img
+                      src={heroSlides[activeHeroSlide].image}
+                      alt={heroSlides[activeHeroSlide].title}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-tr from-black/50 via-black/0 to-transparent" />
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() =>
+                  setActiveHeroSlide(
+                    (prev) => (prev - 1 + heroSlides.length) % heroSlides.length
+                  )
+                }
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 p-2 text-white transition hover:border-white/40 hover:bg-white/10">
+                <FaArrowLeft className="h-4 w-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() =>
+                  setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length)
+                }
+                className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/20 p-2 text-[#F5D26A] transition hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/30">
+                <FaArrowRight className="h-4 w-4" />
+              </motion.button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {heroSlides.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => setActiveHeroSlide(index)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    index === activeHeroSlide
+                      ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                      : "w-6 bg-white/25 hover:bg-white/45"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </motion.section>
 
