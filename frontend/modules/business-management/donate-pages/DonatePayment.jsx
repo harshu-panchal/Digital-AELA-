@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
+import { FaArrowLeft, FaLock, FaCreditCard } from "react-icons/fa";
 
 const externalDonateUrl = "https://digitalaela.com/donate";
 
@@ -20,12 +21,37 @@ const DonatePayment = () => {
     message: query.get("message") || "",
   };
 
+  const initialAmount = Number(query.get("amount")) || 5000;
+  const [formData, setFormData] = useState({
+    fullName: nearOneDetails.fullName || "",
+    email: nearOneDetails.email || "",
+    phone: nearOneDetails.phone || "",
+    amount: initialAmount,
+    message: nearOneDetails.message || "",
+    paymentMethod: "card",
+  });
+
+  const totalAmount = formData.amount > 0 ? formData.amount : initialAmount;
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "amount" ? Number(value) || 0 : value,
+    }));
+  };
+
   const proceedToGateway = () => {
     window.open(externalDonateUrl, "_blank", "noopener,noreferrer");
   };
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    proceedToGateway();
+  };
+
   return (
-    <div className="min-h-screen bg-[#020409] text-white">
+    <div className="min-h-screen bg-black text-white">
       <SEO
         title="Digital AELA | Donation Checkout"
         description="Complete your donation to the Digital AELA learner community with secure payment options."
@@ -33,182 +59,221 @@ const DonatePayment = () => {
         url="https://digitalaela.com/donate/payment"
       />
 
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#D4AF37]/15 blur-3xl" />
-          <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 translate-y-1/3 rounded-full bg-[#0E1635]/70 blur-[180px]" />
-          <div className="absolute top-1/3 left-0 hidden h-80 w-80 -translate-x-1/2 rounded-full bg-[#103350]/35 blur-[140px] lg:block" />
+      {/* Header */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-black"></div>
+        <div className="relative max-w-7xl mx-auto px-4 md:px-8">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4">
+            <FaArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
         </div>
+      </motion.section>
 
-        <main className="relative z-10 pt-28 pb-24">
-          <div className="layout-container">
+      {/* Payment Section */}
+      <section className="py-12 bg-[#141414] relative">
+        <div className="max-w-5xl mx-auto px-4 md:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Donation Summary */}
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="mb-10">
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2 text-[#D4AF37] transition hover:text-[#FFE28A]">
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  fill="none"
-                  strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
-                </svg>
-                Back to home
-              </Link>
-            </motion.div>
-
-            <motion.section
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
-              className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1.6fr_1fr]">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur supports-backdrop-filter:bg-white/10">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#D4AF37]/80">
-                  Donation Summary
-                </p>
-                <h1 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
-                  You&apos;re almost done
-                </h1>
-                <p className="mt-3 text-base text-slate-300/85">
-                  Review the details below before you continue to our secure payment partner. Your
-                  contribution directly fuels Digital AELA centres and learner scholarships.
-                </p>
-
-                <div className="mt-8 space-y-6 rounded-2xl border border-white/10 bg-black/30 p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D4AF37]">
-                      Donation Type
-                    </span>
-                    <span className="rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-4 py-1 text-xs font-semibold text-[#F5D26A]">
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="lg:col-span-1">
+              <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20 sticky top-24">
+                <h2 className="text-xl font-bold text-white mb-6 font-display">Donation Summary</h2>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Donation Type</p>
+                    <p className="text-white font-semibold">
                       {type === "near" ? "Dedicated Gift" : "Open Contribution"}
-                    </span>
+                    </p>
                   </div>
-
-                  {type === "near" ? (
-                    <div className="space-y-4 text-sm text-slate-200/90">
-                      <p>
-                        <span className="font-semibold text-white">Recipient:</span> {nearOneDetails.fullName || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-white">User ID:</span> {nearOneDetails.userId || "-"}
-                      </p>
+                  {type === "near" && (
+                    <>
+                      <div>
+                        <p className="text-gray-400 text-sm mb-1">Recipient</p>
+                        <p className="text-white font-semibold">{nearOneDetails.fullName || "-"}</p>
+                        <p className="text-gray-400 text-sm">ID: {nearOneDetails.userId || "-"}</p>
+                      </div>
                       {nearOneDetails.relation && (
-                        <p>
-                          <span className="font-semibold text-white">Relation:</span> {nearOneDetails.relation}
-                        </p>
-                      )}
-                      {nearOneDetails.location && (
-                        <p>
-                          <span className="font-semibold text-white">Location:</span> {nearOneDetails.location}
-                        </p>
-                      )}
-                      {nearOneDetails.email && (
-                        <p>
-                          <span className="font-semibold text-white">Email:</span> {nearOneDetails.email}
-                        </p>
-                      )}
-                      {nearOneDetails.phone && (
-                        <p>
-                          <span className="font-semibold text-white">Phone:</span> {nearOneDetails.phone}
-                        </p>
-                      )}
-                      {nearOneDetails.message && (
                         <div>
-                          <span className="font-semibold text-white">Message:</span>
-                          <p className="mt-1 text-sm text-slate-300/85">
-                            {nearOneDetails.message}
-                          </p>
+                          <p className="text-gray-400 text-sm mb-1">Relation</p>
+                          <p className="text-white font-semibold">{nearOneDetails.relation}</p>
                         </div>
                       )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4 text-sm text-slate-200/90">
-                      <p>
-                        Your contribution will be channelled to learners based on priority waitlists across
-                        Digital AELA centres. We ensure every rupee is accounted for and shared with you in the
-                        quarterly impact report.
-                      </p>
-                      <p className="text-slate-300/70">
-                        Need to dedicate this gift instead?{' '}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.location.href = "/donate/payment?type=near";
-                          }}
-                          className="text-[#D4AF37] hover:text-[#FFE28A]">
-                          Restart with dedication form.
-                        </button>
-                      </p>
-                    </div>
+                      {nearOneDetails.location && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Location</p>
+                          <p className="text-white font-semibold">{nearOneDetails.location}</p>
+                        </div>
+                      )}
+                    </>
                   )}
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Impact</p>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      Your gift powers scholarships, lab upgrades, and mentorship pods for learners building Digital
+                      AELA centres worldwide.
+                    </p>
+                  </div>
                 </div>
-
-                <div className="mt-8 rounded-2xl border border-[#D4AF37]/20 bg-[#0B1221]/60 p-6">
-                  <h2 className="text-lg font-semibold text-white">How your donation helps</h2>
-                  <ul className="mt-4 space-y-3 text-sm text-slate-300/85">
-                    <li className="flex items-start gap-3">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
-                      Subsidises tuition, certification fees, and mentorship pods for learners from emerging cities.
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
-                      Expands Digital AELA community labs with new books, devices, and facilitator hours.
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
-                      Powers rapid response scholarships for learners at risk of dropping out.
-                    </li>
-                  </ul>
+                <div className="border-t border-gray-700 pt-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Donation Amount</span>
+                    <span className="text-white font-semibold">₹{totalAmount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Processing Fee</span>
+                    <span className="text-white font-semibold">₹0</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-700">
+                    <span className="text-lg font-bold text-white">Total</span>
+                    <span className="text-2xl font-bold text-[#D4AF37] font-display">₹{totalAmount}</span>
+                  </div>
                 </div>
               </div>
+            </motion.div>
 
-              <div className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15, duration: 0.45, ease: "easeOut" }}
-                  className="rounded-3xl border border-[#D4AF37]/25 bg-black/60 p-6 text-center shadow-[0_25px_80px_rgba(12,12,12,0.6)]">
-                  <h3 className="text-xl font-bold text-white">Checkout</h3>
-                  <p className="mt-2 text-sm text-slate-300/80">
-                    You&apos;ll be redirected to our secure payment partner to complete your donation.
-                  </p>
+            {/* Donation Form */}
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+              className="lg:col-span-2">
+              <div className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <FaLock className="w-5 h-5 text-[#D4AF37]" />
+                  <h2 className="text-2xl font-bold text-white font-display">Secure Checkout</h2>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">Donor Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Full Name *</label>
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Email *</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Phone *</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Donation Amount (₹) *</label>
+                        <input
+                          type="number"
+                          name="amount"
+                          min={1}
+                          value={formData.amount}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">Additional Message (optional)</h3>
+                    <textarea
+                      name="message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      className="w-full bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                      placeholder="Share a note for our team or the recipient"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">Payment Method</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 p-4 bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg cursor-pointer hover:border-[#D4AF37] transition-colors">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="card"
+                          checked={formData.paymentMethod === "card"}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-[#D4AF37]"
+                        />
+                        <FaCreditCard className="w-5 h-5 text-[#D4AF37]" />
+                        <span className="text-white font-semibold">Credit/Debit Card</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-4 bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg cursor-pointer hover:border-[#D4AF37] transition-colors">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="upi"
+                          checked={formData.paymentMethod === "upi"}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-[#D4AF37]"
+                        />
+                        <span className="text-white font-semibold">UPI</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-4 bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg cursor-pointer hover:border-[#D4AF37] transition-colors">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="netbanking"
+                          checked={formData.paymentMethod === "netbanking"}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-[#D4AF37]"
+                        />
+                        <span className="text-white font-semibold">Net Banking</span>
+                      </label>
+                    </div>
+                  </div>
 
                   <motion.button
-                    type="button"
+                    type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={proceedToGateway}
-                    className="mt-5 w-full rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-5 py-3 text-sm font-bold text-black shadow-[0_15px_40px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                    Proceed to secure payment
+                    className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+                    Donate ₹{totalAmount} Securely
                   </motion.button>
 
-                  <p className="mt-3 text-[11px] uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                    powered by digital aela trust
+                  <p className="text-xs text-gray-500 text-center">
+                    Your payment information is secure and encrypted
                   </p>
-                </motion.div>
-
-                <div className="rounded-3xl border border-white/5 bg-white/5 p-6">
-                  <h4 className="text-base font-semibold text-white">Need assistance?</h4>
-                  <p className="mt-2 text-sm text-slate-300/85">
-                    Write to us at{' '}
-                    <a
-                      className="text-[#D4AF37] underline-offset-2 hover:underline"
-                      href="mailto:donations@digitalaela.com">
-                      donations@digitalaela.com
-                    </a>{' '}
-                    or WhatsApp +971-508-185-690. We&apos;re here to help you complete the process.
-                  </p>
-                </div>
+                </form>
               </div>
-            </motion.section>
+            </motion.div>
           </div>
-        </main>
-      </div>
+        </div>
+      </section>
     </div>
   );
 };

@@ -12,20 +12,88 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
-    // Get language from localStorage or default to English
-    return localStorage.getItem("selectedLanguage") || "en";
-  });
-
   const languages = {
-    en: "English",
-    hi: "Hindi",
-    ne: "Nepali",
-    pa: "Punjabi",
-    si: "Sinhala",
-    te: "Telugu",
-    ta: "Tamil",
+    en: {
+      label: "English",
+      country: "Global",
+      flag: "🇬🇧",
+      flagSrc: "https://flagcdn.com/w40/gb.png",
+      flagAlt: "United Kingdom flag",
+    },
+    "hi-IN": {
+      label: "Hindi",
+      country: "India",
+      flag: "🇮🇳",
+      flagSrc: "https://flagcdn.com/w40/in.png",
+      flagAlt: "India flag",
+    },
+    "ur-PK": {
+      label: "Urdu",
+      country: "Pakistan",
+      flag: "🇵🇰",
+      flagSrc: "https://flagcdn.com/w40/pk.png",
+      flagAlt: "Pakistan flag",
+    },
+    "bn-BD": {
+      label: "Bangla",
+      country: "Bangladesh",
+      flag: "🇧🇩",
+      flagSrc: "https://flagcdn.com/w40/bd.png",
+      flagAlt: "Bangladesh flag",
+    },
+    "ne-NP": {
+      label: "Nepali",
+      country: "Nepal",
+      flag: "🇳🇵",
+      flagSrc: "https://flagcdn.com/w40/np.png",
+      flagAlt: "Nepal flag",
+    },
+    "si-LK": {
+      label: "Sinhala",
+      country: "Sri Lanka",
+      flag: "🇱🇰",
+      flagSrc: "https://flagcdn.com/w40/lk.png",
+      flagAlt: "Sri Lanka flag",
+    },
+    "ps-AF": {
+      label: "Pashto",
+      country: "Afghanistan",
+      flag: "🇦🇫",
+      flagSrc: "https://flagcdn.com/w40/af.png",
+      flagAlt: "Afghanistan flag",
+    },
+    "ar-SA": {
+      label: "Arabic",
+      country: "Saudi Arabia",
+      flag: "🇸🇦",
+      flagSrc: "https://flagcdn.com/w40/sa.png",
+      flagAlt: "Saudi Arabia flag",
+    },
+    "ar-KW": {
+      label: "Arabic",
+      country: "Kuwait",
+      flag: "🇰🇼",
+      flagSrc: "https://flagcdn.com/w40/kw.png",
+      flagAlt: "Kuwait flag",
+    },
+    "ar-AE": {
+      label: "Arabic",
+      country: "United Arab Emirates",
+      flag: "🇦🇪",
+      flagSrc: "https://flagcdn.com/w40/ae.png",
+      flagAlt: "United Arab Emirates flag",
+    },
   };
+
+  const getInitialLanguage = () => {
+    const stored = localStorage.getItem("selectedLanguage");
+    if (stored && Object.prototype.hasOwnProperty.call(languages, stored)) {
+      return stored;
+    }
+    return "en";
+  };
+
+  const [language, setLanguage] = useState(getInitialLanguage);
 
   useEffect(() => {
     // Save language preference to localStorage

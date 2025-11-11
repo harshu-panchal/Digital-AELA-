@@ -19,6 +19,7 @@ const Navbar = () => {
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [showSubNav, setShowSubNav] = useState(true);
   const { language, languages, changeLanguage } = useLanguage();
+  const currentLanguage = languages[language] || languages["en"];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,8 +54,12 @@ const Navbar = () => {
       path: "/resources",
       dropdown: [
         { label: "AELA Blogs", path: "/blogs" },
-        { label: "YouTube", path: "/resources/youtube" },
-        { label: "Free Library", path: "/resources/downloads" },
+        {
+          label: "YouTube",
+          external: true,
+          href: "https://www.youtube.com/@digitalaela_dubai",
+        },
+        { label: "Free Library", path: "/free-library" },
         { label: "Books", path: "/books" },
       ],
     },
@@ -213,8 +218,22 @@ const Navbar = () => {
                           d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
                         />
                       </svg>
-                      <span className="text-base font-semibold font-accent">
-                        {languages[language]}
+                      <span className="flex items-center gap-2 text-base font-semibold font-accent">
+                        <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10">
+                          {currentLanguage?.flagSrc ? (
+                            <img
+                              src={currentLanguage.flagSrc}
+                              alt={currentLanguage.flagAlt}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-lg leading-none">
+                              {currentLanguage?.flag}
+                            </span>
+                          )}
+                        </span>
+                        <span>{currentLanguage?.label}</span>
                       </span>
                       <svg
                         className={`h-3 w-3 transition-transform duration-200 ${
@@ -241,7 +260,7 @@ const Navbar = () => {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
                           {Object.entries(languages).map(
-                            ([code, name], index) => (
+                            ([code, option], index) => (
                               <motion.button
                                 key={code}
                                 initial={{ opacity: 0, x: -10 }}
@@ -258,12 +277,30 @@ const Navbar = () => {
                                   backgroundColor: "rgba(212,175,55,0.08)",
                                   x: 5,
                                 }}
-                                className={`w-full border-b border-white/10 px-4 py-3 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
+                                className={`w-full border-b border-white/10 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
                                   language === code
                                     ? "bg-white/20 text-[#FFE28A]"
                                     : "text-slate-100 hover:bg-white/10 hover:text-[#FFE28A]"
                                 }`}>
-                                {name}
+                                <span className="flex items-center gap-2.5">
+                                  <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5">
+                                    {option.flagSrc ? (
+                                      <img
+                                        src={option.flagSrc}
+                                        alt={option.flagAlt}
+                                        className="h-full w-full object-cover"
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <span className="text-lg leading-none">
+                                        {option.flag}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="text-sm font-semibold tracking-wide">
+                                    {option.label}
+                                  </span>
+                                </span>
                               </motion.button>
                             )
                           )}
@@ -338,6 +375,25 @@ const Navbar = () => {
                         />
                       </motion.span>
                     </span>
+                  ) : item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative group">
+                      <motion.span
+                        whileHover={{ y: -2, scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
+                        {item.label}
+                        <motion.div
+                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                          whileHover={{ width: "100%" }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                        />
+                      </motion.span>
+                    </a>
                   ) : (
                     <Link to={item.path} className="relative group">
                       <motion.span
@@ -365,27 +421,51 @@ const Navbar = () => {
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
-                          {item.dropdown.map((dropdownItem, dropIndex) => (
-                            <Link
-                              key={dropdownItem.label}
-                              to={dropdownItem.path}
-                              className="block">
-                              <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{
-                                  duration: 0.2,
-                                  delay: dropIndex * 0.03,
-                                }}
-                                whileHover={{
-                                  backgroundColor: "rgba(212,175,55,0.08)",
-                                  x: 5,
-                                }}
-                                className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                {dropdownItem.label}
-                              </motion.div>
-                            </Link>
-                          ))}
+                          {item.dropdown.map((dropdownItem, dropIndex) =>
+                            dropdownItem.external ? (
+                              <a
+                                key={dropdownItem.label}
+                                href={dropdownItem.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block">
+                                <motion.div
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{
+                                    duration: 0.2,
+                                    delay: dropIndex * 0.03,
+                                  }}
+                                  whileHover={{
+                                    backgroundColor: "rgba(212,175,55,0.08)",
+                                    x: 5,
+                                  }}
+                                  className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                  {dropdownItem.label}
+                                </motion.div>
+                              </a>
+                            ) : (
+                              <Link
+                                key={dropdownItem.label}
+                                to={dropdownItem.path}
+                                className="block">
+                                <motion.div
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{
+                                    duration: 0.2,
+                                    delay: dropIndex * 0.03,
+                                  }}
+                                  whileHover={{
+                                    backgroundColor: "rgba(212,175,55,0.08)",
+                                    x: 5,
+                                  }}
+                                  className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                  {dropdownItem.label}
+                                </motion.div>
+                              </Link>
+                            )
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -464,6 +544,25 @@ const Navbar = () => {
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         />
                       </span>
+                    ) : item.external ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-[#B8831A] font-semibold text-base tracking-wide hover:text-[#8A6611] transition-colors duration-300 font-accent relative group block py-2">
+                        <motion.span
+                          whileHover={{ x: 5, scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="inline-block">
+                          {item.label}
+                        </motion.span>
+                        <motion.div
+                          className="absolute bottom-0 left-0 w-0 h-px bg-[#B8831A]"
+                          whileHover={{ width: "100%" }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                        />
+                      </a>
                     ) : (
                       <Link
                         to={item.path}
@@ -486,15 +585,27 @@ const Navbar = () => {
                     )}
                     {item.dropdown && (
                       <div className="ml-4 mt-2 space-y-1">
-                        {item.dropdown.map((dropdownItem) => (
-                          <Link
-                            key={dropdownItem.label}
-                            to={dropdownItem.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                            {dropdownItem.label}
-                          </Link>
-                        ))}
+                        {item.dropdown.map((dropdownItem) =>
+                          dropdownItem.external ? (
+                            <a
+                              key={dropdownItem.label}
+                              href={dropdownItem.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
+                              {dropdownItem.label}
+                            </a>
+                          ) : (
+                            <Link
+                              key={dropdownItem.label}
+                              to={dropdownItem.path}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
+                              {dropdownItem.label}
+                            </Link>
+                          )
+                        )}
                       </div>
                     )}
                   </div>
@@ -506,19 +617,33 @@ const Navbar = () => {
                     Language
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(languages).map(([code, name]) => (
+                    {Object.entries(languages).map(([code, option]) => (
                       <button
                         key={code}
                         onClick={() => {
                           changeLanguage(code);
                           setMobileMenuOpen(false);
                         }}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 border ${
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${
                           language === code
                             ? "bg-[#D4AF37] text-white border-[#D4AF37]"
                             : "bg-white text-[#B8831A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
                         }`}>
-                        {name}
+                        <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[#D4AF37]/40 bg-white/10">
+                          {option.flagSrc ? (
+                            <img
+                              src={option.flagSrc}
+                              alt={option.flagAlt}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-lg leading-none">
+                              {option.flag}
+                            </span>
+                          )}
+                        </span>
+                        <span>{option.label}</span>
                       </button>
                     ))}
                   </div>

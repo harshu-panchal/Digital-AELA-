@@ -1,0 +1,62 @@
+[
+  {
+    "id": "future-ready-leadership",
+    "title": "Future Ready Leadership",
+    "author": "Priya Menon",
+    "description": "A practical roadmap for building resilient, people-first teams that deliver exponential outcomes.",
+    "coverImage": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=720&q=80",
+    "pages": [
+      "Introduction\\n\\nWelcome to Future Ready Leadership. In today’s fast-changing world, leaders are asked to balance empathy with execution, clarity with experimentation. This guide is designed to help you create teams that feel deeply supported while staying laser-focused on results.",
+      "Chapter 1: Lead with Purpose\\n\\nPurpose is the cornerstone of resilient organisations. Clarify why your team exists, how it creates value and what success looks like. Share stories that bring purpose to life, revisit it in every sprint and celebrate progress with gratitude.",
+      "Chapter 2: Design for Agility\\n\\nReplace rigid annual plans with living roadmaps. Give teams clear guardrails, then empower them to experiment, measure and iterate. Agility is less about speed and more about rapid learning in safe-to-fail environments.",
+      "Chapter 3: Culture of Trust\\n\\nTrust flourishes when leaders are transparent, consistent and available. Practice inclusive decision-making, encourage healthy debates and normalise vulnerability. Teams thrive when they know their leaders have their back.",
+      "Chapter 4: Coaching Conversations\\n\\nFeedback should fuel growth, not fear. Ask powerful questions, listen to what is not said and co-create action plans. Coaching moments compound into transformational change.",
+      "Conclusion\\n\\nThe future belongs to leaders who combine vision with humanity. Use the frameworks in this book to design workplaces where people feel energised and empowered to do the best work of their lives."
+    ]
+  },
+  {
+    "id": "speak-with-confidence",
+    "title": "Speak with Confidence",
+    "author": "James Oliveira",
+    "description": "Master public speaking with frameworks for storytelling, presence, delivery and audience engagement.",
+    "coverImage": "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=720&q=80",
+    "pages": [
+      "Opening\\n\\nConfidence is not the absence of nerves; it is the decision to show up for your audience anyway. Every message matters when it is rooted in service. This playbook helps you craft talks that land with clarity and charisma.",
+      "Chapter 1: Story Architecture\\n\\nEvery compelling talk has a hook, a heart and a call-to-action. Use vivid imagery, relatable stakes and memorable phrasing. Anchor statistics with human stories to help data resonate emotionally.",
+      "Chapter 2: Presence & Delivery\\n\\nPractice grounded stances, intentional gestures and purposeful pacing. Silence is a strategic tool—let important points breathe. Record rehearsals to refine your tone, energy and facial expressions.",
+      "Chapter 3: Audience Intelligence\\n\\nUnderstand who is in the room, what they fear and what they desire. Tailor your message to their vocabulary. Invite micro-interactions like polls or reflective questions to keep them involved.",
+      "Chapter 4: Managing Nerves\\n\\nShift the spotlight from yourself to the audience. Reframe adrenaline as energy. Warm up your voice, visualise success and create a pre-talk ritual that resets your focus.",
+      "Masterclass Summary\\n\\nSpeaking with confidence is a skill you build through repetition and reflection. Keep showing up. The world needs your point of view."
+    ]
+  },
+  {
+    "id": "digital-marketing-playbook",
+    "title": "Digital Marketing Playbook",
+    "author": "Aarav Khan",
+    "description": "A hands-on guide to launching, measuring and scaling campaigns across social, email and performance channels.",
+    "coverImage": "https://images.unsplash.com/photo-1483478550801-ceba5fe50f18?auto=format&fit=crop&w=720&q=80",
+    "pages": [
+      "Foreword\\n\\nThe modern marketer architects experiences, not just ads. This playbook equips you to build integrated funnels that attract, nurture and convert your ideal audience with empathy and precision.",
+      "Chapter 1: Customer Personas\\n\\nInterview real customers to understand their goals, pains and triggers. Map their decision journey and identify moments where your product removes friction or creates delight.",
+      "Chapter 2: Channel Strategy\\n\\nChoose channels based on where your audience spends time. Balance evergreen content with timely campaigns. Pair organic storytelling with paid amplification for consistent reach.",
+      "Chapter 3: Content Systems\\n\\nRepurpose long-form assets into micro-content. Use content pillars to keep messaging cohesive. Visual identity matters—design templates for speed without sacrificing quality.",
+      "Chapter 4: Measure What Matters\\n\\nDefine north-star metrics early. Set up dashboards that highlight leading indicators, not just lagging conversions. Run experiments with clear hypotheses and share learnings broadly.",
+      "Toolkit\\n\\nUse the worksheets in this toolkit to plan 90-day marketing sprints, track experiments and document key insights. Momentum lives in consistent execution."
+    ]
+  },
+  {
+    "id": "mindful-productivity",
+    "title": "Mindful Productivity",
+    "author": "Zarah Lee",
+    "description": "Build sustainable routines that honour your energy, creativity and wellbeing while achieving ambitious goals.",
+    "coverImage": "https://images.unsplash.com/photo-1456327102063-fb5054efe647?auto=format&fit=crop&w=720&q=80",
+    "pages": [
+      "Preface\\n\\nMindful productivity is about designing days that feel meaningful, not just busy. It is the discipline of aligning intention with attention. This book teaches you how to protect your energy while shipping impactful work.",
+      "Chapter 1: Energy Mapping\\n\\nTrack your natural peaks and dips for two weeks. Schedule deep work during peak focus hours and reserve low-energy windows for admin tasks or recovery breaks.",
+      "Chapter 2: Rituals & Routines\\n\\nAnchor your mornings with simple rituals that signal readiness—hydration, movement, gratitude. Bundle habits together to make routines stick, and review your priorities nightly.",
+      "Chapter 3: Boundaries & Focus\\n\\nSay “yes” to fewer, better commitments. Practice single-tasking with timed focus blocks. Audit your notifications and redesign your workspace to reduce context switching.",
+      "Chapter 4: Restorative Recovery\\n\\nRest is a strategic investment. Blend micro-breaks, mindful breathing and creative play into your schedule. Reflect weekly on what energised you and what drained you.",
+      "Closing Notes\\n\\nSustainable productivity is a lifelong experiment. Stay curious, keep iterating and celebrate incremental progress."
+    ]
+  }
+]

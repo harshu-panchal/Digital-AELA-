@@ -18,49 +18,70 @@ const OurStory = () => {
       title: "The First Academy – Where It All Began",
       content:
         "It all started with a small rented classroom, a whiteboard, and a young teacher with a big dream. Imran Sir, a single boy with nothing but determination, stood before a handful of students. With limited resources but unlimited passion, he planted the first seed of Digital AELA. The mission was clear from day one: to give every learner, regardless of background, the confidence to speak, succeed, and shape their future. That little room was more than a classroom — it was the birthplace of a movement.",
-      image: "📚", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Early classroom with teacher writing on a chalkboard in front of attentive students",
     },
     {
       id: 2,
       title: "The First Book Launch – Knowledge in Every Hand",
       content:
         "From chalk on a blackboard to words on printed pages, Imran Sir turned his lessons into a book. The first launch was not grand, but it was powerful. Students held in their hands not just a guide to English, but a weapon for self-growth. For many, this book became their first stepping stone toward career opportunities and personal success. It was proof that Digital AELA wasn't just teaching — it was creating tools for transformation.",
-      image: "📖", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Stack of freshly printed books on a table during a small launch event",
     },
     {
       id: 3,
       title: "The Second Book – Expanding the Dream",
       content:
         "When the first book touched hearts, the second book carried the dream further. It wasn't just about grammar; it was about real-life English that opened doors to jobs, interviews, and global opportunities. Imran Sir often said, \"Education is not about passing exams, it's about passing limits.\" This book embodied that belief, giving learners the confidence to cross barriers and believe in themselves.",
-      image: "📗", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Author signing copies for students at a community book reading",
     },
     {
       id: 4,
       title: "The Third Book – From Local to Global Readers",
       content:
         "The third book marked a turning point. Now, Digital AELA's message was not limited to one city or one country. Written with a bilingual approach, it reached learners across India and resonated with students abroad. Holding that third book in his hands, Imran Sir knew: this was no longer just his journey — it was the journey of thousands who saw Digital AELA as their pathway to success.",
-      image: "📘", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Reader flipping through pages of a newly published bilingual book",
     },
     {
       id: 5,
       title: "The Second Branch – Building a Community",
       content:
         "With growing demand and countless success stories, the need for expansion was inevitable. The opening of the second branch was more than cutting a ribbon; it was building a community. More teachers joined hands, more students walked in with hope, and more dreams found a home. Digital AELA was no longer just one man's vision — it had become a family where educators and learners stood side by side.",
-      image: "🏢", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Modern education center exterior with warm lighting during an opening day",
     },
     {
       id: 6,
       title: "Celebrating the Success of Thousands",
       content:
         "From the first few students to thousands of success stories, Digital AELA became synonymous with achievement. Every certificate awarded, every placement secured, and every student who spoke English with confidence was a victory shared by the entire academy. We celebrated not only results but the journeys — the late nights of practice, the struggles overcome, and the transformation of fear into fluency. Each student became a living testimony: at Digital AELA, success is not an exception; it's a tradition.",
-      image: "🎓", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Graduates celebrating together with certificates raised in the air",
     },
     {
       id: 7,
       title: "The Leap to Dubai – A Global Vision",
       content:
         "The journey from a small town in India to the global city of Dubai was not easy. It was filled with sacrifices, sleepless nights, and relentless belief. But with every challenge, Imran Sir remembered the faces of his students — the trust they placed in him, and the promise he made to never stop. Dubai became the next chapter, not just as a new location, but as a global stage.",
-      image: "🌍", // Placeholder - can be replaced with actual image
+      imageSrc:
+        "https://images.unsplash.com/photo-1508261301921-1b811d5d4d32?auto=format&fit=crop&w=1200&q=80",
+      imageAlt:
+        "Dubai skyline at dusk showcasing global expansion vision",
     },
   ];
 
@@ -229,8 +250,14 @@ const OurStory = () => {
                   </div>
 
                   {/* Image */}
-                  <div className="flex-shrink-0 w-full lg:w-80 h-64 md:h-80 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center text-8xl border border-[#D4AF37]/20 shadow-lg hover:border-[#D4AF37]/50 transition-all duration-300">
-                    {section.image}
+                  <div className="flex-shrink-0 w-full lg:w-80 h-64 md:h-80 rounded-xl border border-[#D4AF37]/20 shadow-lg hover:border-[#D4AF37]/50 transition-all duration-300 overflow-hidden relative">
+                    <img
+                      src={section.imageSrc}
+                      alt={section.imageAlt}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                   </div>
                 </motion.div>
               ))}

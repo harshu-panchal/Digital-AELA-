@@ -52,6 +52,8 @@ import JoinAsTeacher from "../modules/business-management/join-us-pages/JoinAsTe
 import JoinInfluencer from "../modules/business-management/join-us-pages/JoinInfluencer";
 import JoinFreelancer from "../modules/business-management/join-us-pages/JoinFreelancer";
 import JoinBuildAfterLife from "../modules/business-management/join-us-pages/JoinBuildAfterLife";
+import FreeLibrary from "../modules/business-management/free-library/FreeLibrary";
+import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
 
 export const App = () => {
   return (
@@ -92,6 +94,8 @@ export const App = () => {
         <Route path="/books/:id" element={<BookDetail />} />
         <Route path="/books/:id/payment" element={<BookPayment />} />
         <Route path="/donate/payment" element={<DonatePayment />} />
+        <Route path="/free-library" element={<FreeLibrary />} />
+        <Route path="/free-library/:bookId" element={<FreeLibraryReader />} />
         <Route path="/about/our-story" element={<OurStory />} />
         <Route path="/about/mission-vision" element={<MissionVision />} />
         <Route path="/about/founder" element={<MeetTheFounder />} />
