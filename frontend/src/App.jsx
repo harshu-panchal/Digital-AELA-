@@ -22,7 +22,7 @@ import EnglishLanguageCourses from "../modules/business-management/cources-pages
 import Books from "../modules/business-management/business-pages/Books";
 import BookDetail from "../modules/business-management/business-pages/BookDetail";
 import BookPayment from "../modules/business-management/business-pages/BookPayment";
-import DonatePayment from "../modules/business-management/donate-pages/DonatePayment";
+import GiftPayment from "../modules/business-management/gift-pages/GiftPayment";
 import OurStory from "../modules/business-management/business-pages/OurStory";
 import MissionVision from "../modules/business-management/business-pages/MissionVision";
 import MeetTheFounder from "../modules/business-management/business-pages/MeetTheFounder";
@@ -55,6 +55,15 @@ import JoinFreelancer from "../modules/business-management/join-us-pages/JoinFre
 import JoinBuildAfterLife from "../modules/business-management/join-us-pages/JoinBuildAfterLife";
 import FreeLibrary from "../modules/business-management/free-library/FreeLibrary";
 import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
+import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
+import TeacherDashboard from "../modules/teacher/TeacherDashboard";
+import StudentDashboard from "../modules/student/StudentDashboard";
+import CourseCreate from "../modules/teacher/CourseCreate";
+import CourseDetail from "../modules/teacher/CourseDetail";
+import EbookUpload from "../modules/teacher/EbookUpload";
+import EbookDetail from "../modules/teacher/EbookDetail";
+import QuizCreate from "../modules/teacher/QuizCreate";
+import QuizDetail from "../modules/teacher/QuizDetail";
 
 export const App = () => {
   return (
@@ -65,6 +74,78 @@ export const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
+        <Route
+          path="/super-admin"
+          element={
+            <ProtectedRoute roles={["super-admin"]}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/new"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <CourseCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <CourseDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/ebooks/upload"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <EbookUpload />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/ebooks/:ebookId"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <EbookDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/quizzes/new"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <QuizCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/quizzes/:quizId"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <QuizDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute roles={["student", "super-admin"]}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/learn-earn"
           element={
@@ -128,7 +209,7 @@ export const App = () => {
           }
         />
         <Route
-          path="/donate/payment"
+          path="/gift/payment"
           element={
             <ProtectedRoute
               roles={[
@@ -139,7 +220,7 @@ export const App = () => {
                 "freelancer",
                 "super-admin",
               ]}>
-              <DonatePayment />
+              <GiftPayment />
             </ProtectedRoute>
           }
         />

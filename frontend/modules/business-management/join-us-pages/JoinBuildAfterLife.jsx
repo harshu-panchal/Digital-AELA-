@@ -13,7 +13,7 @@ import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
 import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
 import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
-import DonateButton from "../common/DonateButton";
+import GiftButton from "../common/GiftButton";
 
 const whatsappNumber = "+971508185690";
 const generateWhatsAppLink = (courseTitle) =>
@@ -274,7 +274,7 @@ const JoinBuildAfterLife = () => {
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 left-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-[#F5D26A]/15 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-128 w-128 translate-x-1/3 rounded-full bg-[#0E1635]/80 blur-[140px]" />
+        <div className="absolute bottom-0 right-0 h-128 w-[30rem] translate-x-1/3 rounded-full bg-[#0E1635]/80 blur-[140px]" />
         <div className="absolute top-1/3 left-0 hidden h-80 w-80 -translate-x-1/2 rounded-full bg-[#103350]/40 blur-[110px] md:block" />
       </div>
 
@@ -430,11 +430,11 @@ const JoinBuildAfterLife = () => {
                             className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                             Buy Now
                           </motion.a>
-                          <DonateButton
+                          <GiftButton
                             className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                             size="sm">
-                            Donate
-                          </DonateButton>
+                            Gift
+                          </GiftButton>
                         </div>
                       </div>
 
@@ -568,11 +568,11 @@ const JoinBuildAfterLife = () => {
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                           Buy Now
                         </motion.button>
-                        <DonateButton
+                        <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                           size="sm">
-                          Donate
-                        </DonateButton>
+                          Gift
+                        </GiftButton>
                       </div>
                     </div>
                   </Link>

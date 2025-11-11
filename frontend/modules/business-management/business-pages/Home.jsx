@@ -36,7 +36,7 @@ import clientLogo29 from "../../../src/assets/images/client-logos/29.png";
 import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
 import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
 import { useBlogs } from "../../../src/contexts/BlogContext";
-import DonateButton from "../common/DonateButton";
+import GiftButton from "../common/GiftButton";
 
 const MotionLink = motion(Link);
 
@@ -86,7 +86,7 @@ const Home = () => {
         description:
           "Dedicate scholarships, sponsor labs, and co-create hubs that keep learners future-ready across continents.",
         primaryCta: "Gift a Scholarship",
-        primaryLink: "/donate/payment?type=anyone",
+        primaryLink: "/gift/payment?type=anyone",
         secondaryCta: "Build After Life",
         secondaryLink: "/join-us/after-life",
         image:
@@ -168,7 +168,6 @@ const Home = () => {
       format: "In-person / Online",
       price: "₹7,499",
       buyLink: "/contact/book-demo",
-      donateLink: "/contact/business-collaboration",
       features: [
         "Grammar fundamentals",
         "Vocabulary building",
@@ -187,7 +186,6 @@ const Home = () => {
       format: "Hybrid | Online",
       price: "₹9,499",
       buyLink: "/contact/book-demo",
-      donateLink: "/contact/business-collaboration",
       features: [
         "Fluency drills",
         "Sentence structuring",
@@ -206,7 +204,6 @@ const Home = () => {
       format: "In-person / Online",
       price: "₹11,999",
       buyLink: "/contact/book-demo",
-      donateLink: "/contact/business-collaboration",
       features: [
         "Business communication",
         "Presentation mastery",
@@ -1077,11 +1074,11 @@ const Home = () => {
                         className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                         Buy Now
                       </Link>
-                      <DonateButton
+                      <GiftButton
                         className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                         size="sm">
-                        Donate
-                      </DonateButton>
+                        Gift
+                      </GiftButton>
                     </div>
                   </div>
                 </div>
@@ -1470,11 +1467,11 @@ const Home = () => {
                       className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                       Buy Now
                     </motion.button>
-                    <DonateButton
+                    <GiftButton
                       className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                       size="sm">
-                      Donate
-                    </DonateButton>
+                      Gift
+                    </GiftButton>
                   </div>
                 </div>
               </Link>
@@ -1572,11 +1569,11 @@ const Home = () => {
                       className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                       Buy Now
                     </motion.button>
-                    <DonateButton
+                    <GiftButton
                       className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                       size="sm">
-                      Donate
-                    </DonateButton>
+                      Gift
+                    </GiftButton>
                   </div>
                 </div>
               </Link>
@@ -1672,11 +1669,11 @@ const Home = () => {
                       className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                       Buy Now
                     </motion.button>
-                    <DonateButton
+                    <GiftButton
                       className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                       size="sm">
-                      Donate
-                    </DonateButton>
+                      Gift
+                    </GiftButton>
                   </div>
                 </div>
               </Link>
@@ -1772,11 +1769,11 @@ const Home = () => {
                       className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                       Buy Now
                     </motion.button>
-                    <DonateButton
+                    <GiftButton
                       className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                       size="sm">
-                      Donate
-                    </DonateButton>
+                      Gift
+                    </GiftButton>
                   </div>
                 </div>
               </Link>

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { FaSearch, FaStar, FaBook, FaDownload } from "react-icons/fa";
-import DonateButton from "../common/DonateButton";
+import GiftButton from "../common/GiftButton";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -332,11 +332,11 @@ const Books = () => {
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                           Buy Now
                         </motion.button>
-                        <DonateButton
+                        <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                           size="sm">
-                          Donate
-                        </DonateButton>
+                          Gift
+                        </GiftButton>
                       </div>
                     </div>
                   </Link>

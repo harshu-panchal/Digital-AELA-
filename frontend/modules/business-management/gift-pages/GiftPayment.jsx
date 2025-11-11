@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { FaArrowLeft, FaLock, FaCreditCard } from "react-icons/fa";
 
-const externalDonateUrl = "https://digitalaela.com/donate";
+const externalGiftUrl = "https://digitalaela.com/gift";
 
-const DonatePayment = () => {
+const GiftPayment = () => {
   const location = useLocation();
   const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
@@ -42,7 +42,7 @@ const DonatePayment = () => {
   };
 
   const proceedToGateway = () => {
-    window.open(externalDonateUrl, "_blank", "noopener,noreferrer");
+    window.open(externalGiftUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleSubmit = (event) => {
@@ -53,10 +53,10 @@ const DonatePayment = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO
-        title="Digital AELA | Donation Checkout"
-        description="Complete your donation to the Digital AELA learner community with secure payment options."
-        keywords="Digital AELA donation, sponsor student, education charity"
-        url="https://digitalaela.com/donate/payment"
+        title="Digital AELA | Gift Checkout"
+        description="Complete your gift to the Digital AELA learner community with secure payment options."
+        keywords="Digital AELA gift, sponsor student, education support"
+        url="https://digitalaela.com/gift/payment"
       />
 
       {/* Header */}
@@ -80,17 +80,17 @@ const DonatePayment = () => {
       <section className="py-12 bg-[#141414] relative">
         <div className="max-w-5xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Donation Summary */}
+            {/* Gift Summary */}
             <motion.div
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="lg:col-span-1">
               <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20 sticky top-24">
-                <h2 className="text-xl font-bold text-white mb-6 font-display">Donation Summary</h2>
+                <h2 className="text-xl font-bold text-white mb-6 font-display">Gift Summary</h2>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Donation Type</p>
+                    <p className="text-gray-400 text-sm mb-1">Gift Type</p>
                     <p className="text-white font-semibold">
                       {type === "near" ? "Dedicated Gift" : "Open Contribution"}
                     </p>
@@ -119,14 +119,13 @@ const DonatePayment = () => {
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Impact</p>
                     <p className="text-gray-300 text-sm leading-relaxed">
-                      Your gift powers scholarships, lab upgrades, and mentorship pods for learners building Digital
-                      AELA centres worldwide.
+                      Your gift powers scholarships, lab upgrades, and mentorship pods for learners building Digital AELA centres worldwide.
                     </p>
                   </div>
                 </div>
                 <div className="border-t border-gray-700 pt-4 space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Donation Amount</span>
+                    <span className="text-gray-400">Gift Amount</span>
                     <span className="text-white font-semibold">₹{totalAmount}</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -141,7 +140,7 @@ const DonatePayment = () => {
               </div>
             </motion.div>
 
-            {/* Donation Form */}
+            {/* Gift Form */}
             <motion.div
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -155,7 +154,7 @@ const DonatePayment = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-4 font-display">Donor Information</h3>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">Gifter Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm text-gray-300 mb-2">Full Name *</label>
@@ -191,7 +190,7 @@ const DonatePayment = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Donation Amount (₹) *</label>
+                        <label className="block text-sm text-gray-300 mb-2">Gift Amount (₹) *</label>
                         <input
                           type="number"
                           name="amount"
@@ -262,7 +261,7 @@ const DonatePayment = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                    Donate ₹{totalAmount} Securely
+                    Gift ₹{totalAmount} Securely
                   </motion.button>
 
                   <p className="text-xs text-gray-500 text-center">
@@ -278,4 +277,5 @@ const DonatePayment = () => {
   );
 };
 
-export default DonatePayment;
+export default GiftPayment;
+

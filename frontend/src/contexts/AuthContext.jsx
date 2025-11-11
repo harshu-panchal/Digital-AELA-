@@ -29,12 +29,12 @@ export const ROLE_DETAILS = {
   },
   teacher: {
     label: "Teacher",
-    landing: "/learn-earn/dashboard",
+    landing: "/teacher/dashboard",
     description: "Create learning experiences and mentor students.",
   },
   student: {
     label: "Student",
-    landing: "/learn-earn/dashboard",
+    landing: "/student/dashboard",
     description: "Access courses, games, and rewards.",
   },
   recruiter: {

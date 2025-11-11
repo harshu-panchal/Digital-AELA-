@@ -14,13 +14,13 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
-          <PointsProvider>
-            <UserProvider>
-              <BlogProvider>
-                <App />
-              </BlogProvider>
-            </UserProvider>
-          </PointsProvider>
+        <PointsProvider>
+          <UserProvider>
+            <BlogProvider>
+            <App />
+            </BlogProvider>
+          </UserProvider>
+        </PointsProvider>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

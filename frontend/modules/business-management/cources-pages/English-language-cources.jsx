@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
-import DonateButton from "../common/DonateButton";
+import GiftButton from "../common/GiftButton";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -385,11 +385,11 @@ const EnglishLanguageCourses = () => {
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                           Buy Now
                         </motion.a>
-                        <DonateButton
+                        <GiftButton
                           className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                           size="sm">
-                          Donate
-                        </DonateButton>
+                          Gift
+                        </GiftButton>
                       </div>
                     </div>
                   </div>

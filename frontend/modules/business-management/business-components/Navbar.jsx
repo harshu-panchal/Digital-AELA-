@@ -104,6 +104,20 @@ const Navbar = () => {
     },
   ];
 
+  if (user?.role === "super-admin") {
+    baseNavItems.unshift({
+      label: "Admin",
+      path: "/super-admin",
+    });
+  }
+
+  if (user?.role === "teacher") {
+    baseNavItems.unshift({
+      label: "Teaching",
+      path: "/teacher/dashboard",
+    });
+  }
+
   const handleLogout = useCallback(() => {
     logout();
     setActiveDropdown(null);
