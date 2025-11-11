@@ -239,7 +239,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-backdrop-filter:bg-white/15">
+                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
                           {Object.entries(languages).map(
                             ([code, name], index) => (
                               <motion.button
@@ -364,7 +364,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl supports-backdrop-filter:bg-white/10">
+                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
                           {item.dropdown.map((dropdownItem, dropIndex) => (
                             <Link
                               key={dropdownItem.label}

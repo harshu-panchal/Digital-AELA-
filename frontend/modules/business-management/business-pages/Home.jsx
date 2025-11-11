@@ -616,7 +616,7 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative min-h-screen flex items-center pt-[120px] pb-20 md:pt-[140px] md:pb-28 overflow-hidden">
+        className="relative min-h-screen flex items-center pt-[160px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden">
         <div className="absolute inset-0 bg-black" />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
