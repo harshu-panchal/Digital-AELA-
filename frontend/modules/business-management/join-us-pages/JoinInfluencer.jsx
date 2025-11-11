@@ -1,6 +1,13 @@
+import { useCallback } from "react";
 import JoinUsFormLayout from "../business-components/join-us/JoinUsFormLayout";
+import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 
 const JoinInfluencer = () => {
+  const handleSubmit = useCallback(
+    (payload) => submitJoinUsLead("influencer", payload),
+    []
+  );
+
   return (
     <JoinUsFormLayout
       title="Collaborate as an Influencer"
@@ -114,6 +121,8 @@ const JoinInfluencer = () => {
       ]}
       ctaLabel="Submit Influencer Profile"
       disclaimer="Only our partnerships team will review these details. We will reach out within 5 business days."
+      onSubmit={handleSubmit}
+      successMessage="Thanks for reaching out! Our partnerships team will respond within 5 business days."
     />
   );
 };

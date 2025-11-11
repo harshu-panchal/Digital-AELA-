@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const RequestCallback = () => {
   const fields = [
@@ -82,6 +83,11 @@ const RequestCallback = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("request-callback", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -102,6 +108,7 @@ const RequestCallback = () => {
             submitLabel="Request Call Back"
             successMessage="Thanks! A Digital AELA advisor will confirm your callback shortly."
             disclaimer="We typically call from UAE or India numbers. Please whitelist international calls to ensure we can reach you."
+            onSubmit={handleSubmit}
           />
         </div>
 

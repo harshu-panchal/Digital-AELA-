@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const WorkshopEnrollment = () => {
   const fields = [
@@ -108,6 +109,11 @@ const WorkshopEnrollment = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("workshop-enrollment", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -128,6 +134,7 @@ const WorkshopEnrollment = () => {
             submitLabel="Submit Workshop Request"
             successMessage="Thanks for the request! Our training consultants will send a customised proposal shortly."
             disclaimer="Once we receive your request, we will confirm feasibility, investment, and facilitator availability within two business days."
+            onSubmit={handleSubmit}
           />
         </div>
 

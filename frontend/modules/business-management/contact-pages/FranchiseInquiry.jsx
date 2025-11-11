@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const FranchiseInquiry = () => {
   const fields = [
@@ -92,6 +93,11 @@ const FranchiseInquiry = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("franchise-inquiry", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -112,6 +118,7 @@ const FranchiseInquiry = () => {
             submitLabel="Submit Franchise Inquiry"
             successMessage="Thank you for your interest! Our expansion team will reach out with the franchise information deck."
             disclaimer="Submitting this form does not create a legal obligation. We will schedule a discovery call before sharing agreements."
+            onSubmit={handleSubmit}
           />
         </div>
 

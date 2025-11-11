@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const BookDemo = () => {
   const fields = [
@@ -100,6 +101,11 @@ const BookDemo = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("book-demo", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -120,6 +126,7 @@ const BookDemo = () => {
             submitLabel="Book My Demo Class"
             successMessage="Demo request received! Our academic advisor will reach out within 24 hours to confirm your session."
             disclaimer="By submitting this form you consent to be contacted by Digital AELA's programme advisors via phone, email, or WhatsApp."
+            onSubmit={handleSubmit}
           />
         </div>
 

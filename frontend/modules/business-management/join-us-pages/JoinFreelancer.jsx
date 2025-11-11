@@ -1,6 +1,13 @@
+import { useCallback } from "react";
 import JoinUsFormLayout from "../business-components/join-us/JoinUsFormLayout";
+import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 
 const JoinFreelancer = () => {
+  const handleSubmit = useCallback(
+    (payload) => submitJoinUsLead("freelancer", payload),
+    []
+  );
+
   return (
     <JoinUsFormLayout
       title="Work with us as a Freelancer"
@@ -117,6 +124,8 @@ const JoinFreelancer = () => {
       ]}
       ctaLabel="Submit Freelancer Profile"
       disclaimer="Your details help us match you with the right project leads. We’ll be in touch when a brief aligns with your expertise."
+      onSubmit={handleSubmit}
+      successMessage="Thanks for sharing your portfolio! We’ll connect when a project matches your skills."
     />
   );
 };

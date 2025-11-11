@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import {
+  sanitizeUrl,
+  validateJoinUsForm,
+  safeString,
+} from "../../../../src/utils/registrationHelpers";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -20,6 +25,8 @@ const JoinUsFormLayout = ({
   formConfig,
   ctaLabel = "Submit",
   disclaimer,
+  onSubmit,
+  successMessage = "Thanks for reaching out! Our team will contact you soon.",
 }) => {
   const initialValues = useMemo(
     () =>
@@ -38,27 +45,51 @@ const JoinUsFormLayout = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    for (const field of formConfig) {
-      const value = formData[field.name];
-      if (field.required && String(value ?? "").trim().length === 0) {
-        toast.error(`Please enter ${field.label.toLowerCase()}.`, {
-          toastId: `join-us-${field.name}-error`,
-        });
-        return;
-      }
+    const issues = validateJoinUsForm(formConfig, formData);
+    if (issues.length > 0) {
+      toast.error(issues[0], { toastId: `join-us-error-${issues[0]}` });
+      return;
     }
 
+    const normalizedData = formConfig.reduce((acc, field) => {
+      const value = safeString(formData[field.name]);
+      if (!value) {
+        acc[field.name] = "";
+        return acc;
+      }
+      if (field.type === "url" || field.name.toLowerCase().includes("link")) {
+        acc[field.name] = sanitizeUrl(value);
+      } else {
+        acc[field.name] = value;
+      }
+      return acc;
+    }, {});
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      toast.success("Thanks for reaching out! Our team will contact you soon.", {
+    try {
+      if (onSubmit) {
+        await Promise.resolve(onSubmit(normalizedData));
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      toast.success(successMessage, {
         toastId: "join-us-success",
       });
       setFormData(initialValues);
+    } catch (error) {
+      const message =
+        (error && typeof error === "object" && "message" in error && error.message) ||
+        "We couldn't submit your details. Please try again.";
+      toast.error(message, {
+        toastId: "join-us-error-generic",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
   return (

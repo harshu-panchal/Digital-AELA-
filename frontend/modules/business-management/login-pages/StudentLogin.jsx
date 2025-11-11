@@ -4,6 +4,10 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  isValidEmail,
+  safeString,
+} from "../../../src/utils/registrationHelpers";
 
 const StudentLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -23,11 +27,24 @@ const StudentLogin = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const email = safeString(formData.email).toLowerCase();
+    const password = safeString(formData.password);
+
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password) {
+      toast.error("Please enter your password.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const authenticatedUser = await login({
-        email: formData.email,
-        password: formData.password,
+        email,
+        password,
         role: "student",
       });
       toast.success(
@@ -39,6 +56,7 @@ const StudentLogin = () => {
       );
       const destination = redirectTo || getRoleHome(authenticatedUser.role);
       navigate(destination, { replace: true });
+      setFormData({ email: "", password: "" });
     } catch (error) {
       toast.error(
         error.message || "We couldn't sign you in. Please try again."

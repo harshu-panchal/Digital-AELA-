@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const BusinessCollaboration = () => {
   const fields = [
@@ -99,6 +100,11 @@ const BusinessCollaboration = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("business-collaboration", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -119,6 +125,7 @@ const BusinessCollaboration = () => {
             submitLabel="Submit Collaboration Request"
             successMessage="Thank you! Our partnerships team will reach out with the next steps within one business day."
             disclaimer="We sign NDAs upon request. Your project details are kept confidential and viewed only by senior partnership managers."
+            onSubmit={handleSubmit}
           />
         </div>
 

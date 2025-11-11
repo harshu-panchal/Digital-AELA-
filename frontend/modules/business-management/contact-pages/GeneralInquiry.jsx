@@ -1,8 +1,9 @@
-// eslint-disable-next-line no-unused-vars
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const GeneralInquiry = () => {
   const fields = [
@@ -75,6 +76,11 @@ const GeneralInquiry = () => {
     },
   ];
 
+  const handleSubmit = useCallback(
+    (payload) => submitContactLead("general-inquiry", payload),
+    []
+  );
+
   return (
     <>
       <SEO
@@ -95,6 +101,7 @@ const GeneralInquiry = () => {
             submitLabel="Submit Enquiry"
             successMessage="Thanks for reaching out! A member of our support team will respond shortly."
             disclaimer="We respect your privacy. Your details will only be used to respond to this enquiry."
+            onSubmit={handleSubmit}
           />
         </div>
 

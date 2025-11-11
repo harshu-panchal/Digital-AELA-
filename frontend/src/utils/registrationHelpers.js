@@ -13,6 +13,12 @@ export const safeString = (value) => {
 export const isValidEmail = (email) =>
   /\S+@\S+\.\S+/.test(safeString(email).toLowerCase());
 
+export const isValidPhone = (phone) => {
+  const value = safeString(phone);
+  if (!value) return false;
+  return /^[+()\d\s-]{6,20}$/.test(value);
+};
+
 export const validatePasswordPair = (
   password,
   confirmPassword,
@@ -82,4 +88,89 @@ export const sanitizeUrl = (value) => {
     return cleaned;
   }
   return `https://${cleaned}`;
+};
+
+/**
+ * Validates Join Us form data against configuration. Returns an array of issues.
+ */
+export const validateJoinUsForm = (formConfig, data) => {
+  const issues = [];
+
+  formConfig.forEach((field) => {
+    const rawValue = data[field.name];
+    const value = safeString(rawValue);
+
+    if (field.required && !value) {
+      issues.push(`Please provide ${field.label.toLowerCase()}.`);
+      return;
+    }
+
+    if (!value) {
+      return;
+    }
+
+    if (field.type === "email" && !isValidEmail(value)) {
+      issues.push("Please enter a valid email address.");
+      return;
+    }
+
+    if (field.type === "url") {
+      const sanitized = sanitizeUrl(value);
+      if (!/^https?:\/\//i.test(sanitized)) {
+        issues.push(
+          "Please enter a valid URL starting with http:// or https://."
+        );
+      }
+    }
+  });
+
+  return issues;
+};
+
+export const validateContactForm = (fields, data) => {
+  const issues = [];
+
+  fields.forEach((field) => {
+    const { name, label, required = true, type = "text" } = field;
+    const value = safeString(data[name]);
+
+    if (required && !value) {
+      issues.push(`Please provide ${label.toLowerCase()}.`);
+      return;
+    }
+
+    if (!value) {
+      return;
+    }
+
+    if (type === "email" && !isValidEmail(value)) {
+      issues.push("Please enter a valid email address.");
+      return;
+    }
+
+    if (
+      (type === "tel" ||
+        name.toLowerCase().includes("phone") ||
+        name.toLowerCase().includes("contact")) &&
+      !isValidPhone(value)
+    ) {
+      issues.push("Please enter a valid contact number.");
+      return;
+    }
+
+    if (
+      type === "url" ||
+      name.toLowerCase().includes("link") ||
+      name.toLowerCase().includes("website")
+    ) {
+      const sanitized = sanitizeUrl(value);
+      if (!/^https?:\/\//i.test(sanitized)) {
+        issues.push(
+          "Please enter a valid URL starting with http:// or https://."
+        );
+      }
+    }
+  });
+
+  return issues;
 };

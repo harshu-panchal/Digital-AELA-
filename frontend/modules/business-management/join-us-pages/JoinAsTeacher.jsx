@@ -1,6 +1,13 @@
+import { useCallback } from "react";
 import JoinUsFormLayout from "../business-components/join-us/JoinUsFormLayout";
+import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 
 const JoinAsTeacher = () => {
+  const handleSubmit = useCallback(
+    (payload) => submitJoinUsLead("teacher", payload),
+    []
+  );
+
   return (
     <JoinUsFormLayout
       title="Teach with Digital AELA"
@@ -130,6 +137,8 @@ const JoinAsTeacher = () => {
       ]}
       ctaLabel="Apply as Teacher"
       disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."
+      onSubmit={handleSubmit}
+      successMessage="Application received! Our academic partnerships team will get in touch soon."
     />
   );
 };

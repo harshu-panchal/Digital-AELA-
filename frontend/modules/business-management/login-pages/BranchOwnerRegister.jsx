@@ -4,16 +4,25 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  MIN_PASSWORD_LENGTH,
+  isValidEmail,
+  validatePasswordPair,
+  safeString,
+  splitLocation,
+} from "../../../src/utils/registrationHelpers";
+
+const createInitialFormState = () => ({
+  fullName: "",
+  email: "",
+  phone: "",
+  region: "",
+  password: "",
+  confirmPassword: "",
+});
 
 const BranchOwnerRegister = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    region: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState(createInitialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { register: registerUser, getRoleHome } = useAuth();
@@ -31,22 +40,56 @@ const BranchOwnerRegister = () => {
       toast.error("Passwords do not match. Please confirm your password.");
       return;
     }
+    const trimmedName = safeString(formData.fullName);
+    const trimmedPhone = safeString(formData.phone);
+    const trimmedRegion = safeString(formData.region);
+    const email = safeString(formData.email).toLowerCase();
+    const password = safeString(formData.password);
+    const confirmPassword = safeString(formData.confirmPassword);
+
+    if (!trimmedName) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast.error("Please provide a valid email address.");
+      return;
+    }
+
+    const passwordError = validatePasswordPair(password, confirmPassword, MIN_PASSWORD_LENGTH);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
+    if (!trimmedPhone) {
+      toast.error("Please provide your contact number.");
+      return;
+    }
+
+    const { city, country } = splitLocation(trimmedRegion);
+    if (!country) {
+      toast.error("Please specify your region (city and/or country).");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const { email, password, confirmPassword, fullName, phone, region, ...rest } = formData;
-      void confirmPassword;
       const newUser = await registerUser({
         email,
         password,
         role: "branch-owner",
         profile: {
-          fullName,
-          phone,
-          region,
-          additionalDetails: rest,
+          fullName: trimmedName,
+          phone: trimmedPhone,
+          region: trimmedRegion,
+          city,
+          country,
         },
       });
       toast.success("Branch owner application received. Welcome aboard!");
+      setFormData(createInitialFormState());
       navigate(getRoleHome(newUser.role), { replace: true });
     } catch (error) {
       toast.error(error.message || "We couldn't submit your application. Please try again.");

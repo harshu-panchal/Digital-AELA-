@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { validateContactForm, sanitizeUrl, safeString } from "../../../../src/utils/registrationHelpers";
+import { toast } from "react-toastify";
 
 const ContactForm = ({
   fields,
   submitLabel = "Submit",
   successMessage = "Thank you! Our team will reach out shortly.",
   disclaimer,
+  onSubmit,
+  errorMessage = "We couldn't submit your request. Please try again.",
 }) => {
   const initialValues = useMemo(() => {
     return fields.reduce((acc, field) => {
@@ -27,17 +31,51 @@ const ContactForm = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
 
+    const issues = validateContactForm(fields, formData);
+    if (issues.length > 0) {
+      toast.error(issues[0], { toastId: `contact-form-error-${issues[0]}` });
+      return;
+    }
+
+    const normalizedData = fields.reduce((acc, field) => {
+      const rawValue = formData[field.name];
+      const value = safeString(rawValue);
+      if (!value) {
+        acc[field.name] = "";
+        return acc;
+      }
+
+      if (field.type === "url" || field.name.toLowerCase().includes("link") || field.name.toLowerCase().includes("website")) {
+        acc[field.name] = sanitizeUrl(value);
+      } else {
+        acc[field.name] = value;
+      }
+      return acc;
+    }, {});
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      if (onSubmit) {
+        await Promise.resolve(onSubmit(normalizedData));
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+
       setStatus("success");
       setFormData(initialValues);
       setTimeout(() => setStatus(null), 4000);
-    }, 1200);
+    } catch (error) {
+      const message =
+        (error && typeof error === "object" && "message" in error && error.message) ||
+        errorMessage;
+      toast.error(message, { toastId: "contact-form-error-generic" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
