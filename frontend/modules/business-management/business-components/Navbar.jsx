@@ -186,7 +186,7 @@ const Navbar = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-              className="relative z-60 border-b border-white/10 bg-white/10 px-3 py-2 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-4">
+              className="hidden md:block relative z-60 border-b border-white/10 bg-white/10 px-3 py-2 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-4">
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 text-xs text-slate-100/85 sm:flex-row sm:items-center sm:text-sm">
                   <a
