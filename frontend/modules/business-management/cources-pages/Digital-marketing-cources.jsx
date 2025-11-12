@@ -247,93 +247,79 @@ const DigitalMarketingCourses = () => {
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative min-h-[80vh] flex items-center justify-center pt-[120px] pb-20 md:pt-[140px] md:pb-32 overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 bg-black"></div>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
-
-        <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 text-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-            className="inline-block mb-6">
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative overflow-hidden bg-black pt-[120px] pb-20 md:pt-[140px] md:pb-28">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-32 left-[12%] h-104 w-104 rounded-full bg-[#D4AF37]/18 blur-[180px]" />
+          <div className="absolute bottom-[-25%] right-[18%] h-112 w-md rounded-full bg-[#6A8BFF]/12 blur-[200px]" />
+        </div>
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex-1 space-y-6 text-left">
             <motion.span
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-linear-to-r from-[#95928a] to-[#E5C158] text-black px-4 py-2 rounded-full text-sm font-semibold">
+              initial={{ y: -14, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               Digital Marketing Mastery
             </motion.span>
-          </motion.div>
-
-          {/* Main Heading */}
-          <motion.h1
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-            className="clamp-heading font-bold text-white mb-6 leading-tight font-display tracking-tight text-balance">
-            <motion.span
-              initial={{ y: 20, opacity: 0 }}
+            <motion.h1
+              initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              className="block">
+              transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
+              className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
               Master Digital Marketing
-            </motion.span>
-            <motion.span
-              initial={{ y: 20, opacity: 0 }}
+            </motion.h1>
+            <motion.h2
+              initial={{ y: 22, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25, ease: "easeOut" }}
-              className="block bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-transparent">
+              transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
+              className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               From Zero to Hero
-            </motion.span>
-          </motion.h1>
-
-          {/* Descriptive Paragraph */}
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.35, ease: "easeOut" }}
-            className="text-base sm:text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed text-balance">
-            Comprehensive digital marketing courses covering SEO, SMM, PPC,
-            Content Marketing, and more. Learn from industry experts and build
-            a successful online presence.
-          </motion.p>
-
-          {/* CTA Buttons */}
+            </motion.h2>
+            <motion.p
+              initial={{ y: 18, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+              className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
+              Comprehensive digital marketing courses covering SEO, SMM, PPC, Content Marketing, and more. Learn from industry experts and build a successful online presence.
+            </motion.p>
+            <motion.div
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+              className="flex flex-col gap-4 sm:flex-row">
+              <motion.a
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
+                Talk to a Mentor
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                href="#courses"
+              className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
+                Explore Modules
+              </motion.a>
+            </motion.div>
+          </div>
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <motion.a
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-8 py-4 rounded-lg font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
-              Enroll Now
-            </motion.a>
-            <motion.a
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              href="#courses"
-              className="bg-black text-white px-8 py-4 rounded-lg font-bold text-lg border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37] transition-all duration-200 shadow-lg hover:shadow-xl">
-              View Courses
-            </motion.a>
+            initial={{ opacity: 0, scale: 0.92, rotate: 2 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative mx-auto flex-1 max-w-[420px]">
+            <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-gradient-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/30 blur-2xl" />
+            <img
+              src="https://media.istockphoto.com/id/808098858/photo/digital-marketing-concept.webp?a=1&b=1&s=612x612&w=0&k=20&c=kTWoZfMrnLZfQajX17dCc_9tcMwsxszE0bEcH8Y-ipI="
+              alt="Digital marketing strategist analysing data"
+              className="relative z-10 w-full rounded-[32px] border border-white/10 object-cover shadow-[0_28px_60px_rgba(0,0,0,0.55)]"
+              loading="lazy"
+            />
           </motion.div>
         </div>
       </motion.section>
