@@ -1,11 +1,15 @@
-import React, { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   HiOutlineBriefcase,
   HiOutlinePlusCircle,
   HiOutlineFolderOpen,
   HiOutlineTrash,
+  HiOutlineArrowRight,
+  HiOutlineBookOpen,
+  HiOutlineNewspaper,
+  HiOutlineUserGroup,
 } from "react-icons/hi2";
 import PostGrid from "../components/PostGrid";
 import ProfileHeader from "../components/ProfileHeader";
@@ -15,6 +19,7 @@ import {
   CURRENT_RECRUITER_USERNAME,
   highlightTags,
 } from "../data/posts";
+import { getRecruiterDashboard } from "../../../src/services/recruiterDashboard";
 
 const RecruiterDashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +35,36 @@ const RecruiterDashboard = () => {
     closeComposer,
     composerState,
   } = useExploreJobs();
+  const [dashboardData, setDashboardData] = useState(() => getRecruiterDashboard());
+
+  useEffect(() => {
+    setDashboardData(getRecruiterDashboard());
+    const handleStorage = (event) => {
+      if (event.key === "aela.recruiter.dashboard") {
+        setDashboardData(getRecruiterDashboard());
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const {
+    actionShortcuts = [],
+    applicantPipeline = [],
+    talentSpotlight = [],
+    ebookShelf = [],
+    blogDrafts = [],
+  } = dashboardData || {};
+
+  const shortcutIcons = useMemo(
+    () => ({
+      briefcase: HiOutlineBriefcase,
+      blog: HiOutlineNewspaper,
+      users: HiOutlineUserGroup,
+      book: HiOutlineBookOpen,
+    }),
+    []
+  );
 
   const stats = useMemo(() => {
     const totalViews = recruiterPosts.reduce(
@@ -64,6 +99,21 @@ const RecruiterDashboard = () => {
 
   const composerVisible = composerState.mode === "job";
 
+  const handleShortcutClick = (shortcut) => {
+    if (shortcut.to === "composer:job") {
+      openComposer("job");
+      return;
+    }
+    if (shortcut.to.startsWith("#")) {
+      const target = document.querySelector(shortcut.to);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+    navigate(shortcut.to);
+  };
+
   return (
     <div className="space-y-10">
       <ProfileHeader
@@ -85,6 +135,33 @@ const RecruiterDashboard = () => {
         }
         metrics={stats}
       />
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {actionShortcuts.map((shortcut) => {
+          const Icon =
+            shortcutIcons[shortcut.icon] ?? HiOutlineBriefcase;
+          return (
+            <motion.button
+              key={shortcut.id}
+              onClick={() => handleShortcutClick(shortcut)}
+              type="button"
+              whileHover={{ y: -4, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className={`group h-full rounded-3xl border bg-[#050505]/95 p-5 text-left shadow-[0_24px_80px_rgba(6,9,18,0.4)] transition ${shortcut.tone}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-base font-semibold text-white">{shortcut.title}</p>
+                  <p className="mt-2 text-xs text-slate-200/75">{shortcut.description}</p>
+                </div>
+                <Icon className="h-6 w-6 opacity-80" />
+              </div>
+              <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:text-white">
+                Open <HiOutlineArrowRight className="h-4 w-4" />
+              </span>
+            </motion.button>
+          );
+        })}
+      </section>
 
       <section className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -161,6 +238,157 @@ const RecruiterDashboard = () => {
         </div>
       </section>
 
+      <section id="pipeline" className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-8">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+              Applicant Pipeline
+            </p>
+            <h2 className="text-xl font-semibold text-white">
+              Track candidates across each role
+            </h2>
+          </div>
+          <Link
+            to="/explore-jobs"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-200 transition hover:border-white/20 hover:text-white">
+            Open job board
+          </Link>
+        </header>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm text-slate-200">
+            <thead className="text-xs uppercase tracking-[0.25em] text-slate-400">
+              <tr className="border-b border-white/10">
+                <th className="px-3 py-3 font-semibold">Role</th>
+                <th className="px-3 py-3 font-semibold">Candidate</th>
+                <th className="px-3 py-3 font-semibold">Status</th>
+                <th className="px-3 py-3 font-semibold">Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applicantPipeline.flatMap((stage) =>
+                stage.stages.map((applicant) => (
+                  <tr key={`${stage.jobId}-${applicant.id}`} className="border-b border-white/5 last:border-b-0">
+                    <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
+                    <td className="px-3 py-3 text-xs text-slate-200">
+                      <Link
+                        to={applicant.profileUrl}
+                        className="font-semibold text-white hover:text-sky-200">
+                        {applicant.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-3 text-xs">
+                      <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-slate-200">
+                        {applicant.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-slate-400/75">
+                      {applicant.submittedAt}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="grid gap-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:grid-cols-2 sm:p-8">
+        <div className="space-y-3">
+          <header className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+                Talent Spotlight
+              </p>
+              <h2 className="text-lg font-semibold text-white">
+                Recommended student profiles
+              </h2>
+            </div>
+          </header>
+          <div className="space-y-3">
+            {talentSpotlight.map((talent) => (
+              <Link
+                key={talent.id}
+                to={talent.profileUrl}
+                className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                <div>
+                  <p className="font-semibold text-white">{talent.name}</p>
+                  <p className="text-xs text-slate-400/80">{talent.headline}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">
+                    {talent.skills.map((skill) => (
+                      <span key={skill} className="rounded-full border border-white/10 px-2 py-1">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-6">
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-black/70 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+                  Hiring Playbooks
+                </p>
+                <h3 className="text-lg font-semibold text-white">Recommended e-books</h3>
+              </div>
+              <Link
+                to="/free-library"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
+                View library
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {ebookShelf.map((book) => (
+                <Link
+                  key={book.id}
+                  to={book.url}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
+                  <div>
+                    <p className="font-semibold text-white">{book.title}</p>
+                    <p className="text-slate-400/80">{book.pages} pages</p>
+                  </div>
+                  <HiOutlineBookOpen className="h-5 w-5 text-sky-200" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-black/70 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+                  Content Studio
+                </p>
+                <h3 className="text-lg font-semibold text-white">Blogs in progress</h3>
+              </div>
+              <Link
+                to="/my-blogs"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
+                View drafts
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {blogDrafts.map((draft) => (
+                <Link
+                  key={draft.id}
+                  to={draft.url}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
+                  <div>
+                    <p className="font-semibold text-white">{draft.title}</p>
+                    <p className="text-slate-400/80">{draft.status} · {draft.updatedAt}</p>
+                  </div>
+                  <HiOutlineNewspaper className="h-5 w-5 text-sky-200" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <AnimatePresence>
         {composerVisible && (
           <motion.div
@@ -204,5 +432,4 @@ const RecruiterDashboard = () => {
 };
 
 export default RecruiterDashboard;
-
 

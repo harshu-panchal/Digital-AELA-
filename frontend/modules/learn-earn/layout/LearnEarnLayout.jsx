@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
@@ -73,6 +73,21 @@ const LearnEarnLayout = () => {
         .length,
     [notifications]
   );
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const renderNavLinks = (isMobile = false) => (
     <nav className="space-y-1">

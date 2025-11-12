@@ -1,8 +1,21 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { HiOutlineBookOpen, HiOutlineCalendarDays, HiOutlineTrophy, HiOutlineSparkles } from "react-icons/hi2";
+import {
+  HiOutlineAcademicCap,
+  HiOutlineArrowRight,
+  HiOutlineBookOpen,
+  HiOutlineBriefcase,
+  HiOutlineCalendarDays,
+  HiOutlineGift,
+  HiOutlineNewspaper,
+  HiOutlineSparkles,
+  HiOutlineShoppingBag,
+  HiOutlineUserGroup,
+} from "react-icons/hi2";
+import { Link } from "react-router-dom";
 import SEO from "../../src/components/SEO";
 import { useUser } from "../../src/contexts/UserContext";
+import { getStudentDashboard } from "../../src/services/studentDashboard";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -25,132 +38,62 @@ const cardVariants = {
 const StudentDashboard = () => {
   const { profile, notifications, followers } = useUser();
 
-  const { journeyStats, ongoingCourses, learnEarnProgress, nextActions, communityHighlights } = useMemo(() => {
-    const stats = [
-      {
-        id: "learningHours",
-        label: "Learning Hours",
-        value: "124.5",
-        delta: "+12.4 hours this month",
-      },
-      {
-        id: "activeCourses",
-        label: "Active Courses",
-        value: "4",
-        delta: "2 live cohorts this week",
-      },
-      {
-        id: "aelaCoins",
-        label: "AELA Coins",
-        value: `${profile?.coins?.toLocaleString() ?? 0}`,
-        delta: "+340 coins pending redemption",
-      },
-      {
-        id: "speakingScore",
-        label: "Speaking Score",
-        value: "8.4 / 10",
-        delta: "Consistent streak · Keep it up!",
-      },
-    ];
+  const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
 
-    const courses = [
-      {
-        title: "Public Speaking Accelerator",
-        mentor: "Imran Khan",
-        progress: 68,
-        nextSession: "Tomorrow · 19:00 GST",
-        access: "Continuing cohort",
-      },
-      {
-        title: "IELTS Band 8 Mastery",
-        mentor: "Priya Sharma",
-        progress: 42,
-        nextSession: "Friday · 17:30 GST",
-        access: "Live session",
-      },
-      {
-        title: "Corporate Storytelling Bootcamp",
-        mentor: "Omar Al Farsi",
-        progress: 15,
-        nextSession: "Saturday · 12:00 GST",
-        access: "Self-paced module unlocked",
-      },
-    ];
-
-    const learnEarn = {
-      streak: 7,
-      badges: [
-        { label: "Daily Speaker", description: "Completed 7-day speaking streak", icon: "🔥" },
-        { label: "Quiz Champion", description: "Top 5% in Vocabulary Blitz", icon: "🏆" },
-        { label: "Community Mentor", description: "Helped 12 peers", icon: "🤝" },
-      ],
-      leaderboardPosition: 12,
-      coinsToRedeem: 520,
+  useEffect(() => {
+    setDashboardData(getStudentDashboard());
+    const handleStorage = (event) => {
+      if (event.key === "aela.student.dashboard") {
+        setDashboardData(getStudentDashboard());
+      }
     };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
-    const actions = [
-      {
-        title: "Resume IELTS Band 8 Mastery",
-        description: "Next lesson: Writing Task 2 · Live at 17:30 GST",
-        cta: "Join live session",
-      },
-      {
-        title: "Complete confidence challenge",
-        description: "Earn +120 coins · 4 hours left",
-        cta: "Attempt challenge",
-      },
-      {
-        title: "Redeem AELA coins for discount",
-        description: "520 coins available · Save AED 150 on next course",
-        cta: "Open wallet",
-      },
-      {
-        title: "Book mentorship slot",
-        description: "1:1 with Imran Khan · Sunday 20:00 GST",
-        cta: "Schedule session",
-      },
-    ];
+  const notificationsCount = useMemo(
+    () => notifications.filter((notification) => notification.type !== "archived").length,
+    [notifications]
+  );
 
-    const highlights = {
-      communityFeed: [
-        {
-          title: "Live debate: AI in education",
-          time: "Today · 21:00 GST",
-          participants: "Hosted by Fatima Hassan · 680 registered",
-        },
-        {
-          title: "New Speaking Circle",
-          time: "Tomorrow · 19:30 GST",
-          participants: "Topic: Elevator pitches · Hosted by Mohammed Ali",
-        },
-        {
-          title: "Peer feedback session",
-          time: "Friday · 18:00 GST",
-          participants: "IELTS Group C · Facilitated by Sara Malik",
-        },
-      ],
-      recommendedCourses: [
-        {
-          title: "Sales Presentation Lab",
-          mentor: "David Mathews",
-          reason: "Boosts speaking style and persuasion — matches your goals",
-        },
-        {
-          title: "Digital Persona Mastery",
-          mentor: "Lina Joseph",
-          reason: "Helps you craft standout LinkedIn profiles for placements",
-        },
-      ],
-    };
+  const {
+    journeyStats = [],
+    ongoingCourses = [],
+    learnEarnProgress = {},
+    actionShortcuts = [],
+    marketplaceHighlights = [],
+    quizChallenges = [],
+    ebookShelf = [],
+    jobsBoard = [],
+    blogFeed = [],
+    studentProfiles = [],
+    teacherSpotlight = [],
+    recruiterSpotlight = [],
+  } = dashboardData || {};
 
-    return {
-      journeyStats: stats,
-      ongoingCourses: courses,
-      learnEarnProgress: learnEarn,
-      nextActions: actions,
-      communityHighlights: highlights,
-    };
-  }, [profile?.coins]);
+  const streak = learnEarnProgress?.streak ?? 0;
+  const badges = learnEarnProgress?.badges ?? [];
+  const coinsToRedeem = learnEarnProgress?.coinsToRedeem ?? 0;
+  const leaderboardPosition = learnEarnProgress?.leaderboardPosition ?? 0;
+  const redeemRoute = learnEarnProgress?.redeemRoute ?? "/learn-earn/wallet";
+
+  const shortcutIcons = useMemo(
+    () => ({
+      shopping: HiOutlineShoppingBag,
+      gift: HiOutlineGift,
+      sparkles: HiOutlineSparkles,
+      blog: HiOutlineNewspaper,
+    }),
+    []
+  );
+
+  if (!dashboardData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#03040B] text-white">
+        <p className="text-sm text-slate-300/80">Loading your dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#03040B] text-white">
@@ -185,7 +128,7 @@ const StudentDashboard = () => {
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
                   Consistency streak ·{" "}
-                  <span className="font-semibold text-sky-200">{learnEarnProgress.streak} days</span>
+                  <span className="font-semibold text-sky-200">{streak} days</span>
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
                   Upcoming mentor call · <span className="font-semibold text-sky-200">Sunday</span>
@@ -213,6 +156,34 @@ const StudentDashboard = () => {
             ))}
           </motion.section>
 
+          <motion.section
+            variants={sectionVariants}
+            initial="hidden"
+            animate="show"
+            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {actionShortcuts.map((shortcut) => {
+              const Icon = shortcutIcons[shortcut.icon] ?? HiOutlineSparkles;
+              return (
+                <motion.div key={shortcut.id} variants={cardVariants}>
+                  <Link
+                    to={shortcut.to}
+                    className={`group block rounded-3xl border bg-[#060A17]/95 p-5 shadow-[0_24px_80px_rgba(20,30,60,0.35)] transition ${shortcut.tone}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-white">{shortcut.title}</p>
+                        <p className="mt-2 text-xs text-slate-200/80">{shortcut.description}</p>
+                      </div>
+                      <Icon className="h-6 w-6 opacity-80" />
+                    </div>
+                    <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:text-white">
+                      Go to action <HiOutlineArrowRight className="h-4 w-4" />
+                    </span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </motion.section>
+
           <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <motion.div
               variants={cardVariants}
@@ -221,15 +192,18 @@ const StudentDashboard = () => {
               className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">In-progress courses</h2>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:border-sky-300/70 hover:text-sky-100">
+                <Link
+                  to="/learn-earn/courses"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
                   View all
-                </button>
+                </Link>
               </header>
-            <div className="space-y-3">
+              <div className="space-y-3">
                 {ongoingCourses.map((course) => (
-                  <div key={course.title} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+                  <Link
+                    key={course.title}
+                    to={course.route}
+                    className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                       <div className="space-y-1">
                         <p className="font-semibold text-white">{course.title}</p>
@@ -257,7 +231,7 @@ const StudentDashboard = () => {
                         className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
                       />
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </motion.div>
@@ -269,20 +243,20 @@ const StudentDashboard = () => {
               className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Learn & Earn</h2>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:border-sky-300/70 hover:text-sky-100">
-                  View wallet
-                </button>
+                <Link
+                  to={redeemRoute}
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  Redeem now
+                </Link>
               </header>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
                 <p className="font-semibold text-white">Current streak</p>
                 <p className="mt-1 text-xs text-slate-300/80">
-                  {learnEarnProgress.streak} days · unlock bonus at day 10
+                  {streak} days · unlock bonus at day 10
                 </p>
               </div>
               <div className="space-y-3">
-                {learnEarnProgress.badges.map((badge) => (
+                {badges.map((badge) => (
                   <div key={badge.label} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
                     <span className="text-xl">{badge.icon}</span>
                     <div>
@@ -293,9 +267,9 @@ const StudentDashboard = () => {
                 ))}
               </div>
               <div className="rounded-2xl border border-[#0ea5e9]/40 bg-[#0ea5e9]/10 px-4 py-3 text-xs text-sky-100">
-                Leaderboard position · <span className="font-semibold text-white">#{learnEarnProgress.leaderboardPosition}</span>
+                Leaderboard position · <span className="font-semibold text-white">#{leaderboardPosition}</span>
                 <br />
-                Coins available · <span className="font-semibold text-white">{learnEarnProgress.coinsToRedeem}</span>
+                Coins available · <span className="font-semibold text-white">{coinsToRedeem}</span>
               </div>
             </motion.div>
           </section>
@@ -306,23 +280,26 @@ const StudentDashboard = () => {
             animate="show"
             className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
             <header className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Next best actions</h2>
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:border-sky-300/70 hover:text-sky-100">
-                View planner
-              </button>
+              <h2 className="text-lg font-semibold text-white">Play & earn quizzes</h2>
+              <Link
+                to="/learn-earn/activities"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                Explore all
+              </Link>
             </header>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {nextActions.map((action) => (
-                <div key={action.title} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                  <p className="text-base font-semibold text-white">{action.title}</p>
-                  <p className="mt-1 text-xs text-slate-400/80">{action.description}</p>
-                  <button
-                    type="button"
-                    className="mt-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-300 hover:text-white">
-                    {action.cta} →
-                  </button>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {quizChallenges.map((quiz) => (
+                <div
+                  key={quiz.id}
+                  className="rounded-2xl border border-sky-400/30 bg-sky-500/10 px-4 py-4 text-sm text-sky-100">
+                  <p className="text-base font-semibold text-white">{quiz.title}</p>
+                  <p className="mt-1 text-xs text-slate-200/80">{quiz.reward}</p>
+                  <p className="text-[11px] text-slate-200/70">{quiz.closing}</p>
+                  <Link
+                    to={quiz.playRoute}
+                    className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white hover:text-sky-100">
+                    Play now <HiOutlineArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -333,42 +310,204 @@ const StudentDashboard = () => {
             initial="hidden"
             animate="show"
             className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <header className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">Community & Recommendations</h2>
-                <p className="text-xs text-slate-400">Stay connected and keep improving</p>
+                <h2 className="text-lg font-semibold text-white">Marketplace picks</h2>
+                <p className="text-xs text-slate-400">
+                  Buy courses, books, or bundles curated for your journey.
+                </p>
               </div>
+              <Link
+                to="/learn-earn/marketplace"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                Go to marketplace
+              </Link>
             </header>
-
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-              <div className="space-y-3">
-                {communityHighlights.communityFeed.map((item, index) => (
-                  <div key={`${item.title}-${index}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <p className="text-xs text-slate-400/80">{item.time}</p>
-                    <p className="mt-1 text-xs text-slate-300/80">{item.participants}</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {marketplaceHighlights.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.to}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/50">
+                  <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-slate-400">
+                    <span>{item.type}</span>
+                    <span className="text-sky-200">{item.tag}</span>
                   </div>
+                  <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
+                  <p className="text-xs text-slate-300/80">Mentor · {item.mentor}</p>
+                  <p className="mt-3 text-sm font-semibold text-sky-100">{item.price}</p>
+                  <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-300">
+                    View offer <HiOutlineArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Library picks</h2>
+                <Link
+                  to="/free-library"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  View library
+                </Link>
+              </header>
+              <div className="space-y-3">
+                {ebookShelf.map((book) => (
+                  <Link
+                    key={book.id}
+                    to={book.to}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                    <div>
+                      <p className="font-semibold text-white">{book.title}</p>
+                      <p className="text-xs text-slate-400/80">{book.pages} pages</p>
+                    </div>
+                    <HiOutlineBookOpen className="h-6 w-6 text-sky-200" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Latest from the community</h2>
+                <Link
+                  to="/blogs"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  Explore blogs
+                </Link>
+              </header>
+              <div className="space-y-3">
+                {blogFeed.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={post.to}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{post.title}</p>
+                      <p className="text-slate-400/80">
+                        {post.author} · {post.time}
+                      </p>
+                    </div>
+                    <HiOutlineArrowRight className="h-5 w-5 text-sky-200" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Job matches for you</h2>
+              <Link
+                to="/explore-jobs"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all jobs
+              </Link>
+            </header>
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-slate-200">
+                <thead className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                  <tr className="border-b border-white/10">
+                    <th className="px-3 py-3 font-semibold">Role</th>
+                    <th className="px-3 py-3 font-semibold">Company</th>
+                    <th className="px-3 py-3 font-semibold">Type</th>
+                    <th className="px-3 py-3 font-semibold">Posted</th>
+                    <th className="px-3 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobsBoard.map((job) => (
+                    <tr key={job.id} className="border-b border-white/5 last:border-b-0">
+                      <td className="px-3 py-3 font-semibold text-white">{job.title}</td>
+                      <td className="px-3 py-3 text-xs text-slate-300/90">{job.company}</td>
+                      <td className="px-3 py-3 text-xs text-slate-300/90">{job.type}</td>
+                      <td className="px-3 py-3 text-xs text-slate-400/80">{job.posted}</td>
+                      <td className="px-3 py-3 text-xs">
+                        <Link
+                          to={job.to}
+                          className="inline-flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                          Apply
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+            <div className="space-y-3 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Discover fellow students</h2>
+                <Link
+                  to="/community/students"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  View community
+                </Link>
+              </header>
+              {studentProfiles.map((student) => (
+                <Link
+                  key={student.id}
+                  to={student.to}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                  <div>
+                    <p className="font-semibold text-white">{student.name}</p>
+                    <p className="text-xs text-slate-400/80">{student.focus}</p>
+                  </div>
+                  <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
+                </Link>
+              ))}
+            </div>
+            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header>
+                <h2 className="text-lg font-semibold text-white">Mentors & recruiters</h2>
+                <p className="text-xs text-slate-400">
+                  Connect with teachers for guidance and recruiters for roles.
+                </p>
+              </header>
+              <div className="space-y-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
+                {teacherSpotlight.map((teacher) => (
+                  <Link
+                    key={teacher.id}
+                    to={teacher.to}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                    <div>
+                      <p className="font-semibold text-white">{teacher.name}</p>
+                      <p className="text-xs text-slate-400/80">{teacher.expertise}</p>
+                    </div>
+                    <HiOutlineAcademicCap className="h-5 w-5 text-sky-200" />
+                  </Link>
                 ))}
               </div>
               <div className="space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-[#0ea5e9]/10 px-4 py-3 text-sm text-sky-100">
-                  <HiOutlineSparkles className="mb-2 text-sky-200" />
-                  <p className="text-base font-semibold text-white">Recommended for you</p>
-                  <p className="mt-1 text-xs text-slate-200/70">
-                    Based on your learning goals, we handpicked these programmes.
-                  </p>
-                </div>
-                {communityHighlights.recommendedCourses.map((course) => (
-                  <div key={course.title} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-                    <p className="text-sm font-semibold text-white">{course.title}</p>
-                    <p className="text-xs text-slate-400/80">Mentor · {course.mentor}</p>
-                    <p className="mt-1 text-xs text-slate-300/80">{course.reason}</p>
-                    <button
-                      type="button"
-                      className="mt-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-300 hover:text-white">
-                      View details →
-                    </button>
-                  </div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
+                {recruiterSpotlight.map((recruiter) => (
+                  <Link
+                    key={recruiter.id}
+                    to={recruiter.to}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                    <div>
+                      <p className="font-semibold text-white">{recruiter.name}</p>
+                      <p className="text-xs text-slate-400/80">{recruiter.roles}</p>
+                    </div>
+                    <HiOutlineBriefcase className="h-5 w-5 text-sky-200" />
+                  </Link>
                 ))}
               </div>
             </div>
