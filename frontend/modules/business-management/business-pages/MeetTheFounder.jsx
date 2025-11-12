@@ -62,32 +62,13 @@ const MeetTheFounder = () => {
       {/* Founder Section */}
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
-            {/* Left Side - Founder Image */}
+          <div className="grid grid-cols-1 items-center gap-8 md:gap-12 lg:grid-cols-2">
+            {/* Left Side - Text Content */}
             <motion.div
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex justify-center lg:justify-start order-2 lg:order-1">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="relative">
-                <img
-                  src={founderImage}
-                  alt="Imran Khan - Founder of Digital AELA, Educator, Author, and Entrepreneur"
-                  className="w-full max-w-md h-auto rounded-2xl object-cover"
-                  loading="eager"
-                />
-              </motion.div>
-            </motion.div>
-
-            {/* Right Side - Text Content */}
-            <motion.div
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-              className="text-center lg:text-left order-1 lg:order-2">
+              className="order-2 text-center lg:order-1 lg:text-left">
               <motion.h2
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -108,6 +89,24 @@ const MeetTheFounder = () => {
                 building a platform that does not just promise education but delivers
                 results in careers and earnings.
               </motion.p>
+            </motion.div>
+            {/* Right Side - Founder Image */}
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="order-1 flex justify-center lg:order-2 lg:justify-end">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="relative">
+                <img
+                  src={founderImage}
+                  alt="Imran Khan - Founder of Digital AELA, Educator, Author, and Entrepreneur"
+                  className="h-auto w-full max-w-md rounded-2xl object-cover"
+                  loading="eager"
+                />
+              </motion.div>
             </motion.div>
           </div>
         </div>

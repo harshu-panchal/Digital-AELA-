@@ -88,7 +88,7 @@ const Navbar = () => {
         { label: "Our Story", path: "/about/our-story" },
         { label: "Mission & Vision", path: "/about/mission-vision" },
         { label: "Meet the Founder", path: "/about/founder" },
-        { label: "Student Success Stories", path: "/about/success-stories" },
+        { label: "Learner's Success Stories", path: "/about/success-stories" },
       ],
     },
     {
@@ -186,60 +186,60 @@ const Navbar = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-              className="hidden md:block relative z-60 border-b border-white/10 bg-white/10 px-3 py-2 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-4">
+              className="hidden md:block relative z-60 border-b border-white/10 bg-white/10 px-1.5 py-0.5 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-2.5">
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 text-xs text-slate-100/85 sm:flex-row sm:items-center sm:text-sm">
                   <a
                     href="mailto:info@digitalaela.com"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
                     <FaEnvelope className="h-3.5 w-3.5" />
                     info@digitalaela.com
                   </a>
                   <span className="hidden h-4 w-px bg-white/15 sm:block" />
                   <a
                     href="tel:+971508185690"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
                     0508185690
                   </a>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
-                  <div className="flex items-center gap-3 text-[#F5D26A]">
+                  <div className="flex items-center gap-2 text-[#F5D26A]">
                     <a
                       href="https://www.facebook.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
-                      <FaFacebookF className="h-4 w-4" />
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      <FaFacebookF className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://wa.me/971508185690"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#25D366]/60 hover:bg-[#25D366]/10 hover:text-[#25D366]">
-                      <FaWhatsapp className="h-4 w-4" />
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#25D366]/60 hover:bg-[#25D366]/10 hover:text-[#25D366]">
+                      <FaWhatsapp className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.instagram.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
-                      <FaInstagram className="h-4 w-4" />
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      <FaInstagram className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.linkedin.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
-                      <FaLinkedinIn className="h-4 w-4" />
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      <FaLinkedinIn className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.youtube.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
-                      <FaYoutube className="h-4 w-4" />
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      <FaYoutube className="h-3.5 w-3.5" />
                     </a>
                   </div>
 
@@ -263,7 +263,7 @@ const Navbar = () => {
                       onClick={() =>
                         setLanguageDropdownOpen(!languageDropdownOpen)
                       }
-                      className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[#F5D26A] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] transition duration-300 hover:border-[#F5D26A]/40 hover:bg-white/15 hover:text-[#FFE28A]">
+                      className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2 py-1.5 text-[#F5D26A] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] transition duration-300 hover:border-[#F5D26A]/40 hover:bg-white/15 hover:text-[#FFE28A]">
                       <svg
                         className="h-4 w-4"
                         fill="none"
@@ -380,10 +380,10 @@ const Navbar = () => {
             ease: [0.25, 0.1, 0.25, 1],
             delay: 0.05,
           }}
-          className="relative overflow-visible border-b border-white/10 bg-white/10 px-0 py-0 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-4 sm:py-0 min-h-[48px]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(226,232,255,0.35),transparent_55%)] opacity-70" />
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-12 -translate-y-1/2 rounded-[48px] border border-white/15 bg-white/5 blur-3xl" />
-          <div className="layout-container relative z-10 flex items-center justify-between gap-4">
+          className="relative overflow-visible border-b border-white/10 bg-white/10 px-0 py-0 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-2.5 min-h-[24px] -mt-4">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(226,232,255,0.35),transparent_55%)] opacity-60" />
+          <div className="pointer-events-none absolute inset-x-3 top-1/2 h-6 -translate-y-1/2 rounded-[36px] border border-white/15 bg-white/5 blur-2xl" />
+          <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-0">
             {/* Brand Name - Left Side */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -395,7 +395,7 @@ const Navbar = () => {
               }}>
               <Link
                 to="/"
-                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block translate-y-4 sm:translate-y-6 shrink-0">
+                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block translate-y-2 sm:translate-y-4 shrink-0">
                 <motion.span
                   whileHover={{ scale: 1.08, rotate: [0, -3, 3, -3, 0] }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -415,7 +415,7 @@ const Navbar = () => {
             </motion.div>
 
             {/* Navigation Links - Right Side */}
-            <div className="hidden lg:flex flex-1 items-center justify-center gap-6">
+            <div className="hidden lg:flex flex-1 items-center justify-center gap-5">
               {navItems.map((item, index) => (
                 <div
                   key={item.label}

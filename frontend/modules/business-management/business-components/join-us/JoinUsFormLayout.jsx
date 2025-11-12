@@ -9,12 +9,20 @@ import {
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
+  },
 };
 
 const cardVariants = {
   hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] },
+  },
 };
 
 const JoinUsFormLayout = ({
@@ -82,7 +90,10 @@ const JoinUsFormLayout = ({
       setFormData(initialValues);
     } catch (error) {
       const message =
-        (error && typeof error === "object" && "message" in error && error.message) ||
+        (error &&
+          typeof error === "object" &&
+          "message" in error &&
+          error.message) ||
         "We couldn't submit your details. Please try again.";
       toast.error(message, {
         toastId: "join-us-error-generic",
@@ -121,11 +132,18 @@ const JoinUsFormLayout = ({
           className="relative rounded-3xl border border-white/10 bg-white/8 p-6 shadow-[0_24px_80px_rgba(8,11,20,0.55)] backdrop-blur-3xl supports-[backdrop-filter]:bg-white/12 sm:p-8">
           <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/5" />
           <div className="relative">
-            <h1 className="text-2xl font-semibold text-white sm:text-3xl">{title}</h1>
-            <p className="mt-2 text-sm text-slate-300/90 sm:text-base">{subtitle}</p>
+            <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mt-2 text-sm text-slate-300/90 sm:text-base">
+              {subtitle}
+            </p>
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
               {formConfig.map((field) => {
+                const baseClasses =
+                  "w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 backdrop-blur supports-[backdrop-filter]:bg-white/15";
+
                 const commonProps = {
                   id: field.name,
                   name: field.name,
@@ -133,15 +151,21 @@ const JoinUsFormLayout = ({
                   onChange: handleChange,
                   required: field.required,
                   placeholder: field.placeholder,
-                  className:
-                    "w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 backdrop-blur supports-[backdrop-filter]:bg-white/15",
+                  className: `${baseClasses} text-white`,
                 };
 
                 return (
-                  <label key={field.name} htmlFor={field.name} className="block space-y-2">
-                    <span className="text-sm font-semibold text-slate-100">{field.label}</span>
+                  <label
+                    key={field.name}
+                    htmlFor={field.name}
+                    className="block space-y-2">
+                    <span className="text-sm font-semibold text-slate-100">
+                      {field.label}
+                    </span>
                     {field.type === "select" ? (
-                      <select {...commonProps}>
+                      <select
+                        {...commonProps}
+                        className={`${baseClasses} text-black`}>
                         <option value="">Select an option</option>
                         {(field.options ?? []).map((option) => (
                           <option key={option} value={option}>
@@ -159,7 +183,9 @@ const JoinUsFormLayout = ({
                       <input {...commonProps} type={field.type ?? "text"} />
                     )}
                     {field.helperText && (
-                      <span className="block text-xs text-slate-400">{field.helperText}</span>
+                      <span className="block text-xs text-slate-400">
+                        {field.helperText}
+                      </span>
                     )}
                   </label>
                 );
@@ -175,9 +201,7 @@ const JoinUsFormLayout = ({
               </motion.button>
 
               {disclaimer && (
-                <p className="text-xs text-slate-400/80">
-                  {disclaimer}
-                </p>
+                <p className="text-xs text-slate-400/80">{disclaimer}</p>
               )}
             </form>
           </div>
@@ -188,4 +212,3 @@ const JoinUsFormLayout = ({
 };
 
 export default JoinUsFormLayout;
-

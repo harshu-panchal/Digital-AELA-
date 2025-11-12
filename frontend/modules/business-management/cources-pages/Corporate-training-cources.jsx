@@ -264,7 +264,10 @@ const CorporateTrainingCourses = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
-              Transform your workforce with professional English training programs including Public Speaking, Communication & Accent Training, Leadership Skills, and Host/Anchor Training. Available across South Asia and Gulf regions.
+              Transform your workforce with professional English training
+              programs including Public Speaking, Communication & Accent
+              Training, Leadership Skills, and Host/Anchor Training. Available
+              across South Asia and Gulf regions.
             </motion.p>
             <motion.div
               initial={{ y: 16, opacity: 0 }}
@@ -278,7 +281,7 @@ const CorporateTrainingCourses = () => {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
+                className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
                 Request a Demo
               </motion.a>
               <motion.a
@@ -286,7 +289,7 @@ const CorporateTrainingCourses = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 href="#programs"
-              className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
+                className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
                 View Corporate Programs
               </motion.a>
             </motion.div>
@@ -304,6 +307,157 @@ const CorporateTrainingCourses = () => {
               loading="lazy"
             />
           </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Training Programs Section */}
+      <motion.section
+        id="programs"
+        initial={{ opacity: 1 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="py-20 bg-black">
+        <div className="layout-container">
+          <motion.div
+            initial={{ y: 0, opacity: 1 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
+              Our Training <span className="text-[#D4AF37]">Programs</span>
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Professional training programs in Public Speaking, Communication &
+              Accent Training, Leadership Skills, and Host/Anchor Training for
+              teams across South Asia and Gulf regions
+            </p>
+          </motion.div>
+
+          {/* Programs Grid */}
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {trainingPrograms
+              .filter((program) => !program.isCustom)
+              .map((program, index) => {
+                const buyLink = program.buyLink || whatsappUrl;
+
+                return (
+                  <motion.div
+                    key={program.id}
+                    initial={{ y: 40, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: index * 0.05,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                    whileHover={{ y: -6 }}
+                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
+                    <div className="h-40 w-full overflow-hidden">
+                      <img
+                        src={program.image}
+                        alt={program.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                      {(program.title === "Interview Training Course" ||
+                        program.title ===
+                          "Interview Preparation (HR & Technical)") && (
+                        <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                          Trending
+                        </span>
+                      )}
+                      <div>
+                        <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                          {program.title}
+                        </h3>
+                        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                          {program.description}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-[#D4AF37]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {program.duration}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-[#D4AF37]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"
+                            />
+                          </svg>
+                          {program.format}
+                        </span>
+                      </div>
+
+                      <div className="border-t border-[#D4AF37]/15 pt-4">
+                        <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
+                          Key Highlights
+                        </p>
+                        <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                          {program.features.map((feature) => (
+                            <li
+                              key={feature}
+                              className="flex items-center gap-2">
+                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between text-sm text-gray-300">
+                          <span>Program Fee</span>
+                          <span className="text-lg font-semibold text-[#F5D26A]">
+                            {program.price || "On Request"}
+                          </span>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <motion.a
+                            whileHover={{ scale: 1.03, y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            href={buyLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                            Buy Now
+                          </motion.a>
+                          <GiftButton
+                            className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                            size="sm">
+                            Gift
+                          </GiftButton>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+          </div>
         </div>
       </motion.section>
 
@@ -360,284 +514,6 @@ const CorporateTrainingCourses = () => {
               </motion.div>
             ))}
           </div>
-
-          {/* Our Promise Section */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-            className="max-w-4xl mx-auto text-center">
-            <div className="bg-linear-to-r from-[#D4AF37]/10 via-[#E5C158]/10 to-[#D4AF37]/10 rounded-xl p-8 md:p-12 border-2 border-[#D4AF37]/30">
-              {/* Sparkle Icon */}
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                whileInView={{ scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.4, type: "spring" }}
-                className="text-5xl md:text-6xl mb-6">
-                ✨
-              </motion.div>
-
-              {/* Promise Title */}
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 font-display">
-                Our Promise
-              </h3>
-
-              {/* Promise Content */}
-              <div className="space-y-4 text-lg md:text-xl text-gray-300 leading-relaxed">
-                <p className="font-semibold text-white">
-                  Digital AELA is not just another online academy.
-                </p>
-                <p className="text-[#D4AF37] font-bold">
-                  It is your partner in building a strong future.
-                </p>
-                <p className="text-white">
-                  We promise to give you knowledge that creates income, and
-                  income that creates freedom.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Training Programs Section */}
-      <motion.section
-        id="programs"
-        initial={{ opacity: 1 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="py-20 bg-black">
-        <div className="layout-container">
-          <motion.div
-            initial={{ y: 0, opacity: 1 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Our Training <span className="text-[#D4AF37]">Programs</span>
-            </h2>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Professional training programs in Public Speaking, Communication &
-              Accent Training, Leadership Skills, and Host/Anchor Training for
-              teams across South Asia and Gulf regions
-            </p>
-          </motion.div>
-
-          {/* Programs Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
-            {trainingPrograms
-              .filter((program) => !program.isCustom)
-              .map((program, index) => {
-                const buyLink = program.buyLink || whatsappUrl;
-
-                return (
-                <motion.div
-                  key={program.id}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
-                  <div className="h-40 w-full overflow-hidden">
-                    <img
-                      src={program.image}
-                      alt={program.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-              {(program.title === "Interview Training Course" ||
-                program.title === "Interview Preparation (HR & Technical)") && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                  Trending
-                </span>
-              )}
-                    <div>
-                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                        {program.title}
-                      </h3>
-                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                        {program.description}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {program.duration}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
-                        {program.format}
-                      </span>
-                    </div>
-
-                    <div className="border-t border-[#D4AF37]/15 pt-4">
-                      <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
-                        Key Highlights
-                      </p>
-                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                        {program.features.map((feature) => (
-                          <li key={feature} className="flex items-center gap-2">
-                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between text-sm text-gray-300">
-                          <span>Program Fee</span>
-                          <span className="text-lg font-semibold text-[#F5D26A]">
-                            {program.price || "On Request"}
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <motion.a
-                            whileHover={{ scale: 1.03, y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            href={buyLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                            Buy Now
-                          </motion.a>
-                          <GiftButton
-                            className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                            size="sm">
-                            Gift
-                          </GiftButton>
-                        </div>
-                    </div>
-                  </div>
-                </motion.div>
-                );
-              })}
-          </div>
-
-          {/* Custom Training Request - Full Width */}
-          {trainingPrograms
-            .filter((program) => program.isCustom)
-            .map((program, index) => (
-              <motion.div
-                key={program.id}
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6 }}
-                className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
-                <div className="h-52 w-full overflow-hidden">
-                  <img
-                    src={program.image}
-                    alt={program.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-8 md:p-10 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-6">
-                  <div className="max-w-4xl mx-auto text-center space-y-4">
-                    <h3 className="text-2xl md:text-3xl font-semibold text-[#D4AF37] font-display group-hover:text-[#E5C158] transition-colors duration-300">
-                      {program.title}
-                    </h3>
-                    <p className="text-gray-300 leading-relaxed text-sm md:text-base">
-                      {program.description}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                    {program.features.map((feature) => (
-                      <div
-                        key={feature}
-                        className="flex items-center gap-2 text-xs md:text-sm text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37] shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-center">
-                    <motion.a
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-10 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
-                      Request Custom Training Program
-                    </motion.a>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-
-          {/* CTA Button */}
-          <motion.div
-            initial={{ y: 0, opacity: 1 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-            className="flex justify-center">
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-              Get Customized Quote
-            </motion.a>
-          </motion.div>
         </div>
       </motion.section>
 
@@ -649,7 +525,7 @@ const CorporateTrainingCourses = () => {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-[#141414]">
         <div className="layout-container">
-        <div className="auto-grid-sm lg:grid-cols-2 lg:gap-12 items-center">
+          <div className="auto-grid-sm lg:grid-cols-2 lg:gap-12 items-center">
             {/* Left Side - Content */}
             <motion.div
               initial={{ x: -50, opacity: 0 }}
@@ -773,6 +649,105 @@ const CorporateTrainingCourses = () => {
               ))}
             </motion.div>
           </div>
+        </div>
+      </motion.section>
+
+      {/* Custom Training Request Section */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="py-20 bg-[#0b0b0b]">
+        <div className="layout-container">
+          {trainingPrograms
+            .filter((program) => program.isCustom)
+            .map((program, index) => (
+              <motion.div
+                key={program.id}
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ y: -6 }}
+                className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
+                <div className="h-52 w-full overflow-hidden">
+                  <img
+                    src={program.image}
+                    alt={program.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-8 md:p-10 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-6">
+                  <div className="max-w-4xl mx-auto text-center space-y-4">
+                    <h3 className="text-2xl md:text-3xl font-semibold text-[#D4AF37] font-display group-hover:text-[#E5C158] transition-colors duration-300">
+                      {program.title}
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed text-sm md:text-base">
+                      {program.description}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    {program.features.map((feature) => (
+                      <div
+                        key={feature}
+                        className="flex items-center gap-2 text-xs md:text-sm text-gray-300">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37] shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-center">
+                    <motion.a
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-10 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
+                      Request Custom Training Program
+                    </motion.a>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+
+          <motion.div
+            initial={{ y: 0, opacity: 1 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
+            className="flex justify-center">
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+              Get Customized Quote
+            </motion.a>
+          </motion.div>
         </div>
       </motion.section>
     </div>

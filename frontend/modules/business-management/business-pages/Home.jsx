@@ -846,91 +846,41 @@ const Home = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="hidden md:block relative w-full pt-4 pb-8 md:pt-6 md:pb-12 bg-black overflow-hidden -mt-8 md:-mt-12">
         {/* Ribbon Shape - Full Width */}
-        <div className="relative w-full">
+        <div className="relative w-full overflow-visible">
           {/* Main Ribbon with Black->Golden->Black Gradient */}
           <div
-            className="relative min-h-[100px] md:min-h-[120px] flex items-center justify-center py-4 md:py-6"
+            className="relative min-h-[100px] md:min-h-[120px] w-[108%] -ml-[4%] sm:w-[105%] sm:-ml-[2.5%] lg:w-[102%] lg:-ml-[1%] flex items-center justify-center py-4 md:py-6 px-4 md:px-8"
             style={{
               background:
                 "linear-gradient(to right, black 0%, black 10%, #d4a837 15%, #d4af37 85%, black 90%, black 100%)",
             }}>
             {/* Ribbon Content - Statistics Grid */}
             <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 w-full max-w-7xl mx-auto">
-                {/* Stat 1: 35,000+ Job Seekers Placed */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="text-center">
-                  <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                    35,000+
-                  </div>
-                  <div className="text-white text-[10px] md:text-xs font-light">
-                    Job Seekers Placed
-                  </div>
-                </motion.div>
-
-                {/* Stat 2: 150+ Sectors Targeted */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  className="text-center">
-                  <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                    150+
-                  </div>
-                  <div className="text-white text-[10px] md:text-xs font-light">
-                    Sectors Targeted
-                  </div>
-                </motion.div>
-
-                {/* Stat 3: 10+ Years of Experience */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                  className="text-center">
-                  <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                    10+
-                  </div>
-                  <div className="text-white text-[10px] md:text-xs font-light">
-                    Years of Experience
-                  </div>
-                </motion.div>
-
-                {/* Stat 4: 5000+ Placement Assisted Successfully */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                  className="text-center">
-                  <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                    5000+
-                  </div>
-                  <div className="text-white text-[10px] md:text-xs font-light">
-                    Placement Assisted Successfully
-                  </div>
-                </motion.div>
-
-                {/* Stat 5: 3100+ Secured Job Successfully */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                  className="text-center">
-                  <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                    3100+
-                  </div>
-                  <div className="text-white text-[10px] md:text-xs font-light">
-                    Secured Job Successfully
-                  </div>
-                </motion.div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3 w-full max-w-[1600px] mx-auto px-2 sm:px-4">
+                {[
+                  { number: "5000+", label: "Students Enrolled" },
+                  { number: "4000+", label: "Successful Placements" },
+                  { number: "4.9", label: "Average Learner Rating" },
+                  { number: "15+", label: "Corporate Collaborations" },
+                  { number: "200+", label: "Workshops & Webinars Conducted" },
+                  { number: "6+", label: "Countries Reached" },
+                  { number: "100+", label: "Job Sectors Targeted" },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={`${stat.label}-${stat.number}`}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+                    className="text-center">
+                    <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
+                      {stat.number}
+                    </div>
+                    <div className="text-white text-[10px] md:text-xs font-light">
+                      {stat.label}
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </div>
 
