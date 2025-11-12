@@ -621,6 +621,83 @@ const Home = () => {
         onMouseEnter={() => setIsHeroPaused(true)}
         onMouseLeave={() => setIsHeroPaused(false)}>
         <div className="absolute inset-0 bg-black" />
+        {heroSlides[activeHeroSlide].id === "ambition-action" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 0.8, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-0">
+              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#F5D26A_0%,rgba(245,210,106,0.1)_55%,transparent_100%)] blur-[140px]" />
+              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-[#F5D26A]/20 bg-[#F5D26A]/12 blur-[120px] mix-blend-screen" />
+              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-[#FFE28A]/25 bg-[#FFE28A]/10 blur-[140px] mix-blend-screen" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F5D26A]/35 bg-[radial-gradient(circle,#F5D26A/18_0%,rgba(245,210,106,0.05)_35%,transparent_75%)] blur-[90px]" />
+            </motion.div>
+          </>
+        )}
+        {heroSlides[activeHeroSlide].id === "gift-future" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 0.85, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-0">
+              <div className="absolute top-14 right-[18%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#4ADE80_0%,rgba(74,222,128,0.08)_60%,transparent_100%)] blur-[160px]" />
+              <div className="absolute bottom-[18%] left-[14%] h-96 w-96 rounded-full border border-[#6EE7B7]/25 bg-[#6EE7B7]/12 blur-[160px] mix-blend-screen" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0.2, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#6EE7B7]/30 bg-[radial-gradient(circle,#6EE7B7/18_0%,rgba(110,231,183,0.05)_35%,transparent_75%)] blur-[90px]" />
+            </motion.div>
+          </>
+        )}
+        {heroSlides[activeHeroSlide].id === "read-grow" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 0.85, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-0">
+              <div className="absolute top-[18%] left-[18%] h-100 w-100 rounded-full bg-[radial-gradient(circle,#F472B6_0%,rgba(244,114,182,0.08)_60%,transparent_100%)] blur-[150px]" />
+              <div className="absolute bottom-[22%] right-[18%] h-96 w-96 rounded-full border border-[#FB7185]/25 bg-[#FB7185]/12 blur-[160px] mix-blend-screen" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0.2, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F472B6]/25 bg-[radial-gradient(circle,#F472B6/16_0%,rgba(244,114,182,0.05)_35%,transparent_75%)] blur-[90px]" />
+            </motion.div>
+          </>
+        )}
+        {heroSlides[activeHeroSlide].id === "learn-earn" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 0.85, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-0">
+              <div className="absolute top-12 left-[20%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#7AB8FF_0%,rgba(122,184,255,0.1)_60%,transparent_100%)] blur-[150px]" />
+              <div className="absolute top-1/2 -translate-y-1/2 right-[14%] h-96 w-96 rounded-full border border-[#7C9BFF]/25 bg-[#7C9BFF]/12 blur-[160px] mix-blend-screen" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0.2, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#7AB8FF]/30 bg-[radial-gradient(circle,#7AB8FF/20_0%,rgba(122,184,255,0.05)_35%,transparent_75%)] blur-[90px]" />
+            </motion.div>
+          </>
+        )}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
