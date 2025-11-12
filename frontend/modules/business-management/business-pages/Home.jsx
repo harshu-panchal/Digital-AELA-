@@ -165,7 +165,7 @@ const Home = () => {
       description:
         "Build a strong foundation in English grammar, vocabulary, and everyday communication with engaging practice sessions.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohorts",
       price: "₹7,499",
       buyLink: "/contact/book-demo",
       features: [
@@ -201,7 +201,7 @@ const Home = () => {
       description:
         "Master business communication, presentation skills, and global-ready fluency for senior roles and international goals.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Live online cohorts",
       price: "₹11,999",
       buyLink: "/contact/book-demo",
       features: [
@@ -1005,6 +1005,16 @@ const Home = () => {
                   />
                 </div>
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                  {(course.title === "Basic English Course" ||
+                    course.title === "Advanced English Course" ||
+                    course.title === "Personalised English Speaking" ||
+                    course.title === "Interview Training Course" ||
+                    course.title ===
+                      "Interview Preparation (HR & Technical)") && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                      Trending
+                    </span>
+                  )}
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
                       {course.title}

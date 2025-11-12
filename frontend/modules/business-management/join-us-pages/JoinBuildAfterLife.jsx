@@ -30,7 +30,7 @@ const courseCatalog = [
     description:
       "Build grammar, vocabulary, and everyday communication confidence with instructor-led practice labs.",
     duration: "8 weeks",
-    format: "Classroom + Online",
+    format: "Live online cohort",
     price: "₹7,499",
     highlights: ["Grammar fundamentals", "Conversation drills", "Personalised feedback"],
     path: "/courses/english-language",
@@ -43,7 +43,7 @@ const courseCatalog = [
     description:
       "Upgrade sentence structuring, professional writing, and presentation skills for career growth.",
     duration: "10 weeks",
-    format: "Hybrid Batches",
+    format: "Live online cohort",
     price: "₹8,999",
     highlights: ["Fluency labs", "Business writing", "Weekly speaking circles"],
     path: "/courses/english-language",
@@ -56,7 +56,7 @@ const courseCatalog = [
     description:
       "Master high-stakes communication, boardroom storytelling, and accent refinement for global roles.",
     duration: "12 weeks",
-    format: "Executive Cohort",
+    format: "Executive live online",
     price: "₹11,499",
     highlights: ["Executive coaching", "Accent polish", "Presentation mastery"],
     path: "/courses/english-language",
@@ -69,7 +69,7 @@ const courseCatalog = [
     description:
       "Neutralize MTI influence and build confident speech with phonetics, intonation, and storytelling practice.",
     duration: "6 weeks",
-    format: "Live Labs",
+    format: "Live lab intensives",
     price: "₹6,999",
     highlights: ["Accent drills", "Voice modulation", "Role-play practice"],
     path: "/courses/english-language",
@@ -82,7 +82,7 @@ const courseCatalog = [
     description:
       "Design and optimise conversion-driven campaigns across Meta platforms with real ad accounts.",
     duration: "5 weeks",
-    format: "Campaign Studio",
+    format: "Live campaign studio (online)",
     price: "₹9,499",
     highlights: ["Ad psychology", "A/B testing", "Budget optimisation"],
     path: "/courses/digital-marketing",
@@ -95,7 +95,7 @@ const courseCatalog = [
     description:
       "Master Google Ads, analytics dashboards, and funnel optimisation to scale brands profitably.",
     duration: "7 weeks",
-    format: "Project Based",
+    format: "Live project-based online",
     price: "₹10,499",
     highlights: ["Search & display", "Attribution modelling", "Live client projects"],
     path: "/courses/digital-marketing",
@@ -357,6 +357,15 @@ const JoinBuildAfterLife = () => {
                       />
                     </div>
                     <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                      {(course.title === "Basic English Course" ||
+                        course.title === "Advanced English Course" ||
+                        course.title === "Personalised English Speaking" ||
+                        course.title === "Interview Training Course" ||
+                        course.title === "Interview Preparation (HR & Technical)") && (
+                        <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                          Trending
+                        </span>
+                      )}
                       <div>
                         <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
                           {course.title}

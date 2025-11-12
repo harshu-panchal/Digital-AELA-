@@ -24,7 +24,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Master Facebook, Instagram, LinkedIn, and other platforms with our Social Media Marketing Course. Learn how to grow brands, run campaigns, and build engagement that converts followers into customers.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹14,999",
       features: [
         "Platform mastery",
@@ -42,7 +42,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Rank websites on Google with Digital AELA's SEO Training. Cover on-page SEO, off-page SEO, keyword research, backlinks, and advanced strategies to make websites visible globally.",
       duration: "10 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹16,499",
       features: [
         "On-page & off-page SEO",
@@ -60,7 +60,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Learn how to optimize social media profiles, increase organic reach, and strengthen brand identity. Our SMO Course gives you practical skills to create impactful content strategies.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹13,499",
       features: [
         "Profile optimization",
@@ -78,7 +78,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Become an expert in Pay-Per-Click Advertising with hands-on training in Google Ads and Bing Ads. Learn how to manage ad budgets, optimize campaigns, and maximize ROI.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹15,999",
       features: [
         "Google Ads mastery",
@@ -96,7 +96,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Run high-converting campaigns with our Meta Ads Training. Learn audience targeting, creative design, budget optimization, and performance tracking for Facebook and Instagram ads.",
       duration: "6 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹12,499",
       features: [
         "Audience targeting",
@@ -114,7 +114,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Understand the power of Google Ads and GA4 with our practical course. Learn keyword bidding, analytics, and advanced conversion tracking to boost online sales and leads.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹13,999",
       features: [
         "Keyword bidding",
@@ -132,7 +132,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Learn how to craft persuasive content and effective email campaigns that nurture leads and increase sales. This course covers copywriting, email automation, and customer engagement.",
       duration: "10 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹14,499",
       features: [
         "Copywriting skills",
@@ -150,7 +150,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Build professional websites without coding. Our WordPress Course teaches installation, themes, plugins, SEO integration, and e-commerce setup to create fully functional websites.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹17,999",
       features: [
         "Website building",
@@ -168,7 +168,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Earn passive income by promoting products online. Our Affiliate Marketing Training covers affiliate networks, strategies for Indian & global markets, and proven income models.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹13,999",
       features: [
         "Affiliate networks",
@@ -186,7 +186,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Discover how to collaborate with influencers and grow brand awareness. Learn campaign planning, influencer outreach, and ROI measurement in this Influencer Marketing Course.",
       duration: "6 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹11,999",
       features: [
         "Campaign planning",
@@ -204,7 +204,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Scale your online store with our E-commerce Marketing Course. From product listings to paid ads, SEO, and conversion optimization, we guide you in building a successful e-commerce business.",
       duration: "10 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹15,499",
       features: [
         "Product listings",
@@ -222,7 +222,7 @@ const DigitalMarketingCourses = () => {
       description:
         "Turn your ideas into a successful business with Digital AELA's Start-Up Training. Learn planning, digital presence, funding basics, and marketing strategies to launch and grow your venture.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹17,999",
       features: [
         "Business planning",
@@ -365,82 +365,82 @@ const DigitalMarketingCourses = () => {
               const buyLink = course.buyLink || buildWhatsAppLink(course.title);
 
               return (
-                <motion.div
-                  key={course.id}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer">
-                  <div className="h-40 w-full overflow-hidden">
-                    <img
-                      src={course.image}
-                      alt={course.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+              <motion.div
+                key={course.id}
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ y: -6 }}
+                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer">
+                <div className="h-40 w-full overflow-hidden">
+                  <img
+                    src={course.image}
+                    alt={course.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+            <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                  <div>
+                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                      {course.description}
+                    </p>
                   </div>
-                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                    <div>
-                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                        {course.title}
-                      </h3>
-                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                        {course.description}
-                      </p>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {course.duration}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
-                        {course.format}
-                      </span>
-                    </div>
+                  <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-[#D4AF37]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {course.duration}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-[#D4AF37]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 8l4 4m0 0l-4 4m4-4H3"
+                        />
+                      </svg>
+                      {course.format}
+                    </span>
+                  </div>
 
-                    <div className="border-t border-[#D4AF37]/15 pt-4">
+                  <div className="border-t border-[#D4AF37]/15 pt-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                        Key Highlights
-                      </p>
-                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                        {course.features.map((feature) => (
-                          <li key={feature} className="flex items-center gap-2">
-                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      Key Highlights
+                    </p>
+                    <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                      {course.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2">
+                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between text-sm text-gray-300">
@@ -466,8 +466,8 @@ const DigitalMarketingCourses = () => {
                         </GiftButton>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                </div>
+              </motion.div>
               );
             })}
           </div>

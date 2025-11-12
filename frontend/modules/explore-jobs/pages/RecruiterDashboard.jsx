@@ -33,6 +33,7 @@ import {
   createRecruiterBlog,
   updateRecruiterProfile,
 } from "../../../src/services/api/recruiter";
+import { useBlogs } from "../../../src/contexts/BlogContext";
 import { fetchEbooks } from "../../../src/services/api/resources";
 
 const RECRUITER_AVATAR_FALLBACK =
@@ -53,6 +54,7 @@ const RecruiterDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: authUser } = useAuth();
+  const { refreshBlogs } = useBlogs();
   const defaultTalentSpotlight = useMemo(
     () => [
       {
@@ -592,6 +594,7 @@ const RecruiterDashboard = () => {
       setBlogComposerOpen(false);
       resetBlogDraft();
       await loadDashboard(true);
+      await refreshBlogs();
     } catch (error) {
       toast.error(error.message || "Unable to save blog");
     } finally {

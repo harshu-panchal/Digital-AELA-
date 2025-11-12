@@ -3,12 +3,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
 import { useAuth } from "./AuthContext";
+import { fetchPublishedBlogs } from "../services/api/blogs";
 
 const BlogContext = createContext(null);
 
@@ -148,6 +150,66 @@ const formatBlog = (blog) => ({
   commentCount: blog.comments?.length ?? 0,
 });
 
+const DEFAULT_THUMBNAIL =
+  "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80";
+
+const mapApiBlog = (blog) => {
+  const authorId = blog.author?.id ?? blog.author?._id ?? "";
+  const recruiterProfile = blog.recruiterProfile ?? {};
+
+  const formatted = {
+    id: blog.id ?? blog._id ?? crypto.randomUUID(),
+    title: blog.title,
+    excerpt: blog.excerpt ?? "",
+    banner: blog.coverImage ?? blog.thumbnail ?? DEFAULT_THUMBNAIL,
+    thumbnail: blog.coverImage ?? blog.thumbnail ?? DEFAULT_THUMBNAIL,
+    tags: blog.tags ?? [],
+    category: blog.category ?? "Community",
+    readTime:
+      blog.readTime ??
+      Math.max(3, Math.round(((blog.content?.length ?? 800) || 800) / 250)),
+    content: blog.content ?? "",
+    likes: blog.likes ?? blog.stats?.likes ?? 0,
+    views: blog.views ?? blog.stats?.views ?? 0,
+    publishedAt: blog.publishedAt ?? blog.updatedAt ?? new Date().toISOString(),
+    author: blog.author
+      ? {
+          id: authorId,
+          name: blog.author.fullName ?? blog.author.name ?? "Recruiter",
+          avatar:
+            recruiterProfile.avatarUrl ??
+            blog.author.avatarUrl ??
+            "https://i.pravatar.cc/150?img=11",
+          bio:
+            recruiterProfile.headline ??
+            blog.author.bio ??
+            "Digital AELA contributor",
+          role:
+            recruiterProfile.company ??
+            blog.author.role ??
+            "Digital AELA Recruiter",
+          social: recruiterProfile.socials?.website
+            ? {
+                platform: "Website",
+                url: recruiterProfile.socials.website,
+              }
+            : undefined,
+          followers: recruiterProfile.stats?.totalViews ?? 0,
+        }
+      : {
+          id: "digital-aela",
+          name: "Digital AELA",
+          avatar: "https://i.pravatar.cc/150?img=16",
+          bio: "Digital AELA community insights",
+          role: "Community",
+        },
+    comments: blog.comments ?? [],
+    source: "backend",
+  };
+
+  return formatBlog(formatted);
+};
+
 export const useBlogs = () => {
   const context = useContext(BlogContext);
   if (!context) {
@@ -160,7 +222,10 @@ export const BlogProvider = ({ children }) => {
   const { profile } = useUser();
   const { user: authUser } = useAuth();
 
-  const [blogs, setBlogs] = useState(() => seededBlogs.map(formatBlog));
+  const [blogs, setBlogs] = useState(() => seededBlogs.map((blog) => ({
+    ...formatBlog(blog),
+    source: "seed",
+  })));
   const [drafts, setDrafts] = useState([]);
   const [followingAuthors, setFollowingAuthors] = useState(() => new Set());
   const [searchTerm, setSearchTerm] = useState("");
@@ -169,6 +234,39 @@ export const BlogProvider = ({ children }) => {
     category: "all",
     sort: "trending",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+
+  const refreshBlogs = useCallback(
+    async (params = {}) => {
+      try {
+        setIsLoading(true);
+        const response = await fetchPublishedBlogs(params);
+        const remote = response?.data ?? [];
+        setBlogs((prev) => {
+          const localBlogs = prev.filter((blog) => blog.source === "local");
+          const remoteFormatted = remote.map(mapApiBlog);
+          if (remoteFormatted.length > 0) {
+            return [...localBlogs, ...remoteFormatted];
+          }
+          return prev.length ? prev : seededBlogs.map((blog) => ({
+            ...formatBlog(blog),
+            source: "seed",
+          }));
+        });
+        setLoadError(null);
+      } catch (error) {
+        setLoadError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    refreshBlogs();
+  }, [refreshBlogs]);
 
   const saveDraft = useCallback((draft) => {
     setDrafts((prev) => {
@@ -229,6 +327,7 @@ export const BlogProvider = ({ children }) => {
           followers: profile.followers,
         },
         comments: blog.comments ?? [],
+        source: blog.source ?? "local",
       });
 
       setBlogs((prev) => [newBlog, ...prev]);
@@ -455,6 +554,9 @@ export const BlogProvider = ({ children }) => {
       setActiveFilters,
       formatTimestamp,
       isAuthenticated: Boolean(authUser),
+      isLoading,
+      loadError,
+      refreshBlogs,
     }),
     [
       blogs,
@@ -476,6 +578,9 @@ export const BlogProvider = ({ children }) => {
       activeFilters,
       formatTimestamp,
       authUser,
+      isLoading,
+      loadError,
+      refreshBlogs,
     ]
   );
 

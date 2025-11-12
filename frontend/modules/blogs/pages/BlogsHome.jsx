@@ -15,6 +15,9 @@ const BlogsHome = () => {
     filteredBlogs,
     isAuthenticated,
     setSearchTerm,
+    refreshBlogs,
+    isLoading,
+    loadError,
   } = useBlogs();
   const location = useLocation();
 
@@ -50,6 +53,10 @@ const BlogsHome = () => {
       setSearchTerm(authorParam);
     }
   }, [location.search, setSearchTerm]);
+
+  useEffect(() => {
+    refreshBlogs();
+  }, [refreshBlogs]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
@@ -108,6 +115,18 @@ const BlogsHome = () => {
         <div className="grid gap-8 lg:grid-cols-[2.5fr_1fr]">
           <div className="space-y-8">
             <BlogCategoryFilter />
+
+            {loadError && (
+              <div className="rounded-2xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-200">
+                {loadError.message || "Unable to load blogs. Please try refreshing."}
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                Loading latest community posts…
+              </div>
+            )}
 
             <BlogList
               title="Trending Blogs"

@@ -8,6 +8,7 @@ import {
   FaInstagram,
   FaLinkedinIn,
   FaPhone,
+  FaWhatsapp,
   FaYoutube,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
@@ -40,6 +41,10 @@ const Navbar = () => {
   const { user, logout, getRoleLabel, getRoleHome } = useAuth();
 
   const baseNavItems = [
+    {
+      label: "Home",
+      path: "/",
+    },
     {
       label: "Courses",
       path: "/courses",
@@ -104,17 +109,17 @@ const Navbar = () => {
     },
   ];
 
-  if (user?.role === "super-admin") {
-    baseNavItems.unshift({
-      label: "Admin",
-      path: "/super-admin",
+  if (user?.role === "teacher") {
+    baseNavItems.splice(1, 0, {
+      label: "Teaching",
+      path: "/teacher/dashboard",
     });
   }
 
-  if (user?.role === "teacher") {
-    baseNavItems.unshift({
-      label: "Teaching",
-      path: "/teacher/dashboard",
+  if (user?.role === "super-admin") {
+    baseNavItems.splice(1, 0, {
+      label: "Admin",
+      path: "/super-admin",
     });
   }
 
@@ -186,17 +191,17 @@ const Navbar = () => {
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 text-xs text-slate-100/85 sm:flex-row sm:items-center sm:text-sm">
                   <a
-                    href="mailto:hello@digitalaela.com"
+                    href="mailto:info@digitalaela.com"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
                     <FaEnvelope className="h-3.5 w-3.5" />
-                    hello@digitalaela.com
+                    info@digitalaela.com
                   </a>
                   <span className="hidden h-4 w-px bg-white/15 sm:block" />
                   <a
-                    href="tel:+971501234567"
+                    href="tel:+971508185690"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
-                    +971 50 123 4567
+                    0508185690
                   </a>
                 </div>
 
@@ -208,6 +213,13 @@ const Navbar = () => {
                       rel="noreferrer"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
                       <FaFacebookF className="h-4 w-4" />
+                    </a>
+                    <a
+                      href="https://wa.me/971508185690"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#25D366]/60 hover:bg-[#25D366]/10 hover:text-[#25D366]">
+                      <FaWhatsapp className="h-4 w-4" />
                     </a>
                     <a
                       href="https://www.instagram.com/"
@@ -369,9 +381,9 @@ const Navbar = () => {
             ease: [0.25, 0.1, 0.25, 1],
             delay: 0.05,
           }}
-          className="relative overflow-visible border-b border-white/10 bg-white/10 px-3 py-1 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-4 sm:py-1.5">
+          className="relative overflow-visible border-b border-white/10 bg-white/10 px-0 py-0 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-4 sm:py-0 min-h-[48px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(226,232,255,0.35),transparent_55%)] opacity-70" />
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-24 -translate-y-1/2 rounded-[48px] border border-white/15 bg-white/5 blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-12 -translate-y-1/2 rounded-[48px] border border-white/15 bg-white/5 blur-3xl" />
           <div className="layout-container relative z-10 flex items-center justify-between gap-4">
             {/* Brand Name - Left Side */}
             <motion.div
@@ -384,14 +396,18 @@ const Navbar = () => {
               }}>
               <Link
                 to="/"
-                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block">
+                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block translate-y-4 sm:translate-y-6 shrink-0">
                 <motion.span
                   whileHover={{ scale: 1.08, rotate: [0, -3, 3, -3, 0] }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="inline-block relative">
-                  <img src={logo} alt="logo" className="w-14 h-14" />
+                  className="inline-block relative drop-shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
+                  <img
+                    src={logo}
+                    alt="logo"
+                    className="h-20 w-20 sm:h-24 sm:w-24"
+                  />
                   <motion.div
-                    className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#D4AF37]"
+                    className="absolute bottom-3 left-0 w-0 h-0.5 bg-[#D4AF37]"
                     whileHover={{ width: "100%" }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   />
@@ -400,7 +416,7 @@ const Navbar = () => {
             </motion.div>
 
             {/* Navigation Links - Right Side */}
-            <div className="hidden lg:flex items-center gap-6">
+            <div className="hidden lg:flex flex-1 items-center justify-center gap-6">
               {navItems.map((item, index) => (
                 <div
                   key={item.label}

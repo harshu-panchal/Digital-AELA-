@@ -1,4 +1,5 @@
 import RecruiterBlog from "../models/RecruiterBlog.js";
+import RecruiterProfile from "../models/RecruiterProfile.js";
 
 export const listBlogs = async (req, res, next) => {
   try {
@@ -96,6 +97,84 @@ export const publishBlog = async (req, res, next) => {
     }
 
     return res.json(blog);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listPublishedBlogs = async (req, res, next) => {
+  try {
+    const { page = 1, pageSize = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const [items, total] = await Promise.all([
+      RecruiterBlog.find({ status: "published" })
+        .sort({ publishedAt: -1, updatedAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize))
+        .populate("author", ["fullName", "role", "email"])
+        .lean(),
+      RecruiterBlog.countDocuments({ status: "published" }),
+    ]);
+
+    const authorIds = items
+      .map((blog) => blog.author?._id?.toString())
+      .filter(Boolean);
+
+    const profiles = authorIds.length
+      ? await RecruiterProfile.find({ user: { $in: authorIds } })
+          .select(["company", "headline", "avatarUrl", "stats", "socials"])
+          .lean()
+      : [];
+
+    const profileMap = profiles.reduce((acc, profile) => {
+      if (profile.user) {
+        acc[profile.user.toString()] = profile;
+      }
+      return acc;
+    }, {});
+
+    const data = items.map((blog) => {
+      const authorId = blog.author?._id ? blog.author._id.toString() : blog.author?.id;
+      const recruiterProfile = authorId && profileMap[authorId] ? profileMap[authorId] : null;
+      return {
+        id: blog._id ? blog._id.toString() : blog.id,
+        title: blog.title,
+        excerpt: blog.excerpt,
+        content: blog.content,
+        coverImage: blog.coverImage ?? blog.thumbnail ?? null,
+        tags: blog.tags ?? [],
+        status: blog.status,
+        publishedAt: blog.publishedAt,
+        updatedAt: blog.updatedAt,
+        author: blog.author
+          ? {
+              id: authorId,
+              fullName: blog.author.fullName,
+              role: blog.author.role,
+              email: blog.author.email,
+            }
+          : null,
+        recruiterProfile: recruiterProfile
+          ? {
+              company: recruiterProfile.company,
+              headline: recruiterProfile.headline,
+              avatarUrl: recruiterProfile.avatarUrl,
+              socials: recruiterProfile.socials,
+              stats: recruiterProfile.stats,
+            }
+          : null,
+      };
+    });
+
+    return res.json({
+      data,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+      },
+    });
   } catch (error) {
     return next(error);
   }

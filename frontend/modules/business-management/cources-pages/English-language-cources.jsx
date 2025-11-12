@@ -24,7 +24,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Digital AELA's Basic English Course is designed for beginners who want to build a strong foundation in grammar, vocabulary, and everyday communication. With interactive lessons and practical exercises, this course ensures you gain confidence to speak and write English in daily life, study, and work situations.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹7,499",
       features: [
         "Grammar fundamentals",
@@ -42,7 +42,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Take your English skills to the next level with our Intermediate English Course. Focused on enhancing fluency, sentence structuring, and professional communication, this course bridges the gap between basic knowledge and advanced mastery. Ideal for students, professionals, and job seekers.",
       duration: "10 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹8,999",
       features: [
         "Fluency enhancement",
@@ -60,7 +60,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Master the art of fluent and confident English communication with Digital AELA's Advanced English Course. Covering advanced grammar, business communication, presentations, and academic writing, this course is perfect for career growth and international opportunities.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Executive live online",
       price: "₹11,499",
       features: [
         "Advanced grammar",
@@ -78,7 +78,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Our Personalised English Speaking Course offers one-to-one customized lessons tailored to your goals—whether it's job interviews, corporate presentations, or social confidence. Learn at your own pace with dedicated mentors guiding you step by step.",
       duration: "Customized",
-      format: "One-on-One",
+      format: "Live online personalised",
       price: "₹1,499/session",
       features: [
         "One-to-one sessions",
@@ -96,7 +96,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Build your child's confidence with our Kids English Speaking Program. Focused on pronunciation, storytelling, and interactive games, this course helps children develop strong communication skills from an early age.",
       duration: "8 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹6,999",
       features: [
         "Pronunciation practice",
@@ -114,7 +114,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Crack your dream exams with Digital AELA's Exam Preparation Courses. From IELTS & TOEFL for international studies to SSC, Bank PO, and other competitive exams, we provide structured guidance, practice tests, and proven strategies to help you succeed.",
       duration: "10 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹9,999",
       features: [
         "IELTS & TOEFL prep",
@@ -132,7 +132,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Our NCERT English Literature Coaching supports students of class 11th and 12th with in-depth analysis of prose, poetry, and grammar. Designed to score high in board exams while improving overall comprehension skills.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹10,499",
       features: [
         "Prose analysis",
@@ -150,7 +150,7 @@ const EnglishLanguageCourses = () => {
       description:
         "Become a certified English trainer with Digital AELA's Teacher Training Course. Learn modern teaching methodologies, classroom management, and digital tools to kick-start or enhance your teaching career globally.",
       duration: "12 weeks",
-      format: "In-person / Online",
+      format: "Live online cohort",
       price: "₹12,999",
       features: [
         "Teaching methodologies",
@@ -291,82 +291,89 @@ const EnglishLanguageCourses = () => {
               const buyLink = course.buyLink || buildWhatsAppLink(course.title);
 
               return (
-                <motion.div
-                  key={course.id}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
+              <motion.div
+                key={course.id}
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ y: -6 }}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
-                  <div className="h-40 w-full overflow-hidden">
-                    <img
-                      src={course.image}
-                      alt={course.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                <div className="h-40 w-full overflow-hidden">
+                  <img
+                    src={course.image}
+                    alt={course.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                  {(course.title === "Basic English Course" ||
+                    course.title === "Advanced English Course" ||
+                    course.title === "Personalised English Speaking") && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                      Trending
+                    </span>
+                  )}
+                  <div>
+                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                      {course.description}
+                    </p>
                   </div>
-                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                    <div>
-                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                        {course.title}
-                      </h3>
-                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                        {course.description}
-                      </p>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {course.duration}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
-                        {course.format}
-                      </span>
-                    </div>
+                  <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-[#D4AF37]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {course.duration}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-[#D4AF37]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 8l4 4m0 0l-4 4m4-4H3"
+                        />
+                      </svg>
+                      {course.format}
+                    </span>
+                  </div>
 
-                    <div className="border-t border-[#D4AF37]/15 pt-4">
+                  <div className="border-t border-[#D4AF37]/15 pt-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                        Key Highlights
-                      </p>
-                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                        {course.features.map((feature) => (
-                          <li key={feature} className="flex items-center gap-2">
-                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      Key Highlights
+                    </p>
+                    <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                      {course.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2">
+                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between text-sm text-gray-300">
@@ -392,8 +399,8 @@ const EnglishLanguageCourses = () => {
                         </GiftButton>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                </div>
+              </motion.div>
               );
             })}
           </div>
