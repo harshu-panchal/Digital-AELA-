@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
 
@@ -29,7 +30,48 @@ export const clearStoredTokens = () => {
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
 };
 
-export const apiRequest = async (endpoint, { method = "GET", body, headers = {}, skipAuth = false } = {}) => {
+let authUpdateHandler = null;
+let refreshPromise = null;
+
+export const registerAuthUpdateHandler = (handler) => {
+  authUpdateHandler = handler;
+};
+
+const notifyAuthUpdate = (payload) => {
+  if (typeof authUpdateHandler === "function") {
+    authUpdateHandler(payload);
+  }
+};
+
+const refreshTokensIfNeeded = async (currentTokens) => {
+  if (!currentTokens?.refreshToken) {
+    throw new Error("Missing refresh token");
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = import("./auth")
+      .then(({ refreshRecruiterSession }) => refreshRecruiterSession(currentTokens.refreshToken))
+      .then((result) => {
+        notifyAuthUpdate(result);
+        return result;
+      })
+      .catch((error) => {
+        clearStoredTokens();
+        notifyAuthUpdate(null);
+        throw error;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
+
+export const apiRequest = async (
+  endpoint,
+  { method = "GET", body, headers = {}, skipAuth = false, _retry = false } = {}
+) => {
   const tokens = loadTokens();
   const finalHeaders = {
     "Content-Type": "application/json",
@@ -53,18 +95,40 @@ export const apiRequest = async (endpoint, { method = "GET", body, headers = {},
     payload = null;
   }
 
-  if (!response.ok) {
-    const message =
-      payload?.error?.message ??
-      `Request to ${endpoint} failed with status ${response.status}`;
-    const error = new Error(message);
-    error.status = response.status;
-    error.code = payload?.error?.code;
-    error.details = payload;
-    throw error;
+  if (response.ok) {
+    return payload;
   }
 
-  return payload;
+  if (!skipAuth && response.status === 401 && tokens?.refreshToken && !_retry) {
+    try {
+      await refreshTokensIfNeeded(tokens);
+      return apiRequest(endpoint, {
+        method,
+        body,
+        headers,
+        skipAuth,
+        _retry: true,
+      });
+    } catch (error) {
+      const message =
+        payload?.error?.message ??
+        error.message ??
+        `Request to ${endpoint} failed with status ${response.status}`;
+      const unauthorizedError = new Error(message);
+      unauthorizedError.status = response.status;
+      unauthorizedError.code = payload?.error?.code ?? error.code;
+      unauthorizedError.details = payload ?? error.details;
+      throw unauthorizedError;
+    }
+  }
+
+  const message =
+    payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`;
+  const error = new Error(message);
+  error.status = response.status;
+  error.code = payload?.error?.code;
+  error.details = payload;
+  throw error;
 };
 
 export const apiBaseConfig = {

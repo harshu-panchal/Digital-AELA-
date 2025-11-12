@@ -24,86 +24,151 @@ const cardVariants = {
 const SuperAdminDashboard = () => {
   const { user } = useAuth();
 
-  const { headlineStats, approvals, activityFeed, quickActions } = useMemo(() => {
-    const stats = [
-      {
-        id: "learners",
-        label: "Active Learners",
-        value: "12,480",
-        delta: "+6.4% vs last week",
-      },
-      {
-        id: "teachers",
-        label: "Verified Teachers",
-        value: "286",
-        delta: "24 pending approvals",
-      },
-      {
-        id: "revenue",
-        label: "Monthly Revenue",
-        value: "AED 428K",
-        delta: "+18% YoY",
-      },
-      {
-        id: "jobs",
-        label: "Open Jobs",
-        value: "94",
-        delta: "32 new this week",
-      },
-    ];
+  const { headlineStats, approvals, activityFeed, quickActions } =
+    useMemo(() => {
+      const stats = [
+        {
+          id: "learners",
+          label: "Active Learners",
+          value: "12,480",
+          delta: "+6.4% vs last week",
+        },
+        {
+          id: "teachers",
+          label: "Verified Teachers",
+          value: "286",
+          delta: "24 pending approvals",
+        },
+        {
+          id: "revenue",
+          label: "Monthly Revenue",
+          value: "AED 428K",
+          delta: "+18% YoY",
+        },
+        {
+          id: "jobs",
+          label: "Open Jobs",
+          value: "94",
+          delta: "32 new this week",
+        },
+      ];
 
-    const approvalQueues = [
-      {
-        id: "courses",
-        title: "Courses Pending Approval",
-        items: [
-          { title: "Executive Presentation Lab", owner: "Sarah Thomas", submitted: "45 min ago" },
-          { title: "Digital Marketing Sprint 2025", owner: "Ahmed Khan", submitted: "2 hours ago" },
-          { title: "IELTS Band 8 Mastery", owner: "Priya Sharma", submitted: "Yesterday" },
-        ],
-        cta: "Review courses",
-      },
-      {
-        id: "ebooks",
-        title: "Books & E-Books",
-        items: [
-          { title: "Accent Neutralisation Playbook", owner: "Lina Joseph", submitted: "12 min ago" },
-          { title: "Leadership Storytelling Guide", owner: "David Patel", submitted: "1 hour ago" },
-        ],
-        cta: "Moderate library",
-      },
-      {
-        id: "jobs",
-        title: "Job Posts",
-        items: [
-          { title: "Communication Coach · Remote", owner: "TalentBridge HR", submitted: "30 min ago" },
-          { title: "Corporate Trainer · Dubai", owner: "GulfSkills", submitted: "3 hours ago" },
-        ],
-        cta: "Moderate job board",
-      },
-    ];
+      const approvalQueues = [
+        {
+          id: "courses",
+          title: "Courses Pending Approval",
+          items: [
+            {
+              title: "Executive Presentation Lab",
+              owner: "Sarah Thomas",
+              submitted: "45 min ago",
+            },
+            {
+              title: "Digital Marketing Sprint 2025",
+              owner: "Ahmed Khan",
+              submitted: "2 hours ago",
+            },
+            {
+              title: "IELTS Band 8 Mastery",
+              owner: "Priya Sharma",
+              submitted: "Yesterday",
+            },
+          ],
+          cta: "Review courses",
+        },
+        {
+          id: "ebooks",
+          title: "Books & E-Books",
+          items: [
+            {
+              title: "Accent Neutralisation Playbook",
+              owner: "Lina Joseph",
+              submitted: "12 min ago",
+            },
+            {
+              title: "Leadership Storytelling Guide",
+              owner: "David Patel",
+              submitted: "1 hour ago",
+            },
+          ],
+          cta: "Moderate library",
+        },
+        {
+          id: "jobs",
+          title: "Job Posts",
+          items: [
+            {
+              title: "Communication Coach · Remote",
+              owner: "TalentBridge HR",
+              submitted: "30 min ago",
+            },
+            {
+              title: "Corporate Trainer · Dubai",
+              owner: "GulfSkills",
+              submitted: "3 hours ago",
+            },
+          ],
+          cta: "Moderate job board",
+        },
+      ];
 
-    const activity = [
-      { icon: "🧾", title: "New invoice paid", description: "Invoice #INV-2281 · AED 12,999 · Learner: Ali Hassan", time: "5 min ago" },
-      { icon: "🎓", title: "Course completion spike", description: "IELTS Fast Track cohort hit 92% completion", time: "1 hour ago" },
-      { icon: "🤝", title: "Partnership enquiry", description: "Dubai Future Foundation submitted collaboration brief", time: "2 hours ago" },
-      { icon: "🛡️", title: "Security notice", description: "2FA enabled for 184 new accounts", time: "Today, 09:15" },
-    ];
+      const activity = [
+        {
+          icon: "🧾",
+          title: "New invoice paid",
+          description: "Invoice #INV-2281 · AED 12,999 · Learner: Ali Hassan",
+          time: "5 min ago",
+        },
+        {
+          icon: "🎓",
+          title: "Course completion spike",
+          description: "IELTS Fast Track cohort hit 92% completion",
+          time: "1 hour ago",
+        },
+        {
+          icon: "🤝",
+          title: "Partnership enquiry",
+          description: "Dubai Future Foundation submitted collaboration brief",
+          time: "2 hours ago",
+        },
+        {
+          icon: "🛡️",
+          title: "Security notice",
+          description: "2FA enabled for 184 new accounts",
+          time: "Today, 09:15",
+        },
+      ];
 
-    const actions = [
-      { label: "Approve teachers", description: "24 awaiting verification", href: "/super-admin/teachers" },
-      { label: "Moderate course catalog", description: "11 new submissions", href: "/super-admin/courses" },
-      { label: "Review franchise leads", description: "8 warm opportunities", href: "/super-admin/franchise" },
-      { label: "System health dashboard", description: "Uptime 99.97% · All services operational", href: "/super-admin/system-health" },
-    ];
+      const actions = [
+        {
+          label: "Approve teachers",
+          description: "24 awaiting verification",
+          href: "/super-admin/teachers",
+        },
+        {
+          label: "Moderate course catalog",
+          description: "11 new submissions",
+          href: "/super-admin/courses",
+        },
+        {
+          label: "Review franchise leads",
+          description: "8 warm opportunities",
+          href: "/super-admin/franchise",
+        },
+        {
+          label: "System health dashboard",
+          description: "Uptime 99.97% · All services operational",
+          href: "/super-admin/system-health",
+        },
+      ];
 
-    return {
-      headlineStats: stats,
-      approvals: approvalQueues,
-      activityFeed: activity,
-      quickActions: actions,
-    };
-  }, []);
+      return {
+        headlineStats: stats,
+        approvals: approvalQueues,
+        activityFeed: activity,
+        quickActions: actions,
+      };
+    }, []);
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
@@ -132,15 +197,18 @@ const SuperAdminDashboard = () => {
                   Welcome back, {user?.fullName?.split(" ")[0] ?? "Admin"}
                 </h1>
                 <p className="mt-2 text-sm text-slate-300/80">
-                  Oversight across learners, mentors, recruiters, and revenue — stay ahead of approvals and platform health.
+                  Oversight across learners, mentors, recruiters, and revenue —
+                  stay ahead of approvals and platform health.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Monthly NPS <span className="font-semibold text-[#F5D26A]">4.6 / 5</span>
+                  Monthly NPS{" "}
+                  <span className="font-semibold text-[#F5D26A]">4.6 / 5</span>
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Platform uptime <span className="font-semibold text-[#F5D26A]">99.97%</span>
+                  Platform uptime{" "}
+                  <span className="font-semibold text-[#F5D26A]">99.97%</span>
                 </div>
               </div>
             </div>
@@ -159,7 +227,9 @@ const SuperAdminDashboard = () => {
                 <p className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   {stat.label}
                 </p>
-                <p className="mt-3 text-2xl font-semibold text-white">{stat.value}</p>
+                <p className="mt-3 text-2xl font-semibold text-white">
+                  {stat.value}
+                </p>
                 <p className="mt-2 text-xs text-slate-300/80">{stat.delta}</p>
               </motion.div>
             ))}
@@ -173,7 +243,9 @@ const SuperAdminDashboard = () => {
               className="space-y-4 rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
               <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">Approval queue</h2>
+                  <h2 className="text-xl font-semibold text-white">
+                    Approval queue
+                  </h2>
                   <p className="text-xs uppercase tracking-[0.28em] text-[#F5D26A]/70">
                     Latest submissions
                   </p>
@@ -182,14 +254,26 @@ const SuperAdminDashboard = () => {
 
               <div className="grid gap-4 md:grid-cols-3">
                 {approvals.map((column) => (
-                  <div key={column.id} className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                    <h3 className="text-sm font-semibold text-white">{column.title}</h3>
+                  <div
+                    key={column.id}
+                    className="rounded-2xl border border-white/10 bg-black/40 p-4">
+                    <h3 className="text-sm font-semibold text-white">
+                      {column.title}
+                    </h3>
                     <ul className="mt-3 space-y-3 text-xs text-slate-300/85">
                       {column.items.map((item) => (
-                        <li key={item.title} className="rounded-lg border border-white/5 bg-white/5 px-3 py-2">
-                          <p className="font-semibold text-white/90">{item.title}</p>
-                          <p className="text-[11px] text-slate-400">{item.owner}</p>
-                          <p className="text-[11px] text-[#F5D26A]/80">{item.submitted}</p>
+                        <li
+                          key={item.title}
+                          className="rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+                          <p className="font-semibold text-white/90">
+                            {item.title}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {item.owner}
+                          </p>
+                          <p className="text-[11px] text-[#F5D26A]/80">
+                            {item.submitted}
+                          </p>
                         </li>
                       ))}
                     </ul>
@@ -209,7 +293,9 @@ const SuperAdminDashboard = () => {
               animate="show"
               className="space-y-4 rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
               <header className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Recent activity</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  Recent activity
+                </h2>
                 <span className="text-xs text-slate-400">Live feed</span>
               </header>
               <div className="space-y-3">
@@ -224,9 +310,15 @@ const SuperAdminDashboard = () => {
                     <div className="flex items-start gap-3">
                       <span className="text-lg">{item.icon}</span>
                       <div>
-                        <p className="text-sm font-semibold text-white">{item.title}</p>
-                        <p className="text-xs text-slate-300/80">{item.description}</p>
-                        <p className="text-[11px] text-[#F5D26A]/80">{item.time}</p>
+                        <p className="text-sm font-semibold text-white">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-slate-300/80">
+                          {item.description}
+                        </p>
+                        <p className="text-[11px] text-[#F5D26A]/80">
+                          {item.time}
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -242,7 +334,9 @@ const SuperAdminDashboard = () => {
             className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">Quick actions</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  Quick actions
+                </h2>
                 <p className="text-xs text-slate-300/70">
                   Jump into the most visited admin workspaces
                 </p>
@@ -253,8 +347,12 @@ const SuperAdminDashboard = () => {
                 <div
                   key={action.label}
                   className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                  <p className="text-base font-semibold text-white">{action.label}</p>
-                  <p className="text-xs text-slate-400/80">{action.description}</p>
+                  <p className="text-base font-semibold text-white">
+                    {action.label}
+                  </p>
+                  <p className="text-xs text-slate-400/80">
+                    {action.description}
+                  </p>
                   <button
                     type="button"
                     className="mt-2 w-fit rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A]">
@@ -271,4 +369,3 @@ const SuperAdminDashboard = () => {
 };
 
 export default SuperAdminDashboard;
-

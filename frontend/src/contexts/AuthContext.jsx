@@ -8,6 +8,7 @@ import {
   clearStoredTokens,
   getStoredTokens,
   persistTokens,
+  registerAuthUpdateHandler,
 } from "../services/api/baseClient";
 import { updateRecruiterProfile } from "../services/api/recruiter";
 
@@ -170,6 +171,17 @@ export const AuthProvider = ({ children }) => {
     return normalizedUser;
   }, []);
 
+  useEffect(() => {
+    registerAuthUpdateHandler((authPayload) => {
+      if (!authPayload) {
+        setUser(null);
+        setTokens(null);
+        return;
+      }
+      handleBackendAuthSuccess(authPayload);
+    });
+  }, [handleBackendAuthSuccess]);
+
   const login = useCallback(
     async ({ email, password, role }) => {
       const normalizedEmail = String(email || "")
@@ -274,6 +286,14 @@ export const AuthProvider = ({ children }) => {
     },
     [user]
   );
+
+  useEffect(() => {
+    if (user?.role === "recruiter" && !tokens?.accessToken) {
+      logout().catch(() => {
+        // ignore
+      });
+    }
+  }, [user, tokens, logout]);
 
   const updateUserMetadata = useCallback(
     async (updates) => {

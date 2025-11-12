@@ -21,11 +21,11 @@ const ExploreJobsLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black pt-[124px] text-white md:pt-[104px]">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black pt-[20vh] text-white">
       <div className="mx-auto flex w-full max-w-[1600px]">
         <ExploreJobsSidebar onCreatePost={handleCreatePost} />
 
-        <div className="flex min-h-[calc(100vh-124px)] flex-1 flex-col">
+        <div className="flex min-h-[80vh] flex-1 flex-col">
           <ExploreJobsTopbar onFilterToggle={() => setIsFiltersOpen(true)} />
 
           <main className="relative flex-1 pb-24 pt-8 sm:pb-12">
@@ -38,7 +38,10 @@ const ExploreJobsLayout = () => {
 
       <ExploreJobsBottomNav onCreatePost={handleCreatePost} />
 
-      <FiltersPanel isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
+      <FiltersPanel
+        isOpen={isFiltersOpen}
+        onClose={() => setIsFiltersOpen(false)}
+      />
     </div>
   );
 };

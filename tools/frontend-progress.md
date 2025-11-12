@@ -40,3 +40,46 @@
 
 - Document any missing “forgot password” handling.
 - Note any UX quirks (e.g., repeated toasts, uneven redirects) for backend integration pass.
+
+---
+
+## Recruiter Dashboard API Smoke Test (Frontend ↔ Backend)
+
+### 1. Pre-flight
+
+- Backend: `cd backend && npm run dev` (requires `.env` with valid `MONGODB_URI`, JWT secrets).
+- Frontend: ensure `frontend/.env` has `VITE_API_URL=http://localhost:5000/api/v1`, then `npm run dev`.
+- Clear browser storage: `localStorage.removeItem("aela.auth.session"); localStorage.removeItem("aela.auth.tokens");`.
+
+### 2. Recruiter Auth
+
+- Register new recruiter via `/login/recruiter?mode=register`; verify success toast and redirect to `/explore-jobs/recruiter-dashboard`.
+- Sign out via navbar, then log back in with same credentials to confirm backend session works.
+- Attempt recruiter login with incorrect password → expect unauthorized toast from API.
+
+### 3. Profile & Dashboard Load
+
+- On dashboard load, confirm:
+  - Header metrics populated (counts should match API data).
+  - “Recommended e-books” list renders items from `/resources/ebooks`.
+  - “Blogs in progress” reflects `/recruiter/blogs?status=draft` response.
+  - Applicant table fills with `/recruiter/jobs/:id/applicants` data.
+- Use “Refresh” button, check for loading banner + success toast and updated data.
+
+### 4. Job CRUD Flow
+
+- Click “New Job Drop”, submit minimal valid data → expect success toast and new card hydrated from API.
+- Edit the new job (pencil icon), change title and submit → updated card should reflect API response.
+- Delete the job (trash icon) → verify toast + removal from grid and Mongo collection.
+
+### 5. Error Handling Checks
+
+- Temporarily stop backend → trigger dashboard refresh to observe red error banner and toast.
+- Submit job form without required fields → ensure client validation prevents API call.
+
+### 6. Follow-ups & Open Items
+
+- ✅ Refresh-token handling now automatic when sessions expire mid-visit.
+- ✅ Applicant stage updates exposed in dashboard table; monitor for UX tweaks (loading indicators, bulk updates).
+- ✅ Blog composer shipped (draft/publish) — add rich editor + cover image uploads in future iteration.
+- Next: incorporate blog editing & deletion, plus analytics cards once backend endpoints exist.

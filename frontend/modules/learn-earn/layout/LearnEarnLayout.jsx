@@ -200,7 +200,7 @@ const LearnEarnLayout = () => {
                   </Link>
                   <Link
                     to="/learn-earn/wallet"
-                  className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+                    className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
                     <FaCoins className="h-4 w-4" />
                     Redeem Coins
                   </Link>
