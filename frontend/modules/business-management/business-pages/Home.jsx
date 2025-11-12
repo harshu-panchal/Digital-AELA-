@@ -1990,8 +1990,8 @@ const Home = () => {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
                 whileHover={{ y: -6, scale: 1.01 }}
-                className="rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_20px_50px_rgba(8,8,8,0.45)] overflow-hidden">
-                <div className="relative aspect-9/16 w-full overflow-hidden bg-black">
+                className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_20px_50px_rgba(8,8,8,0.45)]">
+                <div className="relative w-full overflow-hidden bg-black aspect-video md:aspect-9/16">
                   <iframe
                     src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1&showinfo=0`}
                     title={video.title}
