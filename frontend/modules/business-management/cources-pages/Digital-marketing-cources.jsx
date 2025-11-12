@@ -385,7 +385,7 @@ const DigitalMarketingCourses = () => {
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-            <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
                   <div>
                     <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
                       {course.title}
@@ -465,7 +465,7 @@ const DigitalMarketingCourses = () => {
                           Gift
                         </GiftButton>
                       </div>
-                    </div>
+                  </div>
                 </div>
               </motion.div>
               );

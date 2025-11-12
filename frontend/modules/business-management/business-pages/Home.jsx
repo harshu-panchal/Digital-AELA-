@@ -42,6 +42,7 @@ const MotionLink = motion(Link);
 
 const Home = () => {
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [activeCertificate, setActiveCertificate] = useState(0);
@@ -111,12 +112,12 @@ const Home = () => {
   );
 
   useEffect(() => {
-    if (heroSlides.length <= 1) return undefined;
+    if (heroSlides.length <= 1 || isHeroPaused) return undefined;
     const timer = setInterval(() => {
       setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length);
     }, 6500);
     return () => clearInterval(timer);
-  }, [heroSlides.length]);
+  }, [heroSlides.length, isHeroPaused]);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -616,7 +617,9 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative min-h-screen flex items-center pt-[160px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden">
+        className="relative min-h-screen flex items-center pt-[160px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}>
         <div className="absolute inset-0 bg-black" />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -2307,7 +2310,11 @@ const Home = () => {
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         id="faq"
-        className="py-12 bg-black">
+        className="relative overflow-hidden py-12 bg-black">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#D4AF37]/20 blur-[180px]" />
+          <div className="absolute bottom-[-20%] right-1/5 h-80 w-80 rounded-full bg-[#6A8BFF]/10 blur-[160px]" />
+        </div>
         <div className="layout-container">
           <div className="text-center mb-9">
             <p className="text-[11px] md:text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70 font-semibold font-accent">

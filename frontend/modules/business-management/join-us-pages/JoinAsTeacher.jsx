@@ -134,6 +134,23 @@ const JoinAsTeacher = () => {
             "Tell us about your mission, teaching philosophy, and the impact you want to create.",
           required: true,
         },
+        {
+          name: "resume",
+          label: "Attach Resume (PDF, under 10MB)",
+          type: "file",
+          accept: ".pdf,.doc,.docx",
+          helperText: "Upload your latest resume (max file size 10 MB).",
+          required: true,
+        },
+        {
+          name: "videoIntro",
+          label: "Attach Your Video Introduction (minimum 3 minutes)",
+          type: "file",
+          accept: "video/mp4,video/webm,video/quicktime",
+          helperText:
+            "Share a video introduction (MP4/WEBM/MOV) at least 3 minutes long to showcase your teaching style.",
+          required: true,
+        },
       ]}
       ctaLabel="Apply as Teacher"
       disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."

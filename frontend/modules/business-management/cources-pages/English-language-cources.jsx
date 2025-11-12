@@ -398,7 +398,7 @@ const EnglishLanguageCourses = () => {
                           Gift
                         </GiftButton>
                       </div>
-                    </div>
+                  </div>
                 </div>
               </motion.div>
               );

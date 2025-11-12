@@ -556,7 +556,7 @@ const CorporateTrainingCourses = () => {
                             Gift
                           </GiftButton>
                         </div>
-                      </div>
+                    </div>
                   </div>
                 </motion.div>
                 );

@@ -77,8 +77,7 @@ const Navbar = () => {
       path: "/join-us",
       dropdown: [
         { label: "As Teacher", path: "/join-us/teacher" },
-        { label: "Influencer", path: "/join-us/influencer" },
-        { label: "Freelancer", path: "/join-us/freelancer" },
+        { label: "Influencer / Freelancer", path: "/join-us/influencer" },
         { label: "Build Your After Life", path: "/join-us/after-life" },
       ],
     },
