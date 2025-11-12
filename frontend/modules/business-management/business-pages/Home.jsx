@@ -2389,8 +2389,9 @@ const Home = () => {
         id="faq"
         className="relative overflow-hidden py-12 bg-black">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#D4AF37]/20 blur-[180px]" />
-          <div className="absolute bottom-[-20%] right-1/5 h-80 w-80 rounded-full bg-[#6A8BFF]/10 blur-[160px]" />
+          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#D4AF37]/22 blur-[180px]" />
+          <div className="absolute bottom-[-18%] right-1/5 h-80 w-80 rounded-full bg-[#F97316]/18 blur-[170px]" />
+          <div className="absolute top-1/3 right-1/3 h-60 w-60 rounded-full border border-[#FDBA74]/20 bg-[#FDBA74]/10 blur-[150px] mix-blend-screen" />
         </div>
         <div className="layout-container">
           <div className="text-center mb-9">
