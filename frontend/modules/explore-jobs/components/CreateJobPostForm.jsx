@@ -26,7 +26,7 @@ const toList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData }) => {
+const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitOverride }) => {
   const [formValues, setFormValues] = useState(initialData ?? defaultValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createJobPost, updateJobPost } = useExploreJobs();
@@ -57,17 +57,27 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData }) => {
       cultureHighlights: toList(formValues.cultureHighlights),
     };
 
-    if (isEditing && initialData?.id) {
-      updateJobPost(initialData.id, payload);
-    } else {
-      createJobPost(payload);
-    }
-
-    setTimeout(() => {
+    try {
+      if (onSubmitOverride) {
+        await onSubmitOverride(payload, {
+          isEditing,
+          id: initialData?.id,
+        });
+      } else if (isEditing && initialData?.id) {
+        updateJobPost(initialData.id, payload);
+      } else {
+        createJobPost(payload);
+      }
+      setTimeout(() => {
+        setIsSubmitting(false);
+        onSubmitComplete?.();
+        setFormValues(defaultValues);
+      }, 350);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to submit job post", error);
       setIsSubmitting(false);
-      onSubmitComplete?.();
-      setFormValues(defaultValues);
-    }, 450);
+    }
   };
 
   useEffect(() => {

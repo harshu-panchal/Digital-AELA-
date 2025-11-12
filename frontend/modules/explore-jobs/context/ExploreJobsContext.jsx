@@ -263,6 +263,7 @@ export const ExploreJobsProvider = ({ children }) => {
     getPostsByUsername,
     setRecruiterProfiles,
     setSeekerProfiles,
+    setPosts,
   };
 
   return (

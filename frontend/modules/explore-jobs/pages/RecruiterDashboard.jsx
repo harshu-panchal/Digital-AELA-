@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,6 +11,7 @@ import {
   HiOutlineNewspaper,
   HiOutlineUserGroup,
 } from "react-icons/hi2";
+import { toast } from "react-toastify";
 import PostGrid from "../components/PostGrid";
 import ProfileHeader from "../components/ProfileHeader";
 import CreateJobPostForm from "../components/CreateJobPostForm";
@@ -19,34 +20,250 @@ import {
   CURRENT_RECRUITER_USERNAME,
   highlightTags,
 } from "../data/posts";
-import { getRecruiterDashboard } from "../../../src/services/recruiterDashboard";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import {
+  fetchRecruiterProfile,
+  fetchRecruiterJobs,
+  createRecruiterJob,
+  updateRecruiterJob,
+  deleteRecruiterJob,
+  fetchJobApplicants,
+  fetchRecruiterBlogs,
+} from "../../../src/services/api/recruiter";
+import { fetchEbooks } from "../../../src/services/api/resources";
 
 const RecruiterDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: authUser } = useAuth();
+  const defaultTalentSpotlight = useMemo(
+    () => [
+      {
+        id: "talent-1",
+        name: "Fatima Hassan",
+        headline: "Marketing Storyteller · Dubai",
+        profileUrl: "/profiles/students/fatima-hassan",
+        skills: ["Content", "Community", "CRM"],
+      },
+      {
+        id: "talent-2",
+        name: "Omar Al Farsi",
+        headline: "Public Speaking Coach · Remote",
+        profileUrl: "/profiles/students/omar-alfarsi",
+        skills: ["Training", "EdTech", "Operations"],
+      },
+      {
+        id: "talent-3",
+        name: "Sara Malik",
+        headline: "IELTS Mentor · Hybrid",
+        profileUrl: "/profiles/students/sara-malik",
+        skills: ["IELTS", "Curriculum", "Coaching"],
+      },
+    ],
+    []
+  );
+
   const {
     recruiterPosts,
     currentRecruiterProfile,
     savedPostIds,
     appliedPostIds,
     toggleSavePost,
-    deletePost,
     openComposer,
     closeComposer,
     composerState,
+    setPosts,
   } = useExploreJobs();
-  const [dashboardData, setDashboardData] = useState(() => getRecruiterDashboard());
+  const [dashboardData, setDashboardData] = useState({
+    actionShortcuts: [],
+    applicantPipeline: [],
+    talentSpotlight: defaultTalentSpotlight,
+    ebookShelf: [],
+    blogDrafts: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+
+  const mapJobToPostCard = useCallback(
+    (job, profile) => {
+      const profileData = profile?.user ?? profile ?? {};
+      const avatar =
+        profile?.avatarUrl ??
+        profileData.avatar ??
+        currentRecruiterProfile?.avatar ??
+        "https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=900&q=80";
+
+      const stats = job.stats ?? {};
+      return {
+        id: job.id,
+        backendId: job.id,
+        type: "job",
+        authorType: "recruiter",
+        authorUsername: CURRENT_RECRUITER_USERNAME,
+        authorName: profileData.fullName ?? currentRecruiterProfile?.name ?? "Recruiter",
+        authorAvatar: avatar,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        salary: job.salary?.range ?? job.salary ?? "",
+        employmentType: job.employmentType ?? "full-time",
+        experience: job.experience ?? "",
+        tags: job.tags ?? [],
+        image:
+          job.image ??
+          currentRecruiterProfile?.banner ??
+          "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1000&q=80",
+        createdAt: job.createdAt,
+        description: job.description,
+        cultureHighlights: job.cultureHighlights ?? [],
+        applyCTA: job.applyCTA ?? "Apply now",
+        stats: {
+          likes: stats.likes ?? 0,
+          comments: stats.comments ?? 0,
+          views: stats.views ?? 0,
+          saves: stats.saves ?? 0,
+          applications: stats.applications ?? 0,
+        },
+      };
+    },
+    [currentRecruiterProfile]
+  );
+
+  const loadDashboard = useCallback(
+    async (showToast = false) => {
+      if (!authUser || authUser.role !== "recruiter") return;
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const [profile, jobsResponse, blogsResponse, ebooksResponse] = await Promise.all([
+          fetchRecruiterProfile(),
+          fetchRecruiterJobs(),
+          fetchRecruiterBlogs({ status: "draft" }),
+          fetchEbooks({ pageSize: 6 }),
+        ]);
+
+        const jobs = jobsResponse?.data ?? [];
+        const applicantGroups = await Promise.all(
+          jobs.map(async (job) => {
+            try {
+              const pipeline = await fetchJobApplicants(job.id);
+              return pipeline;
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error("Failed to fetch applicants", error);
+              return null;
+            }
+          })
+        );
+
+        const mappedPipeline = applicantGroups
+          .filter(Boolean)
+          .map((group) => ({
+            jobId: group.jobId,
+            jobTitle: group.jobTitle,
+            stages: (group.applicants ?? []).map((applicant) => ({
+              id: applicant.applicationId,
+              name: applicant.fullName,
+              profileUrl: applicant.profileUrl ?? "#",
+              status: applicant.currentStage
+                ? applicant.currentStage.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+                : "Screening",
+              submittedAt: applicant.submittedAt
+                ? new Date(applicant.submittedAt).toLocaleDateString()
+                : "",
+            })),
+          }));
+
+        const mappedPosts = jobs.map((job) => mapJobToPostCard(job, profile));
+        setPosts((prev) => {
+          const nonRecruiter = prev.filter(
+            (post) =>
+              post.type !== "job" || post.authorUsername !== CURRENT_RECRUITER_USERNAME
+          );
+          return [...mappedPosts, ...nonRecruiter];
+        });
+
+        const ebooks = (ebooksResponse?.data ?? []).map((ebook) => ({
+          id: ebook.id,
+          title: ebook.title,
+          pages: ebook.pages ?? 0,
+          url: ebook.downloadUrl ?? `/resources/ebooks/${ebook.id}`,
+        }));
+
+        const blogDrafts = (blogsResponse?.data ?? []).map((blog) => ({
+          id: blog.id,
+          title: blog.title,
+          status: blog.status ? blog.status.replace(/\b\w/g, (c) => c.toUpperCase()) : "Draft",
+          updatedAt: blog.updatedAt
+            ? new Date(blog.updatedAt).toLocaleDateString()
+            : "",
+          url: `/blogs/editor/${blog.id}`,
+        }));
+
+        setDashboardData((prev) => ({
+          ...prev,
+          actionShortcuts: [
+            {
+              id: "post-job",
+              title: "Post a New Role",
+              description: "Launch a fresh job drop to attract applications.",
+              icon: "briefcase",
+              tone: "from-emerald-500/15 to-emerald-400/10 border-emerald-400/30 text-emerald-100",
+              to: "composer:job",
+            },
+            {
+              id: "post-blog",
+              title: "Share a Hiring Update",
+              description: "Publish insights to the Digital AELA community.",
+              icon: "blog",
+              tone: "from-sky-500/15 to-sky-400/10 border-sky-400/30 text-sky-100",
+              to: "/blogs/create",
+            },
+            {
+              id: "view-pipeline",
+              title: "Review Applicants",
+              description: "Track candidate progress across your roles.",
+              icon: "users",
+              tone: "from-amber-500/15 to-amber-400/10 border-amber-400/30 text-amber-100",
+              to: "#pipeline",
+            },
+            {
+              id: "read-ebooks",
+              title: "Hiring Playbooks",
+              description: "Download playbooks and scorecards for interviews.",
+              icon: "book",
+              tone: "from-fuchsia-500/15 to-fuchsia-400/10 border-fuchsia-400/30 text-fuchsia-100",
+              to: "/free-library",
+            },
+          ],
+          applicantPipeline: mappedPipeline,
+          ebookShelf: ebooks,
+          blogDrafts,
+          talentSpotlight: prev.talentSpotlight?.length
+            ? prev.talentSpotlight
+            : defaultTalentSpotlight,
+        }));
+
+        if (showToast) {
+          toast.success("Recruiter dashboard refreshed");
+        }
+      } catch (error) {
+        setLoadError(error);
+        // eslint-disable-next-line no-console
+        console.error("Failed to load recruiter dashboard", error);
+        if (showToast) {
+          toast.error(error.message || "Unable to refresh dashboard");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [authUser, defaultTalentSpotlight, mapJobToPostCard, setPosts]
+  );
 
   useEffect(() => {
-    setDashboardData(getRecruiterDashboard());
-    const handleStorage = (event) => {
-      if (event.key === "aela.recruiter.dashboard") {
-        setDashboardData(getRecruiterDashboard());
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+    loadDashboard();
+  }, [loadDashboard]);
 
   const {
     actionShortcuts = [],
@@ -95,9 +312,51 @@ const RecruiterDashboard = () => {
 
   const handleEdit = (post) => openComposer("job", post);
 
-  const handleDelete = (postId) => deletePost(postId);
+  const handleDelete = async (postId) => {
+    try {
+      await deleteRecruiterJob(postId);
+      toast.success("Job archived");
+      await loadDashboard(true);
+    } catch (error) {
+      toast.error(error.message || "Unable to delete job");
+    }
+  };
 
   const composerVisible = composerState.mode === "job";
+
+  const handleJobSubmit = async (payload, context) => {
+    const body = {
+      title: payload.title,
+      company: payload.company,
+      location: payload.location,
+      employmentType: payload.employmentType || "full-time",
+      experience: payload.experience,
+      description: payload.description,
+      tags: payload.tags ?? [],
+      cultureHighlights: payload.cultureHighlights ?? [],
+      applyCTA: payload.applyCTA,
+      salary: payload.salary
+        ? {
+            currency: payload.salary.includes("₹") ? "INR" : "USD",
+            range: payload.salary,
+          }
+        : undefined,
+    };
+
+    try {
+      if (context.isEditing && context.id) {
+        await updateRecruiterJob(context.id, body);
+        toast.success("Job updated");
+      } else {
+        await createRecruiterJob(body);
+        toast.success("Job created");
+      }
+      await loadDashboard(true);
+    } catch (error) {
+      toast.error(error.message || "Unable to save job");
+      throw error;
+    }
+  };
 
   const handleShortcutClick = (shortcut) => {
     if (shortcut.to === "composer:job") {
@@ -125,16 +384,36 @@ const RecruiterDashboard = () => {
           </span>
         }
         actionSlot={
-          <button
-            type="button"
-            onClick={() => openComposer("job")}
-            className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
-            <HiOutlinePlusCircle className="h-5 w-5" />
-            New Job Drop
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => loadDashboard(true)}
+              className="inline-flex items-center gap-2 rounded-3xl border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-white/40">
+              Refresh
+            </button>
+            <button
+              type="button"
+              onClick={() => openComposer("job")}
+              className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
+              <HiOutlinePlusCircle className="h-5 w-5" />
+              New Job Drop
+            </button>
+          </div>
         }
         metrics={stats}
       />
+
+      {isLoading && (
+        <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 backdrop-blur">
+          Syncing recruiter data…
+        </div>
+      )}
+
+      {loadError && (
+        <div className="rounded-3xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+          {loadError.message || "We couldn't load your recruiter data. Please refresh."}
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {actionShortcuts.map((shortcut) => {
@@ -422,6 +701,7 @@ const RecruiterDashboard = () => {
                 }
                 isEditing={Boolean(composerState.post)}
                 onSubmitComplete={closeComposer}
+                onSubmitOverride={handleJobSubmit}
               />
             </div>
           </motion.div>

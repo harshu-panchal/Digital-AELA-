@@ -1,4 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  loginRecruiterAccount,
+  logoutRecruiterAccount,
+  registerRecruiterAccount,
+} from "../services/api/auth";
+import {
+  clearStoredTokens,
+  getStoredTokens,
+  persistTokens,
+} from "../services/api/baseClient";
+import { updateRecruiterProfile } from "../services/api/recruiter";
 
 const AuthContext = createContext(null);
 
@@ -122,6 +133,7 @@ export const AuthProvider = ({ children }) => {
     const stored = loadSessionFromStorage();
     return stored ?? null;
   });
+  const [tokens, setTokens] = useState(() => getStoredTokens());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -137,6 +149,27 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  const handleBackendAuthSuccess = useCallback((authPayload) => {
+    if (!authPayload?.user) return null;
+    const normalizedUser = {
+      id: authPayload.user.id,
+      role: authPayload.user.role,
+      email: authPayload.user.email,
+      fullName: authPayload.user.fullName,
+      createdAt: authPayload.user.createdAt,
+      metadata: authPayload.user.metadata ?? {},
+      source: "backend",
+    };
+    setUser(normalizedUser);
+    const nextTokens = {
+      accessToken: authPayload.accessToken,
+      refreshToken: authPayload.refreshToken,
+    };
+    setTokens(nextTokens);
+    persistTokens(nextTokens);
+    return normalizedUser;
+  }, []);
+
   const login = useCallback(
     async ({ email, password, role }) => {
       const normalizedEmail = String(email || "")
@@ -146,6 +179,11 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Please enter both email and password.");
       }
 
+      if (role === "recruiter") {
+        const authResult = await loginRecruiterAccount({ email: normalizedEmail, password });
+        return handleBackendAuthSuccess(authResult);
+      }
+
       const existing = users.find((item) => item.email === normalizedEmail);
       if (!existing) {
         throw new Error("Account not found. Please register first.");
@@ -153,7 +191,9 @@ export const AuthProvider = ({ children }) => {
 
       if (role && existing.role !== role) {
         const expected = ROLE_DETAILS[existing.role]?.label ?? existing.role;
-        throw new Error(`This email is registered as ${expected}. Try logging in via the correct portal.`);
+        throw new Error(
+          `This email is registered as ${expected}. Try logging in via the correct portal.`
+        );
       }
 
       if (existing.password !== password) {
@@ -164,7 +204,7 @@ export const AuthProvider = ({ children }) => {
       setUser(safeUser);
       return safeUser;
     },
-    [users]
+    [users, handleBackendAuthSuccess]
   );
 
   const register = useCallback(
@@ -175,6 +215,19 @@ export const AuthProvider = ({ children }) => {
 
       if (!normalizedEmail || !password || !role) {
         throw new Error("Email, password, and role are required.");
+      }
+
+      if (role === "recruiter") {
+        const fullName =
+          profile?.fullName?.trim() ||
+          profile?.name?.trim() ||
+          normalizedEmail.split("@")[0];
+        const authResult = await registerRecruiterAccount({
+          email: normalizedEmail,
+          password,
+          fullName,
+        });
+        return handleBackendAuthSuccess(authResult);
       }
 
       const existing = users.find((item) => item.email === normalizedEmail);
@@ -203,16 +256,58 @@ export const AuthProvider = ({ children }) => {
       setUser(safeUser);
       return safeUser;
     },
-    [users]
+    [users, handleBackendAuthSuccess]
   );
 
-  const logout = useCallback(() => {
-    setUser(null);
-  }, []);
+  const logout = useCallback(
+    async (options = {}) => {
+      if (user?.role === "recruiter") {
+        await logoutRecruiterAccount().catch(() => {
+          // swallow logout errors
+        });
+      }
+      setUser(null);
+      setTokens(null);
+      if (!options.preserveSession) {
+        clearStoredTokens();
+      }
+    },
+    [user]
+  );
 
   const updateUserMetadata = useCallback(
-    (updates) => {
+    async (updates) => {
       if (!user) return null;
+      if (user.role === "recruiter") {
+        try {
+          const payload = {
+            fullName: updates.fullName,
+            bio: updates.metadata?.bio,
+            company: updates.metadata?.company,
+            headline: updates.metadata?.headline,
+            avatarUrl: updates.metadata?.avatarUrl,
+            socials: updates.metadata?.socials,
+          };
+          const profile = await updateRecruiterProfile(payload);
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  fullName: profile?.user?.fullName ?? updates.fullName ?? prev.fullName,
+                  metadata: {
+                    ...prev.metadata,
+                    ...updates.metadata,
+                    recruiterProfile: profile,
+                  },
+                }
+              : prev
+          );
+          return profile;
+        } catch (error) {
+          throw error;
+        }
+      }
+
       setUsers((prev) =>
         prev.map((record) =>
           record.id === user.id
@@ -239,6 +334,7 @@ export const AuthProvider = ({ children }) => {
             }
           : prev
       );
+      return null;
     },
     [user]
   );
@@ -252,6 +348,7 @@ export const AuthProvider = ({ children }) => {
       user,
       users,
       isAuthenticated: Boolean(user),
+      tokens,
       login,
       register,
       logout,
@@ -260,7 +357,7 @@ export const AuthProvider = ({ children }) => {
       getRoleHome,
       roleDetails: ROLE_DETAILS,
     }),
-    [user, users, login, register, logout, updateUserMetadata, getRoleLabel, getRoleHome]
+    [user, users, tokens, login, register, logout, updateUserMetadata, getRoleLabel, getRoleHome]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
