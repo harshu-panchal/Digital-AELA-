@@ -39,32 +39,37 @@ const TeacherDashboard = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [ebooks, setEbooks] = useState(() => getTeacherEbooks());
-  const [quizzes, setQuizzes] = useState(() => getTeacherQuizzes());
+  const [ebooks, setEbooks] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
   const [flash, setFlash] = useState({ ebooks: false, quizzes: false });
+  const [loadingEbooks, setLoadingEbooks] = useState(true);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
 
   useEffect(() => {
-    const refresh = () => {
-      setEbooks(getTeacherEbooks());
-      setQuizzes(getTeacherQuizzes());
+    const refresh = async () => {
+      try {
+        setLoadingEbooks(true);
+        setLoadingQuizzes(true);
+        // getTeacherEbooks is async (backend API)
+        const ebooksData = await getTeacherEbooks();
+        // getTeacherQuizzes is still synchronous (localStorage)
+        const quizzesData = getTeacherQuizzes();
+        setEbooks(Array.isArray(ebooksData) ? ebooksData : []);
+        setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+      } catch (error) {
+        console.error("Failed to load teacher data:", error);
+        setEbooks([]);
+        setQuizzes([]);
+      } finally {
+        setLoadingEbooks(false);
+        setLoadingQuizzes(false);
+      }
     };
 
     refresh();
 
-    const handleStorage = (event) => {
-      if (event.key === "aela.teacher.ebooks" || event.key === "aela.teacher.quizzes") {
-        refresh();
-      }
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener("storage", handleStorage);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("storage", handleStorage);
-      }
-    };
+    // Note: Removed storage event listener since we're now using backend API for ebooks
+    // If you need real-time updates, consider using WebSockets or polling
   }, []);
 
   useEffect(() => {
@@ -102,8 +107,9 @@ const TeacherDashboard = () => {
     mentorNetwork,
     marketplace,
   } = useMemo(() => {
-    const ebookCount = ebooks.length;
-    const draftEbooks = ebooks.filter((ebook) => ebook.status !== "published").length;
+    const ebookCount = Array.isArray(ebooks) ? ebooks.length : 0;
+    // For ebooks, check isPublic instead of status (since backend uses isPublic: false for pending)
+    const draftEbooks = Array.isArray(ebooks) ? ebooks.filter((ebook) => !ebook.isPublic).length : 0;
 
     const quizCount = quizzes.length;
     const publishedQuizzes = quizzes.filter((quiz) => quiz.status === "published");
@@ -246,16 +252,16 @@ const TeacherDashboard = () => {
           ],
     };
 
-    const libraryEntries = ebookCount
+    const libraryEntries = ebookCount && Array.isArray(ebooks)
       ? ebooks.map((ebook) => ({
-          id: ebook.id,
+          id: ebook.id || ebook._id,
           title: ebook.title,
           format: ebook.fileMeta
             ? `PDF · ${Math.max(1, Math.round(ebook.fileMeta.size / 1024))} KB`
-            : "PDF",
+            : ebook.pages ? `${ebook.pages} pages` : "PDF",
           downloads: ebook.downloads ?? 0,
           lastUpdated: ebook.updatedAt ? new Date(ebook.updatedAt).toLocaleDateString() : "Just now",
-          status: ebook.status ?? "draft",
+          status: ebook.isPublic ? "published" : "draft",
         }))
       : [
           {
