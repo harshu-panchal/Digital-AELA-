@@ -49,10 +49,26 @@ const ApplicantProfilePage = () => {
         console.log("Applicant details received:", result);
         // eslint-disable-next-line no-console
         console.log("Student profile data:", result?.studentProfile);
+        // eslint-disable-next-line no-console
+        console.log("User data:", result?.user);
+        // eslint-disable-next-line no-console
+        console.log("Application data:", result?.application);
+        
+        if (!result) {
+          throw new Error("No data received from server");
+        }
+        
         setData(result);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Error loading applicant details:", err);
+        // eslint-disable-next-line no-console
+        console.error("Error details:", {
+          message: err.message,
+          status: err.status,
+          code: err.code,
+          details: err.details,
+        });
         const errorMessage = err.message || err.details?.error?.message || "Failed to load applicant details";
         setError(errorMessage);
         toast.error(errorMessage);
@@ -161,8 +177,8 @@ const ApplicantProfilePage = () => {
   const hasStudentProfileData = studentProfile && (
     studentProfile.bio ||
     studentProfile.phone ||
-    studentProfile.location ||
-    studentProfile.skills?.length > 0 ||
+    (studentProfile.location && (studentProfile.location.city || studentProfile.location.country)) ||
+    (studentProfile.skills && studentProfile.skills.length > 0) ||
     studentProfile.goals ||
     studentProfile.headline ||
     studentProfile.currentStatus ||
@@ -171,6 +187,17 @@ const ApplicantProfilePage = () => {
     studentProfile.resumeUrl ||
     studentProfile.portfolioUrl
   );
+
+  // Debug: Log what we have
+  // eslint-disable-next-line no-console
+  console.log("Render check:", {
+    hasApplication: !!application,
+    hasJob: !!job,
+    hasUser: !!user,
+    hasStudentProfile: !!studentProfile,
+    hasStudentProfileData,
+    userRole: user?.role,
+  });
 
   // Safety check - ensure we have at least application data
   if (!application) {
@@ -383,7 +410,7 @@ const ApplicantProfilePage = () => {
                   )}
                 </div>
               </motion.section>
-            ) : user?.role === "student" ? (
+            ) : user?.role === "student" || !user ? (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -391,16 +418,38 @@ const ApplicantProfilePage = () => {
                 className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
                 <div className="mb-4 flex items-center gap-3">
                   <HiOutlineUser className="h-5 w-5 text-sky-300" />
-                  <h2 className="text-lg font-semibold text-white">Student Profile</h2>
+                  <h2 className="text-lg font-semibold text-white">Applicant Information</h2>
                 </div>
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-400">
-                    Student profile not available. The student may need to complete their profile in their account settings.
-                  </p>
+                  {!studentProfile && (
+                    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                      <p className="text-sm text-amber-200">
+                        Student profile not available. The student may need to complete their profile in their account settings.
+                      </p>
+                    </div>
+                  )}
                   {application.candidateHeadline && (
                     <div>
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Headline</p>
                       <p className="text-sm text-slate-200">{application.candidateHeadline}</p>
+                    </div>
+                  )}
+                  {application.candidateName && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Name</p>
+                      <p className="text-sm text-slate-200">{application.candidateName}</p>
+                    </div>
+                  )}
+                  {user?.email && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Email</p>
+                      <p className="text-sm text-slate-200">{user.email}</p>
+                    </div>
+                  )}
+                  {application.candidateId && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Candidate ID</p>
+                      <p className="text-xs text-slate-400 font-mono">{application.candidateId}</p>
                     </div>
                   )}
                 </div>
