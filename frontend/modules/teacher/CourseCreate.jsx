@@ -108,11 +108,11 @@ const CourseCreate = () => {
     setIsSubmitting(true);
     try {
       const created = await createTeacherCourse(payload);
-      toast.success("Course saved successfully. You can edit modules and publish when ready.");
+      toast.success("Course submitted for approval. It will be reviewed by admin before being published.");
       setFormData(initialFormState);
       navigate(`/teacher/courses/${created.id}`, { replace: true });
     } catch (error) {
-      const message = error?.message ?? "We couldn't save your course. Please try again.";
+      const message = (error?.details?.error?.message || error?.message) ?? "We couldn't save your course. Please try again.";
       toast.error(message);
     } finally {
       setIsSubmitting(false);

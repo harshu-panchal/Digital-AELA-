@@ -15,6 +15,16 @@ const containerVariants = {
   },
 };
 
+// Ensure cards are always visible
+const cardVariantsSimple = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] },
+  },
+};
+
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
   show: {
@@ -46,6 +56,8 @@ const SuperAdminDashboard = () => {
 
       const response = await fetchDashboardData();
       if (response) {
+        // eslint-disable-next-line no-console
+        console.log("Dashboard data loaded:", response);
         setDashboardData({
           stats: response.stats || [],
           approvals: response.approvals || [],
@@ -173,6 +185,11 @@ const SuperAdminDashboard = () => {
         },
       ];
 
+      // eslint-disable-next-line no-console
+      console.log("Computed headlineStats:", stats);
+      // eslint-disable-next-line no-console
+      console.log("headlineStats.length:", stats.length);
+
       return {
         headlineStats: stats,
         approvals: approvalQueues,
@@ -190,7 +207,7 @@ const SuperAdminDashboard = () => {
         url="https://digitalaela.com/super-admin"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.14),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.14),transparent_70%)] z-0" />
 
       <div className="relative z-10">
         <section className="space-y-10">
@@ -235,32 +252,33 @@ const SuperAdminDashboard = () => {
             </div>
           </motion.div>
 
-          <motion.section
-            initial="hidden"
-            animate="show"
-            variants={containerVariants}
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 relative z-20">
             {loading && dashboardData.stats.length === 0 ? (
               <div className="col-span-4 flex items-center justify-center py-12">
                 <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
               </div>
-            ) : (
+            ) : headlineStats && headlineStats.length > 0 ? (
               headlineStats.map((stat) => (
-              <motion.div
-                key={stat.id}
-                variants={cardVariants}
-                className="rounded-3xl border border-[#F5D26A]/15 bg-[#080B14]/80 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
-                <p className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  {stat.label}
+              <div
+                key={stat.id || stat.label}
+                style={{ opacity: 1, visibility: "visible" }}
+                className="rounded-3xl border-2 border-[#F5D26A]/40 bg-[#0B0F1E] p-6 shadow-xl shadow-black/50">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
+                  {stat.label || "N/A"}
                 </p>
-                <p className="mt-3 text-2xl font-semibold text-white">
-                  {stat.value}
+                <p className="mt-4 text-3xl font-bold text-white">
+                  {stat.value || "0"}
                 </p>
-                <p className="mt-2 text-xs text-slate-300/80">{stat.delta}</p>
-              </motion.div>
+                <p className="mt-2 text-sm font-medium text-slate-200">{stat.delta || ""}</p>
+              </div>
               ))
+            ) : (
+              <div className="col-span-4 rounded-3xl border-2 border-red-500 bg-red-500/20 p-8 text-center">
+                <p className="text-sm text-red-300">Debug: headlineStats is empty or undefined</p>
+                <p className="text-xs text-red-400 mt-2">Stats count: {headlineStats?.length || 0}</p>
+              </div>
             )}
-          </motion.section>
+          </div>
 
           <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <motion.div

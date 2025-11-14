@@ -1,10 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import {
   FaArrowRight,
   FaBook,
   FaDownload,
   FaStar,
+  FaSpinner,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
@@ -16,6 +19,7 @@ import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { courseCatalog as allCourses } from "../data/courseCatalog";
+import { fetchPublishedCourses } from "../../../src/services/api/courses";
 
 const whatsappNumber = "+971508185690";
 
@@ -102,6 +106,41 @@ const bookLibrary = [
 
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
+  const [afterLifeCourses, setAfterLifeCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchPublishedCourses();
+        const publishedCourses = (response.courses || []).map((course) => ({
+          id: course._id,
+          slug: course._id, // Use ID as slug for now
+          title: course.title,
+          description: course.description || course.metadata?.subtitle || "",
+          image: course.thumbnailUrl || "",
+          price: course.price ? `AED ${course.price}` : "On Request",
+          duration: course.duration ? `${course.duration} hours` : "",
+          format: course.metadata?.deliveryMode || "",
+          features: course.metadata?.tags || [],
+          highlights: course.metadata?.tags || [],
+          category: course.category || "",
+          difficulty: course.metadata?.difficulty || "",
+        }));
+        setAfterLifeCourses(publishedCourses);
+      } catch (error) {
+        console.error("Failed to load courses:", error);
+        // Fallback to static courses if API fails
+        setAfterLifeCourses(allCourses);
+        toast.error("Failed to load courses. Showing cached data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, []);
 
   const handleBuyCourse = (course) => {
     const payload = {
@@ -121,14 +160,12 @@ const JoinBuildAfterLife = () => {
       ...course,
       origin: "join-build-after-life",
     };
-    navigate(`/courses/${course.slug}`, {
+    navigate(`/courses/${course.slug || course.id}`, {
       state: {
         course: payload,
       },
     });
   };
-
-  const afterLifeCourses = allCourses;
 
   return (
     <div className="relative min-h-screen bg-[#020409] text-white">
@@ -198,8 +235,18 @@ const JoinBuildAfterLife = () => {
               </motion.p>
             </div>
 
-            <div className="auto-grid-md lg:grid-cols-2 xl:grid-cols-4 gap-6">
-              {afterLifeCourses.map((course, index) => {
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
+              </div>
+            ) : (
+              <div className="auto-grid-md lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                {afterLifeCourses.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-400">No published courses available yet.</p>
+                  </div>
+                ) : (
+                  afterLifeCourses.map((course, index) => {
                 const highlights = course.features ?? course.highlights ?? [];
                 const isTrending = [
                   "basic-english",
@@ -347,9 +394,11 @@ const JoinBuildAfterLife = () => {
                       </button>
                     </div>
                   </motion.div>
-                );
-              })}
-            </div>
+                  );
+                })
+                )}
+              </div>
+            )}
           </div>
         </section>
 

@@ -1,74 +1,81 @@
-const STORAGE_KEY = "aela.teacher.courses";
+import { apiRequest } from "./api/baseClient";
 
-const loadCourses = () => {
-  if (typeof window === "undefined") return [];
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const persistCourses = (courses) => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
-  } catch {
-    // ignore persistence errors in mock layer
-  }
-};
-
-const generateId = (prefix) =>
-  `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
-
+/**
+ * Create a new course (teacher only - creates with draft status)
+ */
 export const createTeacherCourse = async (payload) => {
-  const timestamp = new Date().toISOString();
-  const id = generateId("course");
-
-  const courses = loadCourses();
-  const entry = {
-    id,
-    status: "draft",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    modules: [],
-    resources: [],
-    enrolments: [],
-    quizzes: [],
-    ...payload,
+  const response = await apiRequest("/teacher/courses", {
+    method: "POST",
+    body: payload,
+  });
+  // Transform backend response to match frontend expectations
+  return {
+    id: response.course._id,
+    ...response.course,
+    modules: response.course.modules || [],
+    resources: response.course.resources || [],
+    enrolments: response.course.enrolments || [],
+    quizzes: response.course.quizzes || [],
   };
-
-  courses.unshift(entry);
-  persistCourses(courses);
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return entry;
 };
 
-export const getTeacherCourses = () => loadCourses();
+/**
+ * Get all courses created by the teacher
+ */
+export const getTeacherCourses = async () => {
+  const response = await apiRequest("/teacher/courses", {
+    method: "GET",
+  });
+  // Transform backend response to match frontend expectations
+  return (response.courses || []).map((course) => ({
+    id: course._id,
+    ...course,
+    modules: course.modules || [],
+    resources: course.resources || [],
+    enrolments: course.enrolments || [],
+    quizzes: course.quizzes || [],
+  }));
+};
 
-export const getTeacherCourseById = (courseId) => loadCourses().find((course) => course.id === courseId) ?? null;
-
-export const updateTeacherCourse = async (courseId, updates) => {
-  const courses = loadCourses();
-  const index = courses.findIndex((course) => course.id === courseId);
-  if (index === -1) {
-    throw new Error("Course not found");
+/**
+ * Get a specific course by ID
+ */
+export const getTeacherCourseById = async (courseId) => {
+  try {
+    const response = await apiRequest(`/teacher/courses/${courseId}`, {
+      method: "GET",
+    });
+    // Transform backend response to match frontend expectations
+    return {
+      id: response.course._id,
+      ...response.course,
+      modules: response.course.modules || [],
+      resources: response.course.resources || [],
+      enrolments: response.course.enrolments || [],
+      quizzes: response.course.quizzes || [],
+    };
+  } catch (error) {
+    return null;
   }
+};
 
-  const updated = {
-    ...courses[index],
-    ...updates,
-    updatedAt: new Date().toISOString(),
+/**
+ * Update a course (only if draft status)
+ */
+export const updateTeacherCourse = async (courseId, updates) => {
+  const response = await apiRequest(`/teacher/courses/${courseId}`, {
+    method: "PUT",
+    body: updates,
+  });
+  // Transform backend response to match frontend expectations
+  return {
+    id: response.course._id,
+    ...response.course,
+    modules: response.course.modules || [],
+    resources: response.course.resources || [],
+    enrolments: response.course.enrolments || [],
+    quizzes: response.course.quizzes || [],
   };
-
-  courses[index] = updated;
-  persistCourses(courses);
-
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return updated;
 };
 
 const commitCourseChange = async (courseId, mutator) => {

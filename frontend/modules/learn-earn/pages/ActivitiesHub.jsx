@@ -239,8 +239,8 @@ const ActivitiesHub = () => {
         }
       } else {
         // No backend auth - use local only
-        const gained = rewardCoins(item.reward, `${item.name} completed`);
-        toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
+    const gained = rewardCoins(item.reward, `${item.name} completed`);
+    toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
       }
     } finally {
       setSubmitting((prev) => {
