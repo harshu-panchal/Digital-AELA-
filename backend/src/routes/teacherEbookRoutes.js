@@ -1,0 +1,28 @@
+import express from "express";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import {
+  createTeacherEbook,
+  getTeacherEbooks,
+  getTeacherEbookById,
+  updateTeacherEbook,
+} from "../controllers/teacherEbookController.js";
+
+const router = express.Router();
+
+// All routes require teacher authentication
+router.use(requireAuth(["teacher"]));
+
+// Create a new ebook (isPublic: false - requires approval)
+router.post("/ebooks", createTeacherEbook);
+
+// Get all ebooks created by the teacher
+router.get("/ebooks", getTeacherEbooks);
+
+// Get a specific ebook by ID
+router.get("/ebooks/:ebookId", getTeacherEbookById);
+
+// Update an ebook (only if not yet approved)
+router.put("/ebooks/:ebookId", updateTeacherEbook);
+
+export default router;
+

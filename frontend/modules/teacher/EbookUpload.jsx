@@ -92,6 +92,15 @@ const EbookUpload = () => {
       return;
     }
 
+    // For now, we'll use the previewUrl or coverImage as downloadUrl
+    // In production, you'd upload the file to a storage service (S3, etc.) and get the URL
+    const downloadUrl = sanitizeUrl(formData.previewUrl) || sanitizeUrl(formData.coverImage) || "";
+
+    if (!downloadUrl) {
+      toast.error("Please provide a download URL or preview URL for the ebook file.");
+      return;
+    }
+
     const payload = {
       title: cleanedTitle,
       subtitle: safeString(formData.subtitle),
@@ -104,23 +113,20 @@ const EbookUpload = () => {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
-      fileMeta: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      },
-      status: "draft",
-      notes: "File stored locally only in metadata until backend upload endpoint is available.",
+      downloadUrl: downloadUrl,
+      // Note: In production, you'd upload the file and get the URL
+      // For now, using previewUrl or coverImage as downloadUrl placeholder
     };
 
     setIsSubmitting(true);
     try {
       const created = await createTeacherEbook(payload);
-      toast.success("E-book saved. Publish once the content is reviewed.");
+      toast.success("E-book submitted for approval. It will be reviewed by admin before being published.");
       setFormData(initialFormState);
       navigate("/teacher/dashboard", { replace: true, state: { highlightEbooks: true, ebookId: created.id } });
     } catch (error) {
-      toast.error(error?.message ?? "Unable to save e-book. Please try again.");
+      const message = (error?.details?.error?.message || error?.message) ?? "Unable to save e-book. Please try again.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
