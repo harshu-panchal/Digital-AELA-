@@ -29,7 +29,9 @@ const navItems = [
 const ExploreJobsSidebar = ({ onCreatePost }) => {
   const location = useLocation();
   const isProfileRoute = location.pathname.startsWith("/explore-jobs/profile/");
-  const isRecruiterDashboard = location.pathname.includes("recruiter-dashboard");
+  const isRecruiterDashboard = location.pathname.includes(
+    "recruiter-dashboard"
+  );
   const isSeekerDashboard = location.pathname.includes("seeker-dashboard");
 
   return (
@@ -66,7 +68,8 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
                       isActive
                         ? "border-white/10 bg-white/5 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]"
                         : "text-gray-300 hover:border-white/10 hover:bg-white/5 hover:text-white"
-                    }`}>
+                    }`
+                  }>
                   <Icon className="h-5 w-5" />
                   {item.label}
                 </NavLink>
