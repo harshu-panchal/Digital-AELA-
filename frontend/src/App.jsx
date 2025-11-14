@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "../modules/business-management/business-components/Navbar";
@@ -58,6 +58,7 @@ import JoinBuildAfterLife from "../modules/business-management/join-us-pages/Joi
 import FreeLibrary from "../modules/business-management/free-library/FreeLibrary";
 import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
 import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
+import AdminLogin from "../modules/admin/AdminLogin";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import StudentDashboard from "../modules/student/StudentDashboard";
 import CourseCreate from "../modules/teacher/CourseCreate";
@@ -68,14 +69,18 @@ import QuizCreate from "../modules/teacher/QuizCreate";
 import QuizDetail from "../modules/teacher/QuizDetail";
 
 export const App = () => {
+  const location = useLocation();
+  const isAdminLogin = location.pathname === "/admin/login";
+
   return (
     <>
       <ScrollToTop />
       <ToastContainer position="top-right" autoClose={3200} theme="dark" />
-      <Navbar />
+      {!isAdminLogin && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/super-admin"
           element={
@@ -370,7 +375,7 @@ export const App = () => {
           element={<BranchOwnerRegister />}
         />
       </Routes>
-      <Footer />
+      {!isAdminLogin && <Footer />}
     </>
   );
 };

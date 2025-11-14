@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import { toast } from "react-toastify";
-import { FaPuzzlePiece, FaHeadset, FaBookReader } from "react-icons/fa";
+import { FaPuzzlePiece, FaHeadset, FaBookReader, FaSpinner } from "react-icons/fa";
 import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
-import { submitQuizAttempt } from "../../../src/services/api/quizzes";
+import { submitQuizAttempt, fetchQuizzes, fetchQuizHistory } from "../../../src/services/api/quizzes";
 
 const ActivitiesHub = () => {
   const { rewardCoins } = useUser();
@@ -14,6 +14,9 @@ const ActivitiesHub = () => {
   const { refreshPoints } = usePoints();
   const [activeCategory, setActiveCategory] = useState("quiz");
   const [submitting, setSubmitting] = useState(new Set());
+  const [quizzes, setQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [quizAttempts, setQuizAttempts] = useState(new Map()); // Track user's quiz attempts
 
   const expiry = useMemo(() => {
     const date = new Date();
@@ -23,50 +26,114 @@ const ActivitiesHub = () => {
 
   const { hours, minutes, seconds } = useTimer({ expiryTimestamp: expiry, autoStart: true });
 
-  const categories = useMemo(
-    () => ({
+  // Load quizzes from backend
+  useEffect(() => {
+    const loadQuizzes = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchQuizzes({ pageSize: 100 });
+        if (response?.quizzes) {
+          setQuizzes(response.quizzes);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load quizzes:", error);
+        toast.error("Failed to load quizzes");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuizzes();
+  }, []);
+
+  // Load user's quiz history to show progress
+  useEffect(() => {
+    const loadQuizHistory = async () => {
+      if (!authUser || !tokens?.accessToken || authUser.role !== "student") {
+        return;
+      }
+
+      try {
+        const response = await fetchQuizHistory({ pageSize: 100 });
+        if (response?.data) {
+          const attemptsMap = new Map();
+          response.data.forEach((attempt) => {
+            const quizId = attempt.quiz?.toString() || attempt.quizId;
+            if (quizId) {
+              attemptsMap.set(quizId, {
+                score: attempt.score || 0,
+                completedAt: attempt.completedAt,
+              });
+            }
+          });
+          setQuizAttempts(attemptsMap);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load quiz history:", error);
+        // Don't show error toast - it's okay if history fails
+      }
+    };
+
+    loadQuizHistory();
+  }, [authUser, tokens]);
+
+  // Map difficulty from backend to display format
+  const formatDifficulty = (difficulty) => {
+    const map = {
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      advanced: "Advanced",
+      "all-levels": "All Levels",
+    };
+    return map[difficulty] || difficulty;
+  };
+
+  // Group quizzes by category
+  const categories = useMemo(() => {
+    const grouped = {
       quiz: {
         title: "Daily English Quizzes",
         icon: FaBookReader,
         description: "Sharpen grammar, comprehension, and listening with adaptive quizzes.",
-        items: [
-          {
-            id: "quiz-grammar",
-            name: "Grammar Accelerator",
-            difficulty: "Intermediate",
-            reward: 45,
-            progress: 70,
-          },
-          {
-            id: "quiz-business",
-            name: "Business English Sprint",
-            difficulty: "Advanced",
-            reward: 60,
-            progress: 40,
-          },
-        ],
+        items: [],
       },
       vocabulary: {
         title: "Vocabulary Games",
         icon: FaPuzzlePiece,
         description: "Gamified flashcards, match-ups, and speed rounds to boost recall.",
-        items: [
-          { id: "vocab-blitz", name: "Word Blitz", difficulty: "All Levels", reward: 30, progress: 84 },
-          { id: "vocab-debate", name: "Debate Phrases", difficulty: "Advanced", reward: 55, progress: 52 },
-        ],
+        items: [],
       },
       speaking: {
         title: "Listening & Speaking",
         icon: FaHeadset,
         description: "Voice prompts, interview drills, and pronunciation feedback sessions.",
-        items: [
-          { id: "speak-interview", name: "Interview Masterclass", difficulty: "Intermediate", reward: 75, progress: 63 },
-          { id: "speak-story", name: "Storytelling Flow", difficulty: "Advanced", reward: 90, progress: 45 },
-        ],
+        items: [],
       },
-    }),
-    []
-  );
+    };
+
+    quizzes.forEach((quiz) => {
+      const category = quiz.category || "quiz";
+      if (grouped[category]) {
+        const attempt = quizAttempts.get(quiz.id);
+        const progress = attempt ? attempt.score || 0 : 0;
+
+        grouped[category].items.push({
+          id: quiz.id,
+          name: quiz.title,
+          difficulty: formatDifficulty(quiz.difficulty),
+          reward: quiz.rewardCoins || 0,
+          progress,
+          description: quiz.description,
+          totalQuestions: quiz.totalQuestions || 0,
+          duration: quiz.duration || 0,
+        });
+      }
+    });
+
+    return grouped;
+  }, [quizzes, quizAttempts]);
 
   const categoryKeys = Object.keys(categories);
   const activeData = categories[activeCategory];
@@ -79,9 +146,18 @@ const ActivitiesHub = () => {
       return;
     }
 
+    // For now, we'll simulate quiz completion
+    // In a full implementation, you'd navigate to a quiz-taking page
+    toast.info("Quiz feature coming soon! For now, simulating completion...", { icon: "📝" });
+
     setSubmitting((prev) => new Set(prev).add(itemId));
 
     try {
+      // Simulate quiz completion with a random score
+      const simulatedScore = Math.floor(Math.random() * 40) + 60; // 60-100%
+      const simulatedCorrectAnswers = Math.round((simulatedScore / 100) * (item.totalQuestions || 10));
+      const simulatedTimeSpent = Math.floor(Math.random() * 180) + 120; // 2-5 minutes
+
       // If user has backend auth, submit to backend
       if (authUser && tokens?.accessToken && authUser.role === "student") {
         try {
@@ -89,10 +165,10 @@ const ActivitiesHub = () => {
             quizId: itemId,
             quizName: item.name,
             category: activeCategory,
-            score: item.progress || 0, // Use progress as score for now
-            totalQuestions: 10, // Default - should come from actual quiz
-            correctAnswers: Math.round((item.progress || 0) / 10), // Estimate
-            timeSpent: 300, // 5 minutes default
+            score: simulatedScore,
+            totalQuestions: item.totalQuestions || 10,
+            correctAnswers: simulatedCorrectAnswers,
+            timeSpent: simulatedTimeSpent,
             rewardCoins: item.reward,
           });
 
@@ -141,6 +217,16 @@ const ActivitiesHub = () => {
             `+${coinsEarned} coins awarded for completing ${item.name}`,
             { icon: "🏆" }
           );
+
+          // Update quiz attempts map with the new attempt
+          setQuizAttempts((prev) => {
+            const next = new Map(prev);
+            next.set(itemId, {
+              score: simulatedScore,
+              completedAt: new Date(),
+            });
+            return next;
+          });
 
           // Dispatch event to refresh student dashboard
           window.dispatchEvent(new CustomEvent("quizCompleted"));
@@ -216,7 +302,19 @@ const ActivitiesHub = () => {
           <p className="mt-3 text-sm text-gray-300">{activeData.description}</p>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          {activeData.items.map((item) => (
+          {loading ? (
+            <div className="col-span-2 flex items-center justify-center py-12">
+              <FaSpinner className="h-8 w-8 animate-spin text-[#D4AF37]" />
+            </div>
+          ) : activeData.items.length === 0 ? (
+            <div className="col-span-2 rounded-2xl border border-white/5 bg-[#111] p-8 text-center">
+              <p className="text-sm text-gray-400">No {activeData.title.toLowerCase()} available at the moment.</p>
+              <p className="mt-2 text-xs text-gray-500">
+                Check back later or ask your teacher/admin to upload new quizzes!
+              </p>
+            </div>
+          ) : (
+            activeData.items.map((item) => (
             <Motion.div
               key={item.id}
               initial={{ opacity: 0, y: 16 }}
@@ -259,7 +357,8 @@ const ActivitiesHub = () => {
                 </button>
               </div>
             </Motion.div>
-          ))}
+            ))
+          )}
         </div>
       </Motion.div>
     </div>

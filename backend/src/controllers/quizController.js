@@ -242,3 +242,199 @@ export const getStudentQuizHistory = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all published quizzes (public endpoint for students)
+ */
+export const getPublishedQuizzes = async (req, res, next) => {
+  try {
+    const { category, difficulty, page = 1, pageSize = 50 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const query = { status: "published" };
+    if (category) {
+      query.category = category;
+    }
+    if (difficulty) {
+      query.difficulty = difficulty;
+    }
+
+    const [quizzes, total] = await Promise.all([
+      Quiz.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize))
+        .lean(),
+      Quiz.countDocuments(query),
+    ]);
+
+    const formattedQuizzes = quizzes.map((quiz) => ({
+      id: quiz._id.toString(),
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      difficulty: quiz.difficulty,
+      rewardCoins: quiz.rewardCoins || 0,
+      duration: quiz.duration || 0,
+      totalQuestions: quiz.questions?.length || 0,
+      createdAt: quiz.createdAt,
+    }));
+
+    return res.json({
+      quizzes: formattedQuizzes,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get a single quiz by ID (public endpoint, but only published quizzes)
+ */
+export const getQuizById = async (req, res, next) => {
+  try {
+    const { quizId } = req.params;
+
+    if (!mongoose.isValidObjectId(quizId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid quiz ID",
+        },
+      });
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      status: "published",
+    }).lean();
+
+    if (!quiz) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Quiz not found or not published",
+        },
+      });
+    }
+
+    // Return quiz without correct answers for security
+    const formattedQuiz = {
+      id: quiz._id.toString(),
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      difficulty: quiz.difficulty,
+      rewardCoins: quiz.rewardCoins || 0,
+      duration: quiz.duration || 0,
+      questions: quiz.questions?.map((q) => ({
+        question: q.question,
+        options: q.options,
+        // Don't include correctAnswer or explanation until quiz is submitted
+      })) || [],
+      createdAt: quiz.createdAt,
+    };
+
+    return res.json({ quiz: formattedQuiz });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Create a new quiz (admin/teacher only)
+ */
+export const createQuiz = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth;
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Only admin and teacher can create quizzes
+    if (!["admin", "teacher"].includes(userRole)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only admins and teachers can create quizzes",
+        },
+      });
+    }
+
+    const {
+      title,
+      description,
+      category,
+      difficulty = "intermediate",
+      rewardCoins = 0,
+      duration = 0,
+      questions = [],
+      status = "published",
+    } = req.body;
+
+    if (!title || !category) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Title and category are required",
+        },
+      });
+    }
+
+    if (!["quiz", "vocabulary", "speaking"].includes(category)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Category must be one of: quiz, vocabulary, speaking",
+        },
+      });
+    }
+
+    // Validate questions
+    if (Array.isArray(questions) && questions.length > 0) {
+      for (const q of questions) {
+        if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Each question must have a question text and at least 2 options",
+            },
+          });
+        }
+        if (typeof q.correctAnswer !== "number" || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Each question must have a valid correctAnswer index",
+            },
+          });
+        }
+      }
+    }
+
+    const quiz = await Quiz.create({
+      title,
+      description,
+      category,
+      difficulty,
+      rewardCoins,
+      duration,
+      questions,
+      status,
+    });
+
+    return res.status(201).json({ quiz });
+  } catch (error) {
+    return next(error);
+  }
+};
+
