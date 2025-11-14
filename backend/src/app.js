@@ -14,6 +14,7 @@ import socialRoutes from "./routes/socialRoutes.js";
 import learnEarnRoutes from "./routes/learnEarnRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import liveRoomRoutes from "./routes/liveRoomRoutes.js";
+import superAdminRoutes from "./routes/superAdminRoutes.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api/v1/social", socialRoutes);
 app.use("/api/v1/learn-earn", learnEarnRoutes);
 app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/live-rooms", liveRoomRoutes);
+app.use("/api/v1/admin", superAdminRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {

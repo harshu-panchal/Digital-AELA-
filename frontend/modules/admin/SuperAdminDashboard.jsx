@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { FaSpinner, FaSync } from "react-icons/fa";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { fetchDashboardData } from "../../src/services/api/superAdmin";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -23,121 +26,129 @@ const cardVariants = {
 
 const SuperAdminDashboard = () => {
   const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState({
+    stats: [],
+    approvals: [],
+    activities: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+
+  // Fetch dashboard data
+  const loadDashboardData = async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const response = await fetchDashboardData();
+      if (response) {
+        setDashboardData({
+          stats: response.stats || [],
+          approvals: response.approvals || [],
+          activities: response.activities || [],
+        });
+        setLastRefresh(new Date());
+      } else {
+        throw new Error("No data received from server");
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load dashboard data:", error);
+      const errorMessage = error?.details?.error?.message || error?.message || "Unknown error";
+      toast.error(`Failed to load dashboard data: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Load data on mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadDashboardData(true);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const { headlineStats, approvals, activityFeed, quickActions } =
     useMemo(() => {
-      const stats = [
-        {
-          id: "learners",
-          label: "Active Learners",
-          value: "12,480",
-          delta: "+6.4% vs last week",
-        },
-        {
-          id: "teachers",
-          label: "Verified Teachers",
-          value: "286",
-          delta: "24 pending approvals",
-        },
-        {
-          id: "revenue",
-          label: "Monthly Revenue",
-          value: "AED 428K",
-          delta: "+18% YoY",
-        },
-        {
-          id: "jobs",
-          label: "Open Jobs",
-          value: "94",
-          delta: "32 new this week",
-        },
-      ];
+      // Use backend data if available, otherwise show loading placeholders
+      const stats = dashboardData.stats.length > 0
+        ? dashboardData.stats
+        : [
+            {
+              id: "learners",
+              label: "Active Learners",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+            {
+              id: "teachers",
+              label: "Verified Teachers",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+            {
+              id: "revenue",
+              label: "Monthly Revenue",
+              value: loading ? "..." : "AED 0",
+              delta: "Loading...",
+            },
+            {
+              id: "jobs",
+              label: "Open Jobs",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+          ];
 
-      const approvalQueues = [
-        {
-          id: "courses",
-          title: "Courses Pending Approval",
-          items: [
+      // Use backend data if available
+      const approvalQueues = dashboardData.approvals.length > 0
+        ? dashboardData.approvals
+        : [
             {
-              title: "Executive Presentation Lab",
-              owner: "Sarah Thomas",
-              submitted: "45 min ago",
+              id: "courses",
+              title: "Courses Pending Approval",
+              items: loading ? [] : [{ title: "No pending courses", owner: "", submitted: "" }],
+              cta: "Review courses",
             },
             {
-              title: "Digital Marketing Sprint 2025",
-              owner: "Ahmed Khan",
-              submitted: "2 hours ago",
+              id: "ebooks",
+              title: "Books & E-Books",
+              items: loading ? [] : [{ title: "No pending ebooks", owner: "", submitted: "" }],
+              cta: "Moderate library",
             },
             {
-              title: "IELTS Band 8 Mastery",
-              owner: "Priya Sharma",
-              submitted: "Yesterday",
+              id: "jobs",
+              title: "Job Posts",
+              items: loading ? [] : [{ title: "No pending jobs", owner: "", submitted: "" }],
+              cta: "Moderate job board",
             },
-          ],
-          cta: "Review courses",
-        },
-        {
-          id: "ebooks",
-          title: "Books & E-Books",
-          items: [
-            {
-              title: "Accent Neutralisation Playbook",
-              owner: "Lina Joseph",
-              submitted: "12 min ago",
-            },
-            {
-              title: "Leadership Storytelling Guide",
-              owner: "David Patel",
-              submitted: "1 hour ago",
-            },
-          ],
-          cta: "Moderate library",
-        },
-        {
-          id: "jobs",
-          title: "Job Posts",
-          items: [
-            {
-              title: "Communication Coach · Remote",
-              owner: "TalentBridge HR",
-              submitted: "30 min ago",
-            },
-            {
-              title: "Corporate Trainer · Dubai",
-              owner: "GulfSkills",
-              submitted: "3 hours ago",
-            },
-          ],
-          cta: "Moderate job board",
-        },
-      ];
+          ];
 
-      const activity = [
-        {
-          icon: "🧾",
-          title: "New invoice paid",
-          description: "Invoice #INV-2281 · AED 12,999 · Learner: Ali Hassan",
-          time: "5 min ago",
-        },
-        {
-          icon: "🎓",
-          title: "Course completion spike",
-          description: "IELTS Fast Track cohort hit 92% completion",
-          time: "1 hour ago",
-        },
-        {
-          icon: "🤝",
-          title: "Partnership enquiry",
-          description: "Dubai Future Foundation submitted collaboration brief",
-          time: "2 hours ago",
-        },
-        {
-          icon: "🛡️",
-          title: "Security notice",
-          description: "2FA enabled for 184 new accounts",
-          time: "Today, 09:15",
-        },
-      ];
+      // Use backend data if available
+      const activity = dashboardData.activities.length > 0
+        ? dashboardData.activities
+        : loading
+          ? []
+          : [
+              {
+                icon: "ℹ️",
+                title: "No recent activity",
+                description: "Activity will appear here as users interact with the platform",
+                time: "",
+              },
+            ];
 
       const actions = [
         {
@@ -168,7 +179,7 @@ const SuperAdminDashboard = () => {
         activityFeed: activity,
         quickActions: actions,
       };
-    }, []);
+    }, [dashboardData, loading]);
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
@@ -202,13 +213,23 @@ const SuperAdminDashboard = () => {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                <button
+                  type="button"
+                  onClick={() => loadDashboardData(true)}
+                  disabled={refreshing}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 transition hover:bg-white/10 disabled:opacity-50">
+                  <FaSync className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </button>
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Monthly NPS{" "}
-                  <span className="font-semibold text-[#F5D26A]">4.6 / 5</span>
+                  Last updated{" "}
+                  <span className="font-semibold text-[#F5D26A]">
+                    {lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Platform uptime{" "}
-                  <span className="font-semibold text-[#F5D26A]">99.97%</span>
+                  Auto-refresh{" "}
+                  <span className="font-semibold text-[#F5D26A]">30s</span>
                 </div>
               </div>
             </div>
@@ -219,7 +240,12 @@ const SuperAdminDashboard = () => {
             animate="show"
             variants={containerVariants}
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {headlineStats.map((stat) => (
+            {loading && dashboardData.stats.length === 0 ? (
+              <div className="col-span-4 flex items-center justify-center py-12">
+                <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
+              </div>
+            ) : (
+              headlineStats.map((stat) => (
               <motion.div
                 key={stat.id}
                 variants={cardVariants}
@@ -232,7 +258,8 @@ const SuperAdminDashboard = () => {
                 </p>
                 <p className="mt-2 text-xs text-slate-300/80">{stat.delta}</p>
               </motion.div>
-            ))}
+              ))
+            )}
           </motion.section>
 
           <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -253,7 +280,12 @@ const SuperAdminDashboard = () => {
               </header>
 
               <div className="grid gap-4 md:grid-cols-3">
-                {approvals.map((column) => (
+                {loading && dashboardData.approvals.length === 0 ? (
+                  <div className="col-span-3 flex items-center justify-center py-12">
+                    <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
+                  </div>
+                ) : (
+                  approvals.map((column) => (
                   <div
                     key={column.id}
                     className="rounded-2xl border border-white/10 bg-black/40 p-4">
@@ -283,7 +315,8 @@ const SuperAdminDashboard = () => {
                       {column.cta} →
                     </button>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
 
@@ -299,7 +332,16 @@ const SuperAdminDashboard = () => {
                 <span className="text-xs text-slate-400">Live feed</span>
               </header>
               <div className="space-y-3">
-                {activityFeed.map((item, index) => (
+                {loading && dashboardData.activities.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
+                  </div>
+                ) : activityFeed.length === 0 ? (
+                  <div className="rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-center text-sm text-gray-400">
+                    No recent activity
+                  </div>
+                ) : (
+                  activityFeed.map((item, index) => (
                   <motion.div
                     key={`${item.title}-${index}`}
                     initial={{ opacity: 0, y: 12 }}
@@ -322,7 +364,8 @@ const SuperAdminDashboard = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           </section>
