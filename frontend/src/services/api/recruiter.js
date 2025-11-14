@@ -36,6 +36,9 @@ export const deleteRecruiterJob = (jobId) =>
 export const fetchJobApplicants = (jobId) =>
   apiRequest(`/recruiter/jobs/${jobId}/applicants`);
 
+export const fetchApplicantDetails = (jobId, applicationId) =>
+  apiRequest(`/recruiter/jobs/${jobId}/applicants/${applicationId}`);
+
 export const updateJobApplicantStage = (jobId, applicationId, payload) =>
   apiRequest(`/recruiter/jobs/${jobId}/applicants/${applicationId}`, {
     method: "PATCH",

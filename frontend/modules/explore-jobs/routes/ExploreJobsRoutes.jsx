@@ -13,6 +13,7 @@ import RecruiterDashboard from "../pages/RecruiterDashboard";
 import SeekerDashboard from "../pages/SeekerDashboard";
 import ProfilePage from "../pages/ProfilePage";
 import PostDetailPage from "../pages/PostDetailPage";
+import ApplicantProfilePage from "../pages/ApplicantProfilePage";
 import PostModal from "../components/PostModal";
 import { useExploreJobs } from "../context/ExploreJobsContext";
 
@@ -47,6 +48,7 @@ const ExploreJobsRoutes = () => {
         <Route path="/*" element={<ExploreJobsLayout />}>
           <Route index element={<ExploreFeed />} />
           <Route path="recruiter-dashboard" element={<RecruiterDashboard />} />
+          <Route path="recruiter/applicants/:jobId/:applicationId" element={<ApplicantProfilePage />} />
           <Route path="seeker-dashboard" element={<SeekerDashboard />} />
           <Route path="profile/:username" element={<ProfilePage />} />
           <Route path="post/:id" element={<PostDetailPage />} />

@@ -850,8 +850,8 @@ const RecruiterDashboard = () => {
                       <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
                       <td className="px-3 py-3 text-xs text-slate-200">
                         <Link
-                          to={applicant.profileUrl}
-                          className="font-semibold text-white hover:text-sky-200">
+                          to={`/explore-jobs/recruiter/applicants/${stage.jobId}/${applicant.id || applicant.applicationId}`}
+                          className="font-semibold text-white hover:text-sky-200 transition hover:underline">
                           {applicant.name}
                         </Link>
                       </td>

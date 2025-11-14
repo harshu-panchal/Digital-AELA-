@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import JobPost from "../models/JobPost.js";
 import JobApplication from "../models/JobApplication.js";
 import User from "../models/User.js";
@@ -160,6 +161,77 @@ export const listApplicants = async (req, res, next) => {
       jobId: job.id,
       jobTitle: job.title,
       applicants,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getApplicantDetails = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    const { jobId, applicationId } = req.params;
+
+    // Verify job ownership
+    const job = await JobPost.findOne({ _id: jobId, owner: userId });
+    if (!job) {
+      return res.status(404).json({
+        error: { code: "RESOURCE_NOT_FOUND", message: "Job not found" },
+      });
+    }
+
+    // Get application
+    const application = await JobApplication.findOne({
+      _id: applicationId,
+      job: jobId,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        error: { code: "RESOURCE_NOT_FOUND", message: "Application not found" },
+      });
+    }
+
+    // Try to fetch user data if candidateId is a valid ObjectId
+    let userData = null;
+    try {
+      if (application.candidateId && mongoose.Types.ObjectId.isValid(application.candidateId)) {
+        userData = await User.findById(application.candidateId).select("-passwordHash");
+      }
+    } catch (userError) {
+      // Ignore user fetch errors - application data is still available
+      // eslint-disable-next-line no-console
+      console.warn("Could not fetch user data for candidate:", userError);
+    }
+
+    return res.json({
+      application: {
+        id: application.id,
+        candidateId: application.candidateId,
+        candidateName: application.candidateName,
+        candidateHeadline: application.candidateHeadline,
+        profileUrl: application.profileUrl,
+        resumeUrl: application.resumeUrl,
+        portfolioUrl: application.portfolioUrl,
+        currentStage: application.currentStage,
+        notes: application.notes,
+        submittedAt: application.submittedAt,
+        createdAt: application.createdAt,
+      },
+      job: {
+        id: job.id,
+        title: job.title,
+        company: job.company,
+      },
+      user: userData
+        ? {
+            id: userData.id,
+            email: userData.email,
+            fullName: userData.fullName,
+            role: userData.role,
+            createdAt: userData.createdAt,
+          }
+        : null,
     });
   } catch (error) {
     return next(error);
