@@ -212,6 +212,27 @@ export const getApplicantDetails = async (req, res, next) => {
             studentProfile = await StudentProfile.findOne({ user: candidateObjectId });
             // eslint-disable-next-line no-console
             console.log("Found student profile:", studentProfile ? "Yes" : "No", "for user:", candidateObjectId);
+            
+            // If no profile exists, create a basic one from application data
+            if (!studentProfile && application) {
+              // eslint-disable-next-line no-console
+              console.log("Creating basic student profile from application data");
+              try {
+                studentProfile = await StudentProfile.create({
+                  user: candidateObjectId,
+                  headline: application.candidateHeadline || null,
+                  resumeUrl: application.resumeUrl || null,
+                  portfolioUrl: application.portfolioUrl || null,
+                });
+                // eslint-disable-next-line no-console
+                console.log("Created basic student profile:", studentProfile._id);
+              } catch (createError) {
+                // eslint-disable-next-line no-console
+                console.warn("Failed to create student profile:", createError.message);
+                // Continue without profile - we'll still return application data
+              }
+            }
+            
             if (studentProfile) {
               // eslint-disable-next-line no-console
               console.log("Student profile data:", {
@@ -220,6 +241,9 @@ export const getApplicantDetails = async (req, res, next) => {
                 hasLocation: !!studentProfile.location,
                 skillsCount: studentProfile.skills?.length || 0,
                 hasGoals: !!studentProfile.goals,
+                hasHeadline: !!studentProfile.headline,
+                hasResume: !!studentProfile.resumeUrl,
+                hasPortfolio: !!studentProfile.portfolioUrl,
               });
             }
           }
