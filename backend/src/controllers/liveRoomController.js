@@ -1,0 +1,401 @@
+import mongoose from "mongoose";
+import LiveRoom from "../models/LiveRoom.js";
+import User from "../models/User.js";
+
+/**
+ * Get all live rooms (debates and open rooms)
+ */
+export const getLiveRooms = async (req, res, next) => {
+  try {
+    const { type, status } = req.query;
+
+    const query = {};
+    if (type) {
+      query.type = type;
+    }
+    if (status) {
+      query.status = status;
+    } else {
+      // Default: get scheduled and live rooms
+      query.status = { $in: ["scheduled", "live"] };
+    }
+
+    const rooms = await LiveRoom.find(query)
+      .populate("host", "fullName avatarUrl")
+      .populate("speakers", "fullName avatarUrl")
+      .sort({ scheduledStart: 1, createdAt: -1 })
+      .lean();
+
+    const formattedRooms = rooms.map((room) => {
+      const now = new Date();
+      const scheduledStart = room.scheduledStart ? new Date(room.scheduledStart) : null;
+      let startInMinutes = 0;
+
+      if (scheduledStart && scheduledStart > now) {
+        startInMinutes = Math.ceil((scheduledStart - now) / (1000 * 60));
+      }
+
+      return {
+        id: room._id.toString(),
+        topic: room.topic || room.title,
+        title: room.title,
+        description: room.description,
+        type: room.type,
+        status: room.status,
+        forVotes: room.forVotes || 0,
+        againstVotes: room.againstVotes || 0,
+        listeners: room.listeners || 0,
+        startInMinutes,
+        scheduledStart: room.scheduledStart,
+        actualStart: room.actualStart,
+        speakers: room.speakers
+          ? room.speakers.map((s) => (typeof s === "object" ? s.fullName : s))
+          : [],
+        host: room.host
+          ? typeof room.host === "object"
+            ? room.host.fullName
+            : room.host
+          : "Unknown",
+        winners: room.winners || [],
+        createdAt: room.createdAt,
+      };
+    });
+
+    return res.json({ rooms: formattedRooms });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get a single live room by ID
+ */
+export const getLiveRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params;
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid room ID",
+        },
+      });
+    }
+
+    const room = await LiveRoom.findById(roomId)
+      .populate("host", "fullName avatarUrl")
+      .populate("speakers", "fullName avatarUrl")
+      .lean();
+
+    if (!room) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Room not found",
+        },
+      });
+    }
+
+    const now = new Date();
+    const scheduledStart = room.scheduledStart ? new Date(room.scheduledStart) : null;
+    let startInMinutes = 0;
+
+    if (scheduledStart && scheduledStart > now) {
+      startInMinutes = Math.ceil((scheduledStart - now) / (1000 * 60));
+    }
+
+    const formattedRoom = {
+      id: room._id.toString(),
+      topic: room.topic || room.title,
+      title: room.title,
+      description: room.description,
+      type: room.type,
+      status: room.status,
+      forVotes: room.forVotes || 0,
+      againstVotes: room.againstVotes || 0,
+      listeners: room.listeners || 0,
+      startInMinutes,
+      scheduledStart: room.scheduledStart,
+      actualStart: room.actualStart,
+      speakers: room.speakers
+        ? room.speakers.map((s) => (typeof s === "object" ? s.fullName : s))
+        : [],
+      host: room.host
+        ? typeof room.host === "object"
+          ? room.host.fullName
+          : room.host
+        : "Unknown",
+      winners: room.winners || [],
+      createdAt: room.createdAt,
+    };
+
+    return res.json({ room: formattedRoom });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Create a new live room
+ */
+export const createLiveRoom = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    const {
+      title,
+      type = "open-room",
+      topic,
+      description,
+      scheduledStart,
+      speakers = [],
+    } = req.body;
+
+    if (!title) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Title is required",
+        },
+      });
+    }
+
+    const hostObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (!hostObjectId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    const speakerObjectIds = speakers
+      .filter((s) => mongoose.isValidObjectId(s))
+      .map((s) => new mongoose.Types.ObjectId(s));
+
+    const room = await LiveRoom.create({
+      title,
+      host: hostObjectId,
+      type,
+      topic: topic || title,
+      description,
+      speakers: speakerObjectIds,
+      scheduledStart: scheduledStart ? new Date(scheduledStart) : new Date(),
+      status: "scheduled",
+    });
+
+    const populatedRoom = await LiveRoom.findById(room._id)
+      .populate("host", "fullName avatarUrl")
+      .populate("speakers", "fullName avatarUrl")
+      .lean();
+
+    return res.status(201).json({ room: populatedRoom });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Vote on a debate (for or against)
+ */
+export const voteOnDebate = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    const { roomId } = req.params;
+    const { side } = req.body; // "for" or "against"
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (!side || !["for", "against"].includes(side)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Side must be 'for' or 'against'",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid room ID",
+        },
+      });
+    }
+
+    const room = await LiveRoom.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Room not found",
+        },
+      });
+    }
+
+    if (room.type !== "debate") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Voting is only available for debates",
+        },
+      });
+    }
+
+    // Increment vote count
+    if (side === "for") {
+      room.forVotes = (room.forVotes || 0) + 1;
+    } else {
+      room.againstVotes = (room.againstVotes || 0) + 1;
+    }
+
+    await room.save();
+
+    // Return updated vote counts for real-time updates
+    return res.json({
+      success: true,
+      roomId: room._id.toString(),
+      forVotes: room.forVotes,
+      againstVotes: room.againstVotes,
+      socketEvent: {
+        event: "vote_update",
+        data: {
+          roomId: room._id.toString(),
+          forVotes: room.forVotes,
+          againstVotes: room.againstVotes,
+          votedBy: userId,
+          side,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Join a room (increment listener count)
+ */
+export const joinRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params;
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid room ID",
+        },
+      });
+    }
+
+    const room = await LiveRoom.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Room not found",
+        },
+      });
+    }
+
+    room.listeners = (room.listeners || 0) + 1;
+
+    // If room is scheduled and it's time, mark as live
+    if (room.status === "scheduled" && room.scheduledStart) {
+      const now = new Date();
+      if (now >= new Date(room.scheduledStart)) {
+        room.status = "live";
+        room.actualStart = now;
+      }
+    }
+
+    await room.save();
+
+    return res.json({
+      success: true,
+      listeners: room.listeners,
+      status: room.status,
+      socketEvent: {
+        event: "room_update",
+        data: {
+          roomId: room._id.toString(),
+          listeners: room.listeners,
+          status: room.status,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Leave a room (decrement listener count)
+ */
+export const leaveRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params;
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid room ID",
+        },
+      });
+    }
+
+    const room = await LiveRoom.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Room not found",
+        },
+      });
+    }
+
+    room.listeners = Math.max(0, (room.listeners || 0) - 1);
+    await room.save();
+
+    return res.json({
+      success: true,
+      listeners: room.listeners,
+      socketEvent: {
+        event: "room_update",
+        data: {
+          roomId: room._id.toString(),
+          listeners: room.listeners,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+

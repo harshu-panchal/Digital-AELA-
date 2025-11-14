@@ -31,7 +31,11 @@ const studentProfileSchema = new mongoose.Schema(
       type: String,
       enum: ["school-student", "college-graduate", "working-professional", "career-switcher"],
     },
+    profession: String,
+    englishLevel: String,
+    maritalStatus: String,
     skills: [String],
+    interests: [String],
     experience: {
       years: Number,
       description: String,
@@ -52,6 +56,28 @@ const studentProfileSchema = new mongoose.Schema(
     avatarUrl: String,
     preferredProgram: String,
     goals: String,
+    socialLinks: [
+      {
+        platform: {
+          type: String,
+          enum: ["LinkedIn", "YouTube", "Instagram", "TikTok", "Twitter", "Facebook", "GitHub", "Website"],
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+        verified: {
+          type: Boolean,
+          default: false,
+        },
+        verifiedAt: Date,
+        bonus: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

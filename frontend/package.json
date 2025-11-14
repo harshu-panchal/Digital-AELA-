@@ -32,6 +32,7 @@
     "react-router-dom": "^7.9.5",
     "react-timer-hook": "^4.0.5",
     "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.16"
   },
   "devDependencies": {

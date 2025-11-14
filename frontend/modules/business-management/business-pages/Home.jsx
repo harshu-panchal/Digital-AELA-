@@ -40,7 +40,7 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { englishCourses } from "../data/englishCourses";
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 const Home = () => {
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);

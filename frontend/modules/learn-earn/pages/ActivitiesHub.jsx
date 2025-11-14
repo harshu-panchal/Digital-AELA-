@@ -4,10 +4,16 @@ import { useTimer } from "react-timer-hook";
 import { toast } from "react-toastify";
 import { FaPuzzlePiece, FaHeadset, FaBookReader } from "react-icons/fa";
 import { useUser } from "../../../src/contexts/UserContext";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { usePoints } from "../../../src/contexts/PointsContext";
+import { submitQuizAttempt } from "../../../src/services/api/quizzes";
 
 const ActivitiesHub = () => {
   const { rewardCoins } = useUser();
+  const { user: authUser, tokens } = useAuth();
+  const { refreshPoints } = usePoints();
   const [activeCategory, setActiveCategory] = useState("quiz");
+  const [submitting, setSubmitting] = useState(new Set());
 
   const expiry = useMemo(() => {
     const date = new Date();
@@ -65,9 +71,98 @@ const ActivitiesHub = () => {
   const categoryKeys = Object.keys(categories);
   const activeData = categories[activeCategory];
 
-  const handleStart = (item) => {
-    const gained = rewardCoins(item.reward, `${item.name} completed`);
-    toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
+  const handleStart = async (item) => {
+    const itemId = item.id;
+    
+    // Prevent duplicate submissions
+    if (submitting.has(itemId)) {
+      return;
+    }
+
+    setSubmitting((prev) => new Set(prev).add(itemId));
+
+    try {
+      // If user has backend auth, submit to backend
+      if (authUser && tokens?.accessToken && authUser.role === "student") {
+        try {
+          const result = await submitQuizAttempt({
+            quizId: itemId,
+            quizName: item.name,
+            category: activeCategory,
+            score: item.progress || 0, // Use progress as score for now
+            totalQuestions: 10, // Default - should come from actual quiz
+            correctAnswers: Math.round((item.progress || 0) / 10), // Estimate
+            timeSpent: 300, // 5 minutes default
+            rewardCoins: item.reward,
+          });
+
+          const coinsEarned = result.attempt?.coinsEarned || item.reward;
+          // Backend returns totalCoins (total in account) and availableCoins (total - redeemed)
+          const newAvailableCoins = result.points?.availableCoins;
+          const newTotalCoins = result.points?.totalCoins;
+          
+          // eslint-disable-next-line no-console
+          console.log("Quiz completed - backend response:", {
+            coinsEarned,
+            newAvailableCoins,
+            newTotalCoins,
+            fullResult: result,
+          });
+          
+          // If backend returned coins data, use it as source of truth
+          if (newAvailableCoins !== undefined) {
+            // Backend already saved the coins, so use the backend value directly
+            // Update localStorage immediately with backend value (this is the source of truth)
+            localStorage.setItem("aelaPoints", newAvailableCoins.toString());
+            // Update local state to match backend (don't add again, backend already did)
+            // We need to set the total, not add to it
+            if (refreshPoints) {
+              // Refresh will load the correct value from backend
+              setTimeout(() => refreshPoints(), 300);
+            } else {
+              // If refreshPoints not available, manually update via addPoints
+              // But calculate the difference to add
+              const currentCoins = parseInt(localStorage.getItem("aelaPoints") || "0", 10);
+              const coinsToAdd = newAvailableCoins - currentCoins;
+              if (coinsToAdd > 0) {
+                rewardCoins(coinsToAdd, `${item.name} completed`);
+              }
+            }
+          } else {
+            // Backend didn't return coins - update locally and refresh
+            rewardCoins(coinsEarned, `${item.name} completed`);
+            if (refreshPoints) {
+              setTimeout(() => refreshPoints(), 800);
+              setTimeout(() => refreshPoints(), 2000);
+            }
+          }
+
+          toast.success(
+            `+${coinsEarned} coins awarded for completing ${item.name}`,
+            { icon: "🏆" }
+          );
+
+          // Dispatch event to refresh student dashboard
+          window.dispatchEvent(new CustomEvent("quizCompleted"));
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to submit quiz to backend:", error);
+          // Fall back to local reward
+          const gained = rewardCoins(item.reward, `${item.name} completed`);
+          toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
+        }
+      } else {
+        // No backend auth - use local only
+        const gained = rewardCoins(item.reward, `${item.name} completed`);
+        toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
+      }
+    } finally {
+      setSubmitting((prev) => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
+    }
   };
 
   return (
@@ -158,8 +253,9 @@ const ActivitiesHub = () => {
                 <button
                   type="button"
                   onClick={() => handleStart(item)}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#151515] px-4 py-2 font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
-                  Start challenge
+                  disabled={submitting.has(item.id)}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#151515] px-4 py-2 font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed">
+                  {submitting.has(item.id) ? "Submitting..." : "Start challenge"}
                 </button>
               </div>
             </Motion.div>

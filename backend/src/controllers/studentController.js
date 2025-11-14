@@ -90,11 +90,18 @@ export const getStudentProfile = async (req, res, next) => {
     );
 
     if (!profile) {
-      return res.status(404).json({
-        error: {
-          code: "RESOURCE_NOT_FOUND",
-          message: "Student profile not found",
-        },
+      // Return empty profile structure instead of 404 to allow creating profile
+      return res.json({
+        user: userId,
+        englishLevel: "",
+        profession: "",
+        experience: { years: null, description: "" },
+        location: { city: "", country: "" },
+        maritalStatus: "",
+        interests: [],
+        skills: [],
+        bio: "",
+        headline: "",
       });
     }
 
@@ -120,14 +127,12 @@ export const updateStudentProfile = async (req, res, next) => {
       });
     }
 
-    const profile = await StudentProfile.findOne({ user: userIdToUse });
+    let profile = await StudentProfile.findOne({ user: userIdToUse });
 
+    // Auto-create profile if it doesn't exist
     if (!profile) {
-      return res.status(404).json({
-        error: {
-          code: "RESOURCE_NOT_FOUND",
-          message: "Student profile not found",
-        },
+      profile = await StudentProfile.create({
+        user: userIdToUse,
       });
     }
 
@@ -139,7 +144,11 @@ export const updateStudentProfile = async (req, res, next) => {
       "location",
       "ageGroup",
       "currentStatus",
+      "profession",
+      "englishLevel",
+      "maritalStatus",
       "skills",
+      "interests",
       "experience",
       "education",
       "resumeUrl",
@@ -150,6 +159,7 @@ export const updateStudentProfile = async (req, res, next) => {
       "avatarUrl",
       "preferredProgram",
       "goals",
+      "socialLinks",
       "metadata",
     ];
 
@@ -161,11 +171,19 @@ export const updateStudentProfile = async (req, res, next) => {
             city: req.body[field].city,
             country: req.body[field].country,
           };
-        } else if (field === "skills" && typeof req.body[field] === "string") {
+        } else if ((field === "skills" || field === "interests") && typeof req.body[field] === "string") {
           updates[field] = req.body[field]
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean);
+        } else if ((field === "skills" || field === "interests") && Array.isArray(req.body[field])) {
+          updates[field] = req.body[field];
+        } else if (field === "socialLinks" && Array.isArray(req.body[field])) {
+          // Update social links array
+          updates[field] = req.body[field];
+        } else if (field === "experience" && typeof req.body[field] === "object") {
+          // Handle experience object
+          updates[field] = req.body[field];
         } else {
           updates[field] = req.body[field];
         }

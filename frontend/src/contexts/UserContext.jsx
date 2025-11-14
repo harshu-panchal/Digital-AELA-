@@ -2,6 +2,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePoints } from "./PointsContext";
 import { useAuth } from "./AuthContext";
+import { fetchSocialStats, fetchFollowers, fetchFollowing } from "../services/api/social";
+import { fetchDashboardData } from "../services/api/learnEarn";
 
 const UserContext = createContext(null);
 
@@ -311,10 +313,163 @@ export const UserProvider = ({ children }) => {
   const [liveDebates, setLiveDebates] = useState(defaultLiveDebates);
   const [openRooms, setOpenRooms] = useState(defaultOpenRooms);
   const [ratings, setRatings] = useState(defaultRatings);
+  const [socialStatsLoaded, setSocialStatsLoaded] = useState(false);
 
   useEffect(() => {
     setProfile((prev) => ({ ...prev, coins: aelaPoints }));
   }, [aelaPoints]);
+
+  // Load social stats from backend (runs after profile is initialized)
+  useEffect(() => {
+    const loadSocialStats = async () => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      // Small delay to ensure profile is initialized first
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      try {
+        const stats = await fetchSocialStats();
+        // eslint-disable-next-line no-console
+        console.log("Social stats from backend:", stats);
+        
+        if (stats) {
+          setProfile((prev) => {
+            // Only update if we got valid data from backend
+            const updated = { ...prev };
+            
+            // Use backend values even if 0 (means no data yet), only fallback if undefined/null
+            if (stats.followers !== undefined && stats.followers !== null) {
+              updated.followers = stats.followers;
+            }
+            if (stats.following !== undefined && stats.following !== null) {
+              updated.following = stats.following;
+            }
+            if (stats.rating !== undefined && stats.rating !== null) {
+              updated.rating = stats.rating;
+            }
+            
+            return updated;
+          });
+          setSocialStatsLoaded(true);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load social stats from backend:", error);
+        // Keep existing values, don't reset to defaults
+      }
+    };
+
+    loadSocialStats();
+  }, [authUser]);
+
+  // Load followers list from backend
+  useEffect(() => {
+    const loadFollowers = async () => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      try {
+        const response = await fetchFollowers(authUser.id, { pageSize: 20 });
+        if (response?.data && response.data.length > 0) {
+          setFollowers(response.data);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load followers from backend:", error);
+        // Keep default followers
+      }
+    };
+
+    loadFollowers();
+  }, [authUser]);
+
+  // Load following list from backend
+  useEffect(() => {
+    const loadFollowing = async () => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      try {
+        const response = await fetchFollowing(authUser.id, { pageSize: 20 });
+        if (response?.data && response.data.length > 0) {
+          setFollowing(response.data);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load following from backend:", error);
+        // Keep default following
+      }
+    };
+
+    loadFollowing();
+  }, [authUser]);
+
+  // Load Learn & Earn dashboard data from backend
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      try {
+        const dashboardData = await fetchDashboardData();
+        
+        // Update messages
+        if (dashboardData.messages && dashboardData.messages.length > 0) {
+          setMessages(dashboardData.messages);
+        }
+
+        // Update notifications
+        if (dashboardData.notifications && dashboardData.notifications.length > 0) {
+          setNotifications(dashboardData.notifications);
+        }
+
+        // Update live debates
+        if (dashboardData.liveDebates && dashboardData.liveDebates.length > 0) {
+          setLiveDebates(dashboardData.liveDebates);
+        }
+
+        // Update open rooms
+        if (dashboardData.openRooms && dashboardData.openRooms.length > 0) {
+          setOpenRooms(dashboardData.openRooms);
+        }
+
+        // Update leaderboard (top followers)
+        if (dashboardData.leaderboard && dashboardData.leaderboard.length > 0) {
+          // Merge leaderboard data with existing followers
+          setFollowers((prev) => {
+            const leaderboardMap = new Map(
+              dashboardData.leaderboard.map((item) => [item.id, item])
+            );
+            // Update existing followers with leaderboard data
+            const updated = prev.map((follower) => {
+              const leaderboardItem = leaderboardMap.get(follower.id);
+              return leaderboardItem
+                ? { ...follower, ...leaderboardItem }
+                : follower;
+            });
+            // Add new leaderboard items not in followers
+            dashboardData.leaderboard.forEach((item) => {
+              if (!prev.find((f) => f.id === item.id)) {
+                updated.push(item);
+              }
+            });
+            return updated;
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load dashboard data from backend:", error);
+        // Keep default data
+      }
+    };
+
+    loadDashboardData();
+  }, [authUser]);
 
   useEffect(() => {
     if (!authUser) {
@@ -326,7 +481,7 @@ export const UserProvider = ({ children }) => {
 
     setProfile((prev) => ({
       ...defaultProfile,
-      ...prev,
+      ...prev, // Preserve existing values (including backend-loaded social stats)
       id: authUser.id ?? defaultProfile.id,
       name: authUser.fullName ?? defaultProfile.name,
       title:
@@ -353,8 +508,12 @@ export const UserProvider = ({ children }) => {
         phone: metadata.phone,
         whatsapp: metadata.whatsapp,
       },
+      // Preserve social stats from backend (don't overwrite if already loaded from backend)
+      followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
+      following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
+      rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
     }));
-  }, [authUser, aelaPoints, getRoleLabel]);
+  }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded]);
 
   const updateProfile = useCallback((updates) => {
     setProfile((prev) => ({ ...prev, ...updates }));

@@ -26,8 +26,17 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
       });
     }
 
+    // Ensure userId is always a string
+    const userIdString = user._id ? user._id.toString() : (user.id ? user.id.toString() : null);
+    
+    if (!userIdString) {
+      return res.status(401).json({
+        error: { code: "UNAUTHORIZED", message: "Invalid user ID" },
+      });
+    }
+
     req.auth = {
-      userId: user.id,
+      userId: userIdString,
       userRole: user.role,
       userFullName: user.fullName,
       email: user.email,
@@ -35,6 +44,12 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
 
     return next();
   } catch (error) {
+    // If token verification fails, return 401
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        error: { code: "UNAUTHORIZED", message: "Invalid or expired token. Please log in again." },
+      });
+    }
     return next(error);
   }
 };

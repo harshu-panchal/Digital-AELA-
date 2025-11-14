@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import {
@@ -6,25 +6,72 @@ import {
   HiOutlineVideoCamera,
   HiOutlineNoSymbol,
   HiOutlineSpeakerWave,
+  HiOutlinePlus,
 } from "react-icons/hi2";
-import { FaVoteYea } from "react-icons/fa";
+import { FaVoteYea, FaSpinner, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { useUser } from "../../../src/contexts/UserContext";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { useSocket } from "../../../src/hooks/useSocket";
+import {
+  fetchLiveRooms,
+  voteOnDebate,
+  joinRoom,
+  leaveRoom,
+  createLiveRoom,
+} from "../../../src/services/api/liveRooms";
 
-const DebateCard = ({ room, onVote }) => {
+const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(false);
+  const [localVotes, setLocalVotes] = useState({
+    for: room.forVotes || 0,
+    against: room.againstVotes || 0,
+  });
+
+  // Update local votes when room data changes
+  useEffect(() => {
+    setLocalVotes({
+      for: room.forVotes || 0,
+      against: room.againstVotes || 0,
+    });
+  }, [room.forVotes, room.againstVotes]);
+
+  // Listen for real-time vote updates
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleVoteUpdate = (data) => {
+      if (data.roomId === room.id) {
+        setLocalVotes({
+          for: data.forVotes,
+          against: data.againstVotes,
+        });
+      }
+    };
+
+    socket.on("vote_update", handleVoteUpdate);
+
+    return () => {
+      socket.off("vote_update", handleVoteUpdate);
+    };
+  }, [socket, isConnected, room.id]);
 
   const expiry = useMemo(() => {
+    if (room.scheduledStart) {
+      return new Date(room.scheduledStart);
+    }
     const end = new Date();
-    end.setMinutes(end.getMinutes() + room.startInMinutes);
+    end.setMinutes(end.getMinutes() + (room.startInMinutes || 0));
     return end;
-  }, [room.startInMinutes]);
+  }, [room.startInMinutes, room.scheduledStart]);
 
-  const { minutes, seconds } = useTimer({ expiryTimestamp: expiry, autoStart: true });
+  const { minutes, seconds } = useTimer({
+    expiryTimestamp: expiry,
+    autoStart: true,
+  });
 
-  const totalVotes = room.forVotes + room.againstVotes || 1;
-  const forPercent = Math.round((room.forVotes / totalVotes) * 100);
+  const totalVotes = localVotes.for + localVotes.against || 1;
+  const forPercent = Math.round((localVotes.for / totalVotes) * 100);
   const againstPercent = 100 - forPercent;
 
   return (
@@ -49,17 +96,19 @@ const DebateCard = ({ room, onVote }) => {
         <button
           type="button"
           onClick={() => onVote(room.id, "for")}
-          className="group flex flex-col rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-left transition hover:border-emerald-400/60">
+          disabled={isVoting || !isConnected}
+          className="group flex flex-col rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-left transition hover:border-emerald-400/60 disabled:opacity-50 disabled:cursor-not-allowed">
           <span className="text-xs uppercase tracking-[0.3em] text-emerald-200">For</span>
-          <span className="mt-2 text-xl font-semibold text-white">{room.forVotes}</span>
+          <span className="mt-2 text-xl font-semibold text-white">{localVotes.for}</span>
           <span className="mt-1 text-xs text-emerald-200">{forPercent}% support</span>
         </button>
         <button
           type="button"
           onClick={() => onVote(room.id, "against")}
-          className="group flex flex-col rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-left transition hover:border-rose-400/60">
+          disabled={isVoting || !isConnected}
+          className="group flex flex-col rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-left transition hover:border-rose-400/60 disabled:opacity-50 disabled:cursor-not-allowed">
           <span className="text-xs uppercase tracking-[0.3em] text-rose-200">Against</span>
-          <span className="mt-2 text-xl font-semibold text-white">{room.againstVotes}</span>
+          <span className="mt-2 text-xl font-semibold text-white">{localVotes.against}</span>
           <span className="mt-1 text-xs text-rose-200">{againstPercent}% votes</span>
         </button>
       </div>
@@ -102,11 +151,212 @@ const DebateCard = ({ room, onVote }) => {
 };
 
 const LiveDebates = () => {
-  const { liveDebates, openRooms, voteOnDebate } = useUser();
+  const { user: authUser } = useAuth();
+  const { socket, isConnected } = useSocket();
+  const [liveDebates, setLiveDebates] = useState([]);
+  const [openRooms, setOpenRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [votingRooms, setVotingRooms] = useState(new Set());
+  const joinedRoomsRef = useRef(new Set());
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    topic: "",
+    description: "",
+    scheduledStart: "",
+    type: "debate",
+  });
 
-  const handleVote = (id, side) => {
-    voteOnDebate(id, side);
-    toast.success(`Vote cast for ${side === "for" ? "For" : "Against"}`, { icon: <FaVoteYea /> });
+  // Load live rooms on mount
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchLiveRooms();
+        if (response?.rooms) {
+          const debates = response.rooms.filter((r) => r.type === "debate");
+          const open = response.rooms.filter((r) => r.type === "open-room");
+          setLiveDebates(debates);
+          setOpenRooms(open);
+
+          // Join all rooms via Socket.io for real-time updates
+          if (socket && isConnected) {
+            response.rooms.forEach((room) => {
+              if (!joinedRoomsRef.current.has(room.id)) {
+                socket.emit("join_room", { roomId: room.id });
+                joinedRoomsRef.current.add(room.id);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load live rooms:", error);
+        toast.error("Failed to load live debates");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, [socket, isConnected]);
+
+  // Listen for real-time room updates
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleRoomUpdate = (data) => {
+      setLiveDebates((prev) =>
+        prev.map((room) =>
+          room.id === data.roomId
+            ? { ...room, listeners: data.listeners, status: data.status || room.status }
+            : room
+        )
+      );
+      setOpenRooms((prev) =>
+        prev.map((room) =>
+          room.id === data.roomId
+            ? { ...room, listeners: data.listeners, status: data.status || room.status }
+            : room
+        )
+      );
+    };
+
+    const handleVoteUpdate = (data) => {
+      setLiveDebates((prev) =>
+        prev.map((room) =>
+          room.id === data.roomId
+            ? {
+                ...room,
+                forVotes: data.forVotes,
+                againstVotes: data.againstVotes,
+              }
+            : room
+        )
+      );
+    };
+
+    socket.on("room_update", handleRoomUpdate);
+    socket.on("vote_update", handleVoteUpdate);
+
+    return () => {
+      socket.off("room_update", handleRoomUpdate);
+      socket.off("vote_update", handleVoteUpdate);
+    };
+  }, [socket, isConnected]);
+
+  // Cleanup: Leave all rooms on unmount
+  useEffect(() => {
+    return () => {
+      if (socket && isConnected) {
+        joinedRoomsRef.current.forEach((roomId) => {
+          socket.emit("leave_room", { roomId });
+        });
+        joinedRoomsRef.current.clear();
+      }
+    };
+  }, [socket, isConnected]);
+
+  const handleVote = async (roomId, side) => {
+    if (votingRooms.has(roomId)) return;
+
+    setVotingRooms((prev) => new Set(prev).add(roomId));
+
+    try {
+      // Send vote via Socket.io for real-time
+      if (socket && isConnected) {
+        socket.emit("vote_debate", { roomId, side });
+      }
+
+      // Also send via REST API as backup
+      await voteOnDebate(roomId, side);
+
+      toast.success(`Vote cast for ${side === "for" ? "For" : "Against"}`, {
+        icon: <FaVoteYea />,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to vote:", error);
+      toast.error("Failed to cast vote. Please try again.");
+    } finally {
+      setVotingRooms((prev) => {
+        const next = new Set(prev);
+        next.delete(roomId);
+        return next;
+      });
+    }
+  };
+
+  const handleCreateDebate = async (e) => {
+    e.preventDefault();
+
+    if (!formData.title || !formData.topic) {
+      toast.error("Please fill in title and topic");
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      // Calculate scheduled start time (default: 15 minutes from now)
+      let scheduledStart = formData.scheduledStart;
+      if (!scheduledStart) {
+        const futureDate = new Date();
+        futureDate.setMinutes(futureDate.getMinutes() + 15);
+        scheduledStart = futureDate.toISOString();
+      }
+
+      const response = await createLiveRoom({
+        title: formData.title,
+        topic: formData.topic,
+        description: formData.description || "",
+        type: "debate",
+        scheduledStart,
+      });
+
+      if (response?.room) {
+        toast.success("Debate room created successfully!", { icon: "🎉" });
+        
+        // Extract room ID (could be _id or id)
+        const roomId = response.room._id?.toString() || response.room.id?.toString();
+        
+        // Reload rooms
+        const roomsResponse = await fetchLiveRooms();
+        if (roomsResponse?.rooms) {
+          const debates = roomsResponse.rooms.filter((r) => r.type === "debate");
+          const open = roomsResponse.rooms.filter((r) => r.type === "open-room");
+          setLiveDebates(debates);
+          setOpenRooms(open);
+
+          // Join new room via Socket.io
+          if (socket && isConnected && roomId) {
+            socket.emit("join_room", { roomId });
+            joinedRoomsRef.current.add(roomId);
+          }
+        }
+
+        // Reset form and close modal
+        setFormData({
+          title: "",
+          topic: "",
+          description: "",
+          scheduledStart: "",
+          type: "debate",
+        });
+        setShowCreateModal(false);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to create debate:", error);
+      const errorMessage =
+        error.details?.error?.message ||
+        error.message ||
+        "Failed to create debate room. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -119,19 +369,63 @@ const LiveDebates = () => {
             Choose your stance, keep mics ready, and earn bonus coins for impactful arguments.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
-          <HiOutlineSpeakerWave className="h-5 w-5" /> 4 rooms live · 128 learners debating now
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+            <HiOutlinePlus className="h-4 w-4" />
+            Create Debate
+          </button>
+          <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
+            <HiOutlineSpeakerWave className="h-5 w-5" />{" "}
+            {liveDebates.length + openRooms.length} rooms{" "}
+            {liveDebates.some((r) => r.status === "live") ? "live" : "scheduled"} ·{" "}
+            {liveDebates.reduce((sum, r) => sum + (r.listeners || 0), 0) +
+              openRooms.reduce((sum, r) => sum + (r.listeners || 0), 0)}{" "}
+            learners {liveDebates.some((r) => r.status === "live") ? "debating" : "waiting"} now
+            {!isConnected && (
+              <span className="ml-2 text-yellow-400">(Connecting...)</span>
+            )}
+          </div>
         </div>
       </div>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        {liveDebates.map((debate) => (
-          <DebateCard key={debate.id} room={debate} onVote={handleVote} />
-        ))}
+        {loading ? (
+          <div className="col-span-2 flex items-center justify-center py-12">
+            <FaSpinner className="h-8 w-8 animate-spin text-[#D4AF37]" />
+          </div>
+        ) : liveDebates.length === 0 ? (
+          <div className="col-span-2 rounded-3xl border border-white/5 bg-[#101010] p-8 text-center">
+            <p className="text-sm text-gray-400">No debates scheduled at the moment.</p>
+            <p className="mt-2 text-xs text-gray-500">Check back later for new debates!</p>
+          </div>
+        ) : (
+          liveDebates.map((debate) => (
+            <DebateCard
+              key={debate.id}
+              room={debate}
+              onVote={handleVote}
+              socket={socket}
+              isConnected={isConnected}
+              isVoting={votingRooms.has(debate.id)}
+            />
+          ))
+        )}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        {openRooms.map((room) => (
+        {loading ? (
+          <div className="col-span-3 flex items-center justify-center py-12">
+            <FaSpinner className="h-8 w-8 animate-spin text-[#D4AF37]" />
+          </div>
+        ) : openRooms.length === 0 ? (
+          <div className="col-span-3 rounded-3xl border border-white/5 bg-[#101010] p-8 text-center">
+            <p className="text-sm text-gray-400">No open rooms available at the moment.</p>
+          </div>
+        ) : (
+          openRooms.map((room) => (
           <Motion.div
             key={room.id}
             initial={{ opacity: 0, y: 18 }}
@@ -148,8 +442,133 @@ const LiveDebates = () => {
               ))}
             </div>
           </Motion.div>
-        ))}
+          ))
+        )}
       </section>
+
+      {/* Create Debate Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <Motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-semibold text-white">Create New Debate</h3>
+                <p className="mt-1 text-sm text-gray-400">
+                  Set up a new debate room for learners to discuss and vote
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setFormData({
+                    title: "",
+                    topic: "",
+                    description: "",
+                    scheduledStart: "",
+                    type: "debate",
+                  });
+                }}
+                className="rounded-full p-2 text-gray-400 transition hover:bg-white/10 hover:text-white">
+                <FaTimes className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDebate} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Debate Title <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g., Hybrid Work Builds Stronger Teams"
+                  required
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Debate Topic <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.topic}
+                  onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                  placeholder="e.g., Should remote work be mandatory?"
+                  required
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Add a brief description of the debate topic..."
+                  rows={3}
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Scheduled Start Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduledStart}
+                  onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Leave empty to start in 15 minutes (default)
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setFormData({
+                      title: "",
+                      topic: "",
+                      description: "",
+                      scheduledStart: "",
+                      type: "debate",
+                    });
+                  }}
+                  className="flex-1 rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm font-semibold text-gray-300 transition hover:bg-white/5">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating || !formData.title || !formData.topic}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {creating ? (
+                    <>
+                      <FaSpinner className="mr-2 inline h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Debate"
+                  )}
+                </button>
+              </div>
+            </form>
+          </Motion.div>
+        </div>
+      )}
     </div>
   );
 };

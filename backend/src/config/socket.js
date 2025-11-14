@@ -1,0 +1,292 @@
+import { verifyAccessToken } from "../utils/token.js";
+import User from "../models/User.js";
+import Message from "../models/Message.js";
+import LiveRoom from "../models/LiveRoom.js";
+import mongoose from "mongoose";
+
+export const setupSocketIO = (io) => {
+  // Authentication middleware for Socket.io
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace("Bearer ", "");
+
+      if (!token) {
+        return next(new Error("Authentication error: Token missing"));
+      }
+
+      const payload = verifyAccessToken(token);
+      const user = await User.findById(payload.sub);
+
+      if (!user) {
+        return next(new Error("Authentication error: User not found"));
+      }
+
+      socket.userId = user._id.toString();
+      socket.userRole = user.role;
+      socket.userFullName = user.fullName;
+
+      return next();
+    } catch (error) {
+      return next(new Error("Authentication error: Invalid token"));
+    }
+  });
+
+  io.on("connection", (socket) => {
+    // eslint-disable-next-line no-console
+    console.log(`[Socket.IO] User connected: ${socket.userId} (${socket.userFullName})`);
+
+    // Join user's personal room
+    socket.join(`user:${socket.userId}`);
+
+    // Handle sending a message
+    socket.on("send_message", async (data) => {
+      try {
+        const { recipientId, content, type = "text", metadata = {} } = data;
+
+        if (!recipientId || !content) {
+          socket.emit("error", { message: "Recipient ID and content are required" });
+          return;
+        }
+
+        const senderObjectId = mongoose.isValidObjectId(socket.userId)
+          ? new mongoose.Types.ObjectId(socket.userId)
+          : null;
+        const recipientObjectId = mongoose.isValidObjectId(recipientId)
+          ? new mongoose.Types.ObjectId(recipientId)
+          : null;
+
+        if (!senderObjectId || !recipientObjectId) {
+          socket.emit("error", { message: "Invalid user ID or recipient ID" });
+          return;
+        }
+
+        // Create message in database
+        const message = await Message.create({
+          sender: senderObjectId,
+          recipient: recipientObjectId,
+          content: content.trim(),
+          type,
+          metadata,
+        });
+
+        const populatedMessage = await Message.findById(message._id)
+          .populate("sender", "fullName avatarUrl")
+          .populate("recipient", "fullName avatarUrl")
+          .lean();
+
+        const formattedMessage = {
+          id: populatedMessage._id.toString(),
+          from: "other", // For recipient
+          content: populatedMessage.content,
+          type: populatedMessage.type,
+          time: new Date(populatedMessage.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          timestamp: populatedMessage.createdAt,
+          duration: populatedMessage.metadata?.duration,
+          senderId: socket.userId,
+          senderName: socket.userFullName,
+        };
+
+        // Emit to sender (confirmation)
+        socket.emit("message_sent", {
+          ...formattedMessage,
+          from: "me",
+        });
+
+        // Emit to recipient
+        io.to(`user:${recipientId}`).emit("new_message", formattedMessage);
+
+        // Update read status if recipient is online
+        const recipientSocket = Array.from(io.sockets.sockets.values()).find(
+          (s) => s.userId === recipientId
+        );
+        if (recipientSocket) {
+          // Mark as read if recipient is viewing the conversation
+          await Message.updateMany(
+            {
+              sender: senderObjectId,
+              recipient: recipientObjectId,
+              isRead: false,
+            },
+            {
+              isRead: true,
+              readAt: new Date(),
+            }
+          );
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error sending message:", error);
+        socket.emit("error", { message: "Failed to send message" });
+      }
+    });
+
+    // Handle typing indicator
+    socket.on("typing", (data) => {
+      const { recipientId, isTyping } = data;
+      if (recipientId) {
+        io.to(`user:${recipientId}`).emit("user_typing", {
+          userId: socket.userId,
+          userName: socket.userFullName,
+          isTyping,
+        });
+      }
+    });
+
+    // Handle joining a live room
+    socket.on("join_room", async (data) => {
+      try {
+        const { roomId } = data;
+        if (!roomId || !mongoose.isValidObjectId(roomId)) {
+          socket.emit("error", { message: "Invalid room ID" });
+          return;
+        }
+
+        const roomObjectId = new mongoose.Types.ObjectId(roomId);
+        socket.join(`room:${roomId}`);
+
+        // Update listener count
+        const room = await LiveRoom.findById(roomObjectId);
+        if (room) {
+          room.listeners = (room.listeners || 0) + 1;
+
+          // If room is scheduled and it's time, mark as live
+          if (room.status === "scheduled" && room.scheduledStart) {
+            const now = new Date();
+            if (now >= new Date(room.scheduledStart)) {
+              room.status = "live";
+              room.actualStart = now;
+            }
+          }
+
+          await room.save();
+
+          // Broadcast update to all room members
+          io.to(`room:${roomId}`).emit("room_update", {
+            roomId,
+            listeners: room.listeners,
+            status: room.status,
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error joining room:", error);
+        socket.emit("error", { message: "Failed to join room" });
+      }
+    });
+
+    // Handle leaving a live room
+    socket.on("leave_room", async (data) => {
+      try {
+        const { roomId } = data;
+        if (!roomId || !mongoose.isValidObjectId(roomId)) {
+          return;
+        }
+
+        socket.leave(`room:${roomId}`);
+
+        // Update listener count
+        const room = await LiveRoom.findById(roomId);
+        if (room) {
+          room.listeners = Math.max(0, (room.listeners || 0) - 1);
+          await room.save();
+
+          // Broadcast update to all room members
+          io.to(`room:${roomId}`).emit("room_update", {
+            roomId,
+            listeners: room.listeners,
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error leaving room:", error);
+      }
+    });
+
+    // Handle voting on a debate
+    socket.on("vote_debate", async (data) => {
+      try {
+        const { roomId, side } = data;
+
+        if (!roomId || !side || !["for", "against"].includes(side)) {
+          socket.emit("error", { message: "Room ID and side (for/against) are required" });
+          return;
+        }
+
+        if (!mongoose.isValidObjectId(roomId)) {
+          socket.emit("error", { message: "Invalid room ID" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        if (room.type !== "debate") {
+          socket.emit("error", { message: "Voting is only available for debates" });
+          return;
+        }
+
+        // Increment vote count
+        if (side === "for") {
+          room.forVotes = (room.forVotes || 0) + 1;
+        } else {
+          room.againstVotes = (room.againstVotes || 0) + 1;
+        }
+
+        await room.save();
+
+        // Broadcast vote update to all room members
+        io.to(`room:${roomId}`).emit("vote_update", {
+          roomId,
+          forVotes: room.forVotes,
+          againstVotes: room.againstVotes,
+          votedBy: socket.userId,
+          side,
+        });
+
+        // Also emit to sender for confirmation
+        socket.emit("vote_confirmed", {
+          roomId,
+          forVotes: room.forVotes,
+          againstVotes: room.againstVotes,
+          side,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error voting on debate:", error);
+        socket.emit("error", { message: "Failed to vote" });
+      }
+    });
+
+    // Handle disconnect
+    socket.on("disconnect", async () => {
+      // eslint-disable-next-line no-console
+      console.log(`[Socket.IO] User disconnected: ${socket.userId}`);
+
+      // Leave all rooms (decrement listener counts)
+      const rooms = await LiveRoom.find({});
+      for (const room of rooms) {
+        const roomId = room._id.toString();
+        const roomSockets = await io.in(`room:${roomId}`).fetchSockets();
+        const wasInRoom = roomSockets.some((s) => s.id === socket.id);
+
+        if (wasInRoom) {
+          room.listeners = Math.max(0, (room.listeners || 0) - 1);
+          await room.save();
+
+          io.to(`room:${roomId}`).emit("room_update", {
+            roomId,
+            listeners: room.listeners,
+          });
+        }
+      }
+    });
+  });
+};
+

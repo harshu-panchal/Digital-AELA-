@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineAcademicCap,
@@ -13,9 +13,12 @@ import {
   HiOutlineUserGroup,
 } from "react-icons/hi2";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { useUser } from "../../src/contexts/UserContext";
+import { useAuth } from "../../src/contexts/AuthContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
+import { fetchStudentDashboard } from "../../src/services/api/student";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -37,11 +40,49 @@ const cardVariants = {
 
 const StudentDashboard = () => {
   const { profile, notifications, followers } = useUser();
+  const { user: authUser, tokens } = useAuth();
 
   const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+
+  // Load real-time data from backend
+  const loadDashboard = useCallback(async () => {
+    // Only fetch from backend if user is authenticated with backend tokens
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      // Fall back to mock data
+      setDashboardData(getStudentDashboard());
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const backendData = await fetchStudentDashboard();
+      // Merge backend data with mock data for sections not yet implemented
+      const mockData = getStudentDashboard();
+      setDashboardData({
+        ...mockData,
+        journeyStats: backendData.journeyStats || mockData.journeyStats,
+        ongoingCourses: backendData.ongoingCourses || mockData.ongoingCourses,
+        learnEarnProgress: backendData.learnEarnProgress || mockData.learnEarnProgress,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load dashboard from backend:", error);
+      setLoadError(error.message);
+      // Fall back to mock data
+      setDashboardData(getStudentDashboard());
+      toast.warning("Using cached data. Some metrics may not be up to date.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [authUser, tokens]);
 
   useEffect(() => {
-    setDashboardData(getStudentDashboard());
+    loadDashboard();
+
+    // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
       if (event.key === "aela.student.dashboard") {
         setDashboardData(getStudentDashboard());
@@ -49,7 +90,20 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  }, [loadDashboard]);
+
+  // Listen for quiz completion events to refresh dashboard
+  useEffect(() => {
+    const handleQuizComplete = () => {
+      // Refresh dashboard after a short delay to allow backend to process
+      setTimeout(() => {
+        loadDashboard();
+      }, 1000);
+    };
+
+    window.addEventListener("quizCompleted", handleQuizComplete);
+    return () => window.removeEventListener("quizCompleted", handleQuizComplete);
+  }, [loadDashboard]);
 
   const notificationsCount = useMemo(
     () => notifications.filter((notification) => notification.type !== "archived").length,
