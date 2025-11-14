@@ -23,7 +23,9 @@ const bottomItems = [
 
 const ExploreJobsBottomNav = ({ onCreatePost }) => {
   const location = useLocation();
-  const isRecruiterDashboard = location.pathname.includes("recruiter-dashboard");
+  const isRecruiterDashboard = location.pathname.includes(
+    "recruiter-dashboard"
+  );
 
   return (
     <nav className="fixed inset-x-0 bottom-4 z-50 flex justify-center lg:hidden">

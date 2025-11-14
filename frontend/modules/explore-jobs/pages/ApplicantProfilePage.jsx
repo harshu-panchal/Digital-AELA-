@@ -42,11 +42,18 @@ const ApplicantProfilePage = () => {
       try {
         setLoading(true);
         setError(null);
+        // eslint-disable-next-line no-console
+        console.log("Fetching applicant details:", { jobId, applicationId });
         const result = await fetchApplicantDetails(jobId, applicationId);
+        // eslint-disable-next-line no-console
+        console.log("Applicant details received:", result);
         setData(result);
       } catch (err) {
-        setError(err.message || "Failed to load applicant details");
-        toast.error(err.message || "Failed to load applicant details");
+        // eslint-disable-next-line no-console
+        console.error("Error loading applicant details:", err);
+        const errorMessage = err.message || err.details?.error?.message || "Failed to load applicant details";
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -105,7 +112,7 @@ const ApplicantProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#03040B] text-white">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white mx-auto" />
           <p className="text-sm text-slate-300">Loading applicant profile...</p>
@@ -114,11 +121,11 @@ const ApplicantProfilePage = () => {
     );
   }
 
-  if (error || !data) {
+  if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#03040B] text-white">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-lg font-semibold text-red-200">{error || "Applicant not found"}</p>
+          <p className="text-lg font-semibold text-red-200">{error}</p>
           <button
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
@@ -130,23 +137,55 @@ const ApplicantProfilePage = () => {
     );
   }
 
-  const { application, job, user } = data;
-
-  return (
-    <div className="min-h-screen bg-[#03040B] text-white">
-      <div className="layout-container py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex items-center justify-between">
+  if (!data) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-lg font-semibold text-slate-300">No data available</p>
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
             <HiOutlineArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            Go Back
           </button>
-        </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  const { application, job, user } = data || {};
+
+  // Safety check - ensure we have at least application data
+  if (!application) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-lg font-semibold text-red-200">Invalid application data</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
+            <HiOutlineArrowLeft className="h-4 w-4" />
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+          <HiOutlineArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </button>
+      </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content */}
@@ -364,7 +403,6 @@ const ApplicantProfilePage = () => {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 };

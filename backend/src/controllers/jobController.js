@@ -206,7 +206,7 @@ export const getApplicantDetails = async (req, res, next) => {
 
     return res.json({
       application: {
-        id: application.id,
+        id: application._id?.toString() || application.id,
         candidateId: application.candidateId,
         candidateName: application.candidateName,
         candidateHeadline: application.candidateHeadline,
@@ -219,13 +219,13 @@ export const getApplicantDetails = async (req, res, next) => {
         createdAt: application.createdAt,
       },
       job: {
-        id: job.id,
+        id: job._id?.toString() || job.id,
         title: job.title,
         company: job.company,
       },
       user: userData
         ? {
-            id: userData.id,
+            id: userData._id?.toString() || userData.id,
             email: userData.email,
             fullName: userData.fullName,
             role: userData.role,
