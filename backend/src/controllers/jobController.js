@@ -1,5 +1,33 @@
 import JobPost from "../models/JobPost.js";
 import JobApplication from "../models/JobApplication.js";
+import User from "../models/User.js";
+
+export const listPublishedJobs = async (req, res, next) => {
+  try {
+    const { page = 1, pageSize = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const [jobs, total] = await Promise.all([
+      JobPost.find({ status: "published" })
+        .populate("owner", "fullName email")
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize)),
+      JobPost.countDocuments({ status: "published" }),
+    ]);
+
+    return res.json({
+      data: jobs,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 export const listMyJobs = async (req, res, next) => {
   try {
@@ -31,10 +59,12 @@ export const listMyJobs = async (req, res, next) => {
 export const createJob = async (req, res, next) => {
   try {
     const { userId } = req.auth;
+    const status = req.body.status || "published";
     const job = await JobPost.create({
       ...req.body,
       owner: userId,
-      publishedAt: req.body.status === "published" ? new Date() : undefined,
+      status,
+      publishedAt: status === "published" ? new Date() : undefined,
     });
 
     return res.status(201).json(job);
@@ -132,6 +162,63 @@ export const listApplicants = async (req, res, next) => {
       applicants,
     });
   } catch (error) {
+    return next(error);
+  }
+};
+
+export const submitApplication = async (req, res, next) => {
+  try {
+    const { userId, userRole, userFullName } = req.auth || {};
+    const { jobId } = req.params;
+    const { candidateName, candidateHeadline, profileUrl, resumeUrl, portfolioUrl, notes } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: { code: "UNAUTHORIZED", message: "Authentication required to apply" },
+      });
+    }
+
+    const job = await JobPost.findOne({ _id: jobId, status: "published" });
+    if (!job) {
+      return res.status(404).json({
+        error: { code: "RESOURCE_NOT_FOUND", message: "Job not found or not published" },
+      });
+    }
+
+    const existingApplication = await JobApplication.findOne({
+      job: jobId,
+      candidateId: userId,
+    });
+
+    if (existingApplication) {
+      return res.status(409).json({
+        error: { code: "DUPLICATE_APPLICATION", message: "You have already applied to this job" },
+      });
+    }
+
+    const application = await JobApplication.create({
+      job: jobId,
+      candidateId: userId,
+      candidateName: candidateName || userFullName || "Applicant",
+      candidateHeadline,
+      profileUrl,
+      resumeUrl,
+      portfolioUrl,
+      notes,
+      currentStage: "screening",
+    });
+
+    await JobPost.findByIdAndUpdate(jobId, {
+      $inc: { "stats.applications": 1 },
+    });
+
+    return res.status(201).json(application);
+  } catch (error) {
+    if (error.name === "MongoServerError" && error.code === 11000) {
+      return res.status(409).json({
+        error: { code: "DUPLICATE_APPLICATION", message: "You have already applied to this job" },
+      });
+    }
     return next(error);
   }
 };

@@ -42,6 +42,9 @@ const jobApplicationSchema = new mongoose.Schema(
   }
 );
 
+// Prevent duplicate applications
+jobApplicationSchema.index({ job: 1, candidateId: 1 }, { unique: true });
+
 const JobApplication = mongoose.model("JobApplication", jobApplicationSchema);
 
 export default JobApplication;

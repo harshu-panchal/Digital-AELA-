@@ -28,7 +28,8 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
 
     req.auth = {
       userId: user.id,
-      role: user.role,
+      userRole: user.role,
+      userFullName: user.fullName,
       email: user.email,
     };
 
