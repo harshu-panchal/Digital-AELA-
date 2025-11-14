@@ -47,23 +47,31 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
         </div>
 
         <nav className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition-all ${
-                    isActive
-                      ? "border-white/10 bg-white/5 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]"
-                      : "text-gray-300 hover:border-white/10 hover:bg-white/5 hover:text-white"
-                  }`}>
-                <Icon className="h-5 w-5" />
-                {item.label}
-              </NavLink>
-            );
-          })}
+          {navItems
+            .filter((item) => {
+              // Hide "Seeker Dashboard" when on recruiter dashboard
+              if (isRecruiterDashboard && item.label === "Seeker Dashboard") {
+                return false;
+              }
+              return true;
+            })
+            .map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition-all ${
+                      isActive
+                        ? "border-white/10 bg-white/5 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]"
+                        : "text-gray-300 hover:border-white/10 hover:bg-white/5 hover:text-white"
+                    }`}>
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </NavLink>
+              );
+            })}
         </nav>
 
         {isRecruiterDashboard && (
