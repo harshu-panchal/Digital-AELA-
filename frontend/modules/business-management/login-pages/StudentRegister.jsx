@@ -25,6 +25,12 @@ const createInitialFormState = () => ({
   message: "",
   password: "",
   confirmPassword: "",
+  // Additional fields for recruiter view
+  headline: "",
+  resumeUrl: "",
+  portfolioUrl: "",
+  linkedinUrl: "",
+  skills: "",
 });
 
 const StudentRegister = () => {
@@ -91,6 +97,14 @@ const StudentRegister = () => {
 
     setIsSubmitting(true);
     try {
+      // Parse skills from comma-separated string
+      const skillsArray = formData.skills
+        ? formData.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
       const profilePayload = {
         fullName: trimmedName,
         phone: trimmedPhone,
@@ -103,6 +117,12 @@ const StudentRegister = () => {
         goals: trimmedGoals,
         message: trimmedMessage,
         bio: trimmedMessage || trimmedGoals,
+        // Additional fields for recruiter view
+        headline: safeString(formData.headline) || null,
+        resumeUrl: safeString(formData.resumeUrl) || null,
+        portfolioUrl: safeString(formData.portfolioUrl) || null,
+        linkedinUrl: safeString(formData.linkedinUrl) || null,
+        skills: skillsArray,
       };
 
       const newUser = await registerUser({
@@ -315,6 +335,81 @@ const StudentRegister = () => {
                 className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
               />
             </label>
+
+            <div className="rounded-2xl border border-[#F5D26A]/30 bg-[#F5D26A]/10 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#F5D26A]">
+                Professional Profile (Optional - for job applications)
+              </p>
+              <div className="space-y-4">
+                <label className="block space-y-2">
+                  <span className="text-sm font-semibold text-slate-100">
+                    Professional Headline
+                  </span>
+                  <input
+                    type="text"
+                    name="headline"
+                    value={formData.headline}
+                    onChange={handleChange}
+                    placeholder="e.g., Full Stack Developer | React & Node.js"
+                    className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-semibold text-slate-100">
+                    Skills (comma-separated)
+                  </span>
+                  <input
+                    type="text"
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    placeholder="e.g., JavaScript, React, Node.js, Python"
+                    className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-slate-100">
+                      Resume URL
+                    </span>
+                    <input
+                      type="url"
+                      name="resumeUrl"
+                      value={formData.resumeUrl}
+                      onChange={handleChange}
+                      placeholder="https://drive.google.com/..."
+                      className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                    />
+                  </label>
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-slate-100">
+                      Portfolio URL
+                    </span>
+                    <input
+                      type="url"
+                      name="portfolioUrl"
+                      value={formData.portfolioUrl}
+                      onChange={handleChange}
+                      placeholder="https://yourportfolio.com"
+                      className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                    />
+                  </label>
+                </div>
+                <label className="block space-y-2">
+                  <span className="text-sm font-semibold text-slate-100">
+                    LinkedIn Profile
+                  </span>
+                  <input
+                    type="url"
+                    name="linkedinUrl"
+                    value={formData.linkedinUrl}
+                    onChange={handleChange}
+                    placeholder="https://linkedin.com/in/yourprofile"
+                    className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  />
+                </label>
+              </div>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">

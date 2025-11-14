@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import JobPost from "../models/JobPost.js";
 import JobApplication from "../models/JobApplication.js";
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 
 export const listPublishedJobs = async (req, res, next) => {
   try {
@@ -192,11 +193,15 @@ export const getApplicantDetails = async (req, res, next) => {
       });
     }
 
-    // Try to fetch user data if candidateId is a valid ObjectId
+    // Try to fetch user data and student profile if candidateId is a valid ObjectId
     let userData = null;
+    let studentProfile = null;
     try {
       if (application.candidateId && mongoose.Types.ObjectId.isValid(application.candidateId)) {
         userData = await User.findById(application.candidateId).select("-passwordHash");
+        if (userData?.role === "student") {
+          studentProfile = await StudentProfile.findOne({ user: application.candidateId });
+        }
       }
     } catch (userError) {
       // Ignore user fetch errors - application data is still available
@@ -230,6 +235,26 @@ export const getApplicantDetails = async (req, res, next) => {
             fullName: userData.fullName,
             role: userData.role,
             createdAt: userData.createdAt,
+          }
+        : null,
+      studentProfile: studentProfile
+        ? {
+            headline: studentProfile.headline,
+            bio: studentProfile.bio,
+            phone: studentProfile.phone,
+            location: studentProfile.location,
+            ageGroup: studentProfile.ageGroup,
+            currentStatus: studentProfile.currentStatus,
+            skills: studentProfile.skills,
+            experience: studentProfile.experience,
+            education: studentProfile.education,
+            resumeUrl: studentProfile.resumeUrl,
+            portfolioUrl: studentProfile.portfolioUrl,
+            linkedinUrl: studentProfile.linkedinUrl,
+            githubUrl: studentProfile.githubUrl,
+            websiteUrl: studentProfile.websiteUrl,
+            preferredProgram: studentProfile.preferredProgram,
+            goals: studentProfile.goals,
           }
         : null,
     });
@@ -268,14 +293,31 @@ export const submitApplication = async (req, res, next) => {
       });
     }
 
+    // Try to fetch student profile to get default values
+    let studentProfile = null;
+    try {
+      if (userRole === "student") {
+        studentProfile = await StudentProfile.findOne({ user: userId });
+      }
+    } catch (profileError) {
+      // Ignore profile fetch errors
+      // eslint-disable-next-line no-console
+      console.warn("Could not fetch student profile:", profileError);
+    }
+
     const application = await JobApplication.create({
       job: jobId,
       candidateId: userId,
       candidateName: candidateName || userFullName || "Applicant",
-      candidateHeadline,
-      profileUrl,
-      resumeUrl,
-      portfolioUrl,
+      candidateHeadline:
+        candidateHeadline ||
+        studentProfile?.headline ||
+        (studentProfile?.currentStatus
+          ? `${studentProfile.currentStatus.replace(/-/g, " ")} · ${studentProfile.location?.city || studentProfile.location?.country || ""}`
+          : null),
+      profileUrl: profileUrl || `/profiles/students/${userId}`,
+      resumeUrl: resumeUrl || studentProfile?.resumeUrl,
+      portfolioUrl: portfolioUrl || studentProfile?.portfolioUrl,
       notes,
       currentStage: "screening",
     });

@@ -8,6 +8,7 @@ import blogRoutes from "./routes/blogRoutes.js";
 import publicBlogRoutes from "./routes/publicBlogRoutes.js";
 import publicJobRoutes from "./routes/publicJobRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/v1/recruiter/blogs", blogRoutes);
 app.use("/api/v1/blogs", publicBlogRoutes);
 app.use("/api/v1/jobs", publicJobRoutes);
 app.use("/api/v1/resources", resourceRoutes);
+app.use("/api/v1/students", studentRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {

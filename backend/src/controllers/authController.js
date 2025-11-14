@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -72,6 +73,42 @@ export const registerUser = async (req, res, next) => {
       fullName: normalizedFullName,
       role,
     });
+
+    // If student role, create student profile with provided data
+    if (role === "student" && req.body.profile) {
+      try {
+        const profileData = req.body.profile;
+        await StudentProfile.create({
+          user: user._id,
+          headline: profileData.headline,
+          bio: profileData.bio,
+          phone: profileData.phone,
+          location: profileData.city || profileData.country
+            ? {
+                city: profileData.city,
+                country: profileData.country,
+              }
+            : undefined,
+          ageGroup: profileData.ageGroup,
+          currentStatus: profileData.currentStatus,
+          skills: Array.isArray(profileData.skills) ? profileData.skills : [],
+          resumeUrl: profileData.resumeUrl,
+          portfolioUrl: profileData.portfolioUrl,
+          linkedinUrl: profileData.linkedinUrl,
+          preferredProgram: profileData.preferredProgram,
+          goals: profileData.goals,
+          metadata: {
+            referralSource: profileData.referralSource,
+            message: profileData.message,
+            ...(profileData.metadata || {}),
+          },
+        });
+      } catch (profileError) {
+        // Log error but don't fail registration
+        // eslint-disable-next-line no-console
+        console.warn("Failed to create student profile during registration:", profileError);
+      }
+    }
 
     return res.status(201).json(buildAuthResponse(user));
   } catch (error) {

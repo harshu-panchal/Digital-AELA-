@@ -246,6 +246,7 @@ export const AuthProvider = ({ children }) => {
           password,
           fullName,
           role,
+          profile: profile, // Include profile data for student profile creation
         });
         return handleBackendAuthSuccess(authResult);
       } catch (backendError) {

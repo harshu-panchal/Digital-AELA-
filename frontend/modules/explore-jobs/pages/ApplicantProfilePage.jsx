@@ -153,7 +153,7 @@ const ApplicantProfilePage = () => {
     );
   }
 
-  const { application, job, user } = data || {};
+  const { application, job, user, studentProfile } = data || {};
 
   // Safety check - ensure we have at least application data
   if (!application) {
@@ -284,12 +284,96 @@ const ApplicantProfilePage = () => {
               </div>
             </motion.section>
 
-            {/* Links & Resources */}
-            {(application.resumeUrl || application.portfolioUrl || application.profileUrl) && (
+            {/* Student Profile Details */}
+            {studentProfile && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
+                className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <HiOutlineUser className="h-5 w-5 text-sky-300" />
+                  <h2 className="text-lg font-semibold text-white">Student Profile</h2>
+                </div>
+                <div className="space-y-4">
+                  {studentProfile.bio && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Bio</p>
+                      <p className="text-sm text-slate-200">{studentProfile.bio}</p>
+                    </div>
+                  )}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {studentProfile.location && (studentProfile.location.city || studentProfile.location.country) && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Location</p>
+                        <p className="mt-1 text-sm text-slate-200">
+                          {[studentProfile.location.city, studentProfile.location.country].filter(Boolean).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                    {studentProfile.phone && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Phone</p>
+                        <p className="mt-1 text-sm text-slate-200">{studentProfile.phone}</p>
+                      </div>
+                    )}
+                    {studentProfile.currentStatus && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Current Status</p>
+                        <p className="mt-1 text-sm text-slate-200 capitalize">
+                          {studentProfile.currentStatus.replace(/-/g, " ")}
+                        </p>
+                      </div>
+                    )}
+                    {studentProfile.ageGroup && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Age Group</p>
+                        <p className="mt-1 text-sm text-slate-200">{studentProfile.ageGroup}</p>
+                      </div>
+                    )}
+                  </div>
+                  {studentProfile.skills && studentProfile.skills.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {studentProfile.skills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {studentProfile.goals && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Goals</p>
+                      <p className="text-sm text-slate-200">{studentProfile.goals}</p>
+                    </div>
+                  )}
+                  {studentProfile.linkedinUrl && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">LinkedIn</p>
+                      <a
+                        href={studentProfile.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-sky-300 hover:text-sky-200 hover:underline">
+                        {studentProfile.linkedinUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {/* Links & Resources */}
+            {(application.resumeUrl || application.portfolioUrl || application.profileUrl || studentProfile?.linkedinUrl || studentProfile?.githubUrl) && (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
                 className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
                 <div className="mb-4 flex items-center gap-3">
                   <HiOutlineGlobeAlt className="h-5 w-5 text-sky-300" />
@@ -341,6 +425,38 @@ const ApplicantProfilePage = () => {
                       </div>
                       <span className="text-xs text-sky-300">Open →</span>
                     </Link>
+                  )}
+                  {studentProfile?.linkedinUrl && !application.profileUrl && (
+                    <a
+                      href={studentProfile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/50 p-4 transition hover:border-sky-400/50 hover:bg-black/70">
+                      <div className="flex items-center gap-3">
+                        <HiOutlineGlobeAlt className="h-5 w-5 text-sky-300" />
+                        <div>
+                          <p className="text-sm font-semibold text-white">LinkedIn</p>
+                          <p className="text-xs text-slate-400">View LinkedIn profile</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-sky-300">Open →</span>
+                    </a>
+                  )}
+                  {studentProfile?.githubUrl && (
+                    <a
+                      href={studentProfile.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/50 p-4 transition hover:border-sky-400/50 hover:bg-black/70">
+                      <div className="flex items-center gap-3">
+                        <HiOutlineGlobeAlt className="h-5 w-5 text-sky-300" />
+                        <div>
+                          <p className="text-sm font-semibold text-white">GitHub</p>
+                          <p className="text-xs text-slate-400">View GitHub profile</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-sky-300">Open →</span>
+                    </a>
                   )}
                 </div>
               </motion.section>
