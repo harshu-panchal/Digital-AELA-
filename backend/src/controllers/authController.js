@@ -7,8 +7,9 @@ import {
 } from "../utils/token.js";
 
 const buildAuthResponse = (user) => {
+  const userId = user._id?.toString() || user.id;
   const payload = {
-    sub: user.id,
+    sub: userId,
     role: user.role,
     email: user.email,
   };
@@ -17,7 +18,7 @@ const buildAuthResponse = (user) => {
     accessToken: generateAccessToken(payload),
     refreshToken: generateRefreshToken(payload),
     user: {
-      id: user.id,
+      id: userId,
       role: user.role,
       email: user.email,
       fullName: user.fullName,
@@ -29,7 +30,12 @@ const buildAuthResponse = (user) => {
 export const registerUser = async (req, res, next) => {
   try {
     const { email, password, fullName, role = "student" } = req.body;
-    if (!email || !password || !fullName) {
+    
+    // Normalize email (lowercase and trim) to match how it's stored
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedFullName = String(fullName || "").trim();
+    
+    if (!normalizedEmail || !password || !normalizedFullName) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
@@ -49,7 +55,7 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({
         error: {
@@ -61,9 +67,9 @@ export const registerUser = async (req, res, next) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await User.create({
-      email,
+      email: normalizedEmail,
       passwordHash,
-      fullName,
+      fullName: normalizedFullName,
       role,
     });
 
@@ -82,10 +88,24 @@ export const registerRecruiter = async (req, res, next) => {
 export const loginUser = async (req, res, next) => {
   try {
     const { email, password, role } = req.body;
-    const query = { email };
+    
+    // Normalize email (lowercase and trim) to match how it's stored
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    
+    if (!normalizedEmail || !password) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and password are required",
+        },
+      });
+    }
+
+    const query = { email: normalizedEmail };
     if (role) {
       query.role = role;
     }
+    
     const user = await User.findOne(query).select("+passwordHash");
     if (!user) {
       return res.status(401).json({
