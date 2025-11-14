@@ -59,6 +59,13 @@ import FreeLibrary from "../modules/business-management/free-library/FreeLibrary
 import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
 import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
 import AdminLogin from "../modules/admin/AdminLogin";
+import AdminLayout from "../modules/admin/layout/AdminLayout";
+import UserManagement from "../modules/admin/pages/UserManagement";
+import ApprovalPage from "../modules/admin/pages/ApprovalPage";
+import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
+import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
+import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
+import UserDetail from "../modules/admin/pages/UserDetail";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import StudentDashboard from "../modules/student/StudentDashboard";
 import CourseCreate from "../modules/teacher/CourseCreate";
@@ -82,13 +89,20 @@ export const App = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
-          path="/super-admin"
+          path="/super-admin/*"
           element={
             <ProtectedRoute roles={["super-admin"]}>
-              <SuperAdminDashboard />
+              <AdminLayout />
             </ProtectedRoute>
-          }
-        />
+          }>
+          <Route index element={<SuperAdminDashboard />} />
+          <Route path="users/:role" element={<UserManagement />} />
+          <Route path="users/id/:userId" element={<UserDetail />} />
+          <Route path="approvals/:type" element={<ApprovalPage />} />
+          <Route path="create/course" element={<AdminCourseCreate />} />
+          <Route path="create/book" element={<AdminBookCreate />} />
+          <Route path="create/blog" element={<AdminBlogCreate />} />
+        </Route>
         <Route
           path="/teacher/dashboard"
           element={

@@ -182,7 +182,7 @@ const SuperAdminDashboard = () => {
     }, [dashboardData, loading]);
 
   return (
-    <div className="min-h-screen bg-[#020409] text-white">
+    <div className="relative">
       <SEO
         title="Super Admin Dashboard | Digital AELA"
         description="Monitor platform health, approve content, and manage global operations from the Digital AELA super admin console."
@@ -192,8 +192,8 @@ const SuperAdminDashboard = () => {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.14),transparent_70%)]" />
 
-      <main className="relative z-10 pt-24 pb-20">
-        <section className="layout-container space-y-10">
+      <div className="relative z-10">
+        <section className="space-y-10">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -406,7 +406,7 @@ const SuperAdminDashboard = () => {
             </div>
           </motion.section>
         </section>
-      </main>
+      </div>
     </div>
   );
 };

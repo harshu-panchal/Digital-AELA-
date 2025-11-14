@@ -681,13 +681,13 @@ const RecruiterDashboard = () => {
               className="inline-flex items-center gap-2 rounded-3xl border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-white/40">
               Edit Profile
             </button>
-            <button
-              type="button"
-              onClick={() => openComposer("job")}
-              className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
-              <HiOutlinePlusCircle className="h-5 w-5" />
-              New Job Drop
-            </button>
+          <button
+            type="button"
+            onClick={() => openComposer("job")}
+            className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
+            <HiOutlinePlusCircle className="h-5 w-5" />
+            New Job Drop
+          </button>
           </div>
         }
         metrics={stats}
@@ -1011,20 +1011,20 @@ const RecruiterDashboard = () => {
                 </button>
               </div>
               <div className="overflow-y-auto pr-1 sm:pr-2">
-                <CreateJobPostForm
-                  initialData={
-                    composerState.post
-                      ? {
-                          ...composerState.post,
-                          tags: (composerState.post.tags ?? []).join(", "),
-                          cultureHighlights: (composerState.post.cultureHighlights ?? []).join(
-                            ", "
-                          ),
-                        }
-                      : undefined
-                  }
-                  isEditing={Boolean(composerState.post)}
-                  onSubmitComplete={closeComposer}
+              <CreateJobPostForm
+                initialData={
+                  composerState.post
+                    ? {
+                        ...composerState.post,
+                        tags: (composerState.post.tags ?? []).join(", "),
+                        cultureHighlights: (composerState.post.cultureHighlights ?? []).join(
+                          ", "
+                        ),
+                      }
+                    : undefined
+                }
+                isEditing={Boolean(composerState.post)}
+                onSubmitComplete={closeComposer}
                   onSubmitOverride={handleJobSubmit}
                 />
               </div>

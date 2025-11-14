@@ -483,7 +483,7 @@ const ProfilePage = () => {
           className="space-y-6">
           <div>
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">About</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">About</p>
               {authUser && tokens?.accessToken && (
                 <button
                   type="button"
@@ -506,7 +506,7 @@ const ProfilePage = () => {
               {infoGrid.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-white/5 bg-[#111] p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">{item.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">{item.label}</p>
                     {authUser && tokens?.accessToken && editingField === "all" && (
                       <button
                         type="button"
@@ -574,7 +574,7 @@ const ProfilePage = () => {
 
           <div>
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Interests</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Interests</p>
               {authUser && tokens?.accessToken && editingField === "all" && (
                 <button
                   type="button"
@@ -632,17 +632,17 @@ const ProfilePage = () => {
                 </div>
               </div>
             ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
                 {getInterests().length > 0 ? (
                   getInterests().map((interest) => (
-                    <span key={interest} className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-200">
-                      #{interest}
-                    </span>
+                <span key={interest} className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-200">
+                  #{interest}
+                </span>
                   ))
                 ) : (
                   <span className="text-sm text-gray-500 italic">No interests added yet</span>
                 )}
-              </div>
+            </div>
             )}
           </div>
         </Motion.div>
@@ -674,29 +674,29 @@ const ProfilePage = () => {
           <div className="mt-3 space-y-2">
             {socialLinks.length > 0 ? (
               socialLinks.map((link) => (
-                <div
-                  key={link.platform}
+              <div
+                key={link.platform}
                   className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaGlobe className="h-4 w-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-semibold text-white">{link.platform}</p>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
-                        {link.url}
-                      </a>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <FaGlobe className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{link.platform}</p>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
+                      {link.url}
+                    </a>
                   </div>
+                </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                       {link.verified ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
                           <FaCheckCircle className="h-3 w-3" />
                           Verified
-                        </span>
+                  </span>
                       ) : (
                         <button
                           type="button"
@@ -751,7 +751,7 @@ const ProfilePage = () => {
           {/* Add/Edit Social Link Modal */}
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-              <Motion.div
+        <Motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
@@ -788,7 +788,7 @@ const ProfilePage = () => {
                         </option>
                       ))}
                     </select>
-                  </div>
+              </div>
 
                   <div>
                     <label className="mb-2 block text-xs font-semibold text-gray-300">
@@ -804,7 +804,7 @@ const ProfilePage = () => {
                     <p className="mt-1 text-xs text-gray-400">
                       Enter the full URL of your profile (e.g., https://linkedin.com/in/yourname)
                     </p>
-                  </div>
+            </div>
 
                   <div className="flex gap-3 pt-2">
                     <button
@@ -833,8 +833,8 @@ const ProfilePage = () => {
                         "Add Link"
                       )}
                     </button>
-                  </div>
-                </div>
+            </div>
+              </div>
               </Motion.div>
             </div>
           )}
