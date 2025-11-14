@@ -151,7 +151,7 @@ export const ExploreJobsProvider = ({ children }) => {
     if (tokens?.accessToken && jobId) {
       try {
         await submitJobApplication(jobId, {
-          candidateName: authUser?.fullName,
+          candidateName: authUser?.fullName || "Student",
           candidateHeadline: authUser?.metadata?.headline,
           profileUrl: `/profiles/${authUser?.role}/${authUser?.id}`,
         });
@@ -164,6 +164,14 @@ export const ExploreJobsProvider = ({ children }) => {
         }
         return; // Don't update UI if API call failed
       }
+    } else if (!tokens?.accessToken) {
+      // User doesn't have backend tokens - this is a mock application
+      toast.warning(
+        "Application saved locally. Please log in with backend authentication to submit your application.",
+        { autoClose: 5000 }
+      );
+      // eslint-disable-next-line no-console
+      console.warn("Student applied without backend tokens - application not saved to backend");
     }
 
     // Update local state

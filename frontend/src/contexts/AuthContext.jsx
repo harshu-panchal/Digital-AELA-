@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  loginRecruiterAccount,
+  loginUserAccount,
   logoutRecruiterAccount,
-  registerRecruiterAccount,
+  registerUserAccount,
 } from "../services/api/auth";
 import {
   clearStoredTokens,
@@ -191,30 +191,35 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Please enter both email and password.");
       }
 
-      if (role === "recruiter") {
-        const authResult = await loginRecruiterAccount({ email: normalizedEmail, password });
+      // Try backend auth first for all roles
+      try {
+        const authResult = await loginUserAccount({ email: normalizedEmail, password, role });
         return handleBackendAuthSuccess(authResult);
-      }
+      } catch (backendError) {
+        // If backend auth fails, fall back to mock auth for backward compatibility
+        // eslint-disable-next-line no-console
+        console.warn("Backend auth failed, falling back to mock auth:", backendError);
+        
+        const existing = users.find((item) => item.email === normalizedEmail);
+        if (!existing) {
+          throw new Error("Account not found. Please register first.");
+        }
 
-      const existing = users.find((item) => item.email === normalizedEmail);
-      if (!existing) {
-        throw new Error("Account not found. Please register first.");
-      }
+        if (role && existing.role !== role) {
+          const expected = ROLE_DETAILS[existing.role]?.label ?? existing.role;
+          throw new Error(
+            `This email is registered as ${expected}. Try logging in via the correct portal.`
+          );
+        }
 
-      if (role && existing.role !== role) {
-        const expected = ROLE_DETAILS[existing.role]?.label ?? existing.role;
-        throw new Error(
-          `This email is registered as ${expected}. Try logging in via the correct portal.`
-        );
-      }
+        if (existing.password !== password) {
+          throw new Error("Incorrect password. Please try again.");
+        }
 
-      if (existing.password !== password) {
-        throw new Error("Incorrect password. Please try again.");
+        const safeUser = toPublicUser(existing);
+        setUser(safeUser);
+        return safeUser;
       }
-
-      const safeUser = toPublicUser(existing);
-      setUser(safeUser);
-      return safeUser;
     },
     [users, handleBackendAuthSuccess]
   );
@@ -229,51 +234,54 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Email, password, and role are required.");
       }
 
-      if (role === "recruiter") {
-        const fullName =
-          profile?.fullName?.trim() ||
-          profile?.name?.trim() ||
-          normalizedEmail.split("@")[0];
-        const authResult = await registerRecruiterAccount({
-          email: normalizedEmail,
-          password,
-          fullName,
-        });
-        return handleBackendAuthSuccess(authResult);
-      }
-
-      const existing = users.find((item) => item.email === normalizedEmail);
-      if (existing) {
-        throw new Error("An account with this email already exists. Try signing in instead.");
-      }
-
-      const id = generateId("user");
       const fullName =
         profile?.fullName?.trim() ||
         profile?.name?.trim() ||
         normalizedEmail.split("@")[0];
 
-      const newUserRecord = {
-        id,
-        role,
-        email: normalizedEmail,
-        password,
-        fullName,
-        createdAt: new Date().toISOString(),
-        metadata: profile ?? {},
-      };
+      // Try backend auth first for all roles
+      try {
+        const authResult = await registerUserAccount({
+          email: normalizedEmail,
+          password,
+          fullName,
+          role,
+        });
+        return handleBackendAuthSuccess(authResult);
+      } catch (backendError) {
+        // If backend auth fails, fall back to mock auth for backward compatibility
+        // eslint-disable-next-line no-console
+        console.warn("Backend registration failed, falling back to mock auth:", backendError);
+        
+        const existing = users.find((item) => item.email === normalizedEmail);
+        if (existing) {
+          throw new Error("An account with this email already exists. Try signing in instead.");
+        }
 
-      setUsers((prev) => [...prev, newUserRecord]);
-      const safeUser = toPublicUser(newUserRecord);
-      setUser(safeUser);
-      return safeUser;
+        const id = generateId("user");
+        const newUserRecord = {
+          id,
+          role,
+          email: normalizedEmail,
+          password,
+          fullName,
+          createdAt: new Date().toISOString(),
+          metadata: profile ?? {},
+        };
+
+        setUsers((prev) => [...prev, newUserRecord]);
+        const safeUser = toPublicUser(newUserRecord);
+        setUser(safeUser);
+        return safeUser;
+      }
     },
     [users, handleBackendAuthSuccess]
   );
 
   const logout = useCallback(
     async (options = {}) => {
-      if (user?.role === "recruiter") {
+      // If user has backend tokens, call logout endpoint
+      if (tokens?.accessToken) {
         await logoutRecruiterAccount().catch(() => {
           // swallow logout errors
         });
@@ -284,7 +292,7 @@ export const AuthProvider = ({ children }) => {
         clearStoredTokens();
       }
     },
-    [user]
+    [tokens]
   );
 
   useEffect(() => {

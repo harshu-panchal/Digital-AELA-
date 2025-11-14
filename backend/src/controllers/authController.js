@@ -26,14 +26,25 @@ const buildAuthResponse = (user) => {
   };
 };
 
-export const registerRecruiter = async (req, res, next) => {
+export const registerUser = async (req, res, next) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { email, password, fullName, role = "student" } = req.body;
     if (!email || !password || !fullName) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
           message: "Email, password and full name are required",
+        },
+      });
+    }
+
+    // Validate role
+    const validRoles = ["student", "teacher", "recruiter", "influencer", "freelancer", "super-admin"];
+    if (!validRoles.includes(role)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
         },
       });
     }
@@ -53,7 +64,7 @@ export const registerRecruiter = async (req, res, next) => {
       email,
       passwordHash,
       fullName,
-      role: "recruiter",
+      role,
     });
 
     return res.status(201).json(buildAuthResponse(user));
@@ -62,10 +73,20 @@ export const registerRecruiter = async (req, res, next) => {
   }
 };
 
-export const loginRecruiter = async (req, res, next) => {
+// Keep recruiter-specific endpoints for backward compatibility
+export const registerRecruiter = async (req, res, next) => {
+  req.body.role = "recruiter";
+  return registerUser(req, res, next);
+};
+
+export const loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email, role: "recruiter" }).select("+passwordHash");
+    const { email, password, role } = req.body;
+    const query = { email };
+    if (role) {
+      query.role = role;
+    }
+    const user = await User.findOne(query).select("+passwordHash");
     if (!user) {
       return res.status(401).json({
         error: {
@@ -89,6 +110,12 @@ export const loginRecruiter = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+};
+
+// Keep recruiter-specific endpoints for backward compatibility
+export const loginRecruiter = async (req, res, next) => {
+  req.body.role = "recruiter";
+  return loginUser(req, res, next);
 };
 
 export const refreshToken = async (req, res, next) => {

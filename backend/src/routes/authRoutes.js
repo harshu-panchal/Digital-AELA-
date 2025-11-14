@@ -1,15 +1,17 @@
 import { Router } from "express";
 import {
-  loginRecruiter,
+  loginUser,
   logout,
   refreshToken,
-  registerRecruiter,
+  registerUser,
 } from "../controllers/authController.js";
 
 const router = Router();
 
-router.post("/register", registerRecruiter);
-router.post("/login", loginRecruiter);
+// Generic endpoints that support all roles (student, teacher, recruiter, etc.)
+// Role can be passed in the request body, defaults to "student" for register
+router.post("/register", registerUser);
+router.post("/login", loginUser);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);
 

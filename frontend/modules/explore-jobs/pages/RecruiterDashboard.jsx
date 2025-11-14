@@ -264,15 +264,18 @@ const RecruiterDashboard = () => {
         const jobs = (jobsResponse?.data ?? []).map((job) => ({
           ...job,
           id: job.id ?? job._id ?? job.jobId,
+          backendId: job._id || job.id, // Store backend _id for API calls
         }));
         const applicantGroups = await Promise.all(
           jobs.map(async (job) => {
             try {
-              const pipeline = await fetchJobApplicants(job.id);
+              // Use backend _id for API calls
+              const jobIdForApi = job.backendId || job._id || job.id;
+              const pipeline = await fetchJobApplicants(jobIdForApi);
               return pipeline;
             } catch (error) {
               // eslint-disable-next-line no-console
-              console.error("Failed to fetch applicants", error);
+              console.error(`Failed to fetch applicants for job ${job.id}:`, error);
               return null;
             }
           })
@@ -281,18 +284,19 @@ const RecruiterDashboard = () => {
         const mappedPipeline = applicantGroups
           .filter(Boolean)
           .map((group) => ({
-            jobId: group.jobId,
-            jobTitle: group.jobTitle,
+            jobId: group.jobId || group.job?._id || group.job?.id,
+            jobTitle: group.jobTitle || group.job?.title,
             stages: (group.applicants ?? []).map((applicant) => ({
-              id: applicant.applicationId,
-              name: applicant.fullName,
-              profileUrl: applicant.profileUrl ?? "#",
-              status: applicant.currentStage ?? "screening",
-              statusLabel: (applicant.currentStage ?? "screening")
+              id: applicant.id || applicant._id,
+              applicationId: applicant.id || applicant._id,
+              name: applicant.candidateName || applicant.fullName || "Applicant",
+              profileUrl: applicant.profileUrl || "#",
+              status: applicant.currentStage || "screening",
+              statusLabel: (applicant.currentStage || "screening")
                 .replace(/-/g, " ")
                 .replace(/\b\w/g, (char) => char.toUpperCase()),
-              submittedAt: applicant.submittedAt
-                ? new Date(applicant.submittedAt).toLocaleDateString()
+              submittedAt: applicant.submittedAt || applicant.createdAt
+                ? new Date(applicant.submittedAt || applicant.createdAt).toLocaleDateString()
                 : "",
             })),
           }));
@@ -830,39 +834,49 @@ const RecruiterDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {applicantPipeline.flatMap((stage) =>
-                stage.stages.map((applicant) => (
-                  <tr key={`${stage.jobId}-${applicant.id}`} className="border-b border-white/5 last:border-b-0">
-                    <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
-                    <td className="px-3 py-3 text-xs text-slate-200">
-                      <Link
-                        to={applicant.profileUrl}
-                        className="font-semibold text-white hover:text-sky-200">
-                        {applicant.name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3 text-xs">
-                      <div className="inline-flex items-center gap-2">
-                        <select
-                          value={applicant.status}
-                          onChange={(event) =>
-                            handleApplicantStageChange(
-                              stage.jobId,
-                              applicant.id,
-                              event.target.value
-                            )
-                          }
-                          disabled={pipelineUpdates.has(`${stage.jobId}:${applicant.id}`)}
-                          className="rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-medium text-slate-200 outline-none transition focus:border-sky-400/60"
-                        >
-                          {applicantStageOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        {pipelineUpdates.has(`${stage.jobId}:${applicant.id}`) && (
-                          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+              {applicantPipeline.length === 0 || applicantPipeline.every((s) => s.stages.length === 0) ? (
+                <tr>
+                  <td colSpan={4} className="px-3 py-8 text-center">
+                    <p className="text-sm text-slate-400">No applications yet</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Applications from students will appear here once they apply to your jobs.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                applicantPipeline.flatMap((stage) =>
+                  stage.stages.map((applicant) => (
+                    <tr key={`${stage.jobId}-${applicant.id || applicant.applicationId}`} className="border-b border-white/5 last:border-b-0">
+                      <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
+                      <td className="px-3 py-3 text-xs text-slate-200">
+                        <Link
+                          to={applicant.profileUrl}
+                          className="font-semibold text-white hover:text-sky-200">
+                          {applicant.name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 text-xs">
+                        <div className="inline-flex items-center gap-2">
+                          <select
+                            value={applicant.status}
+                            onChange={(event) =>
+                              handleApplicantStageChange(
+                                stage.jobId,
+                                applicant.id || applicant.applicationId,
+                                event.target.value
+                              )
+                            }
+                            disabled={pipelineUpdates.has(`${stage.jobId}:${applicant.id || applicant.applicationId}`)}
+                            className="rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-medium text-slate-200 outline-none transition focus:border-sky-400/60"
+                          >
+                            {applicantStageOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          {pipelineUpdates.has(`${stage.jobId}:${applicant.id || applicant.applicationId}`) && (
+                            <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
                             Updating…
                           </span>
                         )}
@@ -872,7 +886,8 @@ const RecruiterDashboard = () => {
                       {applicant.submittedAt}
                     </td>
                   </tr>
-                ))
+                  ))
+                )
               )}
             </tbody>
           </table>

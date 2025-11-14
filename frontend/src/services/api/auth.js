@@ -1,9 +1,9 @@
 import { apiRequest, persistTokens } from "./baseClient";
 
-export const registerRecruiterAccount = async ({ email, password, fullName }) => {
+export const registerUserAccount = async ({ email, password, fullName, role = "student" }) => {
   const result = await apiRequest("/auth/register", {
     method: "POST",
-    body: { email, password, fullName },
+    body: { email, password, fullName, role },
     skipAuth: true,
   });
   persistTokens({
@@ -13,10 +13,10 @@ export const registerRecruiterAccount = async ({ email, password, fullName }) =>
   return result;
 };
 
-export const loginRecruiterAccount = async ({ email, password }) => {
+export const loginUserAccount = async ({ email, password, role }) => {
   const result = await apiRequest("/auth/login", {
     method: "POST",
-    body: { email, password },
+    body: { email, password, role },
     skipAuth: true,
   });
   persistTokens({
@@ -24,6 +24,15 @@ export const loginRecruiterAccount = async ({ email, password }) => {
     refreshToken: result.refreshToken,
   });
   return result;
+};
+
+// Keep recruiter-specific functions for backward compatibility
+export const registerRecruiterAccount = async ({ email, password, fullName }) => {
+  return registerUserAccount({ email, password, fullName, role: "recruiter" });
+};
+
+export const loginRecruiterAccount = async ({ email, password }) => {
+  return loginUserAccount({ email, password, role: "recruiter" });
 };
 
 export const refreshRecruiterSession = async (refreshToken) => {
