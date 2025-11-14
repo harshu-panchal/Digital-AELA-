@@ -215,12 +215,18 @@ const GiftButton = ({
                 <button
                   type="button"
                   onClick={handleSelectNearOne}
+                  onMouseDown={trapEvent}
+                  onPointerDown={trapEvent}
+                  onTouchStart={trapEvent}
                   className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10">
                   Gift to a near one
                 </button>
                 <button
                   type="button"
                   onClick={handleGiftAnyone}
+                  onMouseDown={trapEvent}
+                  onPointerDown={trapEvent}
+                  onTouchStart={trapEvent}
                   className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10">
                   Gift to anyone
                 </button>

@@ -1,7 +1,10 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
+import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { corporateTrainingCourses } from "../data/corporateTrainingCourses";
 
 const CorporateTrainingCourses = () => {
   // WhatsApp integration
@@ -10,160 +13,31 @@ const CorporateTrainingCourses = () => {
     "Hello! I'm interested in Corporate Training programs for my organization."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+  const navigate = useNavigate();
 
-  // Training Programs
-  const trainingPrograms = [
-    {
-      id: 1,
-      title: "Public Speaking & Stage Confidence",
-      seoKeyword:
-        "Public speaking course online India Pakistan Bangladesh Nepal",
-      description:
-        "Build your confidence on stage and in meetings with Digital AELA's Public Speaking Training. Learn voice control, body language, storytelling, and audience engagement. Whether you are a student, teacher, or professional in South Asia and Gulf regions this course helps you become a fearless speaker in every environment.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹18,999",
-      features: [
-        "Voice control & modulation",
-        "Body language mastery",
-        "Storytelling techniques",
-        "Audience engagement",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 2,
-      title: "Communication & Accent Training",
-      seoKeyword:
-        "English communication and accent training India Pakistan Bangladesh Nepal",
-      description:
-        "Improve your fluency, clarity, and pronunciation with our Communication & Accent Training program. Learn neutral English accent, reduce MTI (Mother Tongue Influence), and practice real-life dialogues. Perfect for call center employees, international job aspirants, and corporate professionals across South Asia.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹16,999",
-      features: [
-        "Neutral English accent",
-        "MTI reduction techniques",
-        "Pronunciation mastery",
-        "Real-life dialogue practice",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 3,
-      title: "Leadership & Team Management Skills",
-      seoKeyword: "Leadership training program India Pakistan Bangladesh Nepal",
-      description:
-        "Become a confident leader with our Leadership & Team Management Training. Learn decision-making, conflict resolution, motivation techniques, and project management. This course is ideal for managers, startup founders, and business leaders in India, Pakistan, Bangladesh, Nepal, South Asia and Gulf regions.",
-      duration: "12 weeks",
-      format: "Live online cohort",
-      price: "₹22,499",
-      features: [
-        "Decision-making strategies",
-        "Conflict resolution",
-        "Motivation techniques",
-        "Project management",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 4,
-      title: "Host / Anchor / Speaker Training",
-      seoKeyword:
-        "Anchor and event hosting training India Pakistan Bangladesh Nepal",
-      description:
-        "Want to become a professional host, anchor, or event speaker? Our Host & Anchor Training Course covers stage handling, script reading, voice modulation, and event coordination. Perfect for aspiring media professionals, YouTubers, and event speakers in South Asia.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹15,499",
-      features: [
-        "Stage handling & presence",
-        "Script reading mastery",
-        "Voice modulation",
-        "Event coordination",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 5,
-      title: "Interview Preparation (HR & Technical)",
-      seoKeyword:
-        "Job interview preparation training India Pakistan Bangladesh Nepal Gulf",
-      description:
-        "Equip your teams and trainees to ace HR and technical interviews with confidence. Mock interviews, communication labs, and role-specific question banks ensure they represent your brand flawlessly across South Asia and Gulf placements.",
-      duration: "6 weeks",
-      format: "Live online cohort",
-      price: "₹12,999",
-      features: [
-        "Mock interview labs",
-        "Communication coaching",
-        "Role-specific prep",
-        "HR & technical panels",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 6,
-      title: "Call Centre / Customer Service Training",
-      seoKeyword:
-        "Call centre customer service training India Pakistan Bangladesh Nepal Gulf",
-      description:
-        "Launch high-performing customer experience teams. Voice & accent, empathy frameworks, and de-escalation drills prepare your workforce for BPO and client-facing roles across global markets.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹11,999",
-      features: [
-        "Voice & accent mastery",
-        "Client communication",
-        "Problem-solving drills",
-        "CX quality metrics",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1525182008055-f88b95ff7980?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 7,
-      title: "Sales Executive Masterclass",
-      seoKeyword: "Sales executive training course South Asia Gulf",
-      description:
-        "Turn sales teams into revenue powerhouses. Learn territory planning, negotiation playbooks, CRM workflows, and deal-closing psychology tailored for retail, telecom, BFSI, and enterprise sectors.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹19,999",
-      features: [
-        "Consultative selling",
-        "Negotiation labs",
-        "Client relationship design",
-        "CRM implementation",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1507679622673-989605832e3d?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 8,
-      title: "Custom Training Request",
-      seoKeyword: "Corporate training programs customized South Asia",
-      description:
-        "At Digital AELA, we understand every company and individual has unique training needs. Our Custom Training Programs allow businesses and learners to request personalized modules in communication, leadership, or technical skills. Available across South Asia and Gulf regions with both online and offline options.",
-      duration: "Customized",
-      format: "Live online cohort",
-      price: "Custom Pricing",
-      features: [
-        "Personalized curriculum",
-        "Flexible scheduling",
-        "Industry-specific modules",
-        "Online & offline options",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80",
-      isCustom: true,
-    },
-  ];
+  const augmentCourse = (program) => ({
+    ...program,
+    category: "Corporate Training",
+    origin: "corporate-training-courses",
+  });
+
+  const handleBuyCourse = (program) => {
+    const payload = augmentCourse(program);
+    navigate(buildCoursePaymentLink(payload), {
+      state: {
+        course: payload,
+      },
+    });
+  };
+
+  const handleViewCourse = (program) => {
+    const payload = augmentCourse(program);
+    navigate(`/courses/${program.slug}`, {
+      state: {
+        course: payload,
+      },
+    });
+  };
 
   // Benefits
   const benefits = [
@@ -299,7 +173,7 @@ const CorporateTrainingCourses = () => {
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative mx-auto flex-1 max-w-[420px]">
-            <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-gradient-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
+            <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-linear-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
             <img
               src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&auto=format&fit=crop&q=80"
               alt="Corporate training workshop in progress"
@@ -337,115 +211,122 @@ const CorporateTrainingCourses = () => {
 
           {/* Programs Grid */}
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {trainingPrograms
+            {corporateTrainingCourses
               .filter((program) => !program.isCustom)
-              .map((program, index) => {
-                const buyLink = program.buyLink || whatsappUrl;
-
-                return (
-                  <motion.div
-                    key={program.id}
-                    initial={{ y: 40, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{
-                      duration: 0.25,
-                      delay: index * 0.05,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                    whileHover={{ y: -6 }}
-                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
-                    <div className="h-40 w-full overflow-hidden">
-                      <img
-                        src={program.image}
-                        alt={program.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+              .map((program, index) => (
+                <motion.div
+                  key={program.slug}
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.25,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  whileHover={{ y: -6 }}
+                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleViewCourse(program)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleViewCourse(program);
+                    }
+                  }}>
+                  <div className="h-40 w-full overflow-hidden">
+                    <img
+                      src={program.image}
+                      alt={program.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                    {(program.slug === "interview-preparation" ||
+                      program.slug === "public-speaking-stage-confidence") && (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                        Trending
+                      </span>
+                    )}
+                    <div>
+                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                        {program.title}
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                        {program.description}
+                      </p>
                     </div>
-                    <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                      {(program.title === "Interview Training Course" ||
-                        program.title ===
-                          "Interview Preparation (HR & Technical)") && (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                          Trending
-                        </span>
-                      )}
-                      <div>
-                        <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                          {program.title}
-                        </h3>
-                        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                          {program.description}
-                        </p>
-                      </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                        <span className="flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4 text-[#D4AF37]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          {program.duration}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4 text-[#D4AF37]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 8l4 4m0 0l-4 4m4-4H3"
-                            />
-                          </svg>
-                          {program.format}
+                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {program.duration}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                        {program.format}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-[#D4AF37]/15 pt-4">
+                      <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
+                        Key Highlights
+                      </p>
+                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                        {program.features.map((feature) => (
+                          <li key={feature} className="flex items-center gap-2">
+                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between text-sm text-gray-300">
+                        <span>Program Fee</span>
+                        <span className="text-lg font-semibold text-[#F5D26A]">
+                          {program.price || "On Request"}
                         </span>
                       </div>
-
-                      <div className="border-t border-[#D4AF37]/15 pt-4">
-                        <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
-                          Key Highlights
-                        </p>
-                        <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                          {program.features.map((feature) => (
-                            <li
-                              key={feature}
-                              className="flex items-center gap-2">
-                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between text-sm text-gray-300">
-                          <span>Program Fee</span>
-                          <span className="text-lg font-semibold text-[#F5D26A]">
-                            {program.price || "On Request"}
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <motion.a
-                            whileHover={{ scale: 1.03, y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            href={buyLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                            Buy Now
-                          </motion.a>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <motion.button
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleBuyCourse(program);
+                          }}
+                          className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                          Buy Now
+                        </motion.button>
+                        <div
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}>
                           <GiftButton
                             className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                             size="sm">
@@ -454,9 +335,9 @@ const CorporateTrainingCourses = () => {
                         </div>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
+                  </div>
+                </motion.div>
+              ))}
           </div>
         </div>
       </motion.section>
@@ -660,11 +541,11 @@ const CorporateTrainingCourses = () => {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-[#0b0b0b]">
         <div className="layout-container">
-          {trainingPrograms
+          {corporateTrainingCourses
             .filter((program) => program.isCustom)
             .map((program, index) => (
               <motion.div
-                key={program.id}
+                key={program.slug}
                 initial={{ y: 40, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true, amount: 0.3 }}

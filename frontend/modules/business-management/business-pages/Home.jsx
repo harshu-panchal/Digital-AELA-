@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import {
@@ -37,6 +37,8 @@ import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
 import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
+import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { englishCourses } from "../data/englishCourses";
 
 const MotionLink = motion(Link);
 
@@ -48,6 +50,39 @@ const Home = () => {
   const [activeCertificate, setActiveCertificate] = useState(0);
   const { trendingBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
+  const navigate = useNavigate();
+
+  const redirectToCoursePayment = (course, extra = {}) => {
+    const payload = {
+      ...course,
+      ...extra,
+    };
+    const paymentLink = buildCoursePaymentLink(payload);
+    navigate(paymentLink, {
+      state: {
+        course: payload,
+      },
+    });
+  };
+
+  const ribbonStats = useMemo(
+    () => [
+      { value: 5000, suffix: "+", label: "Students Enrolled" },
+      { value: 4000, suffix: "+", label: "Successful Placements" },
+      { value: 4.9, decimals: 1, label: "Average Learner Rating" },
+      { value: 15, suffix: "+", label: "Corporate Collaborations" },
+      { value: 200, suffix: "+", label: "Workshops & Webinars Conducted" },
+      { value: 6, suffix: "+", label: "Countries Reached" },
+      { value: 100, suffix: "+", label: "Job Sectors Targeted" },
+    ],
+    []
+  );
+
+  const [ribbonCounts, setRibbonCounts] = useState(() =>
+    ribbonStats.map(() => 0)
+  );
+  const [ribbonInView, setRibbonInView] = useState(false);
+  const ribbonRef = useRef(null);
 
   const heroSlides = useMemo(
     () => [
@@ -149,6 +184,62 @@ const Home = () => {
     setActiveCertificate(normalizedIndex);
   };
 
+  useEffect(() => {
+    if (!ribbonRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRibbonInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(ribbonRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!ribbonInView) return;
+
+    const duration = 2000;
+    const startTime = performance.now();
+    let animationFrameId = 0;
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      setRibbonCounts(
+        ribbonStats.map((stat) => {
+          const target = stat.value;
+          if (stat.decimals) {
+            const current = target * progress;
+            return Number(current.toFixed(stat.decimals));
+          }
+          return Math.round(target * progress);
+        })
+      );
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        setRibbonCounts(
+          ribbonStats.map((stat) =>
+            stat.decimals
+              ? Number(stat.value.toFixed(stat.decimals))
+              : stat.value
+          )
+        );
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [ribbonInView, ribbonStats]);
+
   // WhatsApp integration
   const whatsappNumber = "+971508185690";
   const whatsappMessage = encodeURIComponent(
@@ -156,63 +247,19 @@ const Home = () => {
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
-  // Courses data
-  const courses = [
-    {
-      id: 1,
-      title: "Basic English Course",
-      image:
-        "https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=800&q=80",
-      description:
-        "Build a strong foundation in English grammar, vocabulary, and everyday communication with engaging practice sessions.",
-      duration: "8 weeks",
-      format: "Live online cohorts",
-      price: "₹7,499",
-      buyLink: "/contact/book-demo",
-      features: [
-        "Grammar fundamentals",
-        "Vocabulary building",
-        "Speaking confidence",
-        "Practical activities",
-      ],
-    },
-    {
-      id: 2,
-      title: "Intermediate English Course",
-      image:
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
-      description:
-        "Enhance fluency, sentence structure, and professional communication to bridge the gap between basics and mastery.",
-      duration: "10 weeks",
-      format: "Hybrid | Online",
-      price: "₹9,499",
-      buyLink: "/contact/book-demo",
-      features: [
-        "Fluency drills",
-        "Sentence structuring",
-        "Professional writing",
-        "Advanced vocabulary",
-      ],
-    },
-    {
-      id: 3,
-      title: "Advanced English Course",
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80",
-      description:
-        "Master business communication, presentation skills, and global-ready fluency for senior roles and international goals.",
-      duration: "12 weeks",
-      format: "Live online cohorts",
-      price: "₹11,999",
-      buyLink: "/contact/book-demo",
-      features: [
-        "Business communication",
-        "Presentation mastery",
-        "Advanced grammar",
-        "Coaching & feedback",
-      ],
-    },
-  ];
+  const homeCourses = useMemo(() => englishCourses.slice(0, 3), []);
+
+  const handleViewCourseDetail = (course, origin = "home-featured") => {
+    const payload = {
+      ...course,
+      origin,
+    };
+    navigate(`/courses/${course.slug}`, {
+      state: {
+        course: payload,
+      },
+    });
+  };
 
   // Testimonials data
   const testimonials = [
@@ -840,6 +887,7 @@ const Home = () => {
 
       {/* Golden Ribbon Divider */}
       <motion.div
+        ref={ribbonRef}
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -857,30 +905,30 @@ const Home = () => {
             {/* Ribbon Content - Statistics Grid */}
             <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3 w-full max-w-[1600px] mx-auto px-2 sm:px-4">
-                {[
-                  { number: "5000+", label: "Students Enrolled" },
-                  { number: "4000+", label: "Successful Placements" },
-                  { number: "4.9", label: "Average Learner Rating" },
-                  { number: "15+", label: "Corporate Collaborations" },
-                  { number: "200+", label: "Workshops & Webinars Conducted" },
-                  { number: "6+", label: "Countries Reached" },
-                  { number: "100+", label: "Job Sectors Targeted" },
-                ].map((stat, index) => (
-                  <motion.div
-                    key={`${stat.label}-${stat.number}`}
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
-                    className="text-center">
-                    <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                      {stat.number}
-                    </div>
-                    <div className="text-white text-[10px] md:text-xs font-light">
-                      {stat.label}
-                    </div>
-                  </motion.div>
-                ))}
+                {ribbonStats.map((stat, index) => {
+                  const currentValue =
+                    index < ribbonCounts.length ? ribbonCounts[index] : 0;
+                  const formattedValue = stat.decimals
+                    ? currentValue.toFixed(stat.decimals)
+                    : Math.max(0, currentValue).toLocaleString();
+
+                  return (
+                    <motion.div
+                      key={`${stat.label}-${stat.value}`}
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+                      className="text-center">
+                      <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
+                        {`${formattedValue}${stat.suffix ?? ""}`}
+                      </div>
+                      <div className="text-white text-[10px] md:text-xs font-light">
+                        {stat.label}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1013,9 +1061,9 @@ const Home = () => {
           </motion.div>
 
           <div className="auto-grid-md lg:grid-cols-3 mb-10">
-            {courses.map((course, index) => (
+            {homeCourses.map((course, index) => (
               <motion.div
-                key={course.id}
+                key={course.slug}
                 initial={{ y: 50, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -1025,7 +1073,16 @@ const Home = () => {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
                 whileHover={{ y: -6 }}
-                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer">
+                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleViewCourseDetail(course, "home-featured")}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleViewCourseDetail(course, "home-featured");
+                  }
+                }}>
                 <div className="h-40 w-full overflow-hidden">
                   <img
                     src={course.image}
@@ -1035,12 +1092,11 @@ const Home = () => {
                   />
                 </div>
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                  {(course.title === "Basic English Course" ||
-                    course.title === "Advanced English Course" ||
-                    course.title === "Personalised English Speaking" ||
-                    course.title === "Interview Training Course" ||
-                    course.title ===
-                      "Interview Preparation (HR & Technical)") && (
+                  {(course.slug === "basic-english" ||
+                    course.slug === "advanced-english" ||
+                    course.slug === "personalised-english-speaking" ||
+                    course.slug === "public-speaking-stage-confidence" ||
+                    course.slug === "interview-preparation") && (
                     <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
                       Trending
                     </span>
@@ -1109,16 +1165,28 @@ const Home = () => {
                       </span>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Link
-                        to={course.buyLink || "/contact/book-demo"}
+                      <motion.button
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          redirectToCoursePayment(course, {
+                            origin: "home-featured",
+                            category: course.category ?? "Featured Programs",
+                          });
+                        }}
                         className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                         Buy Now
-                      </Link>
-                      <GiftButton
-                        className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                        size="sm">
-                        Gift
-                      </GiftButton>
+                      </motion.button>
+                      <div
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}>
+                        <GiftButton
+                          className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                          size="sm">
+                          Gift
+                        </GiftButton>
+                      </div>
                     </div>
                   </div>
                 </div>

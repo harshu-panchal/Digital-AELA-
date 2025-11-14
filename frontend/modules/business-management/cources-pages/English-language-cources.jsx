@@ -1,7 +1,9 @@
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
+import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { englishCourses } from "../data/englishCourses";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -10,158 +12,31 @@ const EnglishLanguageCourses = () => {
     "Hello! I'm interested in English Language courses."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
-  const buildWhatsAppLink = (courseTitle) =>
-    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-      `Hello! I'd like to enroll in the ${courseTitle} course at Digital AELA.`
-    )}`;
+  const navigate = useNavigate();
 
-  // English Language Courses
-  const courses = [
-    {
-      id: 1,
-      title: "Basic English Course",
-      seoKeyword: "Basic English speaking course online",
-      description:
-        "Digital AELA's Basic English Course is designed for beginners who want to build a strong foundation in grammar, vocabulary, and everyday communication. With interactive lessons and practical exercises, this course ensures you gain confidence to speak and write English in daily life, study, and work situations.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹7,499",
-      features: [
-        "Grammar fundamentals",
-        "Vocabulary building",
-        "Everyday communication",
-        "Practical exercises",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 2,
-      title: "Intermediate English Course",
-      seoKeyword: "Intermediate English language training",
-      description:
-        "Take your English skills to the next level with our Intermediate English Course. Focused on enhancing fluency, sentence structuring, and professional communication, this course bridges the gap between basic knowledge and advanced mastery. Ideal for students, professionals, and job seekers.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹8,999",
-      features: [
-        "Fluency enhancement",
-        "Sentence structuring",
-        "Professional communication",
-        "Advanced vocabulary",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 3,
-      title: "Advanced English Course",
-      seoKeyword: "Advanced English speaking classes online",
-      description:
-        "Master the art of fluent and confident English communication with Digital AELA's Advanced English Course. Covering advanced grammar, business communication, presentations, and academic writing, this course is perfect for career growth and international opportunities.",
-      duration: "12 weeks",
-      format: "Executive live online",
-      price: "₹11,499",
-      features: [
-        "Advanced grammar",
-        "Business communication",
-        "Presentation skills",
-        "Academic writing",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 4,
-      title: "Personalised English Speaking",
-      seoKeyword: "Personalized English coaching online",
-      description:
-        "Our Personalised English Speaking Course offers one-to-one customized lessons tailored to your goals—whether it's job interviews, corporate presentations, or social confidence. Learn at your own pace with dedicated mentors guiding you step by step.",
-      duration: "Customized",
-      format: "Live online personalised",
-      price: "₹1,499/session",
-      features: [
-        "One-to-one sessions",
-        "Customized curriculum",
-        "Personal mentors",
-        "Flexible scheduling",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 5,
-      title: "Specialized Speaking Course for Kids",
-      seoKeyword: "English speaking course for kids",
-      description:
-        "Build your child's confidence with our Kids English Speaking Program. Focused on pronunciation, storytelling, and interactive games, this course helps children develop strong communication skills from an early age.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹6,999",
-      features: [
-        "Pronunciation practice",
-        "Storytelling skills",
-        "Interactive games",
-        "Early communication",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 6,
-      title: "Exam Preparation (IELTS, TOEFL, SSC, Bank PO & Others)",
-      seoKeyword: "IELTS TOEFL SSC Bank PO English preparation",
-      description:
-        "Crack your dream exams with Digital AELA's Exam Preparation Courses. From IELTS & TOEFL for international studies to SSC, Bank PO, and other competitive exams, we provide structured guidance, practice tests, and proven strategies to help you succeed.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹9,999",
-      features: [
-        "IELTS & TOEFL prep",
-        "SSC & Bank PO prep",
-        "Practice tests",
-        "Proven strategies",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1488722796624-0aa6f1bb6399?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 7,
-      title: "11th & 12th English Literature (NCERT)",
-      seoKeyword: "NCERT English Literature Class 11 12 coaching",
-      description:
-        "Our NCERT English Literature Coaching supports students of class 11th and 12th with in-depth analysis of prose, poetry, and grammar. Designed to score high in board exams while improving overall comprehension skills.",
-      duration: "12 weeks",
-      format: "Live online cohort",
-      price: "₹10,499",
-      features: [
-        "Prose analysis",
-        "Poetry comprehension",
-        "Grammar mastery",
-        "Board exam prep",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 8,
-      title: "English Language Teacher/Trainer Course",
-      seoKeyword: "English teacher training course online",
-      description:
-        "Become a certified English trainer with Digital AELA's Teacher Training Course. Learn modern teaching methodologies, classroom management, and digital tools to kick-start or enhance your teaching career globally.",
-      duration: "12 weeks",
-      format: "Live online cohort",
-      price: "₹12,999",
-      features: [
-        "Teaching methodologies",
-        "Classroom management",
-        "Digital tools",
-        "Global certification",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80",
-    },
-  ];
+  const augmentCourse = (course) => ({
+    ...course,
+    category: "English Language",
+    origin: "english-courses",
+  });
+
+  const handleBuyCourse = (course) => {
+    const payload = augmentCourse(course);
+    navigate(buildCoursePaymentLink(payload), {
+      state: {
+        course: payload,
+      },
+    });
+  };
+
+  const handleViewCourse = (course) => {
+    const payload = augmentCourse(course);
+    navigate(`/courses/${course.slug}`, {
+      state: {
+        course: payload,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -273,12 +148,9 @@ const EnglishLanguageCourses = () => {
 
           {/* Courses Grid */}
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
-            {courses.map((course, index) => {
-              const buyLink = course.buyLink || buildWhatsAppLink(course.title);
-
-              return (
+            {englishCourses.map((course, index) => (
               <motion.div
-                key={course.id}
+                key={course.slug}
                 initial={{ y: 40, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -288,7 +160,16 @@ const EnglishLanguageCourses = () => {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
                 whileHover={{ y: -6 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group">
+                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleViewCourse(course)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleViewCourse(course);
+                  }
+                }}>
                 <div className="h-40 w-full overflow-hidden">
                   <img
                     src={course.image}
@@ -298,9 +179,9 @@ const EnglishLanguageCourses = () => {
                   />
                 </div>
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                  {(course.title === "Basic English Course" ||
-                    course.title === "Advanced English Course" ||
-                    course.title === "Personalised English Speaking") && (
+                  {(course.slug === "basic-english" ||
+                    course.slug === "advanced-english" ||
+                    course.slug === "personalised-english-speaking") && (
                     <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
                       Trending
                     </span>
@@ -369,26 +250,30 @@ const EnglishLanguageCourses = () => {
                         </span>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <motion.a
-                          whileHover={{ scale: 1.03, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
-                          href={buyLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      <motion.button
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleBuyCourse(course);
+                        }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                           Buy Now
-                        </motion.a>
+                        </motion.button>
+                      <div
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}>
                         <GiftButton
                           className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                           size="sm">
                           Gift
                         </GiftButton>
                       </div>
+                      </div>
                   </div>
                 </div>
               </motion.div>
-              );
-            })}
+            ))}
           </div>
 
           {/* CTA Button */}

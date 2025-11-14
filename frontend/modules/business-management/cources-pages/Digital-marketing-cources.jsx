@@ -1,7 +1,9 @@
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
+import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { digitalMarketingCourses } from "../data/digitalMarketingCourses";
 
 const DigitalMarketingCourses = () => {
   // WhatsApp integration
@@ -10,230 +12,31 @@ const DigitalMarketingCourses = () => {
     "Hello! I'm interested in Digital Marketing courses."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
-  const buildWhatsAppLink = (courseTitle) =>
-    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-      `Hello! I'm interested in the ${courseTitle} course from Digital AELA.`
-    )}`;
+  const navigate = useNavigate();
 
-  // Digital Marketing Courses
-  const courses = [
-    {
-      id: 1,
-      title: "Social Media Marketing (SMM)",
-      seoKeyword: "Social Media Marketing course online",
-      description:
-        "Master Facebook, Instagram, LinkedIn, and other platforms with our Social Media Marketing Course. Learn how to grow brands, run campaigns, and build engagement that converts followers into customers.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹14,999",
-      features: [
-        "Platform mastery",
-        "Campaign management",
-        "Engagement strategies",
-        "Brand growth",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 2,
-      title: "SEO (Search Engine Optimization)",
-      seoKeyword: "Best SEO training online",
-      description:
-        "Rank websites on Google with Digital AELA's SEO Training. Cover on-page SEO, off-page SEO, keyword research, backlinks, and advanced strategies to make websites visible globally.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹16,499",
-      features: [
-        "On-page & off-page SEO",
-        "Keyword research",
-        "Backlink strategies",
-        "Global visibility",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 3,
-      title: "SMO (Social Media Optimization)",
-      seoKeyword: "Social Media Optimization course",
-      description:
-        "Learn how to optimize social media profiles, increase organic reach, and strengthen brand identity. Our SMO Course gives you practical skills to create impactful content strategies.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹13,499",
-      features: [
-        "Profile optimization",
-        "Organic reach growth",
-        "Brand identity",
-        "Content strategies",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 4,
-      title: "PPC (Pay-Per-Click Advertising)",
-      seoKeyword: "PPC advertising course online",
-      description:
-        "Become an expert in Pay-Per-Click Advertising with hands-on training in Google Ads and Bing Ads. Learn how to manage ad budgets, optimize campaigns, and maximize ROI.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹15,999",
-      features: [
-        "Google Ads mastery",
-        "Bing Ads training",
-        "Budget management",
-        "ROI optimization",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 5,
-      title: "Facebook & Instagram Ads (Meta Ads)",
-      seoKeyword: "Facebook Instagram Ads training",
-      description:
-        "Run high-converting campaigns with our Meta Ads Training. Learn audience targeting, creative design, budget optimization, and performance tracking for Facebook and Instagram ads.",
-      duration: "6 weeks",
-      format: "Live online cohort",
-      price: "₹12,499",
-      features: [
-        "Audience targeting",
-        "Creative design",
-        "Budget optimization",
-        "Performance tracking",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 6,
-      title: "Google Ads (GA4)",
-      seoKeyword: "Google Ads GA4 course online",
-      description:
-        "Understand the power of Google Ads and GA4 with our practical course. Learn keyword bidding, analytics, and advanced conversion tracking to boost online sales and leads.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹13,999",
-      features: [
-        "Keyword bidding",
-        "GA4 analytics",
-        "Conversion tracking",
-        "Sales optimization",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 7,
-      title: "Content & Email Marketing",
-      seoKeyword: "Content and Email Marketing course",
-      description:
-        "Learn how to craft persuasive content and effective email campaigns that nurture leads and increase sales. This course covers copywriting, email automation, and customer engagement.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹14,499",
-      features: [
-        "Copywriting skills",
-        "Email automation",
-        "Lead nurturing",
-        "Customer engagement",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 8,
-      title: "WordPress Website Development",
-      seoKeyword: "WordPress website development course",
-      description:
-        "Build professional websites without coding. Our WordPress Course teaches installation, themes, plugins, SEO integration, and e-commerce setup to create fully functional websites.",
-      duration: "12 weeks",
-      format: "Live online cohort",
-      price: "₹17,999",
-      features: [
-        "Website building",
-        "Theme customization",
-        "Plugin integration",
-        "E-commerce setup",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 9,
-      title: "Affiliate Marketing (National & International Market)",
-      seoKeyword: "Affiliate Marketing course online",
-      description:
-        "Earn passive income by promoting products online. Our Affiliate Marketing Training covers affiliate networks, strategies for Indian & global markets, and proven income models.",
-      duration: "8 weeks",
-      format: "Live online cohort",
-      price: "₹13,999",
-      features: [
-        "Affiliate networks",
-        "National & global strategies",
-        "Income models",
-        "Passive income",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 10,
-      title: "Influencer Marketing",
-      seoKeyword: "Influencer Marketing course",
-      description:
-        "Discover how to collaborate with influencers and grow brand awareness. Learn campaign planning, influencer outreach, and ROI measurement in this Influencer Marketing Course.",
-      duration: "6 weeks",
-      format: "Live online cohort",
-      price: "₹11,999",
-      features: [
-        "Campaign planning",
-        "Influencer outreach",
-        "Brand awareness",
-        "ROI measurement",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 11,
-      title: "E-commerce Marketing",
-      seoKeyword: "E-commerce Marketing training",
-      description:
-        "Scale your online store with our E-commerce Marketing Course. From product listings to paid ads, SEO, and conversion optimization, we guide you in building a successful e-commerce business.",
-      duration: "10 weeks",
-      format: "Live online cohort",
-      price: "₹15,499",
-      features: [
-        "Product listings",
-        "Paid advertising",
-        "Conversion optimization",
-        "E-commerce growth",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      id: 12,
-      title: "Start-Up & Business Setup Training",
-      seoKeyword: "Startup business training online",
-      description:
-        "Turn your ideas into a successful business with Digital AELA's Start-Up Training. Learn planning, digital presence, funding basics, and marketing strategies to launch and grow your venture.",
-      duration: "12 weeks",
-      format: "Live online cohort",
-      price: "₹17,999",
-      features: [
-        "Business planning",
-        "Digital presence",
-        "Funding basics",
-        "Marketing strategies",
-      ],
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80",
-    },
-  ];
+  const augmentCourse = (course) => ({
+    ...course,
+    category: "Digital Marketing",
+    origin: "digital-marketing-courses",
+  });
+
+  const handleBuyCourse = (course) => {
+    const payload = augmentCourse(course);
+    navigate(buildCoursePaymentLink(payload), {
+      state: {
+        course: payload,
+      },
+    });
+  };
+
+  const handleViewCourse = (course) => {
+    const payload = augmentCourse(course);
+    navigate(`/courses/${course.slug}`, {
+      state: {
+        course: payload,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -262,7 +65,7 @@ const DigitalMarketingCourses = () => {
               className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               Digital Marketing Mastery
             </motion.span>
-            <motion.h1
+          <motion.h1
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
@@ -276,36 +79,36 @@ const DigitalMarketingCourses = () => {
               className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               From Zero to Hero
             </motion.h2>
-            <motion.p
+          <motion.p
               initial={{ y: 18, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+            animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
               Comprehensive digital marketing courses covering SEO, SMM, PPC, Content Marketing, and more. Learn from industry experts and build a successful online presence.
-            </motion.p>
-            <motion.div
+          </motion.p>
+          <motion.div
               initial={{ y: 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+            animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="flex flex-col gap-4 sm:flex-row">
-              <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+            <motion.a
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
                 Talk to a Mentor
-              </motion.a>
-              <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                href="#courses"
+            </motion.a>
+            <motion.a
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              href="#courses"
               className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
                 Explore Modules
-              </motion.a>
+            </motion.a>
             </motion.div>
           </div>
           <motion.div
@@ -347,12 +150,9 @@ const DigitalMarketingCourses = () => {
 
           {/* Courses Grid */}
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
-            {courses.map((course, index) => {
-              const buyLink = course.buyLink || buildWhatsAppLink(course.title);
-
-              return (
+            {digitalMarketingCourses.map((course, index) => (
               <motion.div
-                key={course.id}
+                key={course.slug}
                 initial={{ y: 40, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -362,7 +162,16 @@ const DigitalMarketingCourses = () => {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
                 whileHover={{ y: -6 }}
-                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer">
+                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleViewCourse(course)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleViewCourse(course);
+                  }
+                }}>
                 <div className="h-40 w-full overflow-hidden">
                   <img
                     src={course.image}
@@ -436,26 +245,30 @@ const DigitalMarketingCourses = () => {
                         </span>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <motion.a
+                        <motion.button
                           whileHover={{ scale: 1.03, y: -2 }}
                           whileTap={{ scale: 0.97 }}
-                          href={buyLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleBuyCourse(course);
+                          }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                           Buy Now
-                        </motion.a>
-                        <GiftButton
-                          className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                          size="sm">
-                          Gift
-                        </GiftButton>
+                        </motion.button>
+                        <div
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}>
+                          <GiftButton
+                            className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                            size="sm">
+                            Gift
+                          </GiftButton>
+                        </div>
                       </div>
                   </div>
                 </div>
               </motion.div>
-              );
-            })}
+            ))}
           </div>
 
           {/* CTA Button */}

@@ -27,6 +27,8 @@ import OurStory from "../modules/business-management/business-pages/OurStory";
 import MissionVision from "../modules/business-management/business-pages/MissionVision";
 import MeetTheFounder from "../modules/business-management/business-pages/MeetTheFounder";
 import StudentSuccessStories from "../modules/business-management/business-pages/StudentSuccessStories";
+import CoursePayment from "../modules/business-management/business-pages/CoursePayment";
+import CourseDetail from "../modules/business-management/business-pages/CourseDetail";
 import BookDemo from "../modules/business-management/contact-pages/BookDemo";
 import BusinessCollaboration from "../modules/business-management/contact-pages/BusinessCollaboration";
 import FranchiseInquiry from "../modules/business-management/contact-pages/FranchiseInquiry";
@@ -59,7 +61,7 @@ import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import StudentDashboard from "../modules/student/StudentDashboard";
 import CourseCreate from "../modules/teacher/CourseCreate";
-import CourseDetail from "../modules/teacher/CourseDetail";
+import TeacherCourseDetail from "../modules/teacher/CourseDetail";
 import EbookUpload from "../modules/teacher/EbookUpload";
 import EbookDetail from "../modules/teacher/EbookDetail";
 import QuizCreate from "../modules/teacher/QuizCreate";
@@ -102,7 +104,7 @@ export const App = () => {
           path="/teacher/courses/:courseId"
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <CourseDetail />
+              <TeacherCourseDetail />
             </ProtectedRoute>
           }
         />
@@ -208,6 +210,8 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/courses/:slug" element={<CourseDetail />} />
+        <Route path="/courses/payment" element={<CoursePayment />} />
         <Route
           path="/gift/payment"
           element={
