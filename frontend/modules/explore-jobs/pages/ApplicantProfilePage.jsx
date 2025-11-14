@@ -47,6 +47,8 @@ const ApplicantProfilePage = () => {
         const result = await fetchApplicantDetails(jobId, applicationId);
         // eslint-disable-next-line no-console
         console.log("Applicant details received:", result);
+        // eslint-disable-next-line no-console
+        console.log("Student profile data:", result?.studentProfile);
         setData(result);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -154,6 +156,21 @@ const ApplicantProfilePage = () => {
   }
 
   const { application, job, user, studentProfile } = data || {};
+
+  // Check if studentProfile has any meaningful data
+  const hasStudentProfileData = studentProfile && (
+    studentProfile.bio ||
+    studentProfile.phone ||
+    studentProfile.location ||
+    studentProfile.skills?.length > 0 ||
+    studentProfile.goals ||
+    studentProfile.headline ||
+    studentProfile.currentStatus ||
+    studentProfile.ageGroup ||
+    studentProfile.linkedinUrl ||
+    studentProfile.resumeUrl ||
+    studentProfile.portfolioUrl
+  );
 
   // Safety check - ensure we have at least application data
   if (!application) {
@@ -285,7 +302,7 @@ const ApplicantProfilePage = () => {
             </motion.section>
 
             {/* Student Profile Details */}
-            {studentProfile && (
+            {hasStudentProfileData ? (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -366,7 +383,29 @@ const ApplicantProfilePage = () => {
                   )}
                 </div>
               </motion.section>
-            )}
+            ) : user?.role === "student" ? (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <HiOutlineUser className="h-5 w-5 text-sky-300" />
+                  <h2 className="text-lg font-semibold text-white">Student Profile</h2>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-400">
+                    Student profile not available. The student may need to complete their profile in their account settings.
+                  </p>
+                  {application.candidateHeadline && (
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Headline</p>
+                      <p className="text-sm text-slate-200">{application.candidateHeadline}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            ) : null}
 
             {/* Links & Resources */}
             {(application.resumeUrl || application.portfolioUrl || application.profileUrl || studentProfile?.linkedinUrl || studentProfile?.githubUrl) && (

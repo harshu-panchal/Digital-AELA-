@@ -197,16 +197,41 @@ export const getApplicantDetails = async (req, res, next) => {
     let userData = null;
     let studentProfile = null;
     try {
-      if (application.candidateId && mongoose.Types.ObjectId.isValid(application.candidateId)) {
-        userData = await User.findById(application.candidateId).select("-passwordHash");
-        if (userData?.role === "student") {
-          studentProfile = await StudentProfile.findOne({ user: application.candidateId });
+      if (application.candidateId) {
+        // candidateId is stored as String, so we need to convert it to ObjectId for queries
+        const candidateObjectId = mongoose.Types.ObjectId.isValid(application.candidateId)
+          ? new mongoose.Types.ObjectId(application.candidateId)
+          : null;
+
+        if (candidateObjectId) {
+          userData = await User.findById(candidateObjectId).select("-passwordHash");
+          // eslint-disable-next-line no-console
+          console.log("Found user:", userData ? `${userData.fullName} (${userData.role})` : "Not found", "for candidateId:", application.candidateId);
+          
+          if (userData?.role === "student") {
+            studentProfile = await StudentProfile.findOne({ user: candidateObjectId });
+            // eslint-disable-next-line no-console
+            console.log("Found student profile:", studentProfile ? "Yes" : "No", "for user:", candidateObjectId);
+            if (studentProfile) {
+              // eslint-disable-next-line no-console
+              console.log("Student profile data:", {
+                hasBio: !!studentProfile.bio,
+                hasPhone: !!studentProfile.phone,
+                hasLocation: !!studentProfile.location,
+                skillsCount: studentProfile.skills?.length || 0,
+                hasGoals: !!studentProfile.goals,
+              });
+            }
+          }
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn("Invalid candidateId format:", application.candidateId);
         }
       }
     } catch (userError) {
-      // Ignore user fetch errors - application data is still available
+      // Log error for debugging
       // eslint-disable-next-line no-console
-      console.warn("Could not fetch user data for candidate:", userError);
+      console.error("Could not fetch user data for candidate:", userError);
     }
 
     return res.json({
