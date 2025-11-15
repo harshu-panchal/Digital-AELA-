@@ -650,11 +650,11 @@ const TeacherDashboard = () => {
             className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
             <header className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Marketplace recommendations</h2>
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white hover:text-[#F5D26A]">
+              <Link
+                to="/teacher/marketplace"
+                className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white hover:text-[#F5D26A] transition-colors">
                 Open marketplace <FaShoppingCart />
-              </button>
+              </Link>
             </header>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               {marketplace.map((item) => (

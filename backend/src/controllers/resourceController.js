@@ -9,12 +9,19 @@ export const listEbooks = async (req, res, next) => {
       EbookResource.find({ isPublic: true })
         .sort({ publishedAt: -1 })
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(), // Use lean() to get plain JavaScript objects
       EbookResource.countDocuments({ isPublic: true }),
     ]);
 
+    // Ensure metadata exists for all items
+    const itemsWithMetadata = items.map((item) => ({
+      ...item,
+      metadata: item.metadata || {},
+    }));
+
     return res.json({
-      data: items,
+      data: itemsWithMetadata,
       meta: {
         page: Number(page),
         pageSize: Number(pageSize),

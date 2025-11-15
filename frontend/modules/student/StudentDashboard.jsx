@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { useUser } from "../../src/contexts/UserContext";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard } from "../../src/services/api/student";
 
@@ -41,6 +42,7 @@ const cardVariants = {
 const StudentDashboard = () => {
   const { profile, notifications, followers } = useUser();
   const { user: authUser, tokens } = useAuth();
+  const { aelaPoints, refreshPoints } = usePoints(); // Get live coin balance
 
   const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
   const [isLoading, setIsLoading] = useState(false);
@@ -59,13 +61,21 @@ const StudentDashboard = () => {
     setLoadError(null);
     try {
       const backendData = await fetchStudentDashboard();
-      // Merge backend data with mock data for sections not yet implemented
+      // Use backend data for all sections, fall back to mock data only if backend data is missing
       const mockData = getStudentDashboard();
       setDashboardData({
         ...mockData,
         journeyStats: backendData.journeyStats || mockData.journeyStats,
         ongoingCourses: backendData.ongoingCourses || mockData.ongoingCourses,
         learnEarnProgress: backendData.learnEarnProgress || mockData.learnEarnProgress,
+        quizChallenges: backendData.quizChallenges || mockData.quizChallenges,
+        marketplaceHighlights: backendData.marketplaceHighlights || mockData.marketplaceHighlights,
+        ebookShelf: backendData.ebookShelf || mockData.ebookShelf,
+        blogFeed: backendData.blogFeed || mockData.blogFeed,
+        jobsBoard: backendData.jobsBoard || mockData.jobsBoard,
+        studentProfiles: backendData.studentProfiles || mockData.studentProfiles,
+        teacherSpotlight: backendData.teacherSpotlight || mockData.teacherSpotlight,
+        recruiterSpotlight: backendData.recruiterSpotlight || mockData.recruiterSpotlight,
       });
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -92,9 +102,15 @@ const StudentDashboard = () => {
     return () => window.removeEventListener("storage", handleStorage);
   }, [loadDashboard]);
 
-  // Listen for quiz completion events to refresh dashboard
+  // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
     const handleQuizComplete = () => {
+      // Refresh points immediately (from PointsContext)
+      if (refreshPoints) {
+        setTimeout(() => {
+          refreshPoints();
+        }, 500);
+      }
       // Refresh dashboard after a short delay to allow backend to process
       setTimeout(() => {
         loadDashboard();
@@ -103,7 +119,7 @@ const StudentDashboard = () => {
 
     window.addEventListener("quizCompleted", handleQuizComplete);
     return () => window.removeEventListener("quizCompleted", handleQuizComplete);
-  }, [loadDashboard]);
+  }, [loadDashboard, refreshPoints]);
 
   const notificationsCount = useMemo(
     () => notifications.filter((notification) => notification.type !== "archived").length,
@@ -127,9 +143,23 @@ const StudentDashboard = () => {
 
   const streak = learnEarnProgress?.streak ?? 0;
   const badges = learnEarnProgress?.badges ?? [];
-  const coinsToRedeem = learnEarnProgress?.coinsToRedeem ?? 0;
+  // Use live coin balance from PointsContext instead of static dashboard data
+  const coinsToRedeem = aelaPoints ?? learnEarnProgress?.coinsToRedeem ?? 0;
   const leaderboardPosition = learnEarnProgress?.leaderboardPosition ?? 0;
   const redeemRoute = learnEarnProgress?.redeemRoute ?? "/learn-earn/wallet";
+  
+  // Update journeyStats with live coin balance
+  const updatedJourneyStats = useMemo(() => {
+    return journeyStats.map((stat) => {
+      if (stat.id === "aelaCoins") {
+        return {
+          ...stat,
+          value: coinsToRedeem.toString(), // Use live balance
+        };
+      }
+      return stat;
+    });
+  }, [journeyStats, coinsToRedeem]);
 
   const shortcutIcons = useMemo(
     () => ({
@@ -196,7 +226,7 @@ const StudentDashboard = () => {
             initial="hidden"
             animate="show"
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {journeyStats.map((stat) => (
+            {updatedJourneyStats.map((stat) => (
               <motion.div
                 key={stat.id}
                 variants={cardVariants}

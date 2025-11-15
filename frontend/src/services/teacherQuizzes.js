@@ -1,5 +1,8 @@
+import { apiRequest } from "./api/baseClient";
+
 const STORAGE_KEY = "aela.teacher.quizzes";
 
+// Fallback to localStorage for backward compatibility
 const loadQuizzes = () => {
   if (typeof window === "undefined") return [];
   try {
@@ -29,23 +32,74 @@ export const getTeacherQuizzes = () => loadQuizzes();
 export const getTeacherQuizById = (quizId) =>
   loadQuizzes().find((quiz) => quiz.id === quizId) ?? null;
 
+/**
+ * Create a quiz via backend API
+ * Maps frontend format to backend format
+ */
 export const createTeacherQuiz = async (payload) => {
-  const timestamp = new Date().toISOString();
-  const id = generateId("quiz");
-  const quizzes = loadQuizzes();
+  try {
+    // Map frontend format to backend format
+    const backendQuestions = (payload.questions || []).map((q) => ({
+      question: q.prompt || q.question || "",
+      options: q.options || [],
+      correctAnswer: q.correctIndex !== undefined ? q.correctIndex : q.correctAnswer,
+      explanation: q.explanation || "",
+    }));
 
-  const entry = {
-    id,
-    status: payload.status ?? "draft",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    ...payload,
-  };
+    // Determine category - default to "quiz" if not provided
+    let category = payload.category || "quiz";
+    
+    // If category is not one of the valid values, default to "quiz"
+    if (!["quiz", "vocabulary", "speaking"].includes(category)) {
+      category = "quiz";
+    }
 
-  quizzes.unshift(entry);
-  persistQuizzes(quizzes);
-  await new Promise((resolve) => setTimeout(resolve, 450));
-  return entry;
+    // Map difficulty
+    const difficulty = payload.difficulty || "intermediate";
+
+    // Map duration from timeLimitMinutes
+    const duration = payload.timeLimitMinutes ? Number(payload.timeLimitMinutes) : 0;
+
+    const backendPayload = {
+      title: payload.title || "",
+      description: payload.description || "",
+      category: category,
+      difficulty: difficulty,
+      rewardCoins: payload.rewardCoins ? Number(payload.rewardCoins) : 0,
+      duration: duration,
+      questions: backendQuestions,
+      status: payload.status || "published", // Default to published so it appears on activities page
+    };
+
+    // Call backend API
+    const response = await apiRequest("/quizzes", {
+      method: "POST",
+      body: backendPayload,
+    });
+
+    if (response?.quiz) {
+      // Transform backend response to frontend format for compatibility
+      return {
+        id: response.quiz._id || response.quiz.id,
+        _id: response.quiz._id,
+        title: response.quiz.title,
+        description: response.quiz.description,
+        category: response.quiz.category,
+        difficulty: response.quiz.difficulty,
+        rewardCoins: response.quiz.rewardCoins,
+        duration: response.quiz.duration,
+        status: response.quiz.status,
+        questions: response.quiz.questions || [],
+        createdAt: response.quiz.createdAt,
+        updatedAt: response.quiz.updatedAt,
+      };
+    }
+
+    throw new Error("Invalid response from server");
+  } catch (error) {
+    console.error("Failed to create quiz via API:", error);
+    throw error;
+  }
 };
 
 export const updateTeacherQuiz = async (quizId, updates) => {

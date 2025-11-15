@@ -56,8 +56,11 @@ export const submitQuizAttempt = async (req, res, next) => {
       });
     }
 
-    // Calculate coins to award (use provided rewardCoins or default)
-    const coinsToAward = rewardCoins || 0;
+    // Calculate coins to award based on score percentage
+    // If user scores 80%, they get 80% of the total reward coins
+    const baseRewardCoins = rewardCoins || 0;
+    const scorePercentage = score || 0; // score is already a percentage (0-100)
+    const coinsToAward = Math.round((scorePercentage / 100) * baseRewardCoins);
 
     // Create quiz attempt record
     const attemptData = {
@@ -78,19 +81,21 @@ export const submitQuizAttempt = async (req, res, next) => {
         const quiz = await Quiz.findById(quizId);
         if (quiz) {
           attemptData.quiz = new mongoose.Types.ObjectId(quizId);
+          // Also store as string for easier matching
+          attemptData.quizId = quizId.toString();
         } else {
           // Quiz ID is valid ObjectId but doesn't exist - store as string ID
-          attemptData.quizId = quizId;
+          attemptData.quizId = quizId.toString();
         }
       } catch (error) {
         // If quiz lookup fails, just store as string ID
         // eslint-disable-next-line no-console
         console.warn("Quiz lookup failed, storing as string ID:", error);
-        attemptData.quizId = quizId;
+        attemptData.quizId = quizId.toString();
       }
     } else if (quizId) {
       // quizId is not a valid ObjectId (e.g., "quiz-grammar") - store as string
-      attemptData.quizId = quizId;
+      attemptData.quizId = quizId.toString();
     }
     // If no quizId provided at all, quiz field will be undefined (optional)
 
@@ -225,12 +230,20 @@ export const getStudentQuizHistory = async (req, res, next) => {
       QuizAttempt.find(query)
         .sort({ completedAt: -1 })
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(),
       QuizAttempt.countDocuments(query),
     ]);
 
+    // Format attempts to ensure quiz ID is always available as string
+    const formattedAttempts = attempts.map((attempt) => ({
+      ...attempt,
+      quiz: attempt.quiz ? attempt.quiz.toString() : null,
+      quizId: attempt.quizId || (attempt.quiz ? attempt.quiz.toString() : null),
+    }));
+
     return res.json({
-      data: attempts,
+      data: formattedAttempts,
       meta: {
         page: Number(page),
         pageSize: Number(pageSize),
@@ -322,8 +335,11 @@ export const getQuizById = async (req, res, next) => {
       });
     }
 
-    // Return quiz without correct answers for security
+    // Return quiz with correct answers for authenticated users (needed to calculate score)
+    // For public access, we could hide answers, but for authenticated students taking the quiz,
+    // we need them to calculate results. Answers will be shown in results anyway.
     const formattedQuiz = {
+      _id: quiz._id.toString(),
       id: quiz._id.toString(),
       title: quiz.title,
       description: quiz.description,
@@ -334,7 +350,8 @@ export const getQuizById = async (req, res, next) => {
       questions: quiz.questions?.map((q) => ({
         question: q.question,
         options: q.options,
-        // Don't include correctAnswer or explanation until quiz is submitted
+        correctAnswer: q.correctAnswer, // Include for score calculation
+        explanation: q.explanation || "",
       })) || [],
       createdAt: quiz.createdAt,
     };

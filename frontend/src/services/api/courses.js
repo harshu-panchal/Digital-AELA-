@@ -2,9 +2,10 @@ import { apiRequest } from "./baseClient";
 
 /**
  * Fetch all published courses (public endpoint)
+ * Backend automatically filters for status: "published"
  */
 export const fetchPublishedCourses = async () => {
-  return apiRequest("/courses?status=published", {
+  return apiRequest("/courses", {
     method: "GET",
     skipAuth: true,
   });

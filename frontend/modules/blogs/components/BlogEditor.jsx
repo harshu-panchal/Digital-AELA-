@@ -13,18 +13,26 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
+        heading: { 
+          levels: [1, 2, 3, 4],
+          HTMLAttributes: {
+            class: 'heading',
+          },
+        },
       }),
-        Underline,
-        Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-[#F5D26A] underline" } }),
-        Placeholder.configure({ placeholder }),
-      ],
-      content: value,
-      onUpdate: ({ editor: tiptap }) => {
-        const html = tiptap.getHTML();
-        onChange(html === "<p></p>" ? "" : html);
-      },
-    });
+      Underline,
+      Link.configure({ 
+        openOnClick: false, 
+        HTMLAttributes: { class: "text-[#F5D26A] underline" } 
+      }),
+      Placeholder.configure({ placeholder }),
+    ],
+    content: value,
+    onUpdate: ({ editor: tiptap }) => {
+      const html = tiptap.getHTML();
+      onChange(html === "<p></p>" ? "" : html);
+    },
+  });
 
   useEffect(() => {
     if (!editor) return;
@@ -182,7 +190,10 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-[#050505]/90 p-4 text-sm text-gray-100 md:p-6">
-          <EditorContent editor={editor} className="prose prose-invert max-w-none" />
+          <EditorContent 
+            editor={editor} 
+            className="prose prose-invert max-w-none prose-headings:text-white prose-h1:text-3xl prose-h1:font-bold prose-h2:text-2xl prose-h2:font-bold prose-h3:text-xl prose-h3:font-semibold prose-h4:text-lg prose-h4:font-semibold" 
+          />
         </div>
       </div>
     </Motion.div>

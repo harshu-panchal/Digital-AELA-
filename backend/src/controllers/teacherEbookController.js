@@ -6,7 +6,7 @@ import mongoose from "mongoose";
  */
 export const createTeacherEbook = async (req, res, next) => {
   try {
-    const { userId, userRole } = req.auth || {};
+    const { userId, userRole, userFullName } = req.auth || {};
 
     if (!userId) {
       return res.status(401).json({
@@ -66,11 +66,20 @@ export const createTeacherEbook = async (req, res, next) => {
       });
     }
 
+    if (!pages || pages <= 0) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Number of pages is required and must be greater than 0",
+        },
+      });
+    }
+
     // Create ebook with isPublic: false (requires admin approval)
     const ebook = await EbookResource.create({
       title,
       description,
-      pages: pages ? Number(pages) : undefined,
+      pages: Number(pages),
       downloadUrl,
       categories: category ? [category] : [],
       isPublic: false, // Always false for teacher-created ebooks - requires approval
@@ -80,6 +89,7 @@ export const createTeacherEbook = async (req, res, next) => {
         price: price ? Number(price) : 0,
         coverImage: coverImage || "",
         previewUrl: previewUrl || "",
+        author: userFullName || "Digital AELA", // Store teacher's name as author
         tags: tags
           ? Array.isArray(tags)
             ? tags

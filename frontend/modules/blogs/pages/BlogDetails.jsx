@@ -231,7 +231,7 @@ const BlogDetails = () => {
           </div>
         </section>
 
-        <article className="prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-[#F5D26A] prose-blockquote:border-[#D4AF37]/40 prose-blockquote:text-[#F5D26A] max-w-none rounded-3xl border border-white/10 bg-[#050505]/80 p-8 shadow-[0_28px_75px_rgba(0,0,0,0.55)]">
+        <article className="prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-[#F5D26A] prose-blockquote:border-[#D4AF37]/40 prose-blockquote:text-[#F5D26A] prose-h1:text-3xl prose-h1:font-bold prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-5 prose-h3:mb-2 prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-2 max-w-none rounded-3xl border border-white/10 bg-[#050505]/80 p-8 shadow-[0_28px_75px_rgba(0,0,0,0.55)]">
           <div dangerouslySetInnerHTML={{ __html: blog.content }} />
         </article>
 

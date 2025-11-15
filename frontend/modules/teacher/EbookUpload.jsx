@@ -24,6 +24,7 @@ const initialFormState = {
   coverImage: "",
   previewUrl: "",
   tags: "",
+  pages: "",
   file: null,
 };
 
@@ -113,6 +114,7 @@ const EbookUpload = () => {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      pages: formData.pages ? Number(formData.pages) : undefined,
       downloadUrl: downloadUrl,
       // Note: In production, you'd upload the file and get the URL
       // For now, using previewUrl or coverImage as downloadUrl placeholder
@@ -227,6 +229,25 @@ const EbookUpload = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">{priceHelper.price}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="pages" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Number of Pages*
+                </label>
+                <input
+                  id="pages"
+                  name="pages"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formData.pages}
+                  onChange={handleInputChange}
+                  placeholder="250"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  required
+                />
+                <p className="text-[11px] text-slate-400">Enter the total number of pages in the e-book</p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">

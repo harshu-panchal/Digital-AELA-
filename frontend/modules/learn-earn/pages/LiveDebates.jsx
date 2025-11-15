@@ -377,7 +377,7 @@ const LiveDebates = () => {
             <HiOutlinePlus className="h-4 w-4" />
             Create Debate
           </button>
-          <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
+        <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
             <HiOutlineSpeakerWave className="h-5 w-5" />{" "}
             {liveDebates.length + openRooms.length} rooms{" "}
             {liveDebates.some((r) => r.status === "live") ? "live" : "scheduled"} ·{" "}

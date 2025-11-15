@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
@@ -129,6 +129,7 @@ const staticBooks = [
 const BOOKS_STORAGE_KEY = "aela.books.cache";
 
 const Books = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [books, setBooks] = useState(() => {
     // Try to load from sessionStorage first
@@ -146,59 +147,67 @@ const Books = () => {
     return staticBooks;
   });
   const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(() => {
-    // Check if we have cached data
-    try {
-      return !!sessionStorage.getItem(BOOKS_STORAGE_KEY);
-    } catch {
-      return false;
-    }
-  });
 
   useEffect(() => {
-    // Only load if we don't have cached data
-    if (hasLoaded) return;
-
+    // Always fetch fresh data on mount to show newly approved books
     const loadBooks = async () => {
       try {
         setLoading(true);
         const response = await fetchEbooks({ page: 1, pageSize: 100 });
-        const ebooksFromApi = (response.data || []).map((ebook) => ({
-          id: ebook._id,
-          title: ebook.title,
-          author: ebook.metadata?.author || "Digital AELA",
-          price: ebook.metadata?.price || 0,
-          originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
-          image: ebook.metadata?.coverImage || bookGrammarImg,
-          imageAlt: `${ebook.title} cover`,
-          rating: 4.5, // Default rating
-          reviews: 0,
-          format: "ebook",
-          description: ebook.description || "",
-          category: ebook.categories?.[0] || "General",
-          pages: ebook.pages || 0,
-          language: "English",
-          isbn: ebook._id,
-        }));
+        const ebooksFromApi = (response.data || []).map((ebook) => {
+          // Debug: log the ebook to see what we're getting
+          // eslint-disable-next-line no-console
+          console.log("Ebook from API:", { id: ebook._id, title: ebook.title, metadata: ebook.metadata });
+          const price = ebook.metadata?.price !== undefined && ebook.metadata.price !== null && ebook.metadata.price !== "" ? Number(ebook.metadata.price) : 0;
+          return {
+            id: ebook._id,
+            title: ebook.title,
+            author: ebook.metadata?.author || "Digital AELA", // This will be the teacher's name
+            price: price,
+            originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
+            image: ebook.metadata?.coverImage || bookGrammarImg,
+            imageAlt: `${ebook.title} cover`,
+            rating: 4.5, // Default rating
+            reviews: 0,
+            format: "ebook",
+            description: ebook.description || "",
+            category: ebook.categories?.[0] || "General",
+            pages: ebook.pages || 0,
+            language: "English",
+            isbn: ebook._id,
+          };
+        });
         const finalBooks = ebooksFromApi.length > 0 ? ebooksFromApi : staticBooks;
         setBooks(finalBooks);
-        // Cache in sessionStorage
+        // Cache in sessionStorage for faster initial render on next visit
         try {
           sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(finalBooks));
         } catch (e) {
           // Ignore storage errors
         }
-        setHasLoaded(true);
       } catch (error) {
         console.error("Failed to load books:", error);
-        // Fallback to static books on error
+        // Only fallback to static books if we don't have cached data
+        try {
+          const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setBooks(parsed);
+              toast.warning("Using cached data. Please refresh if books are outdated.");
+              return;
+            }
+          }
+        } catch (e) {
+          // Ignore storage errors
+        }
+        // Final fallback to static books
         setBooks(staticBooks);
         try {
           sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(staticBooks));
         } catch (e) {
           // Ignore storage errors
         }
-        setHasLoaded(true);
         toast.error("Failed to load books. Showing cached data.");
       } finally {
         setLoading(false);
@@ -206,7 +215,7 @@ const Books = () => {
     };
 
     loadBooks();
-  }, [hasLoaded]);
+  }, []); // Empty dependency array - fetch on mount only
 
   // Filter books based on search query
   const filteredBooks = books.filter(
@@ -393,7 +402,7 @@ const Books = () => {
                       {/* Price */}
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
-                          ₹{book.price}
+                          {book.price > 0 ? `₹${book.price}` : "Free"}
                         </span>
                         {book.originalPrice > book.price && (
                           <span className="text-xs text-gray-500 line-through">
@@ -408,7 +417,7 @@ const Books = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={(e) => {
                             e.preventDefault();
-                            window.location.href = `/books/${book.id}/payment`;
+                            navigate(`/books/${book.id}/payment`);
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                           Buy Now

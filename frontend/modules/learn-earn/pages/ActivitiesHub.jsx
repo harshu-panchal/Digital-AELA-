@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import { toast } from "react-toastify";
@@ -9,6 +10,8 @@ import { usePoints } from "../../../src/contexts/PointsContext";
 import { submitQuizAttempt, fetchQuizzes, fetchQuizHistory } from "../../../src/services/api/quizzes";
 
 const ActivitiesHub = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { rewardCoins } = useUser();
   const { user: authUser, tokens } = useAuth();
   const { refreshPoints } = usePoints();
@@ -59,15 +62,32 @@ const ActivitiesHub = () => {
         if (response?.data) {
           const attemptsMap = new Map();
           response.data.forEach((attempt) => {
-            const quizId = attempt.quiz?.toString() || attempt.quizId;
+            // Normalize quiz ID - handle both ObjectId and string formats
+            let quizId = null;
+            if (attempt.quiz) {
+              quizId = typeof attempt.quiz === 'object' && attempt.quiz._id 
+                ? attempt.quiz._id.toString() 
+                : attempt.quiz.toString();
+            } else if (attempt.quizId) {
+              quizId = attempt.quizId.toString();
+            }
+            
             if (quizId) {
+              // Store with normalized string ID
               attemptsMap.set(quizId, {
                 score: attempt.score || 0,
+                correctAnswers: attempt.correctAnswers || 0,
+                totalQuestions: attempt.totalQuestions || 0,
+                coinsEarned: attempt.coinsEarned || 0,
                 completedAt: attempt.completedAt,
               });
             }
           });
+          console.log("Quiz attempts loaded:", Array.from(attemptsMap.entries()));
+          console.log("Total attempts found:", attemptsMap.size);
           setQuizAttempts(attemptsMap);
+        } else {
+          console.log("No quiz history data in response:", response);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -77,7 +97,130 @@ const ActivitiesHub = () => {
     };
 
     loadQuizHistory();
+    
+    // Listen for quiz completion events to refresh attempts
+    const handleQuizCompleted = (event) => {
+      console.log("Quiz completed event received, refreshing history...", event.detail);
+      // Add a delay to ensure backend has processed the attempt, then retry a few times
+      let retries = 0;
+      const maxRetries = 3;
+      
+      const tryRefresh = () => {
+        setTimeout(() => {
+          console.log(`Refreshing quiz history (attempt ${retries + 1}/${maxRetries})...`);
+          loadQuizHistory();
+          retries++;
+          if (retries < maxRetries) {
+            tryRefresh();
+          }
+        }, 500 * (retries + 1)); // Increasing delay: 500ms, 1000ms, 1500ms
+      };
+      
+      tryRefresh();
+    };
+    
+    // Also refresh when page becomes visible (user returns from quiz page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("Page visible, refreshing quiz history...");
+        loadQuizHistory();
+      }
+    };
+    
+    window.addEventListener("quizCompleted", handleQuizCompleted);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener("quizCompleted", handleQuizCompleted);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [authUser, tokens]);
+  
+  // Refresh quiz history when returning to this page or when location changes
+  useEffect(() => {
+    if (location.pathname === "/learn-earn/activities" && authUser && tokens?.accessToken) {
+      const loadQuizHistory = async () => {
+        try {
+          console.log("Refreshing quiz history on location change...");
+          const response = await fetchQuizHistory({ pageSize: 100 });
+          if (response?.data) {
+            const attemptsMap = new Map();
+            response.data.forEach((attempt) => {
+              let quizId = null;
+              if (attempt.quiz) {
+                quizId = typeof attempt.quiz === 'object' && attempt.quiz._id 
+                  ? attempt.quiz._id.toString() 
+                  : attempt.quiz.toString();
+              } else if (attempt.quizId) {
+                quizId = attempt.quizId.toString();
+              }
+              
+              if (quizId) {
+                attemptsMap.set(quizId, {
+                  score: attempt.score || 0,
+                  correctAnswers: attempt.correctAnswers || 0,
+                  totalQuestions: attempt.totalQuestions || 0,
+                  coinsEarned: attempt.coinsEarned || 0,
+                  completedAt: attempt.completedAt,
+                });
+              }
+            });
+            console.log("Quiz history refreshed, attempts:", Array.from(attemptsMap.keys()));
+            setQuizAttempts(attemptsMap);
+          }
+        } catch (error) {
+          console.error("Failed to load quiz history:", error);
+        }
+      };
+      // Small delay to ensure backend has processed
+      const timeoutId = setTimeout(loadQuizHistory, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [location.pathname, location.key, authUser, tokens]);
+  
+  // Also refresh when window gains focus (user switches back to tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (location.pathname === "/learn-earn/activities" && authUser && tokens?.accessToken) {
+        console.log("Window focused, refreshing quiz history...");
+        const loadQuizHistory = async () => {
+          try {
+            const response = await fetchQuizHistory({ pageSize: 100 });
+            if (response?.data) {
+              const attemptsMap = new Map();
+              response.data.forEach((attempt) => {
+                let quizId = null;
+                if (attempt.quiz) {
+                  quizId = typeof attempt.quiz === 'object' && attempt.quiz._id 
+                    ? attempt.quiz._id.toString() 
+                    : attempt.quiz.toString();
+                } else if (attempt.quizId) {
+                  quizId = attempt.quizId.toString();
+                }
+                
+                if (quizId) {
+                  attemptsMap.set(quizId, {
+                    score: attempt.score || 0,
+                    correctAnswers: attempt.correctAnswers || 0,
+                    totalQuestions: attempt.totalQuestions || 0,
+                    coinsEarned: attempt.coinsEarned || 0,
+                    completedAt: attempt.completedAt,
+                  });
+                }
+              });
+              setQuizAttempts(attemptsMap);
+            }
+          } catch (error) {
+            console.error("Failed to load quiz history on focus:", error);
+          }
+        };
+        loadQuizHistory();
+      }
+    };
+    
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [location.pathname, authUser, tokens]);
 
   // Map difficulty from backend to display format
   const formatDifficulty = (difficulty) => {
@@ -94,9 +237,9 @@ const ActivitiesHub = () => {
   const categories = useMemo(() => {
     const grouped = {
       quiz: {
-        title: "Daily English Quizzes",
+        title: "Quizzes",
         icon: FaBookReader,
-        description: "Sharpen grammar, comprehension, and listening with adaptive quizzes.",
+        description: "Test your knowledge and earn coins with interactive quizzes covering various topics.",
         items: [],
       },
       vocabulary: {
@@ -116,18 +259,39 @@ const ActivitiesHub = () => {
     quizzes.forEach((quiz) => {
       const category = quiz.category || "quiz";
       if (grouped[category]) {
-        const attempt = quizAttempts.get(quiz.id);
-        const progress = attempt ? attempt.score || 0 : 0;
-
+        // Normalize quiz ID to string for matching
+        const quizId = (quiz.id || quiz._id || '').toString();
+        
+        // Try to find attempt by normalized ID
+        const attempt = quizAttempts.get(quizId);
+        const hasAttempted = quizAttempts.has(quizId);
+        
+        // Debug logging (only log mismatches to reduce noise)
+        if (!hasAttempted && quizAttempts.size > 0) {
+          // Only log if we have attempts but this quiz isn't found
+          const availableIds = Array.from(quizAttempts.keys());
+          const isCloseMatch = availableIds.some(id => id.includes(quizId) || quizId.includes(id));
+          if (!isCloseMatch) {
+            console.log(`⚠ Quiz ${quizId} (${quiz.title}) not found in attempts. Available IDs:`, availableIds);
+          }
+        }
+        
         grouped[category].items.push({
-          id: quiz.id,
+          id: quizId,
           name: quiz.title,
           difficulty: formatDifficulty(quiz.difficulty),
           reward: quiz.rewardCoins || 0,
-          progress,
           description: quiz.description,
           totalQuestions: quiz.totalQuestions || 0,
           duration: quiz.duration || 0,
+          hasAttempted,
+          attemptResult: attempt ? {
+            score: attempt.score || 0,
+            correctAnswers: attempt.correctAnswers || 0,
+            totalQuestions: attempt.totalQuestions || 0,
+            coinsEarned: attempt.coinsEarned || 0,
+            completedAt: attempt.completedAt,
+          } : null,
         });
       }
     });
@@ -141,114 +305,8 @@ const ActivitiesHub = () => {
   const handleStart = async (item) => {
     const itemId = item.id;
     
-    // Prevent duplicate submissions
-    if (submitting.has(itemId)) {
-      return;
-    }
-
-    // For now, we'll simulate quiz completion
-    // In a full implementation, you'd navigate to a quiz-taking page
-    toast.info("Quiz feature coming soon! For now, simulating completion...", { icon: "📝" });
-
-    setSubmitting((prev) => new Set(prev).add(itemId));
-
-    try {
-      // Simulate quiz completion with a random score
-      const simulatedScore = Math.floor(Math.random() * 40) + 60; // 60-100%
-      const simulatedCorrectAnswers = Math.round((simulatedScore / 100) * (item.totalQuestions || 10));
-      const simulatedTimeSpent = Math.floor(Math.random() * 180) + 120; // 2-5 minutes
-
-      // If user has backend auth, submit to backend
-      if (authUser && tokens?.accessToken && authUser.role === "student") {
-        try {
-          const result = await submitQuizAttempt({
-            quizId: itemId,
-            quizName: item.name,
-            category: activeCategory,
-            score: simulatedScore,
-            totalQuestions: item.totalQuestions || 10,
-            correctAnswers: simulatedCorrectAnswers,
-            timeSpent: simulatedTimeSpent,
-            rewardCoins: item.reward,
-          });
-
-          const coinsEarned = result.attempt?.coinsEarned || item.reward;
-          // Backend returns totalCoins (total in account) and availableCoins (total - redeemed)
-          const newAvailableCoins = result.points?.availableCoins;
-          const newTotalCoins = result.points?.totalCoins;
-          
-          // eslint-disable-next-line no-console
-          console.log("Quiz completed - backend response:", {
-            coinsEarned,
-            newAvailableCoins,
-            newTotalCoins,
-            fullResult: result,
-          });
-          
-          // If backend returned coins data, use it as source of truth
-          if (newAvailableCoins !== undefined) {
-            // Backend already saved the coins, so use the backend value directly
-            // Update localStorage immediately with backend value (this is the source of truth)
-            localStorage.setItem("aelaPoints", newAvailableCoins.toString());
-            // Update local state to match backend (don't add again, backend already did)
-            // We need to set the total, not add to it
-            if (refreshPoints) {
-              // Refresh will load the correct value from backend
-              setTimeout(() => refreshPoints(), 300);
-            } else {
-              // If refreshPoints not available, manually update via addPoints
-              // But calculate the difference to add
-              const currentCoins = parseInt(localStorage.getItem("aelaPoints") || "0", 10);
-              const coinsToAdd = newAvailableCoins - currentCoins;
-              if (coinsToAdd > 0) {
-                rewardCoins(coinsToAdd, `${item.name} completed`);
-              }
-            }
-          } else {
-            // Backend didn't return coins - update locally and refresh
-            rewardCoins(coinsEarned, `${item.name} completed`);
-            if (refreshPoints) {
-              setTimeout(() => refreshPoints(), 800);
-              setTimeout(() => refreshPoints(), 2000);
-            }
-          }
-
-          toast.success(
-            `+${coinsEarned} coins awarded for completing ${item.name}`,
-            { icon: "🏆" }
-          );
-
-          // Update quiz attempts map with the new attempt
-          setQuizAttempts((prev) => {
-            const next = new Map(prev);
-            next.set(itemId, {
-              score: simulatedScore,
-              completedAt: new Date(),
-            });
-            return next;
-          });
-
-          // Dispatch event to refresh student dashboard
-          window.dispatchEvent(new CustomEvent("quizCompleted"));
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error("Failed to submit quiz to backend:", error);
-          // Fall back to local reward
-          const gained = rewardCoins(item.reward, `${item.name} completed`);
-          toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
-        }
-      } else {
-        // No backend auth - use local only
-    const gained = rewardCoins(item.reward, `${item.name} completed`);
-    toast.success(`+${gained} coins awarded for completing ${item.name}`, { icon: "🏆" });
-      }
-    } finally {
-      setSubmitting((prev) => {
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-    }
+    // Navigate to quiz play page
+    navigate(`/learn-earn/quiz/${itemId}`);
   };
 
   return (
@@ -321,7 +379,11 @@ const ActivitiesHub = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.25 }}
-              className="space-y-4 rounded-2xl border border-white/5 bg-[#111] p-5">
+              className={`space-y-4 rounded-2xl border p-5 ${
+                item.hasAttempted 
+                  ? "border-[#D4AF37]/30 bg-[#111]/80" 
+                  : "border-white/5 bg-[#111]"
+              }`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">{item.name}</p>
@@ -331,29 +393,43 @@ const ActivitiesHub = () => {
                   +{item.reward} coins
                 </span>
               </div>
-              <div>
-                <div className="flex justify-between text-[11px] text-gray-400">
-                  <span>Progress</span>
-                  <span>{item.progress}%</span>
+              
+              {/* Show result if attempted */}
+              {item.hasAttempted && item.attemptResult && (
+                <div className="rounded-lg border border-[#D4AF37]/20 bg-[#D4AF37]/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Your Score</span>
+                    <span className="text-lg font-bold text-[#D4AF37]">
+                      {item.attemptResult.score}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">
+                      {item.attemptResult.correctAnswers} / {item.attemptResult.totalQuestions} correct
+                    </span>
+                    <span className="text-[#D4AF37] font-semibold">
+                      +{item.attemptResult.coinsEarned} coins earned
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#1a1a1a]">
-                  <Motion.div
-                    initial={{ width: "0%" }}
-                    whileInView={{ width: `${item.progress}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="h-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158]"
-                  />
-                </div>
-              </div>
+              )}
+              
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-                <span>Complete in under 6 minutes</span>
+                {!item.hasAttempted && <span>Complete in under 6 minutes</span>}
                 <button
                   type="button"
-                  onClick={() => handleStart(item)}
-                  disabled={submitting.has(item.id)}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#151515] px-4 py-2 font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed">
-                  {submitting.has(item.id) ? "Submitting..." : "Start challenge"}
+                  onClick={() => !item.hasAttempted && handleStart(item)}
+                  disabled={submitting.has(item.id) || item.hasAttempted}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-semibold transition ${
+                    item.hasAttempted
+                      ? "border-gray-600/40 bg-[#1a1a1a] text-gray-500 cursor-not-allowed"
+                      : "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
+                  }`}>
+                  {submitting.has(item.id) 
+                    ? "Submitting..." 
+                    : item.hasAttempted 
+                    ? "Attempted" 
+                    : "Start challenge"}
                 </button>
               </div>
             </Motion.div>

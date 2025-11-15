@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
-import { FaArrowLeft, FaLock, FaCreditCard } from "react-icons/fa";
+import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
+import { fetchEbookById } from "../../../src/services/api/resources";
+import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
 
 const BookPayment = () => {
   const { id } = useParams();
   const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -19,55 +23,37 @@ const BookPayment = () => {
     paymentMethod: "card",
   });
 
-  // Sample books data - In production, this would come from an API
-  const booksData = [
-    {
-      id: 1,
-      title: "Advanced English Grammar",
-      author: "Dr. Sarah Johnson",
-      price: 499,
-      format: "physical",
-    },
-    {
-      id: 2,
-      title: "Vocabulary Builder Pro",
-      author: "Prof. Michael Chen",
-      price: 299,
-      format: "ebook",
-    },
-    {
-      id: 3,
-      title: "Self Help: Confidence Building",
-      author: "Dr. Priya Sharma",
-      price: 399,
-      format: "physical",
-    },
-    {
-      id: 4,
-      title: "English Sentence Structures",
-      author: "Dr. Robert Williams",
-      price: 349,
-      format: "ebook",
-    },
-    {
-      id: 5,
-      title: "Business English Essentials",
-      author: "Dr. Sarah Johnson",
-      price: 449,
-      format: "physical",
-    },
-    {
-      id: 6,
-      title: "IELTS Vocabulary Master",
-      author: "Prof. Michael Chen",
-      price: 379,
-      format: "ebook",
-    },
-  ];
-
   useEffect(() => {
-    const foundBook = booksData.find((b) => b.id === parseInt(id));
-    setBook(foundBook);
+    const loadBook = async () => {
+      try {
+        setLoading(true);
+        const ebook = await fetchEbookById(id);
+        if (ebook) {
+          // Transform backend data to frontend format
+          const price = ebook.metadata?.price !== undefined && ebook.metadata.price !== null && ebook.metadata.price !== "" ? Number(ebook.metadata.price) : 0;
+          const transformedBook = {
+            id: ebook._id || id,
+            title: ebook.title,
+            author: ebook.metadata?.author || "Digital AELA",
+            price: price,
+            format: "ebook", // All books from API are ebooks
+            image: ebook.metadata?.coverImage || bookGrammarImg,
+          };
+          setBook(transformedBook);
+        } else {
+          toast.error("Book not found");
+        }
+      } catch (error) {
+        console.error("Failed to load book:", error);
+        toast.error("Failed to load book details. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      loadBook();
+    }
   }, [id]);
 
   const handleSubmit = (e) => {
@@ -84,6 +70,19 @@ const BookPayment = () => {
       [e.target.name]: e.target.value,
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="w-12 h-12 text-[#D4AF37] animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-4 font-display">
+            Loading book details...
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   if (!book) {
     return (

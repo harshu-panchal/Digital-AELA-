@@ -3,11 +3,13 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
-  FaArrowRight,
+  FaSearch,
   FaBook,
   FaDownload,
   FaStar,
   FaSpinner,
+  FaGraduationCap,
+  FaArrowLeft,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
@@ -18,92 +20,8 @@ import bookSentenceStructureImg from "../../../src/assets/images/books/sentence 
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
-import { courseCatalog as allCourses } from "../data/courseCatalog";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
-
-const whatsappNumber = "+971508185690";
-
-const bookLibrary = [
-  {
-    id: 1,
-    title: "Advanced English Grammar",
-    author: "Dr. Sarah Johnson",
-    price: 499,
-    originalPrice: 699,
-    rating: 4.8,
-    reviews: 125,
-    category: "Grammar",
-    badge: "Physical",
-    image: bookGrammarImg,
-    imageAlt: "Advanced English Grammar cover",
-  },
-  {
-    id: 2,
-    title: "Vocabulary Builder Pro",
-    author: "Prof. Michael Chen",
-    price: 299,
-    originalPrice: 399,
-    rating: 4.6,
-    reviews: 89,
-    category: "Vocabulary",
-    badge: "E-Book",
-    image: bookVocabularyImg,
-    imageAlt: "Vocabulary Builder Pro cover",
-  },
-  {
-    id: 3,
-    title: "Self Help: Confidence Building",
-    author: "Dr. Priya Sharma",
-    price: 399,
-    originalPrice: 599,
-    rating: 4.9,
-    reviews: 203,
-    category: "Self Help",
-    badge: "Physical",
-    image: bookConfidenceBuildingImg,
-    imageAlt: "Self Help Confidence Building cover",
-  },
-  {
-    id: 4,
-    title: "English Sentence Structures",
-    author: "Dr. Robert Williams",
-    price: 349,
-    originalPrice: 499,
-    rating: 4.7,
-    reviews: 156,
-    category: "Structures",
-    badge: "E-Book",
-    image: bookSentenceStructureImg,
-    imageAlt: "English Sentence Structures cover",
-  },
-  {
-    id: 5,
-    title: "Business English Essentials",
-    author: "Dr. Sarah Johnson",
-    price: 449,
-    originalPrice: 649,
-    rating: 4.8,
-    reviews: 178,
-    category: "Business",
-    badge: "Physical",
-    image: bookAdvancedEnglishImg,
-    imageAlt: "Business English Essentials cover",
-  },
-  {
-    id: 6,
-    title: "IELTS Vocabulary Master",
-    author: "Prof. Michael Chen",
-    price: 379,
-    originalPrice: 549,
-    rating: 4.9,
-    reviews: 267,
-    category: "IELTS",
-    badge: "E-Book",
-    image: bookIELTSVocabularyImg,
-    imageAlt: "IELTS Vocabulary Master cover",
-  },
-];
 
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
@@ -111,32 +29,50 @@ const JoinBuildAfterLife = () => {
   const [afterLifeBooks, setAfterLifeBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("all"); // all, course, book
 
   useEffect(() => {
     const loadCourses = async () => {
       try {
         setLoading(true);
         const response = await fetchPublishedCourses();
-        const publishedCourses = (response.courses || []).map((course) => ({
-          id: course._id,
-          slug: course._id, // Use ID as slug for now
-          title: course.title,
-          description: course.description || course.metadata?.subtitle || "",
-          image: course.thumbnailUrl || "",
-          price: course.price ? `AED ${course.price}` : "On Request",
-          duration: course.duration ? `${course.duration} hours` : "",
-          format: course.metadata?.deliveryMode || "",
-          features: course.metadata?.tags || [],
-          highlights: course.metadata?.tags || [],
-          category: course.category || "",
-          difficulty: course.metadata?.difficulty || "",
-        }));
+        
+        if (!response || !response.courses) {
+          console.warn("No courses data received from API");
+          setAfterLifeCourses([]);
+          return;
+        }
+
+        // Only show published/approved courses
+        const publishedCourses = (response.courses || [])
+          .filter((course) => course.status === "published") // Extra safety check
+          .map((course) => ({
+            id: course._id,
+            slug: course._id,
+            title: course.title || "Untitled Course",
+            description: course.description || course.metadata?.subtitle || course.subtitle || "",
+            image: course.thumbnailUrl || course.thumbnail || course.image || "",
+            price: course.price ? `AED ${course.price}` : "On Request",
+            duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
+            format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
+            features: course.metadata?.tags || course.tags || [],
+            highlights: course.metadata?.tags || course.tags || [],
+            category: course.category || course.metadata?.category || "General",
+            difficulty: course.metadata?.difficulty || course.difficulty || "",
+            instructor: course.instructor?.fullName || course.instructorName || "Digital AELA",
+            type: "course",
+          }));
+        
         setAfterLifeCourses(publishedCourses);
+        
+        if (publishedCourses.length === 0) {
+          console.info("No published courses available");
+        }
       } catch (error) {
         console.error("Failed to load courses:", error);
-        // Fallback to static courses if API fails
-        setAfterLifeCourses(allCourses);
-        toast.error("Failed to load courses. Showing cached data.");
+        setAfterLifeCourses([]);
+        toast.error("Failed to load courses. Please try refreshing the page.");
       } finally {
         setLoading(false);
       }
@@ -149,25 +85,51 @@ const JoinBuildAfterLife = () => {
     const loadBooks = async () => {
       try {
         setLoadingBooks(true);
-        const response = await fetchEbooks({ page: 1, pageSize: 100 });
-        const booksFromApi = (response.data || []).map((ebook) => ({
-          id: ebook._id,
-          title: ebook.title,
-          author: ebook.metadata?.author || "Digital AELA",
-          price: ebook.metadata?.price || 0,
-          originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
-          rating: 4.5,
-          reviews: 0,
-          category: ebook.categories?.[0] || "General",
-          badge: "E-Book",
-          image: ebook.metadata?.coverImage || bookAdvancedEnglishImg,
-          imageAlt: `${ebook.title} cover`,
-        }));
+        // Fetch all approved books (increase pageSize to get all)
+        const response = await fetchEbooks({ page: 1, pageSize: 500 });
+        
+        if (!response || !response.data) {
+          console.warn("No books data received from API");
+          setAfterLifeBooks([]);
+          return;
+        }
+
+        // Only show approved books (isPublic: true)
+        const booksFromApi = (response.data || [])
+          .filter((ebook) => ebook.isPublic === true) // Extra safety check
+          .map((ebook) => {
+            const price = ebook.metadata?.price !== undefined && 
+                        ebook.metadata.price !== null && 
+                        ebook.metadata.price !== "" 
+                        ? Number(ebook.metadata.price) 
+                        : 0;
+            
+            return {
+              id: ebook._id,
+              title: ebook.title || "Untitled Book",
+              author: ebook.metadata?.author || ebook.author || "Digital AELA",
+              price: price,
+              originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
+              rating: 4.5, // Default rating
+              reviews: 0,
+              category: ebook.categories?.[0] || ebook.category || "General",
+              badge: "E-Book",
+              image: ebook.metadata?.coverImage || ebook.coverImage || bookAdvancedEnglishImg,
+              imageAlt: `${ebook.title || "Book"} cover`,
+              description: ebook.description || "",
+              type: "book",
+            };
+          });
+        
         setAfterLifeBooks(booksFromApi);
+        
+        if (booksFromApi.length === 0) {
+          console.info("No approved books available");
+        }
       } catch (error) {
         console.error("Failed to load books:", error);
-        // Keep static books on error
         setAfterLifeBooks([]);
+        toast.error("Failed to load books. Please try refreshing the page.");
       } finally {
         setLoadingBooks(false);
       }
@@ -175,6 +137,23 @@ const JoinBuildAfterLife = () => {
 
     loadBooks();
   }, []);
+
+  // Combine all items - only from backend, no static fallback
+  const allItems = [
+    ...afterLifeCourses,
+    ...afterLifeBooks,
+  ];
+
+  // Filter items
+  const filteredItems = allItems.filter((item) => {
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.author && item.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesType = selectedType === "all" || item.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   const handleBuyCourse = (course) => {
     const payload = {
@@ -201,8 +180,10 @@ const JoinBuildAfterLife = () => {
     });
   };
 
+  const isLoading = loading || loadingBooks;
+
   return (
-    <div className="relative min-h-screen bg-[#020409] text-white">
+    <div className="min-h-screen bg-black">
       <SEO
         title="Build Your After Life | All Courses & Books | Digital AELA"
         description="Explore every Digital AELA course track and book collection in one immersive space. Plan your After Life journey with curated learning paths and premium resources."
@@ -210,368 +191,339 @@ const JoinBuildAfterLife = () => {
         url="https://digitalaela.com/join-us/after-life"
       />
 
-      {/* Ambient background */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/3 h-72 w-full max-w-lg -translate-x-1/2 rounded-full bg-[#F5D26A]/15 blur-3xl" />
-        <div className="absolute top-1/3 left-0 hidden h-80 w-full max-w-xl -translate-x-1/2 rounded-full bg-[#103350]/40 blur-[110px] md:block" />
-      </div>
+      {/* Header */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-black"></div>
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+          className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
 
-      <main className="relative z-10">
-        {/* Hero */}
-        <section className="pt-32 pb-20 sm:pt-36">
-          <div className="layout-container">
-            <div className="mx-auto max-w-3xl text-center">
-              <motion.span
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#F5D26A]">
-                Build Your After Life
-              </motion.span>
+        <div className="relative max-w-7xl mx-auto px-4 md:px-8">
+          <motion.h1
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
+            Build Your <span className="text-[#D4AF37]">After Life</span>
+          </motion.h1>
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
+            Craft lifelong learning hubs powered by Digital AELA courses & books.
+            Explore every course track and book collection in one immersive space.
+          </motion.p>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 28 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-                className="mt-6 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
-                Craft lifelong learning hubs powered by{" "}
-                <span className="text-[#F5D26A]">Digital AELA courses & books</span>
-              </motion.h1>
-
-              <motion.div
-                initial={{ opacity: 0, y: 26 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-                className="mt-6 h-2 bg-linear-to-r from-transparent via-[#F5D26A]/40 to-transparent rounded-full" />
+          {/* Search and Filters */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
+            <div className="relative flex-1">
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search courses and books..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-lg pl-12 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-colors duration-200"
+              />
             </div>
-          </div>
-        </section>
-
-        {/* Courses */}
-        <section className="py-12 sm:py-16">
-          <div className="layout-container">
-            <div className="mx-auto mb-12 max-w-3xl text-center">
-              <motion.h2
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                className="text-2xl font-semibold text-white sm:text-3xl">
-                Explore the complete Digital AELA course catalogue
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.08, ease: [0.25, 0.1, 0.25, 1] }}
-                className="mt-4 text-base text-slate-300/80">
-                From foundational English to performance marketing and enterprise leadership, build your After Life centre with proven programmes across every learner need.
-              </motion.p>
+            <div className="flex gap-2">
+              {["all", "course", "book"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200 capitalize ${
+                    selectedType === type
+                      ? "bg-[#D4AF37] text-black"
+                      : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
+                  }`}>
+                  {type === "all" ? "All" : type === "course" ? "Courses" : "Books"}
+                </button>
+              ))}
             </div>
+          </motion.div>
+        </div>
+      </motion.section>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
-              </div>
-            ) : (
-              <div className="auto-grid-md lg:grid-cols-2 xl:grid-cols-4 gap-6">
-                {afterLifeCourses.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-gray-400">No published courses available yet.</p>
-                  </div>
-                ) : (
-                  afterLifeCourses.map((course, index) => {
-                const highlights = course.features ?? course.highlights ?? [];
-                const isTrending = [
-                  "basic-english",
-                  "advanced-english",
-                  "personalised-english-speaking",
-                  "interview-preparation",
-                  "public-speaking-stage-confidence",
-                ].includes(course.slug);
+      {/* Items Grid */}
+      <section className="py-12 bg-[#141414] relative">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          {/* Results Count */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="mb-8">
+            <p className="text-gray-300 text-sm">
+              {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
+              {searchQuery && ` for "${searchQuery}"`}
+              {selectedType !== "all" && ` in ${selectedType === "course" ? "Courses" : "Books"}`}
+            </p>
+          </motion.div>
 
-                return (
-                  <motion.div
-                    key={course.slug ?? course.title}
-                    initial={{ y: 40, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{
-                      duration: 0.25,
-                      delay: index * 0.05,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                    whileHover={{ y: -6 }}
-                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleViewCourse(course)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleViewCourse(course);
-                      }
-                    }}>
-                    <div className="h-44 w-full overflow-hidden">
-                      <img
-                        src={course.image}
-                        alt={course.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                      {isTrending && (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                          Trending
-                        </span>
-                      )}
-                      <div>
-                        <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                          {course.title}
-                        </h3>
-                        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                          {course.description}
-                        </p>
-                      </div>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-20">
+              <FaSpinner className="w-8 h-8 text-[#D4AF37] animate-spin" />
+            </div>
+          )}
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                        {course.duration && (
-                          <span className="flex items-center gap-2">
-                            <svg
-                              className="w-4 h-4 text-[#D4AF37]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {course.duration}
-                          </span>
-                        )}
-                        {course.format && (
-                          <span className="flex items-center gap-2">
-                            <svg
-                              className="w-4 h-4 text-[#D4AF37]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 8l4 4m0 0l-4 4m4-4H3"
-                              />
-                            </svg>
-                            {course.format}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="border-t border-[#D4AF37]/15 pt-4">
-                        <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                          Key Highlights
-                        </p>
-                        <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                          {highlights.map((feature) => (
-                            <li key={feature} className="flex items-center gap-2">
-                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between text-sm text-gray-300">
-                          <span>Course Fee</span>
-                          <span className="text-lg font-semibold text-[#F5D26A]">
-                            {course.price || "On Request"}
+          {/* Items Grid */}
+          {!isLoading && filteredItems.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredItems.map((item, index) => {
+                if (item.type === "course") {
+                  const highlights = item.features ?? item.highlights ?? [];
+                  return (
+                    <motion.div
+                      key={item.id || item.slug}
+                      initial={{ y: 50, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{
+                        duration: 0.25,
+                        delay: index * 0.05,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                      whileHover={{ y: -8, scale: 1.02 }}
+                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
+                      <div
+                        onClick={() => handleViewCourse(item)}
+                        className="relative h-48 w-full overflow-hidden">
+                        <img
+                          src={item.image || "https://via.placeholder.com/300x200?text=Course"}
+                          alt={item.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-[#D4AF37] text-black px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+                            <FaGraduationCap className="w-2.5 h-2.5" />
+                            Course
                           </span>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                      </div>
+
+                      <div className="p-4">
+                        <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                          {item.description}
+                        </p>
+
+                        {highlights.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide mb-1">
+                              Key Highlights
+                            </p>
+                            <ul className="space-y-1">
+                              {highlights.slice(0, 2).map((feature, idx) => (
+                                <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-300">
+                                  <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                                  <span className="line-clamp-1">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700">
+                          <span className="text-lg font-bold text-[#D4AF37] font-display">
+                            {item.price || "On Request"}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2">
                           <motion.button
-                            whileHover={{ scale: 1.03, y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleBuyCourse(course);
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBuyCourse(item);
                             }}
-                            className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                            className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                             Buy Now
                           </motion.button>
                           <div
-                            onClick={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => event.stopPropagation()}>
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}>
                             <GiftButton
-                              className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                               size="sm">
                               Gift
                             </GiftButton>
                           </div>
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleViewCourse(course);
-                        }}
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition hover:text-[#FFE28A]">
-                        Explore course
-                        <FaArrowRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </motion.div>
+                    </motion.div>
                   );
-                })
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Books */}
-        <section className="relative overflow-hidden py-16 sm:py-20">
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#0C1328]/50 via-transparent to-[#020409]" />
-          <div className="layout-container relative">
-            <div className="flex flex-col gap-6 pb-8 text-center md:flex-row md:items-end md:justify-between md:text-left">
-              <div className="max-w-xl">
-                <motion.h2
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="text-2xl font-semibold text-white sm:text-3xl">
-                  Curated bookshelf to fuel every learner
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.08, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="mt-3 text-base text-slate-300/80">
-                  Pair live sessions with self-paced reading. Every title is authored by Digital AELA faculty and partners,
-                  ready for your centre library.
-                </motion.p>
-              </div>
-            </div>
-
-            {loadingBooks ? (
-              <div className="flex items-center justify-center py-12">
-                <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {(afterLifeBooks.length > 0 ? afterLifeBooks : bookLibrary).map((book, index) => (
-                  <motion.div
-                    key={book.id}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group">
-                  <Link to={`/books/${book.id}`}>
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <img
-                        src={book.image}
-                        alt={book.imageAlt || `${book.title} cover`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute top-2 right-2">
-                        <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                          {book.badge === "E-Book" ? (
-                            <FaDownload className="w-2.5 h-2.5" />
-                          ) : (
-                            <FaBook className="w-2.5 h-2.5" />
+                } else {
+                  // Book item
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ y: 50, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{
+                        duration: 0.25,
+                        delay: index * 0.05,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                      whileHover={{ y: -8, scale: 1.02 }}
+                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
+                      <Link to={`/books/${item.id}`}>
+                        <div className="relative h-48 w-full overflow-hidden">
+                          <img
+                            src={item.image}
+                            alt={item.imageAlt || `${item.title} cover`}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
+                          <div className="absolute top-2 right-2">
+                            <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                              {item.badge === "E-Book" ? (
+                                <FaDownload className="w-2.5 h-2.5" />
+                              ) : (
+                                <FaBook className="w-2.5 h-2.5" />
+                              )}
+                              {item.badge}
+                            </span>
+                          </div>
+                          {item.originalPrice > item.price && (
+                            <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                              {Math.round(
+                                ((item.originalPrice - item.price) / item.originalPrice) * 100
+                              )}
+                              % OFF
+                            </div>
                           )}
-                          {book.badge}
-                        </span>
-                      </div>
-                      {book.originalPrice > book.price && (
-                        <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                          {Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)}% OFF
                         </div>
-                      )}
-                    </div>
 
-                    <div className="p-4">
-                      <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                        {book.category}
-                      </span>
-
-                      <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                        {book.title}
-                      </h3>
-
-                      <p className="text-xs text-gray-400 mb-2">by {book.author}</p>
-
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <FaStar
-                              key={i}
-                              className={`w-3 h-3 ${
-                                i < Math.round(book.rating)
-                                  ? "text-[#D4AF37] fill-current"
-                                  : "text-gray-600"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-300">{book.rating.toFixed(1)}</span>
-                        <span className="text-[10px] text-gray-500">({book.reviews})</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-lg font-bold text-[#D4AF37] font-display">
-                          ₹{book.price}
-                        </span>
-                        {book.originalPrice > book.price && (
-                          <span className="text-xs text-gray-500 line-through">
-                            ₹{book.originalPrice}
+                        <div className="p-4">
+                          <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                            {item.category}
                           </span>
-                        )}
-                      </div>
 
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.href = `/books/${book.id}/payment`;
-                          }}
-                          className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          Buy Now
-                        </motion.button>
-                        <GiftButton
-                          className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                          size="sm">
-                          Gift
-                        </GiftButton>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
+                          <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                            {item.title}
+                          </h3>
+
+                          <p className="text-xs text-gray-400 mb-2">by {item.author}</p>
+
+                          <div className="flex items-center gap-1.5 mb-3">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <FaStar
+                                  key={i}
+                                  className={`w-3 h-3 ${
+                                    i < Math.floor(item.rating || 4.5)
+                                      ? "text-[#D4AF37] fill-current"
+                                      : "text-gray-600"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-300">
+                              {(item.rating || 4.5).toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-gray-500">
+                              ({item.reviews || 0})
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-lg font-bold text-[#D4AF37] font-display">
+                              {item.price > 0 ? `₹${item.price}` : "Free"}
+                            </span>
+                            {item.originalPrice > item.price && (
+                              <span className="text-xs text-gray-500 line-through">
+                                ₹{item.originalPrice}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(`/books/${item.id}/payment`);
+                              }}
+                              className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                              Buy Now
+                            </motion.button>
+                            <GiftButton
+                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                              size="sm">
+                              Gift
+                            </GiftButton>
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                }
+              })}
+            </div>
+          ) : !isLoading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20">
+              {allItems.length === 0 ? (
+                <>
+                  <div className="text-6xl mb-4">📚</div>
+                  <h3 className="text-2xl font-bold text-white mb-2 font-display">
+                    No courses or books available yet
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    Approved courses and books will appear here once they are published.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-2xl font-bold text-white mb-2 font-display">
+                    No items found
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    Try adjusting your search or filter criteria
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedType("all");
+                    }}
+                    className="text-[#D4AF37] hover:text-[#E5C158] transition-colors">
+                    Clear filters
+                  </button>
+                </>
+              )}
+            </motion.div>
+          ) : null}
+        </div>
+      </section>
     </div>
   );
 };

@@ -207,7 +207,7 @@ const BookDetail = () => {
             const transformedBook = {
               id: ebook._id || id,
               title: ebook.title,
-              author: ebook.metadata?.author || "Digital AELA",
+              author: ebook.metadata?.author || "Digital AELA", // Teacher's name
               price: ebook.metadata?.price || 0,
               originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
               image: ebook.metadata?.coverImage || bookGrammarImg,
@@ -218,10 +218,10 @@ const BookDetail = () => {
               description: ebook.description || "",
               fullDescription: ebook.description || ebook.metadata?.subtitle || "",
               category: ebook.categories?.[0] || "General",
-              pages: ebook.pages || 0,
+              pages: ebook.pages && ebook.pages > 0 ? ebook.pages : undefined, // Only set if > 0
               language: "English",
               isbn: ebook._id || id,
-              publisher: "Digital AELA Publications",
+              publisher: ebook.metadata?.author || "Digital AELA Publications", // Use teacher's name as publisher
               publishedDate: ebook.publishedAt ? new Date(ebook.publishedAt).getFullYear().toString() : "2024",
               features: ebook.metadata?.tags || [
                 "Expert-authored content",
@@ -435,10 +435,12 @@ const BookDetail = () => {
                   Book Details
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
+                  {book.pages && book.pages > 0 && (
                   <div>
                     <span className="text-sm text-gray-400">Pages:</span>
                     <p className="text-white font-semibold">{book.pages}</p>
                   </div>
+                  )}
                   <div>
                     <span className="text-sm text-gray-400">Language:</span>
                     <p className="text-white font-semibold">{book.language}</p>

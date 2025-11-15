@@ -132,13 +132,15 @@ const QuizCreate = () => {
       availableUntil: formData.availableUntil ? new Date(formData.availableUntil).toISOString() : null,
       timeLimitMinutes: formData.timeLimitMinutes ? Number(formData.timeLimitMinutes) : null,
       questions: preparedQuestions,
-      status: "draft",
+      category: formData.category || "quiz", // Add category field
+      difficulty: formData.difficulty || "intermediate", // Add difficulty field
+      status: "published", // Publish by default so it appears on activities page
     };
 
     setIsSubmitting(true);
     try {
       await createTeacherQuiz(payload);
-      toast.success("Quiz saved as draft. Link it to courses from the dashboard.");
+      toast.success("Quiz created and published successfully! It will appear on the activities page.");
       setFormData(initialForm);
       setQuestions([emptyQuestion]);
       navigate("/teacher/dashboard", { replace: true, state: { highlightQuizzes: true } });

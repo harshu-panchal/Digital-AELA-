@@ -4,6 +4,11 @@ import LessonCompletion from "../models/LessonCompletion.js";
 import StudentPoints from "../models/StudentPoints.js";
 import SpeakingAssessment from "../models/SpeakingAssessment.js";
 import Course from "../models/Course.js";
+import Quiz from "../models/Quiz.js";
+import EbookResource from "../models/EbookResource.js";
+import RecruiterBlog from "../models/RecruiterBlog.js";
+import JobPost from "../models/JobPost.js";
+import User from "../models/User.js";
 
 export const getStudentDashboard = async (req, res, next) => {
   try {
@@ -219,14 +224,247 @@ export const getStudentDashboard = async (req, res, next) => {
       })),
     };
 
+    // Get Quiz Challenges (top 3 published quizzes)
+    let quizChallenges = [];
+    try {
+      const quizzes = await Quiz.find({ status: "published" })
+        .sort({ createdAt: -1 })
+        .limit(3)
+        .lean();
+      
+      quizChallenges = quizzes.map((quiz) => {
+        const difficultyMap = {
+          beginner: "Beginner",
+          intermediate: "Intermediate",
+          advanced: "Advanced",
+          "all-levels": "All Levels",
+        };
+        
+        return {
+          id: quiz._id.toString(),
+          title: quiz.title,
+          reward: `+${quiz.rewardCoins || 0} coins`,
+          closing: quiz.difficulty ? `${difficultyMap[quiz.difficulty] || quiz.difficulty} challenge` : "Daily challenge",
+          playRoute: `/learn-earn/quiz/${quiz._id}`,
+        };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching quizzes:", error);
+      quizChallenges = [];
+    }
+
+    // Get Marketplace Picks (top 3 published courses and ebooks)
+    let marketplaceHighlights = [];
+    try {
+      const [courses, ebooks] = await Promise.all([
+        Course.find({ status: "published" })
+          .populate("instructor", "fullName")
+          .sort({ createdAt: -1 })
+          .limit(2)
+          .lean(),
+        EbookResource.find({ isPublic: true })
+          .sort({ publishedAt: -1, createdAt: -1 })
+          .limit(1)
+          .lean(),
+      ]);
+
+      const courseItems = courses.map((course) => ({
+        id: course._id.toString(),
+        type: "Course",
+        tag: "Best Seller",
+        title: course.title,
+        mentor: course.instructor?.fullName || "Instructor",
+        price: `AED ${course.price || 0}`,
+        to: `/learn-earn/courses/${course._id}`,
+      }));
+
+      const ebookItems = ebooks.map((ebook) => ({
+        id: ebook._id.toString(),
+        type: "E-Book",
+        tag: "Top Rated",
+        title: ebook.title,
+        mentor: ebook.metadata?.author || "Digital AELA",
+        price: ebook.metadata?.price ? `AED ${ebook.metadata.price}` : "Free",
+        to: `/books/${ebook._id}/payment`,
+      }));
+
+      marketplaceHighlights = [...courseItems, ...ebookItems].slice(0, 3);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching marketplace items:", error);
+      marketplaceHighlights = [];
+    }
+
+    // Get Library Picks (top 3 public ebooks)
+    let ebookShelf = [];
+    try {
+      const ebooks = await EbookResource.find({ isPublic: true })
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .limit(3)
+        .lean();
+      
+      ebookShelf = ebooks.map((ebook) => ({
+        id: ebook._id.toString(),
+        title: ebook.title,
+        pages: ebook.pages || 0,
+        to: `/books/${ebook._id}/payment`,
+      }));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching library ebooks:", error);
+      ebookShelf = [];
+    }
+
+    // Get Latest Blogs (top 3 published blogs)
+    let blogFeed = [];
+    try {
+      const blogs = await RecruiterBlog.find({ status: "published" })
+        .populate("author", "fullName")
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .limit(3)
+        .lean();
+      
+      blogFeed = blogs.map((blog) => {
+        const publishedDate = blog.publishedAt || blog.createdAt;
+        const timeAgo = formatTimeAgo(publishedDate);
+        
+        return {
+          id: blog._id.toString(),
+          title: blog.title,
+          author: blog.author?.fullName || "Author",
+          time: timeAgo,
+          to: `/blogs/${blog._id}`,
+        };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching blogs:", error);
+      blogFeed = [];
+    }
+
+    // Get Job Matches (top 3 published jobs)
+    let jobsBoard = [];
+    try {
+      const jobs = await JobPost.find({ status: "published" })
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .limit(3)
+        .lean();
+      
+      jobsBoard = jobs.map((job) => {
+        const publishedDate = job.publishedAt || job.createdAt;
+        const timeAgo = formatTimeAgo(publishedDate);
+        const employmentType = job.employmentType || "full-time";
+        const location = job.isRemote ? "Remote" : job.location || "Location TBD";
+        
+        return {
+          id: job._id.toString(),
+          title: job.title,
+          company: job.company,
+          type: employmentType.charAt(0).toUpperCase() + employmentType.slice(1).replace("-", " "),
+          posted: timeAgo,
+          to: `/explore-jobs/jobs/${job._id}`,
+        };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching jobs:", error);
+      jobsBoard = [];
+    }
+
+    // Get Student Profiles (top 3 students)
+    let studentProfiles = [];
+    try {
+      const students = await User.find({ role: "student", isActive: true })
+        .select("fullName")
+        .limit(3)
+        .lean();
+      
+      studentProfiles = students.map((student, index) => {
+        const focuses = ["IELTS Scholar", "Debate Captain", "Blog Creator", "Speaking Champion", "Grammar Master"];
+        return {
+          id: student._id.toString(),
+          name: student.fullName,
+          focus: focuses[index % focuses.length],
+          to: `/community/students/${student._id}`,
+        };
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching students:", error);
+      studentProfiles = [];
+    }
+
+    // Get Teachers (top 2 teachers)
+    let teacherSpotlight = [];
+    try {
+      const teachers = await User.find({ role: "teacher", isActive: true })
+        .select("fullName metadata")
+        .limit(2)
+        .lean();
+      
+      teacherSpotlight = teachers.map((teacher) => ({
+        id: teacher._id.toString(),
+        name: teacher.fullName,
+        expertise: teacher.metadata?.expertise || "English Language",
+        to: `/community/teachers/${teacher._id}`,
+      }));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching teachers:", error);
+      teacherSpotlight = [];
+    }
+
+    // Get Recruiters (top 2 recruiters)
+    let recruiterSpotlight = [];
+    try {
+      const recruiters = await User.find({ role: "recruiter", isActive: true })
+        .select("fullName metadata")
+        .limit(2)
+        .lean();
+      
+      recruiterSpotlight = recruiters.map((recruiter) => ({
+        id: recruiter._id.toString(),
+        name: recruiter.fullName,
+        roles: recruiter.metadata?.company || "Talent Partner",
+        to: `/community/recruiters/${recruiter._id}`,
+      }));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching recruiters:", error);
+      recruiterSpotlight = [];
+    }
+
     return res.json({
       journeyStats,
       ongoingCourses: ongoingCourses.filter(Boolean),
       learnEarnProgress,
-      // Other dashboard sections can be added here
+      quizChallenges,
+      marketplaceHighlights,
+      ebookShelf,
+      blogFeed,
+      jobsBoard,
+      studentProfiles,
+      teacherSpotlight,
+      recruiterSpotlight,
     });
   } catch (error) {
     return next(error);
   }
 };
+
+// Helper function to format time ago
+function formatTimeAgo(date) {
+  if (!date) return "Recently";
+  const now = new Date();
+  const past = new Date(date);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+  
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+}
 

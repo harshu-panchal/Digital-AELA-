@@ -271,7 +271,7 @@ const CreateBlog = () => {
             <h2 className="mb-6 text-xl font-semibold text-white">
               Live Preview
             </h2>
-            <article className="prose prose-invert max-w-none">
+            <article className="prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-[#F5D26A] prose-h1:text-3xl prose-h1:font-bold prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-5 prose-h3:mb-2 prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-2 max-w-none">
               <h1>{title || "Your inspiring title"}</h1>
               <p className="text-sm text-gray-400">
                 Tags:{" "}

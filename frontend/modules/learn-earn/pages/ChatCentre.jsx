@@ -144,7 +144,7 @@ const ChatCentre = () => {
               : conv
           )
         );
-      }
+    }
     };
 
     const handleMessageSent = (message) => {
@@ -410,7 +410,7 @@ const ChatCentre = () => {
                       {item.time}
                     </p>
                   </Motion.div>
-                    ))}
+                ))}
                     {typingUsers.has(activeChatId) && (
                       <div className="text-xs text-gray-400 italic">
                         {activeChat?.name || "User"} is typing...
@@ -455,7 +455,7 @@ const ChatCentre = () => {
                   {sending ? (
                     <FaSpinner className="h-5 w-5 animate-spin" />
                   ) : (
-                    <HiOutlinePaperAirplane className="h-5 w-5" />
+                  <HiOutlinePaperAirplane className="h-5 w-5" />
                   )}
                 </button>
               </div>

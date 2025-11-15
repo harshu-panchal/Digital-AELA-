@@ -13,6 +13,7 @@ import ProfilePage from "../modules/learn-earn/pages/ProfilePage";
 import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
 import LiveDebates from "../modules/learn-earn/pages/LiveDebates";
 import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
+import QuizPlay from "../modules/learn-earn/pages/QuizPlay";
 import WalletDashboard from "../modules/learn-earn/pages/WalletDashboard";
 import RatingsReviews from "../modules/learn-earn/pages/RatingsReviews";
 import AdminControl from "../modules/learn-earn/pages/AdminControl";
@@ -67,6 +68,7 @@ import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import UserDetail from "../modules/admin/pages/UserDetail";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
+import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
 import StudentDashboard from "../modules/student/StudentDashboard";
 import CourseCreate from "../modules/teacher/CourseCreate";
 import TeacherCourseDetail from "../modules/teacher/CourseDetail";
@@ -74,6 +76,9 @@ import EbookUpload from "../modules/teacher/EbookUpload";
 import EbookDetail from "../modules/teacher/EbookDetail";
 import QuizCreate from "../modules/teacher/QuizCreate";
 import QuizDetail from "../modules/teacher/QuizDetail";
+import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
+import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
+import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
 
 export const App = () => {
   const location = useLocation();
@@ -108,6 +113,14 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
               <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/marketplace"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <TeacherMarketplace />
             </ProtectedRoute>
           }
         />
@@ -188,6 +201,7 @@ export const App = () => {
           <Route path="chat" element={<ChatCentre />} />
           <Route path="live-debates" element={<LiveDebates />} />
           <Route path="activities" element={<ActivitiesHub />} />
+          <Route path="quiz/:quizId" element={<QuizPlay />} />
           <Route path="wallet" element={<WalletDashboard />} />
           <Route path="ratings" element={<RatingsReviews />} />
           <Route
@@ -303,6 +317,9 @@ export const App = () => {
         <Route path="/join-us/influencer" element={<JoinInfluencer />} />
         <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
         <Route path="/join-us/after-life" element={<JoinBuildAfterLife />} />
+        <Route path="/community/students/:userId" element={<StudentProfileDetail />} />
+        <Route path="/community/teachers/:userId" element={<TeacherProfileDetail />} />
+        <Route path="/community/recruiters/:userId" element={<RecruiterProfileDetail />} />
         <Route
           path="/explore-jobs/*"
           element={
