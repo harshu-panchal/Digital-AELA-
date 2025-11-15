@@ -40,17 +40,27 @@ const ProfilePage = () => {
       try {
         const profileData = await fetchStudentProfile(authUser.id);
         setStudentProfile(profileData);
+        // Update profile avatar if available from StudentProfile
+        if (profileData?.avatarUrl) {
+          updateProfile({ avatar: profileData.avatarUrl });
+        } else if (authUser?.metadata?.avatarUrl) {
+          updateProfile({ avatar: authUser.metadata.avatarUrl });
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load student profile:", error);
         // Profile might not exist yet, that's okay
+        // Fallback to user metadata avatarUrl
+        if (authUser?.metadata?.avatarUrl) {
+          updateProfile({ avatar: authUser.metadata.avatarUrl });
+        }
       } finally {
         setLoadingProfile(false);
       }
     };
 
     loadProfile();
-  }, [authUser, tokens]);
+  }, [authUser, tokens, updateProfile]);
 
   // Load social links from backend on mount
   useEffect(() => {

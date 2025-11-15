@@ -461,6 +461,11 @@ export const UserProvider = ({ children }) => {
             return updated;
           });
         }
+
+        // Update profile avatar if available from dashboard data
+        if (dashboardData.profileAvatar) {
+          updateProfile({ avatar: dashboardData.profileAvatar });
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load dashboard data from backend:", error);
@@ -498,7 +503,7 @@ export const UserProvider = ({ children }) => {
           : defaultProfile.experience),
       maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
       interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
-      avatar: metadata.avatar ?? prev.avatar ?? defaultProfile.avatar,
+      avatar: metadata.avatarUrl ?? metadata.avatar ?? prev.avatar ?? defaultProfile.avatar,
       bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
       coins: aelaPoints,
       metadata,

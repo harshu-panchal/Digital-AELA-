@@ -177,24 +177,25 @@ const mapApiBlog = (blog) => {
           id: authorId,
           name: blog.author.fullName ?? blog.author.name ?? "Recruiter",
           avatar:
-            recruiterProfile.avatarUrl ??
+            recruiterProfile?.avatarUrl ??
             blog.author.avatarUrl ??
+            blog.recruiterProfile?.avatarUrl ??
             "https://i.pravatar.cc/150?img=11",
           bio:
-            recruiterProfile.headline ??
+            recruiterProfile?.headline ??
             blog.author.bio ??
             "Digital AELA contributor",
           role:
-            recruiterProfile.company ??
+            recruiterProfile?.company ??
             blog.author.role ??
             "Digital AELA Recruiter",
-          social: recruiterProfile.socials?.website
+          social: recruiterProfile?.socials?.website
             ? {
                 platform: "Website",
                 url: recruiterProfile.socials.website,
               }
             : undefined,
-          followers: recruiterProfile.stats?.totalViews ?? 0,
+          followers: recruiterProfile?.stats?.totalViews ?? 0,
         }
       : {
           id: "digital-aela",

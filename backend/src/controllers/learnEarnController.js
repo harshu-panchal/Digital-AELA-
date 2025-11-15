@@ -98,15 +98,17 @@ export const getDashboardData = async (req, res, next) => {
     const messagesWithUsers = await Promise.all(
       recentMessages.map(async (conv) => {
         const otherUserId = conv._id;
-        const otherUser = await User.findById(otherUserId).select("fullName email");
+        const otherUser = await User.findById(otherUserId).select("fullName email metadata");
         const profile = await StudentProfile.findOne({ user: otherUserId });
         const lastMsg = conv.lastMessage;
+        // Get avatarUrl from user metadata, then profile, then fallback
+        const avatarUrl = otherUser?.metadata?.avatarUrl || profile?.avatarUrl || `https://i.pravatar.cc/150?img=${otherUserId.toString().slice(-2)}`;
 
         return {
           id: `chat-${otherUserId.toString()}`,
           userId: otherUserId.toString(),
           name: otherUser?.fullName || "User",
-          avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${otherUserId.toString().slice(-2)}`,
+          avatar: avatarUrl,
           preview: lastMsg.content || "",
           unread: conv.unreadCount,
           timestamp: formatTimeAgo(lastMsg.createdAt),

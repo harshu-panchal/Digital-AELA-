@@ -86,10 +86,27 @@ export const getStudentProfile = async (req, res, next) => {
 
     const profile = await StudentProfile.findOne({ user: userId }).populate(
       "user",
-      "fullName email role"
+      "fullName email role metadata"
     );
 
     if (!profile) {
+      // Try to get user metadata for avatarUrl even if profile doesn't exist
+      const user = await User.findById(userId).select("fullName email role metadata").lean();
+      if (user) {
+        return res.json({
+          user: userId,
+          englishLevel: "",
+          profession: "",
+          experience: { years: null, description: "" },
+          location: { city: "", country: "" },
+          maritalStatus: "",
+          interests: [],
+          skills: [],
+          bio: "",
+          headline: "",
+          avatarUrl: user.metadata?.avatarUrl || "", // Include avatarUrl from user metadata
+        });
+      }
       // Return empty profile structure instead of 404 to allow creating profile
       return res.json({
         user: userId,
@@ -102,7 +119,14 @@ export const getStudentProfile = async (req, res, next) => {
         skills: [],
         bio: "",
         headline: "",
+        avatarUrl: "",
       });
+    }
+
+    // Merge avatarUrl from user metadata if profile doesn't have it
+    const user = profile.user;
+    if (user && user.metadata && user.metadata.avatarUrl && !profile.avatarUrl) {
+      profile.avatarUrl = user.metadata.avatarUrl;
     }
 
     return res.json(profile);

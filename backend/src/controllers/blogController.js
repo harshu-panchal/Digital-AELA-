@@ -112,7 +112,7 @@ export const listPublishedBlogs = async (req, res, next) => {
         .sort({ publishedAt: -1, updatedAt: -1 })
         .skip(skip)
         .limit(Number(pageSize))
-        .populate("author", ["fullName", "role", "email"])
+        .populate("author", ["fullName", "role", "email", "metadata"])
         .lean(),
       RecruiterBlog.countDocuments({ status: "published" }),
     ]);
@@ -137,6 +137,8 @@ export const listPublishedBlogs = async (req, res, next) => {
     const data = items.map((blog) => {
       const authorId = blog.author?._id ? blog.author._id.toString() : blog.author?.id;
       const recruiterProfile = authorId && profileMap[authorId] ? profileMap[authorId] : null;
+      // Get avatarUrl from user metadata if available (for all user types)
+      const userAvatarUrl = blog.author?.metadata?.avatarUrl || null;
       return {
         id: blog._id ? blog._id.toString() : blog.id,
         title: blog.title,
@@ -153,13 +155,14 @@ export const listPublishedBlogs = async (req, res, next) => {
               fullName: blog.author.fullName,
               role: blog.author.role,
               email: blog.author.email,
+              avatarUrl: userAvatarUrl, // Include avatarUrl from user metadata
             }
           : null,
         recruiterProfile: recruiterProfile
           ? {
               company: recruiterProfile.company,
               headline: recruiterProfile.headline,
-              avatarUrl: recruiterProfile.avatarUrl,
+              avatarUrl: recruiterProfile.avatarUrl || userAvatarUrl, // Prefer recruiter profile, fallback to user metadata
               socials: recruiterProfile.socials,
               stats: recruiterProfile.stats,
             }

@@ -171,6 +171,7 @@ export const registerUser = async (req, res, next) => {
           linkedinUrl: profileData.linkedinUrl,
           preferredProgram: profileData.preferredProgram,
           goals: profileData.goals,
+          avatarUrl: avatarUrl || profileData.avatarUrl || "", // Store Cloudinary avatar URL
           metadata: {
             referralSource: profileData.referralSource,
             message: profileData.message,
