@@ -43,6 +43,28 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// API info endpoint
+app.get("/api/v1", (_req, res) => {
+  res.json({
+    message: "Digital AELA Backend API",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      auth: "/api/v1/auth",
+      students: "/api/v1/students",
+      teachers: "/api/v1/teachers",
+      courses: "/api/v1/courses",
+      quizzes: "/api/v1/quizzes",
+      blogs: "/api/v1/blogs",
+      jobs: "/api/v1/jobs",
+      resources: "/api/v1/resources",
+      admin: "/api/v1/admin",
+      upload: "/api/v1/upload",
+    },
+    health: "/health",
+  });
+});
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/recruiter/jobs", jobRoutes);
