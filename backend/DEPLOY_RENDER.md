@@ -191,9 +191,65 @@ Socket.IO works on Render, but you may need to:
 2. Check that frontend uses `wss://` (secure WebSocket) for production
 3. Verify Socket.IO client version matches server version
 
+## Step 6: Enable Auto-Deploy
+
+Auto-deploy is **enabled by default** when you create a service from a Git repository. However, you can verify and configure it:
+
+### Verify Auto-Deploy is Enabled
+
+1. Go to your service in the [Render Dashboard](https://dashboard.render.com)
+2. Click on your service name (e.g., `digital-aela-backend`)
+3. Click on the **"Settings"** tab
+4. Scroll down to the **"Auto-Deploy"** section
+5. You should see:
+   - ✅ **Auto-Deploy**: Enabled
+   - **Branch**: `main` (or your default branch)
+
+### Enable/Disable Auto-Deploy
+
+If auto-deploy is disabled or you want to change settings:
+
+1. In the **"Auto-Deploy"** section:
+
+   - Toggle the **"Auto-Deploy"** switch to **ON** or **OFF**
+   - Select the branch you want to auto-deploy from (usually `main` or `master`)
+
+2. **Enable Auto-Deploy for specific branches**:
+   - You can only auto-deploy from one branch at a time
+   - Default is usually your repository's default branch
+
+### Manual Deploy
+
+Even with auto-deploy enabled, you can manually trigger deployments:
+
+1. Go to your service in Render Dashboard
+2. Click on the **"Manual Deploy"** button in the top right
+3. Select the branch/commit you want to deploy
+4. Click **"Deploy"**
+
+### Deploy Notifications (Optional)
+
+1. In the **"Settings"** tab
+2. Scroll to **"Notifications"** section
+3. Add email/webhook notifications for:
+   - Deployment started
+   - Deployment succeeded
+   - Deployment failed
+
+### Auto-Deploy Behavior
+
+With auto-deploy enabled:
+
+- ✅ **Automatic**: Every push to the selected branch triggers a new deployment
+- ✅ **Builds**: Render automatically runs `npm install` (build command)
+- ✅ **Restarts**: Service automatically restarts with new code
+- ⚠️ **Downstream**: Any push to the branch will trigger deployment (be careful with `main`)
+
+**Note**: On the free tier, Render may take a moment to detect the push and start the deployment.
+
 ## Next Steps
 
-1. Set up automated deployments from your main branch
+1. ✅ Set up automated deployments from your main branch (Auto-deploy is enabled by default)
 2. Consider setting up monitoring and alerts
 3. Configure custom domain (paid plans)
 4. Set up database backups
