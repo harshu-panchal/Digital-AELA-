@@ -20,19 +20,19 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
           },
         },
       }),
-      Underline,
+        Underline,
       Link.configure({ 
         openOnClick: false, 
         HTMLAttributes: { class: "text-[#F5D26A] underline" } 
       }),
-      Placeholder.configure({ placeholder }),
-    ],
-    content: value,
-    onUpdate: ({ editor: tiptap }) => {
-      const html = tiptap.getHTML();
-      onChange(html === "<p></p>" ? "" : html);
-    },
-  });
+        Placeholder.configure({ placeholder }),
+      ],
+      content: value,
+      onUpdate: ({ editor: tiptap }) => {
+        const html = tiptap.getHTML();
+        onChange(html === "<p></p>" ? "" : html);
+      },
+    });
 
   useEffect(() => {
     if (!editor) return;

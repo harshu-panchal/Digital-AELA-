@@ -4,6 +4,7 @@ import {
   getPendingApprovals,
   getRecentActivity,
   getDashboardData,
+  getSystemHealth,
 } from "../controllers/superAdminController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -14,6 +15,9 @@ router.use(requireAuth(["super-admin"]));
 
 // Get all dashboard data (recommended - single call)
 router.get("/dashboard", getDashboardData);
+
+// System health endpoint
+router.get("/system-health", getSystemHealth);
 
 // Individual endpoints (for granular fetching if needed)
 router.get("/stats", getDashboardStats);

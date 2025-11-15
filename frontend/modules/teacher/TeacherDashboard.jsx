@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineArrowUpRight,
@@ -10,12 +10,15 @@ import {
   HiOutlineSparkles,
   HiOutlinePresentationChartLine,
 } from "react-icons/hi2";
-import { FaFilePdf, FaClipboardList, FaShoppingCart } from "react-icons/fa";
+import { FaFilePdf, FaClipboardList, FaShoppingCart, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { getTeacherEbooks } from "../../src/services/teacherEbooks";
-import { getTeacherQuizzes } from "../../src/services/teacherQuizzes";
+import { getTeacherQuizzes, deleteTeacherQuiz } from "../../src/services/teacherQuizzes";
+import { getTeacherCourses } from "../../src/services/teacherCourses";
+import { fetchTeacherDashboard } from "../../src/services/api/teacher";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -41,25 +44,51 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [ebooks, setEbooks] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [flash, setFlash] = useState({ ebooks: false, quizzes: false });
   const [loadingEbooks, setLoadingEbooks] = useState(true);
   const [loadingQuizzes, setLoadingQuizzes] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+
+  // Load dashboard data from backend
+  const loadDashboard = useCallback(async () => {
+    if (!user || user.role !== "teacher") {
+      setLoadingDashboard(false);
+      return;
+    }
+
+    try {
+      setLoadingDashboard(true);
+      const data = await fetchTeacherDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      console.error("Failed to load teacher dashboard:", error);
+      toast.warning("Some dashboard data may not be up to date.");
+    } finally {
+      setLoadingDashboard(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const refresh = async () => {
       try {
         setLoadingEbooks(true);
         setLoadingQuizzes(true);
-        // getTeacherEbooks is async (backend API)
-        const ebooksData = await getTeacherEbooks();
-        // getTeacherQuizzes is still synchronous (localStorage)
-        const quizzesData = getTeacherQuizzes();
+        // Fetch all teacher data from backend
+        const [ebooksData, quizzesData, coursesData] = await Promise.all([
+          getTeacherEbooks().catch(() => []),
+          getTeacherQuizzes().catch(() => []),
+          getTeacherCourses().catch(() => []),
+        ]);
         setEbooks(Array.isArray(ebooksData) ? ebooksData : []);
         setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+        setCourses(Array.isArray(coursesData) ? coursesData : []);
       } catch (error) {
         console.error("Failed to load teacher data:", error);
         setEbooks([]);
         setQuizzes([]);
+        setCourses([]);
       } finally {
         setLoadingEbooks(false);
         setLoadingQuizzes(false);
@@ -67,10 +96,11 @@ const TeacherDashboard = () => {
     };
 
     refresh();
+    loadDashboard();
 
     // Note: Removed storage event listener since we're now using backend API for ebooks
     // If you need real-time updates, consider using WebSockets or polling
-  }, []);
+  }, [loadDashboard]);
 
   useEffect(() => {
     const state = location.state;
@@ -83,6 +113,20 @@ const TeacherDashboard = () => {
 
     if (highlightConfig.ebooks || highlightConfig.quizzes) {
       setFlash(highlightConfig);
+      // Refresh data when returning from ebook/quiz creation
+      if (highlightConfig.ebooks) {
+        getTeacherEbooks().then((data) => {
+          setEbooks(Array.isArray(data) ? data : []);
+        }).catch(() => {});
+        loadDashboard();
+      }
+      if (highlightConfig.quizzes) {
+        getTeacherQuizzes().then((data) => {
+          setQuizzes(Array.isArray(data) ? data : []);
+        }).catch(() => {});
+        loadDashboard();
+      }
+      
       let timerId;
       if (typeof window !== "undefined") {
         timerId = window.setTimeout(() => setFlash({ ebooks: false, quizzes: false }), 2600);
@@ -94,7 +138,7 @@ const TeacherDashboard = () => {
         }
       };
     }
-  }, [location, navigate]);
+  }, [location, navigate, loadDashboard]);
 
   const {
     headlineStats,
@@ -111,17 +155,36 @@ const TeacherDashboard = () => {
     // For ebooks, check isPublic instead of status (since backend uses isPublic: false for pending)
     const draftEbooks = Array.isArray(ebooks) ? ebooks.filter((ebook) => !ebook.isPublic).length : 0;
 
-    const quizCount = quizzes.length;
-    const publishedQuizzes = quizzes.filter((quiz) => quiz.status === "published");
-    const draftQuizzes = quizzes.filter((quiz) => quiz.status !== "published");
+    // Filter quizzes by current teacher (check metadata.createdBy)
+    const teacherId = user?.id || user?._id;
+    const teacherQuizzes = teacherId
+      ? quizzes.filter((quiz) => {
+          const createdBy = quiz.metadata?.createdBy;
+          return (
+            !createdBy ||
+            createdBy === teacherId ||
+            createdBy.toString() === teacherId.toString()
+          );
+        })
+      : quizzes;
+    
+    const quizCount = teacherQuizzes.length;
+    const publishedQuizzes = teacherQuizzes.filter((quiz) => quiz.status === "published");
+    const draftQuizzes = teacherQuizzes.filter((quiz) => quiz.status !== "published");
+
+    // Get published courses count from courses or dashboard data
+    const publishedCoursesCount = dashboardData?.headlineStats?.coursesPublished 
+      || courses.filter((c) => c.status === "published").length;
 
     const stats = [
       {
         id: "activeCourses",
         label: "Courses Published",
-        value: "12",
+        value: publishedCoursesCount.toString(),
         icon: HiOutlineBookOpen,
-        context: "+2 launching next week",
+        context: publishedCoursesCount > 0
+          ? `${publishedCoursesCount} published`
+          : "+2 launching next week",
       },
       {
         id: "ebooks",
@@ -140,9 +203,9 @@ const TeacherDashboard = () => {
       {
         id: "monthlyRevenue",
         label: "30-day Revenue",
-        value: "AED 58,240",
+        value: dashboardData?.headlineStats?.monthlyRevenue || "AED 0",
         icon: HiOutlineCurrencyDollar,
-        context: "+21% vs last month",
+        context: dashboardData?.headlineStats?.monthlyRevenueContext || "No revenue yet",
       },
     ];
 
@@ -181,150 +244,115 @@ const TeacherDashboard = () => {
       },
     ];
 
-    const sales = [
+    // Use backend data if available, otherwise use defaults
+    const sales = dashboardData?.salesBreakdown || [
       {
         type: "Courses",
-        revenue: "AED 32.4K",
-        enrollments: 642,
-        topCourse: "Public Speaking Accelerator",
-        trend: "+14%",
+        revenue: "AED 0",
+        enrollments: 0,
+        topCourse: "No courses yet",
+        trend: "0%",
       },
       {
         type: "Books",
-        revenue: "AED 18.9K",
-        enrollments: 914,
-        topCourse: "Confidence Blueprint",
-        trend: "+9%",
+        revenue: "AED 0",
+        enrollments: 0,
+        topCourse: "No books yet",
+        trend: "0%",
       },
       {
         type: "Learn & Earn",
-        revenue: "AED 6.9K",
-        enrollments: 1_280,
-        topCourse: "Speaking Streak Challenges",
-        trend: "+28%",
+        revenue: "AED 0",
+        enrollments: 0,
+        topCourse: "No quizzes yet",
+        trend: "0%",
       },
     ];
 
-    const purchases = [
-      { learner: "Fatima Hassan", item: "IELTS Band 8 Mastery", type: "Course", time: "12 min ago", value: "AED 899" },
-      { learner: "Omar Al Farsi", item: "Executive Storytelling Playbook", type: "E-Book", time: "30 min ago", value: "AED 199" },
-      { learner: "Sara Malik", item: "Public Speaking Accelerator", type: "Course", time: "2 hours ago", value: "AED 899" },
-      { learner: "Mohammed Ali", item: "Confidence Drills Toolkit", type: "E-Book", time: "Yesterday", value: "AED 149" },
-    ];
+    const purchases = dashboardData?.recentPurchases || [];
+
+    // Use backend quiz data with participants (already filtered by teacher)
+    const backendQuizzes = dashboardData?.quizzesWithParticipants || [];
+    
+    // Additional frontend filter as safety measure - only show quizzes created by this teacher
+    // (teacherId is already declared above, so we reuse it)
+    const filteredBackendQuizzes = teacherId
+      ? backendQuizzes.filter((q) => {
+          // Backend should already filter, but double-check on frontend
+          const createdBy = q.metadata?.createdBy;
+          // If no createdBy metadata, skip it (shouldn't happen for new quizzes)
+          if (!createdBy) return false;
+          return (
+            createdBy === teacherId ||
+            createdBy.toString() === teacherId.toString()
+          );
+        })
+      : backendQuizzes;
 
     const quizPanelData = {
-      active: publishedQuizzes.length
-        ? publishedQuizzes.map((quiz) => ({
-            id: quiz.id,
-            title: quiz.title,
-            participants: quiz.participants ?? 0,
-            reward: `+${quiz.rewardCoins ?? 0} coins`,
-            status: quiz.availableUntil
-              ? `Closes ${new Date(quiz.availableUntil).toLocaleString()}`
-              : "Live",
-          }))
-        : [
-            {
-              id: "sample-quiz-1",
-              title: "Confidence Lightning Round",
-              participants: 482,
-              reward: "+120 coins",
-              status: "Live until midnight",
-            },
-            {
-              id: "sample-quiz-2",
-              title: "IELTS Listening Drill",
-              participants: 316,
-              reward: "+90 coins",
-              status: "Closing in 2 days",
-            },
-          ],
-      drafts: draftQuizzes.length
-        ? draftQuizzes.map((quiz) => ({
-            id: quiz.id,
-            title: quiz.title,
-            status: quiz.status,
-            action: "Continue editing",
-          }))
-        : [
-            { id: "sample-draft-1", title: "Storytelling Warm-Up", status: "draft", action: "Continue editing" },
-            { id: "sample-draft-2", title: "Vocabulary Blitz · Advanced", status: "pending", action: "Submit for approval" },
-          ],
+      active: filteredBackendQuizzes
+        .filter((q) => q.status === "published")
+        .map((q) => ({
+          id: q.id || q._id,
+          title: q.title,
+          participants: q.participants ?? 0,
+          reward: `+${q.rewardCoins ?? 0} coins`,
+          status: "Live", // Simplified status
+        })),
+      drafts: (dashboardData?.pendingItems || []).filter((item) => {
+        // Only show draft quizzes created by this teacher
+        if (item.type !== "quiz") return true; // Keep courses and ebooks
+        if (!teacherId) return false;
+        // For quizzes, we need to check if they're in the backend quizzes list
+        // or check metadata if available
+        const createdBy = item.metadata?.createdBy;
+        if (!createdBy) return false;
+        return (
+          createdBy === teacherId ||
+          createdBy.toString() === teacherId.toString()
+        );
+      }),
     };
 
-    const libraryEntries = ebookCount && Array.isArray(ebooks)
-      ? ebooks.map((ebook) => ({
+    // Use backend ebook library data if available, otherwise fallback to local ebooks
+    const libraryEntries = dashboardData?.ebookLibrary && dashboardData.ebookLibrary.length > 0
+      ? dashboardData.ebookLibrary
+      : (ebookCount && Array.isArray(ebooks)
+        ? ebooks.map((ebook) => {
+            const format = ebook.pages ? `PDF · ${ebook.pages} pages` : "PDF";
+            const downloads = ebook.metadata?.downloads || ebook.downloads || 0;
+            const updatedAt = ebook.updatedAt || ebook.createdAt;
+            const lastUpdated = updatedAt 
+              ? (() => {
+                  const now = new Date();
+                  const past = new Date(updatedAt);
+                  const diffInSeconds = Math.floor((now - past) / 1000);
+                  if (diffInSeconds < 60) return "Just now";
+                  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+                  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+                  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+                  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+                  return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+                })()
+              : "Just now";
+            const status = ebook.isPublic ? "published" : "draft";
+
+            return {
           id: ebook.id || ebook._id,
           title: ebook.title,
-          format: ebook.fileMeta
-            ? `PDF · ${Math.max(1, Math.round(ebook.fileMeta.size / 1024))} KB`
-            : ebook.pages ? `${ebook.pages} pages` : "PDF",
-          downloads: ebook.downloads ?? 0,
-          lastUpdated: ebook.updatedAt ? new Date(ebook.updatedAt).toLocaleDateString() : "Just now",
-          status: ebook.isPublic ? "published" : "draft",
-        }))
-      : [
-          {
-            id: "sample-ebook-1",
-            title: "Confidence Blueprint",
-            format: "PDF · 45 pages",
-            downloads: 320,
-            lastUpdated: "2 days ago",
-            status: "published",
-          },
-          {
-            id: "sample-ebook-2",
-            title: "IELTS Speaking Drills",
-            format: "PDF · 28 pages",
-            downloads: 214,
-            lastUpdated: "4 days ago",
-            status: "published",
-          },
-          {
-            id: "sample-ebook-3",
-            title: "Stage Anxiety Reset",
-            format: "PDF · 30 pages",
-            downloads: 156,
-            lastUpdated: "1 week ago",
-            status: "draft",
-          },
-        ];
+              format: format,
+              downloads: downloads,
+              lastUpdated: lastUpdated,
+              status: status,
+            };
+          })
+        : []);
 
-    const students = [
-      { name: "Ali Hassan", programme: "Public Speaking Accelerator", progress: "92%", coins: 620 },
-      { name: "Lina Joseph", programme: "Corporate Storytelling", progress: "78%", coins: 540 },
-      { name: "Ahmed Khan", programme: "IELTS Band 8 Mastery", progress: "84%", coins: 480 },
-    ];
+    const students = dashboardData?.learnerSpotlight || [];
 
-    const mentors = [
-      { name: "Priya Sharma", expertise: "IELTS & Test Prep", courses: 9, rating: "4.9 ★" },
-      { name: "Omar Al Farsi", expertise: "Corporate Communication", courses: 7, rating: "4.8 ★" },
-      { name: "Sarah Thomas", expertise: "Leadership Storytelling", courses: 5, rating: "4.7 ★" },
-    ];
+    const mentors = dashboardData?.mentorNetwork || [];
 
-    const marketplaceItems = [
-      {
-        title: "Leadership Storytelling Masterclass",
-        mentor: "Sarah Thomas",
-        type: "Course",
-        price: "AED 799",
-        reason: "Great addition to your corporate communication bundle",
-      },
-      {
-        title: "Voice & Accent Playbook",
-        mentor: "Priya Sharma",
-        type: "E-Book",
-        price: "AED 149",
-        reason: "Pairs well with your confidence drills course",
-      },
-      {
-        title: "Advanced Debate Challenges",
-        mentor: "Mohammed Ali",
-        type: "Quiz Pack",
-        price: "AED 299",
-        reason: "Boost Learn & Earn engagement",
-      },
-    ];
+    const marketplaceItems = dashboardData?.marketplace || [];
 
     return {
       headlineStats: stats,
@@ -337,7 +365,7 @@ const TeacherDashboard = () => {
       mentorNetwork: mentors,
       marketplace: marketplaceItems,
     };
-  }, [ebooks, quizzes]);
+  }, [ebooks, quizzes, courses, dashboardData, user]);
 
   return (
     <div className="min-h-screen bg-[#05060D] text-white">
@@ -350,7 +378,7 @@ const TeacherDashboard = () => {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,210,106,0.12),transparent_70%)]" />
 
-      <main className="relative z-10 pt-24 pb-20">
+      <main className="relative z-10 pt-24 pb-20" style={{ paddingTop: 'calc(6rem + 5vh)' }}>
         <section className="layout-container space-y-10">
           <motion.header
             variants={sectionVariants}
@@ -509,38 +537,129 @@ const TeacherDashboard = () => {
                 </button>
               </header>
               <div className="space-y-3">
-                {quizPanel.active.map((quiz) => (
-                  <Link
+                {quizPanel.active.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-slate-400">No active quizzes yet. Create one to get started!</p>
+                  </div>
+                ) : (
+                  quizPanel.active.map((quiz) => (
+                  <div
                     key={quiz.id}
+                    className="group relative flex items-center gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100 transition hover:border-emerald-300/60">
+                    <Link
                     to={quiz.id.startsWith("sample-quiz") ? "/teacher/quizzes/new" : `/teacher/quizzes/${quiz.id}`}
-                    className="block rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100 transition hover:border-emerald-300/60">
+                      className="flex-1">
                     <p className="text-sm font-semibold text-white">{quiz.title}</p>
                     <p className="text-xs text-emerald-200/80">
                       {quiz.participants} participants · Reward {quiz.reward}
                     </p>
                     <p className="text-xs text-emerald-100/70">{quiz.status}</p>
                   </Link>
-                ))}
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.confirm(`Are you sure you want to delete "${quiz.title}"? This action cannot be undone.`)) {
+                          try {
+                            await deleteTeacherQuiz(quiz.id || quiz._id);
+                            toast.success("Quiz deleted successfully");
+                            // Refresh quizzes and dashboard
+                            const quizzesData = await getTeacherQuizzes();
+                            setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+                            loadDashboard();
+                          } catch (error) {
+                            console.error("Failed to delete quiz:", error);
+                            toast.error("Failed to delete quiz. Please try again.");
+                          }
+                        }
+                      }}
+                      className="flex-shrink-0 rounded-lg p-2 text-red-400 transition hover:bg-red-500/20 hover:text-red-300"
+                      title="Delete quiz">
+                      <FaTrash className="h-4 w-4" />
+                    </button>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
-                <p className="text-sm font-semibold text-white">Drafts & review</p>
-                {quizPanel.drafts.map((draft) => (
-                  <Link
-                    key={draft.id}
-                    to={draft.id.startsWith("sample-draft") ? "/teacher/quizzes/new" : `/teacher/quizzes/${draft.id}`}
-                    className="mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3 py-2 transition hover:border-sky-400/50">
-                    <div>
-                      <p className="font-semibold text-white">{draft.title}</p>
-                      <p className="text-[11px] text-slate-400/70">{draft.status}</p>
-                    </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
-                      {draft.action} →
-                    </span>
-                  </Link>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           </section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Drafts & review</h2>
+                <p className="text-xs text-slate-400 mt-1">Pending admin approval</p>
+              </div>
+            </header>
+            <div className="space-y-2">
+              {quizPanel.drafts.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-xs text-slate-400">No pending items</p>
+                </div>
+              ) : (
+                quizPanel.drafts.map((item) => {
+                  const getTypeLabel = (type) => {
+                    switch (type) {
+                      case "course":
+                        return "Course";
+                      case "ebook":
+                        return "E-Book";
+                      case "quiz":
+                        return "Quiz";
+                      default:
+                        return "Item";
+                    }
+                  };
+
+                  const getTypeColor = (type) => {
+                    switch (type) {
+                      case "course":
+                        return "text-blue-300";
+                      case "ebook":
+                        return "text-purple-300";
+                      case "quiz":
+                        return "text-emerald-300";
+                      default:
+                        return "text-slate-300";
+                    }
+                  };
+
+                  const route = item.route || (item.type === "course" 
+                    ? `/teacher/courses/${item.id}`
+                    : item.type === "ebook"
+                    ? `/teacher/ebooks/${item.id}`
+                    : `/teacher/quizzes/${item.id}`);
+
+                  return (
+                    <Link
+                      key={item.id}
+                      to={route}
+                      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-sky-400/50">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-white truncate">{item.title}</p>
+                          <span className={`text-[10px] uppercase tracking-[0.2em] ${getTypeColor(item.type)} flex-shrink-0`}>
+                            {getTypeLabel(item.type)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400/70 mt-0.5">
+                          {item.status === "draft" ? "Draft" : item.status === "pending" ? "Pending approval" : item.status}
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300 flex-shrink-0 ml-2">
+                        {item.action} →
+                      </span>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </motion.section>
 
           <motion.section
             variants={cardVariants}
@@ -569,10 +688,17 @@ const TeacherDashboard = () => {
               </div>
             </header>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {ebookLibrary.map((book) => (
+              {ebookLibrary.length === 0 ? (
+                <div className="col-span-full py-12 text-center">
+                  <FaFilePdf className="mx-auto mb-3 h-12 w-12 text-slate-500" />
+                  <p className="text-sm text-slate-400">No ebooks in your library yet</p>
+                  <p className="mt-1 text-xs text-slate-500">Upload your first e-book to get started</p>
+                </div>
+              ) : (
+                ebookLibrary.map((book) => (
                 <Link
                   key={book.id ?? book.title}
-                  to={book.id?.startsWith("sample-ebook") ? "/teacher/ebooks/upload" : `/teacher/ebooks/${book.id}`}
+                    to={`/teacher/ebooks/${book.id}`}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/40">
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <FaFilePdf className="text-[#f87171]" />
@@ -583,7 +709,8 @@ const TeacherDashboard = () => {
                   <p className="text-xs text-slate-400/80">Updated · {book.lastUpdated}</p>
                   <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">{book.status}</p>
                 </Link>
-              ))}
+                ))
+              )}
             </div>
           </motion.section>
 
@@ -602,7 +729,13 @@ const TeacherDashboard = () => {
                 </button>
               </header>
               <div className="space-y-3">
-                {studentSpotlight.map((student) => (
+                {studentSpotlight.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-slate-400">No student progress data yet</p>
+                    <p className="mt-1 text-xs text-slate-500">Students will appear here as they enroll in your courses</p>
+                  </div>
+                ) : (
+                  studentSpotlight.map((student) => (
                   <div key={student.name} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
                     <div>
                       <p className="text-sm font-semibold text-white">{student.name}</p>
@@ -617,7 +750,8 @@ const TeacherDashboard = () => {
                       </span>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
             <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
@@ -630,7 +764,13 @@ const TeacherDashboard = () => {
                 </button>
               </header>
               <div className="space-y-3">
-                {mentorNetwork.map((mentor) => (
+                {mentorNetwork.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-slate-400">No other mentors found</p>
+                    <p className="mt-1 text-xs text-slate-500">Connect with other teachers in the marketplace</p>
+                  </div>
+                ) : (
+                  mentorNetwork.map((mentor) => (
                   <div key={mentor.name} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
                     <p className="text-sm font-semibold text-white">{mentor.name}</p>
                     <p className="text-slate-300/80">{mentor.expertise}</p>
@@ -638,7 +778,8 @@ const TeacherDashboard = () => {
                       Courses {mentor.courses} · Rating {mentor.rating}
                     </p>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </motion.section>
@@ -657,8 +798,18 @@ const TeacherDashboard = () => {
               </Link>
             </header>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {marketplace.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
+              {marketplace.length === 0 ? (
+                <div className="col-span-full py-12 text-center">
+                  <FaShoppingCart className="mx-auto mb-3 h-12 w-12 text-slate-500" />
+                  <p className="text-sm text-slate-400">No marketplace recommendations available</p>
+                  <p className="mt-1 text-xs text-slate-500">Explore the marketplace to discover courses and resources</p>
+                </div>
+              ) : (
+                marketplace.map((item) => (
+                  <Link
+                    key={item.id || item.title}
+                    to={item.route || "/teacher/marketplace"}
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/40">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
                     {item.type}
                   </p>
@@ -669,14 +820,13 @@ const TeacherDashboard = () => {
                     <span className="rounded-full border border-white/10 px-3 py-1 text-white/90">
                       {item.price}
                     </span>
-                    <button
-                      type="button"
-                      className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">
                       View →
-                    </button>
+                      </span>
                   </div>
-                </div>
-              ))}
+                  </Link>
+                ))
+              )}
             </div>
           </motion.section>
         </section>

@@ -275,7 +275,7 @@ const ActivitiesHub = () => {
             console.log(`⚠ Quiz ${quizId} (${quiz.title}) not found in attempts. Available IDs:`, availableIds);
           }
         }
-        
+
         grouped[category].items.push({
           id: quizId,
           name: quiz.title,
@@ -410,7 +410,7 @@ const ActivitiesHub = () => {
                     <span className="text-[#D4AF37] font-semibold">
                       +{item.attemptResult.coinsEarned} coins earned
                     </span>
-                  </div>
+                </div>
                 </div>
               )}
               

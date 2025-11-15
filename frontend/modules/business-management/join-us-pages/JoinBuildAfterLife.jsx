@@ -48,12 +48,12 @@ const JoinBuildAfterLife = () => {
         const publishedCourses = (response.courses || [])
           .filter((course) => course.status === "published") // Extra safety check
           .map((course) => ({
-            id: course._id,
+          id: course._id,
             slug: course._id,
             title: course.title || "Untitled Course",
             description: course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || "",
-            price: course.price ? `AED ${course.price}` : "On Request",
+          price: course.price ? `AED ${course.price}` : "On Request",
             duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
             format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
             features: course.metadata?.tags || course.tags || [],
@@ -62,7 +62,7 @@ const JoinBuildAfterLife = () => {
             difficulty: course.metadata?.difficulty || course.difficulty || "",
             instructor: course.instructor?.fullName || course.instructorName || "Digital AELA",
             type: "course",
-          }));
+        }));
         
         setAfterLifeCourses(publishedCourses);
         
@@ -104,22 +104,22 @@ const JoinBuildAfterLife = () => {
                         ? Number(ebook.metadata.price) 
                         : 0;
             
-            return {
-              id: ebook._id,
+          return {
+            id: ebook._id,
               title: ebook.title || "Untitled Book",
               author: ebook.metadata?.author || ebook.author || "Digital AELA",
-              price: price,
-              originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
+            price: price,
+            originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
               rating: 4.5, // Default rating
-              reviews: 0,
+            reviews: 0,
               category: ebook.categories?.[0] || ebook.category || "General",
-              badge: "E-Book",
+            badge: "E-Book",
               image: ebook.metadata?.coverImage || ebook.coverImage || bookAdvancedEnglishImg,
               imageAlt: `${ebook.title || "Book"} cover`,
               description: ebook.description || "",
               type: "book",
-            };
-          });
+          };
+        });
         
         setAfterLifeBooks(booksFromApi);
         
@@ -210,13 +210,13 @@ const JoinBuildAfterLife = () => {
           className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
-          <motion.h1
+              <motion.h1
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
             Build Your <span className="text-[#D4AF37]">After Life</span>
-          </motion.h1>
+              </motion.h1>
           <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -227,7 +227,7 @@ const JoinBuildAfterLife = () => {
           </motion.p>
 
           {/* Search and Filters */}
-          <motion.div
+              <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
@@ -257,7 +257,7 @@ const JoinBuildAfterLife = () => {
               ))}
             </div>
           </motion.div>
-        </div>
+          </div>
       </motion.section>
 
       {/* Items Grid */}
@@ -267,7 +267,7 @@ const JoinBuildAfterLife = () => {
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
+                viewport={{ once: true }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
             <p className="text-gray-300 text-sm">
@@ -290,28 +290,28 @@ const JoinBuildAfterLife = () => {
               {filteredItems.map((item, index) => {
                 if (item.type === "course") {
                   const highlights = item.features ?? item.highlights ?? [];
-                  return (
-                    <motion.div
+                return (
+                  <motion.div
                       key={item.id || item.slug}
                       initial={{ y: 50, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      viewport={{ once: true, amount: 0.3 }}
-                      transition={{
-                        duration: 0.25,
-                        delay: index * 0.05,
-                        ease: [0.25, 0.1, 0.25, 1],
-                      }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: index * 0.05,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
                       whileHover={{ y: -8, scale: 1.02 }}
                       className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
                       <div
                         onClick={() => handleViewCourse(item)}
                         className="relative h-48 w-full overflow-hidden">
-                        <img
+                      <img
                           src={item.image || "https://via.placeholder.com/300x200?text=Course"}
                           alt={item.title}
-                          loading="lazy"
+                        loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        />
+                      />
                         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                         <div className="absolute top-2 left-2">
                           <span className="bg-[#D4AF37] text-black px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -332,17 +332,17 @@ const JoinBuildAfterLife = () => {
                         {highlights.length > 0 && (
                           <div className="mb-3">
                             <p className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide mb-1">
-                              Key Highlights
-                            </p>
+                          Key Highlights
+                        </p>
                             <ul className="space-y-1">
                               {highlights.slice(0, 2).map((feature, idx) => (
                                 <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-300">
-                                  <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
                                   <span className="line-clamp-1">{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                         )}
 
                         <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700">
@@ -372,116 +372,116 @@ const JoinBuildAfterLife = () => {
                             </GiftButton>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  );
+                    </div>
+                  </motion.div>
+                );
                 } else {
                   // Book item
                   return (
-                    <motion.div
+                <motion.div
                       key={item.id}
                       initial={{ y: 50, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      viewport={{ once: true, amount: 0.3 }}
-                      transition={{
-                        duration: 0.25,
-                        delay: index * 0.05,
-                        ease: [0.25, 0.1, 0.25, 1],
-                      }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.25,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
                       whileHover={{ y: -8, scale: 1.02 }}
                       className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
                       <Link to={`/books/${item.id}`}>
-                        <div className="relative h-48 w-full overflow-hidden">
-                          <img
+                    <div className="relative h-48 w-full overflow-hidden">
+                      <img
                             src={item.image}
                             alt={item.imageAlt || `${item.title} cover`}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                          />
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
                           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
-                          <div className="absolute top-2 right-2">
-                            <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                      <div className="absolute top-2 right-2">
+                        <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                               {item.badge === "E-Book" ? (
-                                <FaDownload className="w-2.5 h-2.5" />
-                              ) : (
-                                <FaBook className="w-2.5 h-2.5" />
-                              )}
+                            <FaDownload className="w-2.5 h-2.5" />
+                          ) : (
+                            <FaBook className="w-2.5 h-2.5" />
+                          )}
                               {item.badge}
-                            </span>
-                          </div>
+                        </span>
+                      </div>
                           {item.originalPrice > item.price && (
-                            <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
                               {Math.round(
                                 ((item.originalPrice - item.price) / item.originalPrice) * 100
                               )}
                               % OFF
-                            </div>
-                          )}
                         </div>
+                      )}
+                    </div>
 
-                        <div className="p-4">
-                          <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                    <div className="p-4">
+                      <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
                             {item.category}
-                          </span>
+                      </span>
 
-                          <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                      <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
                             {item.title}
-                          </h3>
+                      </h3>
 
                           <p className="text-xs text-gray-400 mb-2">by {item.author}</p>
 
-                          <div className="flex items-center gap-1.5 mb-3">
-                            <div className="flex items-center gap-0.5">
-                              {[...Array(5)].map((_, i) => (
-                                <FaStar
-                                  key={i}
-                                  className={`w-3 h-3 ${
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={`w-3 h-3 ${
                                     i < Math.floor(item.rating || 4.5)
-                                      ? "text-[#D4AF37] fill-current"
-                                      : "text-gray-600"
-                                  }`}
-                                />
-                              ))}
-                            </div>
+                                  ? "text-[#D4AF37] fill-current"
+                                  : "text-gray-600"
+                              }`}
+                            />
+                          ))}
+                        </div>
                             <span className="text-xs text-gray-300">
                               {(item.rating || 4.5).toFixed(1)}
                             </span>
                             <span className="text-[10px] text-gray-500">
                               ({item.reviews || 0})
                             </span>
-                          </div>
+                      </div>
 
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-lg font-bold text-[#D4AF37] font-display">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-lg font-bold text-[#D4AF37] font-display">
                               {item.price > 0 ? `₹${item.price}` : "Free"}
-                            </span>
+                        </span>
                             {item.originalPrice > item.price && (
-                              <span className="text-xs text-gray-500 line-through">
+                          <span className="text-xs text-gray-500 line-through">
                                 ₹{item.originalPrice}
-                              </span>
-                            )}
-                          </div>
+                          </span>
+                        )}
+                      </div>
 
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={(e) => {
-                                e.preventDefault();
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={(e) => {
+                            e.preventDefault();
                                 navigate(`/books/${item.id}/payment`);
-                              }}
-                              className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                              Buy Now
-                            </motion.button>
-                            <GiftButton
-                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                              size="sm">
-                              Gift
-                            </GiftButton>
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
+                          }}
+                          className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                          Buy Now
+                        </motion.button>
+                        <GiftButton
+                          className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                          size="sm">
+                          Gift
+                        </GiftButton>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
                   );
                 }
               })}
@@ -522,8 +522,8 @@ const JoinBuildAfterLife = () => {
               )}
             </motion.div>
           ) : null}
-        </div>
-      </section>
+          </div>
+        </section>
     </div>
   );
 };

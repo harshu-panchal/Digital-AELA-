@@ -6,11 +6,15 @@ import {
   getTeacherCourseById,
   updateTeacherCourse,
 } from "../controllers/teacherCourseController.js";
+import { getTeacherDashboard } from "../controllers/teacherDashboardController.js";
 
 const router = express.Router();
 
 // All routes require teacher authentication
 router.use(requireAuth(["teacher"]));
+
+// Get teacher dashboard data
+router.get("/dashboard", getTeacherDashboard);
 
 // Create a new course (draft status)
 router.post("/courses", createTeacherCourse);

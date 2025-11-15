@@ -188,10 +188,11 @@ const CourseCreate = () => {
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                  <option value="">Select category</option>
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: '#0a0d19' }}>
+                  <option value="" style={{ backgroundColor: '#0a0d19' }}>Select category</option>
                   {categories.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} style={{ backgroundColor: '#0a0d19' }}>
                       {option}
                     </option>
                   ))}
@@ -208,10 +209,11 @@ const CourseCreate = () => {
                     name="difficulty"
                     value={formData.difficulty}
                     onChange={handleChange}
-                    className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                    style={{ backgroundColor: '#0a0d19' }}>
+                    <option value="Beginner" style={{ backgroundColor: '#0a0d19' }}>Beginner</option>
+                    <option value="Intermediate" style={{ backgroundColor: '#0a0d19' }}>Intermediate</option>
+                    <option value="Advanced" style={{ backgroundColor: '#0a0d19' }}>Advanced</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -223,12 +225,13 @@ const CourseCreate = () => {
                     name="language"
                     value={formData.language}
                     onChange={handleChange}
-                    className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                    <option value="English">English</option>
-                    <option value="Arabic">Arabic</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Urdu">Urdu</option>
-                    <option value="Other">Other</option>
+                    className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                    style={{ backgroundColor: '#0a0d19' }}>
+                    <option value="English" style={{ backgroundColor: '#0a0d19' }}>English</option>
+                    <option value="Arabic" style={{ backgroundColor: '#0a0d19' }}>Arabic</option>
+                    <option value="Hindi" style={{ backgroundColor: '#0a0d19' }}>Hindi</option>
+                    <option value="Urdu" style={{ backgroundColor: '#0a0d19' }}>Urdu</option>
+                    <option value="Other" style={{ backgroundColor: '#0a0d19' }}>Other</option>
                   </select>
                 </div>
               </div>
@@ -357,11 +360,12 @@ const CourseCreate = () => {
                   name="deliveryMode"
                   value={formData.deliveryMode}
                   onChange={handleChange}
-                  className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                  <option value="Live cohort">Live cohort</option>
-                  <option value="Self-paced video">Self-paced video</option>
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="Learn & Earn challenge">Learn & Earn challenge</option>
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: '#0a0d19' }}>
+                  <option value="Live cohort" style={{ backgroundColor: '#0a0d19' }}>Live cohort</option>
+                  <option value="Self-paced video" style={{ backgroundColor: '#0a0d19' }}>Self-paced video</option>
+                  <option value="Hybrid" style={{ backgroundColor: '#0a0d19' }}>Hybrid</option>
+                  <option value="Learn & Earn challenge" style={{ backgroundColor: '#0a0d19' }}>Learn & Earn challenge</option>
                 </select>
               </div>
 

@@ -438,6 +438,8 @@ export const createQuiz = async (req, res, next) => {
       }
     }
 
+    // Store teacher's ID in metadata.createdBy to track quiz ownership
+    // This ensures each teacher only sees their own quizzes in the dashboard
     const quiz = await Quiz.create({
       title,
       description,
@@ -447,9 +449,86 @@ export const createQuiz = async (req, res, next) => {
       duration,
       questions,
       status,
+      metadata: {
+        createdBy: userId, // Store as string for consistent querying
+      },
     });
+    
+    // Debug: Log quiz creation for verification
+    // eslint-disable-next-line no-console
+    console.log(`[Quiz] Created quiz "${title}" by teacher ${userId} (${userRole})`);
 
     return res.status(201).json({ quiz });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Delete a quiz (admin/teacher only - only if they created it)
+ */
+export const deleteQuiz = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Only admin and teacher can delete quizzes
+    if (!["admin", "teacher"].includes(userRole)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only admins and teachers can delete quizzes",
+        },
+      });
+    }
+
+    const { quizId } = req.params;
+
+    if (!mongoose.isValidObjectId(quizId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid quiz ID",
+        },
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Quiz not found",
+        },
+      });
+    }
+
+    // Check if user is admin or the creator of the quiz
+    const isAdmin = userRole === "admin";
+    const isCreator = quiz.metadata?.createdBy?.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only delete quizzes you created",
+        },
+      });
+    }
+
+    // Delete the quiz
+    await quiz.deleteOne();
+
+    return res.status(204).send();
   } catch (error) {
     return next(error);
   }

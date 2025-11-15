@@ -233,7 +233,7 @@ const StudentDashboard = () => {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(55,124,255,0.18),transparent_70%)]" />
 
-      <main className="relative z-10 pt-24 pb-20">
+      <main className="relative z-10 pt-24 pb-20" style={{ paddingTop: 'calc(6rem + 5vh)' }}>
         <section className="layout-container space-y-10">
           <motion.header
             variants={sectionVariants}
@@ -625,7 +625,7 @@ const StudentDashboard = () => {
               </header>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
                 </div>
                 <div className="relative">
                   <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -658,7 +658,7 @@ const StudentDashboard = () => {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
                 </div>
                 <div className="relative">
                   <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

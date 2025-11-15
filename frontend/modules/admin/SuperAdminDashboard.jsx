@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { FaSpinner, FaSync } from "react-icons/fa";
@@ -40,6 +41,7 @@ const SuperAdminDashboard = () => {
     stats: [],
     approvals: [],
     activities: [],
+    quickActions: [],
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,6 +64,7 @@ const SuperAdminDashboard = () => {
           stats: response.stats || [],
           approvals: response.approvals || [],
           activities: response.activities || [],
+          quickActions: response.quickActions || [],
         });
         setLastRefresh(new Date());
       } else {
@@ -162,25 +165,51 @@ const SuperAdminDashboard = () => {
               },
             ];
 
-      const actions = [
+      // Use backend data if available, otherwise show loading placeholders
+      const actions = dashboardData.quickActions.length > 0
+        ? dashboardData.quickActions
+        : loading
+          ? [
+              {
+                label: "Approve teachers",
+                description: "Loading...",
+                href: "/super-admin/approvals/teachers",
+              },
+              {
+                label: "Moderate course catalog",
+                description: "Loading...",
+                href: "/super-admin/approvals/courses",
+              },
+              {
+                label: "Review franchise leads",
+                description: "Loading...",
+                href: "/super-admin/franchise",
+              },
+              {
+                label: "System health dashboard",
+                description: "Loading...",
+                href: "/super-admin/system-health",
+              },
+            ]
+          : [
         {
           label: "Approve teachers",
-          description: "24 awaiting verification",
-          href: "/super-admin/teachers",
+                description: "0 awaiting verification",
+                href: "/super-admin/approvals/teachers",
         },
         {
           label: "Moderate course catalog",
-          description: "11 new submissions",
-          href: "/super-admin/courses",
+                description: "0 new submissions",
+                href: "/super-admin/approvals/courses",
         },
         {
           label: "Review franchise leads",
-          description: "8 warm opportunities",
+                description: "No franchise leads",
           href: "/super-admin/franchise",
         },
         {
           label: "System health dashboard",
-          description: "Uptime 99.97% · All services operational",
+                description: "Uptime 0% · Service status unknown",
           href: "/super-admin/system-health",
         },
       ];
@@ -414,11 +443,11 @@ const SuperAdminDashboard = () => {
                   <p className="text-xs text-slate-400/80">
                     {action.description}
                   </p>
-                  <button
-                    type="button"
-                    className="mt-2 w-fit rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A]">
+                  <Link
+                    to={action.href}
+                    className="mt-2 w-fit rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A] transition-colors">
                     Open workspace →
-                  </button>
+                  </Link>
                 </div>
               ))}
             </div>

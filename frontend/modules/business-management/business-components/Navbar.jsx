@@ -21,13 +21,28 @@ const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [showSubNav, setShowSubNav] = useState(true);
+  const [navbarOffset, setNavbarOffset] = useState(0);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { language, languages, changeLanguage } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
 
   useEffect(() => {
     const handleScroll = () => {
-      const shouldShow = window.scrollY < 40;
+      const currentScrollY = window.scrollY;
+      const shouldShow = currentScrollY < 40;
       setShowSubNav(shouldShow);
+      
+      // Bottom navbar should move only 1px up when scrolling
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down - move bottom navbar up by 1px only
+        setNavbarOffset(1);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - move bottom navbar back down
+        setNavbarOffset(0);
+      }
+      
+      setLastScrollY(currentScrollY);
+      
       if (!shouldShow) {
         setLanguageDropdownOpen(false);
       }
@@ -36,7 +51,7 @@ const Navbar = () => {
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   const { user, logout, getRoleLabel, getRoleHome } = useAuth();
 
@@ -172,33 +187,43 @@ const Navbar = () => {
   };
 
   return (
-    <header className="w-full fixed top-0 z-50">
+    <motion.header
+      initial={{ y: -80, opacity: 0 }}
+      animate={{ 
+        y: -navbarOffset,
+        opacity: 1
+      }}
+      transition={{ 
+        duration: 0.3, 
+        ease: [0.25, 0.1, 0.25, 1]
+      }}
+      className="w-full fixed top-0 z-[60]">
       <motion.div
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
         className="relative">
         <AnimatePresence>
           {showSubNav && (
             <motion.div
               key="sub-nav"
               initial={{ y: -40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              animate={{ 
+                y: showSubNav ? -navbarOffset : -40 - navbarOffset,
+                opacity: showSubNav ? 1 : 0
+              }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-              className="hidden md:block relative z-60 border-b border-white/10 bg-white/10 px-1.5 py-0.5 backdrop-blur-lg supports-backdrop-filter:bg-white/15 sm:px-2.5">
+              className="hidden md:block relative z-60 border-b border-[#D4AF37]/20 bg-[#0a0a0a]/80 px-1.5 py-0.5 backdrop-blur-2xl supports-backdrop-filter:bg-[#0a0a0a]/70 sm:px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-2 text-xs text-slate-100/85 sm:flex-row sm:items-center sm:text-sm">
+                <div className="flex flex-col gap-2 text-xs text-[#F5D26A]/90 sm:flex-row sm:items-center sm:text-sm">
                   <a
                     href="mailto:info@digitalaela.com"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
+                    className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaEnvelope className="h-3.5 w-3.5" />
                     info@digitalaela.com
                   </a>
                   <span className="hidden h-4 w-px bg-white/15 sm:block" />
                   <a
                     href="tel:+971508185690"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold transition hover:border-[#F5D26A]/40 hover:bg-white/10 hover:text-[#FFE28A]">
+                    className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
                     0508185690
                   </a>
@@ -316,7 +341,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
+                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
                           {Object.entries(languages).map(
                             ([code, option], index) => (
                               <motion.button
@@ -335,10 +360,10 @@ const Navbar = () => {
                                   backgroundColor: "rgba(212,175,55,0.08)",
                                   x: 5,
                                 }}
-                                className={`w-full border-b border-white/10 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
+                                className={`w-full border-b border-[#D4AF37]/20 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
                                   language === code
-                                    ? "bg-white/20 text-[#FFE28A]"
-                                    : "text-slate-100 hover:bg-white/10 hover:text-[#FFE28A]"
+                                    ? "bg-[#D4AF37]/20 text-[#FFE28A]"
+                                    : "text-[#F5D26A] hover:bg-[#D4AF37]/10 hover:text-[#FFE28A]"
                                 }`}>
                                 <span className="flex items-center gap-2.5">
                                   <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5">
@@ -374,16 +399,18 @@ const Navbar = () => {
 
         <motion.nav
           initial={{ y: -60, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{
-            duration: 0.45,
-            ease: [0.25, 0.1, 0.25, 1],
-            delay: 0.05,
+          animate={{ 
+            y: -navbarOffset,
+            opacity: 1
           }}
-          className="relative overflow-visible border-b border-white/10 bg-white/10 px-0 py-0 backdrop-blur-xl supports-backdrop-filter:bg-white/15 sm:px-2.5 min-h-[24px] -mt-4">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(226,232,255,0.35),transparent_55%)] opacity-60" />
-          <div className="pointer-events-none absolute inset-x-3 top-1/2 h-6 -translate-y-1/2 rounded-[36px] border border-white/15 bg-white/5 blur-2xl" />
-          <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-0">
+          transition={{
+            duration: 0.3,
+            ease: [0.25, 0.1, 0.25, 1]
+          }}
+          className="relative overflow-visible border-b border-[#D4AF37]/20 bg-[#0a0a0a]/80 px-0 py-1 backdrop-blur-2xl supports-backdrop-filter:bg-[#0a0a0a]/70 sm:px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.15),transparent_55%)] opacity-80" />
+          <div className="pointer-events-none absolute inset-x-3 top-1/2 h-4 -translate-y-1/2 rounded-[36px] border border-[#D4AF37]/20 bg-[#D4AF37]/5 blur-2xl" />
+          <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-1">
             {/* Brand Name - Left Side */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -392,21 +419,23 @@ const Navbar = () => {
                 duration: 0.3,
                 delay: 0.1,
                 ease: [0.25, 0.1, 0.25, 1],
-              }}>
+              }}
+              className="flex-shrink-0 -ml-2 sm:-ml-4">
               <Link
                 to="/"
-                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block translate-y-2 sm:translate-y-4 shrink-0">
+                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block">
                 <motion.span
-                  whileHover={{ scale: 1.08, rotate: [0, -3, 3, -3, 0] }}
+                  whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className="inline-block relative drop-shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
                   <img
                     src={logo}
                     alt="logo"
-                    className="h-20 w-20 sm:h-24 sm:w-24"
+                    className="h-[56px] w-auto object-contain"
+                    style={{ maxHeight: '56px', width: '180px', objectFit: 'contain' }}
                   />
                   <motion.div
-                    className="absolute bottom-3 left-0 w-0 h-0.5 bg-[#D4AF37]"
+                    className="absolute bottom-1 left-0 w-0 h-0.5 bg-[#D4AF37]"
                     whileHover={{ width: "100%" }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   />
@@ -482,7 +511,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-white/15 bg-black/95 shadow-[0_18px_60px_rgba(6,9,18,0.55)]">
+                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
                           {item.dropdown.map((dropdownItem, dropIndex) => {
                             if (dropdownItem.disabled) {
                               return (
@@ -629,7 +658,7 @@ const Navbar = () => {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-black/95 shadow-[0_25px_80px_rgba(6,9,18,0.55)]">
+              className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(212,175,55,0.2)]">
               <div className="flex max-h-[calc(100vh-160px)] flex-col gap-2 overflow-y-auto px-2 pr-1 sm:px-4 sm:pr-2">
                 {navItems.map((item) => (
                   <div key={item.label}>
@@ -758,8 +787,8 @@ const Navbar = () => {
                         }}
                         className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${
                           language === code
-                            ? "bg-[#D4AF37] text-white border-[#D4AF37]"
-                            : "bg-white text-[#B8831A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
+                            ? "bg-[#D4AF37] text-[#0a0a0a] border-[#D4AF37]"
+                            : "bg-[#D4AF37]/10 text-[#F5D26A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
                         }`}>
                         <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[#D4AF37]/40 bg-white/10">
                           {option.flagSrc ? (
@@ -785,7 +814,7 @@ const Navbar = () => {
           )}
         </AnimatePresence>
       </motion.div>
-    </header>
+    </motion.header>
   );
 };
 

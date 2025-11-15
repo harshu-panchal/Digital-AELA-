@@ -1,4 +1,5 @@
 import EbookResource from "../models/EbookResource.js";
+import User from "../models/User.js";
 import mongoose from "mongoose";
 
 /**
@@ -90,6 +91,7 @@ export const createTeacherEbook = async (req, res, next) => {
         coverImage: coverImage || "",
         previewUrl: previewUrl || "",
         author: userFullName || "Digital AELA", // Store teacher's name as author
+        uploadedBy: userId, // Store teacher's ID for dashboard queries
         tags: tags
           ? Array.isArray(tags)
             ? tags
@@ -129,9 +131,19 @@ export const getTeacherEbooks = async (req, res, next) => {
       });
     }
 
-    // Note: We don't filter by instructor since EbookResource doesn't have that field
-    // All ebooks with isPublic: false are considered pending teacher uploads
-    const ebooks = await EbookResource.find({ isPublic: false })
+    // Get teacher's ebooks by checking metadata.uploadedBy or metadata.author
+    const teacher = await User.findById(userId).select("fullName").lean();
+    const teacherName = teacher?.fullName || "";
+    const teacherObjectId = mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null;
+    
+    const ebooks = await EbookResource.find({
+      $or: [
+        { "metadata.uploadedBy": userId },
+        { "metadata.uploadedBy": teacherObjectId?.toString() },
+        ...(teacherObjectId ? [{ "metadata.uploadedBy": teacherObjectId }] : []),
+        ...(teacherName ? [{ "metadata.author": teacherName }] : []),
+      ],
+    })
       .sort({ createdAt: -1 })
       .lean();
 

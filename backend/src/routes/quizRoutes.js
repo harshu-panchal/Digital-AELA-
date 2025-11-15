@@ -5,6 +5,7 @@ import {
   getPublishedQuizzes,
   getQuizById,
   createQuiz,
+  deleteQuiz,
 } from "../controllers/quizController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -23,6 +24,9 @@ router.get("/attempts", requireAuth(["student"]), getStudentQuizHistory);
 
 // Create a new quiz (admin/teacher only)
 router.post("/", requireAuth(["admin", "teacher"]), createQuiz);
+
+// Delete a quiz (admin/teacher only)
+router.delete("/:quizId", requireAuth(["admin", "teacher"]), deleteQuiz);
 
 // Get a single quiz by ID (public endpoint)
 // Must come last to avoid matching other routes

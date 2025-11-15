@@ -203,10 +203,11 @@ const EbookUpload = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                  <option value="">Select a category</option>
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: '#0a0d19' }}>
+                  <option value="" style={{ backgroundColor: '#0a0d19' }}>Select a category</option>
                   {categories.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} style={{ backgroundColor: '#0a0d19' }}>
                       {option}
                     </option>
                   ))}

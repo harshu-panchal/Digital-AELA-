@@ -27,7 +27,41 @@ const persistQuizzes = (quizzes) => {
 const generateId = (prefix) =>
   `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
 
-export const getTeacherQuizzes = () => loadQuizzes();
+export const getTeacherQuizzes = async () => {
+  try {
+    // Try to fetch from backend first
+    const response = await apiRequest("/quizzes", {
+      method: "GET",
+      skipAuth: true, // Public endpoint
+    });
+    
+    if (response?.quizzes && Array.isArray(response.quizzes)) {
+      // Transform backend format to frontend format
+      // Note: We get all quizzes, but the dashboard controller filters by teacher
+      return response.quizzes.map((quiz) => ({
+        id: quiz._id || quiz.id,
+        _id: quiz._id,
+        title: quiz.title,
+        description: quiz.description,
+        category: quiz.category,
+        difficulty: quiz.difficulty,
+        rewardCoins: quiz.rewardCoins || 0,
+        duration: quiz.duration || 0,
+        status: quiz.status || "published",
+        questions: quiz.questions || [],
+        createdAt: quiz.createdAt,
+        updatedAt: quiz.updatedAt,
+        metadata: quiz.metadata || {},
+      }));
+    }
+    
+    // Fallback to localStorage if backend fails
+    return loadQuizzes();
+  } catch (error) {
+    console.warn("Failed to fetch quizzes from backend, using localStorage:", error);
+    return loadQuizzes();
+  }
+};
 
 export const getTeacherQuizById = (quizId) =>
   loadQuizzes().find((quiz) => quiz.id === quizId) ?? null;
@@ -122,9 +156,25 @@ export const updateTeacherQuiz = async (quizId, updates) => {
 };
 
 export const deleteTeacherQuiz = async (quizId) => {
-  const quizzes = loadQuizzes();
-  const next = quizzes.filter((quiz) => quiz.id !== quizId);
-  persistQuizzes(next);
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  try {
+    // Try to delete from backend first
+    await apiRequest(`/quizzes/${quizId}`, {
+      method: "DELETE",
+    });
+    
+    // Also remove from localStorage if it exists there
+    const quizzes = loadQuizzes();
+    const next = quizzes.filter((quiz) => quiz.id !== quizId);
+    persistQuizzes(next);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete quiz from backend:", error);
+    // Fallback to localStorage deletion
+    const quizzes = loadQuizzes();
+    const next = quizzes.filter((quiz) => quiz.id !== quizId);
+    persistQuizzes(next);
+    throw error;
+  }
 };
 

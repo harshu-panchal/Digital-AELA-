@@ -10,21 +10,15 @@ export const Footer = () => {
     {
       title: "Explore",
       links: [
-        { label: "Career Paths", to: "/career-paths" },
         { label: "Learn & Earn", to: "/learn-earn" },
       ],
     },
     {
       title: "Courses",
       links: [
-        { label: "Overview", to: "/courses" },
         { label: "Corporate Training", to: "/courses/corporate-training" },
         { label: "Digital Marketing", to: "/courses/digital-marketing" },
         { label: "English Language", to: "/courses/english-language" },
-        {
-          label: "Career Counselling & Skills",
-          to: "/courses/career-counselling-skill-development",
-        },
       ],
     },
     {
@@ -60,27 +54,6 @@ export const Footer = () => {
           label: "Franchise Inquiry",
           to: "/contact/franchise-partnership",
         },
-        {
-          label: "Workshop / Training",
-          to: "/contact/workshop-training",
-        },
-        { label: "General Inquiry", to: "/contact/general-inquiry" },
-        { label: "Request a Call Back", to: "/contact/callback" },
-      ],
-    },
-    {
-      title: "Access Hub",
-      links: [
-        {
-          label: "Hire Talent (Recruiters)",
-          to: "/access-hub/recruiter/login",
-        },
-        { label: "Find Jobs (Seekers)", to: "/access-hub/job-seeker/login" },
-        { label: "Student Dashboard", to: "/access-hub/student/login" },
-        { label: "Instructor Portal", to: "/access-hub/instructor/login" },
-        { label: "Join as Instructor", to: "/access-hub/join-instructor/register" },
-        { label: "Start AELA Centre", to: "/access-hub/start-centre/login" },
-        { label: "Feedback Hub", to: "/access-hub/feedback/login" },
       ],
     },
   ];
@@ -93,53 +66,56 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#1a1a1a] text-white">
+    <footer className="relative bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-[#D4AF37]/20 text-[#F5D26A] shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(212,175,55,0.1),transparent_55%)] opacity-60"></div>
       <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent"></div>
 
-      <div className="layout-container py-8 sm:py-10 space-y-8">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {footerColumns.map((column, columnIndex) => (
-            <motion.div
-              key={column.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.05 * columnIndex, ease: "easeOut" }}
-              className="space-y-3">
+      <div className="layout-container py-4 sm:py-5 space-y-4 relative z-10">
+        <div className="flex justify-end">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {footerColumns.map((column, columnIndex) => (
+              <motion.div
+                key={column.title}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: 0.05 * columnIndex, ease: "easeOut" }}
+              className="space-y-2">
               <h3 className="text-sm md:text-base font-bold text-[#D4AF37] font-accent tracking-wide uppercase">
                 {column.title}
               </h3>
-              <ul className="space-y-2.5">
-                {column.links.map((link, linkIndex) => (
-                  <motion.li
-                    key={link.label}
-                    initial={{ opacity: 0, x: -8 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.25, delay: 0.05 * linkIndex }}
-                    className="text-xs md:text-sm text-gray-400 hover:text-[#D4AF37] transition-colors duration-200">
-                    {link.to ? (
-                      <Link to={link.to} className="inline-flex items-center gap-2">
-                        <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                        {link.label}
-                      </Link>
-                    ) : (
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
-                        <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                        {link.label}
-                      </a>
-                    )}
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
+              <ul className="space-y-1.5">
+                  {column.links.map((link, linkIndex) => (
+                    <motion.li
+                      key={link.label}
+                      initial={{ opacity: 0, x: -8 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.25, delay: 0.05 * linkIndex }}
+                      className="text-xs md:text-sm text-white hover:text-[#FFE28A] transition-colors duration-200">
+                      {link.to ? (
+                        <Link to={link.to} className="inline-flex items-center gap-2">
+                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                          {link.label}
+                        </a>
+                      )}
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent"></div>
 
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-[11px] md:text-xs text-gray-500">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <p className="text-[11px] md:text-xs text-[#F5D26A]/60">
             © {currentYear} Digital AELA. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-3">
@@ -149,7 +125,7 @@ export const Footer = () => {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs md:text-sm text-gray-400 hover:text-[#D4AF37] transition-colors duration-200">
+                    className="text-xs md:text-sm text-[#F5D26A]/80 hover:text-[#FFE28A] transition-colors duration-200">
                 {social.label}
               </a>
             ))}

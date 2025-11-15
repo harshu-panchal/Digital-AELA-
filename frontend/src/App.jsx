@@ -67,6 +67,7 @@ import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
 import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import UserDetail from "../modules/admin/pages/UserDetail";
+import SystemHealth from "../modules/admin/pages/SystemHealth";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
 import StudentDashboard from "../modules/student/StudentDashboard";
@@ -104,6 +105,7 @@ export const App = () => {
           <Route path="users/:role" element={<UserManagement />} />
           <Route path="users/id/:userId" element={<UserDetail />} />
           <Route path="approvals/:type" element={<ApprovalPage />} />
+          <Route path="system-health" element={<SystemHealth />} />
           <Route path="create/course" element={<AdminCourseCreate />} />
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />

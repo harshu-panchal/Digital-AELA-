@@ -20,3 +20,8 @@ export const fetchPendingApprovals = () => apiRequest("/admin/approvals");
  */
 export const fetchRecentActivity = () => apiRequest("/admin/activity");
 
+/**
+ * Get system health status
+ */
+export const fetchSystemHealth = () => apiRequest("/admin/system-health");
+

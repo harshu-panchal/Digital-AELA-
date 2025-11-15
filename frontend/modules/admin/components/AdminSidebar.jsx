@@ -23,41 +23,81 @@ const AdminSidebar = () => {
     {
       label: "User Management",
       children: [
-        { label: "Students", path: "/super-admin/users/students", icon: FaUsers },
-        { label: "Teachers", path: "/super-admin/users/teachers", icon: FaChalkboardTeacher },
-        { label: "Recruiters", path: "/super-admin/users/recruiters", icon: FaUserTie },
-        { label: "Influencers", path: "/super-admin/users/influencer", icon: FaUserFriends },
-        { label: "Freelancers", path: "/super-admin/users/freelancer", icon: FaUserFriends },
+        {
+          label: "Students",
+          path: "/super-admin/users/students",
+          icon: FaUsers,
+        },
+        {
+          label: "Teachers",
+          path: "/super-admin/users/teachers",
+          icon: FaChalkboardTeacher,
+        },
+        {
+          label: "Recruiters",
+          path: "/super-admin/users/recruiters",
+          icon: FaUserTie,
+        },
+        {
+          label: "Influencers",
+          path: "/super-admin/users/influencer",
+          icon: FaUserFriends,
+        },
+        {
+          label: "Freelancers",
+          path: "/super-admin/users/freelancer",
+          icon: FaUserFriends,
+        },
       ],
     },
     {
       label: "Approvals",
       children: [
-        { label: "Courses", path: "/super-admin/approvals/courses", icon: FaGraduationCap },
+        {
+          label: "Courses",
+          path: "/super-admin/approvals/courses",
+          icon: FaGraduationCap,
+        },
         { label: "Books", path: "/super-admin/approvals/books", icon: FaBook },
-        { label: "Jobs", path: "/super-admin/approvals/jobs", icon: FaBriefcase },
-        { label: "Teacher Applications", path: "/super-admin/approvals/teachers", icon: FaChalkboardTeacher },
+        {
+          label: "Jobs",
+          path: "/super-admin/approvals/jobs",
+          icon: FaBriefcase,
+        },
+        {
+          label: "Teacher Applications",
+          path: "/super-admin/approvals/teachers",
+          icon: FaChalkboardTeacher,
+        },
       ],
     },
     {
       label: "Content Creation",
       children: [
-        { label: "Create Course", path: "/super-admin/create/course", icon: FaPlusCircle },
-        { label: "Upload Book", path: "/super-admin/create/book", icon: FaPlusCircle },
+        {
+          label: "Create Course",
+          path: "/super-admin/create/course",
+          icon: FaPlusCircle,
+        },
+        {
+          label: "Upload Book",
+          path: "/super-admin/create/book",
+          icon: FaPlusCircle,
+        },
         { label: "Post Blog", path: "/super-admin/create/blog", icon: FaEdit },
       ],
     },
   ];
 
   return (
-    <aside className="fixed left-0 top-[144px] h-[calc(100vh-144px)] w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl">
-      <div className="flex h-full flex-col">
-        <div className="border-b border-white/10 p-6">
+    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-50">
+      <div className="flex h-full flex-col pt-25 pb-8">
+        <div className="border-b border-white/10 px-6 pt-12 pb-6">
           <h2 className="text-lg font-semibold text-[#F5D26A]">Super Admin</h2>
           <p className="text-xs text-gray-400">Control Panel</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
           <div className="space-y-2">
             {navItems.map((item, index) => (
               <div key={index}>
@@ -107,4 +147,3 @@ const AdminSidebar = () => {
 };
 
 export default AdminSidebar;
-
