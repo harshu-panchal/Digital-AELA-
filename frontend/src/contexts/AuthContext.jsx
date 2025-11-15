@@ -243,7 +243,7 @@ export const AuthProvider = ({ children }) => {
       try {
         // Use file upload utility if profileImage is provided
         if (profileImage) {
-          const { registerWithFile } = await import("../../utils/fileUpload");
+          const { registerWithFile } = await import("../utils/fileUpload");
           const authResult = await registerWithFile(profileImage, {
             email: normalizedEmail,
             password,
