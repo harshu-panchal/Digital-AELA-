@@ -9,12 +9,21 @@ import {
   isValidEmail,
   validatePasswordPair,
   safeString,
+  sanitizeUrl,
 } from "../../../src/utils/registrationHelpers";
 
 const createInitialFormState = () => ({
   fullName: "",
   company: "",
   email: "",
+  phone: "",
+  linkedinUrl: "",
+  website: "",
+  twitter: "",
+  aboutCompany: "",
+  experience: "",
+  experienceYears: "",
+  headline: "",
   password: "",
   confirmPassword: "",
 });
@@ -67,6 +76,15 @@ const RecruiterRegister = () => {
 
     setIsSubmitting(true);
     try {
+      const trimmedAbout = safeString(formData.aboutCompany);
+      const trimmedHeadline = safeString(formData.headline);
+      const trimmedExperience = safeString(formData.experience);
+      const experienceYears = formData.experienceYears ? Number.parseInt(formData.experienceYears, 10) : 0;
+      const safeLinkedin = sanitizeUrl(formData.linkedinUrl);
+      const safeWebsite = sanitizeUrl(formData.website);
+      const safeTwitter = sanitizeUrl(formData.twitter);
+      const trimmedPhone = safeString(formData.phone);
+
       const newUser = await registerUser({
         email,
         password,
@@ -74,6 +92,17 @@ const RecruiterRegister = () => {
         profile: {
           fullName: trimmedName,
           companyName: trimmedCompany,
+          company: trimmedCompany,
+          headline: trimmedHeadline,
+          aboutCompany: trimmedAbout,
+          bio: trimmedAbout,
+          experience: trimmedExperience,
+          experienceYears: experienceYears,
+          phone: trimmedPhone,
+          linkedinUrl: safeLinkedin,
+          linkedin: safeLinkedin,
+          website: safeWebsite,
+          twitter: safeTwitter,
         },
       });
       toast.success("Recruiter account created successfully.");
@@ -118,41 +147,144 @@ const RecruiterRegister = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-7">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Full Name</span>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Neha Kapoor"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Company</span>
+                <input
+                  type="text"
+                  name="company"
+                  required
+                  value={formData.company}
+                  onChange={handleChange}
+                  placeholder="AELA Talent Partners"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Work Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="talent@company.com"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Phone Number</span>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+971 50 123 4567"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+            </div>
+
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Full Name</span>
+              <span className="text-sm font-semibold text-slate-100">Professional Headline</span>
               <input
                 type="text"
-                name="fullName"
-                required
-                value={formData.fullName}
+                name="headline"
+                value={formData.headline}
                 onChange={handleChange}
-                placeholder="Neha Kapoor"
+                placeholder="Senior Talent Acquisition Specialist"
                 className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
               />
             </label>
 
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Company</span>
-              <input
-                type="text"
-                name="company"
-                required
-                value={formData.company}
-                onChange={handleChange}
-                placeholder="AELA Talent Partners"
-                className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
-              />
-            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Years of Experience</span>
+                <input
+                  type="number"
+                  min="0"
+                  name="experienceYears"
+                  value={formData.experienceYears}
+                  onChange={handleChange}
+                  placeholder="5"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Experience Description</span>
+                <input
+                  type="text"
+                  name="experience"
+                  value={formData.experience}
+                  onChange={handleChange}
+                  placeholder="Recruiting in tech, finance, healthcare, etc."
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">LinkedIn Profile</span>
+                <input
+                  type="url"
+                  name="linkedinUrl"
+                  value={formData.linkedinUrl}
+                  onChange={handleChange}
+                  placeholder="https://linkedin.com/in/..."
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Company Website</span>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  placeholder="https://"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">Twitter / X</span>
+                <input
+                  type="url"
+                  name="twitter"
+                  value={formData.twitter}
+                  onChange={handleChange}
+                  placeholder="https://twitter.com/..."
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+            </div>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Work Email</span>
-              <input
-                type="email"
-                name="email"
-                required
-                value={formData.email}
+              <span className="text-sm font-semibold text-slate-100">About Your Company</span>
+              <textarea
+                name="aboutCompany"
+                rows={4}
+                value={formData.aboutCompany}
                 onChange={handleChange}
-                placeholder="talent@company.com"
+                placeholder="Tell us about your company, what industries you recruit for, your company culture, and what makes you unique."
                 className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
               />
             </label>

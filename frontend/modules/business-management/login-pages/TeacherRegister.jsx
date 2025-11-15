@@ -18,14 +18,19 @@ const createInitialFormState = () => ({
   email: "",
   phone: "",
   experienceYears: "",
+  expertise: "",
   primarySubjects: "",
   certifications: "",
   portfolioLink: "",
+  linkedinUrl: "",
+  website: "",
+  twitter: "",
   preferredDelivery: "online",
   timeZones: "Gulf Standard Time (GST)",
   password: "",
   confirmPassword: "",
   message: "",
+  about: "",
 });
 
 const TeacherRegister = () => {
@@ -91,6 +96,11 @@ const TeacherRegister = () => {
       const primarySubjects = parseCommaSeparated(formData.primarySubjects);
       const certifications = parseCommaSeparated(formData.certifications);
       const safePortfolio = sanitizeUrl(formData.portfolioLink);
+      const safeLinkedin = sanitizeUrl(formData.linkedinUrl);
+      const safeWebsite = sanitizeUrl(formData.website);
+      const safeTwitter = sanitizeUrl(formData.twitter);
+      const trimmedAbout = safeString(formData.about);
+      const trimmedExpertise = safeString(formData.expertise);
 
       const newUser = await registerUser({
         email,
@@ -100,13 +110,19 @@ const TeacherRegister = () => {
           fullName: trimmedName,
           phone: trimmedPhone,
           experienceYears,
+          expertise: trimmedExpertise || primarySubjects[0] || "English Language",
           primarySubjects,
           certifications,
           portfolioLink: safePortfolio,
+          linkedinUrl: safeLinkedin,
+          linkedin: safeLinkedin,
+          website: safeWebsite,
+          twitter: safeTwitter,
           preferredDelivery: formData.preferredDelivery,
           timeZones: formData.timeZones,
           message: trimmedMessage,
-          bio: trimmedMessage,
+          bio: trimmedAbout || trimmedMessage,
+          about: trimmedAbout,
         },
       });
       toast.success("Your mentor account has been created successfully.");
@@ -254,7 +270,22 @@ const TeacherRegister = () => {
 
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-slate-100">
-                Primary Subjects & Audience
+                Primary Expertise
+              </span>
+              <input
+                type="text"
+                name="expertise"
+                required
+                value={formData.expertise}
+                onChange={handleChange}
+                placeholder="Public Speaking & Communication, IELTS & Test Prep, etc."
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+              />
+            </label>
+
+            <label className="block space-y-2">
+              <span className="text-sm font-semibold text-slate-100">
+                Primary Subjects & Specializations
               </span>
               <textarea
                 name="primarySubjects"
@@ -296,6 +327,48 @@ const TeacherRegister = () => {
               </label>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  LinkedIn Profile
+                </span>
+                <input
+                  type="url"
+                  name="linkedinUrl"
+                  value={formData.linkedinUrl}
+                  onChange={handleChange}
+                  placeholder="https://linkedin.com/in/..."
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Website
+                </span>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  placeholder="https://"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Twitter / X
+                </span>
+                <input
+                  type="url"
+                  name="twitter"
+                  value={formData.twitter}
+                  onChange={handleChange}
+                  placeholder="https://twitter.com/..."
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                />
+              </label>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-slate-100">
@@ -329,11 +402,25 @@ const TeacherRegister = () => {
 
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-slate-100">
-                Tell us about your teaching philosophy
+                About You
+              </span>
+              <textarea
+                name="about"
+                rows={4}
+                value={formData.about}
+                onChange={handleChange}
+                placeholder="Tell us about your teaching experience, background, and what makes you unique as an educator."
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+              />
+            </label>
+
+            <label className="block space-y-2">
+              <span className="text-sm font-semibold text-slate-100">
+                Teaching Philosophy (Optional)
               </span>
               <textarea
                 name="message"
-                rows={4}
+                rows={3}
                 value={formData.message}
                 onChange={handleChange}
                 placeholder="Share how you create outcome-driven sessions, tools you love, or success stories."

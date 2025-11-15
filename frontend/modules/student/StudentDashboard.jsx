@@ -11,6 +11,7 @@ import {
   HiOutlineSparkles,
   HiOutlineShoppingBag,
   HiOutlineUserGroup,
+  HiOutlineMagnifyingGlass,
 } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -47,6 +48,9 @@ const StudentDashboard = () => {
   const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [studentSearchQuery, setStudentSearchQuery] = useState("");
+  const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
+  const [recruiterSearchQuery, setRecruiterSearchQuery] = useState("");
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -160,6 +164,45 @@ const StudentDashboard = () => {
       return stat;
     });
   }, [journeyStats, coinsToRedeem]);
+
+  // Filter students based on search query
+  const filteredStudentProfiles = useMemo(() => {
+    if (!studentSearchQuery.trim()) {
+      return studentProfiles;
+    }
+    const query = studentSearchQuery.toLowerCase().trim();
+    return studentProfiles.filter((student) => {
+      const nameMatch = student.name?.toLowerCase().includes(query);
+      const focusMatch = student.focus?.toLowerCase().includes(query);
+      return nameMatch || focusMatch;
+    });
+  }, [studentProfiles, studentSearchQuery]);
+
+  // Filter teachers based on search query
+  const filteredTeacherSpotlight = useMemo(() => {
+    if (!teacherSearchQuery.trim()) {
+      return teacherSpotlight;
+    }
+    const query = teacherSearchQuery.toLowerCase().trim();
+    return teacherSpotlight.filter((teacher) => {
+      const nameMatch = teacher.name?.toLowerCase().includes(query);
+      const expertiseMatch = teacher.expertise?.toLowerCase().includes(query);
+      return nameMatch || expertiseMatch;
+    });
+  }, [teacherSpotlight, teacherSearchQuery]);
+
+  // Filter recruiters based on search query
+  const filteredRecruiterSpotlight = useMemo(() => {
+    if (!recruiterSearchQuery.trim()) {
+      return recruiterSpotlight;
+    }
+    const query = recruiterSearchQuery.toLowerCase().trim();
+    return recruiterSpotlight.filter((recruiter) => {
+      const nameMatch = recruiter.name?.toLowerCase().includes(query);
+      const rolesMatch = recruiter.roles?.toLowerCase().includes(query);
+      return nameMatch || rolesMatch;
+    });
+  }, [recruiterSpotlight, recruiterSearchQuery]);
 
   const shortcutIcons = useMemo(
     () => ({
@@ -544,7 +587,22 @@ const StudentDashboard = () => {
                   View community
                 </Link>
               </header>
-              {studentProfiles.map((student) => (
+              <div className="relative">
+                <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={studentSearchQuery}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                />
+              </div>
+              {filteredStudentProfiles.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-slate-400">No students found matching your search.</p>
+                </div>
+              ) : (
+                filteredStudentProfiles.map((student) => (
                 <Link
                   key={student.id}
                   to={student.to}
@@ -555,7 +613,8 @@ const StudentDashboard = () => {
                   </div>
                   <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
                 </Link>
-              ))}
+                ))
+              )}
             </div>
             <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
               <header>
@@ -565,8 +624,25 @@ const StudentDashboard = () => {
                 </p>
               </header>
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
-                {teacherSpotlight.map((teacher) => (
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
+                </div>
+                <div className="relative">
+                  <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search teachers..."
+                    value={teacherSearchQuery}
+                    onChange={(e) => setTeacherSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                  />
+                </div>
+                {filteredTeacherSpotlight.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <p className="text-xs text-slate-400">No teachers found matching your search.</p>
+                  </div>
+                ) : (
+                  filteredTeacherSpotlight.map((teacher) => (
                   <Link
                     key={teacher.id}
                     to={teacher.to}
@@ -577,11 +653,29 @@ const StudentDashboard = () => {
                     </div>
                     <HiOutlineAcademicCap className="h-5 w-5 text-sky-200" />
                   </Link>
-                ))}
+                  ))
+                )}
               </div>
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
-                {recruiterSpotlight.map((recruiter) => (
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
+                </div>
+                <div className="relative">
+                  <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search recruiters..."
+                    value={recruiterSearchQuery}
+                    onChange={(e) => setRecruiterSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                  />
+                </div>
+                {filteredRecruiterSpotlight.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <p className="text-xs text-slate-400">No recruiters found matching your search.</p>
+                  </div>
+                ) : (
+                  filteredRecruiterSpotlight.map((recruiter) => (
                   <Link
                     key={recruiter.id}
                     to={recruiter.to}
@@ -592,7 +686,8 @@ const StudentDashboard = () => {
                     </div>
                     <HiOutlineBriefcase className="h-5 w-5 text-sky-200" />
                   </Link>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </motion.section>

@@ -67,11 +67,63 @@ export const registerUser = async (req, res, next) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    
+    // Build metadata from profile data for teachers and recruiters
+    let metadata = {};
+    if (role === "teacher" && req.body.profile) {
+      const profileData = req.body.profile;
+      const primarySubjectsArray = Array.isArray(profileData.primarySubjects) 
+        ? profileData.primarySubjects 
+        : (profileData.primarySubjects ? profileData.primarySubjects.split(",").map(s => s.trim()) : []);
+      const certificationsArray = Array.isArray(profileData.certifications) 
+        ? profileData.certifications 
+        : (profileData.certifications ? profileData.certifications.split(",").map(s => s.trim()) : []);
+      
+      metadata = {
+        expertise: profileData.expertise || primarySubjectsArray[0] || "English Language",
+        bio: profileData.bio || profileData.about || profileData.message || "",
+        about: profileData.about || profileData.message || "",
+        experienceYears: profileData.experienceYears || 0,
+        experience: profileData.experience || `${profileData.experienceYears || 0} years of teaching experience`,
+        certifications: certificationsArray,
+        specializations: primarySubjectsArray,
+        primarySubjects: primarySubjectsArray,
+        portfolioLink: profileData.portfolioLink || "",
+        preferredDelivery: profileData.preferredDelivery || "online",
+        timeZones: profileData.timeZones || "Gulf Standard Time (GST)",
+        phone: profileData.phone || "",
+        socials: {
+          linkedin: profileData.linkedinUrl || profileData.linkedin || "",
+          website: profileData.website || profileData.portfolioLink || "",
+          twitter: profileData.twitter || "",
+        },
+        avatarUrl: profileData.avatarUrl || "",
+      };
+    } else if (role === "recruiter" && req.body.profile) {
+      const profileData = req.body.profile;
+      metadata = {
+        company: profileData.companyName || profileData.company || "Talent Partner",
+        headline: profileData.headline || "",
+        bio: profileData.bio || profileData.aboutCompany || "",
+        aboutCompany: profileData.aboutCompany || "",
+        experience: profileData.experience || "",
+        experienceYears: profileData.experienceYears || 0,
+        phone: profileData.phone || "",
+        socials: {
+          linkedin: profileData.linkedinUrl || profileData.linkedin || "",
+          website: profileData.website || "",
+          twitter: profileData.twitter || "",
+        },
+        avatarUrl: profileData.avatarUrl || "",
+      };
+    }
+    
     const user = await User.create({
       email: normalizedEmail,
       passwordHash,
       fullName: normalizedFullName,
       role,
+      metadata,
     });
 
     // If student role, create student profile with provided data

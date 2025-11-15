@@ -19,6 +19,7 @@ import adminUserRoutes from "./routes/adminUserRoutes.js";
 import adminContentRoutes from "./routes/adminContentRoutes.js";
 import teacherCourseRoutes from "./routes/teacherCourseRoutes.js";
 import teacherEbookRoutes from "./routes/teacherEbookRoutes.js";
+import teacherRoutes from "./routes/teacherRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 
 const app = express();
@@ -49,6 +50,7 @@ app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/admin", adminContentRoutes);
 app.use("/api/v1/teacher", teacherCourseRoutes);
 app.use("/api/v1/teacher", teacherEbookRoutes);
+app.use("/api/v1/teachers", teacherRoutes);
 app.use("/api/v1/courses", courseRoutes);
 
 // eslint-disable-next-line no-unused-vars

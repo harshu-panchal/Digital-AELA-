@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaArrowLeft, FaSpinner, FaUser, FaBriefcase, FaEnvelope, FaLink, FaGlobe, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaArrowLeft, FaSpinner, FaUser, FaBriefcase, FaEnvelope, FaLink, FaGlobe, FaLinkedin, FaTwitter, FaPhone, FaBuilding } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import { apiRequest } from "../../../src/services/api/baseClient";
 
@@ -17,21 +17,12 @@ const RecruiterProfileDetail = () => {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        // Fetch user data
-        const userData = await apiRequest(`/admin/users/id/${userId}`, {
+        // Fetch recruiter profile from public endpoint
+        const profileData = await apiRequest(`/recruiter/${userId}/profile`, {
           skipAuth: true,
         });
-        setUser(userData);
-
-        // Try to fetch recruiter profile if available (using admin endpoint for now)
-        // In the future, we can create a public endpoint for this
-        try {
-          // For now, we'll just use the user data from the admin endpoint
-          // The profile data will come from user.metadata
-        } catch (error) {
-          // Profile might not exist or require auth, that's okay
-          console.log("Recruiter profile not available:", error);
-        }
+        setProfile(profileData);
+        setUser(profileData.user || profileData);
       } catch (error) {
         console.error("Failed to load profile:", error);
         toast.error("Failed to load recruiter profile");
@@ -70,10 +61,14 @@ const RecruiterProfileDetail = () => {
     );
   }
 
-  const company = profile?.company || user.metadata?.company || "Talent Partner";
-  const headline = profile?.headline || user.metadata?.headline || "";
-  const bio = profile?.bio || user.metadata?.bio || "";
-  const socials = profile?.socials || user.metadata?.socials || {};
+  const company = profile?.company || user?.metadata?.company || "Talent Partner";
+  const headline = profile?.headline || user?.metadata?.headline || "";
+  const bio = profile?.bio || profile?.aboutCompany || user?.metadata?.bio || user?.metadata?.aboutCompany || "";
+  const aboutCompany = profile?.aboutCompany || user?.metadata?.aboutCompany || bio || "";
+  const experience = profile?.experience || user?.metadata?.experience || "";
+  const experienceYears = profile?.experienceYears || user?.metadata?.experienceYears || 0;
+  const phone = profile?.phone || user?.metadata?.phone || "";
+  const socials = profile?.socials || user?.metadata?.socials || {};
   const stats = profile?.stats || {};
 
   return (
@@ -130,12 +125,26 @@ const RecruiterProfileDetail = () => {
               {bio && (
                 <p className="text-gray-300 mb-4">{bio}</p>
               )}
-              {user.email && (
-                <div className="flex items-center gap-2 text-gray-400">
-                  <FaEnvelope className="w-4 h-4" />
-                  <span>{user.email}</span>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                {user.email && (
+                  <div className="flex items-center gap-2">
+                    <FaEnvelope className="w-4 h-4" />
+                    <span>{user.email}</span>
+                  </div>
+                )}
+                {phone && (
+                  <div className="flex items-center gap-2">
+                    <FaPhone className="w-4 h-4" />
+                    <span>{phone}</span>
+                  </div>
+                )}
+                {experienceYears > 0 && (
+                  <div className="flex items-center gap-2">
+                    <FaBriefcase className="w-4 h-4" />
+                    <span>{experienceYears} years experience</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -202,13 +211,41 @@ const RecruiterProfileDetail = () => {
             </div>
           )}
 
+          {/* About Company */}
+          {aboutCompany && (
+            <div className="mb-8 p-6 rounded-2xl border border-white/10 bg-[#0b0b0b]/80">
+              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <FaBuilding className="w-5 h-5 text-[#D4AF37]" />
+                About Company
+              </h2>
+              <p className="text-gray-300">{aboutCompany}</p>
+            </div>
+          )}
+
+          {/* Experience */}
+          {(experienceYears > 0 || experience) && (
+            <div className="mb-8 p-6 rounded-2xl border border-white/10 bg-[#0b0b0b]/80">
+              <h2 className="text-xl font-semibold text-white mb-4">Experience</h2>
+              {experienceYears > 0 && (
+                <p className="text-gray-300 mb-2">
+                  <span className="font-semibold text-[#D4AF37]">{experienceYears} years</span> of recruiting experience
+                </p>
+              )}
+              {experience && (
+                <p className="text-gray-300">{experience}</p>
+              )}
+            </div>
+          )}
+
           {/* Company Info */}
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#0b0b0b]/80">
-            <h2 className="text-xl font-semibold text-white mb-4">About</h2>
-            <p className="text-gray-300">
-              {bio || `Connect with ${user.fullName} from ${company} for career opportunities and guidance.`}
-            </p>
-          </div>
+          {!aboutCompany && (
+            <div className="p-6 rounded-2xl border border-white/10 bg-[#0b0b0b]/80">
+              <h2 className="text-xl font-semibold text-white mb-4">About</h2>
+              <p className="text-gray-300">
+                {bio || `Connect with ${user.fullName} from ${company} for career opportunities and guidance.`}
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
