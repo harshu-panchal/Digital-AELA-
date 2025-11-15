@@ -53,6 +53,7 @@ const liveRoomSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    suppressReservedKeysWarning: true,
   }
 );
 
