@@ -73,42 +73,42 @@ export const Footer = () => {
       <div className="layout-container py-4 sm:py-5 space-y-4 relative z-10">
         <div className="flex justify-end">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {footerColumns.map((column, columnIndex) => (
-              <motion.div
-                key={column.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: 0.05 * columnIndex, ease: "easeOut" }}
+          {footerColumns.map((column, columnIndex) => (
+            <motion.div
+              key={column.title}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: 0.05 * columnIndex, ease: "easeOut" }}
               className="space-y-2">
               <h3 className="text-sm md:text-base font-bold text-[#D4AF37] font-accent tracking-wide uppercase">
                 {column.title}
               </h3>
               <ul className="space-y-1.5">
-                  {column.links.map((link, linkIndex) => (
-                    <motion.li
-                      key={link.label}
-                      initial={{ opacity: 0, x: -8 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.25, delay: 0.05 * linkIndex }}
+                {column.links.map((link, linkIndex) => (
+                  <motion.li
+                    key={link.label}
+                    initial={{ opacity: 0, x: -8 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.25, delay: 0.05 * linkIndex }}
                       className="text-xs md:text-sm text-white hover:text-[#FFE28A] transition-colors duration-200">
-                      {link.to ? (
-                        <Link to={link.to} className="inline-flex items-center gap-2">
-                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                          {link.label}
-                        </Link>
-                      ) : (
-                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
-                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                          {link.label}
-                        </a>
-                      )}
-                    </motion.li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+                    {link.to ? (
+                      <Link to={link.to} className="inline-flex items-center gap-2">
+                        <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                        <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                        {link.label}
+                      </a>
+                    )}
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
           </div>
         </div>
 
