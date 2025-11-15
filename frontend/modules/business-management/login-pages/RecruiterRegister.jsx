@@ -37,8 +37,32 @@ const RecruiterRegister = () => {
   motion.div;
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = event.target;
+    if (type === "file" && files && files[0]) {
+      const file = files[0];
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file.");
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB.");
+        return;
+      }
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          profileImage: file,
+          profileImagePreview: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -104,6 +128,7 @@ const RecruiterRegister = () => {
           website: safeWebsite,
           twitter: safeTwitter,
         },
+        profileImage: formData.profileImage,
       });
       toast.success("Recruiter account created successfully.");
       setFormData(createInitialFormState());
@@ -201,6 +226,38 @@ const RecruiterRegister = () => {
                 />
               </label>
             </div>
+
+            {/* Profile Image Upload */}
+            <label className="block space-y-2">
+              <span className="text-sm font-semibold text-slate-100">
+                Profile Photo <span className="text-xs text-slate-400">(Optional)</span>
+              </span>
+              <div className="flex items-center gap-4">
+                {formData.profileImagePreview ? (
+                  <img
+                    src={formData.profileImagePreview}
+                    alt="Profile preview"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-[#F5D26A]/40"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center">
+                    <span className="text-xs text-slate-400">No image</span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    name="profileImage"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#F5D26A] file:text-black hover:file:bg-[#FFE28A] transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  />
+                  <p className="mt-1 text-xs text-slate-400">
+                    JPG, PNG, or GIF. Max 5MB.
+                  </p>
+                </div>
+              </div>
+            </label>
 
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-slate-100">Professional Headline</span>

@@ -225,7 +225,7 @@ export const AuthProvider = ({ children }) => {
   );
 
   const register = useCallback(
-    async ({ email, password, role, profile }) => {
+    async ({ email, password, role, profile, profileImage }) => {
       const normalizedEmail = String(email || "")
         .trim()
         .toLowerCase();
@@ -241,14 +241,28 @@ export const AuthProvider = ({ children }) => {
 
       // Try backend auth first for all roles
       try {
-        const authResult = await registerUserAccount({
-          email: normalizedEmail,
-          password,
-          fullName,
-          role,
-          profile: profile, // Include profile data for student profile creation
-        });
-        return handleBackendAuthSuccess(authResult);
+        // Use file upload utility if profileImage is provided
+        if (profileImage) {
+          const { registerWithFile } = await import("../../utils/fileUpload");
+          const authResult = await registerWithFile(profileImage, {
+            email: normalizedEmail,
+            password,
+            fullName,
+            role,
+            profile: profile,
+          });
+          return handleBackendAuthSuccess(authResult);
+        } else {
+          // Use regular registration without file
+          const authResult = await registerUserAccount({
+            email: normalizedEmail,
+            password,
+            fullName,
+            role,
+            profile: profile, // Include profile data for student profile creation
+          });
+          return handleBackendAuthSuccess(authResult);
+        }
       } catch (backendError) {
         // If backend auth fails, fall back to mock auth for backward compatibility
         // eslint-disable-next-line no-console

@@ -6,6 +6,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/token.js";
+import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
 
 const buildAuthResponse = (user) => {
   const userId = user._id?.toString() || user.id;
@@ -66,6 +67,22 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    // Handle profile image upload if provided
+    let avatarUrl = "";
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(
+          req.file.buffer,
+          `digital-aela/profiles/${role}`
+        );
+        avatarUrl = uploadResult.url;
+      } catch (uploadError) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to upload profile image:", uploadError);
+        // Continue registration without image - don't fail registration
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
     
     // Build metadata from profile data for teachers and recruiters
@@ -97,7 +114,7 @@ export const registerUser = async (req, res, next) => {
           website: profileData.website || profileData.portfolioLink || "",
           twitter: profileData.twitter || "",
         },
-        avatarUrl: profileData.avatarUrl || "",
+        avatarUrl: avatarUrl || profileData.avatarUrl || "",
       };
     } else if (role === "recruiter" && req.body.profile) {
       const profileData = req.body.profile;
@@ -114,7 +131,12 @@ export const registerUser = async (req, res, next) => {
           website: profileData.website || "",
           twitter: profileData.twitter || "",
         },
-        avatarUrl: profileData.avatarUrl || "",
+        avatarUrl: avatarUrl || profileData.avatarUrl || "",
+      };
+    } else {
+      // For students, influencers, freelancers - store avatarUrl in metadata
+      metadata = {
+        avatarUrl: avatarUrl || (req.body.profile?.avatarUrl || ""),
       };
     }
     
