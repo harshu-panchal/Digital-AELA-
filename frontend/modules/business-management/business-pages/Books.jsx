@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { FaSearch, FaStar, FaBook, FaDownload, FaSpinner } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
-import { FaSearch, FaStar, FaBook, FaDownload } from "react-icons/fa";
 import GiftButton from "../common/GiftButton";
+import { fetchEbooks } from "../../../src/services/api/resources";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -12,11 +14,8 @@ import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocab
 import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 
-const Books = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Sample books data - In production, this would come from an API
-  const books = [
+// Fallback static books for when API fails
+const staticBooks = [
     {
       id: 1,
       title: "Advanced English Grammar",
@@ -126,6 +125,88 @@ const Books = () => {
       isbn: "978-1234567895",
     },
   ];
+
+const BOOKS_STORAGE_KEY = "aela.books.cache";
+
+const Books = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [books, setBooks] = useState(() => {
+    // Try to load from sessionStorage first
+    try {
+      const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+    return staticBooks;
+  });
+  const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(() => {
+    // Check if we have cached data
+    try {
+      return !!sessionStorage.getItem(BOOKS_STORAGE_KEY);
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    // Only load if we don't have cached data
+    if (hasLoaded) return;
+
+    const loadBooks = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchEbooks({ page: 1, pageSize: 100 });
+        const ebooksFromApi = (response.data || []).map((ebook) => ({
+          id: ebook._id,
+          title: ebook.title,
+          author: ebook.metadata?.author || "Digital AELA",
+          price: ebook.metadata?.price || 0,
+          originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
+          image: ebook.metadata?.coverImage || bookGrammarImg,
+          imageAlt: `${ebook.title} cover`,
+          rating: 4.5, // Default rating
+          reviews: 0,
+          format: "ebook",
+          description: ebook.description || "",
+          category: ebook.categories?.[0] || "General",
+          pages: ebook.pages || 0,
+          language: "English",
+          isbn: ebook._id,
+        }));
+        const finalBooks = ebooksFromApi.length > 0 ? ebooksFromApi : staticBooks;
+        setBooks(finalBooks);
+        // Cache in sessionStorage
+        try {
+          sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(finalBooks));
+        } catch (e) {
+          // Ignore storage errors
+        }
+        setHasLoaded(true);
+      } catch (error) {
+        console.error("Failed to load books:", error);
+        // Fallback to static books on error
+        setBooks(staticBooks);
+        try {
+          sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(staticBooks));
+        } catch (e) {
+          // Ignore storage errors
+        }
+        setHasLoaded(true);
+        toast.error("Failed to load books. Showing cached data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooks();
+  }, [hasLoaded]);
 
   // Filter books based on search query
   const filteredBooks = books.filter(

@@ -1,15 +1,10 @@
-import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { FaStar, FaBook, FaDownload, FaArrowLeft, FaCheck, FaSpinner } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
-import {
-  FaStar,
-  FaBook,
-  FaDownload,
-  FaArrowLeft,
-  FaCheck,
-} from "react-icons/fa";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -17,12 +12,10 @@ import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocab
 import bookSentenceStructureImg from "../../../src/assets/images/books/sentence structure.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
+import { fetchEbookById } from "../../../src/services/api/resources";
 
-const BookDetail = () => {
-  const { id } = useParams();
-  // Sample books data - In production, this would come from an API
-  const booksData = useMemo(
-    () => [
+// Fallback static books data
+const staticBooksData = [
       {
         id: 1,
         title: "Advanced English Grammar",
@@ -191,21 +184,98 @@ const BookDetail = () => {
           "Exam strategies and tips",
         ],
       },
-    ],
-    []
-  );
+    ];
 
-  const book = useMemo(
-    () => booksData.find((b) => b.id === parseInt(id, 10)),
-    [booksData, id]
-  );
+const BookDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!book) {
+  useEffect(() => {
+    const loadBook = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Try to fetch from API first
+        try {
+          const ebook = await fetchEbookById(id);
+          if (ebook) {
+            // Transform backend data to frontend format
+            const transformedBook = {
+              id: ebook._id || id,
+              title: ebook.title,
+              author: ebook.metadata?.author || "Digital AELA",
+              price: ebook.metadata?.price || 0,
+              originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
+              image: ebook.metadata?.coverImage || bookGrammarImg,
+              imageAlt: `${ebook.title} cover`,
+              rating: 4.5,
+              reviews: 0,
+              format: "ebook",
+              description: ebook.description || "",
+              fullDescription: ebook.description || ebook.metadata?.subtitle || "",
+              category: ebook.categories?.[0] || "General",
+              pages: ebook.pages || 0,
+              language: "English",
+              isbn: ebook._id || id,
+              publisher: "Digital AELA Publications",
+              publishedDate: ebook.publishedAt ? new Date(ebook.publishedAt).getFullYear().toString() : "2024",
+              features: ebook.metadata?.tags || [
+                "Expert-authored content",
+                "Comprehensive coverage",
+                "Digital format",
+              ],
+            };
+            setBook(transformedBook);
+            setLoading(false);
+            return;
+          }
+        } catch (apiError) {
+          console.error("API fetch failed, trying static data:", apiError);
+        }
+
+        // Fallback to static data if API fails or book not found
+        // Try to match by numeric ID first (for static books)
+        const numericId = parseInt(id, 10);
+        const staticBook = staticBooksData.find((b) => b.id === numericId || b.id.toString() === id);
+        if (staticBook) {
+          setBook(staticBook);
+        } else {
+          setError("Book not found");
+        }
+      } catch (err) {
+        console.error("Failed to load book:", err);
+        setError("Failed to load book details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      loadBook();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="h-12 w-12 animate-spin text-[#D4AF37] mx-auto mb-4" />
+          <p className="text-white">Loading book details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !book) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-4 font-display">
-            Book not found
+            {error || "Book not found"}
           </h2>
           <Link
             to="/books"

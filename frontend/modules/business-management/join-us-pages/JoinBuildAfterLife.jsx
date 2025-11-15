@@ -20,6 +20,7 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { courseCatalog as allCourses } from "../data/courseCatalog";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
+import { fetchEbooks } from "../../../src/services/api/resources";
 
 const whatsappNumber = "+971508185690";
 
@@ -107,7 +108,9 @@ const bookLibrary = [
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
   const [afterLifeCourses, setAfterLifeCourses] = useState([]);
+  const [afterLifeBooks, setAfterLifeBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingBooks, setLoadingBooks] = useState(true);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -140,6 +143,37 @@ const JoinBuildAfterLife = () => {
     };
 
     loadCourses();
+  }, []);
+
+  useEffect(() => {
+    const loadBooks = async () => {
+      try {
+        setLoadingBooks(true);
+        const response = await fetchEbooks({ page: 1, pageSize: 100 });
+        const booksFromApi = (response.data || []).map((ebook) => ({
+          id: ebook._id,
+          title: ebook.title,
+          author: ebook.metadata?.author || "Digital AELA",
+          price: ebook.metadata?.price || 0,
+          originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
+          rating: 4.5,
+          reviews: 0,
+          category: ebook.categories?.[0] || "General",
+          badge: "E-Book",
+          image: ebook.metadata?.coverImage || bookAdvancedEnglishImg,
+          imageAlt: `${ebook.title} cover`,
+        }));
+        setAfterLifeBooks(booksFromApi);
+      } catch (error) {
+        console.error("Failed to load books:", error);
+        // Keep static books on error
+        setAfterLifeBooks([]);
+      } finally {
+        setLoadingBooks(false);
+      }
+    };
+
+    loadBooks();
   }, []);
 
   const handleBuyCourse = (course) => {
@@ -428,10 +462,15 @@ const JoinBuildAfterLife = () => {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {bookLibrary.map((book, index) => (
-                <motion.div
-                  key={book.id}
+            {loadingBooks ? (
+              <div className="flex items-center justify-center py-12">
+                <FaSpinner className="h-8 w-8 animate-spin text-[#F5D26A]" />
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {(afterLifeBooks.length > 0 ? afterLifeBooks : bookLibrary).map((book, index) => (
+                  <motion.div
+                    key={book.id}
                   initial={{ y: 40, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true, amount: 0.3 }}
@@ -527,8 +566,9 @@ const JoinBuildAfterLife = () => {
                     </div>
                   </Link>
                 </motion.div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
