@@ -17,6 +17,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
+import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -30,12 +31,12 @@ const redeemOptions = [
 ];
 
 const WalletDashboard = () => {
-  const { transactions, recordTransaction, shareCoins, totals } = useUser();
+  const { transactions, recordTransaction, totals } = useUser();
   const { redeemPoints, addPoints } = usePoints();
   const [showConfetti, setShowConfetti] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [sendAmount, setSendAmount] = useState(60);
-  const [recipient, setRecipient] = useState("Fatima Hassan");
+  const [recipientUserId, setRecipientUserId] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -119,12 +120,41 @@ const WalletDashboard = () => {
     toast.info("Withdrawal submitted · expect funds in 24h", { icon: "🏦" });
   };
 
-  const handleSendCoins = () => {
-    const result = shareCoins(recipient, sendAmount, "Keep shining!");
-    if (result.success) {
-      toast.success(`Sent ${sendAmount} coins to ${recipient}`, { icon: "🤝" });
-    } else {
-      toast.error(result.reason, { icon: "⚠️" });
+  const handleSendCoins = async () => {
+    if (!recipientUserId.trim()) {
+      toast.error("Please enter a recipient user ID", { icon: "⚠️" });
+      return;
+    }
+    
+    if (sendAmount <= 0) {
+      toast.error("Amount must be greater than zero", { icon: "⚠️" });
+      return;
+    }
+
+    try {
+      const result = await shareCoinsAPI(recipientUserId.trim(), sendAmount, "Keep shining!");
+      if (result?.success) {
+        toast.success(result.message || `Sent ${sendAmount} coins successfully`, { icon: "🤝" });
+        setRecipientUserId(""); // Clear input after successful send
+        setSendAmount(60); // Reset to default amount
+        // Update local transaction record
+        recordTransaction({
+          type: "sent",
+          label: `Gifted to user ${recipientUserId.trim()}`,
+          amount: sendAmount,
+          time: "Just now",
+        });
+        // Refresh wallet data from backend
+        window.dispatchEvent(new CustomEvent("transactionCompleted"));
+        // Refresh points context to get updated wallet balance
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("refreshWallet"));
+        }, 500);
+      } else {
+        toast.error(result?.error?.message || result?.message || "Failed to send coins", { icon: "⚠️" });
+      }
+    } catch (error) {
+      toast.error(error?.error?.message || error?.message || "Failed to send coins", { icon: "⚠️" });
     }
   };
 
@@ -183,9 +213,9 @@ const WalletDashboard = () => {
             <p>Send coins to a learner</p>
             <div className="mt-3 space-y-2">
               <input
-                value={recipient}
-                onChange={(event) => setRecipient(event.target.value)}
-                placeholder="Recipient name"
+                value={recipientUserId}
+                onChange={(event) => setRecipientUserId(event.target.value)}
+                placeholder="Enter user ID"
                 className="w-full rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-gray-100 focus:border-[#D4AF37]/40 focus:outline-none"
               />
               <input
@@ -194,6 +224,7 @@ const WalletDashboard = () => {
                 step={10}
                 value={sendAmount}
                 onChange={(event) => setSendAmount(Number(event.target.value))}
+                placeholder="Amount"
                 className="w-full rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-gray-100 focus:border-[#D4AF37]/40 focus:outline-none"
               />
               <button

@@ -7,6 +7,7 @@ import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
 import Follow from "../models/Follow.js";
 import UserRating from "../models/UserRating.js";
+import QuizAttempt from "../models/QuizAttempt.js";
 
 export const getDashboardData = async (req, res, next) => {
   try {
@@ -216,11 +217,18 @@ export const getDashboardData = async (req, res, next) => {
         if (!user) return null;
 
         const profile = await StudentProfile.findOne({ user: user._id });
-        const ratings = await UserRating.find({ ratedUser: user._id });
-        const rating =
-          ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-            : 0;
+        // Get rating based on quiz performance
+        const userQuizAttempts = await QuizAttempt.find({ student: user._id });
+        let rating = 0;
+        if (userQuizAttempts.length > 0) {
+          const validAttempts = userQuizAttempts.filter(attempt => attempt.score != null && attempt.score >= 0);
+          if (validAttempts.length > 0) {
+            const totalScore = validAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
+            const averageQuizScore = totalScore / validAttempts.length;
+            // Convert 0-100 score to 0-5.0 rating (divide by 20)
+            rating = averageQuizScore / 20;
+          }
+        }
 
         // Get coins shared (would come from coin sharing transactions)
         const coinsShared = 0; // TODO: Implement when coin sharing is tracked

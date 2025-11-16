@@ -94,7 +94,18 @@ export const PointsProvider = ({ children }) => {
     // Refresh wallet data every 30 seconds to keep it live
     const interval = setInterval(loadPointsFromBackend, 30000);
     
-    return () => clearInterval(interval);
+    // Listen for transaction completion to refresh wallet immediately
+    const handleTransactionCompleted = () => {
+      loadPointsFromBackend();
+    };
+    window.addEventListener("transactionCompleted", handleTransactionCompleted);
+    window.addEventListener("refreshWallet", handleTransactionCompleted);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("transactionCompleted", handleTransactionCompleted);
+      window.removeEventListener("refreshWallet", handleTransactionCompleted);
+    };
   }, [loadPointsFromBackend]);
 
   // Save to localStorage whenever points change

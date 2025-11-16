@@ -40,3 +40,9 @@ export const unfollowUser = (targetUserId) =>
     method: "DELETE",
   });
 
+export const shareCoins = (recipientUserId, amount, note = "") =>
+  apiRequest("/social/share-coins", {
+    method: "POST",
+    body: { recipientUserId, amount, note },
+  });
+

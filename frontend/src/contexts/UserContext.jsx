@@ -363,6 +363,29 @@ export const UserProvider = ({ children }) => {
             
             return updated;
           });
+          
+          // Update ratings with quiz attempts count (totalRatings)
+          if (stats.totalRatings !== undefined && stats.totalRatings !== null) {
+            setRatings((prev) => ({
+              ...prev,
+              votes: stats.totalRatings, // This is now quiz attempts count
+              average: stats.rating || prev.average,
+            }));
+          } else if (stats.rating !== undefined && stats.rating !== null) {
+            setRatings((prev) => ({
+              ...prev,
+              average: stats.rating,
+            }));
+          }
+
+          // Update badges from backend
+          if (stats.badges && Array.isArray(stats.badges)) {
+            setProfile((prev) => ({
+              ...prev,
+              badges: stats.badges.length > 0 ? stats.badges : prev.badges || [],
+            }));
+          }
+          
           setSocialStatsLoaded(true);
         }
       } catch (error) {
@@ -493,12 +516,16 @@ export const UserProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [reloadFollowing]);
 
-  // Listen for coin earning events to refresh leaderboard data
+  // Listen for coin earning events to refresh leaderboard data and rating/badges
   useEffect(() => {
     const handleCoinEarned = () => {
       // Refresh followers and following lists when coins are earned
       reloadFollowers();
       reloadFollowing();
+      // Refresh social stats (including rating and badges) when quiz is completed
+      if (refreshSocialStats) {
+        refreshSocialStats();
+      }
     };
 
     // Listen for quiz completion (coins earned)
@@ -513,7 +540,7 @@ export const UserProvider = ({ children }) => {
       window.removeEventListener("coinsEarned", handleCoinEarned);
       window.removeEventListener("transactionCompleted", handleCoinEarned);
     };
-  }, [reloadFollowers, reloadFollowing]);
+  }, [reloadFollowers, reloadFollowing, refreshSocialStats]);
 
   // Load Learn & Earn dashboard data from backend
   useEffect(() => {

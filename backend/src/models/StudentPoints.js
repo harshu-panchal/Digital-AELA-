@@ -38,7 +38,7 @@ const studentPointsSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ["earned", "redeemed", "bonus", "penalty"],
+          enum: ["earned", "redeemed", "bonus", "penalty", "sent", "received"],
         },
         amount: Number,
         reason: String,

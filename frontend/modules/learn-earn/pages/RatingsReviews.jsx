@@ -35,13 +35,17 @@ const RatingsReviews = () => {
           <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="text-center sm:text-left">
               <p className="text-5xl font-semibold text-white">{ratings.average.toFixed(1)}</p>
-              <p className="mt-2 text-sm text-gray-400">Based on {ratings.votes} peer reviews</p>
+              <p className="mt-2 text-sm text-gray-400">Based on {ratings.votes} quiz {ratings.votes === 1 ? 'attempt' : 'attempts'}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {profile.badges.map((badge) => (
-                  <span key={badge.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}>
-                    {badge.label}
-                  </span>
-                ))}
+                {profile.badges && profile.badges.length > 0 ? (
+                  profile.badges.map((badge) => (
+                    <span key={badge.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}>
+                      {badge.label}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500">Complete more quizzes to earn badges</p>
+                )}
               </div>
             </div>
             <div className="relative h-28 w-28">

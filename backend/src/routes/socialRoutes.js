@@ -5,6 +5,7 @@ import {
   getFollowing,
   followUser,
   unfollowUser,
+  shareCoins,
 } from "../controllers/socialController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -26,6 +27,9 @@ router.post("/follow", requireAuth([]), followUser);
 
 // Unfollow a user (authenticated)
 router.delete("/follow/:targetUserId", requireAuth([]), unfollowUser);
+
+// Share coins with another user (authenticated)
+router.post("/share-coins", requireAuth(["student"]), shareCoins);
 
 export default router;
 
