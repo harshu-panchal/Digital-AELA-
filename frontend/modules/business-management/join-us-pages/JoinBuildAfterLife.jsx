@@ -158,8 +158,8 @@ const JoinBuildAfterLife = () => {
   const handleBuyCourse = (course) => {
     const payload = {
       ...course,
-      category: "Build Your After Life",
-      origin: "join-build-after-life",
+      category: "Build Your Afterlife",
+      origin: "join-build-afterlife",
     };
     navigate(buildCoursePaymentLink(payload), {
       state: {
@@ -171,7 +171,7 @@ const JoinBuildAfterLife = () => {
   const handleViewCourse = (course) => {
     const payload = {
       ...course,
-      origin: "join-build-after-life",
+      origin: "join-build-afterlife",
     };
     navigate(`/courses/${course.slug || course.id}`, {
       state: {
@@ -185,10 +185,10 @@ const JoinBuildAfterLife = () => {
   return (
     <div className="min-h-screen bg-black">
       <SEO
-        title="Build Your After Life | All Courses & Books | Digital AELA"
-        description="Explore every Digital AELA course track and book collection in one immersive space. Plan your After Life journey with curated learning paths and premium resources."
-        keywords="Digital AELA courses, Digital AELA books, Build Your After Life, corporate training, digital marketing, English language courses"
-        url="https://digitalaela.com/join-us/after-life"
+        title="Build Your Afterlife | All Courses & Books | Digital AELA"
+        description="Explore every Digital AELA course track and book collection in one immersive space. Plan your Afterlife journey with curated learning paths and premium resources."
+        keywords="Digital AELA courses, Digital AELA books, Build Your Afterlife, corporate training, digital marketing, English language courses"
+        url="https://digitalaela.com/join-us/afterlife"
       />
 
       {/* Header */}
@@ -215,7 +215,7 @@ const JoinBuildAfterLife = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
-            Build Your <span className="text-[#D4AF37]">After Life</span>
+            Build Your <span className="text-[#D4AF37]">Afterlife</span>
               </motion.h1>
           <motion.p
             initial={{ y: 20, opacity: 0 }}

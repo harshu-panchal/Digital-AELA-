@@ -322,7 +322,7 @@ export const App = () => {
         <Route path="/join-us/teacher" element={<JoinAsTeacher />} />
         <Route path="/join-us/influencer" element={<JoinInfluencer />} />
         <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
-        <Route path="/join-us/after-life" element={<JoinBuildAfterLife />} />
+        <Route path="/join-us/afterlife" element={<JoinBuildAfterLife />} />
         <Route path="/community/students/:userId" element={<StudentProfileDetail />} />
         <Route path="/community/teachers/:userId" element={<TeacherProfileDetail />} />
         <Route path="/community/recruiters/:userId" element={<RecruiterProfileDetail />} />

@@ -39,6 +39,8 @@ import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { englishCourses } from "../data/englishCourses";
+import { digitalMarketingCourses } from "../data/digitalMarketingCourses";
+import { corporateTrainingCourses } from "../data/corporateTrainingCourses";
 
 const MotionLink = motion.create(Link);
 
@@ -48,9 +50,31 @@ const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [activeCertificate, setActiveCertificate] = useState(0);
+  const [isCourseRibbonPaused, setIsCourseRibbonPaused] = useState(false);
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
+
+  // Define home courses before useEffect hooks - exactly 6 courses
+  const homeCourses = useMemo(() => {
+    // Get Interview Preparation course from corporate training
+    const interviewPrep = corporateTrainingCourses.find(
+      (course) => course.slug === "interview-preparation"
+    );
+    // Get 3 from English, 2 from Digital Marketing, and Interview Preparation = 6 total
+    const selectedCourses = [
+      ...englishCourses.slice(0, 3),
+      ...digitalMarketingCourses.slice(0, 2),
+      interviewPrep,
+    ].filter(Boolean);
+    return selectedCourses.slice(0, 6); // Ensure exactly 6 courses
+  }, []);
+
+  // Duplicate courses for seamless infinite scroll
+  const duplicatedCourses = useMemo(() => {
+    // Duplicate the courses array multiple times for seamless scrolling
+    return [...homeCourses, ...homeCourses, ...homeCourses];
+  }, [homeCourses]);
 
   // Refresh blogs when home page mounts to ensure we have latest data
   useEffect(() => {
@@ -99,7 +123,7 @@ const Home = () => {
         description:
           "Grow from learner to leader through guided cohorts, paid projects, and a global network cheering for you.",
         primaryCta: null, // Removed "Start Your Journey"
-        primaryLink: "/join-us/after-life",
+        primaryLink: "/join-us/afterlife",
         secondaryCta: "See Success Stories",
         secondaryLink: "/about/success-stories",
         image:
@@ -122,14 +146,14 @@ const Home = () => {
       {
         id: "gift-future",
         badge: "Gift a future",
-        title: "Build your After Life centre",
+        title: "Build your Afterlife centre",
         highlight: "Sponsor a classroom. Transform a city",
         description:
           "Dedicate scholarships, sponsor labs, and co-create hubs that keep learners future-ready across continents.",
         primaryCta: null, // Removed "Gift a Scholarship"
         primaryLink: "/gift/payment?type=anyone",
-        secondaryCta: "Build After Life",
-        secondaryLink: "/join-us/after-life",
+        secondaryCta: "Build Afterlife",
+        secondaryLink: "/join-us/afterlife",
         image:
           "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80",
       },
@@ -143,7 +167,7 @@ const Home = () => {
         primaryCta: "Read Free Library",
         primaryLink: "/books",
         secondaryCta: null, // Removed "See Featured Reads"
-        secondaryLink: "/join-us/after-life",
+        secondaryLink: "/join-us/afterlife",
         image:
           "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
       },
@@ -251,8 +275,6 @@ const Home = () => {
     "Hello! I'm interested in learning more about your English courses."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
-
-  const homeCourses = useMemo(() => englishCourses.slice(0, 3), []);
 
   const handleViewCourseDetail = (course, origin = "home-featured") => {
     const payload = {
@@ -406,7 +428,7 @@ const Home = () => {
     },
     {
       id: "story-4",
-      title: "Mentors Inspiring The After Life Movement",
+      title: "Mentors Inspiring The Afterlife Movement",
       youtubeId: "DMLVWteuQJI",
       thumbnail: "https://img.youtube.com/vi/DMLVWteuQJI/hqdefault.jpg",
     },
@@ -1075,138 +1097,195 @@ const Home = () => {
             </p>
           </motion.div>
 
-          <div className="auto-grid-md lg:grid-cols-3 mb-10">
-            {homeCourses.map((course, index) => (
-              <motion.div
-                key={course.slug}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6 }}
-                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleViewCourseDetail(course, "home-featured")}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleViewCourseDetail(course, "home-featured");
-                  }
+          {/* Courses Infinite Scrolling Ribbon */}
+          <div
+            className="relative mb-10 overflow-hidden"
+            onMouseEnter={() => setIsCourseRibbonPaused(true)}
+            onMouseLeave={() => setIsCourseRibbonPaused(false)}>
+            <style>{`
+              @keyframes scroll-left {
+                0% {
+                  transform: translateX(0);
+                }
+                100% {
+                  transform: translateX(-33.333%);
+                }
+              }
+              .course-ribbon {
+                animation: scroll-left 60s linear infinite;
+              }
+              .course-ribbon.paused {
+                animation-play-state: paused;
+              }
+            `}</style>
+            <div className="overflow-hidden">
+              <div
+                className={`course-ribbon flex gap-6 ${
+                  isCourseRibbonPaused ? "paused" : ""
+                }`}
+                style={{
+                  width: "fit-content",
                 }}>
-                <div className="h-40 w-full overflow-hidden">
-                  <img
-                    src={course.image}
-                    alt={course.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
-                  {(course.slug === "basic-english" ||
-                    course.slug === "advanced-english" ||
-                    course.slug === "personalised-english-speaking" ||
-                    course.slug === "public-speaking-stage-confidence" ||
-                    course.slug === "interview-preparation") && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                      Trending
-                    </span>
-                  )}
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                      {course.description}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                {duplicatedCourses.map((course, index) => (
+                  <div
+                    key={`${course.slug}-${index}`}
+                    className="shrink-0"
+                    style={{
+                      width:
+                        "clamp(280px, calc((100vw - 4rem) / 3 - 1.5rem), 400px)",
+                    }}>
+                    <motion.div
+                      initial={{ y: 50, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{
+                        duration: 0.25,
+                        delay: (index % homeCourses.length) * 0.05,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                      whileHover={{ y: -6 }}
+                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        handleViewCourseDetail(course, "home-featured")
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleViewCourseDetail(course, "home-featured");
+                        }
+                      }}>
+                      <div className="h-40 w-full overflow-hidden">
+                        <img
+                          src={course.image}
+                          alt={course.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                      </svg>
-                      {course.duration}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                      {course.format}
-                    </span>
-                  </div>
-
-                  <div className="border-t border-[#D4AF37]/15 pt-4">
-                    <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                      Key Highlights
-                    </p>
-                    <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                      {course.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between text-sm text-gray-300">
-                      <span>Course Fee</span>
-                      <span className="text-lg font-semibold text-[#F5D26A]">
-                        {course.price}
-                      </span>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <motion.button
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          redirectToCoursePayment(course, {
-                            origin: "home-featured",
-                            category: course.category ?? "Featured Programs",
-                          });
-                        }}
-                        className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                        Buy Now
-                      </motion.button>
-                      <div
-                        onClick={(event) => event.stopPropagation()}
-                        onKeyDown={(event) => event.stopPropagation()}>
-                        <GiftButton
-                          className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                          size="sm">
-                          Gift
-                        </GiftButton>
                       </div>
-                    </div>
+                      <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
+                        <div className="min-h-[28px] mb-4">
+                          {(course.slug === "basic-english" ||
+                            course.slug === "advanced-english" ||
+                            course.slug === "personalised-english-speaking" ||
+                            course.slug ===
+                              "public-speaking-stage-confidence" ||
+                            course.slug === "interview-preparation") && (
+                            <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
+                              Most Enrolled
+                            </span>
+                          )}
+                        </div>
+                        <div className="mb-4">
+                          <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                            {course.title}
+                          </h3>
+                          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                            {course.description}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                          <span className="flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-[#D4AF37]"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {course.duration}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-[#D4AF37]"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 8l4 4m0 0l-4 4m4-4H3"
+                              />
+                            </svg>
+                            {course.format}
+                          </span>
+                        </div>
+
+                        <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
+                          <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
+                            Key Highlights
+                          </p>
+                          <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                            {course.features.map((feature) => (
+                              <li
+                                key={feature}
+                                className="flex items-center gap-2">
+                                <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="flex flex-col gap-3 mt-auto">
+                          <div className="flex items-center justify-between text-sm text-gray-300">
+                            <span>Course Fee</span>
+                            <span className="text-lg font-semibold text-[#F5D26A]">
+                              {course.price}
+                            </span>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleViewCourseDetail(course, "home-featured");
+                            }}
+                            className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
+                            See Full Course
+                          </motion.button>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <motion.button
+                              whileHover={{ scale: 1.03, y: -2 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                redirectToCoursePayment(course, {
+                                  origin: "home-featured",
+                                  category:
+                                    course.category ?? "Featured Programs",
+                                });
+                              }}
+                              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                              Buy Now
+                            </motion.button>
+                            <div
+                              onClick={(event) => event.stopPropagation()}
+                              onKeyDown={(event) => event.stopPropagation()}>
+                              <GiftButton
+                                course={course}
+                                origin="home-featured"
+                                className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                                size="sm">
+                                Gift
+                              </GiftButton>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* See All Courses Button */}
@@ -1323,6 +1402,34 @@ const Home = () => {
                     </p>
                   </motion.div>
                 ))}
+              </motion.div>
+
+              {/* Know More Button */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
+                className="mt-8">
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/about/founder")}
+                  className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                  Know More
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </motion.button>
               </motion.div>
             </motion.div>
           </div>
@@ -2055,7 +2162,7 @@ const Home = () => {
             </h2>
             <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Hear from our learners, mentors, and community as they share
-              milestones, transformations, and the heart behind the After Life
+              milestones, transformations, and the heart behind the Afterlife
               movement.
             </p>
           </motion.div>
@@ -2128,7 +2235,7 @@ const Home = () => {
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 Quick reads curated by our mentors and learners. Dive into
                 frameworks, wins, and behind-the-scenes playbooks powering the
-                After Life movement.
+                Afterlife movement.
               </p>
             </motion.div>
 
@@ -2236,7 +2343,7 @@ const Home = () => {
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 Celebrate wins from community hubs, partner organisations, and
-                learners who are shaping the After Life movement across cities.
+                learners who are shaping the Afterlife movement across cities.
               </p>
             </motion.div>
 

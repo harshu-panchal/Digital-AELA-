@@ -225,7 +225,7 @@ const CorporateTrainingCourses = () => {
                     ease: [0.25, 0.1, 0.25, 1],
                   }}
                   whileHover={{ y: -6 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer"
+                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
                   role="button"
                   tabIndex={0}
                   onClick={() => handleViewCourse(program)}
@@ -243,14 +243,16 @@ const CorporateTrainingCourses = () => {
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-4">
+                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
+                    <div className="min-h-[28px] mb-4">
                     {(program.slug === "interview-preparation" ||
                       program.slug === "public-speaking-stage-confidence") && (
                       <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                        Trending
+                          Most Enrolled
                       </span>
                     )}
-                    <div>
+                    </div>
+                    <div className="mb-4">
                       <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
                         {program.title}
                       </h3>
@@ -259,7 +261,7 @@ const CorporateTrainingCourses = () => {
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400">
+                    <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
                       <span className="flex items-center gap-2">
                         <svg
                           className="w-4 h-4 text-[#D4AF37]"
@@ -292,7 +294,7 @@ const CorporateTrainingCourses = () => {
                       </span>
                     </div>
 
-                    <div className="border-t border-[#D4AF37]/15 pt-4">
+                    <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
                         Key Highlights
                       </p>
@@ -306,13 +308,23 @@ const CorporateTrainingCourses = () => {
                       </ul>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
                         <span>Program Fee</span>
                         <span className="text-lg font-semibold text-[#F5D26A]">
                           {program.price || "On Request"}
                         </span>
                       </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleViewCourse(program);
+                        }}
+                        className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
+                        See Full Course
+                      </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <motion.button
                           whileHover={{ scale: 1.03, y: -2 }}

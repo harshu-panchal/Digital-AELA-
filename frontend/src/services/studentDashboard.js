@@ -81,7 +81,7 @@ const defaultDashboard = {
       title: "Donate Access",
       description: "Gift a course to a friend or community student.",
       icon: "gift",
-      to: "/join-us/after-life",
+      to: "/join-us/afterlife",
       tone: "from-emerald-500/15 to-emerald-400/10 border-emerald-400/30 text-emerald-100",
     },
     {
