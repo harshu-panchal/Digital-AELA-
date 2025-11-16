@@ -44,33 +44,44 @@ export const PointsProvider = ({ children }) => {
     try {
       const dashboardData = await fetchStudentDashboard();
       const learnEarnProgress = dashboardData?.learnEarnProgress;
-      if (learnEarnProgress?.coinsToRedeem !== undefined) {
-        const backendCoins = learnEarnProgress.coinsToRedeem || 0;
-        // Always use backend value - it's the source of truth
-        // Only update if backend has a value (even if 0, but only if explicitly returned)
-        setAelaPoints((prev) => {
-          // If backend returns 0, use it (means user has 0 coins)
-          // But if backend fails, keep previous value
-          const newValue = backendCoins;
-          if (prev !== newValue) {
-            // eslint-disable-next-line no-console
-            console.log("Updating coins from backend:", prev, "->", newValue);
-          }
-          return newValue;
-        });
-        localStorage.setItem("aelaPoints", backendCoins.toString());
+      if (learnEarnProgress) {
+        // Update coins (available coins to redeem)
+        if (learnEarnProgress.coinsToRedeem !== undefined) {
+          const backendCoins = learnEarnProgress.coinsToRedeem || 0;
+          setAelaPoints((prev) => {
+            const newValue = backendCoins;
+            if (prev !== newValue) {
+              // eslint-disable-next-line no-console
+              console.log("Updating coins from backend:", prev, "->", newValue);
+            }
+            return newValue;
+          });
+          localStorage.setItem("aelaPoints", backendCoins.toString());
+        }
+
+        // Update total earned from backend
+        if (learnEarnProgress.totalEarned !== undefined) {
+          const backendTotalEarned = learnEarnProgress.totalEarned || 0;
+          setTotalEarned(backendTotalEarned);
+          localStorage.setItem("totalEarned", backendTotalEarned.toString());
+        }
+
+        // Update total redeemed from backend
+        if (learnEarnProgress.totalRedeemed !== undefined) {
+          const backendTotalRedeemed = learnEarnProgress.totalRedeemed || 0;
+          setTotalRedeemed(backendTotalRedeemed);
+          localStorage.setItem("totalRedeemed", backendTotalRedeemed.toString());
+        }
+
         setBackendCoinsLoaded(true);
-        // eslint-disable-next-line no-console
-        console.log("Loaded coins from backend:", backendCoins);
       } else {
-        // Backend didn't return coins data - keep current value
+        // Backend didn't return learnEarnProgress data - keep current value
         setBackendCoinsLoaded(true);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn("Failed to load points from backend:", error);
       // If backend fails, keep using current localStorage value (don't reset to 0)
-      // Don't overwrite existing coins if backend call fails
       setBackendCoinsLoaded(true);
     } finally {
       setIsLoadingPoints(false);
@@ -79,6 +90,11 @@ export const PointsProvider = ({ children }) => {
 
   useEffect(() => {
     loadPointsFromBackend();
+    
+    // Refresh wallet data every 30 seconds to keep it live
+    const interval = setInterval(loadPointsFromBackend, 30000);
+    
+    return () => clearInterval(interval);
   }, [loadPointsFromBackend]);
 
   // Save to localStorage whenever points change

@@ -69,8 +69,21 @@ export const getConversations = async (req, res, next) => {
       {
         $lookup: {
           from: "users",
-          localField: "_id",
-          foreignField: "_id",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$userId"] },
+              },
+            },
+            {
+              $project: {
+                fullName: 1,
+                email: 1,
+                metadata: 1,
+              },
+            },
+          ],
           as: "user",
         },
       },
@@ -81,12 +94,22 @@ export const getConversations = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "studentprofiles",
+          localField: "_id",
+          foreignField: "user",
+          as: "profile",
+        },
+      },
+      {
         $project: {
           _id: 0,
           userId: { $toString: "$_id" },
           name: "$user.fullName",
           avatar: {
             $ifNull: [
+              { $arrayElemAt: ["$profile.avatarUrl", 0] },
+              "$user.metadata.avatarUrl",
               "$user.avatarUrl",
               {
                 $concat: [
@@ -167,8 +190,8 @@ export const getMessages = async (req, res, next) => {
       ],
     })
       .sort({ createdAt: 1 })
-      .populate("sender", "fullName avatarUrl")
-      .populate("recipient", "fullName avatarUrl")
+      .populate("sender", "fullName metadata")
+      .populate("recipient", "fullName metadata")
       .lean();
 
     // Mark messages as read

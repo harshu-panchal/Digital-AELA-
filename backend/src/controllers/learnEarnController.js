@@ -109,8 +109,8 @@ export const getDashboardData = async (req, res, next) => {
           userId: otherUserId.toString(),
           name: otherUser?.fullName || "User",
           avatar: avatarUrl,
-          preview: lastMsg.content || "",
-          unread: conv.unreadCount,
+          preview: lastMsg.content || "No messages yet",
+          unread: conv.unreadCount || 0,
           timestamp: formatTimeAgo(lastMsg.createdAt),
         };
       })
@@ -172,6 +172,8 @@ export const getDashboardData = async (req, res, next) => {
       startInMinutes: debate.scheduledStart
         ? Math.max(0, Math.floor((debate.scheduledStart - new Date()) / 60000))
         : 0,
+      scheduledStart: debate.scheduledStart || null,
+      status: debate.status || "scheduled",
       speakers: (debate.speakers || []).map((s) => s.fullName || "Speaker"),
     }));
 
@@ -181,7 +183,19 @@ export const getDashboardData = async (req, res, next) => {
       host: room.host?.fullName || "Host",
       listeners: room.listeners || 0,
       winners: room.winners || [],
+      status: room.status || "scheduled",
     }));
+
+    // Get user streak from StudentPoints
+    let streak = 0;
+    try {
+      const userPoints = await StudentPoints.findOne({ student: userObjectId });
+      streak = userPoints?.streak || 0;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching user streak:", error);
+      streak = 0;
+    }
 
     // Get leaderboard (top users by coins shared/earned)
     let topUsers = [];
@@ -228,6 +242,7 @@ export const getDashboardData = async (req, res, next) => {
       liveDebates: formattedDebates,
       openRooms: formattedRooms,
       leaderboard: leaderboard.filter(Boolean),
+      streak: streak,
     });
   } catch (error) {
     return next(error);

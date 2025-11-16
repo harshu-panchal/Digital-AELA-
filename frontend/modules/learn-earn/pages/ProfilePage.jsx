@@ -33,7 +33,7 @@ const ProfilePage = () => {
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
   const { refreshPoints } = usePoints();
   const [verifying, setVerifying] = useState(new Set());
-  const [socialLinks, setSocialLinks] = useState(profile.socialLinks || []);
+  const [socialLinks, setSocialLinks] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLink, setEditingLink] = useState(null);
   const [formData, setFormData] = useState({ platform: "", url: "" });
@@ -102,27 +102,32 @@ const ProfilePage = () => {
 
       try {
         const response = await fetchSocialLinks();
-        if (response?.socialLinks && response.socialLinks.length > 0) {
-          setSocialLinks(response.socialLinks);
-          // Update profile with backend social links
+        // Always update socialLinks from backend, even if empty array (removes defaults)
+        if (response?.socialLinks !== undefined) {
+          // Only show verified links that user has manually added
+          const verifiedLinks = (response.socialLinks || []).filter(
+            (link) => link.verified === true
+          );
+          setSocialLinks(verifiedLinks);
+          // Update profile with backend social links (all links, not just verified)
           updateProfile({ socialLinks: response.socialLinks });
+        } else {
+          // If backend doesn't return socialLinks, set to empty array
+          setSocialLinks([]);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load social links from backend:", error);
-        // Keep using profile.socialLinks from context
+        // Set to empty array on error to avoid showing default links
+        setSocialLinks([]);
       }
     };
 
     loadSocialLinks();
   }, [authUser, tokens, updateProfile]);
 
-  // Sync with profile.socialLinks when it changes
-  useEffect(() => {
-    if (profile.socialLinks && profile.socialLinks.length > 0) {
-      setSocialLinks(profile.socialLinks);
-    }
-  }, [profile.socialLinks]);
+  // Don't sync with profile.socialLinks to avoid showing default links
+  // Only show verified links from backend
 
   const handleAddOrEdit = useCallback(async () => {
     if (!formData.platform || !formData.url) {
@@ -151,8 +156,12 @@ const ProfilePage = () => {
       if (result.success) {
         // Reload social links
         const response = await fetchSocialLinks();
-        if (response?.socialLinks) {
-          setSocialLinks(response.socialLinks);
+        if (response?.socialLinks !== undefined) {
+          // Only show verified links that user has manually added
+          const verifiedLinks = (response.socialLinks || []).filter(
+            (link) => link.verified === true
+          );
+          setSocialLinks(verifiedLinks);
           updateProfile({ socialLinks: response.socialLinks });
         }
 
@@ -192,8 +201,12 @@ const ProfilePage = () => {
         if (result.success) {
           // Reload social links
           const response = await fetchSocialLinks();
-          if (response?.socialLinks) {
-            setSocialLinks(response.socialLinks);
+          if (response?.socialLinks !== undefined) {
+            // Only show verified links that user has manually added
+            const verifiedLinks = (response.socialLinks || []).filter(
+              (link) => link.verified === true
+            );
+            setSocialLinks(verifiedLinks);
             updateProfile({ socialLinks: response.socialLinks });
           }
 
@@ -254,18 +267,16 @@ const ProfilePage = () => {
         });
 
         if (result.success) {
-          // Update local state
-          const updatedLinks = socialLinks.map((l) =>
-            l.platform === link.platform
-              ? {
-                  ...l,
-                  verified: true,
-                  bonus: result.verifiedLink.bonus,
-                }
-              : l
-          );
-          setSocialLinks(updatedLinks);
-          updateProfile({ socialLinks: updatedLinks });
+          // Reload social links from backend to get the verified link
+          const response = await fetchSocialLinks();
+          if (response?.socialLinks !== undefined) {
+            // Only show verified links that user has manually added
+            const verifiedLinks = (response.socialLinks || []).filter(
+              (link) => link.verified === true
+            );
+            setSocialLinks(verifiedLinks);
+            updateProfile({ socialLinks: response.socialLinks });
+          }
 
           // Refresh points to show updated coin balance
           if (refreshPoints) {
@@ -866,85 +877,80 @@ const ProfilePage = () => {
             </div>
           </div>
           <div className="mt-3 space-y-2">
-            {socialLinks.length > 0 ? (
-              socialLinks.map((link) => (
-                <div
-                  key={link.platform}
-                  className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaGlobe className="h-4 w-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {link.platform}
-                      </p>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
-                        {link.url}
-                      </a>
+            {socialLinks.length > 0
+              ? socialLinks.map((link) => (
+                  <div
+                    key={link.platform}
+                    className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <FaGlobe className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {link.platform}
+                        </p>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
+                          {link.url}
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      {link.verified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
-                          <FaCheckCircle className="h-3 w-3" />
-                          Verified
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        {link.verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
+                            <FaCheckCircle className="h-3 w-3" />
+                            Verified
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleVerify(link)}
+                            disabled={verifying.has(link.platform)}
+                            className="inline-flex items-center gap-1 rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {verifying.has(link.platform) ? (
+                              <>
+                                <FaSpinner className="h-3 w-3 animate-spin" />
+                                Verifying...
+                              </>
+                            ) : (
+                              <>
+                                <FaLock className="h-3 w-3" />
+                                Verify & claim
+                              </>
+                            )}
+                          </button>
+                        )}
+                        <span className="text-xs text-gray-400">
+                          +{link.bonus || 0} coins
                         </span>
-                      ) : (
+                      </div>
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => handleVerify(link)}
-                          disabled={verifying.has(link.platform)}
-                          className="inline-flex items-center gap-1 rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/25 disabled:opacity-50 disabled:cursor-not-allowed">
-                          {verifying.has(link.platform) ? (
-                            <>
-                              <FaSpinner className="h-3 w-3 animate-spin" />
-                              Verifying...
-                            </>
+                          onClick={() => openEditModal(link)}
+                          className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-300 transition hover:bg-white/10">
+                          <FaEdit className="h-2.5 w-2.5" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(link.platform)}
+                          disabled={deleting.has(link.platform)}
+                          className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                          {deleting.has(link.platform) ? (
+                            <FaSpinner className="h-2.5 w-2.5 animate-spin" />
                           ) : (
-                            <>
-                              <FaLock className="h-3 w-3" />
-                              Verify & claim
-                            </>
+                            <FaTrash className="h-2.5 w-2.5" />
                           )}
                         </button>
-                      )}
-                      <span className="text-xs text-gray-400">
-                        +{link.bonus || 0} coins
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(link)}
-                        className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-300 transition hover:bg-white/10">
-                        <FaEdit className="h-2.5 w-2.5" />
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(link.platform)}
-                        disabled={deleting.has(link.platform)}
-                        className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {deleting.has(link.platform) ? (
-                          <FaSpinner className="h-2.5 w-2.5 animate-spin" />
-                        ) : (
-                          <FaTrash className="h-2.5 w-2.5" />
-                        )}
-                      </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-white/5 bg-[#111] p-4 text-center text-sm text-gray-400">
-                No social links added yet. Click "Add Social Link" to get
-                started.
-              </div>
-            )}
+                ))
+              : null}
           </div>
 
           {/* Add/Edit Social Link Modal */}

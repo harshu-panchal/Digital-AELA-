@@ -70,8 +70,8 @@ export const setupSocketIO = (io) => {
         });
 
         const populatedMessage = await Message.findById(message._id)
-          .populate("sender", "fullName avatarUrl")
-          .populate("recipient", "fullName avatarUrl")
+          .populate("sender", "fullName metadata")
+          .populate("recipient", "fullName metadata")
           .lean();
 
         const formattedMessage = {
@@ -86,7 +86,9 @@ export const setupSocketIO = (io) => {
           timestamp: populatedMessage.createdAt,
           duration: populatedMessage.metadata?.duration,
           senderId: socket.userId,
-          senderName: socket.userFullName,
+          recipientId: recipientId,
+          senderName: populatedMessage.sender?.fullName || socket.userFullName,
+          senderAvatar: populatedMessage.sender?.avatarUrl || populatedMessage.sender?.metadata?.avatarUrl || null,
         };
 
         // Emit to sender (confirmation)
@@ -96,7 +98,15 @@ export const setupSocketIO = (io) => {
         });
 
         // Emit to recipient
-        io.to(`user:${recipientId}`).emit("new_message", formattedMessage);
+        const recipientFormattedMessage = {
+          ...formattedMessage,
+          recipientId: socket.userId,
+        };
+        io.to(`user:${recipientId}`).emit("new_message", recipientFormattedMessage);
+        
+        // Notify both users that conversations list should be updated
+        io.to(`user:${socket.userId}`).emit("conversation_updated");
+        io.to(`user:${recipientId}`).emit("conversation_updated");
 
         // Update read status if recipient is online
         const recipientSocket = Array.from(io.sockets.sockets.values()).find(
@@ -241,14 +251,17 @@ export const setupSocketIO = (io) => {
 
         await room.save();
 
-        // Broadcast vote update to all room members
-        io.to(`room:${roomId}`).emit("vote_update", {
+        // Broadcast vote update to all room members and all connected clients (for dashboard updates)
+        const voteUpdateData = {
           roomId,
           forVotes: room.forVotes,
           againstVotes: room.againstVotes,
           votedBy: socket.userId,
           side,
-        });
+        };
+        io.to(`room:${roomId}`).emit("vote_update", voteUpdateData);
+        // Also broadcast to all clients for dashboard updates (even if not in room)
+        io.emit("vote_update", voteUpdateData);
 
         // Also emit to sender for confirmation
         socket.emit("vote_confirmed", {

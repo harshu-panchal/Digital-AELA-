@@ -18,10 +18,19 @@ export const useSocket = () => {
       // Disconnect if no token
       if (socketRef.current) {
         socketRef.current.disconnect();
+        socketRef.current.removeAllListeners();
+        socketRef.current = null;
         setSocket(null);
         setIsConnected(false);
       }
       return;
+    }
+
+    // Clean up existing socket before creating a new one
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current.removeAllListeners();
+      socketRef.current = null;
     }
 
     // Initialize socket connection
@@ -30,6 +39,9 @@ export const useSocket = () => {
         token: tokens.accessToken,
       },
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     newSocket.on("connect", () => {
@@ -48,14 +60,24 @@ export const useSocket = () => {
       // eslint-disable-next-line no-console
       console.error("[Socket.IO] Connection error:", error);
       setIsConnected(false);
+      // Don't log authentication errors as they're expected during initial connection
+      if (error.message?.includes("Authentication error")) {
+        // Silent fail - will retry when token is available
+        return;
+      }
     });
 
     socketRef.current = newSocket;
     setSocket(newSocket);
 
     return () => {
-      newSocket.close();
-      socketRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current.removeAllListeners();
+        socketRef.current = null;
+      }
+      setSocket(null);
+      setIsConnected(false);
     };
   }, [tokens?.accessToken]);
 

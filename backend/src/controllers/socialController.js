@@ -3,6 +3,7 @@ import Follow from "../models/Follow.js";
 import UserRating from "../models/UserRating.js";
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
+import StudentPoints from "../models/StudentPoints.js";
 
 export const getSocialStats = async (req, res, next) => {
   try {
@@ -74,7 +75,7 @@ export const getFollowers = async (req, res, next) => {
 
     const [follows, total] = await Promise.all([
       Follow.find({ following: userObjectId })
-        .populate("follower", "fullName email")
+        .populate("follower", "fullName email metadata")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(pageSize)),
@@ -103,8 +104,31 @@ export const getFollowers = async (req, res, next) => {
           mutuals = [...currentUserFollowingIds].filter((id) => followerFollowingIds.has(id)).length;
         }
 
-        // Get coins shared (this would come from a coin sharing transaction model)
-        const coinsShared = 0; // TODO: Implement when coin sharing is tracked
+        // Get coins shared - calculate from StudentPoints transactions
+        // Look for transactions where coins were shared with this follower
+        let coinsShared = 0;
+        if (currentUserId && mongoose.isValidObjectId(currentUserId)) {
+          try {
+            const currentUserPoints = await StudentPoints.findOne({ student: currentUserObjectId });
+            if (currentUserPoints && currentUserPoints.transactions) {
+              // Sum transactions that mention this follower or have "gift" in reason
+              const followerName = follower.fullName || "";
+              const sharedTransactions = currentUserPoints.transactions.filter(
+                (txn) =>
+                  (txn.reason && 
+                    (txn.reason.toLowerCase().includes("gift") || 
+                     txn.reason.toLowerCase().includes("shared") ||
+                     txn.reason.toLowerCase().includes(followerName.toLowerCase()))) ||
+                  (txn.source && txn.source.toLowerCase().includes("share"))
+              );
+              coinsShared = sharedTransactions.reduce((sum, txn) => sum + (txn.amount || 0), 0);
+            }
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error("Error calculating coins shared:", error);
+            coinsShared = 0;
+          }
+        }
 
         // Get rating
         const ratings = await UserRating.find({ ratedUser: follower._id });
@@ -113,15 +137,18 @@ export const getFollowers = async (req, res, next) => {
             ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
             : 0;
 
+        // Format AELA ID - use user ID as is, or format it if there's a pattern
+        const aelaId = follower._id.toString();
+
         return {
-          id: follower._id.toString(),
-          userId: follower._id.toString(),
+          id: aelaId,
+          userId: aelaId,
           name: follower.fullName || "User",
-          avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${follower._id.toString().slice(-2)}`,
-          tagline: profile?.headline || profile?.bio || "Learner",
+          avatar: profile?.avatarUrl || follower.metadata?.avatarUrl || `https://i.pravatar.cc/150?img=${aelaId.slice(-2)}`,
+          tagline: profile?.headline || profile?.bio || profile?.tagline || "Learner",
           rating: Math.round(rating * 10) / 10,
           mutuals,
-          coinsShared,
+          coinsShared: Math.round(coinsShared),
         };
       })
     );

@@ -4,6 +4,8 @@ import { usePoints } from "./PointsContext";
 import { useAuth } from "./AuthContext";
 import { fetchSocialStats, fetchFollowers, fetchFollowing } from "../services/api/social";
 import { fetchDashboardData } from "../services/api/learnEarn";
+import { useSocket } from "../hooks/useSocket";
+import { fetchConversations } from "../services/api/messages";
 
 const UserContext = createContext(null);
 
@@ -301,7 +303,8 @@ const defaultRatings = {
 
 export const UserProvider = ({ children }) => {
   const { aelaPoints, addPoints, redeemPoints, totalEarned, totalRedeemed } = usePoints();
-  const { user: authUser, updateUserMetadata, getRoleLabel } = useAuth();
+  const { user: authUser, tokens, updateUserMetadata, getRoleLabel } = useAuth();
+  const { socket, isConnected } = useSocket();
 
   const [profile, setProfile] = useState(defaultProfile);
   const [followers, setFollowers] = useState(defaultFollowers);
@@ -314,6 +317,7 @@ export const UserProvider = ({ children }) => {
   const [openRooms, setOpenRooms] = useState(defaultOpenRooms);
   const [ratings, setRatings] = useState(defaultRatings);
   const [socialStatsLoaded, setSocialStatsLoaded] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     setProfile((prev) => ({ ...prev, coins: aelaPoints }));
@@ -322,7 +326,7 @@ export const UserProvider = ({ children }) => {
   // Load social stats from backend (runs after profile is initialized)
   useEffect(() => {
     const loadSocialStats = async () => {
-      if (!authUser?.id) {
+      if (!authUser?.id || !tokens?.accessToken) {
         return;
       }
 
@@ -362,34 +366,40 @@ export const UserProvider = ({ children }) => {
     };
 
     loadSocialStats();
-  }, [authUser]);
+  }, [authUser, tokens?.accessToken]);
 
   // Load followers list from backend
   useEffect(() => {
     const loadFollowers = async () => {
-      if (!authUser?.id) {
+      if (!authUser?.id || !tokens?.accessToken) {
         return;
       }
 
       try {
         const response = await fetchFollowers(authUser.id, { pageSize: 20 });
-        if (response?.data && response.data.length > 0) {
-          setFollowers(response.data);
+        if (response?.data) {
+          // Always update followers, even if empty array (shows real data)
+          setFollowers(response.data || []);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load followers from backend:", error);
-        // Keep default followers
+        // Keep existing followers on error
       }
     };
 
     loadFollowers();
-  }, [authUser]);
+    
+    // Refresh followers every 30 seconds to keep it live
+    const interval = setInterval(loadFollowers, 30000);
+    
+    return () => clearInterval(interval);
+  }, [authUser, tokens?.accessToken]);
 
   // Load following list from backend
   useEffect(() => {
     const loadFollowing = async () => {
-      if (!authUser?.id) {
+      if (!authUser?.id || !tokens?.accessToken) {
         return;
       }
 
@@ -406,36 +416,36 @@ export const UserProvider = ({ children }) => {
     };
 
     loadFollowing();
-  }, [authUser]);
+  }, [authUser, tokens?.accessToken]);
 
   // Load Learn & Earn dashboard data from backend
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (!authUser?.id) {
+      if (!authUser?.id || !tokens?.accessToken) {
         return;
       }
 
       try {
         const dashboardData = await fetchDashboardData();
         
-        // Update messages
-        if (dashboardData.messages && dashboardData.messages.length > 0) {
-          setMessages(dashboardData.messages);
+        // Always update messages (even if empty array) to show real data
+        if (dashboardData.messages !== undefined) {
+          setMessages(dashboardData.messages || []);
         }
 
-        // Update notifications
-        if (dashboardData.notifications && dashboardData.notifications.length > 0) {
-          setNotifications(dashboardData.notifications);
+        // Always update notifications (even if empty array)
+        if (dashboardData.notifications !== undefined) {
+          setNotifications(dashboardData.notifications || []);
         }
 
-        // Update live debates
-        if (dashboardData.liveDebates && dashboardData.liveDebates.length > 0) {
-          setLiveDebates(dashboardData.liveDebates);
+        // Always update live debates (even if empty array)
+        if (dashboardData.liveDebates !== undefined) {
+          setLiveDebates(dashboardData.liveDebates || []);
         }
 
-        // Update open rooms
-        if (dashboardData.openRooms && dashboardData.openRooms.length > 0) {
-          setOpenRooms(dashboardData.openRooms);
+        // Always update open rooms (even if empty array)
+        if (dashboardData.openRooms !== undefined) {
+          setOpenRooms(dashboardData.openRooms || []);
         }
 
         // Update leaderboard (top followers)
@@ -464,17 +474,126 @@ export const UserProvider = ({ children }) => {
 
         // Update profile avatar if available from dashboard data
         if (dashboardData.profileAvatar) {
-          updateProfile({ avatar: dashboardData.profileAvatar });
+          setProfile((prev) => ({ ...prev, avatar: dashboardData.profileAvatar }));
+        }
+
+        // Update streak from dashboard data
+        if (dashboardData.streak !== undefined) {
+          setStreak(dashboardData.streak || 0);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load dashboard data from backend:", error);
-        // Keep default data
+        // Keep default data only if there's an error
       }
     };
 
     loadDashboardData();
-  }, [authUser]);
+    
+    // Refresh dashboard data every 30 seconds to keep it live
+    const interval = setInterval(loadDashboardData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [authUser, tokens?.accessToken]);
+
+  // Real-time message updates via Socket.io
+  useEffect(() => {
+    if (!socket || !isConnected || !authUser?.id) {
+      return;
+    }
+
+    const handleNewMessage = (messageData) => {
+      // Update messages list when a new message is received
+      setMessages((prev) => {
+        // Check if conversation already exists
+        const conversationPartnerId = 
+          messageData.senderId === authUser.id 
+            ? messageData.recipientId 
+            : messageData.senderId;
+        
+        const existingIndex = prev.findIndex((msg) => 
+          msg.userId === conversationPartnerId || msg.id === `chat-${conversationPartnerId}`
+        );
+
+        const newConversation = {
+          id: `chat-${conversationPartnerId}`,
+          userId: conversationPartnerId,
+          name: messageData.senderName || "User",
+          avatar: messageData.senderAvatar || `https://i.pravatar.cc/150?img=${conversationPartnerId.slice(-2)}`,
+          preview: messageData.content || "",
+          timestamp: new Date(messageData.timestamp).toLocaleDateString([], {
+            month: "short",
+            day: "numeric",
+          }),
+          unread: messageData.senderId === authUser.id ? 0 : (prev[existingIndex]?.unread || 0) + 1,
+        };
+
+        if (existingIndex >= 0) {
+          // Update existing conversation
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            preview: newConversation.preview,
+            timestamp: newConversation.timestamp,
+            unread: newConversation.unread,
+          };
+          // Move to top
+          const [moved] = updated.splice(existingIndex, 1);
+          return [moved, ...updated];
+        } else {
+          // Add new conversation at the top
+          return [newConversation, ...prev];
+        }
+      });
+
+      // Add notification for new message if it's not from the current user
+      if (messageData.senderId !== authUser.id) {
+        setNotifications((prev) => [
+          {
+            id: crypto.randomUUID(),
+            time: "Just now",
+            type: "message",
+            title: `New message from ${messageData.senderName || "User"}`,
+            description: messageData.content || "",
+          },
+          ...prev,
+        ]);
+      }
+    };
+
+    const handleConversationUpdate = async () => {
+      // Refresh conversations list when a conversation is updated
+      try {
+        const response = await fetchConversations();
+        if (response?.conversations) {
+          const formatted = response.conversations.map((conv) => ({
+            id: conv.userId || conv.id,
+            userId: conv.userId || conv.id,
+            name: conv.name || "Unknown User",
+            avatar: conv.avatar || `https://i.pravatar.cc/150?img=${(conv.userId || conv.id).slice(-2)}`,
+            preview: conv.preview || "No messages yet",
+            timestamp: conv.timestamp || "",
+            unread: conv.unread || 0,
+          }));
+          setMessages(formatted);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to refresh conversations:", error);
+      }
+    };
+
+    // Listen for new messages
+    socket.on("new_message", handleNewMessage);
+    socket.on("message_sent", handleConversationUpdate);
+    socket.on("conversation_updated", handleConversationUpdate);
+
+    return () => {
+      socket.off("new_message", handleNewMessage);
+      socket.off("message_sent", handleConversationUpdate);
+      socket.off("conversation_updated", handleConversationUpdate);
+    };
+  }, [socket, isConnected, authUser]);
 
   useEffect(() => {
     if (!authUser) {
@@ -484,15 +603,48 @@ export const UserProvider = ({ children }) => {
 
     const metadata = authUser.metadata ?? {};
 
-    // Load student profile avatar first (for students) to get the most up-to-date avatar
+    // Load full student profile data (for students) from backend
     const loadAvatar = async () => {
-      if (authUser.role === "student" && authUser.id) {
+      if (authUser.role === "student" && authUser.id && tokens?.accessToken) {
         try {
           const { fetchStudentProfile } = await import("../services/api/student");
+          const { fetchStudentDashboard } = await import("../services/api/student");
+          
+          // Load StudentProfile for detailed info
           const profileData = await fetchStudentProfile(authUser.id);
+          
+          // Load dashboard data for badges
+          let badgesData = [];
+          try {
+            const dashboardData = await fetchStudentDashboard();
+            if (dashboardData?.learnEarnProgress?.badges) {
+              badgesData = dashboardData.learnEarnProgress.badges.map((badge) => ({
+                id: badge.label.toLowerCase().replace(/\s+/g, "-"),
+                label: badge.label,
+                color: "bg-[#D4AF37]/20 text-[#D4AF37]",
+              }));
+            }
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.warn("Failed to load badges from dashboard:", error);
+          }
           
           // Priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > default
           const avatarUrl = profileData?.avatarUrl || metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
+          
+          // Format experience from StudentProfile
+          let experienceText = defaultProfile.experience;
+          if (profileData?.experience) {
+            if (profileData.experience.description) {
+              experienceText = profileData.experience.description;
+            } else if (profileData.experience.years) {
+              experienceText = `${profileData.experience.years} years of experience`;
+            }
+          } else if (metadata.experience) {
+            experienceText = metadata.experience;
+          } else if (metadata.experienceYears) {
+            experienceText = `${metadata.experienceYears} years of experience`;
+          }
           
           setProfile((prev) => ({
             ...defaultProfile,
@@ -502,25 +654,23 @@ export const UserProvider = ({ children }) => {
             title:
               metadata.title ??
               (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
-            bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
-            country: metadata.country ?? metadata.region ?? defaultProfile.country,
-            city: metadata.city ?? defaultProfile.city,
-            profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
-            experience:
-              metadata.experience ??
-              (metadata.experienceYears
-                ? `${metadata.experienceYears} years of experience`
-                : defaultProfile.experience),
-            maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
-            interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
+            bio: profileData?.bio || profileData?.headline || metadata.bio || metadata.goals || defaultProfile.bio,
+            country: profileData?.location?.country || metadata.country || metadata.region || defaultProfile.country,
+            city: profileData?.location?.city || metadata.city || defaultProfile.city,
+            profession: profileData?.profession || metadata.profession || metadata.currentStatus || defaultProfile.profession,
+            englishLevel: profileData?.englishLevel || metadata.englishLevel || defaultProfile.englishLevel,
+            experience: experienceText,
+            maritalStatus: profileData?.maritalStatus || metadata.maritalStatus || defaultProfile.maritalStatus,
+            interests: profileData?.interests || metadata.interests || metadata.contentThemes || defaultProfile.interests,
             avatar: avatarUrl, // Use StudentProfile avatar or metadata avatar from registration
             bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
             coins: aelaPoints,
+            badges: badgesData.length > 0 ? badgesData : (prev.badges || defaultProfile.badges),
             metadata,
             role: authUser.role,
             contact: {
               email: authUser.email,
-              phone: metadata.phone,
+              phone: profileData?.phone || metadata.phone,
               whatsapp: metadata.whatsapp,
             },
             followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
@@ -531,7 +681,7 @@ export const UserProvider = ({ children }) => {
         } catch (error) {
           // Profile might not exist yet, continue with metadata fallback
           // eslint-disable-next-line no-console
-          console.warn("Failed to load student profile avatar:", error);
+          console.warn("Failed to load student profile:", error);
         }
       }
 
@@ -575,7 +725,12 @@ export const UserProvider = ({ children }) => {
     };
 
     loadAvatar();
-  }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded]);
+    
+    // Refresh profile data every 30 seconds to keep it live
+    const interval = setInterval(loadAvatar, 30000);
+    
+    return () => clearInterval(interval);
+  }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded, tokens?.accessToken]);
 
   const updateProfile = useCallback((updates) => {
     setProfile((prev) => ({ ...prev, ...updates }));
@@ -760,6 +915,7 @@ export const UserProvider = ({ children }) => {
       groups,
       setGroups,
       liveDebates,
+      setLiveDebates,
       voteOnDebate,
       openRooms,
       setOpenRooms,
@@ -770,6 +926,7 @@ export const UserProvider = ({ children }) => {
         earned: totalEarned,
         redeemed: totalRedeemed,
       },
+      streak,
     }),
     [
       profile,
@@ -787,6 +944,7 @@ export const UserProvider = ({ children }) => {
       rewardCoins,
       groups,
       liveDebates,
+      setLiveDebates,
       voteOnDebate,
       openRooms,
       ratings,
@@ -794,6 +952,7 @@ export const UserProvider = ({ children }) => {
       aelaPoints,
       totalEarned,
       totalRedeemed,
+      streak,
     ]
   );
 

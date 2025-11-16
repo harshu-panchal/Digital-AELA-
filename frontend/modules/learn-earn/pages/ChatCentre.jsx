@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
@@ -23,6 +24,8 @@ const ChatCentre = () => {
   const { shareCoins } = useUser();
   const { user: authUser } = useAuth();
   const { socket, isConnected } = useSocket();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const userIdFromUrl = searchParams.get("userId");
   const [conversations, setConversations] = useState([]);
   const [activeChatId, setActiveChatId] = useState("");
   const [activeChat, setActiveChat] = useState(null);
@@ -32,7 +35,9 @@ const ChatCentre = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
+  const shouldAutoScrollRef = useRef(true); // Track if we should auto-scroll
 
   // Load conversations on mount
   useEffect(() => {
@@ -58,7 +63,24 @@ const ChatCentre = () => {
             unread: conv.unread || 0,
           }));
           setConversations(formatted);
-          if (formatted.length > 0 && !activeChatId) {
+          
+          // Check if there's a userId in the URL, and set active chat accordingly
+          if (userIdFromUrl) {
+            // Check if conversation already exists
+            const existingConv = formatted.find((conv) => conv.userId === userIdFromUrl);
+            if (existingConv) {
+              setActiveChatId(existingConv.userId);
+              // Clear the URL parameter after setting active chat
+              setSearchParams({});
+            } else {
+              // Conversation doesn't exist yet, but we can still set the active chat
+              // This will create a new conversation when first message is sent
+              setActiveChatId(userIdFromUrl);
+              // Clear the URL parameter
+              setSearchParams({});
+            }
+          } else if (formatted.length > 0 && !activeChatId) {
+            // Default to first conversation if no URL parameter
             setActiveChatId(formatted[0].userId);
           }
         }
@@ -72,7 +94,7 @@ const ChatCentre = () => {
     };
 
     loadConversations();
-  }, [authUser, activeChatId]);
+  }, [authUser, activeChatId, userIdFromUrl, setSearchParams]);
 
   // Load messages when active chat changes
   useEffect(() => {
@@ -94,7 +116,24 @@ const ChatCentre = () => {
         }
 
         // Find active chat details
-        const chat = conversations.find((c) => c.userId === activeChatId);
+        let chat = conversations.find((c) => c.userId === activeChatId);
+        
+        // If chat doesn't exist in conversations but activeChatId is set (from URL),
+        // create a placeholder chat object
+        if (!chat && activeChatId) {
+          // Try to get user info from somewhere or create a basic placeholder
+          // This will be updated when the first message is sent/received
+          chat = {
+            id: activeChatId,
+            userId: activeChatId,
+            name: "User",
+            avatar: `https://i.pravatar.cc/150?img=${activeChatId.slice(-2)}`,
+            preview: "No messages yet",
+            timestamp: "",
+            unread: 0,
+          };
+        }
+        
         setActiveChat(chat || null);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -108,7 +147,38 @@ const ChatCentre = () => {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Use a small timeout to ensure DOM is updated before scrolling
+    const timer = setTimeout(() => {
+      if (messagesContainerRef.current) {
+        // Scroll the container directly using scrollTo for smooth behavior
+        const container = messagesContainerRef.current;
+        
+        // Check if last message is from current user (always scroll for own messages)
+        const lastMessage = messages[messages.length - 1];
+        const isOwnMessage = lastMessage?.from === "me";
+        
+        // Only auto-scroll if user is near the bottom (within 100px) OR it's their own message
+        const isNearBottom = 
+          container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        if (isOwnMessage || isNearBottom || messages.length === 1 || shouldAutoScrollRef.current) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth",
+          });
+          shouldAutoScrollRef.current = true;
+        }
+      } else if (messagesEndRef.current) {
+        // Fallback: scroll the element into view only if container ref is not available
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest"
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [messages]);
 
   // Socket.io event handlers
@@ -381,7 +451,16 @@ const ChatCentre = () => {
             </header>
 
             <div className="flex-1 overflow-hidden">
-              <div className="custom-scrollbar h-[360px] space-y-3 overflow-y-auto rounded-2xl bg-[#101010] p-4">
+              <div 
+                ref={messagesContainerRef}
+                onScroll={(e) => {
+                  // Track if user manually scrolled up - disable auto-scroll if they're far from bottom
+                  const container = e.target;
+                  const isNearBottom = 
+                    container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                  shouldAutoScrollRef.current = isNearBottom;
+                }}
+                className="custom-scrollbar h-[360px] space-y-3 overflow-y-auto rounded-2xl bg-[#101010] p-4">
                 {messages.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-gray-400">
                     No messages yet. Start the conversation!

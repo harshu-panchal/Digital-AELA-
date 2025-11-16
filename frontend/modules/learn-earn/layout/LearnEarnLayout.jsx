@@ -9,14 +9,16 @@ import {
   HiOutlineBookOpen,
   HiOutlineCurrencyDollar,
   HiOutlineStar,
-  HiOutlineShieldCheck,
   HiOutlineBars3,
   HiOutlineXMark,
   HiOutlineMagnifyingGlass,
   HiOutlineBell,
   HiOutlineUserGroup,
+  HiOutlineClipboard,
+  HiOutlineClipboardDocumentCheck,
 } from "react-icons/hi2";
 import { FaCoins } from "react-icons/fa";
+import { toast } from "react-toastify";
 import { useUser } from "../../../src/contexts/UserContext";
 
 const sideNavLinks = [
@@ -55,17 +57,41 @@ const sideNavLinks = [
     label: "Ratings",
     icon: HiOutlineStar,
   },
-  {
-    to: "/learn-earn/admin",
-    label: "Admin Control",
-    icon: HiOutlineShieldCheck,
-  },
 ];
 
 const LearnEarnLayout = () => {
   const location = useLocation();
-  const { profile, totals, notifications } = useUser();
+  const { profile, totals, notifications, liveDebates, openRooms } = useUser();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyUserId = async () => {
+    if (!profile.id) return;
+    try {
+      await navigator.clipboard.writeText(profile.id);
+      setCopied(true);
+      toast.success("User ID copied to clipboard!", {
+        icon: "📋",
+        position: "top-right",
+        autoClose: 2000,
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+      toast.error("Failed to copy User ID", {
+        icon: "⚠️",
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+  
+  // Calculate live rooms count (rooms with status "live")
+  const liveRoomsCount = useMemo(() => {
+    const liveDebatesCount = liveDebates.filter(room => room.status === "live").length;
+    const liveOpenRoomsCount = openRooms.filter(room => room.status === "live").length;
+    return liveDebatesCount + liveOpenRoomsCount;
+  }, [liveDebates, openRooms]);
 
   const unreadCount = useMemo(
     () =>
@@ -134,15 +160,28 @@ const LearnEarnLayout = () => {
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="h-12 w-12 rounded-full border border-[#D4AF37]/50 object-cover"
+                  className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
                 />
-                <div>
-                  <p className="text-sm font-semibold text-white">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-sm font-semibold text-white truncate">
                     {profile.name}
                   </p>
-                  <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                    {profile.id}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                      {profile.id}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCopyUserId}
+                      className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                      title="Copy User ID">
+                      {copied ? (
+                        <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : (
+                        <HiOutlineClipboard className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
@@ -163,13 +202,17 @@ const LearnEarnLayout = () => {
                 Live
               </p>
               <p className="mt-1 text-sm font-medium text-white">
-                4 rooms open now
+                {liveRoomsCount > 0 
+                  ? `${liveRoomsCount} ${liveRoomsCount === 1 ? 'room' : 'rooms'} open now`
+                  : 'No rooms live'}
               </p>
-              <Link
-                to="/learn-earn/live-debates"
-                className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
-                Jump in
-              </Link>
+              {liveRoomsCount > 0 && (
+                <Link
+                  to="/learn-earn/live-debates"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
+                  Jump in
+                </Link>
+              )}
             </div>
           </div>
         </aside>
@@ -280,15 +323,28 @@ const LearnEarnLayout = () => {
                   <img
                     src={profile.avatar}
                     alt={profile.name}
-                    className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover"
+                    className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
                   />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <p className="text-sm font-semibold text-white truncate">
                       {profile.name}
                     </p>
-                    <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                      {profile.id}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                        {profile.id}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyUserId}
+                        className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                        title="Copy User ID">
+                        {copied ? (
+                          <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <HiOutlineClipboard className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {renderNavLinks(true)}

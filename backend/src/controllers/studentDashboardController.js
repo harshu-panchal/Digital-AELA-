@@ -128,7 +128,16 @@ export const getStudentDashboard = async (req, res, next) => {
 
     const totalCoins = studentPoints.totalCoins || 0;
     const pendingCoins = studentPoints.pendingCoins || 0;
-    const availableCoins = totalCoins - (studentPoints.redeemedCoins || 0);
+    const redeemedCoins = studentPoints.redeemedCoins || 0;
+    const availableCoins = totalCoins - redeemedCoins;
+
+    // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
+    let totalEarned = 0;
+    if (studentPoints.transactions && Array.isArray(studentPoints.transactions)) {
+      totalEarned = studentPoints.transactions
+        .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+        .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+    }
 
     // Get Speaking Score (latest assessment)
     let latestAssessment = null;
@@ -216,6 +225,9 @@ export const getStudentDashboard = async (req, res, next) => {
       streak: streak,
       leaderboardPosition: studentPoints.leaderboardPosition || 0,
       coinsToRedeem: availableCoins,
+      totalCoins: totalCoins,
+      totalEarned: totalEarned,
+      totalRedeemed: redeemedCoins,
       redeemRoute: "/learn-earn/wallet",
       badges: (studentPoints.badges || []).map((badge) => ({
         label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),

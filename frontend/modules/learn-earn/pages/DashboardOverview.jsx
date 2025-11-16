@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import {
@@ -12,8 +12,10 @@ import {
   HiOutlineMicrophone,
   HiOutlineBellAlert,
   HiOutlineUserCircle,
+  HiOutlineChatBubbleOvalLeft,
 } from "react-icons/hi2";
 import { useUser } from "../../../src/contexts/UserContext";
+import { useSocket } from "../../../src/hooks/useSocket";
 
 const DashboardOverview = () => {
   const {
@@ -24,17 +26,73 @@ const DashboardOverview = () => {
     liveDebates,
     openRooms,
     totals,
+    streak,
+    setLiveDebates,
   } = useUser();
 
+  const { socket, isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState("messages");
+  
+  // Real-time vote updates via Socket.io
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
 
+    const handleVoteUpdate = (data) => {
+      setLiveDebates((prev) =>
+        prev.map((room) =>
+          room.id === data.roomId
+            ? {
+                ...room,
+                forVotes: data.forVotes || room.forVotes,
+                againstVotes: data.againstVotes || room.againstVotes,
+              }
+            : room
+        )
+      );
+    };
+
+    socket.on("vote_update", handleVoteUpdate);
+
+    return () => {
+      socket.off("vote_update", handleVoteUpdate);
+    };
+  }, [socket, isConnected, setLiveDebates]);
+
+  // Calculate real-time startInMinutes for each debate and update every minute
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute for startInMinutes calculation
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const debatesWithRealTime = useMemo(() => {
+    const now = currentTime;
+    return liveDebates.map((room) => {
+      // If scheduledStart is available, calculate from it in real-time
+      if (room.scheduledStart) {
+        const scheduledStart = new Date(room.scheduledStart);
+        const diffMs = scheduledStart - now;
+        const startInMinutes = Math.max(0, Math.floor(diffMs / 60000));
+        return { ...room, startInMinutes };
+      }
+      // Otherwise use the startInMinutes from backend (will be updated on next refresh)
+      return room;
+    });
+  }, [liveDebates, currentTime]);
+
+  // Calculate dynamic counts from backend data
   const unreadMessages = useMemo(
-    () => messages.filter((chat) => chat.unread > 0).length,
+    () => messages.reduce((sum, chat) => sum + (chat.unread || 0), 0),
     [messages]
   );
   const followerCount = followers.length;
-  const notificationCount = notifications.length;
-  const badgeCount = profile.badges.length;
+  const notificationCount = notifications.filter((n) => n.type !== "archived").length;
+  const badgeCount = profile.badges?.length || 0;
   const liveRoomCount = liveDebates.length + openRooms.length;
   const totalCoins = totals.current;
 
@@ -152,6 +210,12 @@ const DashboardOverview = () => {
               <span>{follower.mutuals} mutuals</span>
               <span>{follower.coinsShared} coins shared</span>
             </div>
+            <Link
+              to={`/learn-earn/chat?userId=${follower.id || follower.userId}`}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2.5 text-xs font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/20 active:scale-[0.98]">
+              <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
+              Messages
+            </Link>
           </Motion.div>
         ))}
       </div>
@@ -232,7 +296,7 @@ const DashboardOverview = () => {
           <p className="mt-6 text-[13px] text-gray-400">
             Daily streak:{" "}
             <span className="font-semibold text-emerald-300">
-              Active · 7 days
+              {streak > 0 ? `Active · ${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start your streak'}
             </span>
           </p>
         </Motion.div>
@@ -296,7 +360,7 @@ const DashboardOverview = () => {
     ),
     live: (
       <div className="auto-grid-sm lg:grid-cols-2">
-        {liveDebates.map((room) => (
+        {debatesWithRealTime.map((room) => (
           <Motion.div
             key={room.id}
             initial={{ opacity: 0, y: 16 }}
@@ -310,15 +374,19 @@ const DashboardOverview = () => {
               {room.topic}
             </p>
             <p className="mt-2 text-xs text-gray-400">
-              Starts in {room.startInMinutes} min · Hosts{" "}
-              {room.speakers.join(" & ")}
+              {room.startInMinutes > 0
+                ? `Starts in ${room.startInMinutes} min`
+                : room.status === "live"
+                ? "Live Now"
+                : "Starting soon"}{" "}
+              · Hosts {room.speakers?.join(" & ") || "TBD"}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm font-semibold">
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-emerald-200">
-                For · {room.forVotes}
+                For · {room.forVotes || 0}
               </div>
               <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-200">
-                Against · {room.againstVotes}
+                Against · {room.againstVotes || 0}
               </div>
             </div>
           </Motion.div>
