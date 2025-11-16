@@ -278,35 +278,35 @@ const Navbar = () => {
                       href="https://www.facebook.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
                       <FaFacebookF className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://wa.me/971508185690"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#25D366]/60 hover:bg-[#25D366]/10 hover:text-[#25D366]">
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-green-500/70 hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.6)]">
                       <FaWhatsapp className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.instagram.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-pink-500/70 hover:bg-pink-500/20 hover:text-pink-300 hover:shadow-[0_0_15px_rgba(236,72,153,0.6)]">
                       <FaInstagram className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.linkedin.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
                       <FaLinkedinIn className="h-3.5 w-3.5" />
                     </a>
                     <a
                       href="https://www.youtube.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition duration-300 hover:border-[#F5D26A]/60 hover:bg-white/15 hover:text-[#FFE28A]">
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]">
                       <FaYoutube className="h-3.5 w-3.5" />
                     </a>
                   </div>
