@@ -34,7 +34,9 @@ const ChatCentre = () => {
   const [messageText, setMessageText] = useState("");
   const [coinAmount, setCoinAmount] = useState(20);
   const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
+  const conversationsLoadedRef = useRef(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
@@ -47,10 +49,10 @@ const ChatCentre = () => {
   const prevMessagesLengthRef = useRef(0); // Track previous messages length to detect new messages
   const initialScrollTimeoutRef = useRef(null); // Track initial scroll timeout to cancel if needed
 
-  // Load conversations on mount
+  // Load conversations on mount (only once, or when authUser changes)
   useEffect(() => {
     const loadConversations = async () => {
-      if (!authUser) return;
+      if (!authUser || conversationsLoadedRef.current) return;
 
       try {
         setLoading(true);
@@ -71,6 +73,7 @@ const ChatCentre = () => {
             unread: conv.unread || 0,
           }));
           setConversations(formatted);
+          conversationsLoadedRef.current = true;
           
           // Check if there's a userId in the URL, and set active chat accordingly
           if (userIdFromUrl) {
@@ -79,13 +82,13 @@ const ChatCentre = () => {
             if (existingConv) {
               setActiveChatId(existingConv.userId);
               // Clear the URL parameter after setting active chat
-              setSearchParams({});
+              setSearchParams({}, { replace: true });
             } else {
               // Conversation doesn't exist yet, but we can still set the active chat
               // This will create a new conversation when first message is sent
               setActiveChatId(userIdFromUrl);
               // Clear the URL parameter
-              setSearchParams({});
+              setSearchParams({}, { replace: true });
             }
           } else if (formatted.length > 0 && !activeChatId) {
             // Default to first conversation if no URL parameter
@@ -102,14 +105,24 @@ const ChatCentre = () => {
     };
 
     loadConversations();
-  }, [authUser, activeChatId, userIdFromUrl, setSearchParams]);
+  }, [authUser, userIdFromUrl, setSearchParams]); // Removed activeChatId to prevent loop
+
+  // Reset conversationsLoadedRef when authUser changes
+  useEffect(() => {
+    conversationsLoadedRef.current = false;
+  }, [authUser]);
 
   // Load messages when active chat changes
   useEffect(() => {
     const loadMessages = async () => {
-      if (!activeChatId || !authUser) return;
+      if (!activeChatId || !authUser) {
+        setMessages([]);
+        setActiveChat(null);
+        return;
+      }
 
       try {
+        setLoadingMessages(true);
         const response = await fetchMessages(activeChatId);
         if (response?.messages) {
           setMessages(response.messages);
@@ -123,26 +136,9 @@ const ChatCentre = () => {
           );
         }
 
-        // Find active chat details
-        let chat = conversations.find((c) => c.userId === activeChatId);
-        
-        // If chat doesn't exist in conversations but activeChatId is set (from URL),
-        // create a placeholder chat object
-        if (!chat && activeChatId) {
-          // Try to get user info from somewhere or create a basic placeholder
-          // This will be updated when the first message is sent/received
-          chat = {
-            id: activeChatId,
-            userId: activeChatId,
-            name: "User",
-            avatar: `https://i.pravatar.cc/150?img=${activeChatId.slice(-2)}`,
-            preview: "No messages yet",
-            timestamp: "",
-            unread: 0,
-          };
-        }
-        
-        setActiveChat(chat || null);
+        // Find active chat details from current conversations state
+        // Use a separate effect to update activeChat based on conversations
+        // This avoids dependency issues
         
         // Initialize prevMessagesLengthRef when messages first load
         if (response?.messages) {
@@ -184,6 +180,10 @@ const ChatCentre = () => {
         // eslint-disable-next-line no-console
         console.error("Failed to load messages:", error);
         toast.error("Failed to load messages");
+        setMessages([]);
+        setActiveChat(null);
+      } finally {
+        setLoadingMessages(false);
       }
     };
 
@@ -208,7 +208,34 @@ const ChatCentre = () => {
         initialScrollTimeoutRef.current = null;
       }
     };
-  }, [activeChatId, authUser, conversations]);
+  }, [activeChatId, authUser]); // Removed conversations to prevent loop
+
+  // Update activeChat when conversations or activeChatId changes
+  useEffect(() => {
+    if (!activeChatId) {
+      setActiveChat(null);
+      return;
+    }
+
+    // Find active chat details from conversations
+    let chat = conversations.find((c) => c.userId === activeChatId);
+    
+    // If chat doesn't exist in conversations but activeChatId is set (from URL),
+    // create a placeholder chat object
+    if (!chat && activeChatId) {
+      chat = {
+        id: activeChatId,
+        userId: activeChatId,
+        name: "User",
+        avatar: `https://i.pravatar.cc/150?img=${activeChatId.slice(-2)}`,
+        preview: "No messages yet",
+        timestamp: "",
+        unread: 0,
+      };
+    }
+    
+    setActiveChat(chat || null);
+  }, [conversations, activeChatId]);
 
   // Auto-scroll when new messages arrive, but ONLY if user is near bottom
   // This prevents auto-scroll from interrupting user when they're reading old messages
@@ -675,7 +702,12 @@ const ChatCentre = () => {
                   }, 300);
                 }}
                 className="custom-scrollbar h-[360px] space-y-3 overflow-y-auto rounded-2xl bg-[#101010] p-4">
-                {messages.length === 0 ? (
+                {loadingMessages ? (
+                  <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                    <FaSpinner className="mr-2 h-5 w-5 animate-spin text-[#D4AF37]" />
+                    Loading messages...
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-gray-400">
                     No messages yet. Start the conversation!
                   </div>

@@ -29,28 +29,7 @@ const ActivitiesHub = () => {
 
   const { hours, minutes, seconds } = useTimer({ expiryTimestamp: expiry, autoStart: true });
 
-  // Load quizzes from backend
-  useEffect(() => {
-    const loadQuizzes = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchQuizzes({ pageSize: 100 });
-        if (response?.quizzes) {
-          setQuizzes(response.quizzes);
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to load quizzes:", error);
-        toast.error("Failed to load quizzes");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadQuizzes();
-  }, []);
-
-  // Load user's quiz history to show progress
+  // Load quizzes and quiz history from backend in parallel for better performance
   useEffect(() => {
     const loadQuizHistory = async () => {
       if (!authUser || !tokens?.accessToken || authUser.role !== "student") {
@@ -58,7 +37,7 @@ const ActivitiesHub = () => {
       }
 
       try {
-        const response = await fetchQuizHistory({ pageSize: 100 });
+        const response = await fetchQuizHistory({ pageSize: 50 }); // Reduced from 100 to 50
         if (response?.data) {
           const attemptsMap = new Map();
           response.data.forEach((attempt) => {
@@ -83,11 +62,7 @@ const ActivitiesHub = () => {
               });
             }
           });
-          console.log("Quiz attempts loaded:", Array.from(attemptsMap.entries()));
-          console.log("Total attempts found:", attemptsMap.size);
           setQuizAttempts(attemptsMap);
-        } else {
-          console.log("No quiz history data in response:", response);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -96,7 +71,66 @@ const ActivitiesHub = () => {
       }
     };
 
-    loadQuizHistory();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load quizzes and quiz history in parallel for faster loading
+        const [quizzesResponse, historyResponse] = await Promise.allSettled([
+          fetchQuizzes({ pageSize: 50 }), // Reduced from 100 to 50 for faster initial load
+          authUser && tokens?.accessToken && authUser.role === "student"
+            ? fetchQuizHistory({ pageSize: 50 })
+            : Promise.resolve(null),
+        ]);
+
+        // Handle quizzes response
+        if (quizzesResponse.status === "fulfilled" && quizzesResponse.value?.quizzes) {
+          setQuizzes(quizzesResponse.value.quizzes);
+        } else if (quizzesResponse.status === "rejected") {
+          // eslint-disable-next-line no-console
+          console.error("Failed to load quizzes:", quizzesResponse.reason);
+          toast.error("Failed to load quizzes");
+        }
+
+        // Handle quiz history response
+        if (historyResponse.status === "fulfilled" && historyResponse.value?.data) {
+          const attemptsMap = new Map();
+          historyResponse.value.data.forEach((attempt) => {
+            let quizId = null;
+            if (attempt.quiz) {
+              quizId = typeof attempt.quiz === 'object' && attempt.quiz._id 
+                ? attempt.quiz._id.toString() 
+                : attempt.quiz.toString();
+            } else if (attempt.quizId) {
+              quizId = attempt.quizId.toString();
+            }
+            
+            if (quizId) {
+              attemptsMap.set(quizId, {
+                score: attempt.score || 0,
+                correctAnswers: attempt.correctAnswers || 0,
+                totalQuestions: attempt.totalQuestions || 0,
+                coinsEarned: attempt.coinsEarned || 0,
+                completedAt: attempt.completedAt,
+              });
+            }
+          });
+          setQuizAttempts(attemptsMap);
+        } else if (historyResponse.status === "rejected") {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load quiz history:", historyResponse.reason);
+          // Don't show error toast - it's okay if history fails
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load data:", error);
+        toast.error("Failed to load quizzes");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
     
     // Listen for quiz completion events to refresh attempts
     const handleQuizCompleted = (event) => {

@@ -271,8 +271,11 @@ export const getPublishedQuizzes = async (req, res, next) => {
       query.difficulty = difficulty;
     }
 
+    // Exclude questions array from list view for better performance
+    // Only include metadata needed for listing
     const [quizzes, total] = await Promise.all([
       Quiz.find(query)
+        .select("-questions") // Exclude questions array to reduce payload size
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(pageSize))

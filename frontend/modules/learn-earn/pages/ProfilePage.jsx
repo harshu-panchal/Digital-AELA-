@@ -29,7 +29,8 @@ import {
 } from "../../../src/services/api/student";
 
 const ProfilePage = () => {
-  const { profile, updateProfile, refreshSocialStats } = useUser();
+  const { profile, updateProfile, refreshSocialStats, followers, following } =
+    useUser();
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
   const { refreshPoints } = usePoints();
   const [verifying, setVerifying] = useState(new Set());
@@ -647,7 +648,7 @@ const ProfilePage = () => {
                 Followers
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                {profile.followers.toLocaleString()}
+                {followers.length.toLocaleString()}
               </p>
               <Link
                 to="/learn-earn"
@@ -660,7 +661,7 @@ const ProfilePage = () => {
                 Following
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                {profile.following.toLocaleString()}
+                {following.length.toLocaleString()}
               </p>
               <p className="mt-3 text-xs text-gray-400">
                 Curating meaningful learning circles
