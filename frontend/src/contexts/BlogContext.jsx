@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
 import { useAuth } from "./AuthContext";
-import { fetchPublishedBlogs } from "../services/api/blogs";
+import { fetchPublishedBlogs, createBlog } from "../services/api/blogs";
 
 const BlogContext = createContext(null);
 
@@ -301,8 +301,60 @@ export const BlogProvider = ({ children }) => {
   }, []);
 
   const publishBlog = useCallback(
-    (blog) => {
+    async (blog) => {
       const referenceId = blog.id ?? crypto.randomUUID();
+      // Ensure we use the latest profile avatar (Cloudinary URL from metadata.avatarUrl)
+      const authorAvatar = 
+        authUser?.metadata?.avatarUrl || 
+        profile.avatar || 
+        "https://i.pravatar.cc/150?img=11";
+      
+      // Try to save to backend if user is authenticated and is a recruiter
+      let savedBlog = null;
+      if (authUser && authUser.role === "recruiter") {
+        try {
+          const blogPayload = {
+            title: blog.title,
+            excerpt: blog.excerpt ?? blog.description ?? blog.content?.slice(0, 160) ?? "",
+            content: blog.content ?? "",
+            coverImage: blog.thumbnail || blog.banner || null,
+            tags: blog.tags ?? [],
+            status: "published",
+          };
+          
+          savedBlog = await createBlog(blogPayload);
+          
+          // Refresh blogs list to include the new blog from backend
+          await refreshBlogs();
+          
+          toast.success("Blog published successfully!", {
+            toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
+          });
+          
+          // Return the saved blog from backend
+          if (savedBlog._id || savedBlog.id) {
+            const backendBlog = mapApiBlog({
+              ...savedBlog,
+              id: savedBlog._id || savedBlog.id,
+            });
+            return backendBlog;
+          }
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to save blog to backend:", error);
+          // Continue with local save as fallback
+          toast.warning("Blog saved locally. Please check your connection.", {
+            toastId: `blog-published-warning-${referenceId}`,
+          });
+        }
+      } else if (authUser && authUser.role !== "recruiter") {
+        // For non-recruiter users, save locally and refresh to show in local state
+        toast.info("Blog saved locally. Only recruiters can publish to the public feed.", {
+          toastId: `blog-published-info-${referenceId}`,
+        });
+      }
+      
+      // Fallback: Save locally if backend save failed or user not authenticated
       const newBlog = formatBlog({
         id: referenceId,
         title: blog.title,
@@ -319,13 +371,13 @@ export const BlogProvider = ({ children }) => {
         views: blog.views ?? 0,
         publishedAt: new Date().toISOString(),
         author: blog.author ?? {
-          id: profile.id,
-          name: profile.name,
-          avatar: profile.avatar,
-          bio: profile.bio,
-          role: profile.title,
+          id: profile.id || authUser?.id || "user",
+          name: profile.name || authUser?.fullName || "User",
+          avatar: authorAvatar,
+          bio: profile.bio || authUser?.metadata?.bio || "",
+          role: profile.title || (authUser?.role ? `${authUser.role} · Digital AELA` : "Member"),
           social: profile.socialLinks?.[0],
-          followers: profile.followers,
+          followers: profile.followers || 0,
         },
         comments: blog.comments ?? [],
         source: blog.source ?? "local",
@@ -333,12 +385,16 @@ export const BlogProvider = ({ children }) => {
 
       setBlogs((prev) => [newBlog, ...prev]);
       setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
-      toast.success("Blog published successfully!", {
-        toastId: `blog-published-${newBlog.id}`,
-      });
+      
+      if (!savedBlog) {
+        toast.success("Blog published successfully!", {
+          toastId: `blog-published-${newBlog.id}`,
+        });
+      }
+      
       return newBlog;
     },
-    [profile]
+    [profile, authUser, refreshBlogs]
   );
 
   const updateBlog = useCallback((blogId, updates) => {

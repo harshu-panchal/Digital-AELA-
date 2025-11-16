@@ -10,3 +10,9 @@ export const fetchPublishedBlogs = (params = {}) => {
   });
 };
 
+export const createBlog = (payload) =>
+  apiRequest("/recruiter/blogs", {
+    method: "POST",
+    body: payload,
+  });
+

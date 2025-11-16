@@ -484,40 +484,45 @@ export const UserProvider = ({ children }) => {
 
     const metadata = authUser.metadata ?? {};
 
-    setProfile((prev) => ({
-      ...defaultProfile,
-      ...prev, // Preserve existing values (including backend-loaded social stats)
-      id: authUser.id ?? defaultProfile.id,
-      name: authUser.fullName ?? defaultProfile.name,
-      title:
-        metadata.title ??
-        (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
-      bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
-      country: metadata.country ?? metadata.region ?? defaultProfile.country,
-      city: metadata.city ?? defaultProfile.city,
-      profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
-      experience:
-        metadata.experience ??
-        (metadata.experienceYears
-          ? `${metadata.experienceYears} years of experience`
-          : defaultProfile.experience),
-      maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
-      interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
-      avatar: metadata.avatarUrl ?? metadata.avatar ?? prev.avatar ?? defaultProfile.avatar,
-      bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
-      coins: aelaPoints,
-      metadata,
-      role: authUser.role,
-      contact: {
-        email: authUser.email,
-        phone: metadata.phone,
-        whatsapp: metadata.whatsapp,
-      },
-      // Preserve social stats from backend (don't overwrite if already loaded from backend)
-      followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
-      following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
-      rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
-    }));
+    setProfile((prev) => {
+      // Prioritize avatarUrl from metadata (Cloudinary URL)
+      const avatarUrl = metadata.avatarUrl || metadata.avatar || prev.avatar || defaultProfile.avatar;
+      
+      return {
+        ...defaultProfile,
+        ...prev, // Preserve existing values (including backend-loaded social stats)
+        id: authUser.id ?? defaultProfile.id,
+        name: authUser.fullName ?? defaultProfile.name,
+        title:
+          metadata.title ??
+          (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
+        bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
+        country: metadata.country ?? metadata.region ?? defaultProfile.country,
+        city: metadata.city ?? defaultProfile.city,
+        profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
+        experience:
+          metadata.experience ??
+          (metadata.experienceYears
+            ? `${metadata.experienceYears} years of experience`
+            : defaultProfile.experience),
+        maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
+        interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
+        avatar: avatarUrl, // Always use Cloudinary URL if available
+        bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
+        coins: aelaPoints,
+        metadata,
+        role: authUser.role,
+        contact: {
+          email: authUser.email,
+          phone: metadata.phone,
+          whatsapp: metadata.whatsapp,
+        },
+        // Preserve social stats from backend (don't overwrite if already loaded from backend)
+        followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
+        following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
+        rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
+      };
+    });
   }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded]);
 
   const updateProfile = useCallback((updates) => {
