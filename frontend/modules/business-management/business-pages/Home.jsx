@@ -542,35 +542,77 @@ const Home = () => {
   };
 
   // Testimonials data
-  const testimonials = [
-    {
-      id: 1,
-      name: "Sarah Anderson",
-      role: "Business Professional",
-      avatar:
-        "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=300&q=80",
-      text: "The coaching transformed my English skills. Within 3 months, I was confidently presenting to international teams!",
-      rating: 5,
-    },
-    {
-      id: 2,
-      name: "Mohammed Ali",
-      role: "IELTS Student",
-      avatar:
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80",
-      text: "Thanks to Digital AELA's IELTS preparation, I achieved a band 7.5! The personalized feedback made all the difference.",
-      rating: 5,
-    },
-    {
-      id: 3,
-      name: "Fatima Hassan",
-      role: "General English Learner",
-      avatar:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
-      text: "Learning English has never been this engaging. The instructors are patient, and the materials are practical and relevant.",
-      rating: 5,
-    },
-  ];
+  const testimonials = useMemo(
+    () => [
+      {
+        id: 1,
+        name: "Sarah Anderson",
+        role: "Business Professional",
+        avatar:
+          "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=300&q=80",
+        text: "The coaching transformed my English skills. Within 3 months, I was confidently presenting to international teams!",
+        rating: 5,
+      },
+      {
+        id: 2,
+        name: "Mohammed Ali",
+        role: "IELTS Student",
+        avatar:
+          "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80",
+        text: "Thanks to Digital AELA's IELTS preparation, I achieved a band 7.5! The personalized feedback made all the difference.",
+        rating: 5,
+      },
+      {
+        id: 3,
+        name: "Fatima Hassan",
+        role: "General English Learner",
+        avatar:
+          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
+        text: "Learning English has never been this engaging. The instructors are patient, and the materials are practical and relevant.",
+        rating: 5,
+      },
+      {
+        id: 4,
+        name: "Rajesh Kumar",
+        role: "Corporate Executive",
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
+        text: "Digital AELA's corporate training program helped me improve my presentation skills significantly. Highly recommended for professionals!",
+        rating: 5,
+      },
+      {
+        id: 5,
+        name: "Priya Sharma",
+        role: "Digital Marketing Student",
+        avatar:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=300&q=80",
+        text: "The digital marketing course is comprehensive and practical. I've already started applying the strategies in my business!",
+        rating: 5,
+      },
+      {
+        id: 6,
+        name: "Ahmed Malik",
+        role: "Advanced English Student",
+        avatar:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
+        text: "The advanced English course exceeded my expectations. My fluency and confidence have improved dramatically in just 3 months.",
+        rating: 5,
+      },
+    ],
+    []
+  );
+
+  const visibleTestimonials = useMemo(() => {
+    const count = 3;
+    if (!Array.isArray(testimonials) || testimonials.length === 0) return [];
+    if (testimonials.length <= count) return testimonials;
+
+    return Array.from({ length: count }, (_, index) => {
+      const testimonialIndex =
+        (currentTestimonial + index) % testimonials.length;
+      return testimonials[testimonialIndex];
+    });
+  }, [testimonials, currentTestimonial]);
 
   const certificates = [
     {
@@ -2777,125 +2819,135 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* Single Testimonial Card */}
-          <div className="max-w-3xl mx-auto">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentTestimonial}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] relative">
-                {/* Rating Stars - Top Left */}
-                <div className="flex items-center gap-1 mb-6">
-                  {[...Array(testimonials[currentTestimonial].rating)].map(
-                    (_, i) => (
+          {/* Testimonial Cards Row */}
+          <div className="relative">
+            {/* Side Arrows */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={prevTestimonial}
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={nextTestimonial}
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </motion.button>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="grid gap-6 md:grid-cols-3">
+              {visibleTestimonials.map((item) => (
+                <motion.article
+                  key={item.id}
+                  whileHover={{ y: -6, scale: 1.01 }}
+                  className="flex flex-col rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
+                        <img
+                          src={item.avatar}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{item.role}</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
+                      Verified
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-1">
+                    {[...Array(item.rating)].map((_, i) => (
                       <svg
                         key={i}
-                        className="w-5 h-5 text-[#D4AF37]"
+                        className="h-4 w-4 text-[#F5D26A]"
                         fill="currentColor"
                         viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
-                    )
-                  )}
-                </div>
-
-                {/* Testimonial Text */}
-                <p className="text-white mb-6 text-lg leading-relaxed font-normal">
-                  "{testimonials[currentTestimonial].text}"
-                </p>
-
-                {/* Author Information */}
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border border-[#D4AF37]/50 shadow-[0_6px_18px_rgba(12,12,12,0.55)]">
-                    <img
-                      src={testimonials[currentTestimonial].avatar}
-                      alt={testimonials[currentTestimonial].name}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
+                    ))}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-white text-lg">
-                      {testimonials[currentTestimonial].name}
-                    </h4>
-                    <p className="text-sm text-[#D4AF37] font-normal">
-                      {testimonials[currentTestimonial].role}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
 
-            {/* Navigation Controls */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
-              className="flex flex-col items-center gap-4 mt-8">
-              {/* Arrow Buttons */}
-              <div className="flex items-center gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onClick={prevTestimonial}
-                  className="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  onClick={nextTestimonial}
-                  className="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </motion.button>
-              </div>
-
-              {/* Pagination Dots */}
-              <div className="flex items-center gap-2">
-                {testimonials.map((_, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ scale: 1.3 }}
-                    whileTap={{ scale: 0.9 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    onClick={() => setCurrentTestimonial(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === currentTestimonial
-                        ? "bg-[#D4AF37]"
-                        : "bg-gray-700"
-                    }`}
-                  />
-                ))}
-              </div>
+                  <p className="mt-4 text-sm text-gray-200 leading-relaxed">
+                    “{item.text}”
+                  </p>
+                </motion.article>
+              ))}
             </motion.div>
+
+            {/* Mobile arrows below */}
+            <div className="mt-6 flex justify-center gap-4 md:hidden">
+              <button
+                type="button"
+                onClick={prevTestimonial}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/80 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={nextTestimonial}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/80 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </motion.section>
