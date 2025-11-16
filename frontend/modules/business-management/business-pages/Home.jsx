@@ -40,6 +40,12 @@ import slideFreeLibrary from "../../../src/assets/images/slide-images/free libra
 import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.jpg";
 import slideCollaboration from "../../../src/assets/images/slide-images/collaboration.jpg";
 import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.jpg";
+import img1 from "../../../src/assets/images/gallery/IMG_20220805_210225.jpg";
+import img2 from "../../../src/assets/images/gallery/IMG_20220805_210308.jpg";
+import img3 from "../../../src/assets/images/gallery/IMG_20220805_210546.jpg";
+import img4 from "../../../src/assets/images/gallery/IMG_20221010_173754.jpg";
+import img5 from "../../../src/assets/images/gallery/IMG_20221024_175307.jpg";
+import img6 from "../../../src/assets/images/gallery/IMG_20221025_203619.jpg";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
@@ -893,36 +899,12 @@ const Home = () => {
   ];
 
   const galleryItems = [
-    {
-      id: "gallery-workshop",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      id: "gallery-stage",
-      image:
-        "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      id: "gallery-corporate",
-      image:
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      id: "gallery-mentors",
-      image:
-        "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      id: "gallery-celebration",
-      image:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      id: "gallery-organisation",
-      image:
-        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1600&q=80",
-    },
+    { id: "gallery-1", image: img1 },
+    { id: "gallery-2", image: img2 },
+    { id: "gallery-3", image: img3 },
+    { id: "gallery-4", image: img4 },
+    { id: "gallery-5", image: img5 },
+    { id: "gallery-6", image: img6 },
   ];
 
   return (
@@ -2758,6 +2740,16 @@ const Home = () => {
                   </div>
                 </motion.figure>
               ))}
+            </div>
+
+            <div className="mt-10 flex justify-center">
+              <MotionLink
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                to="/gallery"
+                className="inline-flex w-full max-w-xs items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                Go to Gallery
+              </MotionLink>
             </div>
           </div>
         </motion.section>

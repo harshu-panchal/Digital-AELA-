@@ -112,7 +112,7 @@ const BlogsHome = () => {
 
         <BlogSearchBar />
 
-        <div className="grid gap-8 lg:grid-cols-[2.5fr_1fr]">
+        <div className="space-y-8">
           <div className="space-y-8">
             <BlogCategoryFilter />
 
@@ -129,53 +129,12 @@ const BlogsHome = () => {
             )}
 
             <BlogList
-              title="Trending Blogs"
-              description="Most loved this week across the AELA community."
-              blogs={trendingBlogs}
-              limit={6}
-            />
-
-            <BlogList
-              title="Latest from Learners"
-              description="Fresh insights and reflections from our creators."
-              blogs={recentBlogs}
-              limit={6}
-            />
-
-            <BlogList
               title="All Results"
               description="Personalized feed based on your filters and search."
               blogs={filteredBlogs}
               emptyState="No blogs match your current filters. Try adjusting categories or tags."
             />
           </div>
-
-          <aside className="flex w-full items-start">
-            <section className="w-full rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-4 text-emerald-100 shadow-[0_20px_45px_rgba(16,185,129,0.2)]">
-              <h3 className="text-lg font-semibold text-white">Engagement Tips</h3>
-              <ul className="mt-3 space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Publish quality content regularly</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Engage with comments and feedback</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Share insights and experiences</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Connect with other learners</span>
-                </li>
-              </ul>
-              <p className="mt-3 text-xs uppercase tracking-[0.3em] text-white/70">
-                Keep engaging · Grow your influence
-              </p>
-            </section>
-          </aside>
         </div>
       </div>
     </div>

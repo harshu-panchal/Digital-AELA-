@@ -64,6 +64,7 @@ import JoinFreelancer from "../modules/business-management/join-us-pages/JoinFre
 import JoinBuildAfterLife from "../modules/business-management/join-us-pages/JoinBuildAfterLife";
 import FreeLibrary from "../modules/business-management/free-library/FreeLibrary";
 import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
+import Gallery from "../modules/business-management/business-pages/Gallery";
 import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
 import AdminLogin from "../modules/admin/AdminLogin";
 import AdminLayout from "../modules/admin/layout/AdminLayout";
@@ -273,6 +274,7 @@ export const App = () => {
         />
         <Route path="/free-library" element={<FreeLibrary />} />
         <Route path="/free-library/:bookId" element={<FreeLibraryReader />} />
+        <Route path="/gallery" element={<Gallery />} />
         <Route path="/about/our-story" element={<OurStory />} />
         <Route path="/about/mission-vision" element={<MissionVision />} />
         <Route path="/about/founder" element={<MeetTheFounder />} />
