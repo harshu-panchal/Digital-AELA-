@@ -16,6 +16,7 @@ import {
   HiOutlineUserGroup,
   HiOutlineClipboard,
   HiOutlineClipboardDocumentCheck,
+  HiOutlineUserPlus,
 } from "react-icons/hi2";
 import { FaCoins } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -36,6 +37,11 @@ const sideNavLinks = [
     to: "/learn-earn/chat",
     label: "Messages",
     icon: HiOutlineChatBubbleOvalLeft,
+  },
+  {
+    to: "/learn-earn/find-learners",
+    label: "Find Learners",
+    icon: HiOutlineUserPlus,
   },
   {
     to: "/learn-earn/live-debates",
@@ -64,6 +70,7 @@ const LearnEarnLayout = () => {
   const { profile, totals, notifications, liveDebates, openRooms } = useUser();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleCopyUserId = async () => {
     if (!profile.id) return;
@@ -102,6 +109,10 @@ const LearnEarnLayout = () => {
 
   useEffect(() => {
     setIsSidebarOpen(false);
+    // Clear search when navigating away from chat page
+    if (location.pathname !== "/learn-earn/chat") {
+      setSearchQuery("");
+    }
   }, [location.pathname]);
 
   useEffect(() => {
@@ -256,7 +267,13 @@ const LearnEarnLayout = () => {
                     <HiOutlineMagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
                     <input
                       type="search"
-                      placeholder="Search learners by name or AELA ID"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={
+                        location.pathname === "/learn-earn/chat"
+                          ? "Search conversations by name or user ID"
+                          : "Search learners by name or AELA ID"
+                      }
                       className="w-full rounded-2xl border border-white/10 bg-[#101010] py-3 pl-12 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
                     />
                   </div>
@@ -292,7 +309,7 @@ const LearnEarnLayout = () => {
           </header>
 
           <main key={location.pathname} className="layout-container pb-16 pt-8">
-            <Outlet />
+            <Outlet context={{ searchQuery }} />
           </main>
         </div>
       </div>

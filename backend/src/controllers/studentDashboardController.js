@@ -465,6 +465,131 @@ export const getStudentDashboard = async (req, res, next) => {
   }
 };
 
+// Public endpoint to get basic stats/earnings for a user
+export const getPublicUserStats = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User ID is required",
+        },
+      });
+    }
+
+    const studentObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (!studentObjectId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    // Get user basic info
+    const user = await User.findById(studentObjectId).select("fullName email metadata").lean();
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    // Get AELA Coins (public stats only)
+    let studentPoints = null;
+    try {
+      studentPoints = await StudentPoints.findOne({ student: studentObjectId });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching student points:", error);
+    }
+
+    const totalCoins = studentPoints?.totalCoins || 0;
+    const redeemedCoins = studentPoints?.redeemedCoins || 0;
+    const availableCoins = totalCoins - redeemedCoins;
+
+    // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
+    let totalEarned = 0;
+    if (studentPoints?.transactions && Array.isArray(studentPoints.transactions)) {
+      totalEarned = studentPoints.transactions
+        .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+        .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+    }
+
+    // Get streak (public stat)
+    const streak = studentPoints?.streak || 0;
+
+    // Calculate Learning Hours (public stat)
+    let lessonCompletions = [];
+    try {
+      lessonCompletions = await LessonCompletion.find({ student: studentObjectId });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching lesson completions:", error);
+    }
+    
+    const totalLearningHours = lessonCompletions.reduce((total, completion) => {
+      return total + (completion.duration || 0) / 60; // Convert minutes to hours
+    }, 0);
+
+    // Get Active Courses count (public stat)
+    let activeEnrollments = [];
+    try {
+      activeEnrollments = await Enrollment.find({
+        student: studentObjectId,
+        status: "active",
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching enrollments:", error);
+    }
+
+    const activeCoursesCount = activeEnrollments.length;
+
+    // Get Speaking Score (latest assessment) - public stat
+    let latestAssessment = null;
+    try {
+      latestAssessment = await SpeakingAssessment.findOne({ student: studentObjectId })
+        .sort({ createdAt: -1 });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching speaking assessment:", error);
+    }
+
+    const speakingScore = latestAssessment?.score || null;
+
+    return res.json({
+      user: {
+        id: user._id.toString(),
+        fullName: user.fullName,
+        avatarUrl: user.metadata?.avatarUrl || null,
+      },
+      earnings: {
+        totalCoins,
+        availableCoins,
+        redeemedCoins,
+        totalEarned,
+      },
+      stats: {
+        learningHours: parseFloat(totalLearningHours.toFixed(1)),
+        activeCourses: activeCoursesCount,
+        streak,
+        speakingScore: speakingScore ? parseFloat(speakingScore.toFixed(1)) : null,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 // Helper function to format time ago
 function formatTimeAgo(date) {
   if (!date) return "Recently";

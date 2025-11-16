@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import {
@@ -28,10 +28,21 @@ const DashboardOverview = () => {
     totals,
     streak,
     setLiveDebates,
+    refreshSocialStats,
   } = useUser();
 
   const { socket, isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState("messages");
+  const hasRefreshedRef = useRef(false);
+
+  // Refresh social stats once when component mounts (only once, not on every render)
+  useEffect(() => {
+    if (refreshSocialStats && !hasRefreshedRef.current) {
+      hasRefreshedRef.current = true;
+      refreshSocialStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   // Real-time vote updates via Socket.io
   useEffect(() => {

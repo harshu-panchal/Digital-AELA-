@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useOutletContext } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
@@ -21,6 +21,7 @@ import {
 } from "../../../src/services/api/messages";
 
 const ChatCentre = () => {
+  const { searchQuery = "" } = useOutletContext() || {};
   const { shareCoins } = useUser();
   const { user: authUser } = useAuth();
   const { socket, isConnected } = useSocket();
@@ -173,7 +174,7 @@ const ChatCentre = () => {
               const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
               
               if (isNearBottomRef.current && shouldAutoScrollRef.current && !isUserScrollingRef.current && distanceFromBottom < 150) {
-                container.scrollTop = container.scrollHeight; // Instant scroll, no animation on initial load
+              container.scrollTop = container.scrollHeight; // Instant scroll, no animation on initial load
               }
             }
             initialScrollTimeoutRef.current = null;
@@ -518,6 +519,20 @@ const ChatCentre = () => {
     toast.warn("User blocked – you can unblock anytime", { icon: "🛑" });
   };
 
+  // Filter conversations based on search query
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return conversations;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return conversations.filter((chat) => {
+      const nameMatch = chat.name?.toLowerCase().includes(query);
+      const userIdMatch = chat.userId?.toLowerCase().includes(query);
+      const previewMatch = chat.preview?.toLowerCase().includes(query);
+      return nameMatch || userIdMatch || previewMatch;
+    });
+  }, [conversations, searchQuery]);
+
   return (
     <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
       <aside className="h-full rounded-3xl border border-white/5 bg-[#0f0f0f] p-4">
@@ -538,12 +553,16 @@ const ChatCentre = () => {
             <div className="flex items-center justify-center py-8">
               <FaSpinner className="h-5 w-5 animate-spin text-[#D4AF37]" />
             </div>
-          ) : conversations.length === 0 ? (
+          ) : filteredConversations.length === 0 ? (
             <div className="py-8 text-center text-sm text-gray-400">
-              No conversations yet. Start chatting with other users!
+              {conversations.length === 0
+                ? "No conversations yet. Start chatting with other users!"
+                : searchQuery.trim()
+                ? `No conversations found matching "${searchQuery}"`
+                : "No conversations yet. Start chatting with other users!"}
             </div>
           ) : (
-            conversations.map((chat) => (
+            filteredConversations.map((chat) => (
             <button
               key={chat.id}
               onClick={() => setActiveChatId(chat.id)}

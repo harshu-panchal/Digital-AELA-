@@ -11,6 +11,8 @@ import LearnEarnLayout from "../modules/learn-earn/layout/LearnEarnLayout";
 import DashboardOverview from "../modules/learn-earn/pages/DashboardOverview";
 import ProfilePage from "../modules/learn-earn/pages/ProfilePage";
 import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
+import FindLearners from "../modules/learn-earn/pages/FindLearners";
+import UserProfileView from "../modules/learn-earn/pages/UserProfileView";
 import LiveDebates from "../modules/learn-earn/pages/LiveDebates";
 import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
 import QuizPlay from "../modules/learn-earn/pages/QuizPlay";
@@ -201,6 +203,8 @@ export const App = () => {
           <Route path="dashboard" element={<DashboardOverview />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="chat" element={<ChatCentre />} />
+          <Route path="find-learners" element={<FindLearners />} />
+          <Route path="user/:userId" element={<UserProfileView />} />
           <Route path="live-debates" element={<LiveDebates />} />
           <Route path="activities" element={<ActivitiesHub />} />
           <Route path="quiz/:quizId" element={<QuizPlay />} />

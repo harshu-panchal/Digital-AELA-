@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { usePoints } from "./PointsContext";
 import { useAuth } from "./AuthContext";
 import { fetchSocialStats, fetchFollowers, fetchFollowing } from "../services/api/social";
@@ -323,20 +323,27 @@ export const UserProvider = ({ children }) => {
     setProfile((prev) => ({ ...prev, coins: aelaPoints }));
   }, [aelaPoints]);
 
+  // Track if stats are currently loading to prevent duplicate calls
+  const isLoadingSocialStatsRef = useRef(false);
+
   // Load social stats from backend (runs after profile is initialized)
-  useEffect(() => {
-    const loadSocialStats = async () => {
+  const loadSocialStats = useCallback(async () => {
       if (!authUser?.id || !tokens?.accessToken) {
         return;
       }
+
+    // Prevent duplicate simultaneous calls
+    if (isLoadingSocialStatsRef.current) {
+      return;
+    }
+
+    isLoadingSocialStatsRef.current = true;
 
       // Small delay to ensure profile is initialized first
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       try {
         const stats = await fetchSocialStats();
-        // eslint-disable-next-line no-console
-        console.log("Social stats from backend:", stats);
         
         if (stats) {
           setProfile((prev) => {
@@ -362,11 +369,71 @@ export const UserProvider = ({ children }) => {
         // eslint-disable-next-line no-console
         console.warn("Failed to load social stats from backend:", error);
         // Keep existing values, don't reset to defaults
+    } finally {
+      isLoadingSocialStatsRef.current = false;
       }
+  }, [authUser?.id, tokens?.accessToken]);
+
+  useEffect(() => {
+    loadSocialStats();
+  }, [loadSocialStats]);
+
+  // Refresh social stats function (can be called manually)
+  // Use useCallback with stable dependencies to prevent recreation
+  const refreshSocialStats = useCallback(async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      return;
+    }
+    await loadSocialStats();
+  }, [loadSocialStats, authUser?.id, tokens?.accessToken]);
+
+  // Store refreshSocialStats in a ref for socket listeners to avoid dependency issues
+  const refreshSocialStatsRef = useRef(refreshSocialStats);
+  useEffect(() => {
+    refreshSocialStatsRef.current = refreshSocialStats;
+  }, [refreshSocialStats]);
+
+  // Listen for real-time follow events via socket
+  useEffect(() => {
+    if (!socket || !isConnected || !authUser?.id) {
+      return;
+    }
+
+    // Listen for when someone follows you (increases your follower count)
+    const handleUserFollowed = () => {
+      // Refresh social stats when someone follows you
+      refreshSocialStatsRef.current?.();
     };
 
-    loadSocialStats();
-  }, [authUser, tokens?.accessToken]);
+    // Listen for when you follow someone (increases your following count)
+    const handleUserFollowing = () => {
+      // Refresh social stats when you follow someone
+      refreshSocialStatsRef.current?.();
+    };
+
+    // Listen for when someone unfollows you (decreases your follower count)
+    const handleUserUnfollowed = () => {
+      refreshSocialStatsRef.current?.();
+    };
+
+    // Listen for when you unfollow someone (decreases your following count)
+    const handleUserUnfollowing = () => {
+      refreshSocialStatsRef.current?.();
+    };
+
+    // Register socket listeners (events may need to be defined in backend)
+    socket.on("user_followed", handleUserFollowed);
+    socket.on("user_following", handleUserFollowing);
+    socket.on("user_unfollowed", handleUserUnfollowed);
+    socket.on("user_unfollowing", handleUserUnfollowing);
+
+    return () => {
+      socket.off("user_followed", handleUserFollowed);
+      socket.off("user_following", handleUserFollowing);
+      socket.off("user_unfollowed", handleUserUnfollowed);
+      socket.off("user_unfollowing", handleUserUnfollowing);
+    };
+  }, [socket, isConnected, authUser?.id]);
 
   // Load followers list from backend
   useEffect(() => {
@@ -597,8 +664,18 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (!authUser) {
+      // Reset to default profile when logged out
       setProfile(defaultProfile);
       return;
+    }
+
+    // Immediately update name from authUser if available (before async operations)
+    if (authUser.fullName) {
+      setProfile((prev) => ({
+        ...prev,
+        name: authUser.fullName,
+        id: authUser.id || prev.id,
+      }));
     }
 
     const metadata = authUser.metadata ?? {};
@@ -650,7 +727,7 @@ export const UserProvider = ({ children }) => {
             ...defaultProfile,
             ...prev,
             id: authUser.id ?? defaultProfile.id,
-            name: authUser.fullName ?? defaultProfile.name,
+            name: authUser.fullName || authUser.email?.split("@")[0] || "User",
             title:
               metadata.title ??
               (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
@@ -692,7 +769,7 @@ export const UserProvider = ({ children }) => {
         ...defaultProfile,
         ...prev, // Preserve existing values (including backend-loaded social stats)
         id: authUser.id ?? defaultProfile.id,
-        name: authUser.fullName ?? defaultProfile.name,
+        name: authUser.fullName || authUser.email?.split("@")[0] || "User",
         title:
           metadata.title ??
           (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
@@ -921,6 +998,7 @@ export const UserProvider = ({ children }) => {
       setOpenRooms,
       ratings,
       updateRatings,
+      refreshSocialStats,
       totals: {
         current: aelaPoints,
         earned: totalEarned,
@@ -949,6 +1027,7 @@ export const UserProvider = ({ children }) => {
       openRooms,
       ratings,
       updateRatings,
+      refreshSocialStats,
       aelaPoints,
       totalEarned,
       totalRedeemed,

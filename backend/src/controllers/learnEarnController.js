@@ -249,6 +249,116 @@ export const getDashboardData = async (req, res, next) => {
   }
 };
 
+/**
+ * Search for learners/students
+ */
+export const searchLearners = async (req, res, next) => {
+  try {
+    const { q: searchQuery, page = 1, pageSize = 20 } = req.query;
+
+    if (!searchQuery || !searchQuery.trim()) {
+      return res.json({
+        learners: [],
+        pagination: {
+          page: 1,
+          pageSize: parseInt(pageSize),
+          total: 0,
+          totalPages: 0,
+        },
+      });
+    }
+
+    const query = searchQuery.trim();
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    // Search in User model by fullName or _id (user ID)
+    const userQueryConditions = [{ fullName: { $regex: query, $options: "i" } }];
+    if (mongoose.isValidObjectId(query)) {
+      userQueryConditions.push({ _id: new mongoose.Types.ObjectId(query) });
+    }
+    const userQuery = {
+      role: "student",
+      $or: userQueryConditions,
+    };
+
+    // Search in StudentProfile by interests, headline, bio
+    const profileQuery = {
+      $or: [
+        { headline: { $regex: query, $options: "i" } },
+        { bio: { $regex: query, $options: "i" } },
+        { interests: { $in: [new RegExp(query, "i")] } },
+      ],
+    };
+
+    // Find users matching the query
+    const users = await User.find(userQuery)
+      .select("fullName email role metadata _id")
+      .limit(limit)
+      .skip(skip)
+      .lean();
+
+    // Get user IDs
+    const userIds = users.map((u) => u._id);
+
+    // Find profiles that match and get their user IDs
+    const matchingProfiles = await StudentProfile.find(profileQuery)
+      .select("user headline bio interests avatarUrl")
+      .lean();
+
+    const profileUserIds = matchingProfiles.map((p) => p.user);
+
+    // Combine user IDs and remove duplicates
+    const allUserIds = [...new Set([...userIds.map((id) => id.toString()), ...profileUserIds.map((id) => id.toString())])];
+
+    // Get unique users (limit to page size)
+    const uniqueUserIds = allUserIds.slice(skip, skip + limit);
+
+    // Fetch complete user and profile data
+    const learnersData = await Promise.all(
+      uniqueUserIds.map(async (userId) => {
+        const user = await User.findById(userId).select("fullName email role metadata _id").lean();
+        if (!user) return null;
+
+        const profile = await StudentProfile.findOne({ user: userId }).lean();
+
+        return {
+          id: user._id.toString(),
+          userId: user._id.toString(),
+          name: user.fullName,
+          fullName: user.fullName,
+          email: user.email,
+          avatar: profile?.avatarUrl || user.metadata?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
+          avatarUrl: profile?.avatarUrl || user.metadata?.avatarUrl,
+          title: profile?.headline || null,
+          headline: profile?.headline || null,
+          bio: profile?.bio || null,
+          interests: profile?.interests || [],
+        };
+      })
+    );
+
+    const learners = learnersData.filter(Boolean);
+
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments(userQuery);
+    const totalProfiles = await StudentProfile.countDocuments(profileQuery);
+    const total = Math.max(totalUsers, totalProfiles); // Approximate total
+
+    return res.json({
+      learners,
+      pagination: {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        total,
+        totalPages: Math.ceil(total / parseInt(pageSize)),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 function formatTimeAgo(date) {
   if (!date) return "Just now";
   const now = new Date();

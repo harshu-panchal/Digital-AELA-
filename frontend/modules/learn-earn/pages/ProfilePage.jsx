@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -29,7 +29,7 @@ import {
 } from "../../../src/services/api/student";
 
 const ProfilePage = () => {
-  const { profile, updateProfile } = useUser();
+  const { profile, updateProfile, refreshSocialStats } = useUser();
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
   const { refreshPoints } = usePoints();
   const [verifying, setVerifying] = useState(new Set());
@@ -57,6 +57,18 @@ const ProfilePage = () => {
     "GitHub",
     "Website",
   ];
+
+  // Track if we've refreshed stats to prevent multiple calls
+  const hasRefreshedStatsRef = useRef(false);
+
+  // Refresh social stats once when component mounts to ensure counts are up to date
+  useEffect(() => {
+    if (refreshSocialStats && !hasRefreshedStatsRef.current) {
+      hasRefreshedStatsRef.current = true;
+      refreshSocialStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   // Load student profile from backend
   useEffect(() => {
