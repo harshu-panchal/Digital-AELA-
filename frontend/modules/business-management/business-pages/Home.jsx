@@ -330,7 +330,7 @@ const Home = () => {
         id: "ambition-action",
         badge: "Our Mission",
         title:
-          "Har Ghar Shiksha Har Ghar Shiksha Affordable & Global Education",
+          "Har Ghar Shiksha Affordable & Global Education",
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
           "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
@@ -376,7 +376,7 @@ const Home = () => {
         primaryCta: null,
         primaryLink: "/contact",
         secondaryCta: "Apply for Partnership",
-        secondaryLink: "/contact",
+        secondaryLink: "/contact/business-collaboration",
         image: slideCollaboration,
       },
       {
