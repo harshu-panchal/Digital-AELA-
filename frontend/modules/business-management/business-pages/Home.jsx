@@ -329,8 +329,7 @@ const Home = () => {
       {
         id: "ambition-action",
         badge: "Our Mission",
-        title:
-          "Har Ghar Shiksha Affordable & Global Education",
+        title: "Har Ghar Shiksha Affordable & Global Education",
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
           "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
@@ -396,6 +395,32 @@ const Home = () => {
     ],
     []
   );
+
+  const getPrimaryCtaClasses = (label) => {
+    switch (label) {
+      case "Start Learning":
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+      default:
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+    }
+  };
+
+  const getSecondaryCtaClasses = (label) => {
+    switch (label) {
+      case "Start Learning":
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+      case "Explore the Free Library":
+        return "inline-flex items-center justify-center rounded-full border border-blue-400/70 bg-blue-500/20 px-6 py-3 text-sm font-semibold text-blue-100 shadow-[0_10px_30px_rgba(59,130,246,0.35)] transition hover:bg-blue-500/30 hover:border-blue-300";
+      case "Apply for Partnership":
+        return "inline-flex items-center justify-center rounded-full border border-red-400/70 bg-red-500/20 px-6 py-3 text-sm font-semibold text-red-100 shadow-[0_10px_30px_rgba(248,113,113,0.35)] transition hover:bg-red-500/30 hover:border-red-300";
+      case "Donate Education":
+        return "inline-flex items-center justify-center rounded-full border border-emerald-400/70 bg-emerald-500/20 px-6 py-3 text-sm font-semibold text-emerald-100 shadow-[0_10px_30px_rgba(16,185,129,0.35)] transition hover:bg-emerald-500/30 hover:border-emerald-300";
+      case "Start Earning":
+        return "inline-flex items-center justify-center rounded-full border border-white/70 bg-white px-6 py-3 text-sm font-semibold text-black shadow-[0_10px_30px_rgba(255,255,255,0.45)] transition hover:bg-slate-100 hover:border-white";
+      default:
+        return "inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10";
+    }
+  };
 
   useEffect(() => {
     if (heroSlides.length <= 1 || isHeroPaused) return undefined;
@@ -1084,7 +1109,9 @@ const Home = () => {
                       whileHover={{ scale: 1.04, y: -2 }}
                       whileTap={{ scale: 0.96 }}
                       to={heroSlides[activeHeroSlide].primaryLink}
-                      className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                      className={getPrimaryCtaClasses(
+                        heroSlides[activeHeroSlide].primaryCta
+                      )}>
                       {heroSlides[activeHeroSlide].primaryCta}
                     </MotionLink>
                   )}
@@ -1093,7 +1120,9 @@ const Home = () => {
                       whileHover={{ scale: 1.04, y: -2 }}
                       whileTap={{ scale: 0.96 }}
                       to={heroSlides[activeHeroSlide].secondaryLink}
-                      className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10">
+                      className={getSecondaryCtaClasses(
+                        heroSlides[activeHeroSlide].secondaryCta
+                      )}>
                       {heroSlides[activeHeroSlide].secondaryCta}
                     </MotionLink>
                   )}
