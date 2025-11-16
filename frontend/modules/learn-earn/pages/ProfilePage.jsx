@@ -624,9 +624,19 @@ const ProfilePage = () => {
               </Link>
               <button
                 type="button"
+                onClick={() => {
+                  if (editingField === "all") {
+                    // Cancel edit mode
+                    setEditingField(null);
+                    setEditValue("");
+                  } else {
+                    // Enable edit mode for all fields
+                    setEditingField("all");
+                  }
+                }}
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 hover:brightness-110">
                 <FaEdit className="h-3.5 w-3.5" />
-                Edit profile
+                {editingField === "all" ? "Cancel Edit" : "Edit profile"}
               </button>
             </div>
           </div>

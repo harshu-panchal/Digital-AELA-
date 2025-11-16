@@ -21,6 +21,7 @@ const DashboardOverview = () => {
   const {
     profile,
     followers,
+    following,
     messages,
     notifications,
     liveDebates,
@@ -43,6 +44,29 @@ const DashboardOverview = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
+
+  // Listen for coin earning events to refresh leaderboard
+  useEffect(() => {
+    const handleCoinEarned = () => {
+      // Refresh followers and following lists when coins are earned
+      if (refreshSocialStats) {
+        refreshSocialStats();
+      }
+    };
+
+    // Listen for quiz completion (coins earned)
+    window.addEventListener("quizCompleted", handleCoinEarned);
+    
+    // Listen for any coin earning events
+    window.addEventListener("coinsEarned", handleCoinEarned);
+    window.addEventListener("transactionCompleted", handleCoinEarned);
+
+    return () => {
+      window.removeEventListener("quizCompleted", handleCoinEarned);
+      window.removeEventListener("coinsEarned", handleCoinEarned);
+      window.removeEventListener("transactionCompleted", handleCoinEarned);
+    };
+  }, [refreshSocialStats]);
 
   // Real-time vote updates via Socket.io
   useEffect(() => {
@@ -101,7 +125,59 @@ const DashboardOverview = () => {
     () => messages.reduce((sum, chat) => sum + (chat.unread || 0), 0),
     [messages]
   );
-  const followerCount = followers.length;
+
+  // Combine followers and following lists, removing duplicates and preserving totalEarned
+  const combinedFollowersFollowing = useMemo(() => {
+    const followersMap = new Map();
+    
+    // Add followers first, preserving totalEarned
+    followers.forEach((follower) => {
+      const id = follower.id || follower.userId;
+      if (id) {
+        followersMap.set(id, { 
+          ...follower, 
+          relationshipType: "follower",
+          totalEarned: follower.totalEarned || 0 // Ensure totalEarned is preserved
+        });
+      }
+    });
+    
+    // Add following, preserving followers if they already exist (mutual)
+    // If both exist, preserve the higher totalEarned value
+    following.forEach((followedUser) => {
+      const id = followedUser.id || followedUser.userId;
+      if (id) {
+        const existing = followersMap.get(id);
+        if (existing) {
+          // This is a mutual connection - preserve the higher totalEarned
+          const maxEarned = Math.max(
+            existing.totalEarned || 0,
+            followedUser.totalEarned || 0
+          );
+          followersMap.set(id, { 
+            ...existing, 
+            ...followedUser,
+            relationshipType: "mutual",
+            totalEarned: maxEarned
+          });
+        } else {
+          // You follow them but they don't follow you back
+          followersMap.set(id, { 
+            ...followedUser, 
+            relationshipType: "following",
+            totalEarned: followedUser.totalEarned || 0
+          });
+        }
+      }
+    });
+    
+    return Array.from(followersMap.values());
+  }, [followers, following]);
+
+  const followerCount = combinedFollowersFollowing.length;
+  // Get actual follower and following counts from arrays
+  const actualFollowersCount = followers.length;
+  const actualFollowingCount = following.length;
   const notificationCount = notifications.filter((n) => n.type !== "archived").length;
   const badgeCount = profile.badges?.length || 0;
   const liveRoomCount = liveDebates.length + openRooms.length;
@@ -194,41 +270,80 @@ const DashboardOverview = () => {
     ),
     followers: (
       <div className="auto-grid-sm lg:grid-cols-3 lg:gap-6">
-        {followers.map((follower) => (
-          <Motion.div
-            key={follower.id}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.27 }}
-            className="rounded-2xl border border-white/5 bg-linear-to-br from-[#101010] via-[#0c0c0c] to-[#050505] p-5">
-            <div className="flex items-center gap-3">
-              <img
-                src={follower.avatar}
-                alt={follower.name}
-                className="h-12 w-12 rounded-full border border-[#D4AF37]/30 object-cover"
-              />
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {follower.name}
-                </p>
-                <p className="text-[11px] text-gray-400">{follower.id}</p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-gray-300">{follower.tagline}</p>
-            <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
-              <span>⭐ {follower.rating.toFixed(1)}</span>
-              <span>{follower.mutuals} mutuals</span>
-              <span>{follower.coinsShared} coins shared</span>
-            </div>
+        {combinedFollowersFollowing.length === 0 ? (
+          <div className="col-span-full rounded-2xl border border-white/5 bg-linear-to-br from-[#101010] via-[#0c0c0c] to-[#050505] p-8 text-center">
+            <p className="text-gray-400">No followers or following yet.</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Start following users to see them here!
+            </p>
             <Link
-              to={`/learn-earn/chat?userId=${follower.id || follower.userId}`}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2.5 text-xs font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/20 active:scale-[0.98]">
-              <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
-              Messages
+              to="/learn-earn/find-learners"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-sm font-semibold text-black hover:brightness-110">
+              Find Learners
             </Link>
-          </Motion.div>
-        ))}
+          </div>
+        ) : (
+          combinedFollowersFollowing.map((user) => {
+            const userId = user.id || user.userId;
+            const relationshipLabel = 
+              user.relationshipType === "mutual" 
+                ? "Mutual" 
+                : user.relationshipType === "follower"
+                ? "Follows you"
+                : "Following";
+            
+            return (
+              <Motion.div
+                key={userId}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.27 }}
+                className="rounded-2xl border border-white/5 bg-linear-to-br from-[#101010] via-[#0c0c0c] to-[#050505] p-5">
+                <div className="flex items-center gap-3">
+                  <Link to={`/learn-earn/user/${userId}`}>
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-12 w-12 rounded-full border border-[#D4AF37]/30 object-cover hover:border-[#D4AF37]/60 transition"
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <Link 
+                      to={`/learn-earn/user/${userId}`}
+                      className="block hover:text-[#D4AF37] transition">
+                      <p className="text-sm font-semibold text-white">
+                        {user.name}
+                      </p>
+                    </Link>
+                    <p className="text-[11px] text-gray-400">{userId}</p>
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      user.relationshipType === "mutual"
+                        ? "bg-green-500/20 text-green-400"
+                        : user.relationshipType === "follower"
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}>
+                      {relationshipLabel}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-gray-300">{user.tagline || user.headline || "Learner"}</p>
+                <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                  <span>⭐ {(user.rating || 0).toFixed(1)}</span>
+                  {user.mutuals !== undefined && <span>{user.mutuals} mutuals</span>}
+                  {user.coinsShared !== undefined && <span>{user.coinsShared} coins shared</span>}
+                </div>
+                <Link
+                  to={`/learn-earn/chat?userId=${userId}`}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2.5 text-xs font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/20 active:scale-[0.98]">
+                  <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
+                  Messages
+                </Link>
+              </Motion.div>
+            );
+          })
+        )}
       </div>
     ),
     notifications: (
@@ -473,13 +588,13 @@ const DashboardOverview = () => {
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
               <p className="text-[#D4AF37]">Followers</p>
               <p className="mt-1 text-lg font-semibold text-white">
-                {profile.followers.toLocaleString()}
+                {actualFollowersCount.toLocaleString()}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
               <p className="text-[#D4AF37]">Following</p>
               <p className="mt-1 text-lg font-semibold text-white">
-                {profile.following.toLocaleString()}
+                {actualFollowingCount.toLocaleString()}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
@@ -500,26 +615,50 @@ const DashboardOverview = () => {
             Leaderboard snapshot
           </p>
           <div className="mt-4 space-y-3">
-            {followers.slice(0, 3).map((follower, index) => (
-              <div
-                key={follower.id}
-                className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3">
-                <div className="text-xl text-[#D4AF37]">
-                  {["🥇", "🥈", "🥉"][index]}
+            {(() => {
+              // Filter out users with no totalEarned data (or 0) for better sorting
+              // Sort combinedFollowersFollowing by totalEarned (descending)
+              const sortedLeaderboard = [...combinedFollowersFollowing]
+                .filter((user) => user.totalEarned !== undefined && user.totalEarned !== null)
+                .sort((a, b) => {
+                  const aEarned = a.totalEarned || 0;
+                  const bEarned = b.totalEarned || 0;
+                  return bEarned - aEarned; // Descending order
+                })
+                .slice(0, 3); // Top 3
+
+              return sortedLeaderboard.length === 0 ? (
+                <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3 text-center text-sm text-gray-400">
+                  {combinedFollowersFollowing.length === 0 
+                    ? "No leaderboard data available yet. Follow users to see their earnings!"
+                    : "Loading earnings data..."}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">
-                    {follower.name}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Shared {follower.coinsShared} coins
-                  </p>
-                </div>
-                <p className="text-xs text-[#D4AF37]">
-                  ⭐ {follower.rating.toFixed(1)}
-                </p>
-              </div>
-            ))}
+              ) : (
+                sortedLeaderboard.map((user, index) => {
+                  const totalEarned = user.totalEarned || 0;
+                  return (
+                    <div
+                      key={user.id || user.userId}
+                      className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3">
+                      <div className="text-xl text-[#D4AF37]">
+                        {["🥇", "🥈", "🥉"][index]}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-white">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Earned {totalEarned.toLocaleString()} coins
+                        </p>
+                      </div>
+                      <p className="text-xs text-[#D4AF37]">
+                        ⭐ {(user.rating || 0).toFixed(1)}
+                      </p>
+                    </div>
+                  );
+                })
+              );
+            })()}
           </div>
           <Link
             to="/learn-earn/live-debates"

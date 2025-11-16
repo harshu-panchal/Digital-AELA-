@@ -378,14 +378,52 @@ export const UserProvider = ({ children }) => {
     loadSocialStats();
   }, [loadSocialStats]);
 
+  // Helper functions to reload followers and following lists
+  const reloadFollowers = useCallback(async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      return;
+    }
+
+    try {
+      const response = await fetchFollowers(authUser.id, { pageSize: 20 });
+      if (response?.data !== undefined) {
+        setFollowers(response.data || []);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Failed to refresh followers:", error);
+    }
+  }, [authUser?.id, tokens?.accessToken]);
+
+  const reloadFollowing = useCallback(async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      return;
+    }
+
+    try {
+      const response = await fetchFollowing(authUser.id, { pageSize: 20 });
+      if (response?.data !== undefined) {
+        setFollowing(response.data || []);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Failed to refresh following:", error);
+    }
+  }, [authUser?.id, tokens?.accessToken]);
+
   // Refresh social stats function (can be called manually)
   // Use useCallback with stable dependencies to prevent recreation
   const refreshSocialStats = useCallback(async () => {
     if (!authUser?.id || !tokens?.accessToken) {
       return;
     }
-    await loadSocialStats();
-  }, [loadSocialStats, authUser?.id, tokens?.accessToken]);
+    // Refresh counts and lists in parallel
+    await Promise.all([
+      loadSocialStats(),
+      reloadFollowers(),
+      reloadFollowing(),
+    ]);
+  }, [loadSocialStats, reloadFollowers, reloadFollowing, authUser?.id, tokens?.accessToken]);
 
   // Store refreshSocialStats in a ref for socket listeners to avoid dependency issues
   const refreshSocialStatsRef = useRef(refreshSocialStats);
@@ -437,53 +475,45 @@ export const UserProvider = ({ children }) => {
 
   // Load followers list from backend
   useEffect(() => {
-    const loadFollowers = async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
-        return;
-      }
-
-      try {
-        const response = await fetchFollowers(authUser.id, { pageSize: 20 });
-        if (response?.data) {
-          // Always update followers, even if empty array (shows real data)
-          setFollowers(response.data || []);
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load followers from backend:", error);
-        // Keep existing followers on error
-      }
-    };
-
-    loadFollowers();
+    reloadFollowers();
     
-    // Refresh followers every 30 seconds to keep it live
-    const interval = setInterval(loadFollowers, 30000);
+    // Refresh followers every 15 seconds to keep leaderboard updated
+    const interval = setInterval(reloadFollowers, 15000);
     
     return () => clearInterval(interval);
-  }, [authUser, tokens?.accessToken]);
+  }, [reloadFollowers]);
 
   // Load following list from backend
   useEffect(() => {
-    const loadFollowing = async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
-        return;
-      }
+    reloadFollowing();
+    
+    // Refresh following every 15 seconds to keep leaderboard updated
+    const interval = setInterval(reloadFollowing, 15000);
+    
+    return () => clearInterval(interval);
+  }, [reloadFollowing]);
 
-      try {
-        const response = await fetchFollowing(authUser.id, { pageSize: 20 });
-        if (response?.data && response.data.length > 0) {
-          setFollowing(response.data);
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load following from backend:", error);
-        // Keep default following
-      }
+  // Listen for coin earning events to refresh leaderboard data
+  useEffect(() => {
+    const handleCoinEarned = () => {
+      // Refresh followers and following lists when coins are earned
+      reloadFollowers();
+      reloadFollowing();
     };
 
-    loadFollowing();
-  }, [authUser, tokens?.accessToken]);
+    // Listen for quiz completion (coins earned)
+    window.addEventListener("quizCompleted", handleCoinEarned);
+    
+    // Listen for any coin earning events
+    window.addEventListener("coinsEarned", handleCoinEarned);
+    window.addEventListener("transactionCompleted", handleCoinEarned);
+
+    return () => {
+      window.removeEventListener("quizCompleted", handleCoinEarned);
+      window.removeEventListener("coinsEarned", handleCoinEarned);
+      window.removeEventListener("transactionCompleted", handleCoinEarned);
+    };
+  }, [reloadFollowers, reloadFollowing]);
 
   // Load Learn & Earn dashboard data from backend
   useEffect(() => {

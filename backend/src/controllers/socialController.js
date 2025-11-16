@@ -130,6 +130,22 @@ export const getFollowers = async (req, res, next) => {
           }
         }
 
+        // Get total coins earned for this follower
+        let totalEarned = 0;
+        try {
+          const followerPoints = await StudentPoints.findOne({ student: follower._id });
+          if (followerPoints && followerPoints.transactions && Array.isArray(followerPoints.transactions)) {
+            // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
+            totalEarned = followerPoints.transactions
+              .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+              .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+          }
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error calculating total earned for follower:", error);
+          totalEarned = 0;
+        }
+
         // Get rating
         const ratings = await UserRating.find({ ratedUser: follower._id });
         const rating =
@@ -149,6 +165,7 @@ export const getFollowers = async (req, res, next) => {
           rating: Math.round(rating * 10) / 10,
           mutuals,
           coinsShared: Math.round(coinsShared),
+          totalEarned: Math.round(totalEarned),
         };
       })
     );
@@ -200,6 +217,22 @@ export const getFollowing = async (req, res, next) => {
 
         const profile = await StudentProfile.findOne({ user: following._id });
 
+        // Get total coins earned for this followed user
+        let totalEarned = 0;
+        try {
+          const followingPoints = await StudentPoints.findOne({ student: following._id });
+          if (followingPoints && followingPoints.transactions && Array.isArray(followingPoints.transactions)) {
+            // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
+            totalEarned = followingPoints.transactions
+              .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+              .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+          }
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error calculating total earned for following:", error);
+          totalEarned = 0;
+        }
+
         const ratings = await UserRating.find({ ratedUser: following._id });
         const rating =
           ratings.length > 0
@@ -213,6 +246,7 @@ export const getFollowing = async (req, res, next) => {
           avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${following._id.toString().slice(-2)}`,
           tagline: profile?.headline || profile?.bio || "Learner",
           rating: Math.round(rating * 10) / 10,
+          totalEarned: Math.round(totalEarned),
         };
       })
     );
