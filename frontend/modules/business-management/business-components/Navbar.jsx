@@ -275,7 +275,7 @@ const Navbar = () => {
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
                   <div className="flex items-center gap-2 text-[#F5D26A]">
                     <a
-                      href="https://www.facebook.com/"
+                      href="https://www.facebook.com/share/18nAj4v2LM/"
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
@@ -289,7 +289,7 @@ const Navbar = () => {
                       <FaWhatsapp className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href="https://www.instagram.com/"
+                      href="https://www.instagram.com/digitalaela?igsh=d3ZmdmgwYzNsejh2"
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-pink-500/70 hover:bg-pink-500/20 hover:text-pink-300 hover:shadow-[0_0_15px_rgba(236,72,153,0.6)]">
@@ -303,7 +303,7 @@ const Navbar = () => {
                       <FaLinkedinIn className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href="https://www.youtube.com/"
+                      href="https://youtube.com/@digitalaela?si=rMIZ-tX2BqiYkJQN"
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]">
