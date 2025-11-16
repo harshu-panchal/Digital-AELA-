@@ -11,7 +11,6 @@ import {
 import {
   HiOutlineMicrophone,
   HiOutlineBellAlert,
-  HiOutlineUserCircle,
   HiOutlineChatBubbleOvalLeft,
 } from "react-icons/hi2";
 import { useUser } from "../../../src/contexts/UserContext";
@@ -179,7 +178,6 @@ const DashboardOverview = () => {
   const actualFollowersCount = followers.length;
   const actualFollowingCount = following.length;
   const notificationCount = notifications.filter((n) => n.type !== "archived").length;
-  const badgeCount = profile.badges?.length || 0;
   const liveRoomCount = liveDebates.length + openRooms.length;
   const totalCoins = totals.current;
 
@@ -210,12 +208,6 @@ const DashboardOverview = () => {
         icon: FaCoins,
       },
       {
-        id: "profile",
-        label: "Profile",
-        count: badgeCount,
-        icon: HiOutlineUserCircle,
-      },
-      {
         id: "live",
         label: "Live Groups",
         count: liveRoomCount,
@@ -227,7 +219,6 @@ const DashboardOverview = () => {
       followerCount,
       notificationCount,
       totalCoins,
-      badgeCount,
       liveRoomCount,
     ]
   );
@@ -426,62 +417,6 @@ const DashboardOverview = () => {
             </span>
           </p>
         </Motion.div>
-      </div>
-    ),
-    profile: (
-      <div className="rounded-2xl border border-white/5 bg-linear-to-br from-[#101010] via-[#050505] to-black p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <img
-              src={profile.avatar}
-              alt={profile.name}
-              className="h-16 w-16 rounded-full border border-[#D4AF37]/40 object-cover"
-            />
-            <div>
-              <p className="text-lg font-semibold text-white">{profile.name}</p>
-              <p className="text-sm text-gray-400">{profile.title}</p>
-              <p className="text-xs uppercase tracking-[0.35em] text-[#D4AF37]/80">
-                {profile.id}
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/learn-earn/profile"
-            className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 px-4 py-2 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
-            View full profile
-          </Link>
-        </div>
-        <div className="mt-6 auto-grid-sm lg:grid-cols-3">
-          <div className="rounded-xl border border-white/5 bg-[#0f0f0f] p-4 text-sm text-gray-300">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-              Location
-            </p>
-            <p className="mt-2 text-white">
-              {profile.city}, {profile.country}
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-[#0f0f0f] p-4 text-sm text-gray-300">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-              English level
-            </p>
-            <p className="mt-2 text-white">{profile.englishLevel}</p>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-[#0f0f0f] p-4 text-sm text-gray-300">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-              Experience
-            </p>
-            <p className="mt-2 text-white">{profile.experience}</p>
-          </div>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {profile.badges.map((badge) => (
-            <span
-              key={badge.id}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}>
-              {badge.label}
-            </span>
-          ))}
-        </div>
       </div>
     ),
     live: (

@@ -98,7 +98,7 @@ const Home = () => {
         highlight: "Launch your Digital AELA centre",
         description:
           "Grow from learner to leader through guided cohorts, paid projects, and a global network cheering for you.",
-        primaryCta: "Start Your Journey",
+        primaryCta: null, // Removed "Start Your Journey"
         primaryLink: "/join-us/after-life",
         secondaryCta: "See Success Stories",
         secondaryLink: "/about/success-stories",
@@ -114,7 +114,7 @@ const Home = () => {
           "Access micro-batches, freelance gigs, and recruiter dashboards built to accelerate your earning curve.",
         primaryCta: "Explore Learn & Earn",
         primaryLink: "/learn-earn",
-        secondaryCta: "Browse Job Feed",
+        secondaryCta: null, // Removed "Browse Job Feed"
         secondaryLink: "/explore-jobs",
         image:
           "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?auto=format&fit=crop&w=1400&q=80",
@@ -126,7 +126,7 @@ const Home = () => {
         highlight: "Sponsor a classroom. Transform a city",
         description:
           "Dedicate scholarships, sponsor labs, and co-create hubs that keep learners future-ready across continents.",
-        primaryCta: "Gift a Scholarship",
+        primaryCta: null, // Removed "Gift a Scholarship"
         primaryLink: "/gift/payment?type=anyone",
         secondaryCta: "Build After Life",
         secondaryLink: "/join-us/after-life",
@@ -142,7 +142,7 @@ const Home = () => {
           "Dive into grammar guides, leadership playbooks, and digital marketing handbooks ready to read right now.",
         primaryCta: "Read Free Library",
         primaryLink: "/books",
-        secondaryCta: "See Featured Reads",
+        secondaryCta: null, // Removed "See Featured Reads"
         secondaryLink: "/join-us/after-life",
         image:
           "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
@@ -810,20 +810,24 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.34, ease: "easeOut" }}
                   className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <MotionLink
-                    whileHover={{ scale: 1.04, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                    to={heroSlides[activeHeroSlide].primaryLink}
-                    className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
-                    {heroSlides[activeHeroSlide].primaryCta}
-                  </MotionLink>
-                  <MotionLink
-                    whileHover={{ scale: 1.04, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                    to={heroSlides[activeHeroSlide].secondaryLink}
-                    className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10">
-                    {heroSlides[activeHeroSlide].secondaryCta}
-                  </MotionLink>
+                  {heroSlides[activeHeroSlide].primaryCta && (
+                    <MotionLink
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      to={heroSlides[activeHeroSlide].primaryLink}
+                      className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                      {heroSlides[activeHeroSlide].primaryCta}
+                    </MotionLink>
+                  )}
+                  {heroSlides[activeHeroSlide].secondaryCta && (
+                    <MotionLink
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      to={heroSlides[activeHeroSlide].secondaryLink}
+                      className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10">
+                      {heroSlides[activeHeroSlide].secondaryCta}
+                    </MotionLink>
+                  )}
                 </motion.div>
               </div>
 
@@ -897,48 +901,18 @@ const Home = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="hidden md:block relative w-full pt-4 pb-8 md:pt-6 md:pb-12 bg-black overflow-hidden -mt-8 md:-mt-12">
-        {/* Ribbon Shape - Full Width */}
-        <div className="relative w-full overflow-visible">
+        className="hidden md:block relative w-full pt-3 pb-6 md:pt-4 md:pb-8 overflow-hidden -mt-8 md:-mt-12">
+        {/* Ribbon Shape - Full Width Container */}
+        <div className="relative w-full overflow-hidden">
           {/* Main Ribbon with Black->Golden->Black Gradient */}
           <div
-            className="relative min-h-[100px] md:min-h-[120px] w-[108%] -ml-[4%] sm:w-[105%] sm:-ml-[2.5%] lg:w-[102%] lg:-ml-[1%] flex items-center justify-center py-4 md:py-6 px-4 md:px-8"
+            className="relative min-h-[90px] md:min-h-[100px] w-[108%] -ml-[4%] sm:w-[105%] sm:-ml-[2.5%] lg:w-[102%] lg:-ml-[1%] py-4 md:py-5 overflow-hidden"
             style={{
               background:
-                "linear-gradient(to right, black 0%, black 10%, #d4a837 15%, #d4af37 85%, black 90%, black 100%)",
+                "linear-gradient(to right, black 0%, black 5%, #d4a837 8%, #d4af37 92%, black 95%, black 100%)",
             }}>
-            {/* Ribbon Content - Statistics Grid */}
-            <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3 w-full max-w-[1600px] mx-auto px-2 sm:px-4">
-                {ribbonStats.map((stat, index) => {
-                  const currentValue =
-                    index < ribbonCounts.length ? ribbonCounts[index] : 0;
-                  const formattedValue = stat.decimals
-                    ? currentValue.toFixed(stat.decimals)
-                    : Math.max(0, currentValue).toLocaleString();
-
-                  return (
-                    <motion.div
-                      key={`${stat.label}-${stat.value}`}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
-                      className="text-center">
-                      <div className="text-white font-bold text-lg md:text-xl lg:text-2xl font-display mb-0.5">
-                        {`${formattedValue}${stat.suffix ?? ""}`}
-                      </div>
-                      <div className="text-white text-[10px] md:text-xs font-light">
-                        {stat.label}
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Left Ribbon Tail */}
-            <div className="absolute left-0 top-0 h-full w-12 md:w-16">
+            <div className="absolute left-0 top-0 h-full w-12 md:w-16 z-10 pointer-events-none">
               <svg
                 className="w-full h-full"
                 viewBox="0 0 64 96"
@@ -948,7 +922,7 @@ const Home = () => {
             </div>
 
             {/* Right Ribbon Tail */}
-            <div className="absolute right-0 top-0 h-full w-12 md:w-16">
+            <div className="absolute right-0 top-0 h-full w-12 md:w-16 z-10 pointer-events-none">
               <svg
                 className="w-full h-full"
                 viewBox="0 0 64 96"
@@ -957,9 +931,45 @@ const Home = () => {
               </svg>
             </div>
 
+            {/* Ribbon Content Container - Constrained to Golden Area */}
+            <div className="relative z-20 w-full h-full flex items-center justify-center px-12 md:px-16 lg:px-20">
+              {/* Content Grid - Properly Contained */}
+              <div className="w-full max-w-[90%] md:max-w-[85%] lg:max-w-[1600px] mx-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4 lg:gap-5">
+                  {ribbonStats.map((stat, index) => {
+                    const currentValue =
+                      index < ribbonCounts.length ? ribbonCounts[index] : 0;
+                    const formattedValue = stat.decimals
+                      ? currentValue.toFixed(stat.decimals)
+                      : Math.max(0, currentValue).toLocaleString();
+
+                    return (
+                      <motion.div
+                        key={`${stat.label}-${stat.value}`}
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{
+                          duration: 0.4,
+                          delay: 0.1 + index * 0.08,
+                        }}
+                        className="flex flex-col items-center justify-center overflow-hidden px-1 md:px-2">
+                        <div className="text-white font-bold text-base md:text-lg lg:text-xl xl:text-2xl font-display mb-1 md:mb-1.5 text-center leading-tight">
+                          {`${formattedValue}${stat.suffix ?? ""}`}
+                        </div>
+                        <div className="text-white text-[9px] md:text-[10px] lg:text-xs font-light text-center leading-tight px-0.5">
+                          {stat.label}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* Decorative Lines */}
-            <div className="absolute top-0 left-1/4 w-px h-full bg-black/30"></div>
-            <div className="absolute top-0 right-1/4 w-px h-full bg-black/30"></div>
+            <div className="absolute top-0 left-1/4 w-px h-full bg-black/30 z-5 pointer-events-none"></div>
+            <div className="absolute top-0 right-1/4 w-px h-full bg-black/30 z-5 pointer-events-none"></div>
           </div>
         </div>
       </motion.div>

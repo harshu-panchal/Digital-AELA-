@@ -403,33 +403,33 @@ export const UserProvider = ({ children }) => {
 
   // Helper functions to reload followers and following lists
   const reloadFollowers = useCallback(async () => {
-    if (!authUser?.id || !tokens?.accessToken) {
-      return;
-    }
-
-    try {
-      const response = await fetchFollowers(authUser.id, { pageSize: 20 });
-      if (response?.data !== undefined) {
-        setFollowers(response.data || []);
+      if (!authUser?.id || !tokens?.accessToken) {
+        return;
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
+
+      try {
+        const response = await fetchFollowers(authUser.id, { pageSize: 20 });
+      if (response?.data !== undefined) {
+          setFollowers(response.data || []);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
       console.warn("Failed to refresh followers:", error);
     }
   }, [authUser?.id, tokens?.accessToken]);
 
   const reloadFollowing = useCallback(async () => {
-    if (!authUser?.id || !tokens?.accessToken) {
-      return;
-    }
+      if (!authUser?.id || !tokens?.accessToken) {
+        return;
+      }
 
-    try {
-      const response = await fetchFollowing(authUser.id, { pageSize: 20 });
+      try {
+        const response = await fetchFollowing(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
         setFollowing(response.data || []);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
       console.warn("Failed to refresh following:", error);
     }
   }, [authUser?.id, tokens?.accessToken]);

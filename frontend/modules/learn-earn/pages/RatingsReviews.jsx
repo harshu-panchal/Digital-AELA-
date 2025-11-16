@@ -39,9 +39,9 @@ const RatingsReviews = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {profile.badges && profile.badges.length > 0 ? (
                   profile.badges.map((badge) => (
-                    <span key={badge.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}>
-                      {badge.label}
-                    </span>
+                  <span key={badge.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.color}`}>
+                    {badge.label}
+                  </span>
                   ))
                 ) : (
                   <p className="text-xs text-gray-500">Complete more quizzes to earn badges</p>

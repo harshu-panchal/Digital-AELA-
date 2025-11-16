@@ -150,7 +150,7 @@ const WalletDashboard = () => {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent("refreshWallet"));
         }, 500);
-      } else {
+    } else {
         toast.error(result?.error?.message || result?.message || "Failed to send coins", { icon: "⚠️" });
       }
     } catch (error) {
