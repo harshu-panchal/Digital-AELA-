@@ -35,6 +35,11 @@ import clientLogo28 from "../../../src/assets/images/client-logos/28.png";
 import clientLogo29 from "../../../src/assets/images/client-logos/29.png";
 import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
 import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
+import slideOurMission from "../../../src/assets/images/slide-images/our mission.jpg";
+import slideFreeLibrary from "../../../src/assets/images/slide-images/free library.jpg";
+import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.jpg";
+import slideCollaboration from "../../../src/assets/images/slide-images/collaboration.jpg";
+import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.jpg";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
@@ -54,6 +59,60 @@ const Home = () => {
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
+
+  // Get neon light color based on active slide
+  const getNeonTextShadow = (slideId) => {
+    switch (slideId) {
+      case "ambition-action":
+        // Golden/Yellow
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(245, 210, 106, 0.25),
+          0 0 25px rgba(245, 210, 106, 0.2)
+        `;
+      case "gift-future":
+        // Green
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(110, 231, 183, 0.25),
+          0 0 25px rgba(110, 231, 183, 0.2)
+        `;
+      case "read-grow":
+        // Pink/Rose
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(244, 114, 182, 0.25),
+          0 0 25px rgba(244, 114, 182, 0.2)
+        `;
+      case "learn-earn":
+        // Blue
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(122, 184, 255, 0.25),
+          0 0 25px rgba(122, 184, 255, 0.2)
+        `;
+      case "learn-earn-opportunity":
+        // White
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(255, 255, 255, 0.25),
+          0 0 25px rgba(255, 255, 255, 0.2)
+        `;
+      default:
+        // Default golden
+        return `
+          0 0 5px rgba(255, 255, 255, 0.4),
+          0 0 10px rgba(255, 255, 255, 0.3),
+          0 0 15px rgba(212, 175, 55, 0.25),
+          0 0 25px rgba(212, 175, 55, 0.2)
+        `;
+    }
+  };
 
   // Define home courses before useEffect hooks - exactly 6 courses
   const homeCourses = useMemo(() => {
@@ -279,8 +338,7 @@ const Home = () => {
         primaryLink: "/join-us/afterlife",
         secondaryCta: "Start Learning",
         secondaryLink: "/courses/english-language",
-        image:
-          "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80",
+        image: slideOurMission,
       },
       {
         id: "learn-earn",
@@ -293,8 +351,7 @@ const Home = () => {
         primaryLink: "/free-library",
         secondaryCta: "Explore the Free Library",
         secondaryLink: "/free-library",
-        image:
-          "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?auto=format&fit=crop&w=1400&q=80",
+        image: slideFreeLibrary,
       },
       {
         id: "gift-future",
@@ -307,8 +364,7 @@ const Home = () => {
         primaryLink: "/gift/payment?type=anyone",
         secondaryCta: "Donate Education",
         secondaryLink: "/join-us/afterlife",
-        image:
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80",
+        image: slideDonateEducation,
       },
       {
         id: "read-grow",
@@ -321,8 +377,7 @@ const Home = () => {
         primaryLink: "/contact",
         secondaryCta: "Apply for Partnership",
         secondaryLink: "/contact",
-        image:
-          "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
+        image: slideCollaboration,
       },
       {
         id: "learn-earn-opportunity",
@@ -336,8 +391,7 @@ const Home = () => {
         primaryLink: "/courses/english-language",
         secondaryCta: "Start Earning",
         secondaryLink: "/learn-earn",
-        image:
-          "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
+        image: slideLearnAndEarn,
       },
     ],
     []
@@ -940,6 +994,26 @@ const Home = () => {
             </motion.div>
           </>
         )}
+        {heroSlides[activeHeroSlide].id === "learn-earn-opportunity" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 0.8, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-0">
+              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#FFFFFF_0%,rgba(255,255,255,0.1)_55%,transparent_100%)] blur-[140px]" />
+              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-white/20 bg-white/12 blur-[120px] mix-blend-screen" />
+              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-white/25 bg-white/10 blur-[140px] mix-blend-screen" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-white/35 bg-[radial-gradient(circle,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.05)_35%,transparent_75%)] blur-[90px]" />
+            </motion.div>
+          </>
+        )}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -975,7 +1049,12 @@ const Home = () => {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
-                  className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-[2.8rem] font-display">
+                  className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-[2.8rem] font-display"
+                  style={{
+                    textShadow: getNeonTextShadow(
+                      heroSlides[activeHeroSlide].id
+                    ),
+                  }}>
                   {heroSlides[activeHeroSlide].title}
                 </motion.h1>
 
@@ -1027,8 +1106,8 @@ const Home = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
                 className="order-1 flex items-center justify-center lg:order-2">
-                <div className="relative w-full max-w-[320px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
-                  <div className="relative aspect-3/4 w-full">
+                <div className="relative w-full max-w-[480px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+                  <div className="relative aspect-4/3 w-full">
                     <img
                       src={heroSlides[activeHeroSlide].image}
                       alt={heroSlides[activeHeroSlide].title}
