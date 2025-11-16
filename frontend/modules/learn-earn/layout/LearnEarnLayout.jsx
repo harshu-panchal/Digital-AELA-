@@ -168,8 +168,8 @@ const LearnEarnLayout = () => {
                   </p>
                   <div className="flex items-center gap-1.5">
                     <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                      {profile.id}
-                    </p>
+                    {profile.id}
+                  </p>
                     <button
                       type="button"
                       onClick={handleCopyUserId}
@@ -207,11 +207,11 @@ const LearnEarnLayout = () => {
                   : 'No rooms live'}
               </p>
               {liveRoomsCount > 0 && (
-                <Link
-                  to="/learn-earn/live-debates"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
-                  Jump in
-                </Link>
+              <Link
+                to="/learn-earn/live-debates"
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
+                Jump in
+              </Link>
               )}
             </div>
           </div>
@@ -331,8 +331,8 @@ const LearnEarnLayout = () => {
                     </p>
                     <div className="flex items-center gap-1.5">
                       <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                        {profile.id}
-                      </p>
+                      {profile.id}
+                    </p>
                       <button
                         type="button"
                         onClick={handleCopyUserId}

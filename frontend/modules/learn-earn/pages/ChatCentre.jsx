@@ -38,6 +38,13 @@ const ChatCentre = () => {
   const messagesContainerRef = useRef(null);
   const [typingUsers, setTypingUsers] = useState(new Set());
   const shouldAutoScrollRef = useRef(true); // Track if we should auto-scroll
+  const pendingMessagesRef = useRef(new Map()); // Track pending optimistic messages by content+timestamp
+  const isUserScrollingRef = useRef(false); // Track if user is actively scrolling
+  const autoScrollTimeoutRef = useRef(null); // Track auto-scroll timeout to cancel if needed
+  const scrollEndTimeoutRef = useRef(null); // Track timeout for when user stops scrolling
+  const isNearBottomRef = useRef(true); // Track if user is near bottom of scroll container
+  const prevMessagesLengthRef = useRef(0); // Track previous messages length to detect new messages
+  const initialScrollTimeoutRef = useRef(null); // Track initial scroll timeout to cancel if needed
 
   // Load conversations on mount
   useEffect(() => {
@@ -135,6 +142,43 @@ const ChatCentre = () => {
         }
         
         setActiveChat(chat || null);
+        
+        // Initialize prevMessagesLengthRef when messages first load
+        if (response?.messages) {
+          prevMessagesLengthRef.current = response.messages.length;
+        }
+        
+        // Only scroll to bottom when first loading a chat (initial load)
+        // Reset scroll state for new chat
+        if (response?.messages && response.messages.length > 0 && messagesContainerRef.current) {
+          // Reset refs for new chat - user is at bottom on initial load
+          isNearBottomRef.current = true;
+          shouldAutoScrollRef.current = true;
+          isUserScrollingRef.current = false;
+          
+          // Clear any existing initial scroll timeout
+          if (initialScrollTimeoutRef.current) {
+            clearTimeout(initialScrollTimeoutRef.current);
+          }
+          
+          // Small delay to ensure DOM is ready, then scroll to bottom only on initial load
+          initialScrollTimeoutRef.current = setTimeout(() => {
+            if (messagesContainerRef.current) {
+              const container = messagesContainerRef.current;
+              // Only scroll if user hasn't manually scrolled yet (they're still at initial position)
+              // Double check the scroll position to ensure user hasn't scrolled up
+              const scrollTop = container.scrollTop;
+              const scrollHeight = container.scrollHeight;
+              const clientHeight = container.clientHeight;
+              const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+              
+              if (isNearBottomRef.current && shouldAutoScrollRef.current && !isUserScrollingRef.current && distanceFromBottom < 150) {
+                container.scrollTop = container.scrollHeight; // Instant scroll, no animation on initial load
+              }
+            }
+            initialScrollTimeoutRef.current = null;
+          }, 150);
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("Failed to load messages:", error);
@@ -143,43 +187,83 @@ const ChatCentre = () => {
     };
 
     loadMessages();
+    
+    // Reset scroll state when chat changes
+    return () => {
+      isUserScrollingRef.current = false;
+      shouldAutoScrollRef.current = false; // Disable auto-scroll by default
+      isNearBottomRef.current = true; // Reset to true for new chat
+      prevMessagesLengthRef.current = 0; // Reset message count tracking
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
+        autoScrollTimeoutRef.current = null;
+      }
+      if (scrollEndTimeoutRef.current) {
+        clearTimeout(scrollEndTimeoutRef.current);
+        scrollEndTimeoutRef.current = null;
+      }
+      if (initialScrollTimeoutRef.current) {
+        clearTimeout(initialScrollTimeoutRef.current);
+        initialScrollTimeoutRef.current = null;
+      }
+    };
   }, [activeChatId, authUser, conversations]);
 
-  // Scroll to bottom when messages change
+  // Auto-scroll when new messages arrive, but ONLY if user is near bottom
+  // This prevents auto-scroll from interrupting user when they're reading old messages
   useEffect(() => {
-    // Use a small timeout to ensure DOM is updated before scrolling
-    const timer = setTimeout(() => {
-      if (messagesContainerRef.current) {
-        // Scroll the container directly using scrollTo for smooth behavior
-        const container = messagesContainerRef.current;
-        
-        // Check if last message is from current user (always scroll for own messages)
-        const lastMessage = messages[messages.length - 1];
-        const isOwnMessage = lastMessage?.from === "me";
-        
-        // Only auto-scroll if user is near the bottom (within 100px) OR it's their own message
-        const isNearBottom = 
-          container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        
-        if (isOwnMessage || isNearBottom || messages.length === 1 || shouldAutoScrollRef.current) {
-          container.scrollTo({
-            top: container.scrollHeight,
-            behavior: "smooth",
-          });
-          shouldAutoScrollRef.current = true;
-        }
-      } else if (messagesEndRef.current) {
-        // Fallback: scroll the element into view only if container ref is not available
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: "smooth",
-          block: "nearest",
-          inline: "nearest"
-        });
+    // Skip if no messages or container ref doesn't exist
+    if (!messagesContainerRef.current || messages.length === 0) {
+      prevMessagesLengthRef.current = messages.length;
+      return;
+    }
+    
+    // Check if a new message was actually added (not just a re-render)
+    const messageAdded = messages.length > prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+    
+    // Only auto-scroll if:
+    // 1. A new message was actually added
+    // 2. User is near bottom (within 100px)
+    // 3. User is not actively scrolling
+    // 4. We should auto-scroll (from scroll handler)
+    if (
+      messageAdded &&
+      isNearBottomRef.current &&
+      !isUserScrollingRef.current &&
+      shouldAutoScrollRef.current
+    ) {
+      // Clear any existing auto-scroll timeout
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
       }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [messages]);
+      
+      // Use a small timeout to ensure DOM is updated
+      autoScrollTimeoutRef.current = setTimeout(() => {
+        if (messagesContainerRef.current && isNearBottomRef.current && shouldAutoScrollRef.current) {
+          const container = messagesContainerRef.current;
+          // Check one more time before scrolling
+          const scrollTop = container.scrollTop;
+          const scrollHeight = container.scrollHeight;
+          const clientHeight = container.clientHeight;
+          const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+          
+          // Only scroll if still near bottom (user didn't scroll up in the meantime)
+          if (distanceFromBottom < 150) {
+            container.scrollTop = container.scrollHeight;
+          }
+        }
+        autoScrollTimeoutRef.current = null;
+      }, 50);
+      
+      return () => {
+        if (autoScrollTimeoutRef.current) {
+          clearTimeout(autoScrollTimeoutRef.current);
+          autoScrollTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [messages]); // Only trigger when messages array changes
 
   // Socket.io event handlers
   useEffect(() => {
@@ -188,11 +272,40 @@ const ChatCentre = () => {
     const handleNewMessage = (message) => {
       // Only add if it's for the current active chat
       if (message.senderId === activeChatId || message.recipientId === activeChatId) {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          // Check if message already exists (deduplicate by ID or content + sender)
+          const exists = prev.some(
+            (m) => 
+              m.id === message.id || 
+              (m.content === message.content && 
+               m.from === (message.senderId === authUser?.id ? "me" : "other") &&
+               Math.abs(new Date(m.timestamp || m.time) - new Date(message.timestamp)) < 5000)
+          );
+          if (exists) {
+            return prev;
+          }
+          
+          // Replace optimistic message if this matches a pending one
+          const pendingKey = `${message.content}-${message.senderId}`;
+          if (pendingMessagesRef.current.has(pendingKey)) {
+            const optimisticId = pendingMessagesRef.current.get(pendingKey);
+            pendingMessagesRef.current.delete(pendingKey);
+            return prev.map((m) => 
+              m.id === optimisticId ? {
+                ...m,
+                id: message.id,
+                timestamp: message.timestamp,
+              } : m
+            );
+          }
+          
+          return [...prev, message];
+        });
+        
         // Update conversation preview
         setConversations((prev) =>
           prev.map((conv) =>
-            conv.userId === message.senderId
+            conv.userId === message.senderId || conv.userId === message.recipientId
               ? {
                   ...conv,
                   preview: message.content,
@@ -218,13 +331,36 @@ const ChatCentre = () => {
     };
 
     const handleMessageSent = (message) => {
-      // Optimistically add message (already added, but confirm)
+      // Replace optimistic message with real one from server
       setMessages((prev) => {
-        const exists = prev.some((m) => m.id === message.id);
-        if (!exists) {
-          return [...prev, message];
+        // Check if message already exists
+        const exists = prev.some(
+          (m) => 
+            m.id === message.id || 
+            (m.content === message.content && 
+             m.from === "me" &&
+             Math.abs(new Date(m.timestamp || m.time) - new Date(message.timestamp)) < 5000)
+        );
+        if (exists) {
+          return prev;
         }
-        return prev;
+        
+        // Replace optimistic message if this matches a pending one
+        const pendingKey = `${message.content}-${authUser?.id}`;
+        if (pendingMessagesRef.current.has(pendingKey)) {
+          const optimisticId = pendingMessagesRef.current.get(pendingKey);
+          pendingMessagesRef.current.delete(pendingKey);
+          return prev.map((m) => 
+            m.id === optimisticId ? {
+              ...m,
+              id: message.id,
+              timestamp: message.timestamp,
+            } : m
+          );
+        }
+        
+        // Fallback: add if not exists
+        return [...prev, message];
       });
     };
 
@@ -258,7 +394,7 @@ const ChatCentre = () => {
       socket.off("message_sent", handleMessageSent);
       socket.off("user_typing", handleTyping);
     };
-  }, [socket, activeChatId]);
+  }, [socket, activeChatId, authUser]);
 
   const handleSend = useCallback(async () => {
     if (!messageText.trim() || !activeChatId || !socket || sending) return;
@@ -279,22 +415,47 @@ const ChatCentre = () => {
       }),
       timestamp: new Date(),
     };
+    
+    // Track this optimistic message so we can replace it when server responds
+    const pendingKey = `${content}-${authUser?.id}`;
+    pendingMessagesRef.current.set(pendingKey, tempMessage.id);
+    
+    // Clean up pending messages older than 30 seconds to prevent memory leaks
+    setTimeout(() => {
+      pendingMessagesRef.current.delete(pendingKey);
+    }, 30000);
+    
     setMessages((prev) => [...prev, tempMessage]);
+    
+    // Scroll to bottom only when user sends their own message
+    // Use a small timeout to ensure DOM is updated before scrolling
+    setTimeout(() => {
+      if (messagesContainerRef.current && !isUserScrollingRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }, 50);
 
     try {
-      // Send via Socket.io for real-time
+      // Send via Socket.io for real-time (primary method)
       socket.emit("send_message", {
         recipientId: activeChatId,
         content,
         type: "text",
       });
 
-      // Also send via REST API as backup
-      await sendMessageAPI({
-        recipientId: activeChatId,
-        content,
-        type: "text",
-      });
+      // Also send via REST API as backup (but don't add duplicate if socket works)
+      // Only send REST API if socket is not connected or fails
+      if (!isConnected) {
+        await sendMessageAPI({
+          recipientId: activeChatId,
+          content,
+          type: "text",
+        });
+      }
 
       // Update conversation preview
       setConversations((prev) =>
@@ -320,7 +481,7 @@ const ChatCentre = () => {
     } finally {
       setSending(false);
     }
-  }, [messageText, activeChatId, socket, sending]);
+  }, [messageText, activeChatId, socket, sending, isConnected, authUser]);
 
   const handleVoiceMessage = () => {
     toast.info("Voice message feature coming soon", { icon: "🎙️" });
@@ -456,9 +617,43 @@ const ChatCentre = () => {
                 onScroll={(e) => {
                   // Track if user manually scrolled up - disable auto-scroll if they're far from bottom
                   const container = e.target;
-                  const isNearBottom = 
-                    container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-                  shouldAutoScrollRef.current = isNearBottom;
+                  const scrollTop = container.scrollTop;
+                  const scrollHeight = container.scrollHeight;
+                  const clientHeight = container.clientHeight;
+                  const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+                  const isNearBottom = distanceFromBottom < 100;
+                  
+                  // Update the ref to track if user is near bottom
+                  isNearBottomRef.current = isNearBottom;
+                  
+                  // If user scrolled away from bottom, immediately disable auto-scroll and cancel any pending scrolls
+                  if (!isNearBottom) {
+                    shouldAutoScrollRef.current = false;
+                    // Cancel any pending initial scroll
+                    if (initialScrollTimeoutRef.current) {
+                      clearTimeout(initialScrollTimeoutRef.current);
+                      initialScrollTimeoutRef.current = null;
+                    }
+                    // Cancel any pending auto-scroll from messages
+                    if (autoScrollTimeoutRef.current) {
+                      clearTimeout(autoScrollTimeoutRef.current);
+                      autoScrollTimeoutRef.current = null;
+                    }
+                  } else {
+                    // User scrolled back to bottom - allow auto-scroll again
+                    shouldAutoScrollRef.current = true;
+                  }
+                  
+                  // Mark that user is actively scrolling
+                  isUserScrollingRef.current = true;
+                  
+                  // Clear the scrolling flag after user stops scrolling for 300ms
+                  if (scrollEndTimeoutRef.current) {
+                    clearTimeout(scrollEndTimeoutRef.current);
+                  }
+                  scrollEndTimeoutRef.current = setTimeout(() => {
+                    isUserScrollingRef.current = false;
+                  }, 300);
                 }}
                 className="custom-scrollbar h-[360px] space-y-3 overflow-y-auto rounded-2xl bg-[#101010] p-4">
                 {messages.length === 0 ? (

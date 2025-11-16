@@ -47,16 +47,16 @@ export const PointsProvider = ({ children }) => {
       if (learnEarnProgress) {
         // Update coins (available coins to redeem)
         if (learnEarnProgress.coinsToRedeem !== undefined) {
-          const backendCoins = learnEarnProgress.coinsToRedeem || 0;
-          setAelaPoints((prev) => {
-            const newValue = backendCoins;
-            if (prev !== newValue) {
-              // eslint-disable-next-line no-console
-              console.log("Updating coins from backend:", prev, "->", newValue);
-            }
-            return newValue;
-          });
-          localStorage.setItem("aelaPoints", backendCoins.toString());
+        const backendCoins = learnEarnProgress.coinsToRedeem || 0;
+        setAelaPoints((prev) => {
+          const newValue = backendCoins;
+          if (prev !== newValue) {
+            // eslint-disable-next-line no-console
+            console.log("Updating coins from backend:", prev, "->", newValue);
+          }
+          return newValue;
+        });
+        localStorage.setItem("aelaPoints", backendCoins.toString());
         }
 
         // Update total earned from backend

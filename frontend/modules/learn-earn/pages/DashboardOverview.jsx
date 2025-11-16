@@ -32,7 +32,7 @@ const DashboardOverview = () => {
 
   const { socket, isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState("messages");
-  
+
   // Real-time vote updates via Socket.io
   useEffect(() => {
     if (!socket || !isConnected) {
