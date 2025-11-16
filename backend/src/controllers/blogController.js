@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import RecruiterBlog from "../models/RecruiterBlog.js";
 import RecruiterProfile from "../models/RecruiterProfile.js";
 import User from "../models/User.js";
@@ -285,6 +286,16 @@ export const toggleLike = async (req, res, next) => {
     const { userId } = req.auth;
     const { blogId } = req.params;
 
+    // Validate ObjectId format
+    if (!blogId || !mongoose.Types.ObjectId.isValid(blogId)) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_ID",
+          message: "Invalid blog ID format",
+        },
+      });
+    }
+
     const blog = await RecruiterBlog.findById(blogId);
 
     if (!blog) {
@@ -292,6 +303,16 @@ export const toggleLike = async (req, res, next) => {
         error: {
           code: "RESOURCE_NOT_FOUND",
           message: "Blog not found",
+        },
+      });
+    }
+
+    // Only allow liking published blogs
+    if (blog.status !== "published") {
+      return res.status(403).json({
+        error: {
+          code: "BLOG_NOT_PUBLISHED",
+          message: "Cannot like unpublished blog",
         },
       });
     }
@@ -337,6 +358,16 @@ export const addComment = async (req, res, next) => {
       });
     }
 
+    // Validate ObjectId format
+    if (!blogId || !mongoose.Types.ObjectId.isValid(blogId)) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_ID",
+          message: "Invalid blog ID format",
+        },
+      });
+    }
+
     const blog = await RecruiterBlog.findById(blogId);
 
     if (!blog) {
@@ -344,6 +375,16 @@ export const addComment = async (req, res, next) => {
         error: {
           code: "RESOURCE_NOT_FOUND",
           message: "Blog not found",
+        },
+      });
+    }
+
+    // Only allow commenting on published blogs
+    if (blog.status !== "published") {
+      return res.status(403).json({
+        error: {
+          code: "BLOG_NOT_PUBLISHED",
+          message: "Cannot comment on unpublished blog",
         },
       });
     }

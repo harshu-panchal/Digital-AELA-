@@ -498,6 +498,10 @@ export const BlogProvider = ({ children }) => {
       const currentBlog = blogs.find((b) => b.id === blogId);
       const profileIdStr = String(profile.id || "");
       const alreadyLiked = currentBlog?.likedBy?.some((id) => String(id) === profileIdStr);
+      
+      // Check if this is a seeded/local blog (not in database)
+      const isSeededBlog = currentBlog?.source === "seed" || currentBlog?.source === "local";
+      
       setBlogs((prev) =>
         prev.map((blog) => {
           if (blog.id !== blogId) return blog;
@@ -514,8 +518,10 @@ export const BlogProvider = ({ children }) => {
         })
       );
 
-      // Persist to backend if authenticated
-      if (authUser) {
+      // Persist to backend if authenticated and blog is from database
+      // Also check if blogId looks like a MongoDB ObjectId (24 hex characters)
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(blogId);
+      if (authUser && !isSeededBlog && isMongoId) {
         try {
           const response = await toggleBlogLike(blogId);
           // Update with server response
@@ -551,9 +557,16 @@ export const BlogProvider = ({ children }) => {
             })
           );
           if (!isNetworkError(error)) {
-            toast.error("Failed to update like. Please try again.", {
-              toastId: `blog-like-error-${blogId}`,
-            });
+            const errorMessage = error?.response?.data?.error?.message || error?.message || "Failed to update like";
+            if (error?.response?.status === 404) {
+              toast.error("Blog not found. It may have been deleted.", {
+                toastId: `blog-like-error-${blogId}`,
+              });
+            } else {
+              toast.error(errorMessage, {
+                toastId: `blog-like-error-${blogId}`,
+              });
+            }
           }
         }
       } else {
@@ -569,6 +582,10 @@ export const BlogProvider = ({ children }) => {
   const addComment = useCallback(
     async (blogId, message) => {
       if (!message?.trim()) return;
+      
+      const currentBlog = blogs.find((b) => b.id === blogId);
+      // Check if this is a seeded/local blog (not in database)
+      const isSeededBlog = currentBlog?.source === "seed" || currentBlog?.source === "local";
       
       const newComment = {
         id: crypto.randomUUID(),
@@ -594,8 +611,10 @@ export const BlogProvider = ({ children }) => {
         })
       );
 
-      // Persist to backend if authenticated
-      if (authUser) {
+      // Persist to backend if authenticated and blog is from database
+      // Also check if blogId looks like a MongoDB ObjectId (24 hex characters)
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(blogId);
+      if (authUser && !isSeededBlog && isMongoId) {
         try {
           const response = await addBlogComment(blogId, message);
           // Update with server response (replace optimistic comment with real one)
@@ -632,9 +651,16 @@ export const BlogProvider = ({ children }) => {
             })
           );
           if (!isNetworkError(error)) {
-            toast.error("Failed to add comment. Please try again.", {
-              toastId: `blog-comment-error-${blogId}`,
-            });
+            const errorMessage = error?.response?.data?.error?.message || error?.message || "Failed to add comment";
+            if (error?.response?.status === 404) {
+              toast.error("Blog not found. It may have been deleted.", {
+                toastId: `blog-comment-error-${blogId}`,
+              });
+            } else {
+              toast.error(errorMessage, {
+                toastId: `blog-comment-error-${blogId}`,
+              });
+            }
           }
         }
       } else {
