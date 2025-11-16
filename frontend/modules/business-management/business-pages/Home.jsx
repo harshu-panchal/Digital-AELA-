@@ -277,50 +277,50 @@ const Home = () => {
           "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
         primaryCta: null, // Removed "Start Your Journey"
         primaryLink: "/join-us/afterlife",
-        secondaryCta: "See Success Stories",
-        secondaryLink: "/about/success-stories",
+        secondaryCta: "Start Learning",
+        secondaryLink: "/courses/english-language",
         image:
           "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80",
       },
       {
         id: "learn-earn",
-        badge: "Learn & Earn",
-        title: "Upgrade skills. Unlock income.",
-        highlight: "Learning that pays every month",
+        badge: "Free Online Library – Open for Everyone",
+        title: "A Free Digital Library for All Learners",
+        highlight: "Unlimited Books Free Access Anytime, Anywhere",
         description:
-          "Access micro-batches, freelance gigs, and recruiter dashboards built to accelerate your earning curve.",
-        primaryCta: "Explore Learn & Earn",
-        primaryLink: "/learn-earn",
-        secondaryCta: null, // Removed "Browse Job Feed"
-        secondaryLink: "/explore-jobs",
+          "Digital AELA offers an open online library where anyone can read thousands of books for free. We believe knowledge should be available to everyone-without barriers, limits, or cost.",
+        primaryCta: null,
+        primaryLink: "/free-library",
+        secondaryCta: "Explore the Free Library",
+        secondaryLink: "/free-library",
         image:
           "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?auto=format&fit=crop&w=1400&q=80",
       },
       {
         id: "gift-future",
-        badge: "Gift a future",
-        title: "Build your Afterlife centre",
-        highlight: "Sponsor a classroom. Transform a city",
+        badge: "Build Your Legacy – Donate Education & gift a Future",
+        title: "Create a Lasting Impact Through Education",
+        highlight: "Donate a Course Gift a Book Support a Student",
         description:
-          "Dedicate scholarships, sponsor labs, and co-create hubs that keep learners future-ready across continents.",
-        primaryCta: null, // Removed "Gift a Scholarship"
+          "The most meaningful donation is the one that transforms lives for generations. By gifting a book or sponsoring a course through Digital AELA, you help someone learn today and empower many more in the future. Your contribution becomes a legacy that continues to benefit long after you.",
+        primaryCta: null,
         primaryLink: "/gift/payment?type=anyone",
-        secondaryCta: "Build Afterlife",
+        secondaryCta: "Donate Education",
         secondaryLink: "/join-us/afterlife",
         image:
           "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80",
       },
       {
         id: "read-grow",
-        badge: "Read • Reflect • Rise",
-        title: "Free library books online",
-        highlight: "Grow 1% every day with curated titles",
+        badge: "Collaboration & Franchise Opportunities",
+        title: "Partner With Digital AELA",
+        highlight: "Collaboration Franchise Global Partnerships",
         description:
-          "Dive into grammar guides, leadership playbooks, and digital marketing handbooks ready to read right now.",
-        primaryCta: "Read Free Library",
-        primaryLink: "/books",
-        secondaryCta: null, // Removed "See Featured Reads"
-        secondaryLink: "/join-us/afterlife",
+          "We welcome individuals and institutions who want to expand education and create global impact. Whether you want to collaborate, become a franchise partner, or build a joint project-Digital AELA is ready to work with you.",
+        primaryCta: null,
+        primaryLink: "/contact",
+        secondaryCta: "Apply for Partnership",
+        secondaryLink: "/contact",
         image:
           "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
       },
