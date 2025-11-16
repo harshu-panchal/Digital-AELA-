@@ -1459,7 +1459,7 @@ const Home = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {/* Free Demo Class Card */}
             <motion.div
               initial={{ y: 50, opacity: 0, scale: 0.9 }}
@@ -1559,6 +1559,58 @@ const Home = () => {
                 rel="noopener noreferrer"
                 className="block w-full bg-[#1a1a1a] text-[#D4AF37] py-3 rounded-lg font-bold text-center border-2 border-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
                 Download Now
+              </motion.a>
+            </motion.div>
+
+            {/* Gift a Future Card */}
+            <motion.div
+              initial={{ y: 50, opacity: 0, scale: 0.9 }}
+              whileInView={{ y: 0, opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 0.25,
+                delay: 0.11,
+                ease: [0.25, 0.1, 0.25, 1],
+              }}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+              {/* Gift Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-white mb-4 font-display">
+                Gift a Future
+              </h3>
+
+              {/* Description */}
+              <p className="text-gray-300 mb-6 leading-relaxed">
+                Sponsor a classroom, dedicate scholarships, and help transform
+                lives through education.
+              </p>
+
+              {/* Button */}
+              <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                href="/join-us/afterlife"
+                className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
+                Gift Now
               </motion.a>
             </motion.div>
           </div>

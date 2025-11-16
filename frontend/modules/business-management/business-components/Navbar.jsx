@@ -111,7 +111,7 @@ const Navbar = () => {
         { label: "Our Story", path: "/about/our-story" },
         { label: "Mission & Vision", path: "/about/mission-vision" },
         { label: "Meet the Founder", path: "/about/founder" },
-        { label: "Learner's Success Stories", path: "/about/success-stories" },
+        { label: "Our Achievement", path: "/about/success-stories" },
       ],
     },
     {
