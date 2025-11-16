@@ -269,11 +269,12 @@ const Home = () => {
     () => [
       {
         id: "ambition-action",
-        badge: "Where ambition meets action",
-        title: "We build cities of opportunity",
-        highlight: "Launch your Digital AELA centre",
+        badge: "Our Mission",
+        title:
+          "Har Ghar Shiksha Har Ghar Shiksha Affordable & Global Education",
+        highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
-          "Grow from learner to leader through guided cohorts, paid projects, and a global network cheering for you.",
+          "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
         primaryCta: null, // Removed "Start Your Journey"
         primaryLink: "/join-us/afterlife",
         secondaryCta: "See Success Stories",
