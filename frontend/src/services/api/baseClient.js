@@ -82,11 +82,31 @@ export const apiRequest = async (
     finalHeaders.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers: finalHeaders,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method,
+      headers: finalHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkError) {
+    // Handle network errors (connection refused, network unavailable, etc.)
+    const isConnectionError =
+      networkError.message?.includes("Failed to fetch") ||
+      networkError.message?.includes("NetworkError") ||
+      networkError.name === "TypeError";
+    
+    if (isConnectionError) {
+      const connectionError = new Error(
+        `Unable to connect to server. Please ensure the backend server is running.`
+      );
+      connectionError.status = 0;
+      connectionError.code = "CONNECTION_ERROR";
+      connectionError.isNetworkError = true;
+      throw connectionError;
+    }
+    throw networkError;
+  }
 
   let payload = null;
   try {
@@ -129,6 +149,22 @@ export const apiRequest = async (
   error.code = payload?.error?.code;
   error.details = payload;
   throw error;
+};
+
+/**
+ * Check if an error is a network/connection error
+ * @param {Error} error - The error to check
+ * @returns {boolean} - True if it's a network error
+ */
+export const isNetworkError = (error) => {
+  return (
+    error?.isNetworkError === true ||
+    error?.code === "CONNECTION_ERROR" ||
+    error?.status === 0 ||
+    error?.message?.includes("Failed to fetch") ||
+    error?.message?.includes("Unable to connect to server") ||
+    error?.name === "TypeError"
+  );
 };
 
 export const apiBaseConfig = {

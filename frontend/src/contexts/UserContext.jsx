@@ -6,6 +6,7 @@ import { fetchSocialStats, fetchFollowers, fetchFollowing } from "../services/ap
 import { fetchDashboardData } from "../services/api/learnEarn";
 import { useSocket } from "../hooks/useSocket";
 import { fetchConversations } from "../services/api/messages";
+import { isNetworkError } from "../services/api/baseClient";
 
 const UserContext = createContext(null);
 
@@ -389,8 +390,11 @@ export const UserProvider = ({ children }) => {
           setSocialStatsLoaded(true);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load social stats from backend:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        if (!isNetworkError(error)) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load social stats from backend:", error);
+        }
         // Keep existing values, don't reset to defaults
     } finally {
       isLoadingSocialStatsRef.current = false;
@@ -413,8 +417,11 @@ export const UserProvider = ({ children }) => {
           setFollowers(response.data || []);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-      console.warn("Failed to refresh followers:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        if (!isNetworkError(error)) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to refresh followers:", error);
+        }
     }
   }, [authUser?.id, tokens?.accessToken]);
 
@@ -429,8 +436,11 @@ export const UserProvider = ({ children }) => {
         setFollowing(response.data || []);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-      console.warn("Failed to refresh following:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        if (!isNetworkError(error)) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to refresh following:", error);
+        }
     }
   }, [authUser?.id, tokens?.accessToken]);
 
@@ -606,8 +616,11 @@ export const UserProvider = ({ children }) => {
           setStreak(dashboardData.streak || 0);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load dashboard data from backend:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        if (!isNetworkError(error)) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load dashboard data from backend:", error);
+        }
         // Keep default data only if there's an error
       }
     };
@@ -702,8 +715,11 @@ export const UserProvider = ({ children }) => {
           setMessages(formatted);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to refresh conversations:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        if (!isNetworkError(error)) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to refresh conversations:", error);
+        }
       }
     };
 
@@ -759,8 +775,11 @@ export const UserProvider = ({ children }) => {
               }));
             }
           } catch (error) {
-            // eslint-disable-next-line no-console
-            console.warn("Failed to load badges from dashboard:", error);
+            // Only log non-network errors to reduce console noise when server is down
+            if (!isNetworkError(error)) {
+              // eslint-disable-next-line no-console
+              console.warn("Failed to load badges from dashboard:", error);
+            }
           }
           
           // Priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > default
@@ -814,8 +833,11 @@ export const UserProvider = ({ children }) => {
           return;
         } catch (error) {
           // Profile might not exist yet, continue with metadata fallback
-          // eslint-disable-next-line no-console
-          console.warn("Failed to load student profile:", error);
+          // Only log non-network errors to reduce console noise when server is down
+          if (!isNetworkError(error)) {
+            // eslint-disable-next-line no-console
+            console.warn("Failed to load student profile:", error);
+          }
         }
       }
 

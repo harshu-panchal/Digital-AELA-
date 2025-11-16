@@ -324,6 +324,21 @@ const Home = () => {
         image:
           "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1400&q=80",
       },
+      {
+        id: "learn-earn-opportunity",
+        badge: "Learn & Earn Opportunity – For Everyone",
+        title: "Learn New Skills and Earn from Anywhere",
+        highlight:
+          "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
+        description:
+          "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
+        primaryCta: "Start Learning",
+        primaryLink: "/courses/english-language",
+        secondaryCta: "Start Earning",
+        secondaryLink: "/learn-earn",
+        image:
+          "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
+      },
     ],
     []
   );

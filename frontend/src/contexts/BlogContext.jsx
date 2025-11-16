@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
 import { useAuth } from "./AuthContext";
 import { fetchPublishedBlogs, createBlog } from "../services/api/blogs";
+import { isNetworkError } from "../services/api/baseClient";
 
 const BlogContext = createContext(null);
 
@@ -416,8 +417,11 @@ export const BlogProvider = ({ children }) => {
             throw new Error("Invalid blog response from server");
           }
         } catch (error) {
-          // eslint-disable-next-line no-console
-          console.warn("Failed to save blog to backend:", error);
+          // Only log non-network errors to reduce console noise when server is down
+          if (!isNetworkError(error)) {
+            // eslint-disable-next-line no-console
+            console.warn("Failed to save blog to backend:", error);
+          }
           // Continue with local save as fallback
           toast.warning("Blog saved locally. Please check your connection.", {
             toastId: `blog-published-warning-${referenceId}`,

@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { fetchStudentDashboard } from "../services/api/student";
+import { isNetworkError } from "../services/api/baseClient";
 
 const PointsContext = createContext();
 
@@ -79,8 +80,11 @@ export const PointsProvider = ({ children }) => {
         setBackendCoinsLoaded(true);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn("Failed to load points from backend:", error);
+      // Only log non-network errors to reduce console noise when server is down
+      if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load points from backend:", error);
+      }
       // If backend fails, keep using current localStorage value (don't reset to 0)
       setBackendCoinsLoaded(true);
     } finally {

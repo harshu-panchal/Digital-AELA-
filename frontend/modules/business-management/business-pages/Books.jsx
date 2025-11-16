@@ -186,7 +186,11 @@ const Books = () => {
           // Ignore storage errors
         }
       } catch (error) {
-        console.error("Failed to load books:", error);
+        // Only log non-network errors to reduce console noise when server is down
+        const isNetworkError = error?.isNetworkError || error?.code === "CONNECTION_ERROR" || error?.status === 0;
+        if (!isNetworkError) {
+          console.error("Failed to load books:", error);
+        }
         // Only fallback to static books if we don't have cached data
         try {
           const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
