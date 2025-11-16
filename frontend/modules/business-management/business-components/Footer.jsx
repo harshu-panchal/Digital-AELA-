@@ -56,6 +56,15 @@ export const Footer = () => {
         },
       ],
     },
+    {
+      title: "Legal",
+      links: [
+        { label: "Disclaimer", to: "/disclaimer" },
+        { label: "Privacy Policy", to: "/privacy-policy" },
+        { label: "Refund & Cancellation Policy", to: "/refund-cancellation-policy" },
+        { label: "Terms & Conditions", to: "/terms-conditions" },
+      ],
+    },
   ];
 
   const socialLinks = [
@@ -72,7 +81,7 @@ export const Footer = () => {
 
       <div className="layout-container py-4 sm:py-5 space-y-4 relative z-10">
         <div className="flex justify-end">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {footerColumns.map((column, columnIndex) => (
             <motion.div
               key={column.title}

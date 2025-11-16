@@ -30,6 +30,10 @@ import OurStory from "../modules/business-management/business-pages/OurStory";
 import MissionVision from "../modules/business-management/business-pages/MissionVision";
 import MeetTheFounder from "../modules/business-management/business-pages/MeetTheFounder";
 import StudentSuccessStories from "../modules/business-management/business-pages/StudentSuccessStories";
+import Disclaimer from "../modules/business-management/business-pages/Disclaimer";
+import PrivacyPolicy from "../modules/business-management/business-pages/PrivacyPolicy";
+import RefundCancellationPolicy from "../modules/business-management/business-pages/RefundCancellationPolicy";
+import TermsConditions from "../modules/business-management/business-pages/TermsConditions";
 import CoursePayment from "../modules/business-management/business-pages/CoursePayment";
 import CourseDetail from "../modules/business-management/business-pages/CourseDetail";
 import BookDemo from "../modules/business-management/contact-pages/BookDemo";
@@ -276,6 +280,10 @@ export const App = () => {
           path="/about/success-stories"
           element={<StudentSuccessStories />}
         />
+        <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/refund-cancellation-policy" element={<RefundCancellationPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/contact/book-demo" element={<BookDemo />} />
         <Route
           path="/contact/business-collaboration"

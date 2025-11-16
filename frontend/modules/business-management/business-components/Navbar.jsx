@@ -22,6 +22,7 @@ const Navbar = () => {
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [showSubNav, setShowSubNav] = useState(true);
   const [navbarOffset, setNavbarOffset] = useState(0);
+  const [logoOffset, setLogoOffset] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { language, languages, changeLanguage } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
@@ -36,9 +37,16 @@ const Navbar = () => {
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         // Scrolling down - move bottom navbar up by 1px only
         setNavbarOffset(1);
+        // Logo should move up 45px when scrolling down
+        setLogoOffset(1);
       } else if (currentScrollY < lastScrollY) {
         // Scrolling up - move bottom navbar back down
         setNavbarOffset(0);
+      }
+      
+      // Logo should only come back down when scrolling to top
+      if (currentScrollY <= 100) {
+        setLogoOffset(0);
       }
       
       setLastScrollY(currentScrollY);
@@ -198,6 +206,41 @@ const Navbar = () => {
         ease: [0.25, 0.1, 0.25, 1]
       }}
       className="w-full fixed top-0 z-[60]">
+      {/* Logo Layer - Positioned on top of navbar */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0, y: 0 }}
+        animate={{ 
+          scale: 1, 
+          opacity: 1,
+          y: -logoOffset * 45
+        }}
+        transition={{
+          duration: 0.3,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+        className="absolute left-[132px] top-[43px] z-[70] pointer-events-auto">
+        <Link
+          to="/"
+          className="block">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="relative drop-shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
+            <img
+              src={logo}
+              alt="logo"
+              className="h-[80px] w-auto object-contain"
+              style={{ maxHeight: '80px', width: '250px', objectFit: 'contain' }}
+            />
+            <motion.div
+              className="absolute bottom-1 left-0 w-0 h-0.5 bg-[#D4AF37]"
+              whileHover={{ width: "100%" }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            />
+          </motion.div>
+        </Link>
+      </motion.div>
+
       <motion.div
         className="relative">
         <AnimatePresence>
@@ -407,42 +450,10 @@ const Navbar = () => {
             duration: 0.3,
             ease: [0.25, 0.1, 0.25, 1]
           }}
-          className="relative overflow-visible border-b border-[#D4AF37]/20 bg-[#0a0a0a]/80 px-0 py-1 backdrop-blur-2xl supports-backdrop-filter:bg-[#0a0a0a]/70 sm:px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          className="relative overflow-visible border-b border-[#D4AF37]/20 bg-[#0a0a0a]/80 px-0 py-3 backdrop-blur-2xl supports-backdrop-filter:bg-[#0a0a0a]/70 sm:px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.15),transparent_55%)] opacity-80" />
           <div className="pointer-events-none absolute inset-x-3 top-1/2 h-4 -translate-y-1/2 rounded-[36px] border border-[#D4AF37]/20 bg-[#D4AF37]/5 blur-2xl" />
-          <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-1">
-            {/* Brand Name - Left Side */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                duration: 0.3,
-                delay: 0.1,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              className="flex-shrink-0 -ml-2 sm:-ml-4">
-              <Link
-                to="/"
-                className="text-[#D4AF37] font-bold text-lg md:text-xl font-display tracking-tight relative group block">
-                <motion.span
-                  whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="inline-block relative drop-shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
-                  <img
-                    src={logo}
-                    alt="logo"
-                    className="h-[56px] w-auto object-contain"
-                    style={{ maxHeight: '56px', width: '180px', objectFit: 'contain' }}
-                  />
-                  <motion.div
-                    className="absolute bottom-1 left-0 w-0 h-0.5 bg-[#D4AF37]"
-                    whileHover={{ width: "100%" }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  />
-                </motion.span>
-              </Link>
-            </motion.div>
-
+          <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-2">
             {/* Navigation Links - Right Side */}
             <div className="hidden lg:flex flex-1 items-center justify-center gap-5">
               {navItems.map((item, index) => (
