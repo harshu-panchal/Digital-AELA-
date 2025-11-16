@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
 import { useAuth } from "./AuthContext";
-import { fetchPublishedBlogs, createBlog } from "../services/api/blogs";
+import { fetchPublishedBlogs, createBlog, toggleBlogLike, addBlogComment } from "../services/api/blogs";
 import { isNetworkError } from "../services/api/baseClient";
 
 const BlogContext = createContext(null);
@@ -147,8 +147,8 @@ const seededBlogs = [
 
 const formatBlog = (blog) => ({
   ...blog,
-  likeCount: blog.likes ?? 0,
-  commentCount: blog.comments?.length ?? 0,
+  likeCount: blog.likeCount ?? (Array.isArray(blog.likes) ? blog.likes.length : blog.likes ?? 0),
+  commentCount: blog.commentCount ?? blog.comments?.length ?? 0,
 });
 
 const DEFAULT_THUMBNAIL =
@@ -170,8 +170,9 @@ const mapApiBlog = (blog) => {
       blog.readTime ??
       Math.max(3, Math.round(((blog.content?.length ?? 800) || 800) / 250)),
     content: blog.content ?? "",
-    likes: blog.likes ?? blog.stats?.likes ?? 0,
+    likes: Array.isArray(blog.likes) ? blog.likes.length : (blog.likes ?? blog.stats?.likes ?? 0),
     views: blog.views ?? blog.stats?.views ?? 0,
+    likedBy: Array.isArray(blog.likes) ? blog.likes.map((id) => (id._id ? id._id.toString() : id.toString())) : [],
     publishedAt: blog.publishedAt ?? blog.updatedAt ?? new Date().toISOString(),
     author: blog.author
       ? {
@@ -492,18 +493,18 @@ export const BlogProvider = ({ children }) => {
   }, []);
 
   const toggleLike = useCallback(
-    (blogId, actorName = profile.name) => {
+    async (blogId, actorName = profile.name) => {
+      // Optimistically update UI
+      const currentBlog = blogs.find((b) => b.id === blogId);
+      const profileIdStr = String(profile.id || "");
+      const alreadyLiked = currentBlog?.likedBy?.some((id) => String(id) === profileIdStr);
       setBlogs((prev) =>
         prev.map((blog) => {
           if (blog.id !== blogId) return blog;
-          const alreadyLiked = blog.likedBy?.includes(profile.id);
           const nextLikes = alreadyLiked ? blog.likeCount - 1 : blog.likeCount + 1;
           const likedBy = alreadyLiked
-            ? blog.likedBy.filter((id) => id !== profile.id)
-            : [...(blog.likedBy ?? []), profile.id];
-          toast.success(alreadyLiked ? "Like removed" : "You liked this blog", {
-            toastId: `blog-like-${blogId}`,
-          });
+            ? blog.likedBy.filter((id) => String(id) !== profileIdStr)
+            : [...(blog.likedBy ?? []), profileIdStr];
           return {
             ...blog,
             likeCount: Math.max(0, nextLikes),
@@ -512,13 +513,63 @@ export const BlogProvider = ({ children }) => {
           };
         })
       );
+
+      // Persist to backend if authenticated
+      if (authUser) {
+        try {
+          const response = await toggleBlogLike(blogId);
+          // Update with server response
+          setBlogs((prev) =>
+            prev.map((blog) => {
+              if (blog.id !== blogId) return blog;
+              return {
+                ...blog,
+                likeCount: response.likeCount || blog.likeCount,
+                likedBy: response.isLiked
+                  ? [...new Set([...(blog.likedBy ?? []), profileIdStr])]
+                  : blog.likedBy.filter((id) => String(id) !== profileIdStr),
+              };
+            })
+          );
+          toast.success(response.isLiked ? "You liked this blog" : "Like removed", {
+            toastId: `blog-like-${blogId}`,
+          });
+        } catch (error) {
+          // Revert on error
+          setBlogs((prev) =>
+            prev.map((blog) => {
+              if (blog.id !== blogId) return blog;
+              const revertedLikes = alreadyLiked ? blog.likeCount + 1 : blog.likeCount - 1;
+              const revertedLikedBy = alreadyLiked
+                ? [...new Set([...(blog.likedBy ?? []), profileIdStr])]
+                : blog.likedBy.filter((id) => String(id) !== profileIdStr);
+              return {
+                ...blog,
+                likeCount: Math.max(0, revertedLikes),
+                likedBy: revertedLikedBy,
+              };
+            })
+          );
+          if (!isNetworkError(error)) {
+            toast.error("Failed to update like. Please try again.", {
+              toastId: `blog-like-error-${blogId}`,
+            });
+          }
+        }
+      } else {
+        // Not authenticated - just show toast
+        toast.success(alreadyLiked ? "Like removed" : "You liked this blog", {
+          toastId: `blog-like-${blogId}`,
+        });
+      }
     },
-    [profile.id, profile.name]
+    [profile.id, profile.name, authUser, blogs]
   );
 
   const addComment = useCallback(
-    (blogId, message) => {
+    async (blogId, message) => {
       if (!message?.trim()) return;
+      
       const newComment = {
         id: crypto.randomUUID(),
         message,
@@ -529,13 +580,12 @@ export const BlogProvider = ({ children }) => {
           avatar: profile.avatar,
         },
       };
+
+      // Optimistically update UI
       setBlogs((prev) =>
         prev.map((blog) => {
           if (blog.id !== blogId) return blog;
           const updatedComments = [newComment, ...blog.comments];
-          toast.success("Comment added", {
-            toastId: `blog-comment-${blogId}`,
-          });
           return {
             ...blog,
             comments: updatedComments,
@@ -543,8 +593,58 @@ export const BlogProvider = ({ children }) => {
           };
         })
       );
+
+      // Persist to backend if authenticated
+      if (authUser) {
+        try {
+          const response = await addBlogComment(blogId, message);
+          // Update with server response (replace optimistic comment with real one)
+          setBlogs((prev) =>
+            prev.map((blog) => {
+              if (blog.id !== blogId) return blog;
+              const commentsWithoutOptimistic = blog.comments.filter(
+                (c) => c.id !== newComment.id
+              );
+              const updatedComments = [response.comment, ...commentsWithoutOptimistic];
+              return {
+                ...blog,
+                comments: updatedComments,
+                commentCount: response.commentCount || updatedComments.length,
+              };
+            })
+          );
+          toast.success("Comment added", {
+            toastId: `blog-comment-${blogId}`,
+          });
+        } catch (error) {
+          // Revert on error
+          setBlogs((prev) =>
+            prev.map((blog) => {
+              if (blog.id !== blogId) return blog;
+              const commentsWithoutOptimistic = blog.comments.filter(
+                (c) => c.id !== newComment.id
+              );
+              return {
+                ...blog,
+                comments: commentsWithoutOptimistic,
+                commentCount: commentsWithoutOptimistic.length,
+              };
+            })
+          );
+          if (!isNetworkError(error)) {
+            toast.error("Failed to add comment. Please try again.", {
+              toastId: `blog-comment-error-${blogId}`,
+            });
+          }
+        }
+      } else {
+        // Not authenticated - just show toast
+        toast.success("Comment added", {
+          toastId: `blog-comment-${blogId}`,
+        });
+      }
     },
-    [profile.avatar, profile.id, profile.name]
+    [profile.avatar, profile.id, profile.name, authUser]
   );
 
   const followAuthor = useCallback((authorId) => {

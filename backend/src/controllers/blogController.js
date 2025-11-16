@@ -1,5 +1,6 @@
 import RecruiterBlog from "../models/RecruiterBlog.js";
 import RecruiterProfile from "../models/RecruiterProfile.js";
+import User from "../models/User.js";
 
 export const listBlogs = async (req, res, next) => {
   try {
@@ -180,11 +181,57 @@ export const listPublishedBlogs = async (req, res, next) => {
       return acc;
     }, {});
 
+    // Populate comment authors
+    const commentAuthorIds = new Set();
+    items.forEach((blog) => {
+      if (blog.comments && Array.isArray(blog.comments)) {
+        blog.comments.forEach((comment) => {
+          if (comment.author) {
+            commentAuthorIds.add(comment.author.toString());
+          }
+        });
+      }
+    });
+
+    const commentAuthors = commentAuthorIds.size
+      ? await User.find({ _id: { $in: Array.from(commentAuthorIds) } })
+          .select(["fullName", "email", "metadata"])
+          .lean()
+      : [];
+
+    const commentAuthorMap = commentAuthors.reduce((acc, user) => {
+      acc[user._id.toString()] = user;
+      return acc;
+    }, {});
+
     const data = items.map((blog) => {
       const authorId = blog.author?._id ? blog.author._id.toString() : blog.author?.id;
       const recruiterProfile = authorId && profileMap[authorId] ? profileMap[authorId] : null;
       // Get avatarUrl from user metadata if available (for all user types)
       const userAvatarUrl = blog.author?.metadata?.avatarUrl || null;
+      
+      // Format comments with author info
+      const formattedComments = (blog.comments || []).map((comment) => {
+        const commentAuthorId = comment.author?.toString();
+        const commentAuthor = commentAuthorId ? commentAuthorMap[commentAuthorId] : null;
+        return {
+          id: comment._id ? comment._id.toString() : crypto.randomUUID(),
+          message: comment.message,
+          createdAt: comment.createdAt || new Date().toISOString(),
+          author: commentAuthor
+            ? {
+                id: commentAuthorId,
+                name: commentAuthor.fullName || "User",
+                avatar: commentAuthor.metadata?.avatarUrl || "https://i.pravatar.cc/150?img=11",
+              }
+            : {
+                id: commentAuthorId || "unknown",
+                name: "User",
+                avatar: "https://i.pravatar.cc/150?img=11",
+              },
+        };
+      });
+
       return {
         id: blog._id ? blog._id.toString() : blog.id,
         title: blog.title,
@@ -195,6 +242,10 @@ export const listPublishedBlogs = async (req, res, next) => {
         status: blog.status,
         publishedAt: blog.publishedAt,
         updatedAt: blog.updatedAt,
+        likes: blog.likes ? blog.likes.map((id) => id.toString()) : [],
+        likeCount: blog.likes ? blog.likes.length : 0,
+        comments: formattedComments,
+        commentCount: formattedComments.length,
         author: blog.author
           ? {
               id: authorId,
@@ -223,6 +274,113 @@ export const listPublishedBlogs = async (req, res, next) => {
         pageSize: Number(pageSize),
         total,
       },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const toggleLike = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    const { blogId } = req.params;
+
+    const blog = await RecruiterBlog.findById(blogId);
+
+    if (!blog) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Blog not found",
+        },
+      });
+    }
+
+    const likes = blog.likes || [];
+    const isLiked = likes.some(
+      (likeId) => likeId.toString() === userId.toString()
+    );
+
+    if (isLiked) {
+      // Remove like
+      blog.likes = likes.filter(
+        (likeId) => likeId.toString() !== userId.toString()
+      );
+    } else {
+      // Add like
+      blog.likes = [...likes, userId];
+    }
+
+    await blog.save();
+
+    return res.json({
+      likeCount: blog.likes.length,
+      isLiked: !isLiked,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const addComment = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    const { blogId } = req.params;
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Comment message is required",
+        },
+      });
+    }
+
+    const blog = await RecruiterBlog.findById(blogId);
+
+    if (!blog) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Blog not found",
+        },
+      });
+    }
+
+    // Add comment
+    blog.comments.push({
+      author: userId,
+      message: message.trim(),
+      createdAt: new Date(),
+    });
+
+    await blog.save();
+
+    // Populate comment author for response
+    const savedComment = blog.comments[blog.comments.length - 1];
+    await blog.populate({
+      path: "comments.author",
+      select: "fullName email metadata",
+    });
+
+    const commentAuthor = savedComment.author;
+    const authorId = commentAuthor?._id ? commentAuthor._id.toString() : commentAuthor?.id;
+
+    const formattedComment = {
+      id: savedComment._id.toString(),
+      message: savedComment.message,
+      createdAt: savedComment.createdAt,
+      author: {
+        id: authorId,
+        name: commentAuthor?.fullName || "User",
+        avatar: commentAuthor?.metadata?.avatarUrl || "https://i.pravatar.cc/150?img=11",
+      },
+    };
+
+    return res.status(201).json({
+      comment: formattedComment,
+      commentCount: blog.comments.length,
     });
   } catch (error) {
     return next(error);

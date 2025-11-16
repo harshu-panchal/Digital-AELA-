@@ -16,3 +16,14 @@ export const createBlog = (payload) =>
     body: payload,
   });
 
+export const toggleBlogLike = (blogId) =>
+  apiRequest(`/blogs/${blogId}/like`, {
+    method: "POST",
+  });
+
+export const addBlogComment = (blogId, message) =>
+  apiRequest(`/blogs/${blogId}/comments`, {
+    method: "POST",
+    body: { message },
+  });
+
