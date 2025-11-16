@@ -36,12 +36,55 @@ export const listBlogs = async (req, res, next) => {
 export const createBlog = async (req, res, next) => {
   try {
     const { userId } = req.auth;
-    const blog = await RecruiterBlog.create({
-      ...req.body,
+    const { status, ...blogData } = req.body;
+    
+    // Set publishedAt when status is "published"
+    const blogPayload = {
+      ...blogData,
       author: userId,
-    });
+      status: status || "draft",
+    };
+    
+    if (status === "published") {
+      blogPayload.publishedAt = new Date();
+    }
+    
+    const blog = await RecruiterBlog.create(blogPayload);
+    
+    // Populate author for response
+    const populatedBlog = await RecruiterBlog.findById(blog._id)
+      .populate("author", "fullName email role metadata")
+      .lean();
+    
+    // Format response to match frontend expectations
+    const authorId = populatedBlog.author?._id ? populatedBlog.author._id.toString() : populatedBlog.author?.id;
+    const userAvatarUrl = populatedBlog.author?.metadata?.avatarUrl || null;
+    
+    const response = {
+      _id: populatedBlog._id.toString(),
+      id: populatedBlog._id.toString(),
+      title: populatedBlog.title,
+      excerpt: populatedBlog.excerpt || "",
+      content: populatedBlog.content,
+      coverImage: populatedBlog.coverImage || null,
+      tags: populatedBlog.tags || [],
+      status: populatedBlog.status,
+      publishedAt: populatedBlog.publishedAt || null,
+      updatedAt: populatedBlog.updatedAt,
+      createdAt: populatedBlog.createdAt,
+      author: populatedBlog.author
+        ? {
+            id: authorId,
+            _id: authorId,
+            fullName: populatedBlog.author.fullName,
+            role: populatedBlog.author.role,
+            email: populatedBlog.author.email,
+            avatarUrl: userAvatarUrl,
+          }
+        : null,
+    };
 
-    return res.status(201).json(blog);
+    return res.status(201).json(response);
   } catch (error) {
     return next(error);
   }
@@ -109,7 +152,10 @@ export const listPublishedBlogs = async (req, res, next) => {
 
     const [items, total] = await Promise.all([
       RecruiterBlog.find({ status: "published" })
-        .sort({ publishedAt: -1, updatedAt: -1 })
+        .sort({ 
+          publishedAt: -1, 
+          createdAt: -1 
+        })
         .skip(skip)
         .limit(Number(pageSize))
         .populate("author", ["fullName", "role", "email", "metadata"])

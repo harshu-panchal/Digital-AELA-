@@ -484,11 +484,61 @@ export const UserProvider = ({ children }) => {
 
     const metadata = authUser.metadata ?? {};
 
-    setProfile((prev) => {
-      // Prioritize avatarUrl from metadata (Cloudinary URL)
-      const avatarUrl = metadata.avatarUrl || metadata.avatar || prev.avatar || defaultProfile.avatar;
-      
-      return {
+    // Load student profile avatar first (for students) to get the most up-to-date avatar
+    const loadAvatar = async () => {
+      if (authUser.role === "student" && authUser.id) {
+        try {
+          const { fetchStudentProfile } = await import("../services/api/student");
+          const profileData = await fetchStudentProfile(authUser.id);
+          
+          // Priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > default
+          const avatarUrl = profileData?.avatarUrl || metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
+          
+          setProfile((prev) => ({
+            ...defaultProfile,
+            ...prev,
+            id: authUser.id ?? defaultProfile.id,
+            name: authUser.fullName ?? defaultProfile.name,
+            title:
+              metadata.title ??
+              (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
+            bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
+            country: metadata.country ?? metadata.region ?? defaultProfile.country,
+            city: metadata.city ?? defaultProfile.city,
+            profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
+            experience:
+              metadata.experience ??
+              (metadata.experienceYears
+                ? `${metadata.experienceYears} years of experience`
+                : defaultProfile.experience),
+            maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
+            interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
+            avatar: avatarUrl, // Use StudentProfile avatar or metadata avatar from registration
+            bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
+            coins: aelaPoints,
+            metadata,
+            role: authUser.role,
+            contact: {
+              email: authUser.email,
+              phone: metadata.phone,
+              whatsapp: metadata.whatsapp,
+            },
+            followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
+            following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
+            rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
+          }));
+          return;
+        } catch (error) {
+          // Profile might not exist yet, continue with metadata fallback
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load student profile avatar:", error);
+        }
+      }
+
+      // For non-students or if StudentProfile fetch failed, use metadata
+      const avatarUrl = metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
+
+      setProfile((prev) => ({
         ...defaultProfile,
         ...prev, // Preserve existing values (including backend-loaded social stats)
         id: authUser.id ?? defaultProfile.id,
@@ -507,7 +557,7 @@ export const UserProvider = ({ children }) => {
             : defaultProfile.experience),
         maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
         interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
-        avatar: avatarUrl, // Always use Cloudinary URL if available
+        avatar: avatarUrl, // Use Cloudinary URL from registration metadata
         bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
         coins: aelaPoints,
         metadata,
@@ -521,8 +571,10 @@ export const UserProvider = ({ children }) => {
         followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
         following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
         rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
-      };
-    });
+      }));
+    };
+
+    loadAvatar();
   }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded]);
 
   const updateProfile = useCallback((updates) => {

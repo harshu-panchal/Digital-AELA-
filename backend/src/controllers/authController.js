@@ -25,6 +25,7 @@ const buildAuthResponse = (user) => {
       email: user.email,
       fullName: user.fullName,
       createdAt: user.createdAt,
+      metadata: user.metadata || {}, // Include metadata with avatarUrl
     },
   };
 };

@@ -48,9 +48,14 @@ const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [activeCertificate, setActiveCertificate] = useState(0);
-  const { trendingBlogs } = useBlogs();
+  const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
+
+  // Refresh blogs when home page mounts to ensure we have latest data
+  useEffect(() => {
+    refreshBlogs();
+  }, [refreshBlogs]);
 
   const redirectToCoursePayment = (course, extra = {}) => {
     const payload = {
@@ -2120,16 +2125,18 @@ const Home = () => {
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {topBlogs.map((blog, index) => (
                 <motion.article
-                  key={blog.id}
+                  key={`${blog.id}-${blog.publishedAt || index}`}
                   initial={{ y: 40, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
+                  animate={{ opacity: 1 }}
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{
                     duration: 0.3,
-                    delay: index * 0.05,
+                    delay: Math.min(index * 0.05, 0.3),
                     ease: [0.25, 0.1, 0.25, 1],
                   }}
                   whileHover={{ y: -6 }}
+                  style={{ opacity: 1 }}
                   className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_24px_60px_rgba(8,8,8,0.45)] transition-all duration-300">
                   <Link
                     to={`/blogs/${blog.id}`}

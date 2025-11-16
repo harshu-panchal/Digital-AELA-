@@ -9,7 +9,7 @@ import { useBlogs } from "../../../src/contexts/BlogContext";
 
 const CreateBlog = () => {
   const navigate = useNavigate();
-  const { publishBlog, saveDraft } = useBlogs();
+  const { publishBlog } = useBlogs();
   const [title, setTitle] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [tagsInput, setTagsInput] = useState("");
@@ -45,21 +45,6 @@ const CreateBlog = () => {
     setPreviewMode(false);
   };
 
-  const handleSaveDraft = () => {
-    if (!title && !content) {
-      toast.info("Start writing before saving a draft");
-      return;
-    }
-    saveDraft({
-      title,
-      thumbnail,
-      tags,
-      category,
-      content,
-    });
-    toast.success("Draft saved to your workspace");
-  };
-
   const handlePublish = async () => {
     if (!title.trim() || !content.trim()) {
       toast.error("Add a title and content before publishing");
@@ -68,23 +53,23 @@ const CreateBlog = () => {
 
     try {
       const blog = await publishBlog({
-        title,
-        thumbnail,
-        tags,
-        category,
-        content,
-      });
+      title,
+      thumbnail,
+      tags,
+      category,
+      content,
+    });
 
-      const { default: confetti } = await import("canvas-confetti");
+    const { default: confetti } = await import("canvas-confetti");
 
-      confetti({
-        particleCount: 160,
-        spread: 65,
-        origin: { y: 0.6 },
-      });
+    confetti({
+      particleCount: 160,
+      spread: 65,
+      origin: { y: 0.6 },
+    });
 
-      resetForm();
-      navigate(`/blogs/${blog.id}`);
+    resetForm();
+    navigate(`/blogs/${blog.id}`);
     } catch (error) {
       // Error handling is done in publishBlog
       console.error("Failed to publish blog:", error);
@@ -208,27 +193,18 @@ const CreateBlog = () => {
 
             <BlogEditor value={content} onChange={setContent} />
 
-            <div className="flex flex-wrap items-center gap-4">
-              <Motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={handleSaveDraft}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#101010]/80 px-5 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
-                Save as Draft
-              </Motion.button>
-
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <Motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={handlePublish}
-                className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#D4AF37] to-[#F5D26A] px-5 py-3 text-sm font-semibold text-black shadow-xl shadow-[#D4AF37]/30">
+                className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#D4AF37] to-[#F5D26A] px-8 py-3 text-sm font-semibold text-black shadow-xl shadow-[#D4AF37]/30 transition hover:brightness-110">
                 <HiOutlineSparkles className="h-5 w-5" />
-                Publish & Earn
+                Publish
               </Motion.button>
 
-              <label className="ml-auto flex items-center gap-2 text-xs font-semibold text-gray-400">
+              <label className="flex items-center gap-2 text-xs font-semibold text-gray-400">
                 <input
                   type="checkbox"
                   checked={previewMode}

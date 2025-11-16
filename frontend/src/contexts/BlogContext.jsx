@@ -247,9 +247,44 @@ export const BlogProvider = ({ children }) => {
         setBlogs((prev) => {
           const localBlogs = prev.filter((blog) => blog.source === "local");
           const remoteFormatted = remote.map(mapApiBlog);
+          
+          // Create a map of remote blog IDs for quick lookup
+          const remoteBlogIds = new Set(remoteFormatted.map((blog) => blog.id));
+          
+          // Keep backend/seed blogs that aren't in remote response yet (e.g., just created)
+          const existingBackendBlogs = prev.filter(
+            (blog) => blog.source === "backend" && !remoteBlogIds.has(blog.id)
+          );
+          
           if (remoteFormatted.length > 0) {
-            return [...localBlogs, ...remoteFormatted];
+            // Merge: local blogs + existing backend blogs not in remote + remote blogs
+            // Remote blogs will override existing ones if duplicates exist
+            const allBlogs = [...localBlogs, ...existingBackendBlogs, ...remoteFormatted];
+            
+            // Deduplicate by ID, keeping remote blogs when duplicates exist
+            const blogMap = new Map();
+            
+            // First, add local and existing backend blogs
+            for (const blog of [...localBlogs, ...existingBackendBlogs]) {
+              blogMap.set(blog.id, blog);
+            }
+            
+            // Then, add/override with remote blogs (remote takes precedence)
+            for (const blog of remoteFormatted) {
+              blogMap.set(blog.id, blog);
+            }
+            
+            // Sort by publishedAt (newest first), then by createdAt as fallback
+            const sortedBlogs = Array.from(blogMap.values()).sort((a, b) => {
+              const dateA = new Date(a.publishedAt || a.createdAt || 0);
+              const dateB = new Date(b.publishedAt || b.createdAt || 0);
+              return dateB - dateA; // Descending order (newest first)
+            });
+            
+            return sortedBlogs;
           }
+          
+          // If no remote blogs, keep existing structure
           return prev.length ? prev : seededBlogs.map((blog) => ({
             ...formatBlog(blog),
             source: "seed",
@@ -309,9 +344,9 @@ export const BlogProvider = ({ children }) => {
         profile.avatar || 
         "https://i.pravatar.cc/150?img=11";
       
-      // Try to save to backend if user is authenticated and is a recruiter
+      // Try to save to backend if user is authenticated
       let savedBlog = null;
-      if (authUser && authUser.role === "recruiter") {
+      if (authUser) {
         try {
           const blogPayload = {
             title: blog.title,
@@ -324,20 +359,61 @@ export const BlogProvider = ({ children }) => {
           
           savedBlog = await createBlog(blogPayload);
           
-          // Refresh blogs list to include the new blog from backend
-          await refreshBlogs();
+          // eslint-disable-next-line no-console
+          console.log("Blog saved to backend:", savedBlog);
           
-          toast.success("Blog published successfully!", {
-            toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
-          });
-          
-          // Return the saved blog from backend
-          if (savedBlog._id || savedBlog.id) {
+          // Immediately add the new blog to state so it appears instantly
+          if (savedBlog && (savedBlog._id || savedBlog.id)) {
             const backendBlog = mapApiBlog({
               ...savedBlog,
               id: savedBlog._id || savedBlog.id,
             });
+            
+            // eslint-disable-next-line no-console
+            console.log("Mapped blog for state:", backendBlog);
+            
+            // Add the blog to state immediately
+            setBlogs((prev) => {
+              // Check if blog already exists to avoid duplicates
+              const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
+              if (existingIndex >= 0) {
+                // Update existing blog
+                const updated = [...prev];
+                updated[existingIndex] = backendBlog;
+                return updated;
+              }
+              // Add new blog at the beginning
+              const newBlogs = [backendBlog, ...prev];
+              // eslint-disable-next-line no-console
+              console.log("Updated blogs state, new count:", newBlogs.length);
+              return newBlogs;
+            });
+            
+            // Remove from drafts
+            setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
+            
+            toast.success("Blog published successfully!", {
+              toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
+            });
+            
+            // Refresh blogs list in background after a delay to ensure DB has saved
+            // This ensures all users see the newly published blog when they visit the blogs page
+            // Use a longer delay to ensure the database transaction has completed
+            setTimeout(() => {
+              refreshBlogs().then(() => {
+                // eslint-disable-next-line no-console
+                console.log("Blogs refreshed successfully after publish");
+              }).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn("Background refresh failed:", err);
+              });
+            }, 1500); // Delay to ensure DB save completes and blog is queryable
+            
             return backendBlog;
+          } else {
+            // eslint-disable-next-line no-console
+            console.error("Blog save failed - invalid response:", savedBlog);
+            throw new Error("Invalid blog response from server");
           }
         } catch (error) {
           // eslint-disable-next-line no-console
@@ -347,11 +423,6 @@ export const BlogProvider = ({ children }) => {
             toastId: `blog-published-warning-${referenceId}`,
           });
         }
-      } else if (authUser && authUser.role !== "recruiter") {
-        // For non-recruiter users, save locally and refresh to show in local state
-        toast.info("Blog saved locally. Only recruiters can publish to the public feed.", {
-          toastId: `blog-published-info-${referenceId}`,
-        });
       }
       
       // Fallback: Save locally if backend save failed or user not authenticated

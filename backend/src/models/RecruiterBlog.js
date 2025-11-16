@@ -21,6 +21,10 @@ const recruiterBlogSchema = new mongoose.Schema(
       required: true,
     },
     coverImage: String,
+    tags: {
+      type: [String],
+      default: [],
+    },
     status: {
       type: String,
       enum: ["draft", "scheduled", "published"],

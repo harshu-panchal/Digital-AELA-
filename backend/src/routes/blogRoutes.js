@@ -8,12 +8,13 @@ import {
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
-const recruiterOnly = requireAuth(["recruiter"]);
+// Allow all authenticated users to create and manage blogs
+const authenticated = requireAuth();
 
-router.get("/", recruiterOnly, listBlogs);
-router.post("/", recruiterOnly, createBlog);
-router.patch("/:blogId", recruiterOnly, updateBlog);
-router.post("/:blogId/publish", recruiterOnly, publishBlog);
+router.get("/", authenticated, listBlogs);
+router.post("/", authenticated, createBlog);
+router.patch("/:blogId", authenticated, updateBlog);
+router.post("/:blogId/publish", authenticated, publishBlog);
 
 export default router;
 

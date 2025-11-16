@@ -2,16 +2,35 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FaCheckCircle, FaEdit, FaGlobe, FaLock, FaShieldAlt, FaSpinner, FaPlus, FaTrash, FaTimes } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaEdit,
+  FaGlobe,
+  FaLock,
+  FaShieldAlt,
+  FaSpinner,
+  FaPlus,
+  FaTrash,
+  FaTimes,
+} from "react-icons/fa";
 import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
-import { verifySocialLink, fetchSocialLinks, addSocialLink, deleteSocialLink } from "../../../src/services/api/socialVerification";
-import { fetchStudentProfile, updateStudentProfile } from "../../../src/services/api/student";
+import {
+  verifySocialLink,
+  fetchSocialLinks,
+  addSocialLink,
+  deleteSocialLink,
+} from "../../../src/services/api/socialVerification";
+import {
+  fetchStudentProfile,
+  updateStudentProfile,
+  uploadProfileImage,
+} from "../../../src/services/api/student";
 
 const ProfilePage = () => {
   const { profile, updateProfile } = useUser();
-  const { user: authUser, tokens } = useAuth();
+  const { user: authUser, tokens, updateUserMetadata } = useAuth();
   const { refreshPoints } = usePoints();
   const [verifying, setVerifying] = useState(new Set());
   const [socialLinks, setSocialLinks] = useState(profile.socialLinks || []);
@@ -25,8 +44,19 @@ const ProfilePage = () => {
   const [editValue, setEditValue] = useState("");
   const [savingField, setSavingField] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-  const availablePlatforms = ["LinkedIn", "YouTube", "Instagram", "TikTok", "Twitter", "Facebook", "GitHub", "Website"];
+  const availablePlatforms = [
+    "LinkedIn",
+    "YouTube",
+    "Instagram",
+    "TikTok",
+    "Twitter",
+    "Facebook",
+    "GitHub",
+    "Website",
+  ];
 
   // Load student profile from backend
   useEffect(() => {
@@ -40,17 +70,18 @@ const ProfilePage = () => {
       try {
         const profileData = await fetchStudentProfile(authUser.id);
         setStudentProfile(profileData);
-        // Update profile avatar if available from StudentProfile
-        if (profileData?.avatarUrl) {
-          updateProfile({ avatar: profileData.avatarUrl });
-        } else if (authUser?.metadata?.avatarUrl) {
-          updateProfile({ avatar: authUser.metadata.avatarUrl });
+
+        // Priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > default
+        const avatarUrl =
+          profileData?.avatarUrl || authUser?.metadata?.avatarUrl || null;
+        if (avatarUrl) {
+          updateProfile({ avatar: avatarUrl });
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load student profile:", error);
         // Profile might not exist yet, that's okay
-        // Fallback to user metadata avatarUrl
+        // Fallback to user metadata avatarUrl from registration
         if (authUser?.metadata?.avatarUrl) {
           updateProfile({ avatar: authUser.metadata.avatarUrl });
         }
@@ -103,7 +134,9 @@ const ProfilePage = () => {
     try {
       new URL(formData.url);
     } catch {
-      toast.error("Please enter a valid URL (e.g., https://linkedin.com/in/yourprofile)");
+      toast.error(
+        "Please enter a valid URL (e.g., https://linkedin.com/in/yourprofile)"
+      );
       return;
     }
 
@@ -123,7 +156,11 @@ const ProfilePage = () => {
           updateProfile({ socialLinks: response.socialLinks });
         }
 
-        toast.success(`${formData.platform} link ${editingLink ? "updated" : "added"} successfully!`);
+        toast.success(
+          `${formData.platform} link ${
+            editingLink ? "updated" : "added"
+          } successfully!`
+        );
         setShowAddModal(false);
         setEditingLink(null);
         setFormData({ platform: "", url: "" });
@@ -317,12 +354,28 @@ const ProfilePage = () => {
 
   const infoGrid = useMemo(
     () => [
-      { label: "English Level", value: getFieldValue("englishLevel"), field: "englishLevel" },
-      { label: "Profession", value: getFieldValue("profession"), field: "profession" },
-      { label: "Experience", value: getFieldValue("experience"), field: "experience" },
+      {
+        label: "English Level",
+        value: getFieldValue("englishLevel"),
+        field: "englishLevel",
+      },
+      {
+        label: "Profession",
+        value: getFieldValue("profession"),
+        field: "profession",
+      },
+      {
+        label: "Experience",
+        value: getFieldValue("experience"),
+        field: "experience",
+      },
       { label: "Country", value: getFieldValue("country"), field: "country" },
       { label: "City", value: getFieldValue("city"), field: "city" },
-      { label: "Marital Status", value: getFieldValue("maritalStatus"), field: "maritalStatus" },
+      {
+        label: "Marital Status",
+        value: getFieldValue("maritalStatus"),
+        field: "maritalStatus",
+      },
     ],
     [getFieldValue]
   );
@@ -375,7 +428,11 @@ const ProfilePage = () => {
           updateProfile({ [field]: value });
         }
 
-        toast.success(`${infoGrid.find((item) => item.field === field)?.label || field} updated successfully`);
+        toast.success(
+          `${
+            infoGrid.find((item) => item.field === field)?.label || field
+          } updated successfully`
+        );
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("Failed to update profile field:", error);
@@ -402,7 +459,12 @@ const ProfilePage = () => {
 
       try {
         const updatedProfile = await updateStudentProfile({
-          interests: Array.isArray(interests) ? interests : interests.split(",").map((i) => i.trim()).filter(Boolean),
+          interests: Array.isArray(interests)
+            ? interests
+            : interests
+                .split(",")
+                .map((i) => i.trim())
+                .filter(Boolean),
         });
 
         setStudentProfile(updatedProfile);
@@ -423,28 +485,112 @@ const ProfilePage = () => {
     [authUser, tokens, updateProfile]
   );
 
+  const handleAvatarChange = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file.");
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB.");
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      setUploadingAvatar(true);
+      try {
+        // Upload to Cloudinary
+        const avatarUrl = await uploadProfileImage(file);
+
+        // Update StudentProfile (backend will also update User.metadata.avatarUrl)
+        await updateStudentProfile({ avatarUrl });
+
+        // Update AuthContext user metadata to reflect new avatar immediately
+        await updateUserMetadata({ metadata: { avatarUrl } });
+
+        // Update local profile context immediately
+        updateProfile({ avatar: avatarUrl });
+
+        // Reload profile to get updated data
+        const profileData = await fetchStudentProfile(authUser.id);
+        setStudentProfile(profileData);
+
+        // Clear preview after successful upload
+        setAvatarPreview(null);
+
+        toast.success(
+          "Profile photo updated successfully! It will appear everywhere in the app."
+        );
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to update profile photo:", error);
+        toast.error(
+          error.message || "Failed to update profile photo. Please try again."
+        );
+        setAvatarPreview(null);
+      } finally {
+        setUploadingAvatar(false);
+        // Reset file input
+        event.target.value = "";
+      }
+    },
+    [updateStudentProfile, updateUserMetadata, updateProfile, authUser]
+  );
+
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-[#1f1f1f] via-[#0c0c0c] to-black">
         <div className="flex flex-col gap-6 px-6 pb-8 pt-6 sm:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-5">
-              <div className="rounded-full border-4 border-black/80 p-1">
+              <div className="relative rounded-full border-4 border-black/80 p-1 group">
                 <img
-                  src={profile.avatar}
+                  src={avatarPreview || profile.avatar}
                   alt={profile.name}
                   className="h-28 w-28 rounded-full border-4 border-[#D4AF37]/50 object-cover"
                 />
+                <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100">
+                  {uploadingAvatar ? (
+                    <FaSpinner className="h-6 w-6 text-[#D4AF37] animate-spin" />
+                  ) : (
+                    <FaEdit className="h-6 w-6 text-[#D4AF37]" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    disabled={uploadingAvatar}
+                  />
+                </label>
               </div>
               <div className="text-center sm:text-left">
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:flex-wrap">
-                  <h1 className="text-2xl font-semibold text-white sm:text-3xl">{profile.name}</h1>
+                  <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+                    {profile.name}
+                  </h1>
                   <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
                     {profile.id}
                   </span>
                 </div>
-                <p className="mt-2 max-w-3xl text-sm text-gray-300 sm:text-left">{profile.title}</p>
-                <p className="mt-3 text-sm text-gray-400 sm:text-left">{profile.bio}</p>
+                <p className="mt-2 max-w-3xl text-sm text-gray-300 sm:text-left">
+                  {profile.title}
+                </p>
+                <p className="mt-3 text-sm text-gray-400 sm:text-left">
+                  {profile.bio}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
@@ -464,21 +610,39 @@ const ProfilePage = () => {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Followers</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{profile.followers.toLocaleString()}</p>
-              <Link to="/learn-earn" className="mt-3 inline-flex text-xs font-semibold text-[#D4AF37]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                Followers
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {profile.followers.toLocaleString()}
+              </p>
+              <Link
+                to="/learn-earn"
+                className="mt-3 inline-flex text-xs font-semibold text-[#D4AF37]">
                 View growth analytics →
               </Link>
             </div>
             <div className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Following</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{profile.following.toLocaleString()}</p>
-              <p className="mt-3 text-xs text-gray-400">Curating meaningful learning circles</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                Following
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {profile.following.toLocaleString()}
+              </p>
+              <p className="mt-3 text-xs text-gray-400">
+                Curating meaningful learning circles
+              </p>
             </div>
             <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#151515] p-5">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Community rating</p>
-              <p className="mt-2 text-2xl font-semibold text-white">⭐ {profile.rating.toFixed(1)}</p>
-              <p className="mt-3 text-xs text-gray-400">Top 5% of mentors on Learn & Earn</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                Community rating
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                ⭐ {profile.rating.toFixed(1)}
+              </p>
+              <p className="mt-3 text-xs text-gray-400">
+                Top 5% of mentors on Learn & Earn
+              </p>
             </div>
           </div>
         </div>
@@ -493,7 +657,9 @@ const ProfilePage = () => {
           className="space-y-6">
           <div>
             <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">About</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                About
+              </p>
               {authUser && tokens?.accessToken && (
                 <button
                   type="button"
@@ -514,20 +680,26 @@ const ProfilePage = () => {
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {infoGrid.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/5 bg-[#111] p-4">
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-white/5 bg-[#111] p-4">
                   <div className="flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">{item.label}</p>
-                    {authUser && tokens?.accessToken && editingField === "all" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingField(item.field);
-                          setEditValue(item.value);
-                        }}
-                        className="text-[10px] text-[#D4AF37] hover:text-[#E5C158] transition">
-                        <FaEdit className="h-3 w-3" />
-                      </button>
-                    )}
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
+                      {item.label}
+                    </p>
+                    {authUser &&
+                      tokens?.accessToken &&
+                      editingField === "all" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingField(item.field);
+                            setEditValue(item.value);
+                          }}
+                          className="text-[10px] text-[#D4AF37] hover:text-[#E5C158] transition">
+                          <FaEdit className="h-3 w-3" />
+                        </button>
+                      )}
                   </div>
                   {editingField === item.field ? (
                     <div className="mt-2 space-y-2">
@@ -574,7 +746,9 @@ const ProfilePage = () => {
                     </div>
                   ) : (
                     <p className="mt-2 text-sm font-semibold text-white">
-                      {item.value || <span className="text-gray-500 italic">Not set</span>}
+                      {item.value || (
+                        <span className="text-gray-500 italic">Not set</span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -584,7 +758,9 @@ const ProfilePage = () => {
 
           <div>
             <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Interests</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                Interests
+              </p>
               {authUser && tokens?.accessToken && editingField === "all" && (
                 <button
                   type="button"
@@ -642,17 +818,21 @@ const ProfilePage = () => {
                 </div>
               </div>
             ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {getInterests().length > 0 ? (
                   getInterests().map((interest) => (
-                <span key={interest} className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-200">
-                  #{interest}
-                </span>
+                    <span
+                      key={interest}
+                      className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-200">
+                      #{interest}
+                    </span>
                   ))
                 ) : (
-                  <span className="text-sm text-gray-500 italic">No interests added yet</span>
+                  <span className="text-sm text-gray-500 italic">
+                    No interests added yet
+                  </span>
                 )}
-            </div>
+              </div>
             )}
           </div>
         </Motion.div>
@@ -667,8 +847,12 @@ const ProfilePage = () => {
           className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Social verification</p>
-              <p className="mt-1 text-xs text-gray-300">Add your social links, verify them, and earn bonus coins</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                Social verification
+              </p>
+              <p className="mt-1 text-xs text-gray-300">
+                Add your social links, verify them, and earn bonus coins
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <FaShieldAlt className="h-5 w-5 text-[#D4AF37]" />
@@ -684,29 +868,31 @@ const ProfilePage = () => {
           <div className="mt-3 space-y-2">
             {socialLinks.length > 0 ? (
               socialLinks.map((link) => (
-              <div
-                key={link.platform}
+                <div
+                  key={link.platform}
                   className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <FaGlobe className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-semibold text-white">{link.platform}</p>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
-                      {link.url}
-                    </a>
+                  <div className="flex items-center gap-3">
+                    <FaGlobe className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {link.platform}
+                      </p>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-[#D4AF37]/90 underline-offset-4 hover:underline">
+                        {link.url}
+                      </a>
+                    </div>
                   </div>
-                </div>
                   <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       {link.verified ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
                           <FaCheckCircle className="h-3 w-3" />
                           Verified
-                  </span>
+                        </span>
                       ) : (
                         <button
                           type="button"
@@ -726,7 +912,9 @@ const ProfilePage = () => {
                           )}
                         </button>
                       )}
-                      <span className="text-xs text-gray-400">+{link.bonus || 0} coins</span>
+                      <span className="text-xs text-gray-400">
+                        +{link.bonus || 0} coins
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -753,7 +941,8 @@ const ProfilePage = () => {
               ))
             ) : (
               <div className="rounded-2xl border border-white/5 bg-[#111] p-4 text-center text-sm text-gray-400">
-                No social links added yet. Click "Add Social Link" to get started.
+                No social links added yet. Click "Add Social Link" to get
+                started.
               </div>
             )}
           </div>
@@ -761,7 +950,7 @@ const ProfilePage = () => {
           {/* Add/Edit Social Link Modal */}
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-        <Motion.div
+              <Motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
@@ -788,7 +977,9 @@ const ProfilePage = () => {
                     </label>
                     <select
                       value={formData.platform}
-                      onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, platform: e.target.value })
+                      }
                       disabled={!!editingLink}
                       className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 disabled:opacity-50 disabled:cursor-not-allowed">
                       <option value="">Select platform</option>
@@ -798,7 +989,7 @@ const ProfilePage = () => {
                         </option>
                       ))}
                     </select>
-              </div>
+                  </div>
 
                   <div>
                     <label className="mb-2 block text-xs font-semibold text-gray-300">
@@ -807,14 +998,17 @@ const ProfilePage = () => {
                     <input
                       type="url"
                       value={formData.url}
-                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, url: e.target.value })
+                      }
                       placeholder="https://linkedin.com/in/yourprofile"
                       className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
                     />
                     <p className="mt-1 text-xs text-gray-400">
-                      Enter the full URL of your profile (e.g., https://linkedin.com/in/yourname)
+                      Enter the full URL of your profile (e.g.,
+                      https://linkedin.com/in/yourname)
                     </p>
-            </div>
+                  </div>
 
                   <div className="flex gap-3 pt-2">
                     <button
@@ -843,8 +1037,8 @@ const ProfilePage = () => {
                         "Add Link"
                       )}
                     </button>
-            </div>
-              </div>
+                  </div>
+                </div>
               </Motion.div>
             </div>
           )}
@@ -855,5 +1049,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-
-

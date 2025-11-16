@@ -22,7 +22,19 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.2,
+      ease: "easeOut"
+    }
+  },
+  // Ensure visible state for newly added items
+  visible: {
+    opacity: 1,
+    y: 0,
+  }
 };
 
 const BlogList = ({
@@ -66,16 +78,20 @@ const BlogList = ({
         variants={containerVariants}
         initial="hidden"
         animate="show"
+        key={`blog-list-${visibleBlogs.length}-${visibleBlogs[0]?.id || ''}`}
         className={
           layout === "slider"
             ? "flex gap-4 overflow-x-auto pb-4"
             : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         }>
-        {visibleBlogs.map((blog) => (
+        {visibleBlogs.map((blog, index) => (
           <Motion.article
-            key={blog.id}
+            key={`${blog.id}-${blog.publishedAt || index}`}
             variants={cardVariants}
+            initial={false}
+            animate="show"
             whileHover={{ y: -6, scale: 1.01 }}
+            style={{ opacity: 1 }}
             className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50">
             <div className="relative h-48 w-full overflow-hidden">
               <img

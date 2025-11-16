@@ -217,6 +217,25 @@ export const updateStudentProfile = async (req, res, next) => {
     Object.assign(profile, updates);
     await profile.save();
 
+    // If avatarUrl was updated, also update User.metadata.avatarUrl
+    if (updates.avatarUrl !== undefined) {
+      try {
+        await User.findByIdAndUpdate(
+          userIdToUse,
+          {
+            $set: {
+              "metadata.avatarUrl": updates.avatarUrl,
+            },
+          },
+          { new: true }
+        );
+      } catch (userUpdateError) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to update user metadata avatarUrl:", userUpdateError);
+        // Continue - profile update was successful
+      }
+    }
+
     return res.json(profile);
   } catch (error) {
     return next(error);
