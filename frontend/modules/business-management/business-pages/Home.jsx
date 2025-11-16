@@ -113,6 +113,158 @@ const Home = () => {
   const [ribbonInView, setRibbonInView] = useState(false);
   const ribbonRef = useRef(null);
 
+  // Benefits for Why Choose Digital AELA section
+  const benefits = [
+    {
+      id: 1,
+      title: "24/7 Support for Every Learner",
+      seoKeyword: "24/7 online learning support South Asia Gulf",
+      description:
+        "Education ka safar raat-din nahi dekhta, aur hum bhi nahi. With round-the-clock student support, you are never alone in your journey. Whether you are in India, Pakistan, Bangladesh, Nepal, or the Gulf countries, help is always one click away.",
+      icon: "clock",
+    },
+    {
+      id: 2,
+      title: "Live + Recorded Classes for Flexibility",
+      seoKeyword: "live and recorded online classes India Pakistan Gulf",
+      description:
+        "We understand every learner has a different routine. That's why Digital AELA offers live interactive sessions plus recorded lessons. You can learn in real-time with mentors or revise at your own pace — anytime, anywhere.",
+      icon: "video",
+    },
+    {
+      id: 3,
+      title: "100% Placement Assistance",
+      seoKeyword: "job placement training India Pakistan Bangladesh Nepal Gulf",
+      description:
+        "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
+      icon: "briefcase",
+    },
+    {
+      id: 4,
+      title: "Expert Trainers & Mentors",
+      seoKeyword: "expert online trainers South Asia Gulf",
+      description:
+        "Our trainers are not just teachers, they are industry professionals who know what works in the real world. They bring practical knowledge, global experience, and personal mentorship that transforms learners into professionals.",
+      icon: "teacher",
+    },
+    {
+      id: 5,
+      title: "Equal Opportunity for All",
+      seoKeyword: "equal opportunity education learning to earning platform",
+      description:
+        "At Digital AELA, we believe education should be free of age, degree, and gender discrimination. Whether you are a student, homemaker, working professional, or retired individual — we provide equal opportunities to learn, grow, and earn.",
+      icon: "handshake",
+    },
+    {
+      id: 6,
+      title: "Affordable & Accessible Globally",
+      seoKeyword:
+        "affordable online courses India Pakistan Bangladesh Nepal Gulf",
+      description:
+        "High-quality education should not be limited to the rich. Digital AELA ensures affordable learning solutions so that anyone from South Asia to the Gulf can access top-class training and career opportunities.",
+      icon: "globe",
+    },
+  ];
+
+  // Icon component renderer
+  const renderIcon = (iconName) => {
+    const iconClass = "w-12 h-12 text-[#D4AF37]";
+    switch (iconName) {
+      case "clock":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        );
+      case "video":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+        );
+      case "briefcase":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        );
+      case "teacher":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+        );
+      case "handshake":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+        );
+      case "globe":
+        return (
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   const heroSlides = useMemo(
     () => [
       {
@@ -2187,6 +2339,64 @@ const Home = () => {
                 />
               ))}
             </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Why Choose Digital AELA Section */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="py-20 bg-[#141414]">
+        <div className="layout-container">
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
+              Why Choose <span className="text-[#D4AF37]">Digital AELA</span>?
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Your partner in building a strong future with knowledge that
+              creates income, and income that creates freedom
+            </p>
+          </motion.div>
+
+          {/* Benefits Grid */}
+          <div className="auto-grid-md lg:grid-cols-3 mb-16">
+            {benefits.map((benefit, index) => (
+              <motion.div
+                key={benefit.id}
+                initial={{ y: 50, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                whileHover={{ y: -8, scale: 1.03 }}
+                className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+                {/* Icon */}
+                <div className="flex justify-center mb-4">
+                  {renderIcon(benefit.icon)}
+                </div>
+
+                {/* Title */}
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
+                  {benefit.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-gray-300 leading-relaxed">
+                  {benefit.description}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </motion.section>
