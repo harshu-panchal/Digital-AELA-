@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
-import founderImage from "../../../src/assets/Founder.png";
+import founderImage from "../../../src/assets/meetTheLeader.jpg";
 
 const MeetTheFounder = () => {
   // WhatsApp integration
@@ -102,7 +102,7 @@ const MeetTheFounder = () => {
                 <img
                   src={founderImage}
                   alt="Imran Khan - Founder of Digital AELA, Educator, Author, and Entrepreneur"
-                  className="h-auto w-full max-w-md rounded-2xl object-cover"
+                  className="h-auto w-full max-w-xs rounded-2xl object-cover"
                   loading="eager"
                 />
               </motion.div>
