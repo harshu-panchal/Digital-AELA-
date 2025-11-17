@@ -7,6 +7,8 @@ import User from "../models/User.js";
  */
 export const getLiveRoomsForModeration = async (req, res, next) => {
   try {
+    // eslint-disable-next-line no-console
+    console.log("[AdminLiveRoom] getLiveRoomsForModeration called");
     const { userRole } = req.auth || {};
 
     if (!req.auth || userRole !== "super-admin") {
