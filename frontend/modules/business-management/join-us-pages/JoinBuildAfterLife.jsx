@@ -368,6 +368,16 @@ const JoinBuildAfterLife = () => {
                             whileTap={{ scale: 0.98 }}
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleViewCourse(item);
+                            }}
+                            className="w-full border border-[#D4AF37]/60 bg-transparent text-[#D4AF37] py-2 rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black transition-colors duration-200">
+                            See Full Course
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleBuyCourse(item);
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
@@ -377,6 +387,7 @@ const JoinBuildAfterLife = () => {
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}>
                             <GiftButton
+                              course={item}
                               className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                               size="sm">
                               Gift
