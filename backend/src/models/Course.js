@@ -38,6 +38,7 @@ const courseSchema = new mongoose.Schema(
       default: "published",
     },
     thumbnailUrl: String,
+    brochureUrl: String,
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

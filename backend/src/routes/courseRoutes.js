@@ -15,11 +15,13 @@ const router = express.Router();
 router.get("/", getPublishedCourses);
 router.get("/enrolled", requireAuth(["student"]), getEnrolledCourses);
 
-// Enrollment routes (authenticated students only)
-router.post("/:courseId/enroll", requireAuth(["student"]), enrollInCourse);
-router.get("/:courseId/enrollment", requireAuth(["student"]), getEnrollmentStatus);
-router.patch("/:courseId/enrollment", requireAuth(["student"]), updateEnrollmentStatus);
-router.delete("/:courseId/enroll", requireAuth(["student"]), unenrollFromCourse);
+// Enrollment routes
+// For free courses: any authenticated user can enroll
+// For paid courses: only students can enroll (checked in controller)
+router.post("/:courseId/enroll", requireAuth(), enrollInCourse);
+router.get("/:courseId/enrollment", requireAuth(), getEnrollmentStatus);
+router.patch("/:courseId/enrollment", requireAuth(), updateEnrollmentStatus);
+router.delete("/:courseId/enroll", requireAuth(), unenrollFromCourse);
 
 // Public course detail route (must be last to avoid matching other routes)
 router.get("/:courseId", getCourseById);

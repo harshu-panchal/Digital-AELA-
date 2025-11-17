@@ -4,6 +4,10 @@ export const extractNumericPrice = (priceInput) => {
   }
 
   if (typeof priceInput === "string") {
+    // Handle "Free" string
+    if (priceInput.toLowerCase().includes("free")) {
+      return 0;
+    }
     const cleaned = priceInput.replace(/[^0-9.]/g, "");
     const parsed = parseFloat(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;

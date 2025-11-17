@@ -52,11 +52,29 @@ const CourseCreate = () => {
   );
 
   const handleChange = useCallback((event) => {
-    const { name, value, type, checked } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value, type, checked, files } = event.target;
+    if (type === "file" && files && files[0]) {
+      const file = files[0];
+      // Validate PDF file
+      if (file.type !== "application/pdf") {
+        toast.error("Please upload a PDF file");
+        return;
+      }
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("PDF file size must be less than 10MB");
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        [name]: file,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   }, []);
 
   const handleSubmit = async (event) => {
@@ -76,8 +94,9 @@ const CourseCreate = () => {
       return;
     }
 
-    if (!trimmedPrice || Number.isNaN(Number(trimmedPrice))) {
-      toast.error("Please enter a valid course price in AED.");
+    // Allow price to be 0 for free courses
+    if (trimmedPrice === "" || trimmedPrice === null || trimmedPrice === undefined || Number.isNaN(Number(trimmedPrice))) {
+      toast.error("Please enter a valid course price in AED (use 0 for free courses).");
       return;
     }
 
@@ -108,7 +127,21 @@ const CourseCreate = () => {
     setIsSubmitting(true);
     try {
       const created = await createTeacherCourse(payload);
-      toast.success("Course submitted for approval. It will be reviewed by admin before being published.");
+      
+      // Upload brochure if provided
+      if (formData.brochureFile) {
+        try {
+          const { uploadCourseBrochure } = await import("../../src/services/teacherCourses");
+          await uploadCourseBrochure(created.id, formData.brochureFile);
+          toast.success("Course and brochure uploaded successfully!");
+        } catch (brochureError) {
+          console.error("Failed to upload brochure:", brochureError);
+          toast.warning("Course saved but brochure upload failed. You can upload it later.");
+        }
+      } else {
+        toast.success("Course submitted for approval. It will be reviewed by admin before being published.");
+      }
+      
       setFormData(initialFormState);
       navigate(`/teacher/courses/${created.id}`, { replace: true });
     } catch (error) {
@@ -429,6 +462,26 @@ const CourseCreate = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">Separate tags with commas. Helps students and mentors discover your course.</p>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label htmlFor="brochureFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Course Brochure PDF (Optional)
+                </label>
+                <input
+                  id="brochureFile"
+                  name="brochureFile"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Upload a PDF brochure for your course. Maximum file size: 10MB. Any user can download this without enrolling.
+                  {formData.brochureFile && (
+                    <span className="block mt-1 text-[#F5D26A]">Selected: {formData.brochureFile.name}</span>
+                  )}
+                </p>
               </div>
 
               <label className="md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">

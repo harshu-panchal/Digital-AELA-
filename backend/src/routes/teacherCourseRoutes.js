@@ -5,7 +5,12 @@ import {
   getTeacherCourses,
   getTeacherCourseById,
   updateTeacherCourse,
+  uploadCourseBrochure,
 } from "../controllers/teacherCourseController.js";
+import {
+  uploadSinglePdf,
+  handleUploadError,
+} from "../middleware/uploadMiddleware.js";
 import { getTeacherDashboard } from "../controllers/teacherDashboardController.js";
 import {
   getTeacherAnalytics,
@@ -36,6 +41,15 @@ router.get("/courses/:courseId", getTeacherCourseById);
 
 // Update a course (only if draft)
 router.put("/courses/:courseId", updateTeacherCourse);
+
+// Upload course brochure PDF
+router.post(
+  "/courses/:courseId/brochure",
+  requireAuth(),
+  uploadSinglePdf("brochure"),
+  handleUploadError,
+  uploadCourseBrochure
+);
 
 // Teacher Analytics endpoints
 router.get("/analytics", getTeacherAnalytics);

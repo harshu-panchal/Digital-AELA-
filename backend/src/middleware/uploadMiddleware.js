@@ -5,7 +5,7 @@ import { Readable } from "stream";
 // Memory storage for multer (we'll upload to Cloudinary manually)
 const storage = multer.memoryStorage();
 
-// File filter
+// File filter for images
 const fileFilter = (req, file, cb) => {
   // Accept only image files
   if (file.mimetype.startsWith("image/")) {
@@ -13,6 +13,19 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error("Invalid file type. Only image files are allowed."),
+      false
+    );
+  }
+};
+
+// File filter for PDFs
+const pdfFileFilter = (req, file, cb) => {
+  // Accept only PDF files
+  if (file.mimetype === "application/pdf") {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Invalid file type. Only PDF files are allowed."),
       false
     );
   }
@@ -58,6 +71,49 @@ export const uploadToCloudinary = (buffer, folder = "digital-aela") => {
   });
 };
 
+// Configure multer for PDF uploads
+export const pdfUpload = multer({
+  storage: storage,
+  fileFilter: pdfFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for PDFs
+  },
+});
+
+// Helper function to upload PDF to Cloudinary
+export const uploadPdfToCloudinary = (buffer, folder = "digital-aela/course-brochures") => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        resource_type: "raw",
+        allowed_formats: ["pdf"],
+        public_id: `brochure-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve({
+          public_id: result.public_id,
+          url: result.secure_url,
+          format: result.format,
+          bytes: result.bytes,
+        });
+      }
+    );
+
+    // Convert buffer to stream and upload
+    const readableStream = Readable.from(buffer);
+    readableStream.pipe(uploadStream);
+  });
+};
+
+// Single PDF upload middleware
+export const uploadSinglePdf = (fieldName = "brochure") => {
+  return pdfUpload.single(fieldName);
+};
+
 // Single file upload middleware
 export const uploadSingle = (fieldName = "image") => {
   return upload.single(fieldName);
@@ -72,10 +128,13 @@ export const uploadMultiple = (fieldName = "images", maxCount = 5) => {
 export const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
+      const isPdf = req.file?.mimetype === "application/pdf";
       return res.status(400).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: "File size exceeds the limit of 5MB",
+          message: isPdf 
+            ? "File size exceeds the limit of 10MB" 
+            : "File size exceeds the limit of 5MB",
         },
       });
     }
@@ -90,6 +149,15 @@ export const handleUploadError = (err, req, res, next) => {
   }
 
   if (err.message === "Invalid file type. Only image files are allowed.") {
+    return res.status(400).json({
+      error: {
+        code: "INVALID_FILE_TYPE",
+        message: err.message,
+      },
+    });
+  }
+
+  if (err.message === "Invalid file type. Only PDF files are allowed.") {
     return res.status(400).json({
       error: {
         code: "INVALID_FILE_TYPE",

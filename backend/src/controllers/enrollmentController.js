@@ -32,6 +32,20 @@ export const enrollInCourse = async (req, res, next) => {
       });
     }
 
+    // For free courses (price = 0), allow any authenticated user to enroll
+    // For paid courses, only students can enroll
+    const isFreeCourse = course.price === 0 || (course.metadata && course.metadata.price === 0);
+    const { userRole } = req.auth;
+
+    if (!isFreeCourse && userRole !== "student") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only students can enroll in paid courses",
+        },
+      });
+    }
+
     // Check if already enrolled
     const existingEnrollment = await Enrollment.findOne({
       student: userId,

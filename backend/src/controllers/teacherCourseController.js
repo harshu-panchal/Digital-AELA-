@@ -1,5 +1,6 @@
 import Course from "../models/Course.js";
 import mongoose from "mongoose";
+import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 
 /**
  * Teacher: Create Course (with draft status)
@@ -64,11 +65,12 @@ export const createTeacherCourse = async (req, res, next) => {
       });
     }
 
-    if (!price || isNaN(Number(price))) {
+    // Allow price to be 0 for free courses
+    if (price === undefined || price === null || price === "" || isNaN(Number(price))) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Valid price is required",
+          message: "Valid price is required (use 0 for free courses)",
         },
       });
     }
@@ -95,6 +97,7 @@ export const createTeacherCourse = async (req, res, next) => {
       price: Number(price),
       currency: "AED",
       thumbnailUrl: coverImage || "",
+      brochureUrl: "", // Will be set if brochure is uploaded
       status: "draft", // Always draft for teacher-created courses
       instructor: instructorObjectId,
       metadata: {
@@ -323,6 +326,7 @@ export const updateTeacherCourse = async (req, res, next) => {
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
     if (coverImage !== undefined) course.thumbnailUrl = coverImage;
+    if (req.body.brochureUrl !== undefined) course.brochureUrl = req.body.brochureUrl;
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
@@ -347,6 +351,93 @@ export const updateTeacherCourse = async (req, res, next) => {
       .lean();
 
     return res.status(200).json({ course: populatedCourse });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Teacher: Upload Course Brochure PDF
+ */
+export const uploadCourseBrochure = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only teachers can upload brochures",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const instructorObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    const course = await Course.findOne({
+      _id: courseId,
+      instructor: instructorObjectId,
+    });
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: {
+          code: "FILE_REQUIRED",
+          message: "No PDF file uploaded",
+        },
+      });
+    }
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await uploadPdfToCloudinary(
+      req.file.buffer,
+      `digital-aela/courses/${courseId}/brochures`
+    );
+
+    // Update course with brochure URL
+    course.brochureUrl = uploadResult.url;
+    await course.save();
+
+    const populatedCourse = await Course.findById(course._id)
+      .populate("instructor", "fullName email")
+      .lean();
+
+    return res.status(200).json({
+      message: "Brochure uploaded successfully",
+      course: populatedCourse,
+      brochureUrl: uploadResult.url,
+    });
   } catch (error) {
     return next(error);
   }

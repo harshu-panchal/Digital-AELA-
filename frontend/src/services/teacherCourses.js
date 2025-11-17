@@ -78,6 +78,26 @@ export const updateTeacherCourse = async (courseId, updates) => {
   };
 };
 
+/**
+ * Upload course brochure PDF
+ */
+export const uploadCourseBrochure = async (courseId, file) => {
+  const formData = new FormData();
+  formData.append("brochure", file);
+
+  const response = await apiRequest(`/teacher/courses/${courseId}/brochure`, {
+    method: "POST",
+    body: formData,
+    // Don't set headers - baseClient will handle FormData correctly
+  });
+
+  return {
+    id: response.course._id,
+    ...response.course,
+    brochureUrl: response.brochureUrl,
+  };
+};
+
 const commitCourseChange = async (courseId, mutator) => {
   const courses = loadCourses();
   const index = courses.findIndex((course) => course.id === courseId);

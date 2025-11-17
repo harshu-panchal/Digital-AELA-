@@ -58,7 +58,7 @@ const JoinBuildAfterLife = () => {
             longDescription: course.longDescription || course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || "",
             coverImage: course.coverImage || course.thumbnailUrl || course.thumbnail || course.image || "",
-            price: course.price ? `AED ${course.price}` : "On Request",
+            price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
             priceLabel: course.priceLabel || (course.price ? `AED ${course.price}` : "On Request"),
             discountPrice: course.discountPrice || course.metadata?.discountPrice || null,
             duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",

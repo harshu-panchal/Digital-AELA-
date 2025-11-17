@@ -24,6 +24,53 @@ const categoryPaths = {
 const fallbackSummary =
   "Digital AELA courses blend live mentorship, guided cohorts, and project practice so you can apply skills immediately in your career.";
 
+// Helper function to normalize course data from backend
+const normalizeCourseData = (backendCourse) => {
+    if (!backendCourse) return null;
+    
+    // Extract course from response if it's wrapped
+    const courseData = backendCourse.course || backendCourse;
+    
+    // Extract metadata fields
+    const metadata = courseData.metadata || {};
+    
+    // Merge all fields, prioritizing direct fields over metadata
+    return {
+      ...courseData,
+      // Basic fields
+      title: courseData.title || "",
+      description: courseData.description || metadata.subtitle || metadata.description || "",
+      longDescription: courseData.longDescription || courseData.description || metadata.longDescription || metadata.subtitle || "",
+      category: courseData.category || metadata.category || "General",
+      difficulty: courseData.difficulty || metadata.difficulty || "",
+      language: courseData.language || metadata.language || "",
+      duration: courseData.duration ? `${courseData.duration} hours` : metadata.duration || "",
+      price: courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request",
+      priceLabel: courseData.priceLabel || (courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request"),
+      discountPrice: courseData.discountPrice || metadata.discountPrice || null,
+      format: courseData.format || metadata.deliveryMode || courseData.deliveryMode || "",
+      deliveryMode: courseData.deliveryMode || metadata.deliveryMode || "",
+      // Media fields
+      image: courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.thumbnailUrl || "",
+      coverImage: courseData.coverImage || courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.coverImage || "",
+      introVideoUrl: courseData.introVideoUrl || metadata.introVideoUrl || "",
+      brochureUrl: courseData.brochureUrl || metadata.brochureUrl || "",
+      // Content fields
+      learningOutcomes: courseData.learningOutcomes || metadata.learningOutcomes || "",
+      requirements: courseData.requirements || metadata.requirements || "",
+      syllabus: courseData.syllabus || metadata.syllabus || "",
+      detailedSyllabus: courseData.detailedSyllabus || metadata.detailedSyllabus || null,
+      // Feature fields
+      features: courseData.features || metadata.tags || courseData.tags || [],
+      highlights: courseData.highlights || metadata.tags || courseData.tags || [],
+      tags: courseData.tags || metadata.tags || [],
+      // Other fields
+      lessonCount: courseData.lessonCount || metadata.lessonCount || null,
+      subtitle: courseData.subtitle || metadata.subtitle || "",
+      instructor: courseData.instructor?.fullName || courseData.instructorName || "Digital AELA",
+    };
+};
+
 const CourseDetail = () => {
   const { slug, courseId } = useParams();
   const location = useLocation();
@@ -52,8 +99,9 @@ const CourseDetail = () => {
         // Priority 1: If courseId is in URL params, fetch by ID
         if (courseId) {
           try {
-            const backendCourse = await fetchCourseById(courseId);
-            setCourse(backendCourse);
+            const response = await fetchCourseById(courseId);
+            const normalizedCourse = normalizeCourseData(response);
+            setCourse(normalizedCourse);
             setIsLoadingCourse(false);
             return;
           } catch (error) {
@@ -68,7 +116,8 @@ const CourseDetail = () => {
         // Priority 2: If course has _id in state, try to fetch from backend
         if (stateCourse?._id) {
           try {
-            const backendCourse = await fetchCourseById(stateCourse._id);
+            const response = await fetchCourseById(stateCourse._id);
+            const backendCourse = normalizeCourseData(response);
             // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
             const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
             setCourse({ 
@@ -96,7 +145,8 @@ const CourseDetail = () => {
         // Priority 3: If slug looks like a MongoDB ObjectId, try to fetch by ID
         if (slug && slug.length === 24 && /^[0-9a-fA-F]{24}$/.test(slug)) {
           try {
-            const backendCourse = await fetchCourseById(slug);
+            const response = await fetchCourseById(slug);
+            const backendCourse = normalizeCourseData(response);
             setCourse({
               ...backendCourse,
               slug: slug, // Preserve slug for navigation
@@ -199,6 +249,7 @@ const CourseDetail = () => {
 
   const priceDisplay = priceLabel || price || "On Request";
   const priceValue = extractNumericPrice(priceDisplay);
+  const isFreeCourse = priceValue === 0 || course.price === 0 || (typeof course.price === 'number' && course.price === 0);
   const categoryPath = categoryPaths[category] ?? "/courses";
   const summaryText = longDescription || description || fallbackSummary;
 
@@ -255,12 +306,14 @@ const CourseDetail = () => {
   };
 
   const handleDownloadBrochure = () => {
-    // TODO: Replace with actual brochure URL or file path
-    // For now, this opens a placeholder link
-    // You can update this to point to actual PDF files or generate brochures dynamically
-    const brochureUrl = `/brochures/${slug || course.id || 'course'}.pdf`;
+    const brochureUrl = course.brochureUrl || course.metadata?.brochureUrl;
     
-    // Try to open/download the brochure
+    if (!brochureUrl) {
+      toast.info("Brochure not available for this course");
+      return;
+    }
+    
+    // Open the brochure PDF in a new tab for download
     const link = document.createElement('a');
     link.href = brochureUrl;
     link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
@@ -268,10 +321,6 @@ const CourseDetail = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Fallback: If file doesn't exist, show a message or redirect to contact
-    // You can uncomment this if you want to handle missing brochures differently
-    // window.open(`mailto:info@digitalaela.com?subject=Request Brochure: ${title}`, '_blank');
   };
 
   return (
@@ -381,13 +430,21 @@ const CourseDetail = () => {
                   {language}
                 </span>
               )}
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 px-3 py-1.5 text-[#F5D26A] font-semibold">
-                Fee: {priceDisplay}
-              </span>
-              {discountPrice && (
+              {isFreeCourse ? (
                 <span className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-green-400 font-semibold">
-                  Discount: AED {discountPrice}
+                  Free Course
                 </span>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 px-3 py-1.5 text-[#F5D26A] font-semibold">
+                    Fee: {priceDisplay}
+                  </span>
+                  {discountPrice && (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-green-400 font-semibold">
+                      Discount: AED {discountPrice}
+                    </span>
+                  )}
+                </>
               )}
             </div>
             <div className="flex flex-wrap gap-3">
@@ -418,34 +475,40 @@ const CourseDetail = () => {
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleEnroll}
-                  disabled={priceValue <= 0 || isEnrolling}
+                  disabled={(!isFreeCourse && priceValue <= 0) || isEnrolling}
                   className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
                   {isEnrolling
                     ? "Enrolling..."
+                    : isFreeCourse
+                    ? "Enroll for Free"
                     : priceValue > 0
                     ? "Enroll Now"
                     : "Connect for Pricing"}
                 </motion.button>
               )}
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleDownloadBrochure}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-6 py-3 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/20 hover:border-[#D4AF37]">
-                <FaDownload className="h-4 w-4" />
-                Download Brochure
-              </motion.button>
-              <div
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}>
-                <GiftButton
-                  className="inline-flex items-center justify-center rounded-full border border-[#F5D26A]/60 px-6 py-3 text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                  size="md"
-                  paymentPath="/gift/payment">
-                  Gift this Course
-                </GiftButton>
-              </div>
-              {priceValue <= 0 && (
+              {(course.brochureUrl || course.metadata?.brochureUrl) && (
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDownloadBrochure}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-6 py-3 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/20 hover:border-[#D4AF37]">
+                  <FaDownload className="h-4 w-4" />
+                  Download Brochure
+                </motion.button>
+              )}
+              {!isFreeCourse && (
+                <div
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}>
+                  <GiftButton
+                    className="inline-flex items-center justify-center rounded-full border border-[#F5D26A]/60 px-6 py-3 text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                    size="md"
+                    paymentPath="/gift/payment">
+                    Gift this Course
+                  </GiftButton>
+                </div>
+              )}
+              {!isFreeCourse && priceValue <= 0 && (
                 <a
                   href="https://wa.me/971508185690"
                   target="_blank"
@@ -475,8 +538,8 @@ const CourseDetail = () => {
       </motion.section>
 
       <section className="bg-[#111111] py-12">
-        <div className="layout-container grid gap-10 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="layout-container">
+          <div className="space-y-8">
             {/* Intro Video Section */}
             {introVideoUrl && (
               <div className="space-y-4">
@@ -1249,71 +1312,6 @@ const CourseDetail = () => {
               </div>
             )}
           </div>
-          <aside className="space-y-6">
-            <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-white font-display mb-4">
-                Program snapshot
-              </h3>
-              <div className="space-y-3 text-sm text-gray-300">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Duration</span>
-                  <span>{duration ?? "Flexible"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Format</span>
-                  <span>{format || deliveryMode || "Guided cohort"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Investment</span>
-                  <span className="text-[#F5D26A] font-semibold">
-                    {priceDisplay}
-                  </span>
-                </div>
-                {discountPrice && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Discounted Price</span>
-                    <span className="text-green-400 font-semibold">
-                      AED {discountPrice}
-                    </span>
-                  </div>
-                )}
-                {language && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Language</span>
-                    <span>{language}</span>
-                  </div>
-                )}
-                {difficulty && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Difficulty</span>
-                    <span>{difficulty}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-white font-display mb-4">
-                Need more information?
-              </h3>
-              <p className="text-sm text-gray-300 leading-relaxed mb-4">
-                Share this course with your decision makers or speak with our
-                admissions specialists for scheduling, pricing and custom
-                cohorts.
-              </p>
-              <div className="flex flex-col gap-3 text-sm">
-                <a
-                  href="mailto:info@digitalaela.com"
-                  className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 px-4 py-2 text-[#D4AF37] transition hover:bg-[#D4AF37]/10">
-                  info@digitalaela.com
-                </a>
-                <a
-                  href="tel:+971508185690"
-                  className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 px-4 py-2 text-[#D4AF37] transition hover:bg-[#D4AF37]/10">
-                  050 818 5690
-                </a>
-              </div>
-            </div>
-          </aside>
         </div>
       </section>
     </div>
