@@ -20,7 +20,8 @@ The video upload button is located in the **Course Detail Page** for teachers.
 
 ### Step 3: Access Your Course
 
-You have **two ways** to access your course:
+
+
 
 #### Option A: From Dashboard
 
