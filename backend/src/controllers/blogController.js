@@ -317,26 +317,33 @@ export const toggleLike = async (req, res, next) => {
       });
     }
 
-    const likes = blog.likes || [];
-    const isLiked = likes.some(
-      (likeId) => likeId.toString() === userId.toString()
-    );
+    // Check if user already has a like reaction
+    const BlogReaction = (await import("../models/BlogReaction.js")).default;
+    const existingReaction = await BlogReaction.findOne({
+      user: userId,
+      blog: blogId,
+      reactionType: "like",
+    });
 
-    if (isLiked) {
+    if (existingReaction) {
       // Remove like
-      blog.likes = likes.filter(
-        (likeId) => likeId.toString() !== userId.toString()
-      );
+      await BlogReaction.deleteOne({ _id: existingReaction._id });
+      blog.likes = Math.max(0, (blog.likes || 0) - 1);
     } else {
       // Add like
-      blog.likes = [...likes, userId];
+      await BlogReaction.findOneAndUpdate(
+        { user: userId, blog: blogId },
+        { user: userId, blog: blogId, reactionType: "like" },
+        { upsert: true, new: true }
+      );
+      blog.likes = (blog.likes || 0) + 1;
     }
 
     await blog.save();
 
     return res.json({
-      likeCount: blog.likes.length,
-      isLiked: !isLiked,
+      liked: !existingReaction,
+      likesCount: blog.likes,
     });
   } catch (error) {
     return next(error);

@@ -1,6 +1,7 @@
 import Enrollment from "../models/Enrollment.js";
 import Course from "../models/Course.js";
 import mongoose from "mongoose";
+import { emitCourseEnrollment } from "../utils/socketEmitter.js";
 
 /**
  * Enroll a student in a course
@@ -59,6 +60,9 @@ export const enrollInCourse = async (req, res, next) => {
     // Populate course and student details
     await enrollment.populate("course", "title description instructor category duration price thumbnailUrl");
     await enrollment.populate("student", "fullName email");
+
+    // Emit real-time event
+    await emitCourseEnrollment(enrollment);
 
     return res.status(201).json({
       message: "Successfully enrolled in course",

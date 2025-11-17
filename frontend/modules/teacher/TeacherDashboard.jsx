@@ -19,6 +19,7 @@ import { getTeacherEbooks } from "../../src/services/teacherEbooks";
 import { getTeacherQuizzes, deleteTeacherQuiz } from "../../src/services/teacherQuizzes";
 import { getTeacherCourses } from "../../src/services/teacherCourses";
 import { fetchTeacherDashboard } from "../../src/services/api/teacher";
+import { useSocket } from "../../src/hooks/useSocket";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -97,10 +98,88 @@ const TeacherDashboard = () => {
 
     refresh();
     loadDashboard();
-
-    // Note: Removed storage event listener since we're now using backend API for ebooks
-    // If you need real-time updates, consider using WebSockets or polling
   }, [loadDashboard]);
+
+  // Handle new enrollment updates
+  const handleNewEnrollment = useCallback((enrollment) => {
+    // Refresh dashboard to show updated enrollment count
+    loadDashboard();
+    // Optionally show a toast notification
+    toast.success(`${enrollment.student.name} enrolled in ${enrollment.course.title}`);
+  }, [loadDashboard]);
+
+  // Handle new quiz attempt updates
+  const handleNewQuizAttempt = useCallback((attempt) => {
+    // Refresh dashboard to show updated quiz stats
+    loadDashboard();
+  }, [loadDashboard]);
+
+  // Subscribe to real-time updates using Socket.io directly
+  const { socket, isConnected } = useSocket();
+  
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    // Subscribe to all course updates
+    courses.forEach((course) => {
+      const courseId = course._id || course.id;
+      if (courseId) {
+        socket.emit("subscribe_course_updates", { courseId });
+      }
+    });
+
+    // Subscribe to all quiz updates
+    quizzes.forEach((quiz) => {
+      const quizId = quiz._id || quiz.id;
+      if (quizId) {
+        socket.emit("subscribe_quiz_updates", { quizId });
+      }
+    });
+
+    // Listen for enrollment updates
+    const handleEnrollmentUpdate = (data) => {
+      handleNewEnrollment(data.enrollment);
+    };
+
+    const handleEnrollmentNotification = (data) => {
+      toast.info(`${data.enrollment.studentName} enrolled in ${data.enrollment.courseTitle}`);
+    };
+
+    // Listen for quiz attempt updates
+    const handleNewAttempt = (data) => {
+      handleNewQuizAttempt(data.attempt);
+    };
+
+    const handleAttemptNotification = (data) => {
+      toast.info(`${data.attempt.studentName} completed ${data.attempt.quizTitle}`);
+    };
+
+    socket.on("new_enrollment", handleEnrollmentUpdate);
+    socket.on("new_enrollment_notification", handleEnrollmentNotification);
+    socket.on("new_quiz_attempt", handleNewAttempt);
+    socket.on("new_quiz_attempt_notification", handleAttemptNotification);
+
+    return () => {
+      socket.off("new_enrollment", handleEnrollmentUpdate);
+      socket.off("new_enrollment_notification", handleEnrollmentNotification);
+      socket.off("new_quiz_attempt", handleNewAttempt);
+      socket.off("new_quiz_attempt_notification", handleAttemptNotification);
+      
+      // Unsubscribe from all
+      courses.forEach((course) => {
+        const courseId = course._id || course.id;
+        if (courseId) {
+          socket.emit("unsubscribe_course_updates", { courseId });
+        }
+      });
+      quizzes.forEach((quiz) => {
+        const quizId = quiz._id || quiz.id;
+        if (quizId) {
+          socket.emit("unsubscribe_quiz_updates", { quizId });
+        }
+      });
+    };
+  }, [socket, isConnected, courses, quizzes, handleNewEnrollment, handleNewQuizAttempt]);
 
   useEffect(() => {
     const state = location.state;
@@ -470,11 +549,18 @@ const TeacherDashboard = () => {
               className="space-y-4 rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Sales & enrolment snapshot</h2>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A]">
-                  Download report
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/teacher/analytics"
+                    className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                    View Analytics
+                  </Link>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A]">
+                    Download report
+                  </button>
+                </div>
               </header>
               <div className="grid gap-3 md:grid-cols-3">
                 {salesBreakdown.map((item) => (
@@ -722,11 +808,11 @@ const TeacherDashboard = () => {
             <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Learner spotlight</h2>
-                <button
-                  type="button"
+                <Link
+                  to="/teacher/students"
                   className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
-                  View all profiles →
-                </button>
+                  Manage Students →
+                </Link>
               </header>
               <div className="space-y-3">
                 {studentSpotlight.length === 0 ? (

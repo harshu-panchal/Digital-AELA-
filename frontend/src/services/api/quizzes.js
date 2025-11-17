@@ -46,3 +46,34 @@ export const fetchQuizHistory = (params = {}) => {
   return apiRequest(`/quizzes/attempts${queryString ? `?${queryString}` : ""}`);
 };
 
+/**
+ * Update a quiz (admin/teacher only)
+ */
+export const updateQuiz = (quizId, payload) =>
+  apiRequest(`/quizzes/${quizId}`, {
+    method: "PATCH",
+    body: payload,
+  });
+
+/**
+ * Get quiz analytics (admin/teacher only)
+ */
+export const fetchQuizAnalytics = (quizId) =>
+  apiRequest(`/quizzes/${quizId}/analytics`, {
+    method: "GET",
+  });
+
+/**
+ * Get quiz leaderboard (public endpoint)
+ */
+export const fetchQuizLeaderboard = (quizId, params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append("page", params.page);
+  if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+
+  const queryString = queryParams.toString();
+  return apiRequest(`/quizzes/${quizId}/leaderboard${queryString ? `?${queryString}` : ""}`, {
+    skipAuth: true, // Public endpoint
+  });
+};
+

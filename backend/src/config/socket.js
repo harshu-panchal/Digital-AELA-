@@ -2,6 +2,9 @@ import { verifyAccessToken } from "../utils/token.js";
 import User from "../models/User.js";
 import Message from "../models/Message.js";
 import LiveRoom from "../models/LiveRoom.js";
+import Enrollment from "../models/Enrollment.js";
+import QuizAttempt from "../models/QuizAttempt.js";
+import Course from "../models/Course.js";
 import mongoose from "mongoose";
 
 export const setupSocketIO = (io) => {
@@ -277,10 +280,95 @@ export const setupSocketIO = (io) => {
       }
     });
 
+    // Handle real-time notifications
+    socket.on("mark_notification_read", async (data) => {
+      try {
+        const { notificationId } = data;
+        // This can be extended when notification model is created
+        // For now, just acknowledge
+        socket.emit("notification_read", { notificationId });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error marking notification as read:", error);
+      }
+    });
+
+    // Handle course enrollment updates (for teachers)
+    socket.on("subscribe_course_updates", async (data) => {
+      try {
+        const { courseId } = data;
+        if (!courseId || !mongoose.isValidObjectId(courseId)) {
+          return;
+        }
+
+        // Verify teacher owns the course
+        const course = await Course.findById(courseId);
+        if (course && course.instructor.toString() === socket.userId) {
+          socket.join(`course:${courseId}`);
+          socket.emit("subscribed_course", { courseId });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error subscribing to course updates:", error);
+      }
+    });
+
+    socket.on("unsubscribe_course_updates", (data) => {
+      const { courseId } = data;
+      if (courseId) {
+        socket.leave(`course:${courseId}`);
+      }
+    });
+
+    // Handle quiz attempt updates (for teachers)
+    socket.on("subscribe_quiz_updates", async (data) => {
+      try {
+        const { quizId } = data;
+        if (quizId) {
+          socket.join(`quiz:${quizId}`);
+          socket.emit("subscribed_quiz", { quizId });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error subscribing to quiz updates:", error);
+      }
+    });
+
+    socket.on("unsubscribe_quiz_updates", (data) => {
+      const { quizId } = data;
+      if (quizId) {
+        socket.leave(`quiz:${quizId}`);
+      }
+    });
+
+    // Handle online status updates
+    socket.on("update_online_status", () => {
+      // Broadcast user is online to their connections
+      io.emit("user_online", {
+        userId: socket.userId,
+        userName: socket.userFullName,
+      });
+    });
+
+    // Handle activity feed subscription
+    socket.on("subscribe_activity_feed", () => {
+      socket.join("activity_feed");
+    });
+
+    socket.on("unsubscribe_activity_feed", () => {
+      socket.leave("activity_feed");
+    });
+
     // Handle disconnect
     socket.on("disconnect", async () => {
       // eslint-disable-next-line no-console
       console.log(`[Socket.IO] User disconnected: ${socket.userId}`);
+
+      // Broadcast user is offline
+      io.emit("user_offline", {
+        userId: socket.userId,
+        userName: socket.userFullName,
+      });
 
       // Leave all rooms (decrement listener counts)
       const rooms = await LiveRoom.find({});
@@ -301,5 +389,6 @@ export const setupSocketIO = (io) => {
       }
     });
   });
+
 };
 

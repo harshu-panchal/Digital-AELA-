@@ -25,6 +25,11 @@ const ebookResourceSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    downloads: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

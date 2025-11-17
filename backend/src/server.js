@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import connectDatabase from "./config/db.js";
 import { setupSocketIO } from "./config/socket.js";
+import { setSocketIO } from "./utils/socketEmitter.js";
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ const start = async () => {
       credentials: true,
     },
   });
+
+  // Store io instance globally for use in controllers
+  setSocketIO(io);
 
   setupSocketIO(io);
 

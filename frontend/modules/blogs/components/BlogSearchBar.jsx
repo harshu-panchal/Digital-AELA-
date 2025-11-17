@@ -17,10 +17,19 @@ const BlogSearchBar = ({
   placeholder = "Search blogs, tags or authors",
   onSubmit,
 }) => {
-  const { searchTerm, setSearchTerm } = useBlogs();
+  const { searchTerm, setSearchTerm, performSearch, activeFilters } = useBlogs();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (searchTerm.trim()) {
+      // Use advanced search API
+      await performSearch({
+        q: searchTerm,
+        category: activeFilters.category !== "all" ? activeFilters.category : undefined,
+        tags: activeFilters.tags.length > 0 ? activeFilters.tags.join(",") : undefined,
+        sortBy: activeFilters.sort || "recent",
+      });
+    }
     onSubmit?.(searchTerm);
   };
 

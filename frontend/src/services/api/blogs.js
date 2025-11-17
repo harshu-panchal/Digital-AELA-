@@ -27,3 +27,70 @@ export const addBlogComment = (blogId, message) =>
     body: { message },
   });
 
+/**
+ * Advanced blog search
+ * GET /api/v1/blogs/search
+ */
+export const searchBlogs = (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.q) searchParams.set("q", params.q);
+  if (params.category) searchParams.set("category", params.category);
+  if (params.tags) searchParams.set("tags", Array.isArray(params.tags) ? params.tags.join(",") : params.tags);
+  if (params.author) searchParams.set("author", params.author);
+  if (params.page) searchParams.set("page", params.page);
+  if (params.pageSize) searchParams.set("pageSize", params.pageSize);
+  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+  const query = searchParams.toString();
+  return apiRequest(`/blogs/search${query ? `?${query}` : ""}`, {
+    skipAuth: true,
+  });
+};
+
+/**
+ * Get blog categories and tags
+ * GET /api/v1/blogs/categories
+ */
+export const fetchBlogCategories = () =>
+  apiRequest("/blogs/categories", {
+    skipAuth: true,
+  });
+
+/**
+ * Add reaction to blog
+ * POST /api/v1/blogs/:blogId/reactions
+ */
+export const addBlogReaction = (blogId, reactionType) =>
+  apiRequest(`/blogs/${blogId}/reactions`, {
+    method: "POST",
+    body: { reactionType },
+  });
+
+/**
+ * Remove reaction from blog
+ * DELETE /api/v1/blogs/:blogId/reactions
+ */
+export const removeBlogReaction = (blogId) =>
+  apiRequest(`/blogs/${blogId}/reactions`, {
+    method: "DELETE",
+  });
+
+/**
+ * Get blog analytics
+ * GET /api/v1/blogs/:blogId/analytics
+ */
+export const fetchBlogAnalytics = (blogId) =>
+  apiRequest(`/blogs/${blogId}/analytics`, {
+    method: "GET",
+  });
+
+/**
+ * Share blog
+ * POST /api/v1/blogs/:blogId/share
+ */
+export const shareBlog = (blogId, platform) =>
+  apiRequest(`/blogs/${blogId}/share`, {
+    method: "POST",
+    body: { platform },
+    skipAuth: true,
+  });
+

@@ -10,7 +10,17 @@ import {
 import { toast } from "react-toastify";
 import { useUser } from "./UserContext";
 import { useAuth } from "./AuthContext";
-import { fetchPublishedBlogs, createBlog, toggleBlogLike, addBlogComment } from "../services/api/blogs";
+import {
+  fetchPublishedBlogs,
+  createBlog,
+  toggleBlogLike,
+  addBlogComment,
+  searchBlogs,
+  fetchBlogCategories,
+  addBlogReaction,
+  removeBlogReaction,
+  shareBlog,
+} from "../services/api/blogs";
 import { isNetworkError } from "../services/api/baseClient";
 
 const BlogContext = createContext(null);
@@ -239,6 +249,8 @@ export const BlogProvider = ({ children }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
 
   const refreshBlogs = useCallback(
     async (params = {}) => {
@@ -302,9 +314,45 @@ export const BlogProvider = ({ children }) => {
     []
   );
 
+  // Load categories and tags from API
+  const loadCategories = useCallback(async () => {
+    try {
+      const data = await fetchBlogCategories();
+      if (data) {
+        setCategories(data.categories || []);
+        setTags(data.tags || []);
+      }
+    } catch (error) {
+      // Silently fail - categories will be extracted from blogs
+      if (!isNetworkError(error)) {
+        console.warn("Failed to load categories:", error);
+      }
+    }
+  }, []);
+
+  // Advanced search function
+  const performSearch = useCallback(async (searchParams) => {
+    try {
+      setIsLoading(true);
+      const response = await searchBlogs(searchParams);
+      const remote = response?.blogs ?? [];
+      const remoteFormatted = remote.map(mapApiBlog);
+      setBlogs((prev) => {
+        const localBlogs = prev.filter((blog) => blog.source === "local");
+        return [...localBlogs, ...remoteFormatted];
+      });
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     refreshBlogs();
-  }, [refreshBlogs]);
+    loadCategories();
+  }, [refreshBlogs, loadCategories]);
 
   const saveDraft = useCallback((draft) => {
     setDrafts((prev) => {
@@ -788,6 +836,77 @@ export const BlogProvider = ({ children }) => {
     }
   }, []);
 
+  // Add reaction function
+  const addReaction = useCallback(
+    async (blogId, reactionType) => {
+      if (!authUser) {
+        toast.info("Please log in to react");
+        return;
+      }
+      try {
+        const response = await addBlogReaction(blogId, reactionType);
+        setBlogs((prev) =>
+          prev.map((blog) => {
+            if (blog.id !== blogId) return blog;
+            return {
+              ...blog,
+              likeCount: response.counts?.like || blog.likeCount,
+            };
+          })
+        );
+        toast.success("Reaction added!");
+      } catch (error) {
+        if (!isNetworkError(error)) {
+          toast.error(error.message || "Failed to add reaction");
+        }
+      }
+    },
+    [authUser]
+  );
+
+  // Remove reaction function
+  const removeReaction = useCallback(
+    async (blogId) => {
+      if (!authUser) {
+        return;
+      }
+      try {
+        await removeBlogReaction(blogId);
+        setBlogs((prev) =>
+          prev.map((blog) => {
+            if (blog.id !== blogId) return blog;
+            return {
+              ...blog,
+              likeCount: Math.max(0, blog.likeCount - 1),
+            };
+          })
+        );
+      } catch (error) {
+        if (!isNetworkError(error)) {
+          toast.error(error.message || "Failed to remove reaction");
+        }
+      }
+    },
+    [authUser]
+  );
+
+  // Share blog function
+  const shareBlogPost = useCallback(async (blogId, platform) => {
+    try {
+      const response = await shareBlog(blogId, platform);
+      if (platform === "copy") {
+        await navigator.clipboard.writeText(response.shareUrl);
+        toast.success("Link copied to clipboard!");
+      } else if (response.platformLinks?.[platform]) {
+        window.open(response.platformLinks[platform], "_blank");
+      }
+    } catch (error) {
+      if (!isNetworkError(error)) {
+        toast.error(error.message || "Failed to share");
+      }
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       blogs,
@@ -815,6 +934,12 @@ export const BlogProvider = ({ children }) => {
       isLoading,
       loadError,
       refreshBlogs,
+      categories,
+      tags,
+      performSearch,
+      addReaction,
+      removeReaction,
+      shareBlogPost,
     }),
     [
       blogs,
@@ -835,6 +960,12 @@ export const BlogProvider = ({ children }) => {
       searchTerm,
       activeFilters,
       formatTimestamp,
+      categories,
+      tags,
+      performSearch,
+      addReaction,
+      removeReaction,
+      shareBlogPost,
       authUser,
       isLoading,
       loadError,

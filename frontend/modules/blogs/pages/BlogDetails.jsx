@@ -21,6 +21,8 @@ const BlogDetails = () => {
     followAuthor,
     isFollowing,
     formatTimestamp,
+    addReaction,
+    shareBlogPost,
   } = useBlogs();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -102,19 +104,23 @@ const BlogDetails = () => {
     .filter((item) => item.id !== blog.id && item.category === blog.category)
     .slice(0, 3);
 
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: blog.title,
-          text: blog.excerpt,
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
+  const handleShare = async (platform) => {
+    if (platform) {
+      await shareBlogPost(blog.id, platform);
+    } else {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: blog.title,
+            text: blog.excerpt,
+            url: window.location.href,
+          });
+        } else {
+          await shareBlogPost(blog.id, "copy");
+        }
+      } catch (error) {
+        console.error("Share action failed", error);
       }
-    } catch (error) {
-      console.error("Share action failed", error);
     }
   };
 
@@ -207,14 +213,70 @@ const BlogDetails = () => {
               {blog.likeCount} likes
             </Motion.button>
 
-            <Motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101010]/80 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
-              <FaShareNodes className="h-4 w-4" />
-              Share
-            </Motion.button>
+            {/* Reactions Dropdown */}
+            <div className="relative group">
+              <Motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101010]/80 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                <HiOutlineHandThumbUp className="h-4 w-4" />
+                React
+              </Motion.button>
+              <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-10">
+                <div className="bg-[#1a1a1a] rounded-xl border border-white/10 p-2 shadow-lg flex flex-col gap-1 min-w-[150px]">
+                  <button
+                    onClick={() => addReaction(blog.id, "love")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    ❤️ Love
+                  </button>
+                  <button
+                    onClick={() => addReaction(blog.id, "insightful")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    💡 Insightful
+                  </button>
+                  <button
+                    onClick={() => addReaction(blog.id, "helpful")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    👍 Helpful
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Share Dropdown */}
+            <div className="relative group">
+              <Motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101010]/80 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                <FaShareNodes className="h-4 w-4" />
+                Share
+              </Motion.button>
+              <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-10">
+                <div className="bg-[#1a1a1a] rounded-xl border border-white/10 p-2 shadow-lg flex flex-col gap-1 min-w-[150px]">
+                  <button
+                    onClick={() => handleShare("facebook")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    📘 Facebook
+                  </button>
+                  <button
+                    onClick={() => handleShare("twitter")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    🐦 Twitter
+                  </button>
+                  <button
+                    onClick={() => handleShare("linkedin")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    💼 LinkedIn
+                  </button>
+                  <button
+                    onClick={() => handleShare("copy")}
+                    className="text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-300 hover:text-[#D4AF37] transition">
+                    📋 Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <Motion.button
               whileHover={{ scale: 1.05 }}

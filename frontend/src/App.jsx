@@ -88,7 +88,11 @@ import TeacherCourseDetail from "../modules/teacher/CourseDetail";
 import EbookUpload from "../modules/teacher/EbookUpload";
 import EbookDetail from "../modules/teacher/EbookDetail";
 import QuizCreate from "../modules/teacher/QuizCreate";
+import QuizAnalytics from "../modules/teacher/QuizAnalytics";
+import QuizLeaderboard from "../modules/student/QuizLeaderboard";
 import QuizDetail from "../modules/teacher/QuizDetail";
+import TeacherAnalytics from "../modules/teacher/TeacherAnalytics";
+import StudentManagement from "../modules/teacher/StudentManagement";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
@@ -187,6 +191,38 @@ export const App = () => {
           }
         />
         <Route
+          path="/teacher/quizzes/:quizId/analytics"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <QuizAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/analytics"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <TeacherAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/students"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <StudentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId/students"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <StudentManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/student/dashboard"
           element={
             <ProtectedRoute roles={["student", "super-admin"]}>
@@ -250,6 +286,7 @@ export const App = () => {
           <Route path="live-debates" element={<LiveDebates />} />
           <Route path="activities" element={<ActivitiesHub />} />
           <Route path="quiz/:quizId" element={<QuizPlay />} />
+          <Route path="quiz/:quizId/leaderboard" element={<QuizLeaderboard />} />
           <Route path="wallet" element={<WalletDashboard />} />
           <Route path="ratings" element={<RatingsReviews />} />
           <Route

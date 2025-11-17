@@ -11,9 +11,20 @@ const FILTER_SORT_OPTIONS = [
 ];
 
 const BlogCategoryFilter = () => {
-  const { blogs, activeFilters, setActiveFilters } = useBlogs();
+  const { blogs, activeFilters, setActiveFilters, categories: apiCategories, tags: apiTags } = useBlogs();
 
   const { categories, tags } = useMemo(() => {
+    // Use API categories/tags if available, otherwise extract from blogs
+    if (apiCategories && apiCategories.length > 0) {
+      const categorySet = new Set(["all", ...apiCategories.map((c) => c.name)]);
+      const tagSet = new Set(apiTags?.map((t) => t.name) || []);
+      return {
+        categories: Array.from(categorySet),
+        tags: Array.from(tagSet),
+      };
+    }
+
+    // Fallback: extract from blogs
     const categorySet = new Set(["all"]);
     const tagSet = new Set();
 
@@ -26,7 +37,7 @@ const BlogCategoryFilter = () => {
       categories: Array.from(categorySet),
       tags: Array.from(tagSet),
     };
-  }, [blogs]);
+  }, [blogs, apiCategories, apiTags]);
 
   const handleCategoryChange = (category) => {
     setActiveFilters((prev) => ({

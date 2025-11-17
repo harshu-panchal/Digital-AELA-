@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Quiz from "../models/Quiz.js";
 import StudentPoints from "../models/StudentPoints.js";
+import { emitQuizAttempt } from "../utils/socketEmitter.js";
 
 export const submitQuizAttempt = async (req, res, next) => {
   try {
@@ -166,6 +167,9 @@ export const submitQuizAttempt = async (req, res, next) => {
 
       await studentPoints.save();
     }
+
+    // Emit real-time event
+    await emitQuizAttempt(attempt);
 
     return res.status(201).json({
       attempt: {
@@ -532,6 +536,355 @@ export const deleteQuiz = async (req, res, next) => {
     await quiz.deleteOne();
 
     return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Update a quiz (admin/teacher only - only if they created it)
+ */
+export const updateQuiz = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Only admin and teacher can update quizzes
+    if (!["admin", "teacher"].includes(userRole)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only admins and teachers can update quizzes",
+        },
+      });
+    }
+
+    const { quizId } = req.params;
+    const {
+      title,
+      description,
+      category,
+      difficulty,
+      rewardCoins,
+      duration,
+      questions,
+      status,
+    } = req.body;
+
+    if (!mongoose.isValidObjectId(quizId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid quiz ID",
+        },
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Quiz not found",
+        },
+      });
+    }
+
+    // Check if user is admin or the creator of the quiz
+    const isAdmin = userRole === "admin";
+    const isCreator = quiz.metadata?.createdBy?.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only update quizzes you created",
+        },
+      });
+    }
+
+    // Validate category if provided
+    if (category && !["quiz", "vocabulary", "speaking"].includes(category)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Category must be one of: quiz, vocabulary, speaking",
+        },
+      });
+    }
+
+    // Validate questions if provided
+    if (Array.isArray(questions) && questions.length > 0) {
+      for (const q of questions) {
+        if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Each question must have a question text and at least 2 options",
+            },
+          });
+        }
+        if (typeof q.correctAnswer !== "number" || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Each question must have a valid correctAnswer index",
+            },
+          });
+        }
+      }
+    }
+
+    // Update quiz fields
+    if (title !== undefined) quiz.title = title;
+    if (description !== undefined) quiz.description = description;
+    if (category !== undefined) quiz.category = category;
+    if (difficulty !== undefined) quiz.difficulty = difficulty;
+    if (rewardCoins !== undefined) quiz.rewardCoins = rewardCoins;
+    if (duration !== undefined) quiz.duration = duration;
+    if (questions !== undefined) quiz.questions = questions;
+    if (status !== undefined) quiz.status = status;
+
+    await quiz.save();
+
+    return res.json({ quiz });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get quiz analytics (admin/teacher only - only for their quizzes)
+ */
+export const getQuizAnalytics = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth;
+    const { quizId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (!["admin", "teacher"].includes(userRole)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only admins and teachers can view quiz analytics",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(quizId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid quiz ID",
+        },
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Quiz not found",
+        },
+      });
+    }
+
+    // Check if user is admin or the creator of the quiz
+    const isAdmin = userRole === "admin";
+    const isCreator = quiz.metadata?.createdBy?.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only view analytics for quizzes you created",
+        },
+      });
+    }
+
+    // Get all attempts for this quiz
+    const attempts = await QuizAttempt.find({ quiz: quizId }).populate("student", "fullName email");
+
+    const totalAttempts = attempts.length;
+    const uniqueStudents = new Set(attempts.map((a) => a.student._id.toString())).size;
+
+    // Calculate average score
+    const avgScore =
+      attempts.length > 0
+        ? attempts.reduce((sum, a) => sum + (a.score || 0), 0) / attempts.length
+        : 0;
+
+    // Calculate average time spent
+    const avgTimeSpent =
+      attempts.length > 0
+        ? attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0) / attempts.length
+        : 0;
+
+    // Score distribution
+    const scoreRanges = {
+      excellent: attempts.filter((a) => (a.score || 0) >= 90).length,
+      good: attempts.filter((a) => (a.score || 0) >= 70 && (a.score || 0) < 90).length,
+      average: attempts.filter((a) => (a.score || 0) >= 50 && (a.score || 0) < 70).length,
+      poor: attempts.filter((a) => (a.score || 0) < 50).length,
+    };
+
+    // Question-level analytics
+    const questionStats = quiz.questions?.map((question, index) => {
+      const questionAttempts = attempts.filter((a) => {
+        const answer = a.answers?.find((ans) => ans.questionIndex === index);
+        return answer !== undefined;
+      });
+
+      const correctCount = questionAttempts.filter((a) => {
+        const answer = a.answers?.find((ans) => ans.questionIndex === index);
+        return answer?.isCorrect === true;
+      }).length;
+
+      const accuracy = questionAttempts.length > 0 ? (correctCount / questionAttempts.length) * 100 : 0;
+
+      return {
+        questionIndex: index,
+        question: question.question,
+        totalAttempts: questionAttempts.length,
+        correctCount,
+        accuracy: Math.round(accuracy * 100) / 100,
+      };
+    }) || [];
+
+    // Recent attempts (last 10)
+    const recentAttempts = attempts
+      .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+      .slice(0, 10)
+      .map((a) => ({
+        studentName: a.student?.fullName || "Unknown",
+        studentEmail: a.student?.email || "",
+        score: a.score || 0,
+        completedAt: a.completedAt,
+      }));
+
+    return res.json({
+      quiz: {
+        id: quiz._id.toString(),
+        title: quiz.title,
+        category: quiz.category,
+        difficulty: quiz.difficulty,
+        totalQuestions: quiz.questions?.length || 0,
+      },
+      analytics: {
+        totalAttempts,
+        uniqueStudents,
+        averageScore: Math.round(avgScore * 100) / 100,
+        averageTimeSpent: Math.round(avgTimeSpent),
+        scoreDistribution: scoreRanges,
+        questionStats,
+        recentAttempts,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get quiz leaderboard
+ */
+export const getQuizLeaderboard = async (req, res, next) => {
+  try {
+    const { quizId } = req.params;
+    const { page = 1, pageSize = 50 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    if (!mongoose.isValidObjectId(quizId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid quiz ID",
+        },
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Quiz not found",
+        },
+      });
+    }
+
+    // Get all attempts for this quiz, sorted by score (desc) and time (asc)
+    const attempts = await QuizAttempt.find({ quiz: quizId })
+      .populate("student", "fullName email")
+      .sort({ score: -1, timeSpent: 1, completedAt: -1 })
+      .lean();
+
+    // Group by student and get their best attempt
+    const studentBestAttempts = new Map();
+
+    attempts.forEach((attempt) => {
+      const studentId = attempt.student._id.toString();
+      const existing = studentBestAttempts.get(studentId);
+
+      if (!existing || attempt.score > existing.score || (attempt.score === existing.score && attempt.timeSpent < existing.timeSpent)) {
+        studentBestAttempts.set(studentId, attempt);
+      }
+    });
+
+    // Convert to array and sort
+    const leaderboard = Array.from(studentBestAttempts.values())
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (a.timeSpent !== b.timeSpent) return a.timeSpent - b.timeSpent;
+        return new Date(b.completedAt) - new Date(a.completedAt);
+      })
+      .map((attempt, index) => ({
+        rank: index + 1,
+        studentId: attempt.student._id.toString(),
+        studentName: attempt.student?.fullName || "Unknown",
+        studentEmail: attempt.student?.email || "",
+        score: attempt.score || 0,
+        timeSpent: attempt.timeSpent || 0,
+        completedAt: attempt.completedAt,
+        coinsEarned: attempt.coinsEarned || 0,
+      }));
+
+    // Paginate
+    const paginatedLeaderboard = leaderboard.slice(skip, skip + Number(pageSize));
+
+    return res.json({
+      quiz: {
+        id: quiz._id.toString(),
+        title: quiz.title,
+      },
+      leaderboard: paginatedLeaderboard,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: leaderboard.length,
+        totalPages: Math.ceil(leaderboard.length / Number(pageSize)),
+      },
+    });
   } catch (error) {
     return next(error);
   }

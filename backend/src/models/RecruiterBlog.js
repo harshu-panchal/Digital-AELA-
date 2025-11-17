@@ -33,9 +33,18 @@ const recruiterBlogSchema = new mongoose.Schema(
     scheduledAt: Date,
     publishedAt: Date,
     likes: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "User",
-      default: [],
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    category: {
+      type: String,
+      trim: true,
     },
     comments: [
       {
