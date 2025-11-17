@@ -1222,84 +1222,113 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Golden Ribbon Divider */}
+      {/* Futuristic Stats Section */}
       <motion.div
         ref={ribbonRef}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="hidden md:block relative w-full pt-3 pb-6 md:pt-4 md:pb-8 overflow-hidden -mt-8 md:-mt-12">
-        {/* Ribbon Shape - Full Width Container */}
-        <div className="relative w-full overflow-hidden">
-          {/* Main Ribbon with Black->Golden->Black Gradient */}
-          <div
-            className="relative min-h-[90px] md:min-h-[100px] w-[108%] -ml-[4%] sm:w-[105%] sm:-ml-[2.5%] lg:w-[102%] lg:-ml-[1%] py-4 md:py-5 overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(to right, black 0%, black 5%, #d4a837 8%, #d4af37 92%, black 95%, black 100%)",
-            }}>
-            {/* Left Ribbon Tail */}
-            <div className="absolute left-0 top-0 h-full w-12 md:w-16 z-10 pointer-events-none">
-              <svg
-                className="w-full h-full"
-                viewBox="0 0 64 96"
-                preserveAspectRatio="none">
-                <path d="M0,0 L64,0 L64,48 L0,96 Z" fill="black" />
-              </svg>
-            </div>
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative w-full py-12 md:py-16 lg:py-5 overflow-hidden -mt-8 md:-mt-12">
+        {/* Animated Background Gradient */}
+        <div className="absolute inset-0 bg-linear-to-br from-[#0a0a0a] via-[#1a0f2e] to-[#0a0a0a]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.1),transparent_70%)] animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-[#D4AF37]/50 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-[#D4AF37]/30 to-transparent"></div>
+        </div>
 
-            {/* Right Ribbon Tail */}
-            <div className="absolute right-0 top-0 h-full w-12 md:w-16 z-10 pointer-events-none">
-              <svg
-                className="w-full h-full"
-                viewBox="0 0 64 96"
-                preserveAspectRatio="none">
-                <path d="M0,0 L64,0 L0,48 L64,96 Z" fill="black" />
-              </svg>
-            </div>
+        {/* Grid Pattern Overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+            linear-gradient(rgba(212,175,55,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(212,175,55,0.1) 1px, transparent 1px)
+          `,
+            backgroundSize: "50px 50px",
+          }}></div>
 
-            {/* Ribbon Content Container - Constrained to Golden Area */}
-            <div className="relative z-20 w-full h-full flex items-center justify-center px-12 md:px-16 lg:px-20">
-              {/* Content Grid - Properly Contained */}
-              <div className="w-full max-w-[90%] md:max-w-[85%] lg:max-w-[1600px] mx-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4 lg:gap-5">
-                  {ribbonStats.map((stat, index) => {
-                    const currentValue =
-                      index < ribbonCounts.length ? ribbonCounts[index] : 0;
-                    const formattedValue = stat.decimals
-                      ? currentValue.toFixed(stat.decimals)
-                      : Math.max(0, currentValue).toLocaleString();
+        {/* Content Container */}
+        <div className="relative z-10 layout-container">
+          {/* Heading */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="text-center mb-5 md:mb-8">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-display tracking-tight">
+              Achievements
+            </h2>
+          </motion.div>
 
-                    return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6 lg:gap-8">
+            {ribbonStats.map((stat, index) => {
+              const currentValue =
+                index < ribbonCounts.length ? ribbonCounts[index] : 0;
+              const formattedValue = stat.decimals
+                ? currentValue.toFixed(stat.decimals)
+                : Math.max(0, currentValue).toLocaleString();
+
+              return (
+                <motion.div
+                  key={`${stat.label}-${stat.value}`}
+                  initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                  whileInView={{ scale: 1, opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: 0.1 + index * 0.1,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  className="group relative">
+                  {/* Glassmorphism Card */}
+                  <div className="relative h-full rounded-xl border border-[#D4AF37]/20 bg-linear-to-br from-white/5 to-white/2 backdrop-blur-xl p-4 md:p-5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_12px_48px_rgba(212,175,55,0.2)]">
+                    {/* Animated Glow Effect */}
+                    <div className="absolute inset-0 bg-linear-to-br from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                    {/* Corner Accents */}
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#D4AF37]/30 rounded-tl-xl"></div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#D4AF37]/30 rounded-br-xl"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 flex flex-col items-center justify-center text-center">
+                      {/* Animated Number */}
                       <motion.div
-                        key={`${stat.label}-${stat.value}`}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        whileInView={{ scale: 1, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{
-                          duration: 0.4,
-                          delay: 0.1 + index * 0.08,
-                        }}
-                        className="flex flex-col items-center justify-center overflow-hidden px-1 md:px-2">
-                        <div className="text-white font-bold text-base md:text-lg lg:text-xl xl:text-2xl font-display mb-1 md:mb-1.5 text-center leading-tight">
-                          {`${formattedValue}${stat.suffix ?? ""}`}
-                        </div>
-                        <div className="text-white text-[9px] md:text-[10px] lg:text-xs font-light text-center leading-tight px-0.5">
-                          {stat.label}
-                        </div>
+                        className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none"
+                        style={{
+                          textShadow: "0 0 20px rgba(212,175,55,0.3)",
+                          backgroundSize: "200% 200%",
+                          animation: "gradient-shift 3s ease infinite",
+                        }}>
+                        {`${formattedValue}${stat.suffix ?? ""}`}
                       </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
 
-            {/* Decorative Lines */}
-            <div className="absolute top-0 left-1/4 w-px h-full bg-black/30 z-5 pointer-events-none"></div>
-            <div className="absolute top-0 right-1/4 w-px h-full bg-black/30 z-5 pointer-events-none"></div>
+                      {/* Label */}
+                      <div className="text-slate-300 text-[10px] md:text-xs font-medium leading-tight px-2">
+                        {stat.label}
+                      </div>
+                    </div>
+
+                    {/* Holographic Shine Effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
+
+        {/* CSS Animation for Gradient */}
+        <style>{`
+          @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+          }
+        `}</style>
       </motion.div>
 
       {/* Our Learners Work At Section */}
