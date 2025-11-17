@@ -26,7 +26,39 @@ import courseVideoRoutes from "./routes/courseVideoRoutes.js";
 
 const app = express();
 
-app.use(cors());
+// Configure CORS with explicit settings for production
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or curl)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      "https://digitalaela.com",
+      "https://www.digitalaela.com",
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+    ].filter(Boolean); // Remove undefined values
+    
+    // Allow if origin is in allowed list or if in development
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      callback(null, true);
+    } else {
+      // In production, log but still allow (you can change this to reject)
+      console.warn(`[CORS] Request from unlisted origin: ${origin}`);
+      callback(null, true); // Allow all origins for now, change to callback(new Error(...)) to reject
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
@@ -90,10 +122,18 @@ app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1", courseVideoRoutes);
 
 // eslint-disable-next-line no-unused-vars
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, next) => {
   // eslint-disable-next-line no-console
   console.error("[Error]", err);
   const status = err.status || 500;
+  
+  // Ensure CORS headers are set even on error responses
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  
   res.status(status).json({
     error: {
       code: err.code || "SERVER_ERROR",

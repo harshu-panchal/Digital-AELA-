@@ -98,22 +98,35 @@ export const apiRequest = async (
       body: requestBody,
     });
   } catch (networkError) {
-    // Handle network errors (connection refused, network unavailable, etc.)
+    // Handle network errors (connection refused, network unavailable, CORS, etc.)
     const isConnectionError =
       networkError.message?.includes("Failed to fetch") ||
       networkError.message?.includes("NetworkError") ||
+      networkError.message?.includes("CORS") ||
       networkError.name === "TypeError";
     
     if (isConnectionError) {
       const connectionError = new Error(
-        `Unable to connect to server. Please ensure the backend server is running.`
+        `Unable to connect to server. The backend server may be down or unreachable.`
       );
       connectionError.status = 0;
       connectionError.code = "CONNECTION_ERROR";
       connectionError.isNetworkError = true;
+      connectionError.isCorsError = networkError.message?.includes("CORS") || false;
       throw connectionError;
     }
     throw networkError;
+  }
+
+  // Handle 502 Bad Gateway (server down or proxy error)
+  if (response.status === 502) {
+    const badGatewayError = new Error(
+      `Backend server is temporarily unavailable (502 Bad Gateway). The server may be starting up or experiencing issues.`
+    );
+    badGatewayError.status = 502;
+    badGatewayError.code = "BAD_GATEWAY";
+    badGatewayError.isNetworkError = true;
+    throw badGatewayError;
   }
 
   let payload = null;
@@ -168,9 +181,12 @@ export const isNetworkError = (error) => {
   return (
     error?.isNetworkError === true ||
     error?.code === "CONNECTION_ERROR" ||
+    error?.code === "BAD_GATEWAY" ||
     error?.status === 0 ||
+    error?.status === 502 ||
     error?.message?.includes("Failed to fetch") ||
     error?.message?.includes("Unable to connect to server") ||
+    error?.message?.includes("CORS") ||
     error?.name === "TypeError"
   );
 };
