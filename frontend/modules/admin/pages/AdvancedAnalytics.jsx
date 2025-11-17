@@ -3,10 +3,6 @@ import { motion } from "framer-motion";
 import { FaSpinner, FaDownload, FaChartLine, FaUsers, FaGraduationCap, FaDollarSign, FaBriefcase } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
-  Line,
-  Bar,
-  Pie,
-  Doughnut,
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
@@ -18,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
 import {
   fetchOverviewAnalytics,
   fetchUserAnalytics,
