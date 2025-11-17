@@ -288,7 +288,28 @@ export const createCourse = async (req, res, next) => {
       });
     }
 
-    const { title, description, category, duration, price, currency, thumbnailUrl, status = "published" } = req.body;
+    const {
+      title,
+      subtitle,
+      description,
+      category,
+      difficulty,
+      price,
+      discountPrice,
+      language,
+      deliveryMode,
+      duration,
+      lessonCount,
+      learningOutcomes,
+      requirements,
+      coverImage,
+      introVideoUrl,
+      syllabus,
+      tags,
+      thumbnailUrl,
+      currency = "AED",
+      status = "published",
+    } = req.body;
 
     if (!title) {
       return res.status(422).json({
@@ -299,16 +320,48 @@ export const createCourse = async (req, res, next) => {
       });
     }
 
+    if (!description || description.length < 60) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Description is required (minimum 60 characters)",
+        },
+      });
+    }
+
+    // Allow price to be 0 for free courses
+    if (price === undefined || price === null || price === "" || isNaN(Number(price))) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Valid price is required (use 0 for free courses)",
+        },
+      });
+    }
+
     const course = await Course.create({
       title,
       description,
-      category,
-      duration: duration || 0,
-      price: price || 0,
+      category: category || "Uncategorised",
+      duration: duration ? parseFloat(duration) : 0,
+      price: Number(price),
       currency: currency || "AED",
-      thumbnailUrl,
+      thumbnailUrl: coverImage || thumbnailUrl || "",
       status,
       instructor: userId, // Super admin as instructor
+      metadata: {
+        subtitle: subtitle || "",
+        difficulty: difficulty || "Intermediate",
+        discountPrice: discountPrice ? Number(discountPrice) : null,
+        language: language || "English",
+        deliveryMode: deliveryMode || "Live cohort",
+        lessonCount: lessonCount || "",
+        learningOutcomes: learningOutcomes || "",
+        requirements: requirements || "",
+        introVideoUrl: introVideoUrl || "",
+        syllabus: syllabus || "",
+        tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean)) : [],
+      },
     });
 
     const populatedCourse = await Course.findById(course._id)
@@ -337,13 +390,53 @@ export const createEbook = async (req, res, next) => {
       });
     }
 
-    const { title, description, pages, downloadUrl, categories, isPublic = true } = req.body;
+    const {
+      title,
+      subtitle,
+      description,
+      price,
+      category,
+      coverImage,
+      previewUrl,
+      tags,
+      downloadUrl,
+      pages,
+      categories,
+      isPublic = true,
+    } = req.body;
 
-    if (!title || !downloadUrl) {
+    if (!title) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Title and downloadUrl are required",
+          message: "Title is required",
+        },
+      });
+    }
+
+    if (!description || description.length < 40) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Description is required (minimum 40 characters)",
+        },
+      });
+    }
+
+    if (!downloadUrl) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Download URL is required",
+        },
+      });
+    }
+
+    if (!pages || pages <= 0) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Number of pages is required and must be greater than 0",
         },
       });
     }
@@ -351,11 +444,23 @@ export const createEbook = async (req, res, next) => {
     const ebook = await EbookResource.create({
       title,
       description,
-      pages,
+      pages: Number(pages),
       downloadUrl,
-      categories: categories || [],
+      categories: category ? [category] : categories || [],
       isPublic,
       publishedAt: isPublic ? new Date() : null,
+      metadata: {
+        subtitle: subtitle || "",
+        price: price ? Number(price) : 0,
+        coverImage: coverImage || "",
+        previewUrl: previewUrl || "",
+        author: "Digital AELA",
+        tags: tags
+          ? Array.isArray(tags)
+            ? tags
+            : tags.split(",").map((t) => t.trim()).filter(Boolean)
+          : [],
+      },
     });
 
     return res.status(201).json({ ebook });

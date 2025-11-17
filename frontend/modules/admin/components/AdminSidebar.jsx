@@ -108,7 +108,7 @@ const AdminSidebar = () => {
           path: "/super-admin/create/book",
           icon: FaPlusCircle,
         },
-        { label: "Post Blog", path: "/super-admin/create/blog", icon: FaEdit },
+        { label: "Post Blog", path: "/blogs/create", icon: FaEdit },
       ],
     },
   ];
