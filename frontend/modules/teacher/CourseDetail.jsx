@@ -153,28 +153,42 @@ const CourseDetail = () => {
   };
 
   useEffect(() => {
-    const existing = getTeacherCourseById(courseId);
+    const loadCourse = async () => {
+      try {
+        setIsLoading(true);
+        const existing = await getTeacherCourseById(courseId);
 
-    if (!existing) {
-      toast.error("We couldn't find that course.");
-      navigate("/teacher/dashboard", { replace: true });
-      return;
+        if (!existing) {
+          toast.error("We couldn't find that course.");
+          navigate("/teacher/dashboard", { replace: true });
+          return;
+        }
+
+        setCourse(existing);
+        setFormData({
+          title: existing.title ?? "",
+          subtitle: existing.subtitle ?? "",
+          price: existing.price?.toString() ?? "",
+          discountPrice: existing.discountPrice?.toString() ?? "",
+          status: existing.status ?? "draft",
+          coverImage: existing.coverImage ?? "",
+          introVideoUrl: existing.introVideoUrl ?? "",
+          description: existing.description ?? "",
+          tags: Array.isArray(existing.tags) ? existing.tags.join(", ") : safeString(existing.tags),
+        });
+        fetchVideos();
+      } catch (error) {
+        console.error("Failed to load course:", error);
+        toast.error("Failed to load course details.");
+        navigate("/teacher/dashboard", { replace: true });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (courseId) {
+      loadCourse();
     }
-
-    setCourse(existing);
-    setFormData({
-      title: existing.title ?? "",
-      subtitle: existing.subtitle ?? "",
-      price: existing.price?.toString() ?? "",
-      discountPrice: existing.discountPrice?.toString() ?? "",
-      status: existing.status ?? "draft",
-      coverImage: existing.coverImage ?? "",
-      introVideoUrl: existing.introVideoUrl ?? "",
-      description: existing.description ?? "",
-      tags: Array.isArray(existing.tags) ? existing.tags.join(", ") : safeString(existing.tags),
-    });
-    setIsLoading(false);
-    fetchVideos();
   }, [courseId, navigate]);
 
   useEffect(() => {
