@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import {
   getPendingReviews,
   moderateReview,
-} from "../../../src/services/api/reviews";
-import RatingDisplay from "../../business-management/common/RatingDisplay";
+} from "../../src/services/api/reviews";
+import RatingDisplay from "../business-management/common/RatingDisplay";
 
 const ReviewModeration = () => {
   const [reviews, setReviews] = useState([]);
