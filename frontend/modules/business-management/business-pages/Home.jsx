@@ -37,9 +37,9 @@ import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
 import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
 import slideOurMission from "../../../src/assets/images/slide-images/our mission.jpg";
 import slideFreeLibrary from "../../../src/assets/images/slide-images/free library.jpg";
-import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.jpg";
+import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.png";
 import slideCollaboration from "../../../src/assets/images/slide-images/collaboration.jpg";
-import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.jpg";
+import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.png";
 import img1 from "../../../src/assets/images/gallery/IMG_20220805_210225.jpg";
 import img2 from "../../../src/assets/images/gallery/IMG_20220805_210308.jpg";
 import img3 from "../../../src/assets/images/gallery/IMG_20220805_210546.jpg";
@@ -335,7 +335,13 @@ const Home = () => {
       {
         id: "ambition-action",
         badge: "Our Mission",
-        title: "Har Ghar Shiksha Affordable & Global Education",
+        title: (
+          <>
+            Affordable & Global Education
+            <br />
+            (Har Ghar Shiksha)
+          </>
+        ),
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
           "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
@@ -1159,8 +1165,8 @@ const Home = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
                 className="order-1 flex items-center justify-center lg:order-2">
-                <div className="relative w-full max-w-[480px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
-                  <div className="relative aspect-4/3 w-full">
+                <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+                  <div className="relative aspect-video w-full">
                     <img
                       src={heroSlides[activeHeroSlide].image}
                       alt={heroSlides[activeHeroSlide].title}

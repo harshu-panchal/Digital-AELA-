@@ -43,7 +43,15 @@ const CourseDetail = () => {
       if (stateCourse?._id) {
         try {
           const backendCourse = await fetchCourseById(stateCourse._id);
-          setCourse({ ...catalogCourse, ...stateCourse, ...backendCourse });
+          // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
+          const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
+          setCourse({ 
+            ...catalogCourse, 
+            ...stateCourse, 
+            ...backendCourse,
+            // Preserve detailedSyllabus from catalog if backend doesn't provide it
+            detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
+          });
         } catch (error) {
           // Fallback to catalog/state course
           setCourse({ ...catalogCourse, ...stateCourse });
