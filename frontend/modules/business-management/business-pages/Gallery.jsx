@@ -1,15 +1,11 @@
 import { motion as Motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
-import img1 from "../../../src/assets/images/gallery/IMG_20220805_210225.jpg";
-import img2 from "../../../src/assets/images/gallery/IMG_20220805_210308.jpg";
-import img3 from "../../../src/assets/images/gallery/IMG_20220805_210546.jpg";
-import img4 from "../../../src/assets/images/gallery/IMG_20221010_173754.jpg";
-import img5 from "../../../src/assets/images/gallery/IMG_20221024_175307.jpg";
-import img6 from "../../../src/assets/images/gallery/IMG_20221025_203619.jpg";
-import img7 from "../../../src/assets/images/gallery/IMG_20230225_170804.jpg";
-import img8 from "../../../src/assets/images/gallery/IMG_20230225_170827.jpg";
-import img9 from "../../../src/assets/images/gallery/IMG_20230603_093034.jpg";
-import img10 from "../../../src/assets/images/gallery/IMG_20240728_191118676_HDR_AE.jpg";
+import img1 from "../../../src/assets/images/gallery/IMG_20230825_155431.jpg";
+import img2 from "../../../src/assets/images/gallery/IMG_20230825_155501.jpg";
+import img3 from "../../../src/assets/images/gallery/IMG_20230825_155510.jpg";
+import img4 from "../../../src/assets/images/gallery/IMG_20230825_155534.jpg";
+import img5 from "../../../src/assets/images/gallery/IMG_20230825_155542 (1).jpg";
+import img6 from "../../../src/assets/images/gallery/IMG_20230825_155624 (1).jpg";
 
 const galleryItems = [
   { id: "gallery-1", image: img1 },
@@ -18,10 +14,6 @@ const galleryItems = [
   { id: "gallery-4", image: img4 },
   { id: "gallery-5", image: img5 },
   { id: "gallery-6", image: img6 },
-  { id: "gallery-7", image: img7 },
-  { id: "gallery-8", image: img8 },
-  { id: "gallery-9", image: img9 },
-  { id: "gallery-10", image: img10 },
 ];
 
 const Gallery = () => {
