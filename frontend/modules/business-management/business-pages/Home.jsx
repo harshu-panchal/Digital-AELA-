@@ -563,11 +563,22 @@ const Home = () => {
       ...course,
       origin,
     };
-    navigate(`/courses/${course.slug}`, {
-      state: {
-        course: payload,
-      },
-    });
+    // If course has _id (backend course), use ID route, otherwise use slug (catalog course)
+    if (course._id) {
+      navigate(`/courses/id/${course._id}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else if (course.slug) {
+      navigate(`/courses/${course.slug}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else {
+      console.error("Course missing both _id and slug:", course);
+    }
   };
 
   // Testimonials data

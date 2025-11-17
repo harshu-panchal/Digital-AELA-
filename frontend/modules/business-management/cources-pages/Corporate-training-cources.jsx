@@ -32,11 +32,22 @@ const CorporateTrainingCourses = () => {
 
   const handleViewCourse = (program) => {
     const payload = augmentCourse(program);
-    navigate(`/courses/${program.slug}`, {
-      state: {
-        course: payload,
-      },
-    });
+    // If course has _id (backend course), use ID route, otherwise use slug (catalog course)
+    if (program._id) {
+      navigate(`/courses/id/${program._id}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else if (program.slug) {
+      navigate(`/courses/${program.slug}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else {
+      console.error("Course missing both _id and slug:", program);
+    }
   };
 
   // Benefits

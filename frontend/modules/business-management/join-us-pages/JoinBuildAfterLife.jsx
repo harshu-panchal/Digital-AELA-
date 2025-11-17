@@ -173,11 +173,22 @@ const JoinBuildAfterLife = () => {
       ...course,
       origin: "join-build-afterlife",
     };
-    navigate(`/courses/${course.slug || course.id}`, {
-      state: {
-        course: payload,
-      },
-    });
+    // If course has _id (backend course), use ID route, otherwise use slug (catalog course)
+    if (course._id) {
+      navigate(`/courses/id/${course._id}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else if (course.slug || course.id) {
+      navigate(`/courses/${course.slug || course.id}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else {
+      console.error("Course missing both _id and slug/id:", course);
+    }
   };
 
   const isLoading = loading || loadingBooks;
