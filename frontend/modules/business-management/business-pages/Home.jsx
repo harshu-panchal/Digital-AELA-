@@ -8,33 +8,17 @@ import {
   FaDownload,
   FaArrowLeft,
   FaArrowRight,
+  FaCalendarCheck,
+  FaCheckCircle,
+  FaPlayCircle,
+  FaCertificate,
+  FaGlobe,
 } from "react-icons/fa";
 import founderImage from "../../../src/assets/Founder.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
 import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
-import clientLogo1 from "../../../src/assets/images/client-logos/1.png";
-import clientLogo2 from "../../../src/assets/images/client-logos/2.png";
-import clientLogo3 from "../../../src/assets/images/client-logos/3.png";
-import clientLogo4 from "../../../src/assets/images/client-logos/4.png";
-import clientLogo5 from "../../../src/assets/images/client-logos/5.png";
-import clientLogo6 from "../../../src/assets/images/client-logos/6.png";
-import clientLogo7 from "../../../src/assets/images/client-logos/7.png";
-import clientLogo8 from "../../../src/assets/images/client-logos/8.png";
-import clientLogo11 from "../../../src/assets/images/client-logos/11.png";
-import clientLogo12 from "../../../src/assets/images/client-logos/12.png";
-import clientLogo13 from "../../../src/assets/images/client-logos/13.png";
-import clientLogo14 from "../../../src/assets/images/client-logos/14.png";
-import clientLogo17 from "../../../src/assets/images/client-logos/17.png";
-import clientLogo19 from "../../../src/assets/images/client-logos/19.png";
-import clientLogo23 from "../../../src/assets/images/client-logos/23.png";
-import clientLogo25 from "../../../src/assets/images/client-logos/25.png";
-import clientLogo26 from "../../../src/assets/images/client-logos/26.png";
-import clientLogo28 from "../../../src/assets/images/client-logos/28.png";
-import clientLogo29 from "../../../src/assets/images/client-logos/29.png";
-import clientLogo30 from "../../../src/assets/images/client-logos/30.png";
-import clientLogo31 from "../../../src/assets/images/client-logos/31.png";
 import slideOurMission from "../../../src/assets/images/slide-images/our mission.jpg";
 import slideFreeLibrary from "../../../src/assets/images/slide-images/free library.jpg";
 import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.png";
@@ -60,8 +44,8 @@ const Home = () => {
   const [isHeroPaused, setIsHeroPaused] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
-  const [activeCertificate, setActiveCertificate] = useState(0);
   const [isCourseRibbonPaused, setIsCourseRibbonPaused] = useState(false);
+  const courseRibbonRef = useRef(null);
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
@@ -146,6 +130,34 @@ const Home = () => {
     refreshBlogs();
   }, [refreshBlogs]);
 
+  // Auto-scroll courses section
+  useEffect(() => {
+    if (!courseRibbonRef.current || isCourseRibbonPaused) return;
+
+    const scrollContainer = courseRibbonRef.current;
+    const scrollSpeed = 1; // pixels per frame
+    let animationFrameId;
+
+    const autoScroll = () => {
+      if (scrollContainer && !isCourseRibbonPaused) {
+        scrollContainer.scrollLeft += scrollSpeed;
+        // Reset to beginning when reaching the end (one-third of total width for seamless loop)
+        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 3) {
+          scrollContainer.scrollLeft = 0;
+        }
+        animationFrameId = requestAnimationFrame(autoScroll);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(autoScroll);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isCourseRibbonPaused]);
+
   const redirectToCoursePayment = (course, extra = {}) => {
     const payload = {
       ...course,
@@ -157,6 +169,37 @@ const Home = () => {
         course: payload,
       },
     });
+  };
+
+  // Manual scroll functions for courses section
+  const scrollCoursesLeft = () => {
+    if (courseRibbonRef.current) {
+      setIsCourseRibbonPaused(true);
+      const scrollAmount = 400; // Adjust scroll amount as needed
+      courseRibbonRef.current.scrollBy({
+        left: -scrollAmount,
+        behavior: "smooth",
+      });
+      // Resume auto-scroll after a delay
+      setTimeout(() => {
+        setIsCourseRibbonPaused(false);
+      }, 3000);
+    }
+  };
+
+  const scrollCoursesRight = () => {
+    if (courseRibbonRef.current) {
+      setIsCourseRibbonPaused(true);
+      const scrollAmount = 400; // Adjust scroll amount as needed
+      courseRibbonRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+      // Resume auto-scroll after a delay
+      setTimeout(() => {
+        setIsCourseRibbonPaused(false);
+      }, 3000);
+    }
   };
 
   const ribbonStats = useMemo(
@@ -452,26 +495,6 @@ const Home = () => {
     );
   };
 
-  const nextCertificate = () => {
-    if (totalCertificateSlides <= 0) return;
-    setActiveCertificate((prev) => (prev + 1) % totalCertificateSlides);
-  };
-
-  const prevCertificate = () => {
-    if (totalCertificateSlides <= 0) return;
-    setActiveCertificate(
-      (prev) => (prev - 1 + totalCertificateSlides) % totalCertificateSlides
-    );
-  };
-
-  const goToCertificate = (index) => {
-    if (totalCertificateSlides <= 0) return;
-    const normalizedIndex =
-      ((index % totalCertificateSlides) + totalCertificateSlides) %
-      totalCertificateSlides;
-    setActiveCertificate(normalizedIndex);
-  };
-
   useEffect(() => {
     if (!ribbonRef.current) return;
 
@@ -620,94 +643,6 @@ const Home = () => {
     });
   }, [testimonials, currentTestimonial]);
 
-  const certificates = [
-    {
-      id: "certificate-1",
-      image:
-        "https://images.unsplash.com/photo-1588075607487-1b2a43b871d7?auto=format&fit=crop&w=1200&q=80",
-      alt: "Stack of certificates with elegant pen on desk",
-    },
-    {
-      id: "certificate-2",
-      image:
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
-      alt: "Instructor presenting certification to a learner",
-    },
-    {
-      id: "certificate-3",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-      alt: "Team celebrating achievement with certificates",
-    },
-    {
-      id: "certificate-4",
-      image:
-        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80",
-      alt: "Close-up of a certification folder on a table",
-    },
-    {
-      id: "certificate-5",
-      image:
-        "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80",
-      alt: "Graduates holding framed certificates",
-    },
-    {
-      id: "certificate-6",
-      image:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-      alt: "Certificate placed beside laptop and notebook",
-    },
-    {
-      id: "certificate-7",
-      image:
-        "https://images.unsplash.com/photo-1484417894907-623942c8ee29?auto=format&fit=crop&w=1200&q=80",
-      alt: "Elegant award certificate with golden seal",
-    },
-    {
-      id: "certificate-8",
-      image:
-        "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80",
-      alt: "Business partners exchanging certification folder",
-    },
-    {
-      id: "certificate-9",
-      image:
-        "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80",
-      alt: "Professional signing diploma certificate",
-    },
-    {
-      id: "certificate-10",
-      image:
-        "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
-      alt: "Certificate with ribbon placed on workspace",
-    },
-    {
-      id: "certificate-11",
-      image:
-        "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80",
-      alt: "Mentor congratulating student with certificate",
-    },
-    {
-      id: "certificate-12",
-      image:
-        "https://images.unsplash.com/photo-1523475472560-753a17d8d7d7?auto=format&fit=crop&w=1200&q=80",
-      alt: "Framed certifications displayed on wall",
-    },
-  ];
-
-  const certificatesPerSlide = 3;
-  const totalCertificateSlides = Math.ceil(
-    certificates.length / certificatesPerSlide
-  );
-  const certificateSlides = Array.from(
-    { length: totalCertificateSlides },
-    (_, slideIndex) =>
-      certificates.slice(
-        slideIndex * certificatesPerSlide,
-        (slideIndex + 1) * certificatesPerSlide
-      )
-  );
-
   const storyVideos = [
     {
       id: "story-1",
@@ -735,33 +670,6 @@ const Home = () => {
     },
   ];
 
-  const clientLogosTopRow = [
-    { id: "client-logo-1", name: "Aurora Corp", src: clientLogo1 },
-    { id: "client-logo-2", name: "Nimble Retail", src: clientLogo2 },
-    { id: "client-logo-3", name: "Swift Foods", src: clientLogo3 },
-    { id: "client-logo-4", name: "Blue Horizon", src: clientLogo4 },
-    { id: "client-logo-5", name: "Nova Services", src: clientLogo5 },
-    { id: "client-logo-6", name: "Zenith Labs", src: clientLogo6 },
-    { id: "client-logo-7", name: "Urban Motors", src: clientLogo7 },
-    { id: "client-logo-8", name: "Metro Banking", src: clientLogo8 },
-    { id: "client-logo-9", name: "Allied Healthcare", src: clientLogo11 },
-    { id: "client-logo-10", name: "EduSpark", src: clientLogo12 },
-    { id: "client-logo-11", name: "Vertex Analytics", src: clientLogo13 },
-    { id: "client-logo-12", name: "Globe Logistics", src: clientLogo14 },
-  ];
-
-  const clientLogosBottomRow = [
-    { id: "client-logo-13", name: "Momentum Retail", src: clientLogo17 },
-    { id: "client-logo-14", name: "Pulse Media", src: clientLogo19 },
-    { id: "client-logo-15", name: "Evergreen Estates", src: clientLogo23 },
-    { id: "client-logo-16", name: "Bright Learning", src: clientLogo25 },
-    { id: "client-logo-17", name: "Pioneer Systems", src: clientLogo26 },
-    { id: "client-logo-18", name: "Prime Distribution", src: clientLogo28 },
-    { id: "client-logo-19", name: "Connect Tech", src: clientLogo29 },
-    { id: "client-logo-20", name: "Axis Consulting", src: clientLogo30 },
-    { id: "client-logo-21", name: "Spectrum Finance", src: clientLogo31 },
-  ];
-
   // Auto-slide testimonials every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -770,16 +678,6 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [testimonials.length]);
-
-  useEffect(() => {
-    if (totalCertificateSlides <= 1) return;
-
-    const certificateInterval = setInterval(() => {
-      setActiveCertificate((prev) => (prev + 1) % totalCertificateSlides);
-    }, 5000);
-
-    return () => clearInterval(certificateInterval);
-  }, [totalCertificateSlides]);
 
   const faqItems = [
     {
@@ -1331,7 +1229,7 @@ const Home = () => {
         `}</style>
       </motion.div>
 
-      {/* Our Learners Work At Section */}
+      {/* 5 Step Learning Strategy Section */}
       <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -1339,71 +1237,154 @@ const Home = () => {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-16 md:py-20 bg-black overflow-hidden">
         <div className="layout-container">
-          {/* Title Area - Black Background */}
+          {/* Title Area */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="mb-8">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-white text-sm md:text-base font-medium">
-                Our Clients
-              </span>
-              <svg
-                className="w-2 h-2 text-[#D4AF37]"
-                fill="currentColor"
-                viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-[#D4AF37] font-display tracking-tight leading-none">
-              Our Learners Work At
+            className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+              Digital AELA –{" "}
+              <span className="text-[#D4AF37]">5 Step Learning Strategy</span>
             </h2>
+            <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
+              Learn → Practice → Get Certified → Grow Your Career
+            </p>
           </motion.div>
 
-          {/* White Ribbon Container */}
-          <div
-            className="relative rounded-2xl p-1 md:p-1 shadow-xl overflow-hidden"
-            style={{
-              backgroundImage:
-                "linear-gradient(to bottom, #ffffff 0%, #ffffff calc(50% - 3px), #000000 calc(50% - 3px), #000000 calc(50% + 3px), #ffffff calc(50% + 3px), #ffffff 100%)",
-            }}>
-            {/* Client Logos - Top Row (Right to Left) */}
-            <div className="pb-6 overflow-hidden">
-              <div className="flex animate-scroll-left">
-                {clientLogosTopRow.map((client, index) => (
-                  <div
-                    key={`${client.id}-${index}`}
-                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
-                    <img
-                      src={client.src}
-                      alt={client.name}
-                      loading="lazy"
-                      className="h-30 md:h-1 lg:h-30 w-auto object-contain max-w-full"
-                    />
-                  </div>
-                ))}
+          {/* Steps Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Step 1: Book a Free Demo Class */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
+                  <FaCalendarCheck className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                  Step 1: Book a Free Demo Class
+                </h3>
               </div>
-            </div>
+              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                Apni level ko check karein, trainer se interact karein aur
+                course ka real demo experience lein.
+              </p>
+              <Link
+                to="/contact/book-demo"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                Book Demo →
+              </Link>
+            </motion.div>
 
-            {/* Client Logos - Bottom Row (Left to Right) */}
-            <div className="overflow-hidden">
-              <div className="flex animate-scroll-right">
-                {clientLogosBottomRow.map((client, index) => (
-                  <div
-                    key={`${client.id}-${index}`}
-                    className="shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] h-[100px] sm:h-[110px] md:h-[120px]">
-                    <img
-                      src={client.src}
-                      alt={client.name}
-                      loading="lazy"
-                      className="h-30 md:h-1 lg:h-30 w-auto object-contain max-w-full"
-                    />
-                  </div>
-                ))}
+            {/* Step 2: Enroll in the Right Course */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
+                  <FaCheckCircle className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                  Step 2: Enroll in the Right Course
+                </h3>
               </div>
-            </div>
+              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                Beginner, Intermediate ya Spoken English - apne goal ke hisaab
+                se course select karke enroll karein.
+              </p>
+              <Link
+                to="/courses"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-[#10B981] hover:bg-[#059669] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                Enroll Now →
+              </Link>
+            </motion.div>
+
+            {/* Step 3: Get Trained (Online + Books) */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
+                  <FaPlayCircle className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                  Step 3: Get Trained (Online + Books)
+                </h3>
+              </div>
+              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                40+ video lessons, 3 printed books, live Q&A sessions, aur
+                practice groups se daily learning ko strong banayein.
+              </p>
+              <Link
+                to="/learn-earn"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                Start Learning →
+              </Link>
+            </motion.div>
+
+            {/* Step 4: Get Certified */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
+                  <FaCertificate className="w-8 h-8 text-black" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                  Step 4: Get Certified
+                </h3>
+              </div>
+              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                Complete your course, pass the assessment, aur internationally
+                recognized certificate hasil karein.
+              </p>
+              <Link
+                to="/courses"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                Get Certified →
+              </Link>
+            </motion.div>
+
+            {/* Step 5: Placement & Abroad Opportunities */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+              className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 md:col-span-2 lg:col-span-1 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
+                  <FaGlobe className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                  Step 5: Placement & Abroad Opportunities
+                </h3>
+              </div>
+              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                Advanced batches, communication training aur interview support -
+                Gulf countries aur global opportunities ke liye tayyar ho
+                jayein.
+              </p>
+              <Link
+                to="/contact"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                Explore Opportunities →
+              </Link>
+            </motion.div>
           </div>
         </div>
       </motion.section>
@@ -1434,30 +1415,37 @@ const Home = () => {
 
           {/* Courses Infinite Scrolling Ribbon */}
           <div
-            className="relative mb-10 overflow-hidden"
+            className="relative mb-10"
             onMouseEnter={() => setIsCourseRibbonPaused(true)}
             onMouseLeave={() => setIsCourseRibbonPaused(false)}>
+            {/* Navigation Arrows */}
+            <button
+              onClick={scrollCoursesLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-[#D4AF37]/90 hover:bg-[#D4AF37] text-black p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center"
+              aria-label="Scroll left">
+              <FaArrowLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={scrollCoursesRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-[#D4AF37]/90 hover:bg-[#D4AF37] text-black p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center"
+              aria-label="Scroll right">
+              <FaArrowRight className="w-5 h-5" />
+            </button>
+
             <style>{`
-              @keyframes scroll-left {
-                0% {
-                  transform: translateX(0);
-                }
-                100% {
-                  transform: translateX(-33.333%);
-                }
+              .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
               }
-              .course-ribbon {
-                animation: scroll-left 60s linear infinite;
-              }
-              .course-ribbon.paused {
-                animation-play-state: paused;
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
               }
             `}</style>
-            <div className="overflow-hidden">
+            <div
+              className="overflow-x-auto overflow-y-hidden scrollbar-hide px-12"
+              ref={courseRibbonRef}>
               <div
-                className={`course-ribbon flex gap-6 ${
-                  isCourseRibbonPaused ? "paused" : ""
-                }`}
+                className="flex gap-6"
                 style={{
                   width: "fit-content",
                 }}>
@@ -2429,103 +2417,6 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Certificate Showcase Section */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="py-12 bg-black">
-        <div className="layout-container">
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="text-center mb-12">
-            <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
-              • ACCREDITED & TRUSTED •
-            </p>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-              Internationally Recognised{" "}
-              <span className="text-[#D4AF37]">Certificates</span>
-            </h2>
-            <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Our programmes are backed by global awarding bodies, ensuring
-              every learner receives verifiable credentials that open doors
-              worldwide.
-            </p>
-          </motion.div>
-
-          <div className="relative">
-            <div className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white/5 backdrop-blur supports-backdrop-filter:bg-white/10">
-              <ul
-                className="flex transition-transform duration-700 ease-[cubic-bezier(0.65,0.05,0.36,1)]"
-                style={{
-                  transform: `translateX(-${activeCertificate * 100}%)`,
-                }}>
-                {certificateSlides.map((slide, slideIndex) => (
-                  <li
-                    key={`certificate-slide-${slideIndex}`}
-                    className="min-w-full bg-[#080808]/60">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                      {slide.map((certificate) => (
-                        <figure
-                          key={certificate.id}
-                          className="group relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505]/40 shadow-[0_16px_40px_rgba(8,8,8,0.55)]">
-                          <img
-                            src={certificate.image}
-                            alt={certificate.alt}
-                            loading="lazy"
-                            className="h-56 w-full object-cover transition duration-700 ease-out group-hover:scale-105"
-                          />
-                          <figcaption className="sr-only">
-                            {certificate.alt}
-                          </figcaption>
-                        </figure>
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 sm:px-6 pointer-events-none">
-              <button
-                type="button"
-                onClick={prevCertificate}
-                className="pointer-events-auto hidden sm:inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-black/60 p-3 text-[#F5D26A] shadow-lg transition hover:border-[#D4AF37]/60 hover:bg-black/80"
-                aria-label="Previous certificates">
-                <FaArrowLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={nextCertificate}
-                className="pointer-events-auto hidden sm:inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-black/60 p-3 text-[#F5D26A] shadow-lg transition hover:border-[#D4AF37]/60 hover:bg-black/80"
-                aria-label="Next certificates">
-                <FaArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-6 flex justify-center gap-2">
-              {certificateSlides.map((_, index) => (
-                <button
-                  key={`certificate-indicator-${index}`}
-                  type="button"
-                  onClick={() => goToCertificate(index)}
-                  className={`h-2.5 w-8 rounded-full transition-all duration-300 ${
-                    index === activeCertificate
-                      ? "bg-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.6)]"
-                      : "bg-white/25 hover:bg-white/40"
-                  }`}
-                  aria-label={`View certificate slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
       {/* Why Choose Digital AELA Section */}
       <motion.section
         initial={{ opacity: 0 }}
@@ -2783,12 +2674,16 @@ const Home = () => {
                 • AELA GALLERY •
               </p>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-                Highlights from Our{" "}
-                <span className="text-[#D4AF37]">Community & Partners</span>
+                From Hesitation to Certification —{" "}
+                <span className="text-[#D4AF37]">
+                  Their Journey, Your Inspiration
+                </span>
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Celebrate wins from community hubs, partner organisations, and
-                learners who are shaping the Afterlife movement across cities.
+                Certificate ke saath real learning, real confidence aur real
+                speaking skills.
+                <br />
+                Aaj se aapka English journey bhi start ho sakta hai.
               </p>
             </motion.div>
 
@@ -2824,8 +2719,8 @@ const Home = () => {
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.96 }}
                 to="/gallery"
-                className="inline-flex w-full max-w-xs items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
-                Go to Gallery
+                className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                Get Certified with Digital AELA → Enroll Now
               </MotionLink>
             </div>
           </div>
