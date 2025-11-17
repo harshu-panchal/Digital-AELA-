@@ -80,6 +80,9 @@ import SystemHealth from "../modules/admin/pages/SystemHealth";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
 import StudentDashboard from "../modules/student/StudentDashboard";
+import EnrolledCourses from "../modules/student/EnrolledCourses";
+import PointsHistory from "../modules/student/PointsHistory";
+import ApplicationHistory from "../modules/student/ApplicationHistory";
 import CourseCreate from "../modules/teacher/CourseCreate";
 import TeacherCourseDetail from "../modules/teacher/CourseDetail";
 import EbookUpload from "../modules/teacher/EbookUpload";
@@ -188,6 +191,38 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["student", "super-admin"]}>
               <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses"
+          element={
+            <ProtectedRoute roles={["student", "super-admin"]}>
+              <EnrolledCourses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses/:courseId"
+          element={
+            <ProtectedRoute roles={["student", "super-admin"]}>
+              <EnrolledCourses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/points/history"
+          element={
+            <ProtectedRoute roles={["student", "super-admin"]}>
+              <PointsHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/applications"
+          element={
+            <ProtectedRoute roles={["student", "super-admin"]}>
+              <ApplicationHistory />
             </ProtectedRoute>
           }
         />

@@ -320,7 +320,7 @@ const StudentDashboard = () => {
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">In-progress courses</h2>
                 <Link
-                  to="/learn-earn/courses"
+                  to="/student/courses"
                   className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
                   View all
                 </Link>
@@ -370,11 +370,18 @@ const StudentDashboard = () => {
               className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Learn & Earn</h2>
-                <Link
-                  to={redeemRoute}
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  Redeem now
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/student/points/history"
+                    className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                    History
+                  </Link>
+                  <Link
+                    to={redeemRoute}
+                    className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                    Redeem now
+                  </Link>
+                </div>
               </header>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
                 <p className="font-semibold text-white">Current streak</p>
@@ -535,11 +542,18 @@ const StudentDashboard = () => {
             className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
             <header className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Job matches for you</h2>
-              <Link
-                to="/explore-jobs"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                View all jobs
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/student/applications"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  My Applications
+                </Link>
+                <Link
+                  to="/explore-jobs"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  View all jobs
+                </Link>
+              </div>
             </header>
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full text-left text-sm text-slate-200">

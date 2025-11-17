@@ -1,11 +1,18 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaDownload } from "react-icons/fa";
+import { FaDownload, FaCheckCircle, FaPlayCircle } from "react-icons/fa";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
+import { useAuth } from "../../../src/contexts/AuthContext";
 import { buildCoursePaymentLink, extractNumericPrice } from "../utils/paymentLinks";
 import { getCourseBySlug } from "../data/courseCatalog";
+import {
+  enrollInCourse,
+  getEnrollmentStatus,
+  fetchCourseById,
+} from "../../../src/services/api/courses";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -20,19 +27,56 @@ const CourseDetail = () => {
   const { slug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   const stateCourse = location.state?.course;
   const catalogCourse = useMemo(() => getCourseBySlug(slug), [slug]);
+  const [course, setCourse] = useState(null);
+  const [enrollmentStatus, setEnrollmentStatus] = useState(null);
+  const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
-  const course = useMemo(() => {
-    if (!stateCourse && !catalogCourse) {
-      return null;
-    }
-    return {
-      ...catalogCourse,
-      ...stateCourse,
+  // Load course data
+  useEffect(() => {
+    const loadCourse = async () => {
+      // If course has _id, try to fetch from backend
+      if (stateCourse?._id) {
+        try {
+          const backendCourse = await fetchCourseById(stateCourse._id);
+          setCourse({ ...catalogCourse, ...stateCourse, ...backendCourse });
+        } catch (error) {
+          // Fallback to catalog/state course
+          setCourse({ ...catalogCourse, ...stateCourse });
+        }
+      } else {
+        setCourse({ ...catalogCourse, ...stateCourse });
+      }
     };
-  }, [catalogCourse, stateCourse]);
+
+    loadCourse();
+  }, [slug, stateCourse, catalogCourse]);
+
+  // Check enrollment status if user is logged in and course has _id
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (!isAuthenticated || !user || !course?._id) {
+        return;
+      }
+
+      setIsCheckingEnrollment(true);
+      try {
+        const status = await getEnrollmentStatus(course._id);
+        setEnrollmentStatus(status);
+      } catch (error) {
+        // Not enrolled or course doesn't exist in backend
+        setEnrollmentStatus({ enrolled: false });
+      } finally {
+        setIsCheckingEnrollment(false);
+      }
+    };
+
+    checkEnrollment();
+  }, [isAuthenticated, user, course?._id]);
 
   useEffect(() => {
     if (!course) {
@@ -63,16 +107,56 @@ const CourseDetail = () => {
   const categoryPath = categoryPaths[category] ?? "/courses";
   const summaryText = longDescription || description || fallbackSummary;
 
-  const handleEnroll = () => {
-    const payload = {
-      ...course,
-      price: priceDisplay,
-    };
-    navigate(buildCoursePaymentLink(payload), {
-      state: {
-        course: payload,
-      },
-    });
+  const handleEnroll = async () => {
+    // If user is not logged in, redirect to login
+    if (!isAuthenticated) {
+      toast.info("Please log in to enroll in this course");
+      navigate("/login/student", {
+        state: { from: location.pathname },
+      });
+      return;
+    }
+
+    // If course has _id, use API enrollment
+    if (course._id) {
+      setIsEnrolling(true);
+      try {
+        const result = await enrollInCourse(course._id);
+        setEnrollmentStatus({ enrolled: true, enrollment: result.enrollment });
+        toast.success("Successfully enrolled in course!");
+        // Optionally navigate to course content
+        // navigate(`/student/courses/${course._id}`);
+      } catch (error) {
+        if (error.code === "ALREADY_ENROLLED") {
+          setEnrollmentStatus({ enrolled: true, enrollment: error.enrollment });
+          toast.info("You are already enrolled in this course");
+        } else {
+          toast.error(error.message || "Failed to enroll. Please try again.");
+        }
+      } finally {
+        setIsEnrolling(false);
+      }
+    } else {
+      // Fallback to payment flow for catalog courses
+      const payload = {
+        ...course,
+        price: priceDisplay,
+      };
+      navigate(buildCoursePaymentLink(payload), {
+        state: {
+          course: payload,
+        },
+      });
+    }
+  };
+
+  const handleContinueLearning = () => {
+    if (course._id && enrollmentStatus?.enrollment) {
+      // Navigate to course content page
+      navigate(`/student/courses/${course._id}`, {
+        state: { enrollment: enrollmentStatus.enrollment },
+      });
+    }
   };
 
   const handleDownloadBrochure = () => {
@@ -168,14 +252,42 @@ const CourseDetail = () => {
               </span>
             </div>
             <div className="flex flex-wrap gap-3">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleEnroll}
-                disabled={priceValue <= 0}
-                className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
-                {priceValue > 0 ? "Enroll Now" : "Connect for Pricing"}
-              </motion.button>
+              {isCheckingEnrollment ? (
+                <motion.button
+                  disabled
+                  className="inline-flex items-center justify-center rounded-full bg-gray-600 px-6 py-3 text-sm font-bold text-white cursor-not-allowed opacity-60">
+                  Checking...
+                </motion.button>
+              ) : enrollmentStatus?.enrolled ? (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleContinueLearning}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] transition hover:brightness-110">
+                    <FaPlayCircle className="h-4 w-4" />
+                    Continue Learning
+                  </motion.button>
+                  <motion.div
+                    className="inline-flex items-center gap-2 rounded-full border border-[#27ae60]/40 bg-[#27ae60]/15 px-4 py-2 text-sm font-semibold text-[#27ae60]">
+                    <FaCheckCircle className="h-4 w-4" />
+                    Enrolled
+                  </motion.div>
+                </>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleEnroll}
+                  disabled={priceValue <= 0 || isEnrolling}
+                  className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+                  {isEnrolling
+                    ? "Enrolling..."
+                    : priceValue > 0
+                    ? "Enroll Now"
+                    : "Connect for Pricing"}
+                </motion.button>
+              )}
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}

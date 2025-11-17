@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { fetchStudentDashboard } from "../services/api/student";
+import { fetchStudentPoints } from "../services/api/points";
 import { isNetworkError } from "../services/api/baseClient";
 
 const PointsContext = createContext();
@@ -43,6 +44,34 @@ export const PointsProvider = ({ children }) => {
 
     setIsLoadingPoints(true);
     try {
+      // Try to load from dedicated points API first
+      try {
+        const pointsData = await fetchStudentPoints();
+        if (pointsData?.points) {
+          const { availableCoins, totalEarned, totalRedeemed } = pointsData.points;
+          
+          setAelaPoints(availableCoins || 0);
+          localStorage.setItem("aelaPoints", (availableCoins || 0).toString());
+          
+          setTotalEarned(totalEarned || 0);
+          localStorage.setItem("totalEarned", (totalEarned || 0).toString());
+          
+          setTotalRedeemed(totalRedeemed || 0);
+          localStorage.setItem("totalRedeemed", (totalRedeemed || 0).toString());
+          
+          setBackendCoinsLoaded(true);
+          setIsLoadingPoints(false);
+          return;
+        }
+      } catch (pointsError) {
+        // If points API fails, fall back to dashboard
+        if (!isNetworkError(pointsError)) {
+          // eslint-disable-next-line no-console
+          console.warn("Points API failed, falling back to dashboard:", pointsError);
+        }
+      }
+
+      // Fallback to dashboard data
       const dashboardData = await fetchStudentDashboard();
       const learnEarnProgress = dashboardData?.learnEarnProgress;
       if (learnEarnProgress) {

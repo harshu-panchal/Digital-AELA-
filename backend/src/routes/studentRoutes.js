@@ -6,6 +6,12 @@ import {
 } from "../controllers/studentController.js";
 import { getStudentDashboard, getPublicUserStats } from "../controllers/studentDashboardController.js";
 import { verifySocialLink, getSocialLinks, addSocialLink, deleteSocialLink } from "../controllers/socialVerificationController.js";
+import {
+  getStudentPoints,
+  updateStudentPoints,
+  getPointsHistory,
+  getPointsStats,
+} from "../controllers/pointsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -30,6 +36,12 @@ router.delete("/social/links/:platform", requireAuth(["student"]), deleteSocialL
 router.post("/social/verify", requireAuth(["student"]), verifySocialLink); // Verify a social link
 router.get("/social/links", requireAuth(["student"]), getSocialLinks); // Get user's social links
 router.get("/:userId/social/links", getSocialLinks); // Public endpoint
+
+// Points management endpoints
+router.get("/points", requireAuth(["student"]), getStudentPoints); // Get student points
+router.patch("/points", requireAuth(["student"]), updateStudentPoints); // Update student points
+router.get("/points/history", requireAuth(["student"]), getPointsHistory); // Get points transaction history
+router.get("/points/stats", requireAuth(["student"]), getPointsStats); // Get points statistics
 
 export default router;
 

@@ -420,3 +420,98 @@ export const updateApplicantStage = async (req, res, next) => {
   }
 };
 
+/**
+ * Get user's job applications (for students/job seekers)
+ * GET /api/v1/jobs/applications
+ */
+export const getMyApplications = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    const { page = 1, pageSize = 20, status } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    // Build query
+    const query = { candidateId: userId };
+    if (status) {
+      query.currentStage = status;
+    }
+
+    const [applications, total] = await Promise.all([
+      JobApplication.find(query)
+        .populate({
+          path: "job",
+          select: "title company location type status publishedAt",
+        })
+        .sort({ submittedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize)),
+      JobApplication.countDocuments(query),
+    ]);
+
+    return res.json({
+      applications,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+        totalPages: Math.ceil(total / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get application statistics for user
+ * GET /api/v1/jobs/applications/stats
+ */
+export const getApplicationStats = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+
+    const [total, byStage] = await Promise.all([
+      JobApplication.countDocuments({ candidateId: userId }),
+      JobApplication.aggregate([
+        { $match: { candidateId: userId } },
+        {
+          $group: {
+            _id: "$currentStage",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const statsByStage = byStage.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+
+    // Get recent applications (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentCount = await JobApplication.countDocuments({
+      candidateId: userId,
+      submittedAt: { $gte: thirtyDaysAgo },
+    });
+
+    return res.json({
+      stats: {
+        total,
+        recent: recentCount,
+        byStage: {
+          screening: statsByStage.screening || 0,
+          assessment: statsByStage.assessment || 0,
+          interview: statsByStage.interview || 0,
+          offer: statsByStage.offer || 0,
+          hired: statsByStage.hired || 0,
+          rejected: statsByStage.rejected || 0,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
