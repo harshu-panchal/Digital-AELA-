@@ -7,7 +7,7 @@ const AdminLayout = () => {
       <div className="flex">
         <AdminSidebar />
         <main className="ml-64 flex-1">
-          <div className="pt-[200px] pl-[50px]">
+          <div className="pt-[100px] pl-[40px]">
             <Outlet />
           </div>
         </main>
