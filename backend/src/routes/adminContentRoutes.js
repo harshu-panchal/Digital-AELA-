@@ -14,6 +14,11 @@ import {
   getPendingJobs,
   getPendingTeachers,
 } from "../controllers/adminApprovalController.js";
+import {
+  getLiveRoomsForModeration,
+  moderateLiveRoom,
+  deleteLiveRoom,
+} from "../controllers/adminLiveRoomController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -37,6 +42,11 @@ router.patch("/teachers/:userId/approve", approveTeacher);
 router.post("/courses", createCourse);
 router.post("/ebooks", createEbook);
 router.post("/blogs", createBlog);
+
+// Live Room Moderation routes
+router.get("/live-rooms", getLiveRoomsForModeration);
+router.patch("/live-rooms/:roomId/moderate", moderateLiveRoom);
+router.delete("/live-rooms/:roomId", deleteLiveRoom);
 
 export default router;
 

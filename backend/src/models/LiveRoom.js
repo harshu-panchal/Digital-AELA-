@@ -45,6 +45,11 @@ const liveRoomSchema = new mongoose.Schema(
       enum: ["scheduled", "live", "ended"],
       default: "scheduled",
     },
+    moderationStatus: {
+      type: String,
+      enum: ["pending", "approved", "suspended", "rejected"],
+      default: "pending",
+    },
     winners: [String],
     metadata: {
       type: mongoose.Schema.Types.Mixed,

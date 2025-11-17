@@ -14,6 +14,7 @@ import {
   FaStar,
   FaChartBar,
   FaCog,
+  FaVideo,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -86,6 +87,11 @@ const AdminSidebar = () => {
           label: "Course Reviews",
           path: "/super-admin/reviews/moderate",
           icon: FaStar,
+        },
+        {
+          label: "Live Rooms",
+          path: "/super-admin/live-rooms/moderate",
+          icon: FaVideo,
         },
       ],
     },
