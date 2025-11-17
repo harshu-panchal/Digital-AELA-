@@ -48,12 +48,15 @@ const JoinBuildAfterLife = () => {
         const publishedCourses = (response.courses || [])
           .filter((course) => course.status === "published") // Extra safety check
           .map((course) => ({
-          id: course._id,
+            // Preserve all original course data first
+            ...course,
+            // Then override with formatted display values
+            id: course._id,
             slug: course._id,
             title: course.title || "Untitled Course",
             description: course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || "",
-          price: course.price ? `AED ${course.price}` : "On Request",
+            price: course.price ? `AED ${course.price}` : "On Request",
             duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
             format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
             features: course.metadata?.tags || course.tags || [],
@@ -62,7 +65,7 @@ const JoinBuildAfterLife = () => {
             difficulty: course.metadata?.difficulty || course.difficulty || "",
             instructor: course.instructor?.fullName || course.instructorName || "Digital AELA",
             type: "course",
-        }));
+          }));
         
         setAfterLifeCourses(publishedCourses);
         
@@ -180,14 +183,22 @@ const JoinBuildAfterLife = () => {
           course: payload,
         },
       });
-    } else if (course.slug || course.id) {
-      navigate(`/courses/${course.slug || course.id}`, {
+    } else if (course.id) {
+      // If no _id but has id, treat it as backend course ID
+      navigate(`/courses/id/${course.id}`, {
+        state: {
+          course: payload,
+        },
+      });
+    } else if (course.slug) {
+      navigate(`/courses/${course.slug}`, {
         state: {
           course: payload,
         },
       });
     } else {
       console.error("Course missing both _id and slug/id:", course);
+      toast.error("Unable to navigate to course. Course information is missing.");
     }
   };
 
