@@ -13,6 +13,7 @@ import {
   getEnrollmentStatus,
   fetchCourseById,
 } from "../../../src/services/api/courses";
+import CourseVideosList from "../../student/CourseVideosList";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -987,6 +988,13 @@ const CourseDetail = () => {
                     </ul>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Course Videos Section */}
+            {course?._id && (
+              <div className="border-t border-[#D4AF37]/20 pt-8">
+                <CourseVideosList courseId={course._id} />
               </div>
             )}
           </div>

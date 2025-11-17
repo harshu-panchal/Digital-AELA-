@@ -96,6 +96,7 @@ import StudentManagement from "../modules/teacher/StudentManagement";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
+import CourseVideoPlayer from "../modules/student/CourseVideoPlayer";
 
 export const App = () => {
   const location = useLocation();
@@ -259,6 +260,19 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["student", "super-admin"]}>
               <ApplicationHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/videos/:videoId"
+          element={
+            <ProtectedRoute
+              roles={[
+                "student",
+                "teacher",
+                "super-admin",
+              ]}>
+              <CourseVideoPlayer />
             </ProtectedRoute>
           }
         />

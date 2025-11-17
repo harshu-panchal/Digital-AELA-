@@ -73,8 +73,13 @@ export const apiRequest = async (
   { method = "GET", body, headers = {}, skipAuth = false, _retry = false } = {}
 ) => {
   const tokens = loadTokens();
+  
+  // Check if body is FormData
+  const isFormData = body instanceof FormData;
+  
+  // Build headers - don't set Content-Type for FormData (browser will set it with boundary)
   const finalHeaders = {
-    "Content-Type": "application/json",
+    ...(!isFormData && { "Content-Type": "application/json" }),
     ...headers,
   };
 
@@ -82,12 +87,15 @@ export const apiRequest = async (
     finalHeaders.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
+  // Prepare body - use FormData as-is, or stringify JSON
+  const requestBody = isFormData ? body : (body ? JSON.stringify(body) : undefined);
+
   let response;
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers: finalHeaders,
-      body: body ? JSON.stringify(body) : undefined,
+      body: requestBody,
     });
   } catch (networkError) {
     // Handle network errors (connection refused, network unavailable, etc.)
