@@ -93,6 +93,7 @@ const Navbar = () => {
         },
         { label: "Free Library", path: "/free-library" },
         { label: "Books", path: "/books" },
+        { label: "Explore Jobs", path: "/explore-jobs" },
       ],
     },
     {

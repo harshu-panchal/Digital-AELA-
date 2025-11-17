@@ -11,6 +11,7 @@ import {
   FaFileAlt,
   FaPlusCircle,
   FaEdit,
+  FaStar,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -68,6 +69,11 @@ const AdminSidebar = () => {
           label: "Teacher Applications",
           path: "/super-admin/approvals/teachers",
           icon: FaChalkboardTeacher,
+        },
+        {
+          label: "Course Reviews",
+          path: "/super-admin/reviews/moderate",
+          icon: FaStar,
         },
       ],
     },

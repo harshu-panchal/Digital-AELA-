@@ -1,25 +1,19 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   HiOutlineBell,
-  HiOutlineMagnifyingGlass,
   HiOutlineAdjustmentsHorizontal,
 } from "react-icons/hi2";
 import { useExploreJobs } from "../context/ExploreJobsContext";
+import JobSearchBar from "./JobSearchBar";
 
 const ExploreJobsTopbar = ({ onFilterToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRecruiterProfile, currentSeekerProfile } = useExploreJobs();
+  const { searchQuery, setSearchQuery } = useExploreJobs();
 
   const isRecruiter = location.pathname.includes("recruiter-dashboard");
   const isSeeker = location.pathname.includes("seeker-dashboard");
-
-  const activeProfile = isRecruiter
-    ? currentRecruiterProfile
-    : isSeeker
-    ? currentSeekerProfile
-    : currentSeekerProfile;
 
   return (
     <header className="sticky top-[104px] z-40 border-b border-white/5 bg-[#010101]/80 backdrop-blur-xl">
@@ -56,28 +50,14 @@ const ExploreJobsTopbar = ({ onFilterToggle }) => {
                 3
               </span>
             </button>
-            <Link
-              to={`/explore-jobs/profile/${activeProfile?.username}`}
-              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-sm font-semibold text-white transition hover:border-white/20">
-              <img
-                src={activeProfile?.avatar}
-                alt={activeProfile?.name}
-                className="h-8 w-8 rounded-full object-cover"
-              />
-              <span className="hidden sm:block">{activeProfile?.name}</span>
-            </Link>
           </div>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <HiOutlineMagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
-            <input
-              type="search"
-              placeholder="Search roles, skills, companies, or people"
-              className="w-full rounded-2xl border border-white/10 bg-black/60 py-3 pl-12 pr-4 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
-            />
-          </div>
+          <JobSearchBar
+            initialQuery={searchQuery}
+            onSearch={setSearchQuery}
+          />
         </div>
       </div>
     </header>

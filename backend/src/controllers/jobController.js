@@ -9,13 +9,24 @@ export const listPublishedJobs = async (req, res, next) => {
     const { page = 1, pageSize = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(pageSize);
 
+    // Build query - exclude expired jobs
+    const now = new Date();
+    const query = {
+      status: "published",
+      $or: [
+        { expirationDate: { $exists: false } },
+        { expirationDate: null },
+        { expirationDate: { $gt: now } },
+      ],
+    };
+
     const [jobs, total] = await Promise.all([
-      JobPost.find({ status: "published" })
+      JobPost.find(query)
         .populate("owner", "fullName email")
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(Number(pageSize)),
-      JobPost.countDocuments({ status: "published" }),
+      JobPost.countDocuments(query),
     ]);
 
     return res.json({
@@ -62,11 +73,21 @@ export const createJob = async (req, res, next) => {
   try {
     const { userId } = req.auth;
     const status = req.body.status || "published";
+    
+    // Calculate expiration date if not provided
+    let expirationDate = req.body.expirationDate;
+    if (!expirationDate && status === "published") {
+      const expiresInDays = req.body.expiresInDays || 30;
+      expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + expiresInDays);
+    }
+
     const job = await JobPost.create({
       ...req.body,
       owner: userId,
       status,
       publishedAt: status === "published" ? new Date() : undefined,
+      expirationDate,
     });
 
     return res.status(201).json(job);
@@ -98,6 +119,14 @@ export const updateJob = async (req, res, next) => {
     const { userId } = req.auth;
     const { jobId } = req.params;
 
+    // Calculate expiration date if job is being published and expiration not set
+    let expirationDate = req.body.expirationDate;
+    if (!expirationDate && req.body.status === "published") {
+      const expiresInDays = req.body.expiresInDays || 30;
+      expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + expiresInDays);
+    }
+
     const job = await JobPost.findOneAndUpdate(
       { _id: jobId, owner: userId },
       {
@@ -106,6 +135,7 @@ export const updateJob = async (req, res, next) => {
           req.body.status === "published"
             ? req.body.publishedAt || new Date()
             : undefined,
+        expirationDate,
       },
       { new: true }
     );
@@ -512,6 +542,192 @@ export const getApplicationStats = async (req, res, next) => {
     });
   } catch (error) {
     return next(error);
+  }
+};
+
+/**
+ * Advanced job search with filters
+ * GET /api/v1/jobs/search
+ */
+export const searchJobs = async (req, res, next) => {
+  try {
+    const {
+      q, // Search query (text search)
+      location,
+      employmentType,
+      isRemote,
+      minSalary,
+      maxSalary,
+      experience,
+      company,
+      page = 1,
+      pageSize = 20,
+      sortBy = "relevance", // relevance, date, salary
+    } = req.query;
+
+    const skip = (Number(page) - 1) * Number(pageSize);
+    const now = new Date();
+
+    // Build base query - exclude expired jobs
+    const expirationConditions = [
+      { expirationDate: { $exists: false } },
+      { expirationDate: null },
+      { expirationDate: { $gt: now } },
+    ];
+
+    const query = {
+      status: "published",
+    };
+
+    // Text search
+    // Note: For optimal performance, create text index: npm run create-job-index
+    // For now, using regex search which works without index
+    if (q) {
+      // Use regex search (works without text index)
+      // If text index exists, you can switch to: query.$text = { $search: q };
+      const textSearchConditions = [
+        { title: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+        { company: { $regex: q, $options: "i" } },
+        { location: { $regex: q, $options: "i" } },
+      ];
+      
+      // Combine expiration and text search with $and
+      query.$and = [
+        { $or: expirationConditions },
+        { $or: textSearchConditions },
+      ];
+    } else {
+      // No text search, just expiration check
+      query.$or = expirationConditions;
+    }
+
+    // Location filter
+    if (location) {
+      query.location = { $regex: location, $options: "i" };
+    }
+
+    // Employment type filter
+    if (employmentType) {
+      const types = Array.isArray(employmentType)
+        ? employmentType
+        : employmentType.split(",");
+      query.employmentType = { $in: types };
+    }
+
+    // Remote filter
+    if (isRemote !== undefined) {
+      query.isRemote = isRemote === "true" || isRemote === true;
+    }
+
+    // Experience filter
+    if (experience) {
+      query.experience = { $regex: experience, $options: "i" };
+    }
+
+    // Company filter
+    if (company) {
+      query.company = { $regex: company, $options: "i" };
+    }
+
+    // Build sort
+    let sort = {};
+    if (sortBy === "date") {
+      sort = { publishedAt: -1, createdAt: -1 };
+    } else if (sortBy === "salary") {
+      sort = { "salary.range": -1, publishedAt: -1 };
+    } else {
+      sort = { publishedAt: -1, createdAt: -1 };
+    }
+
+    // Execute query
+    const findQuery = JobPost.find(query)
+      .populate("owner", "fullName email")
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(pageSize));
+
+    const [jobs, total] = await Promise.all([
+      findQuery,
+      JobPost.countDocuments(query),
+    ]);
+
+    // Get filter options for UI
+    const filterOptions = await getFilterOptions();
+
+    return res.json({
+      data: jobs,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+        totalPages: Math.ceil(total / Number(pageSize)),
+      },
+      filters: filterOptions,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get available filter options for job search
+ */
+async function getFilterOptions() {
+  try {
+    const now = new Date();
+    const activeJobsQuery = {
+      status: "published",
+      $or: [
+        { expirationDate: { $exists: false } },
+        { expirationDate: null },
+        { expirationDate: { $gt: now } },
+      ],
+    };
+
+    const [locations, employmentTypes, companies] = await Promise.all([
+      JobPost.distinct("location", activeJobsQuery),
+      JobPost.distinct("employmentType", activeJobsQuery),
+      JobPost.distinct("company", activeJobsQuery),
+    ]);
+
+    return {
+      locations: locations.filter(Boolean).sort(),
+      employmentTypes: employmentTypes.filter(Boolean),
+      companies: companies.filter(Boolean).sort(),
+    };
+  } catch (error) {
+    console.error("Error getting filter options:", error);
+    return {
+      locations: [],
+      employmentTypes: [],
+      companies: [],
+    };
+  }
+}
+
+/**
+ * Expire old jobs automatically
+ * This should be called by a cron job
+ */
+export const expireOldJobs = async () => {
+  try {
+    const now = new Date();
+    const result = await JobPost.updateMany(
+      {
+        status: "published",
+        expirationDate: { $lte: now },
+      },
+      {
+        $set: { status: "archived" },
+      }
+    );
+
+    console.log(`Expired ${result.modifiedCount} jobs`);
+    return result;
+  } catch (error) {
+    console.error("Error expiring jobs:", error);
+    throw error;
   }
 };
 

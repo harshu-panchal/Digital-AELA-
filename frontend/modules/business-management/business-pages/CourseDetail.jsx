@@ -14,6 +14,7 @@ import {
   fetchCourseById,
 } from "../../../src/services/api/courses";
 import CourseVideosList from "../../student/CourseVideosList";
+import CourseReviews from "../common/CourseReviews";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -1220,6 +1221,16 @@ const CourseDetail = () => {
             {course?._id && (
               <div className="border-t border-[#D4AF37]/20 pt-8">
                 <CourseVideosList courseId={course._id} />
+              </div>
+            )}
+
+            {/* Course Reviews Section */}
+            {course?._id && (
+              <div className="border-t border-[#D4AF37]/20 pt-8">
+                <h2 className="text-2xl font-bold text-white font-display mb-6">
+                  Reviews & Ratings
+                </h2>
+                <CourseReviews courseId={course._id} />
               </div>
             )}
 

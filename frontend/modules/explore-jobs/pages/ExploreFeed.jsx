@@ -7,7 +7,7 @@ import { useExploreJobs } from "../context/ExploreJobsContext";
 const ExploreFeed = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recruiterJobPosts, toggleSavePost, savedPostIds, appliedPostIds, applyToJob } =
+  const { recruiterJobPosts, toggleSavePost, savedPostIds, appliedPostIds, applyToJob, isSearching, searchQuery, searchResults, clearSearch } =
     useExploreJobs();
 
   const sortedPosts = useMemo(
@@ -30,18 +30,44 @@ const ExploreFeed = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Explore Feed
+              {searchQuery || searchResults ? "Search Results" : "Explore Feed"}
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
-              Job opportunities from recruiters
+              {searchQuery || searchResults
+                ? `Found ${searchResults?.total || 0} job${searchResults?.total !== 1 ? "s" : ""}`
+                : "Job opportunities from recruiters"}
             </h1>
+            {searchQuery && (
+              <p className="mt-1 text-sm text-gray-400">
+                Searching for: "{searchQuery}"
+              </p>
+            )}
           </div>
+          <div className="flex items-center gap-3">
+            {searchQuery || searchResults ? (
+              <button
+                onClick={clearSearch}
+                className="text-xs text-gray-400 hover:text-white transition-colors"
+              >
+                Clear search
+              </button>
+            ) : (
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <HiOutlineCalendarDays className="h-4 w-4" />
             Updated daily
+              </div>
+            )}
           </div>
         </div>
 
+        {isSearching ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
+              <p className="mt-4 text-sm text-gray-400">Searching jobs...</p>
+            </div>
+          </div>
+        ) : (
         <PostGrid
           posts={sortedPosts}
           savedPostIds={savedPostIds}
@@ -52,14 +78,19 @@ const ExploreFeed = () => {
           emptyState={
             <>
               <h3 className="text-lg font-semibold text-white">
-                No posts yet — kickstart the feed!
+                  {searchQuery || searchResults
+                    ? "No jobs found"
+                    : "No posts yet — kickstart the feed!"}
               </h3>
               <p className="mt-2 max-w-md text-sm text-gray-400">
-                Recruiters can post jobs here. Check back later for new opportunities.
+                  {searchQuery || searchResults
+                    ? "Try adjusting your search or filters to find more opportunities."
+                    : "Recruiters can post jobs here. Check back later for new opportunities."}
               </p>
             </>
           }
         />
+        )}
       </section>
     </div>
   );

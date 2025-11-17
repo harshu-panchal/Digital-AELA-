@@ -74,11 +74,25 @@ const jobPostSchema = new mongoose.Schema(
     publishedAt: {
       type: Date,
     },
+    expirationDate: {
+      type: Date,
+      index: true,
+    },
+    expiresInDays: {
+      type: Number,
+      default: 30, // Default expiration period in days
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Index for efficient queries
+jobPostSchema.index({ status: 1, expirationDate: 1, publishedAt: -1 });
+// Note: Text index for full-text search must be created via script
+// Run: npm run create-job-index
+// This creates: { title: "text", description: "text", company: "text", location: "text" }
 
 const JobPost = mongoose.model("JobPost", jobPostSchema);
 

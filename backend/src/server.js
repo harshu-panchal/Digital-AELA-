@@ -5,6 +5,7 @@ import app from "./app.js";
 import connectDatabase from "./config/db.js";
 import { setupSocketIO } from "./config/socket.js";
 import { setSocketIO } from "./utils/socketEmitter.js";
+import { setupJobExpirationCron } from "./utils/jobExpirationCron.js";
 
 dotenv.config();
 
@@ -26,6 +27,9 @@ const start = async () => {
   setSocketIO(io);
 
   setupSocketIO(io);
+
+  // Setup cron jobs
+  setupJobExpirationCron();
 
   httpServer.listen(PORT, () => {
     // eslint-disable-next-line no-console

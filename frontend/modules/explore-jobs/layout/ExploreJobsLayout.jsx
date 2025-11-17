@@ -4,13 +4,14 @@ import ExploreJobsSidebar from "../components/Sidebar";
 import ExploreJobsTopbar from "../components/Topbar";
 import ExploreJobsBottomNav from "../components/BottomNav";
 import FiltersPanel from "../components/FiltersPanel";
+import JobSearchFilters from "../components/JobSearchFilters";
 import { useExploreJobs } from "../context/ExploreJobsContext";
 
 const ExploreJobsLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const { openComposer } = useExploreJobs();
+  const { openComposer, searchFilters, setSearchFilters } = useExploreJobs();
 
   const handleCreatePost = () => {
     // Only allow recruiters to create posts
@@ -38,9 +39,11 @@ const ExploreJobsLayout = () => {
 
       <ExploreJobsBottomNav onCreatePost={handleCreatePost} />
 
-      <FiltersPanel
+      <JobSearchFilters
         isOpen={isFiltersOpen}
         onClose={() => setIsFiltersOpen(false)}
+        filters={searchFilters}
+        onFiltersChange={setSearchFilters}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   listPublishedJobs,
+  searchJobs,
   submitApplication,
   getMyApplications,
   getApplicationStats,
@@ -11,6 +12,9 @@ const router = Router();
 
 // Public endpoint - anyone can view published jobs
 router.get("/", listPublishedJobs);
+
+// Advanced search endpoint
+router.get("/search", searchJobs);
 
 // Allow any authenticated user (student, teacher, etc.) to apply
 router.post("/:jobId/apply", requireAuth([]), submitApplication);

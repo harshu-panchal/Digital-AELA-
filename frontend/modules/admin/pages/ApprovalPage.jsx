@@ -52,6 +52,20 @@ const ApprovalPage = () => {
       approveFn: approveTeacher,
       getTitle: (item) => item.fullName,
       getOwner: (item) => item.email,
+      getDetails: (item) => {
+        const meta = item.metadata || {};
+        const details = [];
+        if (meta.expertise) details.push(`Expertise: ${meta.expertise}`);
+        if (meta.experienceYears !== undefined) details.push(`${meta.experienceYears} years experience`);
+        if (meta.phone) details.push(`Phone: ${meta.phone}`);
+        if (meta.primarySubjects && meta.primarySubjects.length > 0) {
+          details.push(`Subjects: ${meta.primarySubjects.join(", ")}`);
+        }
+        if (meta.certifications && meta.certifications.length > 0) {
+          details.push(`Certifications: ${meta.certifications.join(", ")}`);
+        }
+        return details;
+      },
     },
   };
 
@@ -136,12 +150,22 @@ const ApprovalPage = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-white">{config.getTitle(item)}</h3>
-                      <p className="mt-1 text-sm text-gray-400">By: {config.getOwner(item)}</p>
-                      {item.description && (
-                        <p className="mt-2 text-sm text-gray-300 line-clamp-2">{item.description}</p>
+                      <p className="mt-1 text-sm text-gray-400">Email: {config.getOwner(item)}</p>
+                      {config.getDetails && config.getDetails(item).length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {config.getDetails(item).map((detail, idx) => (
+                            <p key={idx} className="text-xs text-gray-300">{detail}</p>
+                          ))}
+                        </div>
+                      )}
+                      {item.metadata?.bio && (
+                        <p className="mt-2 text-sm text-gray-300 line-clamp-2">{item.metadata.bio}</p>
+                      )}
+                      {item.metadata?.about && !item.metadata?.bio && (
+                        <p className="mt-2 text-sm text-gray-300 line-clamp-2">{item.metadata.about}</p>
                       )}
                       <p className="mt-2 text-xs text-gray-500">
-                        Submitted: {new Date(item.createdAt).toLocaleDateString()}
+                        Applied: {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="ml-4 flex gap-2">

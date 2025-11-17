@@ -11,7 +11,6 @@ import ExploreJobsLayout from "../layout/ExploreJobsLayout";
 import ExploreFeed from "../pages/ExploreFeed";
 import RecruiterDashboard from "../pages/RecruiterDashboard";
 import SeekerDashboard from "../pages/SeekerDashboard";
-import ProfilePage from "../pages/ProfilePage";
 import PostDetailPage from "../pages/PostDetailPage";
 import ApplicantProfilePage from "../pages/ApplicantProfilePage";
 import PostModal from "../components/PostModal";
@@ -50,7 +49,6 @@ const ExploreJobsRoutes = () => {
           <Route path="recruiter-dashboard" element={<RecruiterDashboard />} />
           <Route path="recruiter/applicants/:jobId/:applicationId" element={<ApplicantProfilePage />} />
           <Route path="seeker-dashboard" element={<SeekerDashboard />} />
-          <Route path="profile/:username" element={<ProfilePage />} />
           <Route path="post/:id" element={<PostDetailPage />} />
         </Route>
       </Routes>

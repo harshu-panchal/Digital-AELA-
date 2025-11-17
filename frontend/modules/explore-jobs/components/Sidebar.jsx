@@ -4,11 +4,11 @@ import {
   HiOutlineHome,
   HiOutlineUserCircle,
   HiOutlineBriefcase,
-  HiOutlineSparkles,
   HiOutlinePlusCircle,
 } from "react-icons/hi2";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
-const navItems = [
+const baseNavItems = [
   {
     label: "Explore Feed",
     to: "/explore-jobs",
@@ -18,21 +18,24 @@ const navItems = [
     label: "Recruiter Dashboard",
     to: "/explore-jobs/recruiter-dashboard",
     icon: HiOutlineBriefcase,
-  },
-  {
-    label: "Seeker Dashboard",
-    to: "/explore-jobs/seeker-dashboard",
-    icon: HiOutlineSparkles,
+    requiresRole: "recruiter",
   },
 ];
 
 const ExploreJobsSidebar = ({ onCreatePost }) => {
   const location = useLocation();
-  const isProfileRoute = location.pathname.startsWith("/explore-jobs/profile/");
+  const { user } = useAuth();
   const isRecruiterDashboard = location.pathname.includes(
     "recruiter-dashboard"
   );
-  const isSeekerDashboard = location.pathname.includes("seeker-dashboard");
+
+  // Filter nav items based on user role
+  const navItems = baseNavItems.filter((item) => {
+    if (item.requiresRole) {
+      return user?.role === item.requiresRole;
+    }
+    return true;
+  });
 
   return (
     <aside className="hidden w-[260px] shrink-0 border-r border-white/5 bg-[#050505]/80 backdrop-blur-xl lg:flex lg:flex-col">
@@ -49,15 +52,7 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
         </div>
 
         <nav className="space-y-2">
-          {navItems
-            .filter((item) => {
-              // Hide "Seeker Dashboard" when on recruiter dashboard
-              if (isRecruiterDashboard && item.label === "Seeker Dashboard") {
-                return false;
-              }
-              return true;
-            })
-            .map((item) => {
+          {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink
@@ -77,7 +72,7 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
             })}
         </nav>
 
-        {isRecruiterDashboard && (
+        {isRecruiterDashboard && user?.role === "recruiter" && (
           <div className="space-y-4">
             <button
               type="button"
@@ -89,16 +84,6 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
           </div>
         )}
 
-        {isProfileRoute ? (
-          <div className="mt-auto rounded-3xl border border-white/5 bg-[#090909]/60 p-4">
-            <p className="text-sm font-semibold text-white">
-              Viewing recruiter profile
-            </p>
-            <p className="mt-1 text-xs text-gray-400">
-              See job posts and opportunities from this recruiter.
-            </p>
-          </div>
-        ) : (
           <div className="mt-auto space-y-3 rounded-3xl border border-white/5 bg-[#090909]/60 p-4">
             <div className="flex items-center gap-3">
               <HiOutlineUserCircle className="h-8 w-8 text-gray-300" />
@@ -112,7 +97,6 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
               </div>
             </div>
           </div>
-        )}
       </div>
     </aside>
   );

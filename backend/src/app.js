@@ -23,6 +23,7 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import courseVideoRoutes from "./routes/courseVideoRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 const app = express();
 
@@ -120,6 +121,7 @@ app.use("/api/v1/teachers", teacherRoutes);
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1", courseVideoRoutes);
+app.use("/api/v1", reviewRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

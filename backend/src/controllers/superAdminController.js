@@ -425,6 +425,7 @@ export const getDashboardData = async (req, res, next) => {
       pendingCourses,
       pendingEbooks,
       pendingJobs,
+      pendingTeachersList,
       recentEnrollments,
       recentCompletions,
       recentApplications,
@@ -442,6 +443,7 @@ export const getDashboardData = async (req, res, next) => {
       safeQuery(() => Course.find({ status: "draft" }).populate("instructor", "fullName").sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => EbookResource.find({ isPublic: false }).sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => JobPost.find({ status: "draft" }).populate("owner", "fullName").sort({ createdAt: -1 }).limit(10).lean(), []),
+      safeQuery(() => User.find({ role: "teacher", isActive: false }).select("-passwordHash").sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => Enrollment.find().populate("student", "fullName").populate("course", "title").sort({ createdAt: -1 }).limit(5).lean(), []),
       safeQuery(() => LessonCompletion.aggregate([
         { $group: { _id: "$student", lastCompleted: { $max: "$completedAt" }, courseId: { $first: "$course" } } },
@@ -610,6 +612,18 @@ export const getDashboardData = async (req, res, next) => {
       ],
       approvals: [
         {
+          id: "teachers",
+          title: "Teacher Applications",
+          items: (pendingTeachersList || []).map((teacher) => ({
+            id: teacher._id?.toString() || teacher.id || "",
+            title: teacher.fullName || "Unknown",
+            owner: teacher.email || "No email",
+            submitted: formatTimeAgo(teacher.createdAt || new Date()),
+          })),
+          cta: "Review applications",
+          href: "/super-admin/approvals/teachers",
+        },
+        {
           id: "courses",
           title: "Courses Pending Approval",
           items: (pendingCourses || []).map((course) => ({
@@ -619,6 +633,7 @@ export const getDashboardData = async (req, res, next) => {
             submitted: formatTimeAgo(course.createdAt || new Date()),
           })),
           cta: "Review courses",
+          href: "/super-admin/approvals/courses",
         },
         {
           id: "ebooks",
@@ -630,6 +645,7 @@ export const getDashboardData = async (req, res, next) => {
             submitted: formatTimeAgo(ebook.createdAt || new Date()),
           })),
           cta: "Moderate library",
+          href: "/super-admin/approvals/books",
         },
         {
           id: "jobs",
@@ -641,6 +657,7 @@ export const getDashboardData = async (req, res, next) => {
             submitted: formatTimeAgo(job.createdAt || new Date()),
           })),
           cta: "Moderate job board",
+          href: "/super-admin/approvals/jobs",
         },
       ],
       activities: (sortedActivities || []).slice(0, 20),

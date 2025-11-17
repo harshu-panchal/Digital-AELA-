@@ -141,11 +141,15 @@ export const registerUser = async (req, res, next) => {
       };
     }
     
+    // For teachers, set isActive to false by default (requires admin approval)
+    const isActive = role === "teacher" ? false : true;
+    
     const user = await User.create({
       email: normalizedEmail,
       passwordHash,
       fullName: normalizedFullName,
       role,
+      isActive,
       metadata,
     });
 
@@ -235,6 +239,16 @@ export const loginUser = async (req, res, next) => {
         error: {
           code: "UNAUTHORIZED",
           message: "Invalid email or password",
+        },
+      });
+    }
+
+    // Check if teacher account is approved (isActive must be true for teachers)
+    if (user.role === "teacher" && !user.isActive) {
+      return res.status(403).json({
+        error: {
+          code: "ACCOUNT_PENDING_APPROVAL",
+          message: "Your teacher account is pending approval from the administrator. You will be able to login once your account is approved.",
         },
       });
     }

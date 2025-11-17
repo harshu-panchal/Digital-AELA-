@@ -379,11 +379,11 @@ const SuperAdminDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <button
-                        type="button"
-                        className="mt-3 text-[11px] font-semibold text-[#F5D26A] hover:text-[#FFE28A]">
+                      <Link
+                        to={column.href || `/super-admin/approvals/${column.id}`}
+                        className="mt-3 inline-block text-[11px] font-semibold text-[#F5D26A] hover:text-[#FFE28A] transition-colors">
                         {column.cta} →
-                      </button>
+                      </Link>
                     </div>
                   ))
                 )}

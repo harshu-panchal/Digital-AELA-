@@ -6,7 +6,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "lint": "eslint \"src/**/*.js\"",
-    "create-admin": "node scripts/createSuperAdmin.js"
+    "create-admin": "node scripts/createSuperAdmin.js",
+    "create-job-index": "node scripts/createJobTextIndex.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,6 +21,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "nodemailer": "^6.9.8",
+    "node-cron": "^3.0.3",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },

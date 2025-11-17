@@ -9,7 +9,7 @@ import {
   initialSeekerProfiles,
 } from "../data/posts";
 import { useAuth } from "../../../src/contexts/AuthContext";
-import { fetchPublishedJobs, submitJobApplication } from "../../../src/services/api/jobs";
+import { fetchPublishedJobs, searchJobs, submitJobApplication } from "../../../src/services/api/jobs";
 import { getStoredTokens } from "../../../src/services/api/baseClient";
 
 const ExploreJobsContext = createContext(undefined);
@@ -29,6 +29,16 @@ export const ExploreJobsProvider = ({ children }) => {
   const [savedPostIds, setSavedPostIds] = useState(() => new Set());
   const [composerState, setComposerState] = useState({ mode: null, post: null });
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilters, setSearchFilters] = useState({
+    location: "",
+    employmentType: [],
+    isRemote: undefined,
+    experience: "",
+    company: "",
+  });
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
 
   // Map backend job to post format
   const mapBackendJobToPost = useMemo(
@@ -93,8 +103,69 @@ export const ExploreJobsProvider = ({ children }) => {
       }
     };
 
+    // Only load jobs if not searching
+    if (!searchQuery && !Object.values(searchFilters).some(v => {
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === "boolean") return v !== undefined;
+      return v && v !== "";
+    })) {
     loadJobs();
-  }, [mapBackendJobToPost]);
+    }
+  }, [mapBackendJobToPost, searchQuery, searchFilters]);
+
+  // Perform search when query or filters change
+  useEffect(() => {
+    const performSearch = async () => {
+      const hasSearchQuery = searchQuery && searchQuery.trim().length > 0;
+      const hasFilters = Object.values(searchFilters).some(v => {
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === "boolean") return v !== undefined;
+        return v && v !== "";
+      });
+
+      if (!hasSearchQuery && !hasFilters) {
+        setSearchResults(null);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+      // Clean filters - remove undefined/null values
+      const cleanFilters = Object.entries(searchFilters).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value) && value.length > 0) {
+            acc[key] = value;
+          } else if (!Array.isArray(value) && value !== "") {
+            acc[key] = value;
+          }
+        }
+        return acc;
+      }, {});
+
+      const response = await searchJobs({
+        q: searchQuery || undefined,
+        ...cleanFilters,
+        pageSize: 50,
+      });
+        const backendJobs = (response?.data || []).map(mapBackendJobToPost);
+        setSearchResults({
+          jobs: backendJobs,
+          total: response?.meta?.total || 0,
+        });
+      } catch (error) {
+        console.error("Failed to search jobs:", error);
+        toast.error("Failed to search jobs");
+        setSearchResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(performSearch, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, searchFilters, mapBackendJobToPost]);
 
   const currentRecruiterProfile = useMemo(
     () =>
@@ -328,10 +399,14 @@ export const ExploreJobsProvider = ({ children }) => {
     [posts]
   );
 
-  const recruiterJobPosts = useMemo(
-    () => posts.filter((post) => post.type === "job"),
-    [posts]
-  );
+  const recruiterJobPosts = useMemo(() => {
+    // If search is active, return search results
+    if (searchResults) {
+      return searchResults.jobs;
+    }
+    // Otherwise return all job posts
+    return posts.filter((post) => post.type === "job");
+  }, [posts, searchResults]);
 
   const seekerShowcasePosts = useMemo(
     () => posts.filter((post) => post.type === "resume"),
@@ -352,6 +427,11 @@ export const ExploreJobsProvider = ({ children }) => {
     savedPostIds,
     highlightTags,
     composerState,
+    searchQuery,
+    searchFilters,
+    isSearching,
+    searchResults,
+    isLoadingJobs,
     openComposer: (mode, post = null) => setComposerState({ mode, post }),
     closeComposer: () => setComposerState({ mode: null, post: null }),
     toggleSavePost,
@@ -367,6 +447,19 @@ export const ExploreJobsProvider = ({ children }) => {
     setRecruiterProfiles,
     setSeekerProfiles,
     setPosts,
+    setSearchQuery,
+    setSearchFilters,
+    clearSearch: () => {
+      setSearchQuery("");
+      setSearchFilters({
+        location: "",
+        employmentType: [],
+        isRemote: undefined,
+        experience: "",
+        company: "",
+      });
+      setSearchResults(null);
+    },
   };
 
   return (

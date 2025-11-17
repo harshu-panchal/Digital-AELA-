@@ -57,7 +57,6 @@ import ExploreJobsLayout from "../modules/explore-jobs/layout/ExploreJobsLayout"
 import ExploreFeed from "../modules/explore-jobs/pages/ExploreFeed";
 import RecruiterDashboard from "../modules/explore-jobs/pages/RecruiterDashboard";
 import SeekerDashboard from "../modules/explore-jobs/pages/SeekerDashboard";
-import ExploreProfilePage from "../modules/explore-jobs/pages/ProfilePage";
 import ExplorePostDetailPage from "../modules/explore-jobs/pages/PostDetailPage";
 import { ExploreJobsProvider } from "../modules/explore-jobs/context/ExploreJobsContext";
 import JoinAsTeacher from "../modules/business-management/join-us-pages/JoinAsTeacher";
@@ -72,6 +71,7 @@ import AdminLogin from "../modules/admin/AdminLogin";
 import AdminLayout from "../modules/admin/layout/AdminLayout";
 import UserManagement from "../modules/admin/pages/UserManagement";
 import ApprovalPage from "../modules/admin/pages/ApprovalPage";
+import ReviewModeration from "../modules/admin/ReviewModeration";
 import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
 import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
@@ -122,6 +122,7 @@ export const App = () => {
           <Route path="users/:role" element={<UserManagement />} />
           <Route path="users/id/:userId" element={<UserDetail />} />
           <Route path="approvals/:type" element={<ApprovalPage />} />
+          <Route path="reviews/moderate" element={<ReviewModeration />} />
           <Route path="system-health" element={<SystemHealth />} />
           <Route path="create/course" element={<AdminCourseCreate />} />
           <Route path="create/book" element={<AdminBookCreate />} />
@@ -463,22 +464,6 @@ export const App = () => {
                   "super-admin",
                 ]}>
                 <SeekerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile/:username"
-            element={
-              <ProtectedRoute
-                roles={[
-                  "student",
-                  "teacher",
-                  "recruiter",
-                  "influencer",
-                  "freelancer",
-                  "super-admin",
-                ]}>
-                <ExploreProfilePage />
               </ProtectedRoute>
             }
           />
