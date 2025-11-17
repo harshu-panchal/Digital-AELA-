@@ -343,6 +343,7 @@ export const App = () => {
           }
         />
         <Route path="/courses/:slug" element={<CourseDetail />} />
+        <Route path="/courses/id/:courseId" element={<CourseDetail />} />
         <Route path="/courses/payment" element={<CoursePayment />} />
         <Route
           path="/gift/payment"

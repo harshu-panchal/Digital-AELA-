@@ -256,6 +256,14 @@ const EnrolledCourses = () => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
+                      {course._id && (
+                        <Link
+                          to={`/courses/id/${course._id}`}
+                          className="flex items-center justify-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-4 py-2 text-sm font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/20">
+                          View Details
+                          <HiOutlineArrowRight className="h-4 w-4" />
+                        </Link>
+                      )}
                       {enrollment.status === "active" && course._id && (
                         <Link
                           to={`/student/courses/${course._id}`}

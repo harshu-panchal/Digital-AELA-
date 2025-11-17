@@ -25,13 +25,19 @@ const fallbackSummary =
   "Digital AELA courses blend live mentorship, guided cohorts, and project practice so you can apply skills immediately in your career.";
 
 const CourseDetail = () => {
-  const { slug } = useParams();
+  const { slug, courseId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
   const stateCourse = location.state?.course;
-  const catalogCourse = useMemo(() => getCourseBySlug(slug), [slug]);
+  const catalogCourse = useMemo(() => {
+    // Only try to get by slug if we have a slug and it's not a courseId route
+    if (slug && !courseId) {
+      return getCourseBySlug(slug);
+    }
+    return null;
+  }, [slug, courseId]);
   const [course, setCourse] = useState(null);
   const [enrollmentStatus, setEnrollmentStatus] = useState(null);
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
@@ -40,7 +46,21 @@ const CourseDetail = () => {
   // Load course data
   useEffect(() => {
     const loadCourse = async () => {
-      // If course has _id, try to fetch from backend
+      // Priority 1: If courseId is in URL params, fetch by ID
+      if (courseId) {
+        try {
+          const backendCourse = await fetchCourseById(courseId);
+          setCourse(backendCourse);
+          return;
+        } catch (error) {
+          console.error("Failed to load course by ID:", error);
+          toast.error("Course not found");
+          navigate("/courses", { replace: true });
+          return;
+        }
+      }
+
+      // Priority 2: If course has _id in state, try to fetch from backend
       if (stateCourse?._id) {
         try {
           const backendCourse = await fetchCourseById(stateCourse._id);
@@ -53,17 +73,36 @@ const CourseDetail = () => {
             // Preserve detailedSyllabus from catalog if backend doesn't provide it
             detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
           });
+          return;
         } catch (error) {
           // Fallback to catalog/state course
           setCourse({ ...catalogCourse, ...stateCourse });
+          return;
         }
-      } else {
-        setCourse({ ...catalogCourse, ...stateCourse });
       }
+
+      // Priority 3: If slug looks like a MongoDB ObjectId, try to fetch by ID
+      if (slug && slug.length === 24 && /^[0-9a-fA-F]{24}$/.test(slug)) {
+        try {
+          const backendCourse = await fetchCourseById(slug);
+          setCourse({
+            ...backendCourse,
+            slug: slug, // Preserve slug for navigation
+          });
+          return;
+        } catch (error) {
+          // Fallback to catalog course
+          setCourse({ ...catalogCourse, ...stateCourse });
+          return;
+        }
+      }
+
+      // Priority 4: Use catalog course or state course
+      setCourse({ ...catalogCourse, ...stateCourse });
     };
 
     loadCourse();
-  }, [slug, stateCourse, catalogCourse]);
+  }, [slug, courseId, stateCourse, catalogCourse, navigate]);
 
   // Check enrollment status if user is logged in and course has _id
   useEffect(() => {
@@ -99,16 +138,28 @@ const CourseDetail = () => {
 
   const {
     title,
+    subtitle,
     category,
     description,
     longDescription,
     duration,
     format,
+    deliveryMode,
+    language,
+    difficulty,
+    lessonCount,
+    learningOutcomes,
+    requirements,
+    syllabus,
     price,
+    discountPrice,
     priceLabel,
     image,
+    coverImage,
+    introVideoUrl,
     features = [],
     detailedSyllabus,
+    tags = [],
   } = course;
 
   const priceDisplay = priceLabel || price || "On Request";
@@ -218,7 +269,12 @@ const CourseDetail = () => {
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
               {title}
             </h1>
-            <p className="max-w-2xl text-base text-gray-300 sm:text-lg">
+            {subtitle && (
+              <p className="max-w-2xl text-lg text-[#D4AF37] font-semibold mt-2">
+                {subtitle}
+              </p>
+            )}
+            <p className="max-w-2xl text-base text-gray-300 sm:text-lg mt-2">
               {summaryText}
             </p>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300">
@@ -326,7 +382,7 @@ const CourseDetail = () => {
               )}
             </div>
           </div>
-          {image && (
+          {(image || coverImage) && (
             <motion.div
               initial={{ opacity: 0, scale: 0.92, rotate: 2 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -334,7 +390,7 @@ const CourseDetail = () => {
               className="relative mx-auto flex max-w-[420px] flex-1 justify-center">
               <div className="absolute inset-0 -translate-y-6 rounded-[32px] bg-gradient-to-br from-[#D4AF37]/30 via-transparent to-[#6A8BFF]/20 blur-2xl" />
               <img
-                src={image}
+                src={coverImage || image}
                 alt={title}
                 loading="lazy"
                 className="relative z-10 w-full rounded-[28px] border border-white/10 object-cover shadow-[0_28px_60px_rgba(0,0,0,0.55)]"
@@ -997,6 +1053,108 @@ const CourseDetail = () => {
                 <CourseVideosList courseId={course._id} />
               </div>
             )}
+
+            {/* Additional Course Information */}
+            {(subtitle || category || difficulty || language || deliveryMode || lessonCount || learningOutcomes || requirements || syllabus || (tags && tags.length > 0)) && (
+              <div className="border-t border-[#D4AF37]/20 pt-8 space-y-6">
+                {subtitle && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-3">About This Course</h3>
+                    <p className="text-base text-gray-300 leading-relaxed">{subtitle}</p>
+                  </div>
+                )}
+
+                {(category || difficulty || language || deliveryMode || lessonCount) && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">Course Details</h3>
+                    <div className="grid gap-3 text-sm text-gray-300 sm:grid-cols-2">
+                      {category && (
+                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                          <div>
+                            <span className="text-gray-400">Category:</span> <span className="text-white">{category}</span>
+                          </div>
+                        </div>
+                      )}
+                      {difficulty && (
+                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                          <div>
+                            <span className="text-gray-400">Difficulty:</span> <span className="text-white">{difficulty}</span>
+                          </div>
+                        </div>
+                      )}
+                      {language && (
+                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                          <div>
+                            <span className="text-gray-400">Language:</span> <span className="text-white">{language}</span>
+                          </div>
+                        </div>
+                      )}
+                      {deliveryMode && (
+                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                          <div>
+                            <span className="text-gray-400">Delivery Mode:</span> <span className="text-white">{deliveryMode}</span>
+                          </div>
+                        </div>
+                      )}
+                      {lessonCount && (
+                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                          <div>
+                            <span className="text-gray-400">Lessons:</span> <span className="text-white">{lessonCount}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {learningOutcomes && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">Learning Outcomes</h3>
+                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                      <p className="text-sm text-gray-200 whitespace-pre-line">{learningOutcomes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {requirements && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">Requirements</h3>
+                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                      <p className="text-sm text-gray-200 whitespace-pre-line">{requirements}</p>
+                    </div>
+                  </div>
+                )}
+
+                {syllabus && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">Syllabus</h3>
+                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                      <p className="text-sm text-gray-200 whitespace-pre-line">{syllabus}</p>
+                    </div>
+                  </div>
+                )}
+
+                {tags && Array.isArray(tags) && tags.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#F5D26A]">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <aside className="space-y-6">
             <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6 shadow-lg">
@@ -1010,7 +1168,7 @@ const CourseDetail = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Format</span>
-                  <span>{format ?? "Guided cohort"}</span>
+                  <span>{format || deliveryMode || "Guided cohort"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Investment</span>
@@ -1018,6 +1176,26 @@ const CourseDetail = () => {
                     {priceDisplay}
                   </span>
                 </div>
+                {discountPrice && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Discounted Price</span>
+                    <span className="text-green-400 font-semibold">
+                      AED {discountPrice}
+                    </span>
+                  </div>
+                )}
+                {language && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Language</span>
+                    <span>{language}</span>
+                  </div>
+                )}
+                {difficulty && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Difficulty</span>
+                    <span>{difficulty}</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6 shadow-lg">
