@@ -24,12 +24,12 @@ import slideFreeLibrary from "../../../src/assets/images/slide-images/free libra
 import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.png";
 import slideCollaboration from "../../../src/assets/images/slide-images/collaboration.jpg";
 import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.png";
-import img1 from "../../../src/assets/images/gallery/IMG_20220805_210225.jpg";
-import img2 from "../../../src/assets/images/gallery/IMG_20220805_210308.jpg";
-import img3 from "../../../src/assets/images/gallery/IMG_20220805_210546.jpg";
-import img4 from "../../../src/assets/images/gallery/IMG_20221010_173754.jpg";
-import img5 from "../../../src/assets/images/gallery/IMG_20221024_175307.jpg";
-import img6 from "../../../src/assets/images/gallery/IMG_20221025_203619.jpg";
+import img1 from "../../../src/assets/images/gallery/IMG_20230825_155431.jpg";
+import img2 from "../../../src/assets/images/gallery/IMG_20230825_155501.jpg";
+import img3 from "../../../src/assets/images/gallery/IMG_20230825_155510.jpg";
+import img4 from "../../../src/assets/images/gallery/IMG_20230825_155534.jpg";
+import img5 from "../../../src/assets/images/gallery/IMG_20230825_155542 (1).jpg";
+import img6 from "../../../src/assets/images/gallery/IMG_20230825_155624 (1).jpg";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
