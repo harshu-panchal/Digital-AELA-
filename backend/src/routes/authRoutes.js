@@ -4,6 +4,8 @@ import {
   logout,
   refreshToken,
   registerUser,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 import { uploadSingle, handleUploadError } from "../middleware/uploadMiddleware.js";
 
@@ -16,6 +18,10 @@ router.post("/register", uploadSingle("profileImage"), handleUploadError, regist
 router.post("/login", loginUser);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);
+
+// Password reset endpoints (no authentication required)
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;
 

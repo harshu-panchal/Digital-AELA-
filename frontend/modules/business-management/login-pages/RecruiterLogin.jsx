@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
@@ -153,6 +153,7 @@ const RecruiterLogin = () => {
               </label>
               <button
                 type="button"
+                onClick={() => navigate("/forgot-password")}
                 className="text-[#F5D26A] transition hover:text-[#FFE28A]">
                 Forgot password?
               </button>

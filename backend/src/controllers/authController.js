@@ -289,3 +289,147 @@ export const logout = async (_req, res, next) => {
   }
 };
 
+/**
+ * Request password reset (forgot password)
+ * POST /api/v1/auth/forgot-password
+ */
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email is required",
+        },
+      });
+    }
+
+    // Normalize email
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Find user by email
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // Always return success to prevent email enumeration attacks
+    // Don't reveal whether the email exists or not
+    if (!user) {
+      return res.status(200).json({
+        message: "If an account with that email exists, a password reset link has been sent.",
+      });
+    }
+
+    // Import PasswordResetToken model
+    const PasswordResetToken = (await import("../models/PasswordResetToken.js")).default;
+
+    // Generate reset token (32-byte random hex string)
+    const crypto = (await import("crypto")).default;
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Delete any existing reset tokens for this user
+    await PasswordResetToken.deleteMany({ user: user._id });
+
+    // Create new reset token
+    await PasswordResetToken.create({
+      user: user._id,
+      token,
+      expiresAt,
+    });
+
+    // Send password reset email
+    try {
+      const { sendPasswordResetEmail } = await import("../utils/emailService.js");
+      await sendPasswordResetEmail(user.email, token, user.fullName);
+    } catch (emailError) {
+      // Log error but don't fail the request
+      console.error("Failed to send password reset email:", emailError);
+      // In production, you might want to queue this for retry
+    }
+
+    return res.status(200).json({
+      message: "If an account with that email exists, a password reset link has been sent.",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Reset password with token
+ * POST /api/v1/auth/reset-password
+ */
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Token and new password are required",
+        },
+      });
+    }
+
+    // Validate password strength (minimum 6 characters)
+    if (newPassword.length < 6) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Password must be at least 6 characters long",
+        },
+      });
+    }
+
+    // Import PasswordResetToken model
+    const PasswordResetToken = (await import("../models/PasswordResetToken.js")).default;
+
+    // Find valid token
+    const resetToken = await PasswordResetToken.findValidToken(token);
+
+    if (!resetToken) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired reset token. Please request a new password reset.",
+        },
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update user password
+    await User.findByIdAndUpdate(resetToken.user._id, {
+      passwordHash,
+    });
+
+    // Mark token as used
+    await resetToken.markAsUsed();
+
+    // Delete all other reset tokens for this user
+    await PasswordResetToken.deleteMany({
+      user: resetToken.user._id,
+      _id: { $ne: resetToken._id },
+    });
+
+    // Send confirmation email
+    try {
+      const { sendPasswordResetSuccessEmail } = await import("../utils/emailService.js");
+      await sendPasswordResetSuccessEmail(resetToken.user.email, resetToken.user.fullName);
+    } catch (emailError) {
+      // Log but don't fail - password was already reset
+      console.error("Failed to send password reset success email:", emailError);
+    }
+
+    return res.status(200).json({
+      message: "Password has been successfully reset. You can now log in with your new password.",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+

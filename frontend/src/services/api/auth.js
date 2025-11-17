@@ -60,3 +60,29 @@ export const logoutRecruiterAccount = async () => {
   }
 };
 
+// ==================== Password Reset Functions ====================
+
+/**
+ * Request password reset (forgot password)
+ * POST /api/v1/auth/forgot-password
+ */
+export const requestPasswordReset = async (email) => {
+  return apiRequest("/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+    skipAuth: true,
+  });
+};
+
+/**
+ * Reset password with token
+ * POST /api/v1/auth/reset-password
+ */
+export const resetPassword = async (token, newPassword) => {
+  return apiRequest("/auth/reset-password", {
+    method: "POST",
+    body: { token, newPassword },
+    skipAuth: true,
+  });
+};
+

@@ -43,6 +43,8 @@ import TeacherLogin from "../modules/business-management/login-pages/TeacherLogi
 import StudentLogin from "../modules/business-management/login-pages/StudentLogin";
 import RecruiterLogin from "../modules/business-management/login-pages/RecruiterLogin";
 import BranchOwnerLogin from "../modules/business-management/login-pages/BranchOwnerLogin";
+import ForgotPassword from "../modules/business-management/login-pages/ForgotPassword";
+import ResetPassword from "../modules/business-management/login-pages/ResetPassword";
 import TeacherRegister from "../modules/business-management/login-pages/TeacherRegister";
 import StudentRegister from "../modules/business-management/login-pages/StudentRegister";
 import RecruiterRegister from "../modules/business-management/login-pages/RecruiterRegister";
@@ -410,6 +412,8 @@ export const App = () => {
             }
           />
         </Route>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/login/teacher" element={<TeacherLogin />} />
         <Route path="/register/teacher" element={<TeacherRegister />} />
         <Route path="/login/student" element={<StudentLogin />} />
