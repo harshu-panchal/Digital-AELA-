@@ -75,7 +75,7 @@ const CourseDetail = () => {
   const { slug, courseId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, tokens } = useAuth();
 
   const stateCourse = location.state?.course;
   const catalogCourse = useMemo(() => {
@@ -184,10 +184,12 @@ const CourseDetail = () => {
     loadCourse();
   }, [slug, courseId, stateCourse, catalogCourse, navigate]);
 
-  // Check enrollment status if user is logged in and course has _id
+  // Check enrollment status if user is logged in with valid tokens and course has _id
   useEffect(() => {
     const checkEnrollment = async () => {
-      if (!isAuthenticated || !user || !course?._id) {
+      // Only check enrollment if user is authenticated AND has valid access token
+      if (!isAuthenticated || !user || !tokens?.accessToken || !course?._id) {
+        setEnrollmentStatus({ enrolled: false });
         return;
       }
 
@@ -196,21 +198,26 @@ const CourseDetail = () => {
         const status = await getEnrollmentStatus(course._id);
         setEnrollmentStatus(status);
       } catch (error) {
-        // Course doesn't exist or other error
-        // If it's a 404, the course doesn't exist
-        // Otherwise, assume not enrolled
-        if (error.status === 404) {
+        // Handle errors gracefully
+        if (error.status === 401) {
+          // Unauthorized - token expired or invalid, silently handle
+          // User will need to log in again, but don't show error
+          setEnrollmentStatus({ enrolled: false });
+        } else if (error.status === 404) {
           // Course not found - this is a real error
           console.error("Course not found:", error);
+          setEnrollmentStatus({ enrolled: false });
+        } else {
+          // Other errors - assume not enrolled
+          setEnrollmentStatus({ enrolled: false });
         }
-        setEnrollmentStatus({ enrolled: false });
       } finally {
         setIsCheckingEnrollment(false);
       }
     };
 
     checkEnrollment();
-  }, [isAuthenticated, user, course?._id]);
+  }, [isAuthenticated, user, tokens?.accessToken, course?._id]);
 
   if (isLoadingCourse) {
     return (
