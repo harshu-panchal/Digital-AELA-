@@ -1338,7 +1338,7 @@ const Home = () => {
                 practice groups se daily learning ko strong banayein.
               </p>
               <Link
-                to="/learn-earn"
+                to="/books"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 Start Learning →
               </Link>

@@ -196,7 +196,13 @@ const CourseDetail = () => {
         const status = await getEnrollmentStatus(course._id);
         setEnrollmentStatus(status);
       } catch (error) {
-        // Not enrolled or course doesn't exist in backend
+        // Course doesn't exist or other error
+        // If it's a 404, the course doesn't exist
+        // Otherwise, assume not enrolled
+        if (error.status === 404) {
+          // Course not found - this is a real error
+          console.error("Course not found:", error);
+        }
         setEnrollmentStatus({ enrolled: false });
       } finally {
         setIsCheckingEnrollment(false);

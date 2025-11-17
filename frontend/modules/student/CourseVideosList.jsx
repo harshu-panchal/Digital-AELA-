@@ -25,14 +25,26 @@ const CourseVideosList = ({ courseId }) => {
         }));
 
         setVideos(videosResponse.videos || []);
-        setHasAccess(videosResponse.hasAccess || false);
+        const userHasAccess = videosResponse.hasAccess || false;
+        setHasAccess(userHasAccess);
 
         // Progress is only available for enrolled students
-        try {
-          const progressResponse = await getCourseProgress(courseId);
-          setCourseProgress(progressResponse);
-        } catch (error) {
-          // Progress not available - user not enrolled or not authenticated
+        // Only fetch progress if user has access to avoid unnecessary 403 errors
+        if (userHasAccess) {
+          try {
+            const progressResponse = await getCourseProgress(courseId);
+            setCourseProgress(progressResponse);
+          } catch (error) {
+            // Progress not available - should not happen if hasAccess is true
+            // But handle gracefully just in case
+            if (error.status !== 403) {
+              // Only log unexpected errors
+              console.error("Failed to load course progress:", error);
+            }
+            setCourseProgress(null);
+          }
+        } else {
+          // User doesn't have access, so no progress to fetch
           setCourseProgress(null);
         }
       } catch (error) {

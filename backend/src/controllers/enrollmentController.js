@@ -146,6 +146,17 @@ export const getEnrollmentStatus = async (req, res, next) => {
       });
     }
 
+    // Check if course exists first
+    const course = await Course.findById(courseId).lean();
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
     const enrollment = await Enrollment.findOne({
       student: userId,
       course: courseId,
@@ -154,12 +165,11 @@ export const getEnrollmentStatus = async (req, res, next) => {
       .lean();
 
     if (!enrollment) {
-      return res.status(404).json({
-        error: {
-          code: "NOT_ENROLLED",
-          message: "You are not enrolled in this course",
-        },
+      // Return 200 with enrolled: false instead of 404
+      // This is more RESTful and prevents console errors for expected cases
+      return res.status(200).json({
         enrolled: false,
+        enrollment: null,
       });
     }
 
