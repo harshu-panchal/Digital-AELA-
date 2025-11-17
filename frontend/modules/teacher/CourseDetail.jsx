@@ -75,7 +75,7 @@ const CourseDetail = () => {
   const [isQuizSaving, setIsQuizSaving] = useState(false);
   const [quizLinkMode, setQuizLinkMode] = useState("new");
   const [selectedQuizId, setSelectedQuizId] = useState("");
-  const [availableQuizzes, setAvailableQuizzes] = useState(() => getTeacherQuizzes());
+  const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [videos, setVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState(null);
@@ -178,7 +178,15 @@ const CourseDetail = () => {
   }, [courseId, navigate]);
 
   useEffect(() => {
-    const refresh = () => setAvailableQuizzes(getTeacherQuizzes());
+    const refresh = async () => {
+      try {
+        const quizzes = await getTeacherQuizzes();
+        setAvailableQuizzes(Array.isArray(quizzes) ? quizzes : []);
+      } catch (error) {
+        console.error("Failed to load quizzes:", error);
+        setAvailableQuizzes([]);
+      }
+    };
     refresh();
     const handleStorage = (event) => {
       if (event.key === "aela.teacher.quizzes") {
@@ -231,6 +239,7 @@ const CourseDetail = () => {
   }, [course]);
 
   const linkableQuizzes = useMemo(() => {
+    if (!Array.isArray(availableQuizzes)) return [];
     const attachedIds = new Set((course?.quizzes ?? []).map((item) => item.id));
     return availableQuizzes.filter((quizItem) => !attachedIds.has(quizItem.id));
   }, [availableQuizzes, course]);

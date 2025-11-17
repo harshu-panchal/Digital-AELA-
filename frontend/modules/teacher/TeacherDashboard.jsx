@@ -236,7 +236,7 @@ const TeacherDashboard = () => {
 
     // Filter quizzes by current teacher (check metadata.createdBy)
     const teacherId = user?.id || user?._id;
-    const teacherQuizzes = teacherId
+    const teacherQuizzes = teacherId && Array.isArray(quizzes)
       ? quizzes.filter((quiz) => {
           const createdBy = quiz.metadata?.createdBy;
           return (
@@ -245,7 +245,7 @@ const TeacherDashboard = () => {
             createdBy.toString() === teacherId.toString()
           );
         })
-      : quizzes;
+      : Array.isArray(quizzes) ? quizzes : [];
     
     const quizCount = teacherQuizzes.length;
     const publishedQuizzes = teacherQuizzes.filter((quiz) => quiz.status === "published");
@@ -253,7 +253,7 @@ const TeacherDashboard = () => {
 
     // Get published courses count from courses or dashboard data
     const publishedCoursesCount = dashboardData?.headlineStats?.coursesPublished 
-      || courses.filter((c) => c.status === "published").length;
+      || (Array.isArray(courses) ? courses.filter((c) => c.status === "published").length : 0);
 
     const stats = [
       {
@@ -351,11 +351,13 @@ const TeacherDashboard = () => {
     const purchases = dashboardData?.recentPurchases || [];
 
     // Use backend quiz data with participants (already filtered by teacher)
-    const backendQuizzes = dashboardData?.quizzesWithParticipants || [];
+    const backendQuizzes = Array.isArray(dashboardData?.quizzesWithParticipants) 
+      ? dashboardData.quizzesWithParticipants 
+      : [];
     
     // Additional frontend filter as safety measure - only show quizzes created by this teacher
     // (teacherId is already declared above, so we reuse it)
-    const filteredBackendQuizzes = teacherId
+    const filteredBackendQuizzes = teacherId && Array.isArray(backendQuizzes)
       ? backendQuizzes.filter((q) => {
           // Backend should already filter, but double-check on frontend
           const createdBy = q.metadata?.createdBy;
