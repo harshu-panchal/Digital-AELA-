@@ -107,6 +107,7 @@ export const uploadCourseVideo = async (req, res, next) => {
 export const getCourseVideos = async (req, res, next) => {
   try {
     const { courseId } = req.params;
+    // req.auth might be null if no authentication provided
     const { userId, userRole } = req.auth || {};
 
     if (!mongoose.isValidObjectId(courseId)) {

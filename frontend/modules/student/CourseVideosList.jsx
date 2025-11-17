@@ -18,18 +18,30 @@ const CourseVideosList = ({ courseId }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [videosResponse, progressResponse] = await Promise.all([
-          getCourseVideos(courseId),
-          getCourseProgress(courseId).catch(() => null),
-        ]);
+        // Videos list is always accessible (shows locked for non-enrolled)
+        const videosResponse = await getCourseVideos(courseId).catch(() => ({
+          videos: [],
+          hasAccess: false,
+        }));
 
         setVideos(videosResponse.videos || []);
         setHasAccess(videosResponse.hasAccess || false);
-        setCourseProgress(progressResponse);
+
+        // Progress is only available for enrolled students
+        try {
+          const progressResponse = await getCourseProgress(courseId);
+          setCourseProgress(progressResponse);
+        } catch (error) {
+          // Progress not available - user not enrolled or not authenticated
+          setCourseProgress(null);
+        }
       } catch (error) {
         // Don't show error if user is not enrolled (expected behavior)
         if (error.status !== 403 && error.status !== 404) {
-          toast.error("Failed to load course videos");
+          console.error("Failed to load course videos:", error);
+          // Still show empty state instead of error
+          setVideos([]);
+          setHasAccess(false);
         }
       } finally {
         setLoading(false);
@@ -84,6 +96,11 @@ const CourseVideosList = ({ courseId }) => {
             </span>{" "}
             Complete ({courseProgress.course.completedVideos}/
             {courseProgress.course.totalVideos} videos)
+          </div>
+        )}
+        {!hasAccess && videos.length > 0 && (
+          <div className="text-xs text-slate-400">
+            <span className="text-[#D4AF37]">Enroll to access videos</span>
           </div>
         )}
       </div>

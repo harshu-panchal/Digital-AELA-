@@ -54,3 +54,53 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
   }
 };
 
+/**
+ * Optional authentication middleware
+ * Sets req.auth if token is valid, but doesn't fail if token is missing
+ * Useful for public endpoints that can work with or without authentication
+ */
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "");
+
+    if (!token) {
+      // No token provided - continue without auth
+      req.auth = null;
+      return next();
+    }
+
+    try {
+      const payload = verifyAccessToken(token);
+      const user = await User.findById(payload.sub);
+      
+      if (user) {
+        // Ensure userId is always a string
+        const userIdString = user._id ? user._id.toString() : (user.id ? user.id.toString() : null);
+        
+        if (userIdString) {
+          req.auth = {
+            userId: userIdString,
+            userRole: user.role,
+            userFullName: user.fullName,
+            email: user.email,
+          };
+        } else {
+          req.auth = null;
+        }
+      } else {
+        req.auth = null;
+      }
+    } catch (tokenError) {
+      // Invalid or expired token - continue without auth
+      req.auth = null;
+    }
+
+    return next();
+  } catch (error) {
+    // On any error, continue without auth
+    req.auth = null;
+    return next();
+  }
+};
+

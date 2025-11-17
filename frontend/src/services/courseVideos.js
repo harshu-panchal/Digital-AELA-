@@ -32,6 +32,7 @@ export const uploadCourseVideo = async (courseId, videoFile, videoData) => {
 export const getCourseVideos = async (courseId) => {
   const response = await apiRequest(`/courses/${courseId}/videos`, {
     method: "GET",
+    skipAuth: true, // Allow unauthenticated access - backend will handle access control
   });
   return response;
 };

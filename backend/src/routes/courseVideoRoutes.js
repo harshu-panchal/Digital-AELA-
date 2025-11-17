@@ -1,5 +1,5 @@
 import express from "express";
-import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireAuth, optionalAuth } from "../middleware/authMiddleware.js";
 import {
   uploadSingleVideo,
   handleVideoUploadError,
@@ -26,8 +26,8 @@ router.post(
   uploadCourseVideo
 );
 
-// Get all videos for a course
-router.get("/courses/:courseId/videos", requireAuth(), getCourseVideos);
+// Get all videos for a course (public endpoint - optional auth)
+router.get("/courses/:courseId/videos", optionalAuth, getCourseVideos);
 
 // Get single video
 router.get("/videos/:videoId", requireAuth(), getVideo);
