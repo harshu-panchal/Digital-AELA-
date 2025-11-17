@@ -72,6 +72,8 @@ import AdminLayout from "../modules/admin/layout/AdminLayout";
 import UserManagement from "../modules/admin/pages/UserManagement";
 import ApprovalPage from "../modules/admin/pages/ApprovalPage";
 import ReviewModeration from "../modules/admin/ReviewModeration";
+import AdvancedAnalytics from "../modules/admin/pages/AdvancedAnalytics";
+import SystemSettings from "../modules/admin/pages/SystemSettings";
 import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
 import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
@@ -123,6 +125,8 @@ export const App = () => {
           <Route path="users/id/:userId" element={<UserDetail />} />
           <Route path="approvals/:type" element={<ApprovalPage />} />
           <Route path="reviews/moderate" element={<ReviewModeration />} />
+          <Route path="analytics" element={<AdvancedAnalytics />} />
+          <Route path="settings" element={<SystemSettings />} />
           <Route path="system-health" element={<SystemHealth />} />
           <Route path="create/course" element={<AdminCourseCreate />} />
           <Route path="create/book" element={<AdminBookCreate />} />

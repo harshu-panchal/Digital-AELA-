@@ -12,6 +12,8 @@ import {
   FaPlusCircle,
   FaEdit,
   FaStar,
+  FaChartBar,
+  FaCog,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -20,6 +22,16 @@ const AdminSidebar = () => {
       label: "Dashboard",
       path: "/super-admin",
       icon: FaHome,
+    },
+    {
+      label: "Analytics",
+      path: "/super-admin/analytics",
+      icon: FaChartBar,
+    },
+    {
+      label: "Settings",
+      path: "/super-admin/settings",
+      icon: FaCog,
     },
     {
       label: "User Management",
