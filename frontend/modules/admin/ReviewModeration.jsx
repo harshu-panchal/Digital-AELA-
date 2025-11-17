@@ -18,7 +18,7 @@ const ReviewModeration = () => {
   useEffect(() => {
     loadPendingReviews();
   }, [page]);
-
+//ueurbveiv
   const loadPendingReviews = async () => {
     try {
       setLoading(true);
