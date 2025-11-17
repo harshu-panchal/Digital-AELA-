@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
-import { englishCourses } from "../data/englishCourses";
+import { fetchPublishedCourses } from "../../../src/services/api/courses";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -13,6 +15,52 @@ const EnglishLanguageCourses = () => {
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
   const navigate = useNavigate();
+  const [englishCourses, setEnglishCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchPublishedCourses();
+        
+        if (!response || !response.courses) {
+          console.warn("No courses data received from API");
+          setEnglishCourses([]);
+          return;
+        }
+
+        // Filter courses by category "English Language" (case-insensitive)
+        const filteredCourses = (response.courses || [])
+          .filter((course) => {
+            const category = course.category || course.metadata?.category || "";
+            return category.toLowerCase() === "english language";
+          })
+          .map((course) => ({
+            ...course,
+            id: course._id,
+            slug: course._id,
+            title: course.title || "Untitled Course",
+            description: course.description || course.metadata?.subtitle || course.subtitle || "",
+            image: course.thumbnailUrl || course.thumbnail || course.image || course.coverImage || "",
+            price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
+            duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
+            format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
+            features: course.metadata?.tags || course.tags || [],
+          }));
+        
+        setEnglishCourses(filteredCourses);
+      } catch (error) {
+        console.error("Failed to load courses:", error);
+        setEnglishCourses([]);
+        toast.error("Failed to load courses. Please try refreshing the page.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, []);
 
   const augmentCourse = (course) => ({
     ...course,
@@ -157,9 +205,17 @@ const EnglishLanguageCourses = () => {
             </p>
           </motion.div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-[#D4AF37] text-lg">Loading courses...</div>
+            </div>
+          )}
+
           {/* Courses Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
-            {englishCourses.map((course, index) => (
+          {!loading && englishCourses.length > 0 && (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
+              {englishCourses.map((course, index) => (
               <motion.div
                 key={course.slug}
                 initial={{ y: 40, opacity: 0 }}
@@ -183,22 +239,14 @@ const EnglishLanguageCourses = () => {
                 }}>
                 <div className="h-40 w-full overflow-hidden">
                   <img
-                    src={course.image}
+                    src={course.image || "https://via.placeholder.com/300x200?text=Course"}
                     alt={course.title}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                  <div className="min-h-[28px] mb-4">
-                  {(course.slug === "basic-english" ||
-                    course.slug === "advanced-english" ||
-                    course.slug === "personalised-english-speaking") && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                        Most Enrolled
-                    </span>
-                  )}
-                  </div>
+                  <div className="min-h-[28px] mb-4"></div>
                   <div className="mb-4">
                     <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
                       {course.title}
@@ -241,19 +289,21 @@ const EnglishLanguageCourses = () => {
                     </span>
                   </div>
 
-                  <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
+                  {course.features && course.features.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                      Key Highlights
-                    </p>
-                    <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                      {course.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                        Key Highlights
+                      </p>
+                      <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                        {course.features.slice(0, 3).map((feature, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                     <div className="flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
@@ -296,8 +346,16 @@ const EnglishLanguageCourses = () => {
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* No Courses Message */}
+          {!loading && englishCourses.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-gray-300 text-lg">No English Language courses available yet.</p>
+            </div>
+          )}
 
           {/* CTA Button */}
           <motion.div

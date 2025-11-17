@@ -136,7 +136,7 @@ const AdminBookCreate = () => {
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,210,106,0.15),transparent_70%)]" />
 
-      <main className="relative z-10 pt-24 pb-20">
+      <main className="relative z-10 pt-4 pb-20">
         <section className="layout-container space-y-8">
           <header className="space-y-3">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/30 bg-[#F5D26A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
