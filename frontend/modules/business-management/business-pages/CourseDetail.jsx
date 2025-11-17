@@ -42,63 +42,93 @@ const CourseDetail = () => {
   const [enrollmentStatus, setEnrollmentStatus] = useState(null);
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isLoadingCourse, setIsLoadingCourse] = useState(true);
 
   // Load course data
   useEffect(() => {
     const loadCourse = async () => {
-      // Priority 1: If courseId is in URL params, fetch by ID
-      if (courseId) {
-        try {
-          const backendCourse = await fetchCourseById(courseId);
-          setCourse(backendCourse);
-          return;
-        } catch (error) {
-          console.error("Failed to load course by ID:", error);
-          toast.error("Course not found");
+      setIsLoadingCourse(true);
+      try {
+        // Priority 1: If courseId is in URL params, fetch by ID
+        if (courseId) {
+          try {
+            const backendCourse = await fetchCourseById(courseId);
+            setCourse(backendCourse);
+            setIsLoadingCourse(false);
+            return;
+          } catch (error) {
+            console.error("Failed to load course by ID:", error);
+            toast.error("Course not found");
+            setIsLoadingCourse(false);
+            navigate("/", { replace: true });
+            return;
+          }
+        }
+
+        // Priority 2: If course has _id in state, try to fetch from backend
+        if (stateCourse?._id) {
+          try {
+            const backendCourse = await fetchCourseById(stateCourse._id);
+            // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
+            const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
+            setCourse({ 
+              ...catalogCourse, 
+              ...stateCourse, 
+              ...backendCourse,
+              // Preserve detailedSyllabus from catalog if backend doesn't provide it
+              detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
+            });
+            setIsLoadingCourse(false);
+            return;
+          } catch (error) {
+            // Fallback to catalog/state course
+            const fallbackCourse = { ...catalogCourse, ...stateCourse };
+            setCourse(fallbackCourse);
+            setIsLoadingCourse(false);
+            // Only redirect if we have no course data at all
+            if (!fallbackCourse || (!fallbackCourse.title && !fallbackCourse._id)) {
+              navigate("/", { replace: true });
+            }
+            return;
+          }
+        }
+
+        // Priority 3: If slug looks like a MongoDB ObjectId, try to fetch by ID
+        if (slug && slug.length === 24 && /^[0-9a-fA-F]{24}$/.test(slug)) {
+          try {
+            const backendCourse = await fetchCourseById(slug);
+            setCourse({
+              ...backendCourse,
+              slug: slug, // Preserve slug for navigation
+            });
+            setIsLoadingCourse(false);
+            return;
+          } catch (error) {
+            // Fallback to catalog course
+            const fallbackCourse = { ...catalogCourse, ...stateCourse };
+            setCourse(fallbackCourse);
+            setIsLoadingCourse(false);
+            // Only redirect if we have no course data at all
+            if (!fallbackCourse || (!fallbackCourse.title && !fallbackCourse._id)) {
+              navigate("/", { replace: true });
+            }
+            return;
+          }
+        }
+
+        // Priority 4: Use catalog course or state course
+        const finalCourse = { ...catalogCourse, ...stateCourse };
+        setCourse(finalCourse);
+        setIsLoadingCourse(false);
+        // Only redirect if we have no course data at all
+        if (!finalCourse || (!finalCourse.title && !finalCourse._id && !finalCourse.slug)) {
           navigate("/", { replace: true });
-          return;
         }
+      } catch (error) {
+        console.error("Error loading course:", error);
+        setIsLoadingCourse(false);
+        navigate("/", { replace: true });
       }
-
-      // Priority 2: If course has _id in state, try to fetch from backend
-      if (stateCourse?._id) {
-        try {
-          const backendCourse = await fetchCourseById(stateCourse._id);
-          // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
-          const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
-          setCourse({ 
-            ...catalogCourse, 
-            ...stateCourse, 
-            ...backendCourse,
-            // Preserve detailedSyllabus from catalog if backend doesn't provide it
-            detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
-          });
-          return;
-        } catch (error) {
-          // Fallback to catalog/state course
-          setCourse({ ...catalogCourse, ...stateCourse });
-          return;
-        }
-      }
-
-      // Priority 3: If slug looks like a MongoDB ObjectId, try to fetch by ID
-      if (slug && slug.length === 24 && /^[0-9a-fA-F]{24}$/.test(slug)) {
-        try {
-          const backendCourse = await fetchCourseById(slug);
-          setCourse({
-            ...backendCourse,
-            slug: slug, // Preserve slug for navigation
-          });
-          return;
-        } catch (error) {
-          // Fallback to catalog course
-          setCourse({ ...catalogCourse, ...stateCourse });
-          return;
-        }
-      }
-
-      // Priority 4: Use catalog course or state course
-      setCourse({ ...catalogCourse, ...stateCourse });
     };
 
     loadCourse();
@@ -126,12 +156,16 @@ const CourseDetail = () => {
     checkEnrollment();
   }, [isAuthenticated, user, course?._id]);
 
-  useEffect(() => {
-    if (!course) {
-      // Navigate to home page if course is not found
-      navigate("/", { replace: true });
-    }
-  }, [course, navigate]);
+  if (isLoadingCourse) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading course...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!course) {
     return null;
@@ -313,9 +347,48 @@ const CourseDetail = () => {
                   {format}
                 </span>
               )}
+              {difficulty && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 px-3 py-1.5">
+                  <svg
+                    className="h-4 w-4 text-[#D4AF37]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                    />
+                  </svg>
+                  {difficulty}
+                </span>
+              )}
+              {language && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 px-3 py-1.5">
+                  <svg
+                    className="h-4 w-4 text-[#D4AF37]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+                    />
+                  </svg>
+                  {language}
+                </span>
+              )}
               <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 px-3 py-1.5 text-[#F5D26A] font-semibold">
                 Fee: {priceDisplay}
               </span>
+              {discountPrice && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-green-400 font-semibold">
+                  Discount: AED {discountPrice}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap gap-3">
               {isCheckingEnrollment ? (
@@ -404,6 +477,25 @@ const CourseDetail = () => {
       <section className="bg-[#111111] py-12">
         <div className="layout-container grid gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
+            {/* Intro Video Section */}
+            {introVideoUrl && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-white font-display mb-4">
+                  Course Introduction Video
+                </h2>
+                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-[#D4AF37]/20">
+                  <video
+                    src={introVideoUrl}
+                    controls
+                    className="h-full w-full"
+                    poster={coverImage || image}
+                    preload="metadata">
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+            )}
+
             <div>
               <h2 className="text-2xl font-bold text-white font-display mb-4">
                 Course Overview
