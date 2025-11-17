@@ -55,7 +55,7 @@ const CourseDetail = () => {
         } catch (error) {
           console.error("Failed to load course by ID:", error);
           toast.error("Course not found");
-          navigate("/courses", { replace: true });
+          navigate("/", { replace: true });
           return;
         }
       }
@@ -128,7 +128,8 @@ const CourseDetail = () => {
 
   useEffect(() => {
     if (!course) {
-      navigate("/courses", { replace: true });
+      // Navigate to home page if course is not found
+      navigate("/", { replace: true });
     }
   }, [course, navigate]);
 

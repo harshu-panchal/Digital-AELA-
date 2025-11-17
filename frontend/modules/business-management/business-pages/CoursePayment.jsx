@@ -102,11 +102,11 @@ const CoursePayment = () => {
         <div className="absolute inset-0 bg-black" />
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <Link
-            to="/courses"
+            to="/"
             className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4"
           >
             <FaArrowLeft className="w-4 h-4" />
-            <span>Back to Courses</span>
+            <span>Back to Home</span>
           </Link>
         </div>
       </motion.section>

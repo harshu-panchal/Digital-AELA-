@@ -186,7 +186,7 @@ const EnrolledCourses = () => {
                   : `You don't have any ${filter} courses at the moment`}
               </p>
               <Link
-                to="/courses"
+                to="/"
                 className="mt-6 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/10 px-6 py-3 text-sm font-semibold text-sky-200 transition hover:border-sky-300/70 hover:bg-sky-500/20">
                 Browse Available Courses
                 <HiOutlineArrowRight className="h-4 w-4" />

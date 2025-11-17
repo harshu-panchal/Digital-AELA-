@@ -1312,7 +1312,7 @@ const Home = () => {
                 se course select karke enroll karein.
               </p>
               <Link
-                to="/courses"
+                to="/courses/english-language"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#10B981] hover:bg-[#059669] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 Enroll Now →
               </Link>
@@ -1364,7 +1364,7 @@ const Home = () => {
                 recognized certificate hasil karein.
               </p>
               <Link
-                to="/courses"
+                to="/"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 Get Certified →
               </Link>
