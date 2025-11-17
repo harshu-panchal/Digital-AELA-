@@ -1090,7 +1090,7 @@ const Home = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -120 }}
               transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
-              className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
+              className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:-translate-x-[80px]">
               <div className="order-2 text-left lg:order-1">
                 <motion.span
                   initial={{ opacity: 0, y: -10 }}
@@ -1164,7 +1164,7 @@ const Home = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
-                className="order-1 flex items-center justify-center lg:order-2 lg:-translate-x-8">
+                className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
                 <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
                   <div className="relative aspect-video w-full">
                     <img
