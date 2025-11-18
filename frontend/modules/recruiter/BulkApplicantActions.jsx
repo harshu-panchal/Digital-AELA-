@@ -13,7 +13,7 @@ import {
   performBulkApplicantAction,
   searchCandidates,
   fetchRecruiterJobs,
-} from "../../../src/services/api/recruiter";
+} from "../../src/services/api/recruiter.js";
 
 const BulkApplicantActions = () => {
   const [loading, setLoading] = useState(false);

@@ -15,7 +15,7 @@ import {
   fetchInterviewSchedule,
   updateInterviewStatus,
   searchCandidates,
-} from "../../../src/services/api/recruiter";
+} from "../../../src/services/api/recruiter.js";
 
 const InterviewScheduling = () => {
   const [loading, setLoading] = useState(true);

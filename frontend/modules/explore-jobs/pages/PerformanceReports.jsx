@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  HiOutlineDocumentDownload,
+  HiArrowDownTray,
   HiOutlineCalendar,
   HiOutlineChartBar,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import { fetchPerformanceReport } from "../../../src/services/api/recruiter";
+import { fetchPerformanceReport } from "../../../src/services/api/recruiter.js";
 
 const PerformanceReports = () => {
   const [loading, setLoading] = useState(true);
@@ -80,7 +80,7 @@ const PerformanceReports = () => {
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-black/60 hover:border-white/20 transition"
           >
-            <HiOutlineDocumentDownload className="w-5 h-5" />
+            <HiArrowDownTray className="w-5 h-5" />
             Export CSV
           </button>
         </div>

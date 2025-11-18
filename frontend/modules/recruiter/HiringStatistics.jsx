@@ -7,7 +7,7 @@ import {
   HiOutlineChartBar,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import { fetchHiringStatistics } from "../../../src/services/api/recruiter";
+import { fetchHiringStatistics } from "../../src/services/api/recruiter.js";
 import { Bar } from "react-chartjs-2";
 
 const HiringStatistics = () => {

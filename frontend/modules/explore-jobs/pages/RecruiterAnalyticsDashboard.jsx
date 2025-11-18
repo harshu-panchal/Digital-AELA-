@@ -9,13 +9,13 @@ import {
   HiOutlineBookmark,
   HiOutlineArrowTrendingUp,
   HiOutlineClock,
-  HiOutlineDocumentDownload,
+  HiArrowDownTray,
   HiOutlineCalendar,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import {
   fetchRecruiterAnalyticsDashboard,
-} from "../../../src/services/api/recruiter";
+} from "../../../src/services/api/recruiter.js";
 import { Line, Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,

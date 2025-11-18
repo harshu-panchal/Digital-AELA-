@@ -16,15 +16,15 @@ import {
   HiOutlineDocumentText,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import PostGrid from "../../explore-jobs/components/PostGrid";
-import ProfileHeader from "../../explore-jobs/components/ProfileHeader";
-import CreateJobPostForm from "../../explore-jobs/components/CreateJobPostForm";
-import { useExploreJobs } from "../../explore-jobs/context/ExploreJobsContext";
+import PostGrid from "../explore-jobs/components/PostGrid.jsx";
+import ProfileHeader from "../explore-jobs/components/ProfileHeader.jsx";
+import CreateJobPostForm from "../explore-jobs/components/CreateJobPostForm.jsx";
+import { useExploreJobs } from "../explore-jobs/context/ExploreJobsContext.jsx";
 import {
   CURRENT_RECRUITER_USERNAME,
   highlightTags,
-} from "../../explore-jobs/data/posts";
-import { useAuth } from "../../../src/contexts/AuthContext";
+} from "../explore-jobs/data/posts.js";
+import { useAuth } from "../../src/contexts/AuthContext.jsx";
 import {
   fetchRecruiterProfile,
   fetchRecruiterJobs,
@@ -36,9 +36,9 @@ import {
   updateJobApplicantStage,
   createRecruiterBlog,
   updateRecruiterProfile,
-} from "../../../src/services/api/recruiter";
-import { useBlogs } from "../../../src/contexts/BlogContext";
-import { fetchEbooks } from "../../../src/services/api/resources";
+} from "../../src/services/api/recruiter.js";
+import { useBlogs } from "../../src/contexts/BlogContext.jsx";
+import { fetchEbooks } from "../../src/services/api/resources.js";
 
 const RECRUITER_AVATAR_FALLBACK =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80";

@@ -5,14 +5,14 @@ import {
   HiOutlineArrowLeft,
   HiOutlineDocumentText,
   HiOutlineGlobeAlt,
-  HiOutlineMail,
+  HiOutlineEnvelope,
   HiOutlineUser,
   HiOutlineCalendar,
   HiOutlineBriefcase,
   HiOutlinePencilSquare,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import { fetchApplicantDetails, updateJobApplicantStage } from "../../../src/services/api/recruiter";
+import { fetchApplicantDetails, updateJobApplicantStage } from "../../../src/services/api/recruiter.js";
 
 const ApplicantProfilePage = () => {
   const { jobId, applicationId } = useParams();
@@ -258,7 +258,7 @@ const ApplicantProfilePage = () => {
                   <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
                     {user?.email && (
                       <div className="flex items-center gap-2">
-                        <HiOutlineMail className="h-4 w-4" />
+                        <HiOutlineEnvelope className="h-4 w-4" />
                         <span>{user.email}</span>
                       </div>
                     )}
@@ -569,7 +569,7 @@ const ApplicantProfilePage = () => {
                     window.location.href = `mailto:${email}`;
                   }}
                   className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-sm font-semibold text-white transition hover:border-sky-400/50 hover:bg-black/70">
-                  <HiOutlineMail className="mr-2 inline h-4 w-4" />
+                  <HiOutlineEnvelope className="mr-2 inline h-4 w-4" />
                   Send Email
                 </button>
                 <Link

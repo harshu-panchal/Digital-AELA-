@@ -7,7 +7,7 @@ import {
   HiOutlineExclamationTriangle,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import { fetchCandidatePipelineMetrics, fetchRecruiterJobs } from "../../../src/services/api/recruiter";
+import { fetchCandidatePipelineMetrics, fetchRecruiterJobs } from "../../src/services/api/recruiter.js";
 import { Link } from "react-router-dom";
 
 const CandidatePipeline = () => {

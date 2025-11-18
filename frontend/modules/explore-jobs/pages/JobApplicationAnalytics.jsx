@@ -9,7 +9,7 @@ import {
   HiOutlineArrowTrendingUp,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
-import { fetchJobApplicationAnalytics, fetchRecruiterJobs } from "../../../src/services/api/recruiter";
+import { fetchJobApplicationAnalytics, fetchRecruiterJobs } from "../../../src/services/api/recruiter.js";
 import { Line, Bar } from "react-chartjs-2";
 
 const JobApplicationAnalytics = () => {

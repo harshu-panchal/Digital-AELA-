@@ -36,7 +36,7 @@ import {
   updateJobApplicantStage,
   createRecruiterBlog,
   updateRecruiterProfile,
-} from "../../../src/services/api/recruiter";
+} from "../../../src/services/api/recruiter.js";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import { fetchEbooks } from "../../../src/services/api/resources";
 

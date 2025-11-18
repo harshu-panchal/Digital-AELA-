@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import {
   searchCandidates,
   fetchRecruiterJobs,
-} from "../../../src/services/api/recruiter";
+} from "../../src/services/api/recruiter.js";
 
 const AdvancedCandidateFilter = () => {
   const [loading, setLoading] = useState(true);

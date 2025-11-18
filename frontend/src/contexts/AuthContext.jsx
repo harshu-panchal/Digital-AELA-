@@ -10,7 +10,7 @@ import {
   persistTokens,
   registerAuthUpdateHandler,
 } from "../services/api/baseClient";
-import { updateRecruiterProfile } from "../services/api/recruiter";
+import { updateRecruiterProfile } from "../services/api/recruiter.js";
 
 const AuthContext = createContext(null);
 
