@@ -115,7 +115,7 @@ const HiringStatistics = () => {
   };
 
   return (
-    <div className="w-full text-white space-y-6">
+    <div className="w-full mt-[100px] text-white space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
