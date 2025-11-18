@@ -13,8 +13,6 @@ import RecruiterDashboard from "../pages/RecruiterDashboard";
 import SeekerDashboard from "../pages/SeekerDashboard";
 import PostDetailPage from "../pages/PostDetailPage";
 import ApplicantProfilePage from "../pages/ApplicantProfilePage";
-import RecruiterAnalyticsHub from "../pages/RecruiterAnalyticsHub";
-import JobApplicationAnalytics from "../pages/JobApplicationAnalytics";
 import PostModal from "../components/PostModal";
 import { useExploreJobs } from "../context/ExploreJobsContext";
 
@@ -48,16 +46,6 @@ const ExploreJobsRoutes = () => {
       <Routes location={backgroundLocation || location}>
         <Route path="/*" element={<ExploreJobsLayout />}>
           <Route index element={<ExploreFeed />} />
-          <Route path="recruiter-dashboard" element={<RecruiterDashboard />} />
-          <Route path="recruiter/applicants/:jobId/:applicationId" element={<ApplicantProfilePage />} />
-          <Route path="recruiter/analytics" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/analytics/jobs/:jobId" element={<JobApplicationAnalytics />} />
-          <Route path="recruiter/pipeline" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/hiring-stats" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/performance-reports" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/bulk-actions" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/candidates" element={<RecruiterAnalyticsHub />} />
-          <Route path="recruiter/interviews" element={<RecruiterAnalyticsHub />} />
           <Route path="seeker-dashboard" element={<SeekerDashboard />} />
           <Route path="post/:id" element={<PostDetailPage />} />
         </Route>

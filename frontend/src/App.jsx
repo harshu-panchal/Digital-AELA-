@@ -433,6 +433,38 @@ export const App = () => {
         <Route path="/community/teachers/:userId" element={<TeacherProfileDetail />} />
         <Route path="/community/recruiters/:userId" element={<RecruiterProfileDetail />} />
         <Route
+          path="/recruiter/dashboard"
+          element={
+            <ProtectedRoute roles={["recruiter", "super-admin"]}>
+              <RecruiterDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruiter/analytics"
+          element={
+            <ProtectedRoute roles={["recruiter", "super-admin"]}>
+              <RecruiterAnalyticsHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruiter/analytics/jobs/:jobId"
+          element={
+            <ProtectedRoute roles={["recruiter", "super-admin"]}>
+              <JobApplicationAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruiter/jobs/:jobId/applicants/:applicationId"
+          element={
+            <ProtectedRoute roles={["recruiter", "super-admin"]}>
+              <ApplicantProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/explore-jobs/*"
           element={
             <ProtectedRoute
@@ -450,14 +482,6 @@ export const App = () => {
             </ProtectedRoute>
           }>
           <Route index element={<ExploreFeed />} />
-          <Route
-            path="recruiter-dashboard"
-            element={
-              <ProtectedRoute roles={["recruiter", "super-admin"]}>
-                <RecruiterDashboard />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="seeker-dashboard"
             element={
