@@ -47,9 +47,15 @@ const InterviewScheduling = () => {
       if (dateRange.startDate) params.startDate = dateRange.startDate;
       if (dateRange.endDate) params.endDate = dateRange.endDate;
       const result = await fetchInterviewSchedule(params);
-      setInterviews(result?.interviews || []);
+      // eslint-disable-next-line no-console
+      console.log("Interviews data received:", result);
+      const interviewsData = result?.data || result;
+      setInterviews(interviewsData?.interviews || []);
     } catch (err) {
-      toast.error("Failed to load interviews");
+      // eslint-disable-next-line no-console
+      console.error("Error loading interviews:", err);
+      toast.error(err.message || "Failed to load interviews");
+      setInterviews([]);
     } finally {
       setLoading(false);
     }
@@ -58,10 +64,12 @@ const InterviewScheduling = () => {
   const loadApplicants = useCallback(async () => {
     try {
       const result = await searchCandidates({ stage: "interview", pageSize: 100 });
-      setApplicants(result?.applicants || []);
+      const candidatesData = result?.data || result;
+      setApplicants(candidatesData?.applicants || []);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load applicants:", err);
+      setApplicants([]);
     }
   }, []);
 
@@ -281,7 +289,19 @@ const InterviewScheduling = () => {
               })}
             </div>
           ) : (
-            <div className="text-center text-gray-400 py-12">No interviews scheduled</div>
+            <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-12 text-center">
+              <HiOutlineCalendar className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-white mb-2">No Interviews Scheduled</h2>
+              <p className="text-gray-400 mb-6">
+                Schedule interviews with candidates who are in the interview stage.
+              </p>
+              <button
+                onClick={() => setShowScheduleModal(true)}
+                className="px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-semibold hover:bg-[#D4AF37]/90 transition"
+              >
+                Schedule Interview
+              </button>
+            </div>
           )}
         </div>
 

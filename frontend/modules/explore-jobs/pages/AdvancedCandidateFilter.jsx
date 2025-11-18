@@ -36,10 +36,14 @@ const AdvancedCandidateFilter = () => {
   const loadJobs = useCallback(async () => {
     try {
       const result = await fetchRecruiterJobs();
-      setJobs(result?.data || []);
+      // eslint-disable-next-line no-console
+      console.log("Jobs data received:", result);
+      const jobsData = result?.data || result;
+      setJobs(Array.isArray(jobsData) ? jobsData : []);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load jobs:", err);
+      setJobs([]);
     }
   }, []);
 
@@ -47,10 +51,17 @@ const AdvancedCandidateFilter = () => {
     try {
       setLoading(true);
       const result = await searchCandidates(filters);
-      setApplicants(result?.applicants || []);
-      setPagination(result?.pagination);
+      // eslint-disable-next-line no-console
+      console.log("Candidates data received:", result);
+      const candidatesData = result?.data || result;
+      setApplicants(candidatesData?.applicants || []);
+      setPagination(candidatesData?.pagination || null);
     } catch (err) {
-      toast.error("Failed to load candidates");
+      // eslint-disable-next-line no-console
+      console.error("Error loading candidates:", err);
+      toast.error(err.message || "Failed to load candidates");
+      setApplicants([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }

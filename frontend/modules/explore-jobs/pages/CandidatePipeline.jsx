@@ -19,10 +19,14 @@ const CandidatePipeline = () => {
   const loadJobs = useCallback(async () => {
     try {
       const result = await fetchRecruiterJobs();
-      setJobs(result?.data || []);
+      // eslint-disable-next-line no-console
+      console.log("Jobs data received:", result);
+      const jobsData = result?.data || result;
+      setJobs(Array.isArray(jobsData) ? jobsData : []);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load jobs:", err);
+      setJobs([]);
     }
   }, []);
 
@@ -31,9 +35,15 @@ const CandidatePipeline = () => {
       setLoading(true);
       const params = selectedJobId ? { jobId: selectedJobId } : {};
       const result = await fetchCandidatePipelineMetrics(params);
-      setData(result);
+      // eslint-disable-next-line no-console
+      console.log("Pipeline data received:", result);
+      const pipelineData = result?.data || result;
+      setData(pipelineData || { pipeline: {}, metrics: {} });
     } catch (err) {
-      toast.error("Failed to load pipeline metrics");
+      // eslint-disable-next-line no-console
+      console.error("Error loading pipeline:", err);
+      toast.error(err.message || "Failed to load pipeline metrics");
+      setData({ pipeline: {}, metrics: {} });
     } finally {
       setLoading(false);
     }
@@ -49,21 +59,16 @@ const CandidatePipeline = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white">Loading pipeline...</div>
+      <div className="min-h-screen bg-[#010101] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-white text-lg mb-2">Loading pipeline...</div>
+          <div className="text-gray-400 text-sm">Please wait</div>
+        </div>
       </div>
     );
   }
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-[#010101] text-white p-6">
-        <div className="text-center text-gray-400 py-12">No pipeline data available</div>
-      </div>
-    );
-  }
-
-  const { pipeline, metrics } = data;
+  const { pipeline = {}, metrics = {} } = data || {};
   const stages = ["screening", "assessment", "interview", "offer", "hired", "rejected"];
 
   return (
@@ -93,17 +98,28 @@ const CandidatePipeline = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <div className="text-sm text-gray-400 mb-2">Total in Pipeline</div>
-            <div className="text-3xl font-bold text-white">{metrics.totalInPipeline}</div>
+            <div className="text-3xl font-bold text-white">{metrics.totalInPipeline || 0}</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <div className="text-sm text-gray-400 mb-2">Total Applications</div>
-            <div className="text-3xl font-bold text-white">{metrics.totalApplications}</div>
+            <div className="text-3xl font-bold text-white">{metrics.totalApplications || 0}</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <div className="text-sm text-gray-400 mb-2">Bottlenecks</div>
             <div className="text-3xl font-bold text-white">{metrics.bottlenecks?.length || 0}</div>
           </div>
         </div>
+
+        {/* Empty State */}
+        {(!metrics.totalInPipeline || metrics.totalInPipeline === 0) && (
+          <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-12 text-center">
+            <HiOutlineUserGroup className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">No Candidates in Pipeline</h2>
+            <p className="text-gray-400 mb-6">
+              Applications will appear here once candidates apply to your job postings.
+            </p>
+          </div>
+        )}
 
         {/* Bottlenecks */}
         {metrics.bottlenecks && metrics.bottlenecks.length > 0 && (

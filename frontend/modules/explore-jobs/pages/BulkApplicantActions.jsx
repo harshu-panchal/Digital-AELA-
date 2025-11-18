@@ -31,10 +31,14 @@ const BulkApplicantActions = () => {
   const loadJobs = useCallback(async () => {
     try {
       const result = await fetchRecruiterJobs();
-      setJobs(result?.data || []);
+      // eslint-disable-next-line no-console
+      console.log("Jobs data received:", result);
+      const jobsData = result?.data || result;
+      setJobs(Array.isArray(jobsData) ? jobsData : []);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load jobs:", err);
+      setJobs([]);
     }
   }, []);
 
@@ -47,9 +51,15 @@ const BulkApplicantActions = () => {
         pageSize: 100,
       };
       const result = await searchCandidates(params);
-      setApplicants(result?.applicants || []);
+      // eslint-disable-next-line no-console
+      console.log("Applicants data received:", result);
+      const candidatesData = result?.data || result;
+      setApplicants(candidatesData?.applicants || []);
     } catch (err) {
-      toast.error("Failed to load applicants");
+      // eslint-disable-next-line no-console
+      console.error("Error loading applicants:", err);
+      toast.error(err.message || "Failed to load applicants");
+      setApplicants([]);
     } finally {
       setLoading(false);
     }
