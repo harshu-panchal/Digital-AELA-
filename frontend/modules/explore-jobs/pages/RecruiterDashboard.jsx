@@ -346,43 +346,11 @@ const RecruiterDashboard = () => {
             },
             {
               id: "analytics",
-              title: "Analytics Dashboard",
+              title: "Analytics Hub",
               description: "View comprehensive recruitment analytics and metrics.",
               icon: "chart",
               tone: "from-[#D4AF37]/15 to-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37]",
               to: "/explore-jobs/recruiter/analytics",
-            },
-            {
-              id: "pipeline",
-              title: "Candidate Pipeline",
-              description: "Track candidates through hiring stages.",
-              icon: "users",
-              tone: "from-amber-500/15 to-amber-400/10 border-amber-400/30 text-amber-100",
-              to: "/explore-jobs/recruiter/pipeline",
-            },
-            {
-              id: "candidates",
-              title: "Advanced Search",
-              description: "Find candidates with advanced filters.",
-              icon: "funnel",
-              tone: "from-blue-500/15 to-blue-400/10 border-blue-400/30 text-blue-100",
-              to: "/explore-jobs/recruiter/candidates",
-            },
-            {
-              id: "interviews",
-              title: "Interview Scheduling",
-              description: "Schedule and manage candidate interviews.",
-              icon: "calendar",
-              tone: "from-purple-500/15 to-purple-400/10 border-purple-400/30 text-purple-100",
-              to: "/explore-jobs/recruiter/interviews",
-            },
-            {
-              id: "bulk-actions",
-              title: "Bulk Actions",
-              description: "Manage multiple applicants at once.",
-              icon: "bulk",
-              tone: "from-rose-500/15 to-rose-400/10 border-rose-400/30 text-rose-100",
-              to: "/explore-jobs/recruiter/bulk-actions",
             },
             {
               id: "post-blog",
@@ -858,16 +826,11 @@ const RecruiterDashboard = () => {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-          <Link
-              to="/explore-jobs/recruiter/pipeline"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white/20 hover:bg-white/5">
-              View Full Pipeline
-            </Link>
             <Link
               to="/explore-jobs/recruiter/analytics"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-200 transition hover:border-white/20 hover:text-white">
-              Analytics
-          </Link>
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white/20 hover:bg-white/5">
+              View Analytics Hub
+            </Link>
           </div>
         </header>
         <div className="overflow-x-auto">

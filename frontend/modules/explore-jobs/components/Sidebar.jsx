@@ -29,29 +29,9 @@ const baseNavItems = [
 
 const recruiterNavItems = [
   {
-    label: "Analytics Dashboard",
+    label: "Analytics Hub",
     to: "/explore-jobs/recruiter/analytics",
     icon: HiOutlineChartBar,
-  },
-  {
-    label: "Candidate Pipeline",
-    to: "/explore-jobs/recruiter/pipeline",
-    icon: HiOutlineUserGroup,
-  },
-  {
-    label: "Advanced Search",
-    to: "/explore-jobs/recruiter/candidates",
-    icon: HiOutlineFunnel,
-  },
-  {
-    label: "Interview Schedule",
-    to: "/explore-jobs/recruiter/interviews",
-    icon: HiOutlineCalendar,
-  },
-  {
-    label: "Bulk Actions",
-    to: "/explore-jobs/recruiter/bulk-actions",
-    icon: HiOutlineDocumentText,
   },
 ];
 
