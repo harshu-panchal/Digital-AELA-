@@ -10,7 +10,7 @@ import {
 const bottomItems = [
   { to: "/explore-jobs", label: "Feed", icon: HiOutlineHome },
   {
-    to: "/explore-jobs/recruiter-dashboard",
+    to: "/recruiter/dashboard",
     label: "Recruit",
     icon: HiOutlineBriefcase,
   },
@@ -24,7 +24,7 @@ const bottomItems = [
 const ExploreJobsBottomNav = ({ onCreatePost }) => {
   const location = useLocation();
   const isRecruiterDashboard = location.pathname.includes(
-    "recruiter-dashboard"
+    "/recruiter/"
   );
 
   return (

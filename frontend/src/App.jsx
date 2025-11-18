@@ -55,10 +55,13 @@ import CreateBlog from "../modules/blogs/pages/CreateBlog";
 import MyBlogs from "../modules/blogs/pages/MyBlogs";
 import ExploreJobsLayout from "../modules/explore-jobs/layout/ExploreJobsLayout";
 import ExploreFeed from "../modules/explore-jobs/pages/ExploreFeed";
-import RecruiterDashboard from "../modules/explore-jobs/pages/RecruiterDashboard";
 import SeekerDashboard from "../modules/explore-jobs/pages/SeekerDashboard";
 import ExplorePostDetailPage from "../modules/explore-jobs/pages/PostDetailPage";
 import { ExploreJobsProvider } from "../modules/explore-jobs/context/ExploreJobsContext";
+import RecruiterDashboard from "../modules/recruiter/RecruiterDashboard";
+import RecruiterAnalyticsHub from "../modules/recruiter/RecruiterAnalyticsHub";
+import JobApplicationAnalytics from "../modules/recruiter/JobApplicationAnalytics";
+import ApplicantProfilePage from "../modules/recruiter/ApplicantProfilePage";
 import JoinAsTeacher from "../modules/business-management/join-us-pages/JoinAsTeacher";
 import JoinInfluencer from "../modules/business-management/join-us-pages/JoinInfluencer";
 import JoinFreelancer from "../modules/business-management/join-us-pages/JoinFreelancer";
@@ -436,7 +439,9 @@ export const App = () => {
           path="/recruiter/dashboard"
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
-              <RecruiterDashboard />
+              <ExploreJobsProvider>
+                <RecruiterDashboard />
+              </ExploreJobsProvider>
             </ProtectedRoute>
           }
         />
@@ -444,7 +449,9 @@ export const App = () => {
           path="/recruiter/analytics"
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
-              <RecruiterAnalyticsHub />
+              <ExploreJobsProvider>
+                <RecruiterAnalyticsHub />
+              </ExploreJobsProvider>
             </ProtectedRoute>
           }
         />
@@ -452,7 +459,9 @@ export const App = () => {
           path="/recruiter/analytics/jobs/:jobId"
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
-              <JobApplicationAnalytics />
+              <ExploreJobsProvider>
+                <JobApplicationAnalytics />
+              </ExploreJobsProvider>
             </ProtectedRoute>
           }
         />
@@ -460,7 +469,9 @@ export const App = () => {
           path="/recruiter/jobs/:jobId/applicants/:applicationId"
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
-              <ApplicantProfilePage />
+              <ExploreJobsProvider>
+                <ApplicantProfilePage />
+              </ExploreJobsProvider>
             </ProtectedRoute>
           }
         />

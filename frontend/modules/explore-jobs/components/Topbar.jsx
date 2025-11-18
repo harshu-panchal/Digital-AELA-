@@ -12,7 +12,7 @@ const ExploreJobsTopbar = ({ onFilterToggle }) => {
   const location = useLocation();
   const { searchQuery, setSearchQuery } = useExploreJobs();
 
-  const isRecruiter = location.pathname.includes("recruiter-dashboard");
+  const isRecruiter = location.pathname.includes("/recruiter/");
   const isSeeker = location.pathname.includes("seeker-dashboard");
 
   return (

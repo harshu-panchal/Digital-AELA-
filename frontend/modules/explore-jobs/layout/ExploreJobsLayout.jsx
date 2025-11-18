@@ -15,8 +15,8 @@ const ExploreJobsLayout = () => {
 
   const handleCreatePost = () => {
     // Only allow recruiters to create posts
-    if (!location.pathname.includes("recruiter-dashboard")) {
-      navigate("/explore-jobs/recruiter-dashboard");
+    if (!location.pathname.includes("/recruiter/")) {
+      navigate("/recruiter/dashboard");
     }
     openComposer("job");
   };

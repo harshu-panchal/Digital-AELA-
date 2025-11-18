@@ -21,7 +21,7 @@ const baseNavItems = [
   },
   {
     label: "Recruiter Dashboard",
-    to: "/explore-jobs/recruiter-dashboard",
+    to: "/recruiter/dashboard",
     icon: HiOutlineBriefcase,
     requiresRole: "recruiter",
   },
@@ -30,7 +30,7 @@ const baseNavItems = [
 const recruiterNavItems = [
   {
     label: "Analytics Hub",
-    to: "/explore-jobs/recruiter/analytics",
+    to: "/recruiter/analytics",
     icon: HiOutlineChartBar,
   },
 ];
@@ -39,9 +39,9 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
   const location = useLocation();
   const { user } = useAuth();
   const isRecruiterDashboard = location.pathname.includes(
-    "recruiter-dashboard"
+    "/recruiter/dashboard"
   );
-  const isRecruiterPage = location.pathname.includes("/recruiter/") || isRecruiterDashboard;
+  const isRecruiterPage = location.pathname.includes("/recruiter/");
 
   // Filter nav items based on user role
   const navItems = baseNavItems.filter((item) => {
