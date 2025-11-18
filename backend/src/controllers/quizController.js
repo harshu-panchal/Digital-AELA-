@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Quiz from "../models/Quiz.js";
+import QuestionBank from "../models/QuestionBank.js";
 import StudentPoints from "../models/StudentPoints.js";
 import { emitQuizAttempt } from "../utils/socketEmitter.js";
 
@@ -403,6 +404,7 @@ export const createQuiz = async (req, res, next) => {
       duration = 0,
       questions = [],
       status = "published",
+      settings = {},
     } = req.body;
 
     if (!title || !category) {
@@ -423,27 +425,114 @@ export const createQuiz = async (req, res, next) => {
       });
     }
 
-    // Validate questions
-    if (Array.isArray(questions) && questions.length > 0) {
-      for (const q of questions) {
-        if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
-          return res.status(422).json({
-            error: {
-              code: "VALIDATION_ERROR",
-              message: "Each question must have a question text and at least 2 options",
-            },
-          });
+    // Handle question bank or direct questions
+    let finalQuestions = [];
+    let questionBankIds = [];
+
+    if (settings?.useQuestionBank && settings?.questionBankIds?.length > 0) {
+      // Use question bank
+      questionBankIds = settings.questionBankIds
+        .filter((id) => mongoose.isValidObjectId(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      if (questionBankIds.length === 0) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Valid question bank IDs are required when using question bank",
+          },
+        });
+      }
+
+      // Fetch questions from bank
+      const bankQuestions = await QuestionBank.find({
+        _id: { $in: questionBankIds },
+        $or: [
+          { isPublic: true },
+          { createdBy: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null },
+        ],
+      }).lean();
+
+      if (bankQuestions.length === 0) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "No valid questions found in question bank",
+          },
+        });
+      }
+
+      // Randomize if requested
+      const questionsToUse = settings.randomizeQuestions
+        ? bankQuestions.sort(() => Math.random() - 0.5)
+        : bankQuestions;
+
+      // Limit number of questions if specified
+      const numQuestions = settings.questionsPerQuiz > 0
+        ? Math.min(settings.questionsPerQuiz, questionsToUse.length)
+        : questionsToUse.length;
+
+      finalQuestions = questionsToUse.slice(0, numQuestions).map((q) => ({
+        question: q.question,
+        options: settings.randomizeOptions ? q.options.sort(() => Math.random() - 0.5) : q.options,
+        correctAnswer: settings.randomizeOptions
+          ? q.options.indexOf(q.options[q.correctAnswer])
+          : q.correctAnswer,
+        explanation: q.explanation || "",
+      }));
+
+      // Update usage count for questions
+      await QuestionBank.updateMany(
+        { _id: { $in: questionBankIds } },
+        { $inc: { usageCount: 1 } }
+      );
+    } else {
+      // Use direct questions
+      if (Array.isArray(questions) && questions.length > 0) {
+        for (const q of questions) {
+          if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
+            return res.status(422).json({
+              error: {
+                code: "VALIDATION_ERROR",
+                message: "Each question must have a question text and at least 2 options",
+              },
+            });
+          }
+          if (typeof q.correctAnswer !== "number" || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
+            return res.status(422).json({
+              error: {
+                code: "VALIDATION_ERROR",
+                message: "Each question must have a valid correctAnswer index",
+              },
+            });
+          }
         }
-        if (typeof q.correctAnswer !== "number" || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
-          return res.status(422).json({
-            error: {
-              code: "VALIDATION_ERROR",
-              message: "Each question must have a valid correctAnswer index",
-            },
-          });
-        }
+        finalQuestions = questions;
       }
     }
+
+    // Validate and set default settings
+    const quizSettings = {
+      timeLimit: settings.timeLimit || 0,
+      timeLimitPerQuestion: settings.timeLimitPerQuestion || 0,
+      allowPause: settings.allowPause !== undefined ? settings.allowPause : true,
+      randomizeQuestions: settings.randomizeQuestions || false,
+      randomizeOptions: settings.randomizeOptions || false,
+      showQuestionNumbers: settings.showQuestionNumbers !== undefined ? settings.showQuestionNumbers : true,
+      allowSkip: settings.allowSkip !== undefined ? settings.allowSkip : true,
+      allowReview: settings.allowReview !== undefined ? settings.allowReview : true,
+      showResultsImmediately: settings.showResultsImmediately !== undefined ? settings.showResultsImmediately : true,
+      showCorrectAnswers: settings.showCorrectAnswers !== undefined ? settings.showCorrectAnswers : true,
+      showExplanations: settings.showExplanations !== undefined ? settings.showExplanations : true,
+      showScore: settings.showScore !== undefined ? settings.showScore : true,
+      passingScore: settings.passingScore !== undefined ? Math.max(0, Math.min(100, settings.passingScore)) : 60,
+      requirePassingScore: settings.requirePassingScore || false,
+      maxAttempts: settings.maxAttempts !== undefined ? Math.max(0, settings.maxAttempts) : 0,
+      allowMultipleAttempts: settings.allowMultipleAttempts !== undefined ? settings.allowMultipleAttempts : true,
+      useQuestionBank: settings.useQuestionBank || false,
+      questionBankIds: questionBankIds,
+      questionsPerQuiz: settings.questionsPerQuiz || 0,
+    };
 
     // Store teacher's ID in metadata.createdBy to track quiz ownership
     // This ensures each teacher only sees their own quizzes in the dashboard
@@ -454,8 +543,9 @@ export const createQuiz = async (req, res, next) => {
       difficulty,
       rewardCoins,
       duration,
-      questions,
+      questions: finalQuestions,
       status,
+      settings: quizSettings,
       metadata: {
         createdBy: userId, // Store as string for consistent querying
       },
@@ -577,6 +667,7 @@ export const updateQuiz = async (req, res, next) => {
       duration,
       questions,
       status,
+      settings,
     } = req.body;
 
     if (!mongoose.isValidObjectId(quizId)) {
@@ -622,8 +713,55 @@ export const updateQuiz = async (req, res, next) => {
       });
     }
 
-    // Validate questions if provided
-    if (Array.isArray(questions) && questions.length > 0) {
+    // Handle question bank or direct questions if settings are provided
+    let finalQuestions = quiz.questions; // Keep existing questions by default
+    let questionBankIds = quiz.settings?.questionBankIds || [];
+
+    if (settings?.useQuestionBank && settings?.questionBankIds?.length > 0) {
+      // Use question bank
+      questionBankIds = settings.questionBankIds
+        .filter((id) => mongoose.isValidObjectId(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      if (questionBankIds.length > 0) {
+        // Fetch questions from bank
+        const bankQuestions = await QuestionBank.find({
+          _id: { $in: questionBankIds },
+          $or: [
+            { isPublic: true },
+            { createdBy: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null },
+          ],
+        }).lean();
+
+        if (bankQuestions.length > 0) {
+          // Randomize if requested
+          const questionsToUse = settings.randomizeQuestions
+            ? bankQuestions.sort(() => Math.random() - 0.5)
+            : bankQuestions;
+
+          // Limit number of questions if specified
+          const numQuestions = settings.questionsPerQuiz > 0
+            ? Math.min(settings.questionsPerQuiz, questionsToUse.length)
+            : questionsToUse.length;
+
+          finalQuestions = questionsToUse.slice(0, numQuestions).map((q) => ({
+            question: q.question,
+            options: settings.randomizeOptions ? q.options.sort(() => Math.random() - 0.5) : q.options,
+            correctAnswer: settings.randomizeOptions
+              ? q.options.indexOf(q.options[q.correctAnswer])
+              : q.correctAnswer,
+            explanation: q.explanation || "",
+          }));
+
+          // Update usage count for questions
+          await QuestionBank.updateMany(
+            { _id: { $in: questionBankIds } },
+            { $inc: { usageCount: 1 } }
+          );
+        }
+      }
+    } else if (Array.isArray(questions) && questions.length > 0) {
+      // Use direct questions
       for (const q of questions) {
         if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
           return res.status(422).json({
@@ -642,6 +780,7 @@ export const updateQuiz = async (req, res, next) => {
           });
         }
       }
+      finalQuestions = questions;
     }
 
     // Update quiz fields
@@ -651,8 +790,35 @@ export const updateQuiz = async (req, res, next) => {
     if (difficulty !== undefined) quiz.difficulty = difficulty;
     if (rewardCoins !== undefined) quiz.rewardCoins = rewardCoins;
     if (duration !== undefined) quiz.duration = duration;
-    if (questions !== undefined) quiz.questions = questions;
+    if (finalQuestions !== undefined) quiz.questions = finalQuestions;
     if (status !== undefined) quiz.status = status;
+
+    // Update settings if provided
+    if (settings !== undefined) {
+      if (!quiz.settings) quiz.settings = {};
+      
+      if (settings.timeLimit !== undefined) quiz.settings.timeLimit = settings.timeLimit;
+      if (settings.timeLimitPerQuestion !== undefined) quiz.settings.timeLimitPerQuestion = settings.timeLimitPerQuestion;
+      if (settings.allowPause !== undefined) quiz.settings.allowPause = settings.allowPause;
+      if (settings.randomizeQuestions !== undefined) quiz.settings.randomizeQuestions = settings.randomizeQuestions;
+      if (settings.randomizeOptions !== undefined) quiz.settings.randomizeOptions = settings.randomizeOptions;
+      if (settings.showQuestionNumbers !== undefined) quiz.settings.showQuestionNumbers = settings.showQuestionNumbers;
+      if (settings.allowSkip !== undefined) quiz.settings.allowSkip = settings.allowSkip;
+      if (settings.allowReview !== undefined) quiz.settings.allowReview = settings.allowReview;
+      if (settings.showResultsImmediately !== undefined) quiz.settings.showResultsImmediately = settings.showResultsImmediately;
+      if (settings.showCorrectAnswers !== undefined) quiz.settings.showCorrectAnswers = settings.showCorrectAnswers;
+      if (settings.showExplanations !== undefined) quiz.settings.showExplanations = settings.showExplanations;
+      if (settings.showScore !== undefined) quiz.settings.showScore = settings.showScore;
+      if (settings.passingScore !== undefined) quiz.settings.passingScore = Math.max(0, Math.min(100, settings.passingScore));
+      if (settings.requirePassingScore !== undefined) quiz.settings.requirePassingScore = settings.requirePassingScore;
+      if (settings.maxAttempts !== undefined) quiz.settings.maxAttempts = Math.max(0, settings.maxAttempts);
+      if (settings.allowMultipleAttempts !== undefined) quiz.settings.allowMultipleAttempts = settings.allowMultipleAttempts;
+      if (settings.useQuestionBank !== undefined) quiz.settings.useQuestionBank = settings.useQuestionBank;
+      if (questionBankIds.length > 0 || settings.questionBankIds !== undefined) {
+        quiz.settings.questionBankIds = questionBankIds.length > 0 ? questionBankIds : (settings.questionBankIds || []);
+      }
+      if (settings.questionsPerQuiz !== undefined) quiz.settings.questionsPerQuiz = settings.questionsPerQuiz;
+    }
 
     await quiz.save();
 

@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { createCourse } from "../../../src/services/api/adminContent";
+import { getPremiumCourseCount } from "../../../src/services/api/courses";
 import {
   safeString,
   sanitizeUrl,
@@ -28,6 +29,7 @@ const initialFormState = {
   syllabus: "",
   tags: "",
   publishImmediately: false,
+  isPremium: false,
 };
 
 const categories = [
@@ -40,7 +42,25 @@ const categories = [
 const AdminCourseCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [premiumCount, setPremiumCount] = useState(0);
+  const [maxPremium, setMaxPremium] = useState(6);
   const navigate = useNavigate();
+
+  // Fetch premium course count on mount
+  useEffect(() => {
+    const fetchPremiumCount = async () => {
+      try {
+        const response = await getPremiumCourseCount();
+        if (response) {
+          setPremiumCount(response.count || 0);
+          setMaxPremium(response.maxAllowed || 6);
+        }
+      } catch (error) {
+        console.error("Failed to fetch premium course count:", error);
+      }
+    };
+    fetchPremiumCount();
+  }, []);
 
   const priceHelper = useMemo(
     () => ({
@@ -50,31 +70,46 @@ const AdminCourseCreate = () => {
     []
   );
 
-  const handleChange = useCallback((event) => {
-    const { name, value, type, checked, files } = event.target;
-    if (type === "file" && files && files[0]) {
-      const file = files[0];
-      // Validate PDF file
-      if (file.type !== "application/pdf") {
-        toast.error("Please upload a PDF file");
-        return;
+  const handleChange = useCallback(
+    (event) => {
+      const { name, value, type, checked, files } = event.target;
+      if (type === "file" && files && files[0]) {
+        const file = files[0];
+        // Validate PDF file
+        if (file.type !== "application/pdf") {
+          toast.error("Please upload a PDF file");
+          return;
+        }
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error("PDF file size must be less than 10MB");
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          [name]: file,
+        }));
+      } else if (type === "checkbox" && name === "isPremium" && checked) {
+        // Check premium course limit before allowing checkbox to be checked
+        if (premiumCount >= maxPremium) {
+          toast.error(
+            `Maximum of ${maxPremium} premium courses allowed. Please unmark another premium course first.`
+          );
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          [name]: checked,
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: type === "checkbox" ? checked : value,
+        }));
       }
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("PDF file size must be less than 10MB");
-        return;
-      }
-      setFormData((prev) => ({
-        ...prev,
-        [name]: file,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }));
-    }
-  }, []);
+    },
+    [premiumCount, maxPremium]
+  );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -132,6 +167,7 @@ const AdminCourseCreate = () => {
         .map((tag) => tag.trim())
         .filter(Boolean),
       status: formData.publishImmediately ? "published" : "draft",
+      isPremium: formData.isPremium || false,
     };
 
     setIsSubmitting(true);
@@ -613,6 +649,42 @@ const AdminCourseCreate = () => {
                   <p className="text-xs text-slate-400">
                     Uncheck to keep the course as draft until you publish
                     manually.
+                  </p>
+                </span>
+              </label>
+
+              <label
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
+                  premiumCount >= maxPremium && !formData.isPremium
+                    ? "opacity-60"
+                    : ""
+                }`}>
+                <input
+                  type="checkbox"
+                  name="isPremium"
+                  checked={formData.isPremium}
+                  onChange={handleChange}
+                  disabled={premiumCount >= maxPremium && !formData.isPremium}
+                  className="h-4 w-4 rounded border-white/20 bg-white/10 text-[#F5D26A] focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <span>
+                  Show on Home Page (Premium Course)
+                  <p className="text-xs text-slate-400">
+                    Check this to display this course in the "Our Premium
+                    Courses" section on the home page.
+                    {premiumCount >= maxPremium && !formData.isPremium && (
+                      <span className="block mt-1 text-red-400 font-semibold">
+                        Maximum limit reached ({premiumCount}/{maxPremium}).
+                        Unmark another premium course first.
+                      </span>
+                    )}
+                    {premiumCount < maxPremium && (
+                      <span className="block mt-1 text-[#F5D26A]">
+                        {maxPremium - premiumCount} slot
+                        {maxPremium - premiumCount !== 1 ? "s" : ""} available (
+                        {premiumCount}/{maxPremium} used)
+                      </span>
+                    )}
                   </p>
                 </span>
               </label>

@@ -3,9 +3,16 @@ import { fetchSocialLinks } from "./socialVerification";
 
 export const fetchStudentDashboard = () => apiRequest("/students/dashboard");
 
+export const fetchDashboardWidgets = () => apiRequest("/students/dashboard/widgets");
+
 export const fetchStudentProfile = (userId) =>
   apiRequest(`/students/${userId}/profile`, {
     skipAuth: true, // Public endpoint
+  });
+
+export const fetchEnhancedProfile = (userId) =>
+  apiRequest(`/students/${userId}/profile/enhanced`, {
+    skipAuth: true, // Public endpoint but returns more data if authenticated
   });
 
 export const updateStudentProfile = (payload) =>

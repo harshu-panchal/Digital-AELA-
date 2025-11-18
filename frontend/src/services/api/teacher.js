@@ -88,3 +88,38 @@ export const fetchStudentDetails = async (studentId) => {
   });
 };
 
+/**
+ * Get enhanced analytics report
+ * GET /api/v1/teacher/analytics/report
+ * @param {Object} params - { startDate, endDate, format }
+ */
+export const fetchEnhancedAnalyticsReport = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.startDate) searchParams.set("startDate", params.startDate);
+  if (params.endDate) searchParams.set("endDate", params.endDate);
+  if (params.format) searchParams.set("format", params.format);
+
+  const query = searchParams.toString();
+  return apiRequest(`/teacher/analytics/report${query ? `?${query}` : ""}`, {
+    method: "GET",
+  });
+};
+
+/**
+ * Compare analytics between two periods
+ * GET /api/v1/teacher/analytics/compare
+ * @param {Object} params - { period1Start, period1End, period2Start, period2End }
+ */
+export const compareAnalytics = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.period1Start) searchParams.set("period1Start", params.period1Start);
+  if (params.period1End) searchParams.set("period1End", params.period1End);
+  if (params.period2Start) searchParams.set("period2Start", params.period2Start);
+  if (params.period2End) searchParams.set("period2End", params.period2End);
+
+  const query = searchParams.toString();
+  return apiRequest(`/teacher/analytics/compare${query ? `?${query}` : ""}`, {
+    method: "GET",
+  });
+};
+

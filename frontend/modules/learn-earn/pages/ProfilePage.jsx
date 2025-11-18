@@ -24,6 +24,7 @@ import {
 } from "../../../src/services/api/socialVerification";
 import {
   fetchStudentProfile,
+  fetchEnhancedProfile,
   updateStudentProfile,
   uploadProfileImage,
 } from "../../../src/services/api/student";
@@ -47,6 +48,8 @@ const ProfilePage = () => {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [enhancedProfile, setEnhancedProfile] = useState(null);
+  const [loadingEnhanced, setLoadingEnhanced] = useState(false);
 
   const availablePlatforms = [
     "LinkedIn",
@@ -105,6 +108,28 @@ const ProfilePage = () => {
 
     loadProfile();
   }, [authUser, tokens, updateProfile]);
+
+  // Load enhanced profile data
+  useEffect(() => {
+    const loadEnhanced = async () => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      setLoadingEnhanced(true);
+      try {
+        const enhanced = await fetchEnhancedProfile(authUser.id);
+        setEnhancedProfile(enhanced.profile);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load enhanced profile:", error);
+      } finally {
+        setLoadingEnhanced(false);
+      }
+    };
+
+    loadEnhanced();
+  }, [authUser]);
 
   // Load social links from backend on mount
   useEffect(() => {
@@ -679,8 +704,119 @@ const ProfilePage = () => {
               </p>
             </div>
           </div>
+
+          {/* Enhanced Profile Features */}
+          {enhancedProfile && (
+            <>
+              {/* Profile Completion */}
+              {enhancedProfile.completionPercentage !== undefined && (
+                <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                      Profile Completion
+                    </p>
+                    <span className="text-sm font-semibold text-white">
+                      {enhancedProfile.completionPercentage}%
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                    <Motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${enhancedProfile.completionPercentage}%` }}
+                      transition={{ duration: 0.8 }}
+                      className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158]"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400">
+                    Complete your profile to unlock more features
+                  </p>
+                </div>
+              )}
+
+              {/* Skills Showcase */}
+              {enhancedProfile.skills && enhancedProfile.skills.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
+                  <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                    Skills
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {enhancedProfile.skills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                        <span className="text-sm font-medium text-white">{skill.name}</span>
+                        <span className="text-xs text-gray-400 capitalize">({skill.level})</span>
+                        {skill.verified && (
+                          <FaCheckCircle className="h-3 w-3 text-[#D4AF37]" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Achievements Showcase */}
+              {enhancedProfile.achievements && enhancedProfile.achievements.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
+                  <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                    Achievements
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    {enhancedProfile.achievements.map((achievement) => (
+                      <div
+                        key={achievement.id}
+                        className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                        <span className="text-2xl">{achievement.icon}</span>
+                        <p className="text-xs font-medium text-white">{achievement.label}</p>
+                        <p className="text-[10px] text-gray-400">{achievement.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
+
+      {/* Learning Timeline */}
+      {enhancedProfile?.timeline && enhancedProfile.timeline.length > 0 && (
+        <section className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
+          <Motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+              Learning Timeline
+            </p>
+            <div className="space-y-4">
+              {enhancedProfile.timeline.slice(0, 10).map((item, index) => (
+                <div
+                  key={item.id}
+                  className="flex gap-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#D4AF37]/20">
+                    <span className="text-sm">
+                      {item.type === "enrollment" ? "📚" : "✅"}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{item.title}</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Motion.div>
+        </section>
+      )}
 
       <section className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
         <Motion.div

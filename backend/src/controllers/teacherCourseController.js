@@ -359,6 +359,195 @@ export const updateTeacherCourse = async (req, res, next) => {
 /**
  * Teacher: Upload Course Brochure PDF
  */
+/**
+ * Bulk operations for course management
+ * POST /api/v1/teacher/courses/bulk
+ */
+export const bulkCourseOperations = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only teachers can perform bulk operations",
+        },
+      });
+    }
+
+    const { operation, courseIds } = req.body;
+
+    if (!operation || !Array.isArray(courseIds) || courseIds.length === 0) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Operation and courseIds array are required",
+        },
+      });
+    }
+
+    const instructorObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (!instructorObjectId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    // Validate course IDs
+    const validCourseIds = courseIds
+      .filter((id) => mongoose.isValidObjectId(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    if (validCourseIds.length === 0) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "No valid course IDs provided",
+        },
+      });
+    }
+
+    // Verify all courses belong to this teacher
+    const courses = await Course.find({
+      _id: { $in: validCourseIds },
+      instructor: instructorObjectId,
+    });
+
+    if (courses.length !== validCourseIds.length) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Some courses not found or you don't have permission",
+        },
+      });
+    }
+
+    let result;
+    const updatedCourses = [];
+
+    switch (operation) {
+      case "delete":
+        // Bulk delete courses (only if draft status)
+        const draftCourses = courses.filter((c) => c.status === "draft");
+        if (draftCourses.length !== courses.length) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Only draft courses can be deleted",
+            },
+          });
+        }
+        await Course.deleteMany({ _id: { $in: validCourseIds } });
+        result = {
+          operation: "delete",
+          deleted: draftCourses.length,
+          courseIds: draftCourses.map((c) => c._id.toString()),
+        };
+        break;
+
+      case "publish":
+        // Bulk publish courses (change status to pending for admin approval)
+        await Course.updateMany(
+          { _id: { $in: validCourseIds } },
+          { $set: { status: "pending" } }
+        );
+        result = {
+          operation: "publish",
+          updated: validCourseIds.length,
+          courseIds: validCourseIds.map((id) => id.toString()),
+        };
+        break;
+
+      case "unpublish":
+        // Bulk unpublish courses (change status to draft)
+        await Course.updateMany(
+          { _id: { $in: validCourseIds } },
+          { $set: { status: "draft" } }
+        );
+        result = {
+          operation: "unpublish",
+          updated: validCourseIds.length,
+          courseIds: validCourseIds.map((id) => id.toString()),
+        };
+        break;
+
+      case "updateStatus":
+        // Bulk update status
+        const { status } = req.body;
+        if (!status || !["draft", "pending", "published"].includes(status)) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Valid status is required (draft, pending, published)",
+            },
+          });
+        }
+        await Course.updateMany(
+          { _id: { $in: validCourseIds } },
+          { $set: { status } }
+        );
+        result = {
+          operation: "updateStatus",
+          updated: validCourseIds.length,
+          status,
+          courseIds: validCourseIds.map((id) => id.toString()),
+        };
+        break;
+
+      case "updateCategory":
+        // Bulk update category
+        const { category } = req.body;
+        if (!category) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Category is required",
+            },
+          });
+        }
+        await Course.updateMany(
+          { _id: { $in: validCourseIds } },
+          { $set: { category } }
+        );
+        result = {
+          operation: "updateCategory",
+          updated: validCourseIds.length,
+          category,
+          courseIds: validCourseIds.map((id) => id.toString()),
+        };
+        break;
+
+      default:
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `Invalid operation: ${operation}. Supported: delete, publish, unpublish, updateStatus, updateCategory`,
+          },
+        });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const uploadCourseBrochure = async (req, res, next) => {
   try {
     const { userId, userRole } = req.auth || {};

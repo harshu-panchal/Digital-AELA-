@@ -1,5 +1,5 @@
 import express from "express";
-import { getPublishedCourses, getCourseById } from "../controllers/courseController.js";
+import { getPublishedCourses, getCourseById, getPremiumCourseCount } from "../controllers/courseController.js";
 import {
   enrollInCourse,
   getEnrolledCourses,
@@ -13,6 +13,7 @@ const router = express.Router();
 
 // Public routes - no authentication required
 router.get("/", getPublishedCourses);
+router.get("/premium-count", getPremiumCourseCount); // Get count of premium courses
 router.get("/enrolled", requireAuth(["student"]), getEnrolledCourses);
 
 // Enrollment routes

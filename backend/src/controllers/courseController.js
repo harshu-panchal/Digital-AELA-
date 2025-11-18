@@ -4,16 +4,44 @@ import mongoose from "mongoose";
 /**
  * Get all published courses (public endpoint)
  * Only returns courses with status "published"
+ * Supports query parameter: ?premium=true to get only premium courses
  */
 export const getPublishedCourses = async (req, res, next) => {
   try {
+    const { premium } = req.query;
+    
+    // Build query - always filter for published courses only
+    const query = { status: "published" };
+    
+    // If premium=true, filter for premium courses
+    if (premium === "true" || premium === true) {
+      query["metadata.isPremium"] = true;
+    }
+    
     // Always filter for published courses only - never return draft or archived
-    const courses = await Course.find({ status: "published" })
+    const courses = await Course.find(query)
       .populate("instructor", "fullName email")
       .sort({ createdAt: -1 })
       .lean();
 
     return res.status(200).json({ courses });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get premium course count (for admin use)
+ * Returns the count of published premium courses
+ */
+export const getPremiumCourseCount = async (req, res, next) => {
+  try {
+    const count = await Course.countDocuments({
+      "metadata.isPremium": true,
+      status: "published",
+    });
+    
+    return res.status(200).json({ count, maxAllowed: 6 });
   } catch (error) {
     return next(error);
   }

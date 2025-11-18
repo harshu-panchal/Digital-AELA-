@@ -6,6 +6,7 @@ import {
   getTeacherCourseById,
   updateTeacherCourse,
   uploadCourseBrochure,
+  bulkCourseOperations,
 } from "../controllers/teacherCourseController.js";
 import {
   uploadSinglePdf,
@@ -15,6 +16,8 @@ import { getTeacherDashboard } from "../controllers/teacherDashboardController.j
 import {
   getTeacherAnalytics,
   getCourseAnalytics,
+  getEnhancedAnalyticsReport,
+  compareAnalytics,
 } from "../controllers/teacherAnalyticsController.js";
 import {
   getTeacherStudents,
@@ -36,6 +39,9 @@ router.post("/courses", createTeacherCourse);
 // Get all courses created by the teacher
 router.get("/courses", getTeacherCourses);
 
+// Bulk operations for courses
+router.post("/courses/bulk", bulkCourseOperations);
+
 // Get a specific course by ID
 router.get("/courses/:courseId", getTeacherCourseById);
 
@@ -53,6 +59,8 @@ router.post(
 
 // Teacher Analytics endpoints
 router.get("/analytics", getTeacherAnalytics);
+router.get("/analytics/report", getEnhancedAnalyticsReport);
+router.get("/analytics/compare", compareAnalytics);
 router.get("/courses/:courseId/analytics", getCourseAnalytics);
 
 // Student Management endpoints

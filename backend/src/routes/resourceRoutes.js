@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getEbook, listEbooks } from "../controllers/resourceController.js";
+import { getEbook, listEbooks, getFeaturedBookCount } from "../controllers/resourceController.js";
 import {
   updateReadingProgress,
   getReadingProgress,
@@ -15,6 +15,7 @@ const router = Router();
 
 // Public routes
 router.get("/ebooks", listEbooks);
+router.get("/ebooks/featured-count", getFeaturedBookCount); // Get count of featured books
 router.get("/ebooks/:ebookId", getEbook);
 router.get("/ebooks/:ebookId/download", downloadEbook);
 router.get("/ebooks/:ebookId/ratings", getEbookRatings);

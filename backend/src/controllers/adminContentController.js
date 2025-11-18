@@ -53,6 +53,25 @@ export const approveCourse = async (req, res, next) => {
     }
 
     if (action === "approve") {
+      // Check premium course limit if this course is marked as premium
+      const isPremium = course.metadata?.isPremium === true;
+      if (isPremium) {
+        // Count premium courses excluding the current course
+        const premiumCount = await Course.countDocuments({
+          "metadata.isPremium": true,
+          status: "published",
+          _id: { $ne: courseId },
+        });
+        
+        if (premiumCount >= 6) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
+            },
+          });
+        }
+      }
       course.status = "published";
     } else {
       course.status = "archived";
@@ -309,6 +328,7 @@ export const createCourse = async (req, res, next) => {
       thumbnailUrl,
       currency = "AED",
       status = "published",
+      isPremium = false,
     } = req.body;
 
     if (!title) {
@@ -339,6 +359,24 @@ export const createCourse = async (req, res, next) => {
       });
     }
 
+    // Check premium course limit (max 6)
+    const isPremiumValue = isPremium === true || isPremium === "true";
+    if (isPremiumValue) {
+      const premiumCount = await Course.countDocuments({
+        "metadata.isPremium": true,
+        status: "published",
+      });
+      
+      if (premiumCount >= 6) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
+          },
+        });
+      }
+    }
+
     const course = await Course.create({
       title,
       description,
@@ -361,6 +399,7 @@ export const createCourse = async (req, res, next) => {
         introVideoUrl: introVideoUrl || "",
         syllabus: syllabus || "",
         tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean)) : [],
+        isPremium: isPremium === true || isPremium === "true",
       },
     });
 
@@ -403,6 +442,7 @@ export const createEbook = async (req, res, next) => {
       pages,
       categories,
       isPublic = true,
+      isFeatured = false,
     } = req.body;
 
     if (!title) {
@@ -441,6 +481,24 @@ export const createEbook = async (req, res, next) => {
       });
     }
 
+    // Check featured book limit (max 4)
+    const isFeaturedValue = isFeatured === true || isFeatured === "true";
+    if (isFeaturedValue) {
+      const featuredCount = await EbookResource.countDocuments({
+        "metadata.isFeatured": true,
+        isPublic: true,
+      });
+      
+      if (featuredCount >= 4) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Maximum of 4 featured books allowed. Please unmark another featured book first.",
+          },
+        });
+      }
+    }
+
     const ebook = await EbookResource.create({
       title,
       description,
@@ -460,6 +518,7 @@ export const createEbook = async (req, res, next) => {
             ? tags
             : tags.split(",").map((t) => t.trim()).filter(Boolean)
           : [],
+        isFeatured: isFeaturedValue,
       },
     });
 

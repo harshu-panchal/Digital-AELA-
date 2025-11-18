@@ -15,10 +15,6 @@ import {
   FaGlobe,
 } from "react-icons/fa";
 import founderImage from "../../../src/assets/Founder.png";
-import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
-import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
-import bookIELTSVocabularyImg from "../../../src/assets/images/books/IELTS vocabulary.png";
-import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import slideOurMission from "../../../src/assets/images/slide-images/our mission.jpg";
 import slideFreeLibrary from "../../../src/assets/images/slide-images/free library.jpg";
 import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.png";
@@ -33,9 +29,8 @@ import img6 from "../../../src/assets/images/gallery/IMG_20230825_155624 (1).jpg
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
-import { englishCourses } from "../data/englishCourses";
-import { digitalMarketingCourses } from "../data/digitalMarketingCourses";
-import { corporateTrainingCourses } from "../data/corporateTrainingCourses";
+import { fetchPublishedCourses } from "../../../src/services/api/courses";
+import { fetchEbooks } from "../../../src/services/api/resources";
 
 const MotionLink = motion.create(Link);
 
@@ -49,6 +44,10 @@ const Home = () => {
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
+  const [premiumCourses, setPremiumCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(true);
 
   // Get neon light color based on active slide
   const getNeonTextShadow = (slideId) => {
@@ -104,20 +103,126 @@ const Home = () => {
     }
   };
 
-  // Define home courses before useEffect hooks - exactly 6 courses
-  const homeCourses = useMemo(() => {
-    // Get Interview Preparation course from corporate training
-    const interviewPrep = corporateTrainingCourses.find(
-      (course) => course.slug === "interview-preparation"
-    );
-    // Get 3 from English, 2 from Digital Marketing, and Interview Preparation = 6 total
-    const selectedCourses = [
-      ...englishCourses.slice(0, 3),
-      ...digitalMarketingCourses.slice(0, 2),
-      interviewPrep,
-    ].filter(Boolean);
-    return selectedCourses.slice(0, 6); // Ensure exactly 6 courses
+  // Fetch premium courses from backend
+  useEffect(() => {
+    const loadPremiumCourses = async () => {
+      try {
+        setLoadingCourses(true);
+        const response = await fetchPublishedCourses({ premium: true });
+
+        if (!response || !response.courses) {
+          console.warn("No premium courses data received from API");
+          setPremiumCourses([]);
+          return;
+        }
+
+        // Transform backend courses to match expected format
+        const transformedCourses = (response.courses || [])
+          .map((course) => ({
+            ...course,
+            id: course._id,
+            slug: course._id,
+            title: course.title || "Untitled Course",
+            description:
+              course.description ||
+              course.metadata?.subtitle ||
+              course.subtitle ||
+              "",
+            image:
+              course.thumbnailUrl ||
+              course.thumbnail ||
+              course.image ||
+              course.coverImage ||
+              "",
+            price:
+              course.price === 0
+                ? "Free"
+                : course.price
+                ? `AED ${course.price}`
+                : "On Request",
+            duration: course.duration
+              ? `${course.duration} hours`
+              : course.metadata?.duration || "",
+            format:
+              course.metadata?.deliveryMode ||
+              course.deliveryMode ||
+              course.format ||
+              "",
+            features: course.metadata?.tags || course.tags || [],
+            category: course.category || course.metadata?.category || "General",
+          }))
+          .slice(0, 6); // Limit to 6 courses for home page
+
+        setPremiumCourses(transformedCourses);
+      } catch (error) {
+        console.error("Failed to load premium courses:", error);
+        setPremiumCourses([]);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    loadPremiumCourses();
   }, []);
+
+  // Fetch featured books from backend
+  useEffect(() => {
+    const loadFeaturedBooks = async () => {
+      try {
+        setLoadingBooks(true);
+        const response = await fetchEbooks({ featured: true, pageSize: 4 });
+
+        if (!response || !response.data) {
+          console.warn("No featured books data received from API");
+          setFeaturedBooks([]);
+          return;
+        }
+
+        // Transform backend books to match expected format
+        const transformedBooks = (response.data || [])
+          .slice(0, 4) // Limit to 4 books
+          .map((book) => {
+            const price =
+              book.metadata?.price !== undefined &&
+              book.metadata.price !== null &&
+              book.metadata.price !== ""
+                ? Number(book.metadata.price)
+                : 0;
+            const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
+
+            return {
+              id: book._id,
+              title: book.title || "Untitled Book",
+              author: book.metadata?.author || "Digital AELA",
+              price: price,
+              originalPrice: originalPrice,
+              rating: 4.5, // Default rating
+              reviews: 0,
+              category:
+                book.categories?.[0] || book.metadata?.category || "General",
+              badge: "E-Book", // Can be determined from metadata if needed
+              image: book.metadata?.coverImage || book.coverImage || "",
+              imageAlt: `${book.title || "Book"} cover`,
+              description: book.description || "",
+            };
+          });
+
+        setFeaturedBooks(transformedBooks);
+      } catch (error) {
+        console.error("Failed to load featured books:", error);
+        setFeaturedBooks([]);
+      } finally {
+        setLoadingBooks(false);
+      }
+    };
+
+    loadFeaturedBooks();
+  }, []);
+
+  // Define home courses - use premium courses from backend
+  const homeCourses = useMemo(() => {
+    return premiumCourses;
+  }, [premiumCourses]);
 
   // Duplicate courses for seamless infinite scroll
   const duplicatedCourses = useMemo(() => {
@@ -1455,170 +1560,180 @@ const Home = () => {
             <div
               className="overflow-x-auto overflow-y-hidden scrollbar-hide px-12"
               ref={courseRibbonRef}>
-              <div
-                className="flex gap-6"
-                style={{
-                  width: "fit-content",
-                }}>
-                {duplicatedCourses.map((course, index) => (
-                  <div
-                    key={`${course.slug}-${index}`}
-                    className="shrink-0"
-                    style={{
-                      width:
-                        "clamp(280px, calc((100vw - 4rem) / 3 - 1.5rem), 400px)",
-                    }}>
-                    <motion.div
-                      initial={{ y: 50, opacity: 0 }}
-                      whileInView={{ y: 0, opacity: 1 }}
-                      viewport={{ once: true, amount: 0.3 }}
-                      transition={{
-                        duration: 0.25,
-                        delay: (index % homeCourses.length) * 0.05,
-                        ease: [0.25, 0.1, 0.25, 1],
-                      }}
-                      whileHover={{ y: -6 }}
-                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() =>
-                        handleViewCourseDetail(course, "home-featured")
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          handleViewCourseDetail(course, "home-featured");
-                        }
+              {loadingCourses ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-[#D4AF37] text-lg">
+                    Loading premium courses...
+                  </div>
+                </div>
+              ) : homeCourses.length === 0 ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-gray-300 text-lg">
+                    No premium courses available yet.
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex gap-6"
+                  style={{
+                    width: "fit-content",
+                  }}>
+                  {duplicatedCourses.map((course, index) => (
+                    <div
+                      key={`${course.slug}-${index}`}
+                      className="shrink-0"
+                      style={{
+                        width:
+                          "clamp(280px, calc((100vw - 4rem) / 3 - 1.5rem), 400px)",
                       }}>
-                      <div className="h-40 w-full overflow-hidden">
-                        <img
-                          src={course.image}
-                          alt={course.title}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                        <div className="min-h-[28px] mb-4">
-                          {(course.slug === "basic-english" ||
-                            course.slug === "advanced-english" ||
-                            course.slug === "personalised-english-speaking" ||
-                            course.slug ===
-                              "public-speaking-stage-confidence" ||
-                            course.slug === "interview-preparation") && (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-red-200">
-                              Most Enrolled
+                      <motion.div
+                        initial={{ y: 50, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{
+                          duration: 0.25,
+                          delay: (index % homeCourses.length) * 0.05,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                        whileHover={{ y: -6 }}
+                        className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          handleViewCourseDetail(course, "home-featured")
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleViewCourseDetail(course, "home-featured");
+                          }
+                        }}>
+                        <div className="h-40 w-full overflow-hidden">
+                          <img
+                            src={
+                              course.image ||
+                              "https://via.placeholder.com/300x200?text=Course"
+                            }
+                            alt={course.title}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
+                          <div className="min-h-[28px] mb-4"></div>
+                          <div className="mb-4">
+                            <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                              {course.title}
+                            </h3>
+                            <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                              {course.description}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                            <span className="flex items-center gap-2">
+                              <svg
+                                className="w-4 h-4 text-[#D4AF37]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {course.duration}
                             </span>
-                          )}
-                        </div>
-                        <div className="mb-4">
-                          <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
-                            {course.title}
-                          </h3>
-                          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-                            {course.description}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
-                          <span className="flex items-center gap-2">
-                            <svg
-                              className="w-4 h-4 text-[#D4AF37]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {course.duration}
-                          </span>
-                          <span className="flex items-center gap-2">
-                            <svg
-                              className="w-4 h-4 text-[#D4AF37]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 8l4 4m0 0l-4 4m4-4H3"
-                              />
-                            </svg>
-                            {course.format}
-                          </span>
-                        </div>
-
-                        <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
-                          <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                            Key Highlights
-                          </p>
-                          <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                            {course.features.map((feature) => (
-                              <li
-                                key={feature}
-                                className="flex items-center gap-2">
-                                <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="flex flex-col gap-3 mt-auto">
-                          <div className="flex items-center justify-between text-sm text-gray-300">
-                            <span>Course Fee</span>
-                            <span className="text-lg font-semibold text-[#F5D26A]">
-                              {course.price}
+                            <span className="flex items-center gap-2">
+                              <svg
+                                className="w-4 h-4 text-[#D4AF37]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17 8l4 4m0 0l-4 4m4-4H3"
+                                />
+                              </svg>
+                              {course.format}
                             </span>
                           </div>
-                          <motion.button
-                            whileHover={{ scale: 1.02, y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleViewCourseDetail(course, "home-featured");
-                            }}
-                            className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
-                            See Full Course
-                          </motion.button>
-                          <div className="grid gap-3 sm:grid-cols-2">
+
+                          {course.features && course.features.length > 0 && (
+                            <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
+                              <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
+                                Key Highlights
+                              </p>
+                              <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                                {course.features
+                                  .slice(0, 3)
+                                  .map((feature, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="flex items-center gap-2">
+                                      <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
+                                      {feature}
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="flex flex-col gap-3 mt-auto">
+                            <div className="flex items-center justify-between text-sm text-gray-300">
+                              <span>Course Fee</span>
+                              <span className="text-lg font-semibold text-[#F5D26A]">
+                                {course.price}
+                              </span>
+                            </div>
                             <motion.button
-                              whileHover={{ scale: 1.03, y: -2 }}
-                              whileTap={{ scale: 0.97 }}
+                              whileHover={{ scale: 1.02, y: -2 }}
+                              whileTap={{ scale: 0.98 }}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                redirectToCoursePayment(course, {
-                                  origin: "home-featured",
-                                  category:
-                                    course.category ?? "Featured Programs",
-                                });
+                                handleViewCourseDetail(course, "home-featured");
                               }}
-                              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                              Buy Now
+                              className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
+                              See Full Course
                             </motion.button>
-                            <div
-                              onClick={(event) => event.stopPropagation()}
-                              onKeyDown={(event) => event.stopPropagation()}>
-                              <GiftButton
-                                course={course}
-                                origin="home-featured"
-                                className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                                size="sm">
-                                Gift
-                              </GiftButton>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <motion.button
+                                whileHover={{ scale: 1.03, y: -2 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  redirectToCoursePayment(course, {
+                                    origin: "home-featured",
+                                    category:
+                                      course.category ?? "Featured Programs",
+                                  });
+                                }}
+                                className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                                Buy Now
+                              </motion.button>
+                              <div
+                                onClick={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => event.stopPropagation()}>
+                                <GiftButton
+                                  course={course}
+                                  origin="home-featured"
+                                  className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                                  size="sm">
+                                  Gift
+                                </GiftButton>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                ))}
-              </div>
+                      </motion.div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1989,412 +2104,164 @@ const Home = () => {
             </p>
           </motion.div>
 
+          {/* Loading State */}
+          {loadingBooks && (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-[#D4AF37] text-lg">
+                Loading featured books...
+              </div>
+            </div>
+          )}
+
           {/* Books Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {/* Book 1: English Grammar Mastery */}
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.1,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-              <Link to="/books/1">
-                {/* Book Image */}
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img
-                    src={bookGrammarImg}
-                    alt="English Grammar Mastery cover"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-                  {/* Format Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                      <FaBook className="w-2.5 h-2.5" />
-                      Physical
-                    </span>
-                  </div>
-                  {/* Discount Badge */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                    40% OFF
-                  </div>
-                </div>
+          {!loadingBooks && featuredBooks.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {featuredBooks.map((book, index) => {
+                const discountPercent =
+                  book.originalPrice > 0
+                    ? Math.round(
+                        ((book.originalPrice - book.price) /
+                          book.originalPrice) *
+                          100
+                      )
+                    : 0;
+                const displayPrice =
+                  book.price > 0 ? `AED ${book.price}` : "Free";
+                const displayOriginalPrice =
+                  book.originalPrice > 0 ? `AED ${book.originalPrice}` : "";
 
-                {/* Book Content */}
-                <div className="p-4">
-                  {/* Category */}
-                  <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                    Grammar
-                  </span>
-
-                  {/* Title */}
-                  <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                    English Grammar Mastery
-                  </h3>
-
-                  {/* Author */}
-                  <p className="text-xs text-gray-400 mb-2">
-                    by Prof. Sarah Smith
-                  </p>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < 4
-                              ? "text-[#D4AF37] fill-current"
-                              : "text-gray-600"
-                          }`}
+                return (
+                  <motion.div
+                    key={book.id}
+                    initial={{ y: 50, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: 0.1 + index * 0.05,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
+                    <Link to={`/books/${book.id}`}>
+                      {/* Book Image */}
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <img
+                          src={
+                            book.image ||
+                            "https://via.placeholder.com/300x400?text=Book"
+                          }
+                          alt={book.imageAlt || book.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                         />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-300">4.8</span>
-                    <span className="text-[10px] text-gray-500">(245)</span>
-                  </div>
+                        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+                        {/* Format Badge */}
+                        <div className="absolute top-2 right-2">
+                          <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                            {book.badge === "Physical" ? (
+                              <FaBook className="w-2.5 h-2.5" />
+                            ) : (
+                              <FaDownload className="w-2.5 h-2.5" />
+                            )}
+                            {book.badge || "E-Book"}
+                          </span>
+                        </div>
+                        {/* Discount Badge */}
+                        {discountPercent > 0 && (
+                          <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            {discountPercent}% OFF
+                          </div>
+                        )}
+                      </div>
 
-                  {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-[#D4AF37] font-display">
-                      ₹499
-                    </span>
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹699
-                    </span>
-                  </div>
+                      {/* Book Content */}
+                      <div className="p-4">
+                        {/* Category */}
+                        <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                          {book.category}
+                        </span>
 
-                  {/* Actions */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/books/1/payment`;
-                      }}
-                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                      Buy Now
-                    </motion.button>
-                    <GiftButton
-                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                      size="sm">
-                      Gift
-                    </GiftButton>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
+                        {/* Title */}
+                        <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                          {book.title}
+                        </h3>
 
-            {/* Book 2: Vocabulary Builder Pro */}
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.15,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-              <Link to="/books/2">
-                {/* Book Image */}
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img
-                    src={bookVocabularyImg}
-                    alt="Vocabulary Builder Pro cover"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
-                  {/* Format Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                      <FaDownload className="w-2.5 h-2.5" />
-                      E-Book
-                    </span>
-                  </div>
-                  {/* Discount Badge */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                    25% OFF
-                  </div>
-                </div>
+                        {/* Author */}
+                        <p className="text-xs text-gray-400 mb-2">
+                          by {book.author}
+                        </p>
 
-                {/* Book Content */}
-                <div className="p-4">
-                  {/* Category */}
-                  <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                    Vocabulary
-                  </span>
+                        {/* Rating */}
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <FaStar
+                                key={i}
+                                className={`w-3 h-3 ${
+                                  i < Math.floor(book.rating || 4.5)
+                                    ? "text-[#D4AF37] fill-current"
+                                    : "text-gray-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-300">
+                            {book.rating || 4.5}
+                          </span>
+                          {book.reviews > 0 && (
+                            <span className="text-[10px] text-gray-500">
+                              ({book.reviews})
+                            </span>
+                          )}
+                        </div>
 
-                  {/* Title */}
-                  <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                    Vocabulary Builder Pro
-                  </h3>
+                        {/* Price */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg font-bold text-[#D4AF37] font-display">
+                            {displayPrice}
+                          </span>
+                          {displayOriginalPrice && (
+                            <span className="text-xs text-gray-500 line-through">
+                              {displayOriginalPrice}
+                            </span>
+                          )}
+                        </div>
 
-                  {/* Author */}
-                  <p className="text-xs text-gray-400 mb-2">
-                    by Dr. James Wilson
-                  </p>
+                        {/* Actions */}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.location.href = `/books/${book.id}/payment`;
+                            }}
+                            className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                            {book.price > 0 ? "Buy Now" : "Get Free"}
+                          </motion.button>
+                          <GiftButton
+                            className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                            size="sm">
+                            Gift
+                          </GiftButton>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < 4
-                              ? "text-[#D4AF37] fill-current"
-                              : "text-gray-600"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-300">4.6</span>
-                    <span className="text-[10px] text-gray-500">(189)</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-[#D4AF37] font-display">
-                      ₹299
-                    </span>
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹399
-                    </span>
-                  </div>
-
-                  {/* Buy Now Button */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/books/2/payment`;
-                      }}
-                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                      Buy Now
-                    </motion.button>
-                    <GiftButton
-                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                      size="sm">
-                      Gift
-                    </GiftButton>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-
-            {/* Book 3: IELTS Preparation Guide */}
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.2,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-              <Link to="/books/3">
-                {/* Book Image */}
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img
-                    src={bookIELTSVocabularyImg}
-                    alt="IELTS Preparation Guide cover"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
-                  {/* Format Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                      <FaBook className="w-2.5 h-2.5" />
-                      Physical
-                    </span>
-                  </div>
-                  {/* Discount Badge */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                    42% OFF
-                  </div>
-                </div>
-
-                {/* Book Content */}
-                <div className="p-4">
-                  {/* Category */}
-                  <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                    Exam Prep
-                  </span>
-
-                  {/* Title */}
-                  <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                    IELTS Preparation Guide
-                  </h3>
-
-                  {/* Author */}
-                  <p className="text-xs text-gray-400 mb-2">by Emma Johnson</p>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < 4
-                              ? "text-[#D4AF37] fill-current"
-                              : "text-gray-600"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-300">4.7</span>
-                    <span className="text-[10px] text-gray-500">(312)</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-[#D4AF37] font-display">
-                      ₹349
-                    </span>
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹599
-                    </span>
-                  </div>
-
-                  {/* Buy Now Button */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/books/3/payment`;
-                      }}
-                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                      Buy Now
-                    </motion.button>
-                    <GiftButton
-                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                      size="sm">
-                      Gift
-                    </GiftButton>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-
-            {/* Book 4: Speaking Fluency Course */}
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.25,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-              <Link to="/books/4">
-                {/* Book Image */}
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img
-                    src={bookConfidenceBuildingImg}
-                    alt="Speaking Fluency Course handbook"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
-                  {/* Format Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                      <FaDownload className="w-2.5 h-2.5" />
-                      E-Book
-                    </span>
-                  </div>
-                  {/* Discount Badge */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                    38% OFF
-                  </div>
-                </div>
-
-                {/* Book Content */}
-                <div className="p-4">
-                  {/* Category */}
-                  <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                    Speaking
-                  </span>
-
-                  {/* Title */}
-                  <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                    Speaking Fluency Course
-                  </h3>
-
-                  {/* Author */}
-                  <p className="text-xs text-gray-400 mb-2">by Mark Davis</p>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < 4
-                              ? "text-[#D4AF37] fill-current"
-                              : "text-gray-600"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-300">4.9</span>
-                    <span className="text-[10px] text-gray-500">(267)</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-[#D4AF37] font-display">
-                      ₹279
-                    </span>
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹449
-                    </span>
-                  </div>
-
-                  {/* Buy Now Button */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/books/4/payment`;
-                      }}
-                      className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                      Buy Now
-                    </motion.button>
-                    <GiftButton
-                      className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                      size="sm">
-                      Gift
-                    </GiftButton>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          </div>
+          {/* No Books Message */}
+          {!loadingBooks && featuredBooks.length === 0 && (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-gray-300 text-lg">
+                No featured books available yet.
+              </div>
+            </div>
+          )}
 
           {/* View All Books Button */}
           <motion.div

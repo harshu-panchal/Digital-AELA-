@@ -254,3 +254,16 @@ export const unlinkCourseQuiz = async (courseId, quizId) =>
     course.quizzes = (course.quizzes ?? []).filter((quiz) => quiz.id !== quizId);
   });
 
+/**
+ * Bulk operations for courses
+ * POST /api/v1/teacher/courses/bulk
+ * @param {Object} payload - { operation, courseIds, ...additionalParams }
+ */
+export const bulkCourseOperations = async (payload) => {
+  const response = await apiRequest("/teacher/courses/bulk", {
+    method: "POST",
+    body: payload,
+  });
+  return response;
+};
+

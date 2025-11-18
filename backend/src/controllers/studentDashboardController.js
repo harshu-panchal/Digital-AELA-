@@ -9,6 +9,7 @@ import EbookResource from "../models/EbookResource.js";
 import RecruiterBlog from "../models/RecruiterBlog.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 
 export const getStudentDashboard = async (req, res, next) => {
   try {
@@ -589,6 +590,361 @@ export const getPublicUserStats = async (req, res, next) => {
     return next(error);
   }
 };
+
+// Get enhanced dashboard widgets
+export const getDashboardWidgets = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    const studentObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (!studentObjectId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    // Get student points for achievements
+    let studentPoints = null;
+    try {
+      studentPoints = await StudentPoints.findOne({ student: studentObjectId });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching student points:", error);
+    }
+
+    // Recent Activity Widget - Get last 7 days of activity
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentActivities = [];
+    
+    // Get recent enrollments
+    const recentEnrollments = await Enrollment.find({
+      student: studentObjectId,
+      enrolledAt: { $gte: sevenDaysAgo },
+    })
+      .populate("course", "title")
+      .sort({ enrolledAt: -1 })
+      .limit(5)
+      .lean();
+    
+    recentEnrollments.forEach((enrollment) => {
+      recentActivities.push({
+        id: enrollment._id.toString(),
+        type: "enrollment",
+        title: `Enrolled in ${enrollment.course?.title || "Course"}`,
+        timestamp: enrollment.enrolledAt,
+        icon: "📚",
+      });
+    });
+
+    // Get recent lesson completions
+    const recentCompletions = await LessonCompletion.find({
+      student: studentObjectId,
+      completedAt: { $gte: sevenDaysAgo },
+    })
+      .populate("course", "title")
+      .sort({ completedAt: -1 })
+      .limit(5)
+      .lean();
+    
+    recentCompletions.forEach((completion) => {
+      recentActivities.push({
+        id: completion._id.toString(),
+        type: "completion",
+        title: `Completed lesson in ${completion.course?.title || "Course"}`,
+        timestamp: completion.completedAt,
+        icon: "✅",
+      });
+    });
+
+    // Sort by timestamp and get top 10
+    recentActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const recentActivity = recentActivities.slice(0, 10).map((activity) => ({
+      ...activity,
+      timeAgo: formatTimeAgo(activity.timestamp),
+    }));
+
+    // Achievements Widget
+    const badges = (studentPoints?.badges || []).map((badge) => ({
+      id: badge,
+      label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      description: `Earned ${badge} badge`,
+      icon: getBadgeIcon(badge),
+      earnedAt: new Date(), // TODO: Track when badge was earned
+    }));
+
+    // Weekly Progress Widget - Last 7 days
+    const weeklyProgress = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const dayCompletions = await LessonCompletion.find({
+        student: studentObjectId,
+        completedAt: { $gte: date, $lt: nextDate },
+      });
+
+      const hours = dayCompletions.reduce((total, completion) => {
+        return total + (completion.duration || 0) / 60;
+      }, 0);
+
+      weeklyProgress.push({
+        date: date.toISOString().split("T")[0],
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        hours: parseFloat(hours.toFixed(1)),
+        lessons: dayCompletions.length,
+      });
+    }
+
+    // Learning Goals Widget
+    const totalLearningHours = await LessonCompletion.find({ student: studentObjectId })
+      .then((completions) => {
+        return completions.reduce((total, completion) => {
+          return total + (completion.duration || 0) / 60;
+        }, 0);
+      });
+
+    const activeCourses = await Enrollment.countDocuments({
+      student: studentObjectId,
+      status: "active",
+    });
+
+    const learningGoals = {
+      weeklyHours: {
+        current: weeklyProgress.reduce((sum, day) => sum + day.hours, 0),
+        target: 10, // Default target, can be customized
+        unit: "hours",
+      },
+      coursesCompleted: {
+        current: await Enrollment.countDocuments({
+          student: studentObjectId,
+          status: "completed",
+        }),
+        target: 5, // Default target
+        unit: "courses",
+      },
+      streak: {
+        current: studentPoints?.streak || 0,
+        target: 30, // Default target
+        unit: "days",
+      },
+    };
+
+    // Course Recommendations Widget
+    const enrolledCourseIds = await Enrollment.find({ student: studentObjectId })
+      .select("course")
+      .lean()
+      .then((enrollments) => enrollments.map((e) => e.course));
+
+    const recommendations = await Course.find({
+      _id: { $nin: enrolledCourseIds },
+      status: "published",
+    })
+      .populate("instructor", "fullName")
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean()
+      .then((courses) =>
+        courses.map((course) => ({
+          id: course._id.toString(),
+          title: course.title,
+          instructor: course.instructor?.fullName || "Instructor",
+          price: course.price || 0,
+          thumbnail: course.thumbnail || null,
+          route: `/learn-earn/courses/${course._id}`,
+        }))
+      );
+
+    return res.json({
+      recentActivity,
+      achievements: badges,
+      weeklyProgress,
+      learningGoals,
+      recommendations,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get enhanced profile data
+export const getEnhancedProfile = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { userId: authUserId } = req.auth || {};
+
+    if (!userId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User ID is required",
+        },
+      });
+    }
+
+    const studentObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (!studentObjectId) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    // Get student profile
+    const profile = await StudentProfile.findOne({ user: studentObjectId })
+      .populate("user", "fullName email")
+      .lean();
+
+    if (!profile) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Profile not found",
+        },
+      });
+    }
+
+    // Calculate profile completion percentage
+    const profileFields = [
+      "headline",
+      "bio",
+      "phone",
+      "location",
+      "skills",
+      "experience",
+      "education",
+      "resumeUrl",
+      "portfolioUrl",
+      "linkedinUrl",
+      "socialLinks",
+    ];
+
+    const completedFields = profileFields.filter((field) => {
+      const value = profile[field];
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "object" && value !== null) {
+        return Object.keys(value).length > 0;
+      }
+      return !!value;
+    });
+
+    const completionPercentage = Math.round(
+      (completedFields.length / profileFields.length) * 100
+    );
+
+    // Get skills with levels (if stored in metadata)
+    const skills = (profile.skills || []).map((skill) => ({
+      name: skill,
+      level: profile.metadata?.skillLevels?.[skill] || "intermediate",
+      verified: false,
+    }));
+
+    // Get achievements
+    const studentPoints = await StudentPoints.findOne({ student: studentObjectId });
+    const achievements = (studentPoints?.badges || []).map((badge) => ({
+      id: badge,
+      label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      description: `Earned ${badge} badge`,
+      icon: getBadgeIcon(badge),
+    }));
+
+    // Get learning timeline
+    const enrollments = await Enrollment.find({ student: studentObjectId })
+      .populate("course", "title")
+      .sort({ enrolledAt: -1 })
+      .limit(10)
+      .lean();
+
+    const timeline = enrollments.map((enrollment) => ({
+      id: enrollment._id.toString(),
+      type: "enrollment",
+      title: `Enrolled in ${enrollment.course?.title || "Course"}`,
+      date: enrollment.enrolledAt,
+      courseId: enrollment.course?._id?.toString(),
+    }));
+
+    // Get course completions
+    const completions = await LessonCompletion.find({ student: studentObjectId })
+      .populate("course", "title")
+      .sort({ completedAt: -1 })
+      .limit(10)
+      .lean();
+
+    completions.forEach((completion) => {
+      timeline.push({
+        id: completion._id.toString(),
+        type: "completion",
+        title: `Completed lesson in ${completion.course?.title || "Course"}`,
+        date: completion.completedAt,
+        courseId: completion.course?._id?.toString(),
+      });
+    });
+
+    timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Get social links verification status
+    const socialLinks = (profile.socialLinks || []).map((link) => ({
+      platform: link.platform,
+      url: link.url,
+      verified: link.verified || false,
+      verifiedAt: link.verifiedAt || null,
+    }));
+
+    // Check if viewing own profile
+    const isOwnProfile = authUserId && authUserId.toString() === userId;
+
+    return res.json({
+      profile: {
+        ...profile,
+        completionPercentage,
+        skills,
+        achievements,
+        timeline: timeline.slice(0, 20),
+        socialLinks,
+        isOwnProfile,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Helper function to get badge icon
+function getBadgeIcon(badge) {
+  const badgeIcons = {
+    "first-quiz": "🎯",
+    "course-complete": "🎓",
+    "week-streak": "🔥",
+    "month-streak": "⭐",
+    "top-learner": "🏆",
+    "social-verified": "✅",
+    "early-adopter": "🚀",
+  };
+  return badgeIcons[badge] || "🏅";
+}
 
 // Helper function to format time ago
 function formatTimeAgo(date) {

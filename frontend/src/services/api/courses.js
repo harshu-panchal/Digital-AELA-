@@ -3,9 +3,16 @@ import { apiRequest } from "./baseClient";
 /**
  * Fetch all published courses (public endpoint)
  * Backend automatically filters for status: "published"
+ * @param {Object} options - Optional parameters
+ * @param {boolean} options.premium - If true, only fetch premium courses
  */
-export const fetchPublishedCourses = async () => {
-  return apiRequest("/courses", {
+export const fetchPublishedCourses = async (options = {}) => {
+  const params = new URLSearchParams();
+  if (options.premium) {
+    params.set("premium", "true");
+  }
+  const query = params.toString();
+  return apiRequest(`/courses${query ? `?${query}` : ""}`, {
     method: "GET",
     skipAuth: true,
   });
@@ -77,6 +84,17 @@ export const updateEnrollmentStatus = async (courseId, status) => {
 export const unenrollFromCourse = async (courseId) => {
   return apiRequest(`/courses/${courseId}/enroll`, {
     method: "DELETE",
+  });
+};
+
+/**
+ * Get premium course count
+ * GET /api/v1/courses/premium-count
+ */
+export const getPremiumCourseCount = async () => {
+  return apiRequest("/courses/premium-count", {
+    method: "GET",
+    skipAuth: true,
   });
 };
 

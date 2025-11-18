@@ -4,7 +4,7 @@ import {
   getStudentProfile,
   updateStudentProfile,
 } from "../controllers/studentController.js";
-import { getStudentDashboard, getPublicUserStats } from "../controllers/studentDashboardController.js";
+import { getStudentDashboard, getPublicUserStats, getDashboardWidgets, getEnhancedProfile } from "../controllers/studentDashboardController.js";
 import { verifySocialLink, getSocialLinks, addSocialLink, deleteSocialLink } from "../controllers/socialVerificationController.js";
 import {
   getStudentPoints,
@@ -18,6 +18,12 @@ const router = Router();
 
 // Get student dashboard (authenticated student only)
 router.get("/dashboard", requireAuth(["student"]), getStudentDashboard);
+
+// Get enhanced dashboard widgets (authenticated student only)
+router.get("/dashboard/widgets", requireAuth(["student"]), getDashboardWidgets);
+
+// Get enhanced profile data (public endpoint, but returns more data if own profile)
+router.get("/:userId/profile/enhanced", getEnhancedProfile);
 
 // Get public user stats/earnings (public endpoint)
 router.get("/:userId/stats", getPublicUserStats);

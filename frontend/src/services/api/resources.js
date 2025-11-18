@@ -4,6 +4,7 @@ export const fetchEbooks = (params = {}) => {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set("page", params.page);
   if (params.pageSize) searchParams.set("pageSize", params.pageSize);
+  if (params.featured) searchParams.set("featured", "true");
   const query = searchParams.toString();
   return apiRequest(`/resources/ebooks${query ? `?${query}` : ""}`, {
     skipAuth: true,
@@ -86,4 +87,15 @@ export const downloadEbook = (ebookId) =>
   apiRequest(`/resources/ebooks/${ebookId}/download`, {
     skipAuth: true,
   });
+
+/**
+ * Get featured book count
+ * GET /api/v1/resources/ebooks/featured-count
+ */
+export const getFeaturedBookCount = async () => {
+  return apiRequest("/resources/ebooks/featured-count", {
+    method: "GET",
+    skipAuth: true,
+  });
+};
 

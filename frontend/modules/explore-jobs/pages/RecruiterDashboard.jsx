@@ -10,6 +10,10 @@ import {
   HiOutlineBookOpen,
   HiOutlineNewspaper,
   HiOutlineUserGroup,
+  HiOutlineChartBar,
+  HiOutlineFunnel,
+  HiOutlineCalendar,
+  HiOutlineDocumentText,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import PostGrid from "../components/PostGrid";
@@ -341,20 +345,52 @@ const RecruiterDashboard = () => {
               to: "composer:job",
             },
             {
+              id: "analytics",
+              title: "Analytics Dashboard",
+              description: "View comprehensive recruitment analytics and metrics.",
+              icon: "chart",
+              tone: "from-[#D4AF37]/15 to-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37]",
+              to: "/explore-jobs/recruiter/analytics",
+            },
+            {
+              id: "pipeline",
+              title: "Candidate Pipeline",
+              description: "Track candidates through hiring stages.",
+              icon: "users",
+              tone: "from-amber-500/15 to-amber-400/10 border-amber-400/30 text-amber-100",
+              to: "/explore-jobs/recruiter/pipeline",
+            },
+            {
+              id: "candidates",
+              title: "Advanced Search",
+              description: "Find candidates with advanced filters.",
+              icon: "funnel",
+              tone: "from-blue-500/15 to-blue-400/10 border-blue-400/30 text-blue-100",
+              to: "/explore-jobs/recruiter/candidates",
+            },
+            {
+              id: "interviews",
+              title: "Interview Scheduling",
+              description: "Schedule and manage candidate interviews.",
+              icon: "calendar",
+              tone: "from-purple-500/15 to-purple-400/10 border-purple-400/30 text-purple-100",
+              to: "/explore-jobs/recruiter/interviews",
+            },
+            {
+              id: "bulk-actions",
+              title: "Bulk Actions",
+              description: "Manage multiple applicants at once.",
+              icon: "bulk",
+              tone: "from-rose-500/15 to-rose-400/10 border-rose-400/30 text-rose-100",
+              to: "/explore-jobs/recruiter/bulk-actions",
+            },
+            {
               id: "post-blog",
               title: "Share a Hiring Update",
               description: "Publish insights to the Digital AELA community.",
               icon: "blog",
               tone: "from-sky-500/15 to-sky-400/10 border-sky-400/30 text-sky-100",
               to: "/blogs/create",
-            },
-            {
-              id: "view-pipeline",
-              title: "Review Applicants",
-              description: "Track candidate progress across your roles.",
-              icon: "users",
-              tone: "from-amber-500/15 to-amber-400/10 border-amber-400/30 text-amber-100",
-              to: "#pipeline",
             },
             {
               id: "read-ebooks",
@@ -429,6 +465,10 @@ const RecruiterDashboard = () => {
       blog: HiOutlineNewspaper,
       users: HiOutlineUserGroup,
       book: HiOutlineBookOpen,
+      chart: HiOutlineChartBar,
+      funnel: HiOutlineFunnel,
+      calendar: HiOutlineCalendar,
+      bulk: HiOutlineDocumentText,
     }),
     []
   );

@@ -5,6 +5,9 @@ import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
 import StudentPoints from "../models/StudentPoints.js";
 import QuizAttempt from "../models/QuizAttempt.js";
+import Enrollment from "../models/Enrollment.js";
+import Notification from "../models/Notification.js";
+import Course from "../models/Course.js";
 
 export const getSocialStats = async (req, res, next) => {
   try {
@@ -361,6 +364,18 @@ export const followUser = async (req, res, next) => {
       following: followingObjectId,
     });
 
+    // Create notification for the user being followed
+    await Notification.create({
+      user: followingObjectId,
+      title: "New Follower",
+      description: `${(await User.findById(followerObjectId).select("fullName").lean())?.fullName || "Someone"} started following you`,
+      type: "social",
+      actionUrl: `/learn-earn/profile/${userId}`,
+      metadata: {
+        followerId: userId,
+      },
+    });
+
     return res.status(201).json({
       id: follow._id.toString(),
       follower: userId,
@@ -493,6 +508,9 @@ export const shareCoins = async (req, res, next) => {
       });
     }
 
+    // Get sender info
+    const sender = await User.findById(senderObjectId).select("fullName").lean();
+
     // Get sender's points
     let senderPoints = await StudentPoints.findOne({ student: senderObjectId });
     if (!senderPoints) {
@@ -543,7 +561,7 @@ export const shareCoins = async (req, res, next) => {
           {
             type: "received",
             amount: amount,
-            reason: note || `Received from ${sender.fullName || "User"}`,
+            reason: note || `Received from ${(await User.findById(senderObjectId).select("fullName").lean())?.fullName || "User"}`,
             source: "share",
             createdAt: new Date(),
           },
@@ -555,7 +573,7 @@ export const shareCoins = async (req, res, next) => {
       recipientPoints.transactions.push({
         type: "received",
         amount: amount,
-            reason: note || `Received from ${sender.fullName || "User"}`,
+        reason: note || `Received from ${sender?.fullName || "User"}`,
         source: "share",
         createdAt: new Date(),
       });
@@ -567,6 +585,20 @@ export const shareCoins = async (req, res, next) => {
 
       await recipientPoints.save();
     }
+
+    // Create notification for recipient
+    await Notification.create({
+      user: recipientObjectId,
+      title: "Coins Received",
+      description: `You received ${amount} coins${note ? `: ${note}` : ""}`,
+      type: "coins",
+      actionUrl: `/learn-earn/wallet`,
+      metadata: {
+        senderId: userId,
+        senderName: sender?.fullName || "User",
+        amount,
+      },
+    });
 
     return res.json({
       success: true,

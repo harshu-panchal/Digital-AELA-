@@ -20,7 +20,7 @@ import { useUser } from "../../src/contexts/UserContext";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
-import { fetchStudentDashboard } from "../../src/services/api/student";
+import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -51,6 +51,14 @@ const StudentDashboard = () => {
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
   const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
   const [recruiterSearchQuery, setRecruiterSearchQuery] = useState("");
+  const [widgetsData, setWidgetsData] = useState({
+    recentActivity: [],
+    achievements: [],
+    weeklyProgress: [],
+    learningGoals: {},
+    recommendations: [],
+  });
+  const [loadingWidgets, setLoadingWidgets] = useState(false);
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -93,8 +101,27 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
+  // Load dashboard widgets
+  const loadWidgets = useCallback(async () => {
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      return;
+    }
+
+    setLoadingWidgets(true);
+    try {
+      const widgets = await fetchDashboardWidgets();
+      setWidgetsData(widgets);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load dashboard widgets:", error);
+    } finally {
+      setLoadingWidgets(false);
+    }
+  }, [authUser, tokens]);
+
   useEffect(() => {
     loadDashboard();
+    loadWidgets();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
@@ -104,7 +131,7 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [loadDashboard]);
+  }, [loadDashboard, loadWidgets]);
 
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
@@ -585,6 +612,149 @@ const StudentDashboard = () => {
                 </tbody>
               </table>
             </div>
+          </motion.section>
+
+          {/* Enhanced Dashboard Widgets Section */}
+          <motion.section
+            variants={sectionVariants}
+            initial="hidden"
+            animate="show"
+            className="grid gap-6 lg:grid-cols-2">
+            {/* Recent Activity Widget */}
+            <motion.div
+              variants={cardVariants}
+              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+              </header>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {loadingWidgets ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+                ) : widgetsData.recentActivity.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">No recent activity</div>
+                ) : (
+                  widgetsData.recentActivity.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+                      <span className="text-lg">{activity.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">{activity.title}</p>
+                        <p className="mt-1 text-slate-400">{activity.timeAgo}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+
+            {/* Weekly Progress Widget */}
+            <motion.div
+              variants={cardVariants}
+              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Weekly Progress</h2>
+              </header>
+              <div className="space-y-2">
+                {loadingWidgets ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+                ) : widgetsData.weeklyProgress.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">No progress data</div>
+                ) : (
+                  widgetsData.weeklyProgress.map((day, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-12 text-xs text-slate-400">{day.day}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-slate-300">{day.hours}h</span>
+                          <span className="text-xs text-slate-400">{day.lessons} lessons</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(day.hours / 2) * 100}%` }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+
+            {/* Learning Goals Widget */}
+            <motion.div
+              variants={cardVariants}
+              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Learning Goals</h2>
+              </header>
+              <div className="space-y-4">
+                {loadingWidgets ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+                ) : !widgetsData.learningGoals || Object.keys(widgetsData.learningGoals).length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">No goals set</div>
+                ) : (
+                  Object.entries(widgetsData.learningGoals).map(([key, goal]) => {
+                    const percentage = Math.min((goal.current / goal.target) * 100, 100);
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                          <span className="text-slate-400">
+                            {goal.current} / {goal.target} {goal.unit}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 0.6 }}
+                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+
+            {/* Course Recommendations Widget */}
+            <motion.div
+              variants={cardVariants}
+              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+              <header className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Recommended Courses</h2>
+                <Link
+                  to="/learn-earn/courses"
+                  className="text-xs text-sky-200 hover:text-sky-100 transition">
+                  View all
+                </Link>
+              </header>
+              <div className="space-y-3">
+                {loadingWidgets ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+                ) : widgetsData.recommendations.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">No recommendations</div>
+                ) : (
+                  widgetsData.recommendations.map((course) => (
+                    <Link
+                      key={course.id}
+                      to={course.route}
+                      className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm transition hover:border-sky-400/50">
+                      <p className="font-semibold text-white">{course.title}</p>
+                      <p className="mt-1 text-xs text-slate-400">by {course.instructor}</p>
+                      <p className="mt-1 text-xs text-sky-200">
+                        {course.price === 0 ? "Free" : `AED ${course.price}`}
+                      </p>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </motion.div>
           </motion.section>
 
           <motion.section

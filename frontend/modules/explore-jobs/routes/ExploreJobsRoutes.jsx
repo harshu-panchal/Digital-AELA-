@@ -13,6 +13,14 @@ import RecruiterDashboard from "../pages/RecruiterDashboard";
 import SeekerDashboard from "../pages/SeekerDashboard";
 import PostDetailPage from "../pages/PostDetailPage";
 import ApplicantProfilePage from "../pages/ApplicantProfilePage";
+import RecruiterAnalyticsDashboard from "../pages/RecruiterAnalyticsDashboard";
+import JobApplicationAnalytics from "../pages/JobApplicationAnalytics";
+import CandidatePipeline from "../pages/CandidatePipeline";
+import HiringStatistics from "../pages/HiringStatistics";
+import PerformanceReports from "../pages/PerformanceReports";
+import BulkApplicantActions from "../pages/BulkApplicantActions";
+import AdvancedCandidateFilter from "../pages/AdvancedCandidateFilter";
+import InterviewScheduling from "../pages/InterviewScheduling";
 import PostModal from "../components/PostModal";
 import { useExploreJobs } from "../context/ExploreJobsContext";
 
@@ -48,6 +56,14 @@ const ExploreJobsRoutes = () => {
           <Route index element={<ExploreFeed />} />
           <Route path="recruiter-dashboard" element={<RecruiterDashboard />} />
           <Route path="recruiter/applicants/:jobId/:applicationId" element={<ApplicantProfilePage />} />
+          <Route path="recruiter/analytics" element={<RecruiterAnalyticsDashboard />} />
+          <Route path="recruiter/analytics/jobs/:jobId" element={<JobApplicationAnalytics />} />
+          <Route path="recruiter/pipeline" element={<CandidatePipeline />} />
+          <Route path="recruiter/hiring-stats" element={<HiringStatistics />} />
+          <Route path="recruiter/performance-reports" element={<PerformanceReports />} />
+          <Route path="recruiter/bulk-actions" element={<BulkApplicantActions />} />
+          <Route path="recruiter/candidates" element={<AdvancedCandidateFilter />} />
+          <Route path="recruiter/interviews" element={<InterviewScheduling />} />
           <Route path="seeker-dashboard" element={<SeekerDashboard />} />
           <Route path="post/:id" element={<PostDetailPage />} />
         </Route>
