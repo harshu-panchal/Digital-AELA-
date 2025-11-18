@@ -91,6 +91,7 @@ const RecruiterAnalyticsHub = () => {
 
   return (
     <div className="w-full text-white pt-24">
+      <div className="w-full bg-black h-[10%]"></div>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
