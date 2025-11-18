@@ -90,7 +90,7 @@ const RecruiterAnalyticsHub = () => {
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
 
   return (
-    <div className="w-full text-white mt-[500px] pt-[500px]">
+    <div className="w-full text-white pt-24">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ const RecruiterAnalyticsHub = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className=" flex flex-wrap gap-2 border-b border-white/10 pb-4 mt-[200px]">
+        <div className=" flex flex-wrap gap-2 border-b border-white/10 pb-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
