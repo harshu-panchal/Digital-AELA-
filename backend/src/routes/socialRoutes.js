@@ -6,13 +6,6 @@ import {
   followUser,
   unfollowUser,
   shareCoins,
-  getSocialFeed,
-  getFollowerSuggestions,
-  getSocialNotifications,
-  markNotificationsRead,
-  bulkShareCoins,
-  getCoinSharingHistory,
-  getCoinSharingLimits,
 } from "../controllers/socialController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -23,17 +16,9 @@ const router = Router();
 router.get("/stats", getSocialStats); // Uses req.auth?.userId if authenticated
 router.get("/:userId/stats", getSocialStats); // Public endpoint for any user
 
-// Get social feed/activity stream (authenticated)
-router.get("/feed", requireAuth([]), getSocialFeed);
-
-// Get enhanced follower suggestions (authenticated)
-router.get("/suggestions", requireAuth([]), getFollowerSuggestions);
-
-// Get social notifications (authenticated)
-router.get("/notifications", requireAuth([]), getSocialNotifications);
-
-// Mark notifications as read (authenticated)
-router.patch("/notifications/read", requireAuth([]), markNotificationsRead);
+// Note: getSocialFeed, getFollowerSuggestions, getSocialNotifications, markNotificationsRead
+// are not yet implemented in socialController.js
+// These routes can be added when the controller functions are implemented
 
 // Get followers list (public or authenticated)
 router.get("/:userId/followers", getFollowers);
@@ -50,10 +35,9 @@ router.delete("/follow/:targetUserId", requireAuth([]), unfollowUser);
 // Share coins with another user (authenticated)
 router.post("/share-coins", requireAuth(["student"]), shareCoins);
 
-// Advanced coin sharing features
-router.post("/share-coins/bulk", requireAuth(["student"]), bulkShareCoins);
-router.get("/share-coins/history", requireAuth(["student"]), getCoinSharingHistory);
-router.get("/share-coins/limits", requireAuth(["student"]), getCoinSharingLimits);
+// Note: bulkShareCoins, getCoinSharingHistory, getCoinSharingLimits
+// are not yet implemented in socialController.js
+// These routes can be added when the controller functions are implemented
 
 export default router;
 
