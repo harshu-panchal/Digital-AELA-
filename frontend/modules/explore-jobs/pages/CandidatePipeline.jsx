@@ -59,7 +59,7 @@ const CandidatePipeline = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#010101] text-white flex items-center justify-center">
+      <div className="w-full text-white flex items-center justify-center py-12">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Loading pipeline...</div>
           <div className="text-gray-400 text-sm">Please wait</div>
@@ -72,8 +72,7 @@ const CandidatePipeline = () => {
   const stages = ["screening", "assessment", "interview", "offer", "hired", "rejected"];
 
   return (
-    <div className="min-h-screen bg-[#010101] text-white p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full text-white space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

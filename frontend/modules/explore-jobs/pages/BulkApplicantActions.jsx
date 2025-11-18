@@ -133,8 +133,7 @@ const BulkApplicantActions = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#010101] text-white p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full text-white space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Bulk Applicant Actions</h1>

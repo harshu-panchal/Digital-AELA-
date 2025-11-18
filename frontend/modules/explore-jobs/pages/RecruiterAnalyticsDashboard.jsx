@@ -81,16 +81,19 @@ const RecruiterAnalyticsDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white">Loading analytics...</div>
+      <div className="w-full text-white flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="text-white text-lg mb-2">Loading analytics...</div>
+          <div className="text-gray-400 text-sm">Please wait</div>
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#010101] text-white p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="w-full text-white">
+        <div>
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
             <h2 className="text-xl font-semibold text-red-400 mb-2">Error Loading Analytics</h2>
             <p className="text-gray-300">{error || "No data available"}</p>
@@ -111,8 +114,8 @@ const RecruiterAnalyticsDashboard = () => {
   // Show empty state if no jobs
   if (overview.totalJobs === 0 && !loading) {
     return (
-      <div className="min-h-screen bg-[#010101] text-white p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="w-full text-white">
+        <div>
           <h1 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>
           <p className="text-gray-400 mb-6">Track your recruitment performance</p>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-12 text-center">
@@ -220,8 +223,7 @@ const RecruiterAnalyticsDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#010101] text-white p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full text-white space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
