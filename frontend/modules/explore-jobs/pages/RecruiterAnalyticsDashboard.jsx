@@ -53,10 +53,23 @@ const RecruiterAnalyticsDashboard = () => {
       setLoading(true);
       setError(null);
       const result = await fetchRecruiterAnalyticsDashboard({ period });
-      setData(result);
+      // eslint-disable-next-line no-console
+      console.log("Analytics data received:", result);
+      
+      // Handle if result is wrapped in data property
+      const analyticsData = result?.data || result;
+      
+      if (!analyticsData) {
+        throw new Error("No data received from server");
+      }
+      
+      setData(analyticsData);
     } catch (err) {
-      setError(err.message || "Failed to load analytics");
-      toast.error("Failed to load analytics dashboard");
+      // eslint-disable-next-line no-console
+      console.error("Error loading analytics:", err);
+      const errorMessage = err.message || "Failed to load analytics dashboard";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -76,24 +89,64 @@ const RecruiterAnalyticsDashboard = () => {
 
   if (error || !data) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-400">{error || "No data available"}</div>
+      <div className="min-h-screen bg-[#010101] text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+            <h2 className="text-xl font-semibold text-red-400 mb-2">Error Loading Analytics</h2>
+            <p className="text-gray-300">{error || "No data available"}</p>
+            <button
+              onClick={() => loadAnalytics()}
+              className="mt-4 px-4 py-2 rounded-xl bg-[#D4AF37] text-black font-semibold hover:bg-[#D4AF37]/90 transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const { overview, statusBreakdown, applicationTrend, topPerformingJobs } = data;
+  const { overview = {}, statusBreakdown = {}, applicationTrend = [], topPerformingJobs = [] } = data;
+
+  // Show empty state if no jobs
+  if (overview.totalJobs === 0 && !loading) {
+    return (
+      <div className="min-h-screen bg-[#010101] text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>
+          <p className="text-gray-400 mb-6">Track your recruitment performance</p>
+          <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-12 text-center">
+            <HiOutlineChartBar className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">No Analytics Data Yet</h2>
+            <p className="text-gray-400 mb-6">
+              Start by posting job openings to see analytics and metrics here.
+            </p>
+            <Link
+              to="/explore-jobs/recruiter-dashboard"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-semibold hover:bg-[#D4AF37]/90 transition"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Chart data for application trend
   const trendChartData = {
-    labels: applicationTrend.map((item) => {
-      const date = new Date(item.date);
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    }),
+    labels: (applicationTrend || []).length > 0
+      ? applicationTrend.map((item) => {
+          const date = new Date(item.date);
+          return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        })
+      : ["No data"],
     datasets: [
       {
         label: "Applications",
-        data: applicationTrend.map((item) => item.applications),
+        data: (applicationTrend || []).length > 0
+          ? applicationTrend.map((item) => item.applications || item.count || 0)
+          : [0],
         borderColor: "#D4AF37",
         backgroundColor: "rgba(212, 175, 55, 0.1)",
         tension: 0.4,
@@ -201,9 +254,9 @@ const RecruiterAnalyticsDashboard = () => {
                 <HiOutlineBriefcase className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{overview.totalJobs}</div>
+            <div className="text-3xl font-bold text-white mb-1">{overview.totalJobs || 0}</div>
             <div className="text-sm text-gray-400">Total Jobs</div>
-            <div className="text-xs text-gray-500 mt-2">{overview.activeJobs} active</div>
+            <div className="text-xs text-gray-500 mt-2">{overview.activeJobs || 0} active</div>
           </motion.div>
 
           <motion.div
@@ -217,9 +270,9 @@ const RecruiterAnalyticsDashboard = () => {
                 <HiOutlineUserGroup className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{overview.totalApplications}</div>
+            <div className="text-3xl font-bold text-white mb-1">{overview.totalApplications || 0}</div>
             <div className="text-sm text-gray-400">Total Applications</div>
-            <div className="text-xs text-gray-500 mt-2">{overview.periodApplications} this period</div>
+            <div className="text-xs text-gray-500 mt-2">{overview.periodApplications || 0} this period</div>
           </motion.div>
 
           <motion.div
@@ -233,9 +286,9 @@ const RecruiterAnalyticsDashboard = () => {
                 <HiOutlineArrowTrendingUp className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{overview.conversionRate}%</div>
+            <div className="text-3xl font-bold text-white mb-1">{overview.conversionRate || 0}%</div>
             <div className="text-sm text-gray-400">Conversion Rate</div>
-            <div className="text-xs text-gray-500 mt-2">{statusBreakdown.hired} hired</div>
+            <div className="text-xs text-gray-500 mt-2">{statusBreakdown.hired || 0} hired</div>
           </motion.div>
 
           <motion.div
@@ -249,7 +302,7 @@ const RecruiterAnalyticsDashboard = () => {
                 <HiOutlineClock className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{overview.avgTimeToHire}</div>
+            <div className="text-3xl font-bold text-white mb-1">{overview.avgTimeToHire || 0}</div>
             <div className="text-sm text-gray-400">Avg Days to Hire</div>
             <div className="text-xs text-gray-500 mt-2">Time to fill</div>
           </motion.div>
@@ -345,21 +398,21 @@ const RecruiterAnalyticsDashboard = () => {
               <HiOutlineEye className="w-5 h-5 text-blue-400" />
               <span className="text-gray-400">Total Views</span>
             </div>
-            <div className="text-2xl font-bold text-white">{overview.totalViews}</div>
+            <div className="text-2xl font-bold text-white">{overview.totalViews || 0}</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <div className="flex items-center gap-3 mb-2">
               <HiOutlineBookmark className="w-5 h-5 text-emerald-400" />
               <span className="text-gray-400">Total Saves</span>
             </div>
-            <div className="text-2xl font-bold text-white">{overview.totalSaves}</div>
+            <div className="text-2xl font-bold text-white">{overview.totalSaves || 0}</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <div className="flex items-center gap-3 mb-2">
               <HiOutlineArrowTrendingUp className="w-5 h-5 text-purple-400" />
               <span className="text-gray-400">Interview to Offer</span>
             </div>
-            <div className="text-2xl font-bold text-white">{overview.interviewToOfferRate}%</div>
+            <div className="text-2xl font-bold text-white">{overview.interviewToOfferRate || 0}%</div>
           </div>
         </div>
 
