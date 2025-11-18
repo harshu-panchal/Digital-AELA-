@@ -106,7 +106,7 @@ const RecruiterAnalyticsHub = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-[100px] flex flex-wrap gap-2 border-b border-white/10 pb-4">
+        <div className="mt-[500px] flex flex-wrap gap-2 border-b border-white/10 pb-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
