@@ -5,6 +5,11 @@ import {
   HiOutlineUserCircle,
   HiOutlineBriefcase,
   HiOutlinePlusCircle,
+  HiOutlineChartBar,
+  HiOutlineUserGroup,
+  HiOutlineFunnel,
+  HiOutlineCalendar,
+  HiOutlineDocumentText,
 } from "react-icons/hi2";
 import { useAuth } from "../../../src/contexts/AuthContext";
 
@@ -22,12 +27,41 @@ const baseNavItems = [
   },
 ];
 
+const recruiterNavItems = [
+  {
+    label: "Analytics Dashboard",
+    to: "/explore-jobs/recruiter/analytics",
+    icon: HiOutlineChartBar,
+  },
+  {
+    label: "Candidate Pipeline",
+    to: "/explore-jobs/recruiter/pipeline",
+    icon: HiOutlineUserGroup,
+  },
+  {
+    label: "Advanced Search",
+    to: "/explore-jobs/recruiter/candidates",
+    icon: HiOutlineFunnel,
+  },
+  {
+    label: "Interview Schedule",
+    to: "/explore-jobs/recruiter/interviews",
+    icon: HiOutlineCalendar,
+  },
+  {
+    label: "Bulk Actions",
+    to: "/explore-jobs/recruiter/bulk-actions",
+    icon: HiOutlineDocumentText,
+  },
+];
+
 const ExploreJobsSidebar = ({ onCreatePost }) => {
   const location = useLocation();
   const { user } = useAuth();
   const isRecruiterDashboard = location.pathname.includes(
     "recruiter-dashboard"
   );
+  const isRecruiterPage = location.pathname.includes("/recruiter/") || isRecruiterDashboard;
 
   // Filter nav items based on user role
   const navItems = baseNavItems.filter((item) => {
@@ -71,6 +105,32 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
               );
             })}
         </nav>
+
+        {isRecruiterPage && user?.role === "recruiter" && (
+          <div className="space-y-2">
+            <p className="px-4 text-xs uppercase tracking-[0.3em] text-gray-500">
+              Analytics & Tools
+            </p>
+            {recruiterNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition-all ${
+                      isActive
+                        ? "border-white/10 bg-white/5 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]"
+                        : "text-gray-300 hover:border-white/10 hover:bg-white/5 hover:text-white"
+                    }`
+                  }>
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        )}
 
         {isRecruiterDashboard && user?.role === "recruiter" && (
           <div className="space-y-4">

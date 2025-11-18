@@ -857,11 +857,18 @@ const RecruiterDashboard = () => {
               Track candidates across each role
             </h2>
           </div>
-          <Link
-            to="/explore-jobs"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-200 transition hover:border-white/20 hover:text-white">
-            Open job board
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/explore-jobs/recruiter/pipeline"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white/20 hover:bg-white/5">
+              View Full Pipeline
+            </Link>
+            <Link
+              to="/explore-jobs/recruiter/analytics"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-200 transition hover:border-white/20 hover:text-white">
+              Analytics
+            </Link>
+          </div>
         </header>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm text-slate-200">
