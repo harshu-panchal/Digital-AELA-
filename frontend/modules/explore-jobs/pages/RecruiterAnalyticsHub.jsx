@@ -97,7 +97,7 @@ const RecruiterAnalyticsHub = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              Recruiter Analytics Hub
+              Recruiter Analytics Hub...
             </h1>
             <p className="text-gray-400">
               Comprehensive recruitment analytics and management tools
