@@ -78,7 +78,7 @@ const RecruiterAnalyticsDashboard = () => {
 
   if (loading) {
     return (
-      <div className="w-full text-white flex items-center justify-center py-12">
+      <div className="w-full text-white flex items-center justify-center py-12 ">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Loading analytics...</div>
           <div className="text-gray-400 text-sm">Please wait</div>
@@ -89,7 +89,7 @@ const RecruiterAnalyticsDashboard = () => {
 
   if (error || !data) {
     return (
-      <div className="w-full text-white">
+      <div className="w-full text-white ">
         <div>
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
             <h2 className="text-xl font-semibold text-red-400 mb-2">Error Loading Analytics</h2>
@@ -217,7 +217,7 @@ const RecruiterAnalyticsDashboard = () => {
   };
 
   return (
-    <div className="w-full text-white space-y-6">
+    <div className="w-full text-white space-y-6 ">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>

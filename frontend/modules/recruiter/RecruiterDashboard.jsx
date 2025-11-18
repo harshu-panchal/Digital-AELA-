@@ -666,7 +666,7 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 pt-32 pb-24 pl-10 pr-10">
       <ProfileHeader
         profile={resolvedProfile}
         roleBadge={
@@ -689,13 +689,13 @@ const RecruiterDashboard = () => {
               className="inline-flex items-center gap-2 rounded-3xl border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-white/40">
               Edit Profile
             </button>
-          <button
-            type="button"
-            onClick={() => openComposer("job")}
-            className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
-            <HiOutlinePlusCircle className="h-5 w-5" />
-            New Job Drop
-          </button>
+            <button
+              type="button"
+              onClick={() => openComposer("job")}
+              className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
+              <HiOutlinePlusCircle className="h-5 w-5" />
+              New Job Drop
+            </button>
           </div>
         }
         metrics={stats}
@@ -709,14 +709,14 @@ const RecruiterDashboard = () => {
 
       {loadError && (
         <div className="rounded-3xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
-          {loadError.message || "We couldn't load your recruiter data. Please refresh."}
+          {loadError.message ||
+            "We couldn't load your recruiter data. Please refresh."}
         </div>
       )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {actionShortcuts.map((shortcut) => {
-          const Icon =
-            shortcutIcons[shortcut.icon] ?? HiOutlineBriefcase;
+          const Icon = shortcutIcons[shortcut.icon] ?? HiOutlineBriefcase;
           return (
             <motion.button
               key={shortcut.id}
@@ -727,8 +727,12 @@ const RecruiterDashboard = () => {
               className={`group h-full rounded-3xl border bg-[#050505]/95 p-5 text-left shadow-[0_24px_80px_rgba(6,9,18,0.4)] transition ${shortcut.tone}`}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-base font-semibold text-white">{shortcut.title}</p>
-                  <p className="mt-2 text-xs text-slate-200/75">{shortcut.description}</p>
+                  <p className="text-base font-semibold text-white">
+                    {shortcut.title}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-200/75">
+                    {shortcut.description}
+                  </p>
                 </div>
                 <Icon className="h-6 w-6 opacity-80" />
               </div>
@@ -815,7 +819,9 @@ const RecruiterDashboard = () => {
         </div>
       </section>
 
-      <section id="pipeline" className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-8">
+      <section
+        id="pipeline"
+        className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-8">
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
@@ -844,23 +850,35 @@ const RecruiterDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {applicantPipeline.length === 0 || applicantPipeline.every((s) => s.stages.length === 0) ? (
+              {applicantPipeline.length === 0 ||
+              applicantPipeline.every((s) => s.stages.length === 0) ? (
                 <tr>
                   <td colSpan={4} className="px-3 py-8 text-center">
-                    <p className="text-sm text-slate-400">No applications yet</p>
+                    <p className="text-sm text-slate-400">
+                      No applications yet
+                    </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Applications from students will appear here once they apply to your jobs.
+                      Applications from students will appear here once they
+                      apply to your jobs.
                     </p>
                   </td>
                 </tr>
               ) : (
                 applicantPipeline.flatMap((stage) =>
                   stage.stages.map((applicant) => (
-                    <tr key={`${stage.jobId}-${applicant.id || applicant.applicationId}`} className="border-b border-white/5 last:border-b-0">
-                      <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
+                    <tr
+                      key={`${stage.jobId}-${
+                        applicant.id || applicant.applicationId
+                      }`}
+                      className="border-b border-white/5 last:border-b-0">
+                      <td className="px-3 py-3 text-xs text-slate-300/85">
+                        {stage.jobTitle}
+                      </td>
                       <td className="px-3 py-3 text-xs text-slate-200">
                         <Link
-                          to={`/recruiter/jobs/${stage.jobId}/applicants/${applicant.id || applicant.applicationId}`}
+                          to={`/recruiter/jobs/${stage.jobId}/applicants/${
+                            applicant.id || applicant.applicationId
+                          }`}
                           className="font-semibold text-white hover:text-sky-200 transition hover:underline">
                           {applicant.name}
                         </Link>
@@ -876,26 +894,33 @@ const RecruiterDashboard = () => {
                                 event.target.value
                               )
                             }
-                            disabled={pipelineUpdates.has(`${stage.jobId}:${applicant.id || applicant.applicationId}`)}
-                            className="rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-medium text-slate-200 outline-none transition focus:border-sky-400/60"
-                          >
+                            disabled={pipelineUpdates.has(
+                              `${stage.jobId}:${
+                                applicant.id || applicant.applicationId
+                              }`
+                            )}
+                            className="rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-medium text-slate-200 outline-none transition focus:border-sky-400/60">
                             {applicantStageOptions.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
                             ))}
                           </select>
-                          {pipelineUpdates.has(`${stage.jobId}:${applicant.id || applicant.applicationId}`) && (
+                          {pipelineUpdates.has(
+                            `${stage.jobId}:${
+                              applicant.id || applicant.applicationId
+                            }`
+                          ) && (
                             <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                            Updating…
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-xs text-slate-400/75">
-                      {applicant.submittedAt}
-                    </td>
-                  </tr>
+                              Updating…
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-xs text-slate-400/75">
+                        {applicant.submittedAt}
+                      </td>
+                    </tr>
                   ))
                 )
               )}
@@ -927,7 +952,9 @@ const RecruiterDashboard = () => {
                   <p className="text-xs text-slate-400/80">{talent.headline}</p>
                   <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">
                     {talent.skills.map((skill) => (
-                      <span key={skill} className="rounded-full border border-white/10 px-2 py-1">
+                      <span
+                        key={skill}
+                        className="rounded-full border border-white/10 px-2 py-1">
                         {skill}
                       </span>
                     ))}
@@ -945,7 +972,9 @@ const RecruiterDashboard = () => {
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
                   Hiring Playbooks
                 </p>
-                <h3 className="text-lg font-semibold text-white">Recommended e-books</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Recommended e-books
+                </h3>
               </div>
               <Link
                 to="/free-library"
@@ -975,7 +1004,9 @@ const RecruiterDashboard = () => {
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
                   Content Studio
                 </p>
-                <h3 className="text-lg font-semibold text-white">Blogs in progress</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Blogs in progress
+                </h3>
               </div>
               <Link
                 to="/my-blogs"
@@ -991,7 +1022,9 @@ const RecruiterDashboard = () => {
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
                   <div>
                     <p className="font-semibold text-white">{draft.title}</p>
-                    <p className="text-slate-400/80">{draft.status} · {draft.updatedAt}</p>
+                    <p className="text-slate-400/80">
+                      {draft.status} · {draft.updatedAt}
+                    </p>
                   </div>
                   <HiOutlineNewspaper className="h-5 w-5 text-sky-200" />
                 </Link>
@@ -1021,20 +1054,20 @@ const RecruiterDashboard = () => {
                 </button>
               </div>
               <div className="overflow-y-auto pr-1 sm:pr-2">
-              <CreateJobPostForm
-                initialData={
-                  composerState.post
-                    ? {
-                        ...composerState.post,
-                        tags: (composerState.post.tags ?? []).join(", "),
-                        cultureHighlights: (composerState.post.cultureHighlights ?? []).join(
-                          ", "
-                        ),
-                      }
-                    : undefined
-                }
-                isEditing={Boolean(composerState.post)}
-                onSubmitComplete={closeComposer}
+                <CreateJobPostForm
+                  initialData={
+                    composerState.post
+                      ? {
+                          ...composerState.post,
+                          tags: (composerState.post.tags ?? []).join(", "),
+                          cultureHighlights: (
+                            composerState.post.cultureHighlights ?? []
+                          ).join(", "),
+                        }
+                      : undefined
+                  }
+                  isEditing={Boolean(composerState.post)}
+                  onSubmitComplete={closeComposer}
                   onSubmitOverride={handleJobSubmit}
                 />
               </div>
@@ -1049,16 +1082,16 @@ const RecruiterDashboard = () => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
-            className="fixed inset-0 z-[106] mx-auto flex w-full max-w-3xl items-end justify-center px-4 pb-6 pt-20"
-          >
+            className="fixed inset-0 z-[106] mx-auto flex w-full max-w-3xl items-end justify-center px-4 pb-6 pt-20">
             <div className="relative flex w-full max-h-[82vh] flex-col rounded-[36px] border border-white/10 bg-[#050505]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,0.65)] backdrop-blur-xl">
               <div className="flex items-center justify-between pb-4">
-                <h3 className="text-lg font-semibold text-white">Update recruiter profile</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Update recruiter profile
+                </h3>
                 <button
                   type="button"
                   onClick={() => setProfileEditorOpen(false)}
-                  className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white"
-                >
+                  className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white">
                   Close
                 </button>
               </div>
@@ -1166,21 +1199,20 @@ const RecruiterDashboard = () => {
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                     <p className="text-xs text-gray-500">
-                      Updating your profile refreshes what students, teachers, and recruiters see.
+                      Updating your profile refreshes what students, teachers,
+                      and recruiters see.
                     </p>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setProfileEditorOpen(false)}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30"
-                      >
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30">
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isSavingProfile}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
+                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
                         {isSavingProfile ? "Saving…" : "Save Profile"}
                       </button>
                     </div>
@@ -1198,19 +1230,19 @@ const RecruiterDashboard = () => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
-            className="fixed inset-x-0 bottom-0 z-[105] mx-auto w-full max-w-3xl px-4 pb-6"
-          >
+            className="fixed inset-x-0 bottom-0 z-[105] mx-auto w-full max-w-3xl px-4 pb-6">
             <div className="rounded-[36px] border border-white/10 bg-[#050505]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,0.65)] backdrop-blur-xl">
               <div className="flex items-center justify-between pb-4">
-                <h3 className="text-lg font-semibold text-white">Share a community update</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Share a community update
+                </h3>
                 <button
                   type="button"
                   onClick={() => {
                     setBlogComposerOpen(false);
                     resetBlogDraft();
                   }}
-                  className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white"
-                >
+                  className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white">
                   Close
                 </button>
               </div>
@@ -1222,7 +1254,10 @@ const RecruiterDashboard = () => {
                   <input
                     value={blogDraft.title}
                     onChange={(event) =>
-                      setBlogDraft((prev) => ({ ...prev, title: event.target.value }))
+                      setBlogDraft((prev) => ({
+                        ...prev,
+                        title: event.target.value,
+                      }))
                     }
                     placeholder="How we hired 3 coaches in 30 days"
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
@@ -1236,7 +1271,10 @@ const RecruiterDashboard = () => {
                   <textarea
                     value={blogDraft.excerpt}
                     onChange={(event) =>
-                      setBlogDraft((prev) => ({ ...prev, excerpt: event.target.value }))
+                      setBlogDraft((prev) => ({
+                        ...prev,
+                        excerpt: event.target.value,
+                      }))
                     }
                     placeholder="Share a teaser for your blog drop (optional)"
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
@@ -1250,7 +1288,10 @@ const RecruiterDashboard = () => {
                   <textarea
                     value={blogDraft.content}
                     onChange={(event) =>
-                      setBlogDraft((prev) => ({ ...prev, content: event.target.value }))
+                      setBlogDraft((prev) => ({
+                        ...prev,
+                        content: event.target.value,
+                      }))
                     }
                     placeholder="Tell the story behind your latest hiring win..."
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
@@ -1260,23 +1301,22 @@ const RecruiterDashboard = () => {
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                   <p className="text-xs text-gray-500">
-                    You can keep this as a draft or publish directly to the community feed.
+                    You can keep this as a draft or publish directly to the
+                    community feed.
                   </p>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={(event) => handleBlogSave(event, false)}
                       disabled={isSavingBlog}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
+                      className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-60">
                       {isSavingBlog ? "Saving…" : "Save as Draft"}
                     </button>
                     <button
                       type="button"
                       onClick={(event) => handleBlogSave(event, true)}
                       disabled={isSavingBlog}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
+                      className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
                       {isSavingBlog ? "Publishing…" : "Publish"}
                     </button>
                   </div>

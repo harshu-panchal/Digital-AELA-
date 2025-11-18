@@ -51,7 +51,7 @@ export const ROLE_DETAILS = {
   },
   recruiter: {
     label: "Recruiter",
-    landing: "/explore-jobs/recruiter-dashboard",
+    landing: "/recruiter/dashboard",
     description: "Post jobs and review applicants.",
   },
   influencer: {

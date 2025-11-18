@@ -89,7 +89,7 @@ const RecruiterAnalyticsHub = () => {
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
 
   return (
-    <div className="w-full text-white">
+    <div className="w-full text-white pt-32 pb-24 pl-10 pr-10">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

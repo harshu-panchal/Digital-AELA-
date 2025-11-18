@@ -19,12 +19,6 @@ const baseNavItems = [
     to: "/explore-jobs",
     icon: HiOutlineHome,
   },
-  {
-    label: "Recruiter Dashboard",
-    to: "/recruiter/dashboard",
-    icon: HiOutlineBriefcase,
-    requiresRole: "recruiter",
-  },
 ];
 
 const recruiterNavItems = [
