@@ -19,7 +19,6 @@ import HiringStatistics from "./HiringStatistics";
 import PerformanceReports from "./PerformanceReports";
 
 const RecruiterAnalyticsHub = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -106,7 +105,7 @@ const RecruiterAnalyticsHub = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-[500px] flex flex-wrap gap-2 border-b border-white/10 pb-4">
+        <div className=" flex flex-wrap gap-2 border-b border-white/10 pb-4 mt-[200px]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -118,8 +117,7 @@ const RecruiterAnalyticsHub = () => {
                   isActive
                     ? "border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37]"
                     : "border-white/10 bg-black/60 text-gray-300 hover:border-white/20 hover:text-white"
-                }`}
-              >
+                }`}>
                 <Icon className="w-5 h-5" />
                 <span className="text-sm font-medium">{tab.label}</span>
               </button>
@@ -137,4 +135,3 @@ const RecruiterAnalyticsHub = () => {
 };
 
 export default RecruiterAnalyticsHub;
-
