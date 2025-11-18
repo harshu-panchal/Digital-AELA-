@@ -136,8 +136,9 @@ const InterviewScheduling = () => {
 
   return (
     <div className="min-h-screen bg-[#010101] text-white p-4 md:p-6 lg:p-8">
+      <h1 className="text-3xl font-bold text-white mb-2">Interview Scheduling</h1>
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Header qwertyuio */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Interview Scheduling</h1>
