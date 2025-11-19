@@ -270,7 +270,7 @@ const Navbar = () => {
                     href="tel:+971502270625"
                     className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
-                    +971502270625
+                    +971 502270625
                   </a>
                 </div>
 
