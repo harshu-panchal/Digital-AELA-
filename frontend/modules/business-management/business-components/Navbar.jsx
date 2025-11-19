@@ -266,10 +266,10 @@ const Navbar = () => {
                   </a>
                   <span className="hidden h-4 w-px bg-white/15 sm:block" />
                   <a
-                    href="tel:+971508185690"
+                    href="tel:+971502270625"
                     className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
-                    0508185690
+                    0502270625
                   </a>
                 </div>
 
@@ -283,7 +283,7 @@ const Navbar = () => {
                       <FaFacebookF className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href="https://wa.me/971508185690"
+                      href="https://wa.me/971502270625"
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-green-500/70 hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.6)]">

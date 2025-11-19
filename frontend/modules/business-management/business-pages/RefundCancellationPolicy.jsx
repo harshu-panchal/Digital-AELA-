@@ -218,10 +218,10 @@ const RefundCancellationPolicy = () => {
                       </a>
                       <span className="hidden sm:inline text-gray-500">|</span>
                       <a
-                        href="tel:+971508185690"
+                        href="tel:+971502270625"
                         className="flex items-center gap-2 text-sm sm:text-base text-[#F5D26A] hover:text-[#D4AF37] transition-colors duration-200">
                         <span className="text-lg">📞</span>
-                        <span>+971 508185690</span>
+                        <span>+971 502270625</span>
                       </a>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-400 text-center mt-4 pt-4 border-t border-[#D4AF37]/20">

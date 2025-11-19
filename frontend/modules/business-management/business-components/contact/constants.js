@@ -2,15 +2,15 @@ export const defaultSupportItems = [
   {
     icon: "📞",
     title: "Call our support",
-    description: "+971 50 818 5690",
+    description: "+971 50 227 0625",
     subtext: "Sunday – Saturday | 9:00 AM – 9:00 PM (Gulf Standard Time)",
-    href: "tel:+971508185690",
+    href: "tel:+971502270625",
   },
   {
     icon: "💬",
     title: "WhatsApp Advisor",
     description: "Chat instantly with our team",
-    href: "https://wa.me/971508185690?text=Hello%20Digital%20AELA!",
+    href: "https://wa.me/971502270625?text=Hello%20Digital%20AELA!",
   },
   {
     icon: "✉️",

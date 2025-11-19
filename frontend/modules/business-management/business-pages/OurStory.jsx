@@ -5,7 +5,7 @@ import founderImage2 from "../../../src/assets/Founder2.png";
 
 const OurStory = () => {
   // WhatsApp integration
-  const whatsappNumber = "+971508185690";
+  const whatsappNumber = "+971502270625";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in learning more about Digital AELA."
   );

@@ -657,7 +657,7 @@ const Home = () => {
   }, [ribbonInView, ribbonStats]);
 
   // WhatsApp integration
-  const whatsappNumber = "+971508185690";
+  const whatsappNumber = "+971502270625";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in learning more about your English courses."
   );
