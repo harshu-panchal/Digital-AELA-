@@ -198,31 +198,29 @@ const Navbar = () => {
   return (
     <motion.header
       initial={{ y: -80, opacity: 0 }}
-      animate={{ 
+      animate={{
         y: -navbarOffset,
-        opacity: 1
+        opacity: 1,
       }}
-      transition={{ 
-        duration: 0.3, 
-        ease: [0.25, 0.1, 0.25, 1]
+      transition={{
+        duration: 0.3,
+        ease: [0.25, 0.1, 0.25, 1],
       }}
       className="w-full fixed top-0 z-[60]">
       {/* Logo Layer - Positioned on top of navbar */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0, y: 0 }}
-        animate={{ 
-          scale: 1, 
+        animate={{
+          scale: 1,
           opacity: 1,
-          y: -logoOffset * 45
+          y: -logoOffset * 45,
         }}
         transition={{
           duration: 0.3,
           ease: [0.25, 0.1, 0.25, 1],
         }}
         className="absolute left-[132px] top-[43px] z-[70] pointer-events-auto">
-        <Link
-          to="/"
-          className="block">
+        <Link to="/" className="block">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -231,7 +229,11 @@ const Navbar = () => {
               src={logo}
               alt="logo"
               className="h-[80px] w-auto object-contain"
-              style={{ maxHeight: '80px', width: '250px', objectFit: 'contain' }}
+              style={{
+                maxHeight: "80px",
+                width: "250px",
+                objectFit: "contain",
+              }}
             />
             <motion.div
               className="absolute bottom-1 left-0 w-0 h-0.5 bg-[#D4AF37]"
@@ -242,16 +244,15 @@ const Navbar = () => {
         </Link>
       </motion.div>
 
-      <motion.div
-        className="relative">
+      <motion.div className="relative">
         <AnimatePresence>
           {showSubNav && (
             <motion.div
               key="sub-nav"
               initial={{ y: -40, opacity: 0 }}
-              animate={{ 
+              animate={{
                 y: showSubNav ? -navbarOffset : -40 - navbarOffset,
-                opacity: showSubNav ? 1 : 0
+                opacity: showSubNav ? 1 : 0,
               }}
               exit={{ y: -40, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
@@ -269,7 +270,7 @@ const Navbar = () => {
                     href="tel:+971502270625"
                     className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
-                    0502270625
+                    +971502270625
                   </a>
                 </div>
 
@@ -443,13 +444,13 @@ const Navbar = () => {
 
         <motion.nav
           initial={{ y: -60, opacity: 0 }}
-          animate={{ 
+          animate={{
             y: -navbarOffset,
-            opacity: 1
+            opacity: 1,
           }}
           transition={{
             duration: 0.3,
-            ease: [0.25, 0.1, 0.25, 1]
+            ease: [0.25, 0.1, 0.25, 1],
           }}
           className="relative overflow-visible border-b border-[#D4AF37]/20 bg-[#0a0a0a]/80 px-0 py-3 backdrop-blur-2xl supports-backdrop-filter:bg-[#0a0a0a]/70 sm:px-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.15),transparent_55%)] opacity-80" />
