@@ -84,10 +84,9 @@ export const getStudentProfile = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    const profile = await StudentProfile.findOne({ user: userId }).populate(
-      "user",
-      "fullName email role metadata"
-    );
+    const profile = await StudentProfile.findOne({ user: userId })
+      .populate("user", "fullName email role metadata")
+      .lean();
 
     if (!profile) {
       // Try to get user metadata for avatarUrl even if profile doesn't exist
@@ -104,6 +103,7 @@ export const getStudentProfile = async (req, res, next) => {
           skills: [],
           bio: "",
           headline: "",
+          phone: "",
           avatarUrl: user.metadata?.avatarUrl || "", // Include avatarUrl from user metadata
         });
       }
@@ -119,16 +119,23 @@ export const getStudentProfile = async (req, res, next) => {
         skills: [],
         bio: "",
         headline: "",
+        phone: "",
         avatarUrl: "",
       });
     }
 
     // Merge avatarUrl from user metadata if profile doesn't have it
-    const user = profile.user;
-    if (user && user.metadata && user.metadata.avatarUrl && !profile.avatarUrl) {
-      profile.avatarUrl = user.metadata.avatarUrl;
+    if (profile.user && profile.user.metadata && profile.user.metadata.avatarUrl && !profile.avatarUrl) {
+      profile.avatarUrl = profile.user.metadata.avatarUrl;
     }
 
+    // Ensure location is properly formatted (from registration: city, country)
+    if (!profile.location) {
+      profile.location = { city: "", country: "" };
+    }
+
+    // Ensure all registration fields are included
+    // phone, bio, location, avatarUrl should already be in profile from registration
     return res.json(profile);
   } catch (error) {
     return next(error);

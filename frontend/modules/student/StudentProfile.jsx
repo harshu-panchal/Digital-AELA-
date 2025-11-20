@@ -80,10 +80,15 @@ const StudentProfile = () => {
         setStudentProfile(profileData);
 
         // Get avatar URL - priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > profile.avatar
-        const avatar = profileData?.avatarUrl || authUser?.metadata?.avatarUrl || profile?.avatar || null;
+        // This ensures we get the image uploaded during registration
+        const avatar = 
+          profileData?.avatarUrl || 
+          authUser?.metadata?.avatarUrl || 
+          profile?.avatar || 
+          null;
         setAvatarUrl(avatar);
 
-        // Build address from location
+        // Build address from location (from registration: city, country)
         const addressParts = [];
         if (profileData?.location?.city) {
           addressParts.push(profileData.location.city);
@@ -96,29 +101,42 @@ const StudentProfile = () => {
         // Get dateOfBirth from metadata if available
         const dateOfBirth = profileData?.metadata?.dateOfBirth || "";
 
+        // Set form data with priority: StudentProfile data (from registration) > User metadata > fallback
         setFormData({
           fullName: authUser?.fullName || profile?.name || "",
           email: authUser?.email || "",
-          phone: profileData?.phone || "",
+          // Phone from StudentProfile (set during registration)
+          phone: profileData?.phone || authUser?.metadata?.phone || "",
           dateOfBirth: dateOfBirth,
-          address: address,
-          bio: profileData?.bio || "",
+          // Address from StudentProfile.location (set during registration)
+          address: address || (authUser?.metadata?.city && authUser?.metadata?.country 
+            ? `${authUser.metadata.city}, ${authUser.metadata.country}` 
+            : ""),
+          // Bio from StudentProfile (set during registration)
+          bio: profileData?.bio || authUser?.metadata?.bio || profile?.bio || "",
         });
       } catch (error) {
         console.error("Failed to load student profile:", error);
-        // Fallback to authUser data
+        // Fallback to authUser metadata (which contains registration data)
         const fallbackAvatar = authUser?.metadata?.avatarUrl || profile?.avatar || null;
         setAvatarUrl(fallbackAvatar);
+        
+        // Fallback to user metadata which may contain registration data
+        const fallbackAddress = 
+          (authUser?.metadata?.city && authUser?.metadata?.country 
+            ? `${authUser.metadata.city}, ${authUser.metadata.country}` 
+            : "") ||
+          (profile?.city && profile?.country 
+            ? `${profile.city}, ${profile.country}` 
+            : "");
         
         setFormData({
           fullName: authUser?.fullName || "",
           email: authUser?.email || "",
-          phone: profile?.contact?.phone || "",
+          phone: authUser?.metadata?.phone || profile?.contact?.phone || "",
           dateOfBirth: authUser?.metadata?.dateOfBirth || "",
-          address: profile?.city && profile?.country 
-            ? `${profile.city}, ${profile.country}` 
-            : "",
-          bio: profile?.bio || "",
+          address: fallbackAddress,
+          bio: authUser?.metadata?.bio || profile?.bio || "",
         });
       } finally {
         setLoading(false);
