@@ -109,6 +109,8 @@ import StudentAssignmentDetail from "../modules/student/AssignmentDetail";
 import PaymentHistory from "../modules/student/PaymentHistory";
 import CertificateList from "../modules/student/CertificateList";
 import TeacherEarnings from "../modules/teacher/TeacherEarnings";
+import PayoutRequests from "../modules/teacher/PayoutRequests";
+import PaymentSlips from "../modules/teacher/PaymentSlips";
 import PaymentManagement from "../modules/admin/PaymentManagement";
 import CertificateManagement from "../modules/admin/CertificateManagement";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
@@ -276,6 +278,22 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
               <TeacherEarnings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/payout-requests"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <PayoutRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/payment-slips"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <PaymentSlips />
             </ProtectedRoute>
           }
         />

@@ -368,6 +368,22 @@ const TeacherDashboard = () => {
         icon: HiOutlineCurrencyDollar,
         href: "/teacher/earnings",
       },
+      {
+        title: "Payout Requests",
+        description: "Request payouts for your available earnings",
+        cta: "Request payout",
+        tone: "from-[#f59e0b]/20 to-[#d97706]/20 border-amber-400/40 text-amber-200",
+        icon: HiOutlineCurrencyDollar,
+        href: "/teacher/payout-requests",
+      },
+      {
+        title: "Payment Slips",
+        description: "View and download your payment slips",
+        cta: "View slips",
+        tone: "from-[#3b82f6]/20 to-[#2563eb]/20 border-blue-400/40 text-blue-200",
+        icon: HiOutlineDocumentText,
+        href: "/teacher/payment-slips",
+      },
     ];
 
     // Use backend data if available, otherwise use defaults
@@ -804,7 +820,7 @@ const TeacherDashboard = () => {
             <header className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <HiOutlineCurrencyDollar className="h-5 w-5" />
-                Earnings Overview
+                Earnings & Payouts
               </h2>
               <Link
                 to="/teacher/earnings"
@@ -812,13 +828,24 @@ const TeacherDashboard = () => {
                 View all →
               </Link>
             </header>
-            <div className="text-center py-8 text-xs text-slate-400">
-              <HiOutlineCurrencyDollar className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>Track your course revenue and earnings</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link
                 to="/teacher/earnings"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#F5D26A] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
-                View Earnings
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-emerald-400/40">
+                <p className="font-semibold text-white mb-1">View Earnings</p>
+                <p className="text-xs text-slate-400">Track revenue</p>
+              </Link>
+              <Link
+                to="/teacher/payout-requests"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-amber-400/40">
+                <p className="font-semibold text-white mb-1">Payout Requests</p>
+                <p className="text-xs text-slate-400">Request payouts</p>
+              </Link>
+              <Link
+                to="/teacher/payment-slips"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-blue-400/40">
+                <p className="font-semibold text-white mb-1">Payment Slips</p>
+                <p className="text-xs text-slate-400">Download slips</p>
               </Link>
             </div>
           </motion.section>
