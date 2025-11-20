@@ -93,6 +93,12 @@ const TeacherSidebar = ({ isOpen = false, onClose, onToggle }) => {
       <div className="flex h-full flex-col pt-25 pb-8">
         <div className="border-b border-white/10 px-6 pt-12 pb-6">
           <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-[#F5D26A]">
+                Teacher Portal
+              </h2>
+              <p className="text-xs text-gray-400">Teaching Dashboard</p>
+            </div>
             {/* Mobile Toggle Button */}
             {onToggle && (
               <button
@@ -106,12 +112,6 @@ const TeacherSidebar = ({ isOpen = false, onClose, onToggle }) => {
                 )}
               </button>
             )}
-            <div>
-              <h2 className="text-lg font-semibold text-[#F5D26A]">
-                Teacher Portal
-              </h2>
-              <p className="text-xs text-gray-400">Teaching Dashboard</p>
-            </div>
           </div>
         </div>
 
