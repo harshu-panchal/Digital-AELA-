@@ -6,8 +6,10 @@ import {
   registerUser,
   forgotPassword,
   resetPassword,
+  changePassword,
 } from "../controllers/authController.js";
 import { uploadSingle, handleUploadError } from "../middleware/uploadMiddleware.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -22,6 +24,9 @@ router.post("/logout", logout);
 // Password reset endpoints (no authentication required)
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+// Change password endpoint (authentication required)
+router.post("/change-password", requireAuth([]), changePassword);
 
 export default router;
 

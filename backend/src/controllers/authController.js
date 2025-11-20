@@ -474,3 +474,78 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
+/**
+ * Change password (authenticated user)
+ * POST /api/v1/auth/change-password
+ */
+export const changePassword = async (req, res, next) => {
+  try {
+    const { userId } = req.auth || {};
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Current password and new password are required",
+        },
+      });
+    }
+
+    // Validate password strength (minimum 6 characters)
+    if (newPassword.length < 6) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Password must be at least 6 characters long",
+        },
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    // Verify current password
+    const passwordMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Current password is incorrect",
+        },
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update user password
+    await User.findByIdAndUpdate(userId, {
+      passwordHash,
+    });
+
+    return res.status(200).json({
+      message: "Password has been successfully changed.",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+

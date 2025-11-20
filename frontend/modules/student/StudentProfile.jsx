@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import {
   HiOutlineUser,
@@ -9,18 +9,26 @@ import {
   HiOutlineMapPin,
   HiOutlineAcademicCap,
   HiOutlinePencil,
+  HiOutlineXMark,
+  HiOutlineLockClosed,
+  HiOutlineBell,
+  HiOutlineShieldCheck,
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { useUser } from "../../src/contexts/UserContext";
-import { fetchStudentProfile, updateStudentProfile } from "../../src/services/api/student";
+import { fetchStudentProfile, updateStudentProfile, uploadProfileImage } from "../../src/services/api/student";
+import { apiRequest } from "../../src/services/api/baseClient";
 
 const StudentProfile = () => {
-  const { user: authUser, tokens } = useAuth();
-  const { profile } = useUser();
+  const { user: authUser, tokens, updateUserMetadata } = useAuth();
+  const { profile, updateProfile } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [studentProfile, setStudentProfile] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -29,6 +37,34 @@ const StudentProfile = () => {
     address: "",
     bio: "",
   });
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [notificationSettings, setNotificationSettings] = useState({
+    email: true,
+    push: true,
+    sms: false,
+    courseUpdates: true,
+    jobAlerts: true,
+    messages: true,
+    announcements: true,
+  });
+  const [privacySettings, setPrivacySettings] = useState({
+    profileVisibility: "public",
+    showEmail: false,
+    showPhone: false,
+    showLocation: true,
+    allowMessages: true,
+    showActivity: true,
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   // Fetch student profile from backend
   useEffect(() => {
@@ -42,6 +78,10 @@ const StudentProfile = () => {
         setLoading(true);
         const profileData = await fetchStudentProfile(authUser.id);
         setStudentProfile(profileData);
+
+        // Get avatar URL - priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > profile.avatar
+        const avatar = profileData?.avatarUrl || authUser?.metadata?.avatarUrl || profile?.avatar || null;
+        setAvatarUrl(avatar);
 
         // Build address from location
         const addressParts = [];
@@ -67,6 +107,9 @@ const StudentProfile = () => {
       } catch (error) {
         console.error("Failed to load student profile:", error);
         // Fallback to authUser data
+        const fallbackAvatar = authUser?.metadata?.avatarUrl || profile?.avatar || null;
+        setAvatarUrl(fallbackAvatar);
+        
         setFormData({
           fullName: authUser?.fullName || "",
           email: authUser?.email || "",
@@ -144,6 +187,11 @@ const StudentProfile = () => {
       const updatedProfile = await updateStudentProfile(updatePayload);
       setStudentProfile(updatedProfile);
 
+      // Update avatar URL if it changed
+      if (updatedProfile?.avatarUrl) {
+        setAvatarUrl(updatedProfile.avatarUrl);
+      }
+
       // Update formData with the response to reflect any server-side changes
       const updatedAddressParts = [];
       if (updatedProfile?.location?.city) {
@@ -178,6 +226,7 @@ const StudentProfile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setAvatarPreview(null);
     // Reset form data to original values
     const addressParts = [];
     if (studentProfile?.location?.city) {
@@ -197,6 +246,165 @@ const StudentProfile = () => {
       bio: studentProfile?.bio || "",
     });
   };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB.");
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    setUploadingAvatar(true);
+    try {
+      // Upload to Cloudinary
+      const newAvatarUrl = await uploadProfileImage(file);
+
+      // Update StudentProfile (backend will also update User.metadata.avatarUrl)
+      await updateStudentProfile({ avatarUrl: newAvatarUrl });
+
+      // Update AuthContext user metadata to reflect new avatar immediately
+      await updateUserMetadata({ metadata: { avatarUrl: newAvatarUrl } });
+
+      // Update local profile context immediately
+      updateProfile({ avatar: newAvatarUrl });
+
+      // Update local state
+      setAvatarUrl(newAvatarUrl);
+      setAvatarPreview(null);
+
+      // Reload profile to get updated data
+      const profileData = await fetchStudentProfile(authUser.id);
+      setStudentProfile(profileData);
+
+      toast.success("Profile photo updated successfully!");
+    } catch (error) {
+      console.error("Failed to update profile photo:", error);
+      toast.error(error.message || "Failed to update profile photo. Please try again.");
+      setAvatarPreview(null);
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      event.target.value = "";
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      // Note: This endpoint may need to be created in the backend
+      await apiRequest("/auth/change-password", {
+        method: "POST",
+        body: {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        },
+      });
+
+      toast.success("Password changed successfully");
+      setShowChangePasswordModal(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      toast.error(error.message || "Failed to change password. Please check your current password.");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setSavingNotifications(true);
+    try {
+      // Save notification preferences to student profile metadata
+      await updateStudentProfile({
+        metadata: {
+          ...(studentProfile?.metadata || {}),
+          notificationPreferences: notificationSettings,
+        },
+      });
+
+      toast.success("Notification preferences saved");
+      setShowNotificationModal(false);
+    } catch (error) {
+      console.error("Failed to save notification preferences:", error);
+      toast.error(error.message || "Failed to save notification preferences");
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
+
+  const handleSavePrivacy = async () => {
+    setSavingPrivacy(true);
+    try {
+      // Save privacy settings to student profile metadata
+      await updateStudentProfile({
+        metadata: {
+          ...(studentProfile?.metadata || {}),
+          privacySettings: privacySettings,
+        },
+      });
+
+      toast.success("Privacy settings saved");
+      setShowPrivacyModal(false);
+    } catch (error) {
+      console.error("Failed to save privacy settings:", error);
+      toast.error(error.message || "Failed to save privacy settings");
+    } finally {
+      setSavingPrivacy(false);
+    }
+  };
+
+  // Load settings from profile metadata
+  useEffect(() => {
+    if (studentProfile?.metadata) {
+      if (studentProfile.metadata.notificationPreferences) {
+        setNotificationSettings({
+          ...notificationSettings,
+          ...studentProfile.metadata.notificationPreferences,
+        });
+      }
+      if (studentProfile.metadata.privacySettings) {
+        setPrivacySettings({
+          ...privacySettings,
+          ...studentProfile.metadata.privacySettings,
+        });
+      }
+    }
+  }, [studentProfile]);
 
   if (loading) {
     return (
@@ -257,14 +465,47 @@ const StudentProfile = () => {
             <div className="space-y-6">
               {/* Profile Picture Section */}
               <div className="flex items-center gap-6 pb-6 border-b border-white/10">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-3xl font-semibold">
-                  {formData.fullName
-                    ? formData.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "U"}
+                <div className="relative group">
+                  <div className="h-24 w-24 rounded-full overflow-hidden relative bg-gradient-to-br from-sky-400 to-sky-600">
+                    {(avatarPreview || avatarUrl) ? (
+                      <img
+                        src={avatarPreview || avatarUrl}
+                        alt={formData.fullName || "Student"}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // Hide image on error, initials will show through background
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    {!(avatarPreview || avatarUrl) && (
+                      <div className="h-full w-full flex items-center justify-center text-3xl font-semibold text-white">
+                        {formData.fullName
+                          ? formData.fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                          : "U"}
+                      </div>
+                    )}
+                  </div>
+                  {isEditing && (
+                    <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100">
+                      {uploadingAvatar ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      ) : (
+                        <HiOutlinePencil className="h-6 w-6 text-white" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-white">
@@ -272,9 +513,16 @@ const StudentProfile = () => {
                   </h2>
                   <p className="text-sm text-gray-400 mt-1">{formData.email}</p>
                   {isEditing && (
-                    <button className="mt-3 text-sm text-sky-400 hover:text-sky-300">
+                    <label className="mt-3 text-sm text-sky-400 hover:text-sky-300 cursor-pointer inline-block">
                       Change Photo
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
                   )}
                 </div>
               </div>
@@ -405,35 +653,459 @@ const StudentProfile = () => {
           <div className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Account Settings</h2>
             <div className="space-y-4">
-              <button className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
+              <button
+                onClick={() => setShowChangePasswordModal(true)}
+                className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">Change Password</p>
                     <p className="text-sm text-gray-400">Update your account password</p>
                   </div>
-                  <HiOutlinePencil className="h-5 w-5 text-gray-400" />
+                  <HiOutlineLockClosed className="h-5 w-5 text-gray-400" />
                 </div>
               </button>
-              <button className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
+              <button
+                onClick={() => setShowNotificationModal(true)}
+                className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">Notification Preferences</p>
                     <p className="text-sm text-gray-400">Manage your notification settings</p>
                   </div>
-                  <HiOutlinePencil className="h-5 w-5 text-gray-400" />
+                  <HiOutlineBell className="h-5 w-5 text-gray-400" />
                 </div>
               </button>
-              <button className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
+              <button
+                onClick={() => setShowPrivacyModal(true)}
+                className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">Privacy Settings</p>
                     <p className="text-sm text-gray-400">Control your privacy and data</p>
                   </div>
-                  <HiOutlinePencil className="h-5 w-5 text-gray-400" />
+                  <HiOutlineShieldCheck className="h-5 w-5 text-gray-400" />
                 </div>
               </button>
             </div>
           </div>
+
+          {/* Change Password Modal */}
+          <AnimatePresence>
+            {showChangePasswordModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-[#060A17] rounded-2xl border border-white/10 p-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-white">Change Password</h3>
+                    <button
+                      onClick={() => setShowChangePasswordModal(false)}
+                      className="text-gray-400 hover:text-white transition">
+                      <HiOutlineXMark className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) =>
+                          setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-gray-500 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData({ ...passwordData, newPassword: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-gray-500 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                        placeholder="Enter new password"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-gray-500 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                        placeholder="Confirm new password"
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => {
+                          setShowChangePasswordModal(false);
+                          setPasswordData({
+                            currentPassword: "",
+                            newPassword: "",
+                            confirmPassword: "",
+                          });
+                        }}
+                        className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={savingPassword}
+                        className="flex-1 px-4 py-2 rounded-lg bg-[#F5D26A]/20 text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
+                        {savingPassword ? "Saving..." : "Change Password"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Notification Preferences Modal */}
+          <AnimatePresence>
+            {showNotificationModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-[#060A17] rounded-2xl border border-white/10 p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-white">Notification Preferences</h3>
+                    <button
+                      onClick={() => setShowNotificationModal(false)}
+                      className="text-gray-400 hover:text-white transition">
+                      <HiOutlineXMark className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Email Notifications</p>
+                        <p className="text-sm text-gray-400">Receive notifications via email</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.email}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              email: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Push Notifications</p>
+                        <p className="text-sm text-gray-400">Receive push notifications</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.push}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              push: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">SMS Notifications</p>
+                        <p className="text-sm text-gray-400">Receive notifications via SMS</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.sms}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              sms: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Course Updates</p>
+                        <p className="text-sm text-gray-400">Get notified about course updates</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.courseUpdates}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              courseUpdates: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Job Alerts</p>
+                        <p className="text-sm text-gray-400">Get notified about new job opportunities</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.jobAlerts}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              jobAlerts: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Messages</p>
+                        <p className="text-sm text-gray-400">Get notified about new messages</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.messages}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              messages: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <div>
+                        <p className="text-white font-medium">Announcements</p>
+                        <p className="text-sm text-gray-400">Get notified about platform announcements</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings.announcements}
+                          onChange={(e) =>
+                            setNotificationSettings({
+                              ...notificationSettings,
+                              announcements: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => setShowNotificationModal(false)}
+                        className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveNotifications}
+                        disabled={savingNotifications}
+                        className="flex-1 px-4 py-2 rounded-lg bg-[#F5D26A]/20 text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
+                        {savingNotifications ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Privacy Settings Modal */}
+          <AnimatePresence>
+            {showPrivacyModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-[#060A17] rounded-2xl border border-white/10 p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-white">Privacy Settings</h3>
+                    <button
+                      onClick={() => setShowPrivacyModal(false)}
+                      className="text-gray-400 hover:text-white transition">
+                      <HiOutlineXMark className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Profile Visibility
+                      </label>
+                      <select
+                        value={privacySettings.profileVisibility}
+                        onChange={(e) =>
+                          setPrivacySettings({
+                            ...privacySettings,
+                            profileVisibility: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30">
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                        <option value="friends">Friends Only</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Show Email</p>
+                        <p className="text-sm text-gray-400">Display your email on profile</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacySettings.showEmail}
+                          onChange={(e) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showEmail: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Show Phone</p>
+                        <p className="text-sm text-gray-400">Display your phone on profile</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacySettings.showPhone}
+                          onChange={(e) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showPhone: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Show Location</p>
+                        <p className="text-sm text-gray-400">Display your location on profile</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacySettings.showLocation}
+                          onChange={(e) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showLocation: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
+                      <div>
+                        <p className="text-white font-medium">Allow Messages</p>
+                        <p className="text-sm text-gray-400">Allow others to message you</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacySettings.allowMessages}
+                          onChange={(e) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              allowMessages: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <div>
+                        <p className="text-white font-medium">Show Activity</p>
+                        <p className="text-sm text-gray-400">Show your activity to others</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacySettings.showActivity}
+                          onChange={(e) =>
+                            setPrivacySettings({
+                              ...privacySettings,
+                              showActivity: e.target.checked,
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                      </label>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => setShowPrivacyModal(false)}
+                        className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSavePrivacy}
+                        disabled={savingPrivacy}
+                        className="flex-1 px-4 py-2 rounded-lg bg-[#F5D26A]/20 text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
+                        {savingPrivacy ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>
