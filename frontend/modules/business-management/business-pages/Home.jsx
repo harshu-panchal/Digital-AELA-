@@ -1369,7 +1369,7 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* Steps Grid */}
+          {/* Steps Grid - First 3 Steps */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Step 1: Book a Free Demo Class */}
             <motion.div
@@ -1448,59 +1448,64 @@ const Home = () => {
                 Start Learning →
               </Link>
             </motion.div>
+          </div>
 
-            {/* Step 4: Get Certified */}
-            <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-              className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
-                  <FaCertificate className="w-8 h-8 text-black" />
+          {/* Centered Steps 4 & 5 */}
+          <div className="flex justify-center items-center mt-12 md:mt-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl w-full">
+              {/* Step 4: Get Certified */}
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
+                    <FaCertificate className="w-8 h-8 text-black" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                    Step 4: Get Certified
+                  </h3>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  Step 4: Get Certified
-                </h3>
-              </div>
-              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
-                Complete your course, pass the assessment, aur internationally
-                recognized certificate hasil karein.
-              </p>
-              <Link
-                to="/"
-                className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                Get Certified →
-              </Link>
-            </motion.div>
+                <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                  Complete your course, pass the assessment, aur internationally
+                  recognized certificate hasil karein.
+                </p>
+                <Link
+                  to="/"
+                  className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                  Get Certified →
+                </Link>
+              </motion.div>
 
-            {/* Step 5: Placement & Abroad Opportunities */}
-            <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-              className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 md:col-span-2 lg:col-span-1 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
-                  <FaGlobe className="w-8 h-8 text-white" />
+              {/* Step 5: Placement & Abroad Opportunities */}
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
+                    <FaGlobe className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white font-display">
+                    Step 5: Placement & Abroad Opportunities
+                  </h3>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  Step 5: Placement & Abroad Opportunities
-                </h3>
-              </div>
-              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
-                Advanced batches, communication training aur interview support -
-                Gulf countries aur global opportunities ke liye tayyar ho
-                jayein.
-              </p>
-              <Link
-                to="/contact"
-                className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                Explore Opportunities →
-              </Link>
-            </motion.div>
+                <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                  Advanced batches, communication training aur interview support -
+                  Gulf countries aur global opportunities ke liye tayyar ho
+                  jayein.
+                </p>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
+                  Explore Opportunities →
+                </Link>
+              </motion.div>
+            </div>
           </div>
         </div>
       </motion.section>
