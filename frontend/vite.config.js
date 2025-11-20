@@ -15,5 +15,13 @@ export default defineConfig({
         manualChunks: undefined,
       },
     },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    exclude: [],
   },
 });
