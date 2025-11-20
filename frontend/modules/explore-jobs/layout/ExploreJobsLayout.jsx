@@ -29,6 +29,13 @@ const ExploreJobsLayout = () => {
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
       />
+      {/* Mobile backdrop overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       <div className="mx-auto flex w-full max-w-[1600px]">
         <ExploreJobsSidebar onCreatePost={handleCreatePost} isOpen={isSidebarOpen} />
 

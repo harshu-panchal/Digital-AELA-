@@ -5,7 +5,7 @@ const SidebarToggle = ({ isOpen, onToggle }) => {
   return (
     <motion.button
       onClick={onToggle}
-      className="fixed left-4 top-1/2 -translate-y-1/2 z-[60] rounded-full bg-[#0B0F1E]/95 border border-white/20 backdrop-blur-xl p-3 text-white hover:bg-[#F5D26A]/20 hover:border-[#F5D26A]/40 transition-all duration-300 shadow-lg hover:shadow-[#F5D26A]/20"
+      className="fixed left-4 top-1/2 -translate-y-1/2 z-[60] rounded-full bg-[#0B0F1E]/95 border border-white/20 backdrop-blur-xl p-3 text-white hover:bg-[#F5D26A]/20 hover:border-[#F5D26A]/40 transition-all duration-300 shadow-lg hover:shadow-[#F5D26A]/20 md:hidden"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
