@@ -11,7 +11,7 @@ const AdminLayout = () => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className="fixed top-4 left-4 z-50 md:hidden p-3 rounded-lg bg-[#0B0F1E]/95 border border-white/10 backdrop-blur-xl text-white hover:bg-white/10 transition"
+        className="fixed top-24 left-4 z-[80] md:hidden p-3 rounded-lg bg-[#0B0F1E]/95 border border-white/10 backdrop-blur-xl text-white hover:bg-white/10 transition shadow-lg"
         aria-label="Open sidebar">
         <FaBars className="h-5 w-5" />
       </button>
