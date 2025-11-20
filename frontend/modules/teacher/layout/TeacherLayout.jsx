@@ -1,15 +1,14 @@
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { useSidebar } from "../../../src/contexts/SidebarContext";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { HiOutlineClock, HiOutlineShieldCheck } from "react-icons/hi2";
-import { FaBars } from "react-icons/fa";
 import TeacherSidebar from "../components/TeacherSidebar";
 
 const TeacherLayout = () => {
   const { user, isAuthenticated } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isSidebarOpen, closeSidebar } = useSidebar();
 
   // Wait for user to load before checking approval status
   if (!isAuthenticated || !user) {
@@ -91,19 +90,8 @@ const TeacherLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
-      {/* Mobile Toggle Button */}
-      <button
-        onClick={() => setIsSidebarOpen(true)}
-        className="fixed top-24 left-4 z-[80] md:hidden p-3 rounded-lg bg-[#0B0F1E]/95 border border-white/10 backdrop-blur-xl text-white hover:bg-white/10 transition shadow-lg"
-        aria-label="Open sidebar">
-        <FaBars className="h-5 w-5" />
-      </button>
-
       <div className="flex">
-        <TeacherSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        <TeacherSidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
         <main className="md:ml-64 flex-1">
           <div className="pt-20 md:pt-[120px] md:pl-[30px] pl-4 pb-[20px] pr-[30px]">
             <Outlet />

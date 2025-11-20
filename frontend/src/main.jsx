@@ -6,6 +6,7 @@ import { PointsProvider } from "./contexts/PointsContext";
 import { UserProvider } from "./contexts/UserContext";
 import { BlogProvider } from "./contexts/BlogContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SidebarProvider } from "./contexts/SidebarContext";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -41,6 +42,7 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
+        <SidebarProvider>
         <PointsProvider>
           <UserProvider>
             <BlogProvider>
@@ -48,6 +50,7 @@ createRoot(document.getElementById("root")).render(
             </BlogProvider>
           </UserProvider>
         </PointsProvider>
+        </SidebarProvider>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

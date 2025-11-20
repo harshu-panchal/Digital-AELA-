@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,13 +10,16 @@ import {
   FaPhone,
   FaWhatsapp,
   FaYoutube,
+  FaBars,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { useSidebarSafe } from "../../../src/contexts/SidebarContext";
 import { toast } from "react-toastify";
 import logo from "../../../src/assets/MainLogo.png";
 
 const Navbar = () => {
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
@@ -26,6 +29,15 @@ const Navbar = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const { language, languages, changeLanguage } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
+
+  // Check if we're on a dashboard route
+  const isDashboardRoute =
+    location.pathname.startsWith("/teacher/") ||
+    location.pathname.startsWith("/student/") ||
+    location.pathname.startsWith("/super-admin/");
+
+  // Use sidebar context (safe - returns null if not available)
+  const sidebarContext = useSidebarSafe();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -456,6 +468,16 @@ const Navbar = () => {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.15),transparent_55%)] opacity-80" />
           <div className="pointer-events-none absolute inset-x-3 top-1/2 h-4 -translate-y-1/2 rounded-[36px] border border-[#D4AF37]/20 bg-[#D4AF37]/5 blur-2xl" />
           <div className="layout-container relative z-10 flex items-center justify-between gap-2 py-2">
+            {/* Mobile Sidebar Toggle Button - Left Side */}
+            {isDashboardRoute && sidebarContext && (
+              <button
+                onClick={sidebarContext.openSidebar}
+                className="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition"
+                aria-label="Open sidebar">
+                <FaBars className="h-5 w-5" />
+              </button>
+            )}
+
             {/* Navigation Links - Right Side */}
             <div className="hidden lg:flex flex-1 items-center justify-center gap-5">
               {navItems.map((item, index) => (
