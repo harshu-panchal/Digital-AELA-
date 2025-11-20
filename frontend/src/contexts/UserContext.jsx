@@ -329,7 +329,7 @@ export const UserProvider = ({ children }) => {
 
   // Load social stats from backend (runs after profile is initialized)
   const loadSocialStats = useCallback(async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
+      if (!authUser?.id) {
         return;
       }
 
@@ -344,7 +344,8 @@ export const UserProvider = ({ children }) => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       try {
-        const stats = await fetchSocialStats();
+        // Pass userId to fetchSocialStats so it works even without tokens
+        const stats = await fetchSocialStats(authUser.id);
         
         if (stats) {
           setProfile((prev) => {
@@ -399,7 +400,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       isLoadingSocialStatsRef.current = false;
       }
-  }, [authUser?.id, tokens?.accessToken]);
+  }, [authUser?.id]);
 
   useEffect(() => {
     loadSocialStats();
@@ -407,7 +408,7 @@ export const UserProvider = ({ children }) => {
 
   // Helper functions to reload followers and following lists
   const reloadFollowers = useCallback(async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
+      if (!authUser?.id) {
         return;
       }
 
@@ -423,10 +424,10 @@ export const UserProvider = ({ children }) => {
           console.warn("Failed to refresh followers:", error);
         }
     }
-  }, [authUser?.id, tokens?.accessToken]);
+  }, [authUser?.id]);
 
   const reloadFollowing = useCallback(async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
+      if (!authUser?.id) {
         return;
       }
 
@@ -442,12 +443,12 @@ export const UserProvider = ({ children }) => {
           console.warn("Failed to refresh following:", error);
         }
     }
-  }, [authUser?.id, tokens?.accessToken]);
+  }, [authUser?.id]);
 
   // Refresh social stats function (can be called manually)
   // Use useCallback with stable dependencies to prevent recreation
   const refreshSocialStats = useCallback(async () => {
-    if (!authUser?.id || !tokens?.accessToken) {
+    if (!authUser?.id) {
       return;
     }
     // Refresh counts and lists in parallel
@@ -456,7 +457,7 @@ export const UserProvider = ({ children }) => {
       reloadFollowers(),
       reloadFollowing(),
     ]);
-  }, [loadSocialStats, reloadFollowers, reloadFollowing, authUser?.id, tokens?.accessToken]);
+  }, [loadSocialStats, reloadFollowers, reloadFollowing, authUser?.id]);
 
   // Store refreshSocialStats in a ref for socket listeners to avoid dependency issues
   const refreshSocialStatsRef = useRef(refreshSocialStats);

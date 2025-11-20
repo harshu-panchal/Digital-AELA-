@@ -2,9 +2,7 @@ import { apiRequest } from "./baseClient";
 
 export const fetchSocialStats = (userId = null) => {
   if (userId) {
-    return apiRequest(`/social/${userId}/stats`, {
-      skipAuth: true, // Public endpoint
-    });
+    return apiRequest(`/social/${userId}/stats`);
   }
   return apiRequest("/social/stats"); // Uses authenticated user's ID
 };
