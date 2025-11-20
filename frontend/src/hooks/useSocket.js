@@ -63,19 +63,25 @@ export const useSocket = () => {
       }
 
       // Initialize socket connection with quiet error handling
+      // Use polling first for better compatibility with Render and other hosting services
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: tokens.accessToken,
         },
-        transports: ["websocket", "polling"],
+        // Try polling first, then upgrade to websocket if available
+        transports: ["polling", "websocket"],
+        upgrade: true,
+        rememberUpgrade: true,
         reconnection: true,
-        reconnectionDelay: 2000,
-        reconnectionAttempts: 5,
-        reconnectionDelayMax: 10000,
-        timeout: 10000,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: Infinity,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
         autoConnect: true,
         // Suppress default error logging
         forceNew: false,
+        // Additional options for production stability
+        withCredentials: true,
       });
 
       // Suppress WebSocket connection errors in console
@@ -110,7 +116,7 @@ export const useSocket = () => {
 
       newSocket.on("connect_error", (error) => {
         setIsConnected(false);
-        // Suppress all WebSocket and connection errors
+        // Suppress all WebSocket and connection errors - these are expected in production
         const shouldSuppress = 
           error.message?.includes("xhr poll error") ||
           error.message?.includes("websocket error") ||
@@ -120,14 +126,36 @@ export const useSocket = () => {
           error.message?.includes("Connection refused") ||
           error.message?.includes("closed before the connection is established") ||
           error.message?.includes("timeout") ||
-          error.message?.includes("NetworkError");
+          error.message?.includes("NetworkError") ||
+          error.message?.includes("Failed to fetch") ||
+          error.message?.includes("ERR_CONNECTION") ||
+          error.message?.includes("ERR_INTERNET_DISCONNECTED");
         
         // Only log authentication errors in development
         if (!shouldSuppress && error.message?.includes("Authentication error") && import.meta.env.DEV) {
           // eslint-disable-next-line no-console
           console.warn("[Socket.IO] Authentication error:", error.message);
         }
-        // Silent fail for all other connection errors
+        // Silent fail for all other connection errors - socket will retry automatically
+      });
+
+      // Handle transport upgrades (polling -> websocket)
+      newSocket.on("upgrade", () => {
+        // Connection upgraded successfully, no need to log
+      });
+
+      // Handle transport errors silently
+      newSocket.io.on("error", (error) => {
+        // Suppress all transport errors
+        const shouldSuppress = 
+          error.message?.includes("WebSocket") ||
+          error.message?.includes("transport") ||
+          error.type === "TransportError";
+        
+        if (!shouldSuppress && import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn("[Socket.IO] Transport error:", error.message);
+        }
       });
 
       socketRef.current = newSocket;

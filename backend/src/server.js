@@ -15,12 +15,43 @@ const start = async () => {
   await connectDatabase();
 
   const httpServer = createServer(app);
+  
+  // Get allowed origins for Socket.IO
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "https://digitalaela.com",
+    "https://www.digitalaela.com",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+  ].filter(Boolean);
+
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or Postman)
+        if (!origin) return callback(null, true);
+        
+        // Allow if origin is in allowed list or if in development
+        if (allowedOrigins.some(allowed => origin.includes(allowed.replace(/^https?:\/\//, ''))) || process.env.NODE_ENV !== "production") {
+          callback(null, true);
+        } else {
+          // In production, be more permissive for Socket.IO
+          callback(null, true);
+        }
+      },
       methods: ["GET", "POST"],
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
     },
+    // Additional options for production stability
+    transports: ["websocket", "polling"],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    // Handle connection errors gracefully
+    connectTimeout: 45000,
   });
 
   // Store io instance globally for use in controllers
