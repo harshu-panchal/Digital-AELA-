@@ -15,6 +15,7 @@ import {
   FaChartBar,
   FaCog,
   FaVideo,
+  FaCreditCard,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -33,6 +34,11 @@ const AdminSidebar = () => {
       label: "Settings",
       path: "/super-admin/settings",
       icon: FaCog,
+    },
+    {
+      label: "Payments",
+      path: "/super-admin/payments",
+      icon: FaCreditCard,
     },
     {
       label: "User Management",

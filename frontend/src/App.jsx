@@ -89,6 +89,8 @@ import StudentDashboard from "../modules/student/StudentDashboard";
 import EnrolledCourses from "../modules/student/EnrolledCourses";
 import PointsHistory from "../modules/student/PointsHistory";
 import ApplicationHistory from "../modules/student/ApplicationHistory";
+import StudentLayout from "../modules/student/layout/StudentLayout";
+import StudentProfile from "../modules/student/StudentProfile";
 import CourseCreate from "../modules/teacher/CourseCreate";
 import TeacherCourseDetail from "../modules/teacher/CourseDetail";
 import EbookUpload from "../modules/teacher/EbookUpload";
@@ -99,6 +101,14 @@ import QuizLeaderboard from "../modules/student/QuizLeaderboard";
 import QuizDetail from "../modules/teacher/QuizDetail";
 import TeacherAnalytics from "../modules/teacher/TeacherAnalytics";
 import StudentManagement from "../modules/teacher/StudentManagement";
+import AssignmentCreate from "../modules/teacher/AssignmentCreate";
+import AssignmentList from "../modules/teacher/AssignmentList";
+import AssignmentDetail from "../modules/teacher/AssignmentDetail";
+import StudentAssignmentList from "../modules/student/AssignmentList";
+import StudentAssignmentDetail from "../modules/student/AssignmentDetail";
+import PaymentHistory from "../modules/student/PaymentHistory";
+import TeacherEarnings from "../modules/teacher/TeacherEarnings";
+import PaymentManagement from "../modules/admin/PaymentManagement";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
@@ -136,6 +146,7 @@ export const App = () => {
           <Route path="create/course" element={<AdminCourseCreate />} />
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />
+          <Route path="payments" element={<PaymentManagement />} />
         </Route>
         <Route
           path="/teacher/dashboard"
@@ -234,54 +245,61 @@ export const App = () => {
           }
         />
         <Route
-          path="/student/dashboard"
+          path="/teacher/assignments"
           element={
-            <ProtectedRoute roles={["student", "super-admin"]}>
-              <StudentDashboard />
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AssignmentList />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/courses"
+          path="/teacher/assignments/create"
           element={
-            <ProtectedRoute roles={["student", "super-admin"]}>
-              <EnrolledCourses />
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AssignmentCreate />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/courses/:courseId"
+          path="/teacher/assignments/:assignmentId"
           element={
-            <ProtectedRoute roles={["student", "super-admin"]}>
-              <EnrolledCourses />
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AssignmentDetail />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/points/history"
+          path="/teacher/earnings"
           element={
-            <ProtectedRoute roles={["student", "super-admin"]}>
-              <PointsHistory />
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <TeacherEarnings />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/applications"
+          path="/student/*"
           element={
             <ProtectedRoute roles={["student", "super-admin"]}>
-              <ApplicationHistory />
+              <StudentLayout />
             </ProtectedRoute>
-          }
-        />
+          }>
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="courses" element={<EnrolledCourses />} />
+          <Route path="courses/:courseId" element={<EnrolledCourses />} />
+          <Route path="points/history" element={<PointsHistory />} />
+          <Route path="applications" element={<ApplicationHistory />} />
+          <Route path="assignments" element={<StudentAssignmentList />} />
+          <Route
+            path="assignments/:assignmentId"
+            element={<StudentAssignmentDetail />}
+          />
+          <Route path="payments" element={<PaymentHistory />} />
+          <Route path="profile" element={<StudentProfile />} />
+        </Route>
         <Route
           path="/courses/videos/:videoId"
           element={
-            <ProtectedRoute
-              roles={[
-                "student",
-                "teacher",
-                "super-admin",
-              ]}>
+            <ProtectedRoute roles={["student", "teacher", "super-admin"]}>
               <CourseVideoPlayer />
             </ProtectedRoute>
           }
@@ -310,7 +328,10 @@ export const App = () => {
           <Route path="live-debates" element={<LiveDebates />} />
           <Route path="activities" element={<ActivitiesHub />} />
           <Route path="quiz/:quizId" element={<QuizPlay />} />
-          <Route path="quiz/:quizId/leaderboard" element={<QuizLeaderboard />} />
+          <Route
+            path="quiz/:quizId/leaderboard"
+            element={<QuizLeaderboard />}
+          />
           <Route path="wallet" element={<WalletDashboard />} />
           <Route path="ratings" element={<RatingsReviews />} />
           <Route
@@ -383,7 +404,10 @@ export const App = () => {
         />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/refund-cancellation-policy" element={<RefundCancellationPolicy />} />
+        <Route
+          path="/refund-cancellation-policy"
+          element={<RefundCancellationPolicy />}
+        />
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/contact/book-demo" element={<BookDemo />} />
         <Route
@@ -432,9 +456,18 @@ export const App = () => {
         <Route path="/join-us/influencer" element={<JoinInfluencer />} />
         <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
         <Route path="/join-us/afterlife" element={<JoinBuildAfterLife />} />
-        <Route path="/community/students/:userId" element={<StudentProfileDetail />} />
-        <Route path="/community/teachers/:userId" element={<TeacherProfileDetail />} />
-        <Route path="/community/recruiters/:userId" element={<RecruiterProfileDetail />} />
+        <Route
+          path="/community/students/:userId"
+          element={<StudentProfileDetail />}
+        />
+        <Route
+          path="/community/teachers/:userId"
+          element={<TeacherProfileDetail />}
+        />
+        <Route
+          path="/community/recruiters/:userId"
+          element={<RecruiterProfileDetail />}
+        />
         <Route
           path="/recruiter/dashboard"
           element={

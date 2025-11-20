@@ -9,6 +9,8 @@ import {
   HiOutlineCurrencyDollar,
   HiOutlineSparkles,
   HiOutlinePresentationChartLine,
+  HiOutlineDocumentText,
+  HiOutlineClock,
 } from "react-icons/hi2";
 import { FaFilePdf, FaClipboardList, FaShoppingCart, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -20,6 +22,7 @@ import { getTeacherQuizzes, deleteTeacherQuiz } from "../../src/services/teacher
 import { getTeacherCourses } from "../../src/services/teacherCourses";
 import { fetchTeacherDashboard } from "../../src/services/api/teacher";
 import { useSocket } from "../../src/hooks/useSocket";
+import { getTeacherAssignments } from "../../src/services/api/assignments";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -51,6 +54,8 @@ const TeacherDashboard = () => {
   const [loadingQuizzes, setLoadingQuizzes] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [assignments, setAssignments] = useState([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
 
   // Load dashboard data from backend
   const loadDashboard = useCallback(async () => {
@@ -98,7 +103,25 @@ const TeacherDashboard = () => {
 
     refresh();
     loadDashboard();
+    loadAssignments();
   }, [loadDashboard]);
+
+  // Load assignments
+  const loadAssignments = useCallback(async () => {
+    if (!user || user.role !== "teacher") {
+      return;
+    }
+
+    setLoadingAssignments(true);
+    try {
+      const response = await getTeacherAssignments({ page: 1, pageSize: 5 });
+      setAssignments(response.assignments || []);
+    } catch (error) {
+      console.error("Failed to load assignments:", error);
+    } finally {
+      setLoadingAssignments(false);
+    }
+  }, [user]);
 
   // Handle new enrollment updates
   const handleNewEnrollment = useCallback((enrollment) => {
@@ -314,12 +337,36 @@ const TeacherDashboard = () => {
         href: "/teacher/quizzes/new",
       },
       {
+        title: "Create Assignment",
+        description: "Add assignments for your courses",
+        cta: "Create assignment",
+        tone: "from-[#a855f7]/20 to-[#9333ea]/20 border-purple-400/40 text-purple-200",
+        icon: HiOutlineDocumentText,
+        href: "/teacher/assignments/create",
+      },
+      {
         title: "Explore teacher marketplace",
         description: "Buy new courses or co-teach with top mentors",
         cta: "Browse mentors",
         tone: "from-[#facc15]/20 to-[#eab308]/20 border-yellow-400/40 text-yellow-200",
         icon: HiOutlineSparkles,
         href: "/teacher/marketplace",
+      },
+      {
+        title: "Create Assignment",
+        description: "Add assignments for your courses",
+        cta: "Create assignment",
+        tone: "from-[#a855f7]/20 to-[#9333ea]/20 border-purple-400/40 text-purple-200",
+        icon: HiOutlineDocumentText,
+        href: "/teacher/assignments/create",
+      },
+      {
+        title: "View Earnings",
+        description: "Track your course revenue and payments",
+        cta: "View earnings",
+        tone: "from-[#10b981]/20 to-[#059669]/20 border-emerald-400/40 text-emerald-200",
+        icon: HiOutlineCurrencyDollar,
+        href: "/teacher/earnings",
       },
     ];
 
@@ -746,6 +793,33 @@ const TeacherDashboard = () => {
                   );
                 })
               )}
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineCurrencyDollar className="h-5 w-5" />
+                Earnings Overview
+              </h2>
+              <Link
+                to="/teacher/earnings"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            <div className="text-center py-8 text-xs text-slate-400">
+              <HiOutlineCurrencyDollar className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>Track your course revenue and earnings</p>
+              <Link
+                to="/teacher/earnings"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#F5D26A] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
+                View Earnings
+              </Link>
             </div>
           </motion.section>
 

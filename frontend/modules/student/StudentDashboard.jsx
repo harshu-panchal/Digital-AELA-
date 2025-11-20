@@ -12,6 +12,9 @@ import {
   HiOutlineShoppingBag,
   HiOutlineUserGroup,
   HiOutlineMagnifyingGlass,
+  HiOutlineDocumentText,
+  HiOutlineExclamationTriangle,
+  HiOutlineCreditCard,
 } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -21,6 +24,7 @@ import { useAuth } from "../../src/contexts/AuthContext";
 import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
+import { getStudentAssignments } from "../../src/services/api/assignments";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -59,6 +63,8 @@ const StudentDashboard = () => {
     recommendations: [],
   });
   const [loadingWidgets, setLoadingWidgets] = useState(false);
+  const [assignments, setAssignments] = useState([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -119,9 +125,27 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
+  // Load assignments
+  const loadAssignments = useCallback(async () => {
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      return;
+    }
+
+    setLoadingAssignments(true);
+    try {
+      const response = await getStudentAssignments({ page: 1, pageSize: 5, status: "pending" });
+      setAssignments(response.assignments || []);
+    } catch (error) {
+      console.error("Failed to load assignments:", error);
+    } finally {
+      setLoadingAssignments(false);
+    }
+  }, [authUser, tokens]);
+
   useEffect(() => {
     loadDashboard();
     loadWidgets();
+    loadAssignments();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
@@ -131,7 +155,7 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [loadDashboard, loadWidgets]);
+  }, [loadDashboard, loadWidgets, loadAssignments]);
 
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
@@ -243,14 +267,14 @@ const StudentDashboard = () => {
 
   if (!dashboardData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#03040B] text-white">
+      <div className="flex min-h-screen items-center justify-center text-white">
         <p className="text-sm text-slate-300/80">Loading your dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#03040B] text-white">
+    <div className="min-h-screen text-white">
       <SEO
         title="Student Dashboard | Digital AELA"
         description="Track your courses, Learn & Earn progress, and upcoming sessions in the Digital AELA student dashboard."
@@ -258,10 +282,7 @@ const StudentDashboard = () => {
         url="https://digitalaela.com/student/dashboard"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(55,124,255,0.18),transparent_70%)]" />
-
-      <main className="relative z-10 pt-24 pb-20" style={{ paddingTop: 'calc(6rem + 5vh)' }}>
-        <section className="layout-container space-y-10">
+      <div className="space-y-10">
           <motion.header
             variants={sectionVariants}
             initial="hidden"
@@ -434,6 +455,87 @@ const StudentDashboard = () => {
               </div>
             </motion.div>
           </section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineCreditCard className="h-5 w-5" />
+                Payment History
+              </h2>
+              <Link
+                to="/student/payments"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all
+              </Link>
+            </header>
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineCreditCard className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>View your payment history and download invoices</p>
+              <Link
+                to="/student/payments"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
+                View Payments
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineDocumentText className="h-5 w-5" />
+                Due Assignments
+              </h2>
+              <Link
+                to="/student/assignments"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all
+              </Link>
+            </header>
+            {loadingAssignments ? (
+              <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+            ) : assignments.length === 0 ? (
+              <div className="py-8 text-center text-sm text-slate-400">No pending assignments</div>
+            ) : (
+              <div className="space-y-3">
+                {assignments.slice(0, 3).map((assignment) => {
+                  const isOverdue = new Date(assignment.dueDate) < new Date();
+                  return (
+                    <Link
+                      key={assignment._id}
+                      to={`/student/assignments/${assignment._id}`}
+                      className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-semibold text-white">{assignment.title}</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {assignment.course?.title || "Course"}
+                          </p>
+                          <p
+                            className={`text-xs mt-1 flex items-center gap-1 ${
+                              isOverdue ? "text-red-400" : "text-slate-300"
+                            }`}>
+                            <HiOutlineCalendarDays className="h-3 w-3" />
+                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {isOverdue && (
+                          <HiOutlineExclamationTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </motion.section>
 
           <motion.section
             variants={cardVariants}
@@ -875,8 +977,7 @@ const StudentDashboard = () => {
               </div>
             </div>
           </motion.section>
-        </section>
-      </main>
+      </div>
     </div>
   );
 };
