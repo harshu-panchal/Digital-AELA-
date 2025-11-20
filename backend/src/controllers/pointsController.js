@@ -238,7 +238,26 @@ export const getPointsHistory = async (req, res, next) => {
  */
 export const getPointsStats = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId } = req.auth || {};
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
     const studentObjectId = new mongoose.Types.ObjectId(userId);
 
     let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
