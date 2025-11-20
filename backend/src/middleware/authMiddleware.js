@@ -55,6 +55,12 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
 };
 
 /**
+ * Alias for requireAuth with no role restrictions
+ * Used for routes that require authentication but don't need specific roles
+ */
+export const authenticate = requireAuth([]);
+
+/**
  * Optional authentication middleware
  * Sets req.auth if token is valid, but doesn't fail if token is missing
  * Useful for public endpoints that can work with or without authentication
