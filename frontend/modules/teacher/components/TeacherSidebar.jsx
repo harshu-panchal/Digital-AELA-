@@ -15,7 +15,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 
-const TeacherSidebar = () => {
+const TeacherSidebar = ({ isOpen = false, onClose }) => {
   const navItems = [
     {
       label: "Dashboard",
@@ -85,7 +85,11 @@ const TeacherSidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-50">
+    <aside
+      className={`fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-[55] transition-transform duration-300 ease-in-out ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
+    >
       <div className="flex h-full flex-col pt-25 pb-8">
         <div className="border-b border-white/10 px-6 pt-12 pb-6">
           <h2 className="text-lg font-semibold text-[#F5D26A]">Teacher Portal</h2>
@@ -99,6 +103,12 @@ const TeacherSidebar = () => {
                 key={index}
                 to={item.path}
                 end={item.path === "/teacher/dashboard"}
+                onClick={() => {
+                  // Close sidebar on mobile when a link is clicked
+                  if (window.innerWidth < 768 && onClose) {
+                    onClose();
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
                     isActive
