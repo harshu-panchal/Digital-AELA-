@@ -232,7 +232,11 @@ const Navbar = () => {
           duration: 0.3,
           ease: [0.25, 0.1, 0.25, 1],
         }}
-        className="absolute left-[132px] top-[43px] z-[70] pointer-events-auto">
+        className={`absolute top-2 z-[70] pointer-events-auto ${
+          isDashboardRoute
+            ? "left-1/2 -translate-x-1/2 md:left-1/2 md:-translate-x-1/2"
+            : "left-4 md:left-[132px]"
+        } md:top-[43px]`}>
         <Link to="/" className="block">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
@@ -241,10 +245,10 @@ const Navbar = () => {
             <img
               src={logo}
               alt="logo"
-              className="h-[80px] w-auto object-contain"
+              className="h-10 w-auto md:h-[80px] object-contain"
               style={{
                 maxHeight: "80px",
-                width: "250px",
+                width: "auto",
                 objectFit: "contain",
               }}
             />
