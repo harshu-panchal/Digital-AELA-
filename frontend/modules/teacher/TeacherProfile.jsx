@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import {
   HiOutlineUser,
@@ -16,7 +16,6 @@ import {
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { apiRequest } from "../../src/services/api/baseClient";
-import { motion, AnimatePresence } from "framer-motion";
 
 const TeacherProfile = () => {
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
