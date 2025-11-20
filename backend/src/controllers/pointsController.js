@@ -173,8 +173,43 @@ export const updateStudentPoints = async (req, res, next) => {
  */
 export const getPointsHistory = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
-    const studentObjectId = new mongoose.Types.ObjectId(userId);
+    const { userId } = req.auth || {};
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Validate and create ObjectId
+    let studentObjectId;
+    try {
+      if (!mongoose.isValidObjectId(userId)) {
+        // eslint-disable-next-line no-console
+        console.error("[getPointsHistory] Invalid ObjectId format. userId:", userId, "type:", typeof userId);
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid user ID",
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${userId} (${typeof userId})`,
+          },
+        });
+      }
+      studentObjectId = new mongoose.Types.ObjectId(userId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsHistory] Error creating ObjectId:", error.message, "userId:", userId, "type:", typeof userId);
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+          details: error.message,
+        },
+      });
+    }
 
     const { page = 1, pageSize = 50, type, source } = req.query;
 
