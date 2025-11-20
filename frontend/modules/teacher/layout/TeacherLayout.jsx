@@ -8,7 +8,11 @@ const TeacherLayout = () => {
   const { user } = useAuth();
 
   // Check if teacher is not approved (isActive is false or undefined for teachers)
-  const isTeacherPendingApproval = user?.role === "teacher" && user?.isActive === false;
+  // Default to true if isActive is undefined to avoid blocking access for existing users
+  const isTeacherPendingApproval = 
+    user?.role === "teacher" && 
+    user?.isActive !== undefined && 
+    user.isActive === false;
 
   if (isTeacherPendingApproval) {
     return (
