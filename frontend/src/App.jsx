@@ -88,7 +88,6 @@ import SystemHealth from "../modules/admin/pages/SystemHealth";
 const TeacherDashboard = lazy(() =>
   import("../modules/teacher/TeacherDashboard")
 );
-import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
 const TeacherLayout = lazy(() =>
   import("../modules/teacher/layout/TeacherLayout")
 );
@@ -267,7 +266,6 @@ export const App = () => {
           <Route path="students" element={<StudentManagement />} />
           <Route path="analytics" element={<TeacherAnalytics />} />
           <Route path="earnings" element={<TeacherEarnings />} />
-          <Route path="marketplace" element={<TeacherMarketplace />} />
           <Route path="doubt-tickets" element={<DoubtTicketInbox />} />
           <Route
             path="doubt-tickets/:ticketId"

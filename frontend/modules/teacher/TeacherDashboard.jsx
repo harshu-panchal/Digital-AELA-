@@ -14,7 +14,7 @@ import {
   HiOutlineQuestionMarkCircle,
   HiOutlineMegaphone,
 } from "react-icons/hi2";
-import { FaFilePdf, FaClipboardList, FaShoppingCart, FaTrash } from "react-icons/fa";
+import { FaFilePdf, FaClipboardList, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
@@ -274,7 +274,6 @@ const TeacherDashboard = () => {
     ebookLibrary,
     studentSpotlight,
     mentorNetwork,
-    marketplace,
   } = useMemo(() => {
     const ebookCount = Array.isArray(ebooks) ? ebooks.length : 0;
     // For ebooks, check isPublic instead of status (since backend uses isPublic: false for pending)
@@ -358,22 +357,6 @@ const TeacherDashboard = () => {
         tone: "from-[#34d399]/20 to-[#10b981]/20 border-emerald-400/40 text-emerald-200",
         icon: FaClipboardList,
         href: "/teacher/quizzes/new",
-      },
-      {
-        title: "Create Assignment",
-        description: "Add assignments for your courses",
-        cta: "Create assignment",
-        tone: "from-[#a855f7]/20 to-[#9333ea]/20 border-purple-400/40 text-purple-200",
-        icon: HiOutlineDocumentText,
-        href: "/teacher/assignments/create",
-      },
-      {
-        title: "Explore teacher marketplace",
-        description: "Buy new courses or co-teach with top mentors",
-        cta: "Browse mentors",
-        tone: "from-[#facc15]/20 to-[#eab308]/20 border-yellow-400/40 text-yellow-200",
-        icon: HiOutlineSparkles,
-        href: "/teacher/marketplace",
       },
       {
         title: "Create Assignment",
@@ -527,8 +510,6 @@ const TeacherDashboard = () => {
 
     const mentors = dashboardData?.mentorNetwork || [];
 
-    const marketplaceItems = dashboardData?.marketplace || [];
-
     return {
       headlineStats: stats,
       managementTiles: tiles,
@@ -538,7 +519,6 @@ const TeacherDashboard = () => {
       ebookLibrary: libraryEntries,
       studentSpotlight: students,
       mentorNetwork: mentors,
-      marketplace: marketplaceItems,
     };
   }, [ebooks, quizzes, courses, dashboardData, user]);
 
@@ -1034,7 +1014,7 @@ const TeacherDashboard = () => {
                 {mentorNetwork.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-sm text-slate-400">No other mentors found</p>
-                    <p className="mt-1 text-xs text-slate-500">Connect with other teachers in the marketplace</p>
+                    <p className="mt-1 text-xs text-slate-500">Connect with other teachers</p>
                   </div>
                 ) : (
                   mentorNetwork.map((mentor) => (
@@ -1048,52 +1028,6 @@ const TeacherDashboard = () => {
                   ))
                 )}
               </div>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
-            <header className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Marketplace recommendations</h2>
-              <Link
-                to="/teacher/marketplace"
-                className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white hover:text-[#F5D26A] transition-colors">
-                Open marketplace <FaShoppingCart />
-              </Link>
-            </header>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {marketplace.length === 0 ? (
-                <div className="col-span-full py-12 text-center">
-                  <FaShoppingCart className="mx-auto mb-3 h-12 w-12 text-slate-500" />
-                  <p className="text-sm text-slate-400">No marketplace recommendations available</p>
-                  <p className="mt-1 text-xs text-slate-500">Explore the marketplace to discover courses and resources</p>
-                </div>
-              ) : (
-                marketplace.map((item) => (
-                  <Link
-                    key={item.id || item.title}
-                    to={item.route || "/teacher/marketplace"}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/40">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                    {item.type}
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
-                  <p className="text-xs text-slate-300/80">Mentor · {item.mentor}</p>
-                  <p className="mt-2 text-xs text-slate-300/70">{item.reason}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="rounded-full border border-white/10 px-3 py-1 text-white/90">
-                      {item.price}
-                    </span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200">
-                      View →
-                      </span>
-                  </div>
-                  </Link>
-                ))
-              )}
             </div>
           </motion.section>
 

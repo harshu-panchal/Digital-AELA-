@@ -8,7 +8,6 @@ import {
   FaUsers,
   FaChartBar,
   FaDollarSign,
-  FaShoppingBag,
   FaEnvelope,
   FaBullhorn,
   FaCreditCard,
@@ -57,11 +56,6 @@ const TeacherSidebar = () => {
       label: "Earnings",
       path: "/teacher/earnings",
       icon: FaDollarSign,
-    },
-    {
-      label: "Marketplace",
-      path: "/teacher/marketplace",
-      icon: FaShoppingBag,
     },
     {
       label: "Doubt Tickets",
