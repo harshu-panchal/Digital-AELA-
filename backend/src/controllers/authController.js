@@ -35,6 +35,17 @@ export const registerUser = async (req, res, next) => {
   try {
     const { email, password, fullName, role = "student" } = req.body;
     
+    // Parse profile if it's a JSON string (from FormData)
+    if (req.body.profile && typeof req.body.profile === "string") {
+      try {
+        req.body.profile = JSON.parse(req.body.profile);
+      } catch (parseError) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to parse profile JSON:", parseError);
+        req.body.profile = {};
+      }
+    }
+    
     // Normalize email (lowercase and trim) to match how it's stored
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const normalizedFullName = String(fullName || "").trim();
@@ -73,16 +84,28 @@ export const registerUser = async (req, res, next) => {
     let avatarUrl = "";
     if (req.file) {
       try {
+        // eslint-disable-next-line no-console
+        console.log("Uploading profile image to Cloudinary...", {
+          filename: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          role,
+        });
         const uploadResult = await uploadToCloudinary(
           req.file.buffer,
           `digital-aela/profiles/${role}`
         );
         avatarUrl = uploadResult.url;
+        // eslint-disable-next-line no-console
+        console.log("Profile image uploaded successfully:", avatarUrl);
       } catch (uploadError) {
         // eslint-disable-next-line no-console
         console.error("Failed to upload profile image:", uploadError);
         // Continue registration without image - don't fail registration
       }
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("No profile image file received in request");
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -511,13 +534,23 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    // Find user
-    const user = await User.findById(userId);
+    // Find user (explicitly select passwordHash since it has select: false)
+    const user = await User.findById(userId).select("+passwordHash");
     if (!user) {
       return res.status(404).json({
         error: {
           code: "RESOURCE_NOT_FOUND",
           message: "User not found",
+        },
+      });
+    }
+
+    // Check if user has a passwordHash (for users who might not have set a password yet)
+    if (!user.passwordHash) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User account does not have a password set. Please use password reset instead.",
         },
       });
     }

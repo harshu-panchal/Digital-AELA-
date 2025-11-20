@@ -26,6 +26,8 @@ const createInitialFormState = () => ({
   headline: "",
   password: "",
   confirmPassword: "",
+  profileImage: null,
+  profileImagePreview: null,
 });
 
 const RecruiterRegister = () => {
