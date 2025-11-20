@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import {
@@ -7,6 +8,7 @@ import {
   HiOutlineNoSymbol,
   HiOutlineSpeakerWave,
   HiOutlinePlus,
+  HiOutlineArrowRight,
 } from "react-icons/hi2";
 import { FaVoteYea, FaSpinner, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -153,6 +155,7 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
 const LiveDebates = () => {
   const { user: authUser } = useAuth();
   const { socket, isConnected } = useSocket();
+  const navigate = useNavigate();
   const [liveDebates, setLiveDebates] = useState([]);
   const [openRooms, setOpenRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -441,6 +444,14 @@ const LiveDebates = () => {
                 <p key={winner}>🏆 {winner}</p>
               ))}
             </div>
+            {room.status === "live" && (
+              <button
+                onClick={() => navigate(`/learn-earn/voice-room/${room.id}`)}
+                className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+                <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
+                Join Voice Room
+              </button>
+            )}
           </Motion.div>
           ))
         )}

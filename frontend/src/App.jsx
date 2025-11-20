@@ -14,6 +14,7 @@ import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
 import FindLearners from "../modules/learn-earn/pages/FindLearners";
 import UserProfileView from "../modules/learn-earn/pages/UserProfileView";
 import LiveDebates from "../modules/learn-earn/pages/LiveDebates";
+import VoiceRoom from "../modules/learn-earn/pages/VoiceRoom";
 import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
 import QuizPlay from "../modules/learn-earn/pages/QuizPlay";
 import WalletDashboard from "../modules/learn-earn/pages/WalletDashboard";
@@ -85,6 +86,11 @@ import UserDetail from "../modules/admin/pages/UserDetail";
 import SystemHealth from "../modules/admin/pages/SystemHealth";
 import TeacherDashboard from "../modules/teacher/TeacherDashboard";
 import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
+import TeacherLayout from "../modules/teacher/layout/TeacherLayout";
+import CourseList from "../modules/teacher/CourseList";
+import EbookList from "../modules/teacher/EbookList";
+import QuizList from "../modules/teacher/QuizList";
+import TeacherProfile from "../modules/teacher/TeacherProfile";
 import StudentDashboard from "../modules/student/StudentDashboard";
 import EnrolledCourses from "../modules/student/EnrolledCourses";
 import PointsHistory from "../modules/student/PointsHistory";
@@ -201,189 +207,52 @@ export const App = () => {
           <Route path="backups" element={<BackupManagement />} />
         </Route>
         <Route
-          path="/teacher/dashboard"
+          path="/teacher/*"
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherDashboard />
+              <TeacherLayout />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/marketplace"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherMarketplace />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/courses/new"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <CourseCreate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/courses/:courseId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherCourseDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/ebooks/upload"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <EbookUpload />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/ebooks/:ebookId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <EbookDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/quizzes/new"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <QuizCreate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/quizzes/:quizId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <QuizDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/quizzes/:quizId/analytics"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <QuizAnalytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/analytics"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherAnalytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/students"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <StudentManagement />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/courses/:courseId/students"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <StudentManagement />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/assignments"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AssignmentList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/assignments/create"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AssignmentCreate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/assignments/:assignmentId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AssignmentDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/earnings"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherEarnings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/doubt-tickets"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <DoubtTicketInbox />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/doubt-tickets/:ticketId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherDoubtTicketDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/announcements"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AnnouncementList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/announcements/create"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AnnouncementCreate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/announcements/:announcementId"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <AnnouncementDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/payout-requests"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <PayoutRequests />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/payment-slips"
-          element={
-            <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <PaymentSlips />
-            </ProtectedRoute>
-          }
-        />
+          }>
+          <Route path="dashboard" element={<TeacherDashboard />} />
+          <Route path="courses" element={<CourseList />} />
+          <Route path="courses/new" element={<CourseCreate />} />
+          <Route path="courses/:courseId" element={<TeacherCourseDetail />} />
+          <Route
+            path="courses/:courseId/students"
+            element={<StudentManagement />}
+          />
+          <Route path="ebooks" element={<EbookList />} />
+          <Route path="ebooks/upload" element={<EbookUpload />} />
+          <Route path="ebooks/:ebookId" element={<EbookDetail />} />
+          <Route path="quizzes" element={<QuizList />} />
+          <Route path="quizzes/new" element={<QuizCreate />} />
+          <Route path="quizzes/:quizId" element={<QuizDetail />} />
+          <Route path="quizzes/:quizId/analytics" element={<QuizAnalytics />} />
+          <Route path="assignments" element={<AssignmentList />} />
+          <Route path="assignments/create" element={<AssignmentCreate />} />
+          <Route
+            path="assignments/:assignmentId"
+            element={<AssignmentDetail />}
+          />
+          <Route path="students" element={<StudentManagement />} />
+          <Route path="analytics" element={<TeacherAnalytics />} />
+          <Route path="earnings" element={<TeacherEarnings />} />
+          <Route path="marketplace" element={<TeacherMarketplace />} />
+          <Route path="doubt-tickets" element={<DoubtTicketInbox />} />
+          <Route
+            path="doubt-tickets/:ticketId"
+            element={<TeacherDoubtTicketDetail />}
+          />
+          <Route path="announcements" element={<AnnouncementList />} />
+          <Route path="announcements/create" element={<AnnouncementCreate />} />
+          <Route
+            path="announcements/:announcementId"
+            element={<AnnouncementDetail />}
+          />
+          <Route path="payout-requests" element={<PayoutRequests />} />
+          <Route path="payment-slips" element={<PaymentSlips />} />
+          <Route path="profile" element={<TeacherProfile />} />
+        </Route>
         <Route
           path="/student/*"
           element={
@@ -447,6 +316,7 @@ export const App = () => {
           <Route path="find-learners" element={<FindLearners />} />
           <Route path="user/:userId" element={<UserProfileView />} />
           <Route path="live-debates" element={<LiveDebates />} />
+          <Route path="voice-room/:roomId" element={<VoiceRoom />} />
           <Route path="activities" element={<ActivitiesHub />} />
           <Route path="quiz/:quizId" element={<QuizPlay />} />
           <Route

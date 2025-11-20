@@ -526,7 +526,7 @@ const TeacherDashboard = () => {
   }, [ebooks, quizzes, courses, dashboardData, user]);
 
   return (
-    <div className="min-h-screen bg-[#05060D] text-white">
+    <div className="min-h-screen text-white">
       <SEO
         title="Teacher Dashboard | Digital AELA"
         description="Manage uploads, quizzes, learners, and earnings from the Digital AELA teacher dashboard."
@@ -534,10 +534,7 @@ const TeacherDashboard = () => {
         url="https://digitalaela.com/teacher/dashboard"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,210,106,0.12),transparent_70%)]" />
-
-      <main className="relative z-10 pt-24 pb-20" style={{ paddingTop: 'calc(6rem + 5vh)' }}>
-        <section className="layout-container space-y-10">
+      <div className="space-y-10">
           <motion.header
             variants={sectionVariants}
             initial="hidden"
@@ -1136,8 +1133,7 @@ const TeacherDashboard = () => {
               </Link>
             </div>
           </motion.section>
-        </section>
-      </main>
+      </div>
     </div>
   );
 };
