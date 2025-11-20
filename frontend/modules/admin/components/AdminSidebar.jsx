@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom";
-import { FaTimes } from "react-icons/fa";
 import {
   FaHome,
   FaUsers,
@@ -170,16 +169,7 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}>
         <div className="flex h-full flex-col pt-25 pb-8">
-          <div className="border-b border-white/10 px-6 pt-12 pb-6 relative">
-            {/* Mobile Close Button */}
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 md:hidden p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
-                aria-label="Close sidebar">
-                <FaTimes className="h-5 w-5" />
-              </button>
-            )}
+          <div className="border-b border-white/10 px-6 pt-12 pb-6">
             <h2 className="text-lg font-semibold text-[#F5D26A]">Super Admin</h2>
             <p className="text-xs text-gray-400">Control Panel</p>
           </div>
