@@ -81,37 +81,6 @@ const TeacherDashboard = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const refresh = async () => {
-      try {
-        setLoadingEbooks(true);
-        setLoadingQuizzes(true);
-        // Fetch all teacher data from backend
-        const [ebooksData, quizzesData, coursesData] = await Promise.all([
-          getTeacherEbooks().catch(() => []),
-          getTeacherQuizzes().catch(() => []),
-          getTeacherCourses().catch(() => []),
-        ]);
-        setEbooks(Array.isArray(ebooksData) ? ebooksData : []);
-        setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
-        setCourses(Array.isArray(coursesData) ? coursesData : []);
-      } catch (error) {
-        console.error("Failed to load teacher data:", error);
-        setEbooks([]);
-        setQuizzes([]);
-        setCourses([]);
-      } finally {
-        setLoadingEbooks(false);
-        setLoadingQuizzes(false);
-      }
-    };
-
-    refresh();
-    loadDashboard();
-    loadAssignments();
-    loadDoubtTicketStats();
-  }, [loadDashboard, loadAssignments, loadDoubtTicketStats]);
-
   // Load assignments
   const loadAssignments = useCallback(async () => {
     if (!user || user.role !== "teacher") {
@@ -145,6 +114,37 @@ const TeacherDashboard = () => {
       setLoadingDoubtTickets(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        setLoadingEbooks(true);
+        setLoadingQuizzes(true);
+        // Fetch all teacher data from backend
+        const [ebooksData, quizzesData, coursesData] = await Promise.all([
+          getTeacherEbooks().catch(() => []),
+          getTeacherQuizzes().catch(() => []),
+          getTeacherCourses().catch(() => []),
+        ]);
+        setEbooks(Array.isArray(ebooksData) ? ebooksData : []);
+        setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+        setCourses(Array.isArray(coursesData) ? coursesData : []);
+      } catch (error) {
+        console.error("Failed to load teacher data:", error);
+        setEbooks([]);
+        setQuizzes([]);
+        setCourses([]);
+      } finally {
+        setLoadingEbooks(false);
+        setLoadingQuizzes(false);
+      }
+    };
+
+    refresh();
+    loadDashboard();
+    loadAssignments();
+    loadDoubtTicketStats();
+  }, [loadDashboard, loadAssignments, loadDoubtTicketStats]);
 
   // Handle new enrollment updates
   const handleNewEnrollment = useCallback((enrollment) => {
