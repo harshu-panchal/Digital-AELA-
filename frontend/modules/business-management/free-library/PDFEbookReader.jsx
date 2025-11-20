@@ -12,8 +12,10 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up PDF.js worker - use jsdelivr CDN (more reliable)
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+}
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 2.0;
