@@ -149,13 +149,23 @@ const TeacherProfile = () => {
 
     setSavingNotifications(true);
     try {
-      // Save notification preferences to user metadata using AuthContext
-      await updateUserMetadata({
-        metadata: {
-          ...(authUser?.metadata || {}),
-          notificationPreferences: notificationSettings,
+      // Save notification preferences to backend
+      const response = await apiRequest("/auth/profile", {
+        method: "PATCH",
+        body: {
+          metadata: {
+            ...(authUser?.metadata || {}),
+            notificationPreferences: notificationSettings,
+          },
         },
       });
+
+      // Update local user state using AuthContext
+      if (response?.user) {
+        await updateUserMetadata({
+          metadata: response.user.metadata,
+        });
+      }
 
       toast.success("Notification preferences saved");
       setShowNotificationModal(false);
@@ -170,10 +180,10 @@ const TeacherProfile = () => {
   // Load notification settings from user metadata
   useEffect(() => {
     if (authUser?.metadata?.notificationPreferences) {
-      setNotificationSettings({
-        ...notificationSettings,
+      setNotificationSettings((prev) => ({
+        ...prev,
         ...authUser.metadata.notificationPreferences,
-      });
+      }));
     }
   }, [authUser?.metadata?.notificationPreferences]);
 

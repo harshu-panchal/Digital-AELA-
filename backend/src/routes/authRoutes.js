@@ -7,6 +7,7 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  updateUserProfile,
 } from "../controllers/authController.js";
 import { uploadSingle, handleUploadError } from "../middleware/uploadMiddleware.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
@@ -27,6 +28,9 @@ router.post("/reset-password", resetPassword);
 
 // Change password endpoint (authentication required)
 router.post("/change-password", requireAuth([]), changePassword);
+
+// Update user profile/metadata endpoint (authentication required)
+router.patch("/profile", requireAuth([]), updateUserProfile);
 
 export default router;
 

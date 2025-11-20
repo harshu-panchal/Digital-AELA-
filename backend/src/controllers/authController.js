@@ -583,3 +583,71 @@ export const changePassword = async (req, res, next) => {
   }
 };
 
+/**
+ * Update user metadata (for profile settings like notification preferences)
+ * PATCH /api/v1/auth/profile
+ */
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    const { userId } = req.auth || {};
+    const { metadata, fullName } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    // Prepare update object
+    const updateData = {};
+    
+    if (fullName !== undefined) {
+      updateData.fullName = String(fullName).trim();
+    }
+
+    if (metadata !== undefined) {
+      // Merge metadata instead of replacing it completely
+      updateData.metadata = {
+        ...(user.metadata || {}),
+        ...metadata,
+      };
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("fullName email role metadata isActive createdAt");
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id.toString(),
+        role: updatedUser.role,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        createdAt: updatedUser.createdAt,
+        isActive: updatedUser.isActive,
+        metadata: updatedUser.metadata || {},
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
