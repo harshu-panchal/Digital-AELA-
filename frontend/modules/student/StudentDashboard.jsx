@@ -15,6 +15,7 @@ import {
   HiOutlineDocumentText,
   HiOutlineExclamationTriangle,
   HiOutlineCreditCard,
+  HiOutlineAcademicCap,
 } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -479,6 +480,33 @@ const StudentDashboard = () => {
                 to="/student/payments"
                 className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
                 View Payments
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineAcademicCap className="h-5 w-5" />
+                My Certificates
+              </h2>
+              <Link
+                to="/student/certificates"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all
+              </Link>
+            </header>
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineAcademicCap className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>View and download your course completion certificates</p>
+              <Link
+                to="/student/certificates"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
+                View Certificates
               </Link>
             </div>
           </motion.section>

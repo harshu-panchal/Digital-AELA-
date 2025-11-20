@@ -107,8 +107,10 @@ import AssignmentDetail from "../modules/teacher/AssignmentDetail";
 import StudentAssignmentList from "../modules/student/AssignmentList";
 import StudentAssignmentDetail from "../modules/student/AssignmentDetail";
 import PaymentHistory from "../modules/student/PaymentHistory";
+import CertificateList from "../modules/student/CertificateList";
 import TeacherEarnings from "../modules/teacher/TeacherEarnings";
 import PaymentManagement from "../modules/admin/PaymentManagement";
+import CertificateManagement from "../modules/admin/CertificateManagement";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
@@ -147,6 +149,7 @@ export const App = () => {
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />
           <Route path="payments" element={<PaymentManagement />} />
+          <Route path="certificates" element={<CertificateManagement />} />
         </Route>
         <Route
           path="/teacher/dashboard"
@@ -294,6 +297,7 @@ export const App = () => {
             element={<StudentAssignmentDetail />}
           />
           <Route path="payments" element={<PaymentHistory />} />
+          <Route path="certificates" element={<CertificateList />} />
           <Route path="profile" element={<StudentProfile />} />
         </Route>
         <Route

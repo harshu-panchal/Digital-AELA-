@@ -41,6 +41,11 @@ const AdminSidebar = () => {
       icon: FaCreditCard,
     },
     {
+      label: "Certificates",
+      path: "/super-admin/certificates",
+      icon: FaFileAlt,
+    },
+    {
       label: "User Management",
       children: [
         {

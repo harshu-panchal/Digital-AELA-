@@ -249,16 +249,32 @@ export const getPointsStats = async (req, res, next) => {
       });
     }
 
-    if (!mongoose.isValidObjectId(userId)) {
+    // Validate and create ObjectId
+    let studentObjectId;
+    try {
+      if (!mongoose.isValidObjectId(userId)) {
+        // eslint-disable-next-line no-console
+        console.error("[getPointsStats] Invalid ObjectId format. userId:", userId, "type:", typeof userId);
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid user ID format",
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${userId} (${typeof userId})`,
+          },
+        });
+      }
+      studentObjectId = new mongoose.Types.ObjectId(userId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsStats] Error creating ObjectId:", error.message, "userId:", userId, "type:", typeof userId);
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Invalid user ID",
+          message: "Invalid user ID format",
+          details: error.message,
         },
       });
     }
-
-    const studentObjectId = new mongoose.Types.ObjectId(userId);
 
     let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
 
