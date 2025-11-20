@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../../src/contexts/AuthContext";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { HiOutlineClock, HiOutlineShieldCheck } from "react-icons/hi2";
+import { FaBars } from "react-icons/fa";
 import TeacherSidebar from "../components/TeacherSidebar";
 
 const TeacherLayout = () => {
   const { user, isAuthenticated } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Wait for user to load before checking approval status
   if (!isAuthenticated || !user) {
@@ -55,7 +59,7 @@ const TeacherLayout = () => {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-8 backdrop-blur-sm">
             <div className="flex items-start gap-4 mb-6">
-              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] flex-shrink-0 mt-1" />
+              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] shrink-0 mt-1" />
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-white mb-2">
                   What happens next?
@@ -87,10 +91,21 @@ const TeacherLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden p-3 rounded-lg bg-[#0B0F1E]/95 border border-white/10 backdrop-blur-xl text-white hover:bg-white/10 transition"
+        aria-label="Open sidebar">
+        <FaBars className="h-5 w-5" />
+      </button>
+
       <div className="flex">
-        <TeacherSidebar />
-        <main className="ml-64 flex-1">
-          <div className="pt-[120px] pl-[30px] pb-[20px] pr-[30px]">
+        <TeacherSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+        <main className="md:ml-64 flex-1">
+          <div className="pt-20 md:pt-[120px] md:pl-[30px] pl-4 pb-[20px] pr-[30px]">
             <Outlet />
           </div>
         </main>
