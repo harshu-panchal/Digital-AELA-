@@ -12,82 +12,133 @@ export const useSocket = () => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+  const connectionAttemptRef = useRef(null);
+  const lastTokenRef = useRef(null);
 
   useEffect(() => {
+    // Clear any pending connection attempts
+    if (connectionAttemptRef.current) {
+      clearTimeout(connectionAttemptRef.current);
+      connectionAttemptRef.current = null;
+    }
+
     if (!tokens?.accessToken) {
       // Disconnect if no token
       if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current.removeAllListeners();
+        try {
+          socketRef.current.removeAllListeners();
+          socketRef.current.disconnect();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
         socketRef.current = null;
-        setSocket(null);
-        setIsConnected(false);
       }
+      setSocket(null);
+      setIsConnected(false);
+      lastTokenRef.current = null;
       return;
     }
 
-    // Clean up existing socket before creating a new one
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current.removeAllListeners();
-      socketRef.current = null;
+    // Prevent duplicate connections with the same token
+    if (lastTokenRef.current === tokens.accessToken && socketRef.current?.connected) {
+      return;
     }
 
-    // Initialize socket connection with quiet error handling
-    const newSocket = io(SOCKET_URL, {
-      auth: {
-        token: tokens.accessToken,
-      },
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionDelay: 2000,
-      reconnectionAttempts: 3,
-      timeout: 5000,
-      // Suppress automatic error logging
-      autoConnect: true,
-    });
-
-    newSocket.on("connect", () => {
-      // eslint-disable-next-line no-console
-      console.log("[Socket.IO] Connected");
-      setIsConnected(true);
-    });
-
-    newSocket.on("disconnect", (reason) => {
-      setIsConnected(false);
-      // Only log disconnects if they're not expected (server shutdown, etc.)
-      if (reason !== "io server disconnect" && reason !== "transport close") {
-        // eslint-disable-next-line no-console
-        console.log("[Socket.IO] Disconnected:", reason);
+    // Debounce connection attempts to prevent rapid reconnections
+    connectionAttemptRef.current = setTimeout(() => {
+      // Check if token changed during debounce
+      if (lastTokenRef.current === tokens.accessToken && socketRef.current?.connected) {
+        return;
       }
-    });
 
-    newSocket.on("connect_error", (error) => {
-      setIsConnected(false);
-      // Suppress all connection errors when server is not available
-      // These are expected when the backend is not running
-      const isConnectionRefused = 
-        error.message?.includes("xhr poll error") ||
-        error.message?.includes("websocket error") ||
-        error.message?.includes("TransportError") ||
-        error.type === "TransportError" ||
-        error.message?.includes("Connection refused");
-      
-      // Only log non-connection errors (like authentication errors that aren't expected)
-      if (!isConnectionRefused && !error.message?.includes("Authentication error")) {
-        // Only in development and for unexpected errors
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.warn("[Socket.IO] Connection error:", error.message || error);
+      // Clean up existing socket before creating a new one
+      if (socketRef.current) {
+        try {
+          socketRef.current.removeAllListeners();
+          socketRef.current.disconnect();
+        } catch (e) {
+          // Ignore errors during cleanup
         }
+        socketRef.current = null;
       }
-      // Silent fail for connection refused - server is not running
-    });
 
-    socketRef.current = newSocket;
-    setSocket(newSocket);
+      // Initialize socket connection with quiet error handling
+      const newSocket = io(SOCKET_URL, {
+        auth: {
+          token: tokens.accessToken,
+        },
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+        reconnectionDelayMax: 10000,
+        timeout: 10000,
+        autoConnect: true,
+        // Suppress default error logging
+        forceNew: false,
+      });
+
+      // Suppress WebSocket connection errors in console
+      const originalEmit = newSocket.emit;
+      newSocket.emit = function(...args) {
+        try {
+          return originalEmit.apply(this, args);
+        } catch (e) {
+          // Silently ignore emit errors during connection
+          return false;
+        }
+      };
+
+      newSocket.on("connect", () => {
+        // eslint-disable-next-line no-console
+        console.log("[Socket.IO] Connected");
+        setIsConnected(true);
+        lastTokenRef.current = tokens.accessToken;
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        setIsConnected(false);
+        // Only log disconnects if they're not expected
+        if (reason !== "io server disconnect" && reason !== "transport close" && reason !== "transport error") {
+          // Only log in development
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.log("[Socket.IO] Disconnected:", reason);
+          }
+        }
+      });
+
+      newSocket.on("connect_error", (error) => {
+        setIsConnected(false);
+        // Suppress all WebSocket and connection errors
+        const shouldSuppress = 
+          error.message?.includes("xhr poll error") ||
+          error.message?.includes("websocket error") ||
+          error.message?.includes("WebSocket") ||
+          error.message?.includes("TransportError") ||
+          error.type === "TransportError" ||
+          error.message?.includes("Connection refused") ||
+          error.message?.includes("closed before the connection is established") ||
+          error.message?.includes("timeout") ||
+          error.message?.includes("NetworkError");
+        
+        // Only log authentication errors in development
+        if (!shouldSuppress && error.message?.includes("Authentication error") && import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn("[Socket.IO] Authentication error:", error.message);
+        }
+        // Silent fail for all other connection errors
+      });
+
+      socketRef.current = newSocket;
+      setSocket(newSocket);
+    }, 300); // 300ms debounce to prevent rapid reconnections
 
     return () => {
+      if (connectionAttemptRef.current) {
+        clearTimeout(connectionAttemptRef.current);
+        connectionAttemptRef.current = null;
+      }
       if (socketRef.current) {
         // Gracefully disconnect without triggering error handlers
         try {
