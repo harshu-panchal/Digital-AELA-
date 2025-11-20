@@ -43,21 +43,42 @@ const PDFEbookReader = () => {
   useEffect(() => {
     const fetchEbook = async () => {
       try {
+        setLoading(true);
         const API_BASE_URL =
           import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
         
         const response = await fetch(`${API_BASE_URL}/resources/ebooks/${ebookId}`);
         
         if (!response.ok) {
-          throw new Error("Failed to fetch ebook");
+          throw new Error(`Failed to fetch ebook: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
         setEbookData(data);
+        
+        // Verify PDF URL exists
+        if (!data.downloadUrl) {
+          throw new Error("PDF URL not found in ebook data");
+        }
+        
+        console.log("PDF URL:", data.downloadUrl);
+        
+        // Try to verify the PDF URL is accessible
+        try {
+          const pdfTestResponse = await fetch(data.downloadUrl, { method: "HEAD" });
+          if (!pdfTestResponse.ok) {
+            console.warn("PDF URL might not be accessible:", pdfTestResponse.status);
+          }
+        } catch (testError) {
+          console.warn("Could not verify PDF URL accessibility:", testError);
+        }
+        
         setPdfUrl(data.downloadUrl);
       } catch (err) {
+        console.error("Error fetching ebook:", err);
         setError(err.message || "Failed to load ebook");
-        toast.error("Failed to load ebook. Please try again.");
+        toast.error(`Failed to load ebook: ${err.message}`);
+        setLoading(false);
       }
     };
 
@@ -73,9 +94,11 @@ const PDFEbookReader = () => {
   }, []);
 
   const onDocumentLoadError = useCallback((error) => {
-    setError("Failed to load PDF. Please check if the file is valid.");
+    console.error("PDF Load Error:", error);
+    const errorMessage = error?.message || "Failed to load PDF. Please check if the file is valid.";
+    setError(errorMessage);
     setLoading(false);
-    toast.error("Failed to load PDF file");
+    toast.error(`Failed to load PDF: ${errorMessage}`);
   }, []);
 
   const goToPrevPage = useCallback(() => {
@@ -278,6 +301,10 @@ const PDFEbookReader = () => {
             <div className="relative w-full overflow-auto" style={{ maxHeight: "calc(100vh - 300px)" }}>
               <Document
                 file={pdfUrl}
+                options={{
+                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                  cMapPacked: true,
+                }}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
                 loading={
@@ -289,6 +316,7 @@ const PDFEbookReader = () => {
                 error={
                   <div className="text-center text-red-400">
                     <p>Failed to load PDF</p>
+                    <p className="text-xs mt-2 text-slate-400">URL: {pdfUrl.substring(0, 50)}...</p>
                   </div>
                 }>
                 <AnimatePresence mode="wait" initial={false}>
