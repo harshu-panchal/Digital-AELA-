@@ -11,6 +11,7 @@ import {
   FaWhatsapp,
   FaYoutube,
   FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
@@ -471,10 +472,18 @@ const Navbar = () => {
             {/* Mobile Sidebar Toggle Button - Left Side */}
             {isDashboardRoute && sidebarContext && (
               <button
-                onClick={sidebarContext.openSidebar}
+                onClick={sidebarContext.toggleSidebar}
                 className="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition"
-                aria-label="Open sidebar">
-                <FaBars className="h-5 w-5" />
+                aria-label={
+                  sidebarContext.isSidebarOpen
+                    ? "Close sidebar"
+                    : "Open sidebar"
+                }>
+                {sidebarContext.isSidebarOpen ? (
+                  <FaTimes className="h-5 w-5" />
+                ) : (
+                  <FaBars className="h-5 w-5" />
+                )}
               </button>
             )}
 
