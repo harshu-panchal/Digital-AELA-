@@ -14,9 +14,7 @@ export const fetchFollowers = (userId, params = {}) => {
   if (params.page) searchParams.set("page", params.page);
   if (params.pageSize) searchParams.set("pageSize", params.pageSize);
   const query = searchParams.toString();
-  return apiRequest(`/social/${userId}/followers${query ? `?${query}` : ""}`, {
-    skipAuth: true, // Public endpoint
-  });
+  return apiRequest(`/social/${userId}/followers${query ? `?${query}` : ""}`);
 };
 
 export const fetchFollowing = (userId, params = {}) => {
@@ -24,9 +22,7 @@ export const fetchFollowing = (userId, params = {}) => {
   if (params.page) searchParams.set("page", params.page);
   if (params.pageSize) searchParams.set("pageSize", params.pageSize);
   const query = searchParams.toString();
-  return apiRequest(`/social/${userId}/following${query ? `?${query}` : ""}`, {
-    skipAuth: true, // Public endpoint
-  });
+  return apiRequest(`/social/${userId}/following${query ? `?${query}` : ""}`);
 };
 
 export const followUser = (targetUserId) =>

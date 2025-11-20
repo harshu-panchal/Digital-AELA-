@@ -36,7 +36,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import backupRoutes from "./routes/backupRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js";
-import { authenticate } from "./middleware/authMiddleware.js";
+import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 
 const app = express();
@@ -116,8 +116,10 @@ app.get("/api/v1", (_req, res) => {
 // Auth routes (no authentication required)
 app.use("/api/v1/auth", authRoutes);
 
-// Apply authentication middleware to all other API routes
-app.use("/api/v1", authenticate);
+// Apply optional authentication middleware to all other API routes
+// This allows public endpoints to work without auth, but sets req.auth when token is provided
+// Routes that require auth should use requireAuth() middleware explicitly
+app.use("/api/v1", optionalAuth);
 // Track sessions for authenticated users
 app.use("/api/v1", trackSession);
 app.use("/api/v1/recruiter", recruiterRoutes);

@@ -9,9 +9,7 @@ export const fetchLiveRooms = (params = {}) => {
   if (params.status) queryParams.append("status", params.status);
 
   const queryString = queryParams.toString();
-  return apiRequest(`/live-rooms${queryString ? `?${queryString}` : ""}`, {
-    skipAuth: true, // Public endpoint
-  });
+  return apiRequest(`/live-rooms${queryString ? `?${queryString}` : ""}`);
 };
 
 /**

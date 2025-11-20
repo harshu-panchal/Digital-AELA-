@@ -6,14 +6,10 @@ export const fetchStudentDashboard = () => apiRequest("/students/dashboard");
 export const fetchDashboardWidgets = () => apiRequest("/students/dashboard/widgets");
 
 export const fetchStudentProfile = (userId) =>
-  apiRequest(`/students/${userId}/profile`, {
-    skipAuth: true, // Public endpoint
-  });
+  apiRequest(`/students/${userId}/profile`);
 
 export const fetchEnhancedProfile = (userId) =>
-  apiRequest(`/students/${userId}/profile/enhanced`, {
-    skipAuth: true, // Public endpoint but returns more data if authenticated
-  });
+  apiRequest(`/students/${userId}/profile/enhanced`);
 
 export const updateStudentProfile = (payload) =>
   apiRequest("/students/profile", {

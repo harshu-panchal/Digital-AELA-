@@ -51,9 +51,7 @@ export const searchBlogs = (params = {}) => {
  * GET /api/v1/blogs/categories
  */
 export const fetchBlogCategories = () =>
-  apiRequest("/blogs/categories", {
-    skipAuth: true,
-  });
+  apiRequest("/blogs/categories");
 
 /**
  * Add reaction to blog
