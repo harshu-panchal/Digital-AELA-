@@ -29,6 +29,7 @@ import assignmentRoutes from "./routes/assignmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import certificateRoutes from "./routes/certificateRoutes.js";
 import earningRoutes from "./routes/earningRoutes.js";
+import crmRoutes from "./routes/crmRoutes.js";
 
 const app = express();
 
@@ -132,6 +133,7 @@ app.use("/api/v1", assignmentRoutes);
 app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/certificates", certificateRoutes);
 app.use("/api/v1/earnings", earningRoutes);
+app.use("/api/v1/crm", crmRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

@@ -46,6 +46,11 @@ const AdminSidebar = () => {
       icon: FaFileAlt,
     },
     {
+      label: "CRM / Leads",
+      path: "/super-admin/crm/leads",
+      icon: FaUserFriends,
+    },
+    {
       label: "User Management",
       children: [
         {

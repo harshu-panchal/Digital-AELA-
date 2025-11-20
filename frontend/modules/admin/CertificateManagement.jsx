@@ -10,8 +10,8 @@ import {
   HiOutlinePlus,
   HiOutlineTrash,
   HiOutlineUser,
-  HiOutlineAcademicCap,
 } from "react-icons/hi2";
+import { HiOutlineAcademicCap } from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import {

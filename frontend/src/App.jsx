@@ -113,6 +113,8 @@ import PayoutRequests from "../modules/teacher/PayoutRequests";
 import PaymentSlips from "../modules/teacher/PaymentSlips";
 import PaymentManagement from "../modules/admin/PaymentManagement";
 import CertificateManagement from "../modules/admin/CertificateManagement";
+import LeadManagement from "../modules/admin/LeadManagement";
+import LeadDetail from "../modules/admin/LeadDetail";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
@@ -152,6 +154,8 @@ export const App = () => {
           <Route path="create/blog" element={<AdminBlogCreate />} />
           <Route path="payments" element={<PaymentManagement />} />
           <Route path="certificates" element={<CertificateManagement />} />
+          <Route path="crm/leads" element={<LeadManagement />} />
+          <Route path="crm/leads/:leadId" element={<LeadDetail />} />
         </Route>
         <Route
           path="/teacher/dashboard"

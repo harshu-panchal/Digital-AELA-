@@ -3,12 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
-  HiOutlineAcademicCap,
   HiOutlineArrowRight,
   HiOutlineCalendarDays,
   HiOutlineClock,
   HiOutlineXCircle,
 } from "react-icons/hi2";
+import { HiOutlineAcademicCap } from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import {

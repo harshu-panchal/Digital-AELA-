@@ -6,6 +6,8 @@ import { FaSpinner, FaSync } from "react-icons/fa";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { fetchDashboardData } from "../../src/services/api/superAdmin";
+import { getAllLeads } from "../../src/services/api/crm";
+import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle } from "react-icons/hi2";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -43,6 +45,7 @@ const SuperAdminDashboard = () => {
     activities: [],
     quickActions: [],
   });
+  const [crmStats, setCrmStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -82,9 +85,20 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  // Load CRM stats
+  const loadCrmStats = async () => {
+    try {
+      const response = await getAllLeads({ page: 1, pageSize: 1 });
+      setCrmStats(response.stats || null);
+    } catch (error) {
+      console.error("Failed to load CRM stats:", error);
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     loadDashboardData();
+    loadCrmStats();
   }, []);
 
   // Auto-refresh every 30 seconds
@@ -439,6 +453,58 @@ const SuperAdminDashboard = () => {
               </div>
             </motion.div>
           </section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineUserGroup className="h-5 w-5" />
+                  CRM / Lead Management
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Manage leads, track conversions, and assign to team
+                </p>
+              </div>
+              <Link
+                to="/super-admin/crm/leads"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {crmStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total Leads</p>
+                  <p className="text-2xl font-semibold text-white">{crmStats.total || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">New</p>
+                  <p className="text-2xl font-semibold text-blue-400">{crmStats.new || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Qualified</p>
+                  <p className="text-2xl font-semibold text-purple-400">{crmStats.qualified || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Converted</p>
+                  <p className="text-2xl font-semibold text-emerald-400">{crmStats.converted || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading CRM stats...
+              </div>
+            )}
+            <Link
+              to="/super-admin/crm/leads"
+              className="block w-full rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+              Manage Leads
+            </Link>
+          </motion.section>
 
           <motion.section
             initial="hidden"

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  HiOutlineAcademicCap,
   HiOutlineArrowRight,
   HiOutlineBookOpen,
   HiOutlineBriefcase,
@@ -15,8 +14,8 @@ import {
   HiOutlineDocumentText,
   HiOutlineExclamationTriangle,
   HiOutlineCreditCard,
-  HiOutlineAcademicCap,
 } from "react-icons/hi2";
+import { HiOutlineAcademicCap } from "react-icons/hi";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
