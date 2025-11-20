@@ -69,14 +69,6 @@ const defaultDashboard = {
   },
   actionShortcuts: [
     {
-      id: "marketplace",
-      title: "Browse Marketplace",
-      description: "Buy new courses, bundles, and premium add-ons.",
-      icon: "shopping",
-      to: "/books",
-      tone: "from-sky-500/15 to-sky-400/10 border-sky-400/30 text-sky-100",
-    },
-    {
       id: "donation",
       title: "Donate Access",
       description: "Gift a course to a friend or community student.",

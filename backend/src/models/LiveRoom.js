@@ -25,6 +25,41 @@ const liveRoomSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // Track participants with their roles for voice rooms
+    participants: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: ["host", "speaker", "listener", "requested"],
+          default: "listener",
+        },
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        socketId: String, // Track socket ID for WebRTC signaling
+      },
+    ],
+    // Track pending speak requests
+    speakRequests: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        requestedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        socketId: String,
+      },
+    ],
     forVotes: {
       type: Number,
       default: 0,

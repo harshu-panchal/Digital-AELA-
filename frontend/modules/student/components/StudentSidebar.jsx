@@ -7,11 +7,12 @@ import {
   FaBriefcase,
   FaCoins,
   FaUser,
-  FaShoppingBag,
   FaBookOpen,
   FaUsers,
   FaSearch,
   FaGraduationCap,
+  FaCertificate,
+  FaQuestionCircle,
 } from "react-icons/fa";
 
 const StudentSidebar = () => {
@@ -30,6 +31,16 @@ const StudentSidebar = () => {
       label: "Assignments",
       path: "/student/assignments",
       icon: FaFileAlt,
+    },
+    {
+      label: "Certificates",
+      path: "/student/certificates",
+      icon: FaCertificate,
+    },
+    {
+      label: "Doubt Tickets",
+      path: "/student/doubt-tickets",
+      icon: FaQuestionCircle,
     },
     {
       label: "Payments",
@@ -52,18 +63,13 @@ const StudentSidebar = () => {
       icon: FaCoins,
     },
     {
-      label: "Marketplace",
-      path: "/learn-earn/marketplace",
-      icon: FaShoppingBag,
-    },
-    {
       label: "Library",
       path: "/free-library",
       icon: FaBookOpen,
     },
     {
       label: "Community",
-      path: "/community/students",
+      path: "/community",
       icon: FaUsers,
     },
     {

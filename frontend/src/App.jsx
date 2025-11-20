@@ -133,6 +133,7 @@ import LeadManagement from "../modules/admin/LeadManagement";
 import LeadDetail from "../modules/admin/LeadDetail";
 import ExpenseManagement from "../modules/admin/ExpenseManagement";
 import FinancialDashboard from "../modules/admin/FinancialDashboard";
+import CommunityHub from "../modules/community/pages/CommunityHub";
 import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
 import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
 import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
@@ -576,6 +577,15 @@ export const App = () => {
         <Route path="/join-us/influencer" element={<JoinInfluencer />} />
         <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
         <Route path="/join-us/afterlife" element={<JoinBuildAfterLife />} />
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute
+              roles={["student", "teacher", "recruiter", "super-admin"]}>
+              <CommunityHub />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/community/students/:userId"
           element={<StudentProfileDetail />}

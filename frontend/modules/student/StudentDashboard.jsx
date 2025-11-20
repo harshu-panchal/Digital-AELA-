@@ -2,19 +2,12 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineArrowRight,
-  HiOutlineBookOpen,
-  HiOutlineBriefcase,
   HiOutlineCalendarDays,
   HiOutlineGift,
   HiOutlineNewspaper,
   HiOutlineSparkles,
-  HiOutlineShoppingBag,
-  HiOutlineUserGroup,
-  HiOutlineMagnifyingGlass,
   HiOutlineDocumentText,
   HiOutlineExclamationTriangle,
-  HiOutlineCreditCard,
-  HiOutlineQuestionMarkCircle,
   HiOutlineMegaphone,
   HiOutlineAcademicCap,
 } from "react-icons/hi2";
@@ -27,7 +20,6 @@ import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
 import { getStudentAssignments } from "../../src/services/api/assignments";
-import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -55,9 +47,6 @@ const StudentDashboard = () => {
   const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
-  const [studentSearchQuery, setStudentSearchQuery] = useState("");
-  const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
-  const [recruiterSearchQuery, setRecruiterSearchQuery] = useState("");
   const [widgetsData, setWidgetsData] = useState({
     recentActivity: [],
     achievements: [],
@@ -68,8 +57,6 @@ const StudentDashboard = () => {
   const [loadingWidgets, setLoadingWidgets] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
-  const [doubtTicketStats, setDoubtTicketStats] = useState(null);
-  const [loadingDoubtTickets, setLoadingDoubtTickets] = useState(false);
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -91,14 +78,6 @@ const StudentDashboard = () => {
         journeyStats: backendData.journeyStats || mockData.journeyStats,
         ongoingCourses: backendData.ongoingCourses || mockData.ongoingCourses,
         learnEarnProgress: backendData.learnEarnProgress || mockData.learnEarnProgress,
-        quizChallenges: backendData.quizChallenges || mockData.quizChallenges,
-        marketplaceHighlights: backendData.marketplaceHighlights || mockData.marketplaceHighlights,
-        ebookShelf: backendData.ebookShelf || mockData.ebookShelf,
-        blogFeed: backendData.blogFeed || mockData.blogFeed,
-        jobsBoard: backendData.jobsBoard || mockData.jobsBoard,
-        studentProfiles: backendData.studentProfiles || mockData.studentProfiles,
-        teacherSpotlight: backendData.teacherSpotlight || mockData.teacherSpotlight,
-        recruiterSpotlight: backendData.recruiterSpotlight || mockData.recruiterSpotlight,
       });
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -147,28 +126,11 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
-  // Load doubt ticket stats
-  const loadDoubtTicketStats = useCallback(async () => {
-    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
-      return;
-    }
-
-    setLoadingDoubtTickets(true);
-    try {
-      const response = await getDoubtTicketStats();
-      setDoubtTicketStats(response.stats);
-    } catch (error) {
-      console.error("Failed to load doubt ticket stats:", error);
-    } finally {
-      setLoadingDoubtTickets(false);
-    }
-  }, [authUser, tokens]);
 
   useEffect(() => {
     loadDashboard();
     loadWidgets();
     loadAssignments();
-    loadDoubtTicketStats();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
@@ -178,7 +140,7 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [loadDashboard, loadWidgets, loadAssignments, loadDoubtTicketStats]);
+  }, [loadDashboard, loadWidgets, loadAssignments]);
 
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
@@ -209,14 +171,6 @@ const StudentDashboard = () => {
     ongoingCourses = [],
     learnEarnProgress = {},
     actionShortcuts = [],
-    marketplaceHighlights = [],
-    quizChallenges = [],
-    ebookShelf = [],
-    jobsBoard = [],
-    blogFeed = [],
-    studentProfiles = [],
-    teacherSpotlight = [],
-    recruiterSpotlight = [],
   } = dashboardData || {};
 
   const streak = learnEarnProgress?.streak ?? 0;
@@ -239,48 +193,9 @@ const StudentDashboard = () => {
     });
   }, [journeyStats, coinsToRedeem]);
 
-  // Filter students based on search query
-  const filteredStudentProfiles = useMemo(() => {
-    if (!studentSearchQuery.trim()) {
-      return studentProfiles;
-    }
-    const query = studentSearchQuery.toLowerCase().trim();
-    return studentProfiles.filter((student) => {
-      const nameMatch = student.name?.toLowerCase().includes(query);
-      const focusMatch = student.focus?.toLowerCase().includes(query);
-      return nameMatch || focusMatch;
-    });
-  }, [studentProfiles, studentSearchQuery]);
-
-  // Filter teachers based on search query
-  const filteredTeacherSpotlight = useMemo(() => {
-    if (!teacherSearchQuery.trim()) {
-      return teacherSpotlight;
-    }
-    const query = teacherSearchQuery.toLowerCase().trim();
-    return teacherSpotlight.filter((teacher) => {
-      const nameMatch = teacher.name?.toLowerCase().includes(query);
-      const expertiseMatch = teacher.expertise?.toLowerCase().includes(query);
-      return nameMatch || expertiseMatch;
-    });
-  }, [teacherSpotlight, teacherSearchQuery]);
-
-  // Filter recruiters based on search query
-  const filteredRecruiterSpotlight = useMemo(() => {
-    if (!recruiterSearchQuery.trim()) {
-      return recruiterSpotlight;
-    }
-    const query = recruiterSearchQuery.toLowerCase().trim();
-    return recruiterSpotlight.filter((recruiter) => {
-      const nameMatch = recruiter.name?.toLowerCase().includes(query);
-      const rolesMatch = recruiter.roles?.toLowerCase().includes(query);
-      return nameMatch || rolesMatch;
-    });
-  }, [recruiterSpotlight, recruiterSearchQuery]);
 
   const shortcutIcons = useMemo(
     () => ({
-      shopping: HiOutlineShoppingBag,
       gift: HiOutlineGift,
       sparkles: HiOutlineSparkles,
       blog: HiOutlineNewspaper,
@@ -486,115 +401,6 @@ const StudentDashboard = () => {
             className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
             <header className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineCreditCard className="h-5 w-5" />
-                Payment History
-              </h2>
-              <Link
-                to="/student/payments"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                View all
-              </Link>
-            </header>
-            <div className="text-center py-8 text-sm text-slate-400">
-              <HiOutlineCreditCard className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>View your payment history and download invoices</p>
-              <Link
-                to="/student/payments"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
-                View Payments
-              </Link>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineAcademicCap className="h-5 w-5" />
-                My Certificates
-              </h2>
-              <Link
-                to="/student/certificates"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                View all
-              </Link>
-            </header>
-            <div className="text-center py-8 text-sm text-slate-400">
-              <HiOutlineAcademicCap className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>View and download your course completion certificates</p>
-              <Link
-                to="/student/certificates"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
-                View Certificates
-              </Link>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineQuestionMarkCircle className="h-5 w-5" />
-                My Doubt Tickets
-              </h2>
-              <Link
-                to="/student/doubt-tickets"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                View all
-              </Link>
-            </header>
-            {loadingDoubtTickets ? (
-              <div className="text-center py-8 text-sm text-slate-400">Loading...</div>
-            ) : doubtTicketStats ? (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">Open</p>
-                  <p className="text-2xl font-semibold text-blue-400">{doubtTicketStats.open || 0}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">In Progress</p>
-                  <p className="text-2xl font-semibold text-yellow-400">{doubtTicketStats.inProgress || 0}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">Resolved</p>
-                  <p className="text-2xl font-semibold text-emerald-400">{doubtTicketStats.resolved || 0}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">Total</p>
-                  <p className="text-2xl font-semibold text-white">{doubtTicketStats.total || 0}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-sm text-slate-400">
-                <HiOutlineQuestionMarkCircle className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-                <p>Ask questions and get help from teachers</p>
-                <Link
-                  to="/student/doubt-tickets/create"
-                  className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
-                  Create Ticket
-                </Link>
-              </div>
-            )}
-            <Link
-              to="/student/doubt-tickets"
-              className="block w-full mt-4 text-center px-4 py-2 rounded-lg border border-sky-400/40 bg-sky-400/10 text-sky-200 text-sm font-semibold hover:bg-sky-400/20 transition">
-              View All Tickets
-            </Link>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <HiOutlineMegaphone className="h-5 w-5" />
                 Announcements
               </h2>
@@ -667,185 +473,6 @@ const StudentDashboard = () => {
                 })}
               </div>
             )}
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Play & earn quizzes</h2>
-              <Link
-                to="/learn-earn/activities"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                Explore all
-              </Link>
-            </header>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {quizChallenges.map((quiz) => (
-                <div
-                  key={quiz.id}
-                  className="rounded-2xl border border-sky-400/30 bg-sky-500/10 px-4 py-4 text-sm text-sky-100">
-                  <p className="text-base font-semibold text-white">{quiz.title}</p>
-                  <p className="mt-1 text-xs text-slate-200/80">{quiz.reward}</p>
-                  <p className="text-[11px] text-slate-200/70">{quiz.closing}</p>
-                  <Link
-                    to={quiz.playRoute}
-                    className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white hover:text-sky-100">
-                    Play now <HiOutlineArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Marketplace picks</h2>
-                <p className="text-xs text-slate-400">
-                  Buy courses, books, or bundles curated for your journey.
-                </p>
-              </div>
-              <Link
-                to="/learn-earn/marketplace"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                Go to marketplace
-              </Link>
-            </header>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {marketplaceHighlights.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.to}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/50">
-                  <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-slate-400">
-                    <span>{item.type}</span>
-                    <span className="text-sky-200">{item.tag}</span>
-                  </div>
-                  <p className="mt-2 text-base font-semibold text-white">{item.title}</p>
-                  <p className="text-xs text-slate-300/80">Mentor · {item.mentor}</p>
-                  <p className="mt-3 text-sm font-semibold text-sky-100">{item.price}</p>
-                  <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-300">
-                    View offer <HiOutlineArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Library picks</h2>
-                <Link
-                  to="/free-library"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  View library
-                </Link>
-              </header>
-              <div className="space-y-3">
-                {ebookShelf.map((book) => (
-                  <Link
-                    key={book.id}
-                    to={book.to}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                    <div>
-                      <p className="font-semibold text-white">{book.title}</p>
-                      <p className="text-xs text-slate-400/80">{book.pages} pages</p>
-                    </div>
-                    <HiOutlineBookOpen className="h-6 w-6 text-sky-200" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Latest from the community</h2>
-                <Link
-                  to="/blogs"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  Explore blogs
-                </Link>
-              </header>
-              <div className="space-y-3">
-                {blogFeed.map((post) => (
-                  <Link
-                    key={post.id}
-                    to={post.to}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{post.title}</p>
-                      <p className="text-slate-400/80">
-                        {post.author} · {post.time}
-                      </p>
-                    </div>
-                    <HiOutlineArrowRight className="h-5 w-5 text-sky-200" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Job matches for you</h2>
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/student/applications"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  My Applications
-                </Link>
-                <Link
-                  to="/explore-jobs"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  View all jobs
-                </Link>
-              </div>
-            </header>
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-slate-200">
-                <thead className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                  <tr className="border-b border-white/10">
-                    <th className="px-3 py-3 font-semibold">Role</th>
-                    <th className="px-3 py-3 font-semibold">Company</th>
-                    <th className="px-3 py-3 font-semibold">Type</th>
-                    <th className="px-3 py-3 font-semibold">Posted</th>
-                    <th className="px-3 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobsBoard.map((job) => (
-                    <tr key={job.id} className="border-b border-white/5 last:border-b-0">
-                      <td className="px-3 py-3 font-semibold text-white">{job.title}</td>
-                      <td className="px-3 py-3 text-xs text-slate-300/90">{job.company}</td>
-                      <td className="px-3 py-3 text-xs text-slate-300/90">{job.type}</td>
-                      <td className="px-3 py-3 text-xs text-slate-400/80">{job.posted}</td>
-                      <td className="px-3 py-3 text-xs">
-                        <Link
-                          to={job.to}
-                          className="inline-flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                          Apply
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </motion.section>
 
           {/* Enhanced Dashboard Widgets Section */}
@@ -990,125 +617,6 @@ const StudentDashboard = () => {
               </div>
             </motion.div>
           </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-            <div className="space-y-3 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Discover fellow students</h2>
-                <Link
-                  to="/community/students"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  View community
-                </Link>
-              </header>
-              <div className="relative">
-                <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={studentSearchQuery}
-                  onChange={(e) => setStudentSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
-                />
-              </div>
-              {filteredStudentProfiles.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-sm text-slate-400">No students found matching your search.</p>
-                </div>
-              ) : (
-                filteredStudentProfiles.map((student) => (
-                <Link
-                  key={student.id}
-                  to={student.to}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                  <div>
-                    <p className="font-semibold text-white">{student.name}</p>
-                    <p className="text-xs text-slate-400/80">{student.focus}</p>
-                  </div>
-                  <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
-                </Link>
-                ))
-              )}
-            </div>
-            <div className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header>
-                <h2 className="text-lg font-semibold text-white">Mentors & recruiters</h2>
-                <p className="text-xs text-slate-400">
-                  Connect with teachers for guidance and recruiters for roles.
-                </p>
-              </header>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Teachers</p>
-                </div>
-                <div className="relative">
-                  <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search teachers..."
-                    value={teacherSearchQuery}
-                    onChange={(e) => setTeacherSearchQuery(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
-                  />
-                </div>
-                {filteredTeacherSpotlight.length === 0 ? (
-                  <div className="py-4 text-center">
-                    <p className="text-xs text-slate-400">No teachers found matching your search.</p>
-                  </div>
-                ) : (
-                  filteredTeacherSpotlight.map((teacher) => (
-                  <Link
-                    key={teacher.id}
-                    to={teacher.to}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                    <div>
-                      <p className="font-semibold text-white">{teacher.name}</p>
-                      <p className="text-xs text-slate-400/80">{teacher.expertise}</p>
-                    </div>
-                    <HiOutlineAcademicCap className="h-5 w-5 text-sky-200" />
-                  </Link>
-                  ))
-                )}
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Recruiters</p>
-                </div>
-                <div className="relative">
-                  <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search recruiters..."
-                    value={recruiterSearchQuery}
-                    onChange={(e) => setRecruiterSearchQuery(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400/50 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
-                  />
-                </div>
-                {filteredRecruiterSpotlight.length === 0 ? (
-                  <div className="py-4 text-center">
-                    <p className="text-xs text-slate-400">No recruiters found matching your search.</p>
-                  </div>
-                ) : (
-                  filteredRecruiterSpotlight.map((recruiter) => (
-                  <Link
-                    key={recruiter.id}
-                    to={recruiter.to}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                    <div>
-                      <p className="font-semibold text-white">{recruiter.name}</p>
-                      <p className="text-xs text-slate-400/80">{recruiter.roles}</p>
-                    </div>
-                    <HiOutlineBriefcase className="h-5 w-5 text-sky-200" />
-                  </Link>
-                  ))
-                )}
-              </div>
-          </div>
-        </motion.section>
 
         <motion.section
           variants={cardVariants}
