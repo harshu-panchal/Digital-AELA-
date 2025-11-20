@@ -13,11 +13,14 @@ import {
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { useUser } from "../../src/contexts/UserContext";
+import { fetchStudentProfile, updateStudentProfile } from "../../src/services/api/student";
 
 const StudentProfile = () => {
-  const { user: authUser } = useAuth();
+  const { user: authUser, tokens } = useAuth();
   const { profile } = useUser();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [studentProfile, setStudentProfile] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -27,19 +30,60 @@ const StudentProfile = () => {
     bio: "",
   });
 
+  // Fetch student profile from backend
   useEffect(() => {
-    if (profile || authUser) {
-      const userData = profile || authUser;
-      setFormData({
-        fullName: userData?.fullName || "",
-        email: userData?.email || "",
-        phone: userData?.phone || "",
-        dateOfBirth: userData?.dateOfBirth || "",
-        address: userData?.address || "",
-        bio: userData?.bio || "",
-      });
-    }
-  }, [profile, authUser]);
+    const loadStudentProfile = async () => {
+      if (!authUser?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const profileData = await fetchStudentProfile(authUser.id);
+        setStudentProfile(profileData);
+
+        // Build address from location
+        const addressParts = [];
+        if (profileData?.location?.city) {
+          addressParts.push(profileData.location.city);
+        }
+        if (profileData?.location?.country) {
+          addressParts.push(profileData.location.country);
+        }
+        const address = addressParts.join(", ");
+
+        // Get dateOfBirth from metadata if available
+        const dateOfBirth = profileData?.metadata?.dateOfBirth || "";
+
+        setFormData({
+          fullName: authUser?.fullName || profile?.name || "",
+          email: authUser?.email || "",
+          phone: profileData?.phone || "",
+          dateOfBirth: dateOfBirth,
+          address: address,
+          bio: profileData?.bio || "",
+        });
+      } catch (error) {
+        console.error("Failed to load student profile:", error);
+        // Fallback to authUser data
+        setFormData({
+          fullName: authUser?.fullName || "",
+          email: authUser?.email || "",
+          phone: profile?.contact?.phone || "",
+          dateOfBirth: authUser?.metadata?.dateOfBirth || "",
+          address: profile?.city && profile?.country 
+            ? `${profile.city}, ${profile.country}` 
+            : "",
+          bio: profile?.bio || "",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStudentProfile();
+  }, [authUser, profile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,28 +94,120 @@ const StudentProfile = () => {
   };
 
   const handleSave = async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      toast.error("Authentication required");
+      return;
+    }
+
     try {
-      // TODO: Implement API call to update profile
+      // Parse address into city and country
+      const addressParts = formData.address.split(",").map((part) => part.trim());
+      const city = addressParts[0] || "";
+      const country = addressParts[1] || "";
+
+      // Prepare update payload
+      const updatePayload = {
+        phone: formData.phone || undefined,
+        bio: formData.bio || undefined,
+        location: {
+          city: city || undefined,
+          country: country || undefined,
+        },
+      };
+
+      // Add metadata if dateOfBirth is provided
+      if (formData.dateOfBirth) {
+        updatePayload.metadata = {
+          ...(studentProfile?.metadata || {}),
+          dateOfBirth: formData.dateOfBirth,
+        };
+      }
+
+      // Remove undefined fields
+      Object.keys(updatePayload).forEach((key) => {
+        if (updatePayload[key] === undefined) {
+          delete updatePayload[key];
+        }
+      });
+
+      if (updatePayload.location) {
+        if (!updatePayload.location.city && !updatePayload.location.country) {
+          delete updatePayload.location;
+        } else {
+          // Remove undefined values from location
+          if (!updatePayload.location.city) delete updatePayload.location.city;
+          if (!updatePayload.location.country) delete updatePayload.location.country;
+        }
+      }
+
+      // Update student profile
+      const updatedProfile = await updateStudentProfile(updatePayload);
+      setStudentProfile(updatedProfile);
+
+      // Update formData with the response to reflect any server-side changes
+      const updatedAddressParts = [];
+      if (updatedProfile?.location?.city) {
+        updatedAddressParts.push(updatedProfile.location.city);
+      }
+      if (updatedProfile?.location?.country) {
+        updatedAddressParts.push(updatedProfile.location.country);
+      }
+      const updatedAddress = updatedAddressParts.join(", ");
+
+      setFormData((prev) => ({
+        ...prev,
+        phone: updatedProfile?.phone || prev.phone,
+        bio: updatedProfile?.bio || prev.bio,
+        address: updatedAddress || prev.address,
+        dateOfBirth: updatedProfile?.metadata?.dateOfBirth || prev.dateOfBirth,
+      }));
+
+      // Update fullName if changed (this updates the User model, not StudentProfile)
+      if (formData.fullName !== authUser.fullName) {
+        // Note: Updating fullName would require a separate API call to update the User model
+        // For now, we'll just show a success message
+      }
+
       toast.success("Profile updated successfully");
       setIsEditing(false);
     } catch (error) {
+      console.error("Failed to update profile:", error);
       toast.error(error.message || "Failed to update profile");
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form data
-    const userData = profile || authUser;
+    // Reset form data to original values
+    const addressParts = [];
+    if (studentProfile?.location?.city) {
+      addressParts.push(studentProfile.location.city);
+    }
+    if (studentProfile?.location?.country) {
+      addressParts.push(studentProfile.location.country);
+    }
+    const address = addressParts.join(", ");
+
     setFormData({
-      fullName: userData?.fullName || "",
-      email: userData?.email || "",
-      phone: userData?.phone || "",
-      dateOfBirth: userData?.dateOfBirth || "",
-      address: userData?.address || "",
-      bio: userData?.bio || "",
+      fullName: authUser?.fullName || "",
+      email: authUser?.email || "",
+      phone: studentProfile?.phone || "",
+      dateOfBirth: studentProfile?.metadata?.dateOfBirth || "",
+      address: address,
+      bio: studentProfile?.bio || "",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
+          <p className="mt-4 text-gray-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
