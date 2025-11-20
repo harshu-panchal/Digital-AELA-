@@ -35,6 +35,7 @@ import doubtTicketRoutes from "./routes/doubtTicketRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import backupRoutes from "./routes/backupRoutes.js";
+import batchRoutes from "./routes/batchRoutes.js";
 import { authenticate } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 
@@ -152,6 +153,7 @@ app.use("/api/v1/doubt-tickets", doubtTicketRoutes);
 app.use("/api/v1/announcements", announcementRoutes);
 app.use("/api/v1/sessions", sessionRoutes);
 app.use("/api/v1/backups", backupRoutes);
+app.use("/api/v1/batches", batchRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

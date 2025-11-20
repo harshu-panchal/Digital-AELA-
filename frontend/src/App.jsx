@@ -122,6 +122,7 @@ import ActiveSessions from "../modules/admin/ActiveSessions";
 import BackupManagement from "../modules/admin/BackupManagement";
 import StudentAnnouncementList from "../modules/student/AnnouncementList";
 import StudentAnnouncementDetail from "../modules/student/AnnouncementDetail";
+import BatchInformation from "../modules/student/BatchInformation";
 import CertificateList from "../modules/student/CertificateList";
 import TeacherEarnings from "../modules/teacher/TeacherEarnings";
 import PayoutRequests from "../modules/teacher/PayoutRequests";
@@ -412,6 +413,7 @@ export const App = () => {
             path="announcements/:announcementId"
             element={<StudentAnnouncementDetail />}
           />
+          <Route path="batch" element={<BatchInformation />} />
           <Route path="profile" element={<StudentProfile />} />
         </Route>
         <Route
