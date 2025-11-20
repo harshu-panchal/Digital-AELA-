@@ -6,7 +6,6 @@ import {
   HiOutlineClock,
   HiOutlineShieldCheck,
   HiOutlineBars3,
-  HiOutlineXMark,
 } from "react-icons/hi2";
 import TeacherSidebar from "../components/TeacherSidebar";
 
@@ -94,18 +93,6 @@ const TeacherLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed top-4 left-4 z-[60] md:hidden p-2 rounded-lg bg-[#0B0F1E]/95 border border-white/10 text-white hover:bg-white/10 transition"
-        aria-label="Toggle sidebar">
-        {isSidebarOpen ? (
-          <HiOutlineXMark className="w-6 h-6" />
-        ) : (
-          <HiOutlineBars3 className="w-6 h-6" />
-        )}
-      </button>
-
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
@@ -114,10 +101,21 @@ const TeacherLayout = () => {
         />
       )}
 
+      {/* Mobile Menu Button - Only visible when sidebar is closed */}
+      {!isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-[60] md:hidden p-2 rounded-lg bg-[#0B0F1E]/95 border border-white/10 text-white hover:bg-white/10 transition"
+          aria-label="Open sidebar">
+          <HiOutlineBars3 className="w-6 h-6" />
+        </button>
+      )}
+
       <div className="flex">
         <TeacherSidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <main className="md:ml-64 flex-1 w-full">
           <div className="pt-[80px] md:pt-[120px] pl-[20px] md:pl-[30px] pb-[20px] pr-[20px] md:pr-[30px]">

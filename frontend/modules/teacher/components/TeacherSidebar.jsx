@@ -14,8 +14,9 @@ import {
   FaFileInvoiceDollar,
   FaUser,
 } from "react-icons/fa";
+import { HiOutlineBars3, HiOutlineXMark } from "react-icons/hi2";
 
-const TeacherSidebar = ({ isOpen = false, onClose }) => {
+const TeacherSidebar = ({ isOpen = false, onClose, onToggle }) => {
   const navItems = [
     {
       label: "Dashboard",
@@ -88,12 +89,30 @@ const TeacherSidebar = ({ isOpen = false, onClose }) => {
     <aside
       className={`fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-[55] transition-transform duration-300 ease-in-out ${
         isOpen ? "translate-x-0" : "-translate-x-full"
-      } md:translate-x-0`}
-    >
+      } md:translate-x-0`}>
       <div className="flex h-full flex-col pt-25 pb-8">
         <div className="border-b border-white/10 px-6 pt-12 pb-6">
-          <h2 className="text-lg font-semibold text-[#F5D26A]">Teacher Portal</h2>
-          <p className="text-xs text-gray-400">Teaching Dashboard</p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-[#F5D26A]">
+                Teacher Portal
+              </h2>
+              <p className="text-xs text-gray-400">Teaching Dashboard</p>
+            </div>
+            {/* Mobile Toggle Button */}
+            {onToggle && (
+              <button
+                onClick={onToggle}
+                className="md:hidden p-2 rounded-lg text-white hover:bg-white/10 transition shrink-0"
+                aria-label="Toggle sidebar">
+                {isOpen ? (
+                  <HiOutlineXMark className="w-5 h-5" />
+                ) : (
+                  <HiOutlineBars3 className="w-5 h-5" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
@@ -128,4 +147,3 @@ const TeacherSidebar = ({ isOpen = false, onClose }) => {
 };
 
 export default TeacherSidebar;
-
