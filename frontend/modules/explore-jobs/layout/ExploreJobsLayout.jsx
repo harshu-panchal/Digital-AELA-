@@ -6,13 +6,11 @@ import ExploreJobsBottomNav from "../components/BottomNav";
 import FiltersPanel from "../components/FiltersPanel";
 import JobSearchFilters from "../components/JobSearchFilters";
 import { useExploreJobs } from "../context/ExploreJobsContext";
-import SidebarToggle from "../../../src/components/SidebarToggle";
 
 const ExploreJobsLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { openComposer, searchFilters, setSearchFilters } = useExploreJobs();
 
   const handleCreatePost = () => {
@@ -25,19 +23,8 @@ const ExploreJobsLayout = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black pt-[20vh] text-white">
-      <SidebarToggle 
-        isOpen={isSidebarOpen} 
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
-      />
-      {/* Mobile backdrop overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
       <div className="mx-auto flex w-full max-w-[1600px]">
-        <ExploreJobsSidebar onCreatePost={handleCreatePost} isOpen={isSidebarOpen} />
+        <ExploreJobsSidebar onCreatePost={handleCreatePost} />
 
         <div className="flex min-h-[80vh] flex-1 flex-col">
           <ExploreJobsTopbar onFilterToggle={() => setIsFiltersOpen(true)} />

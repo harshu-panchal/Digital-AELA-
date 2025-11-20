@@ -32,7 +32,7 @@ const Navbar = () => {
       const currentScrollY = window.scrollY;
       const shouldShow = currentScrollY < 40;
       setShowSubNav(shouldShow);
-      
+
       // Bottom navbar should move only 1px up when scrolling
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         // Scrolling down - move bottom navbar up by 1px only
@@ -43,14 +43,14 @@ const Navbar = () => {
         // Scrolling up - move bottom navbar back down
         setNavbarOffset(0);
       }
-      
+
       // Logo should only come back down when scrolling to top
       if (currentScrollY <= 100) {
         setLogoOffset(0);
       }
-      
+
       setLastScrollY(currentScrollY);
-      
+
       if (!shouldShow) {
         setLanguageDropdownOpen(false);
       }
@@ -631,7 +631,7 @@ const Navbar = () => {
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.92 }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden text-[#B8831A] hover:text-[#8A6611] transition-colors duration-300">
+              className="lg:hidden ml-auto text-[#B8831A] hover:text-[#8A6611] transition-colors duration-300">
               <svg
                 className="w-6 h-6"
                 fill="none"
