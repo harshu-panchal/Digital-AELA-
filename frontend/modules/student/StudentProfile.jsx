@@ -29,6 +29,7 @@ const StudentProfile = () => {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -87,6 +88,8 @@ const StudentProfile = () => {
           profile?.avatar || 
           null;
         setAvatarUrl(avatar);
+        // Reset image error when avatar URL changes
+        setImageError(false);
 
         // Build address from location (from registration: city, country)
         const addressParts = [];
@@ -120,6 +123,8 @@ const StudentProfile = () => {
         // Fallback to authUser metadata (which contains registration data)
         const fallbackAvatar = authUser?.metadata?.avatarUrl || profile?.avatar || null;
         setAvatarUrl(fallbackAvatar);
+        // Reset image error when avatar URL changes
+        setImageError(false);
         
         // Fallback to user metadata which may contain registration data
         const fallbackAddress = 
@@ -306,6 +311,7 @@ const StudentProfile = () => {
       // Update local state
       setAvatarUrl(newAvatarUrl);
       setAvatarPreview(null);
+      setImageError(false);
 
       // Reload profile to get updated data
       const profileData = await fetchStudentProfile(authUser.id);
@@ -485,30 +491,24 @@ const StudentProfile = () => {
               {/* Profile Picture Section */}
               <div className="flex items-center gap-6 pb-6 border-b border-white/10">
                 <div className="relative group">
-                  <div className="h-24 w-24 rounded-full overflow-hidden relative bg-gradient-to-br from-sky-400 to-sky-600">
-                    {(avatarPreview || avatarUrl) ? (
-                      <img
-                        src={avatarPreview || avatarUrl}
-                        alt={formData.fullName || "Student"}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          // Hide image on error, initials will show through background
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    ) : null}
-                    {!(avatarPreview || avatarUrl) && (
-                      <div className="h-full w-full flex items-center justify-center text-3xl font-semibold text-white">
-                        {formData.fullName
-                          ? formData.fullName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                          : "U"}
-                      </div>
-                    )}
-                  </div>
+                  {(avatarPreview || (avatarUrl && !imageError)) ? (
+                    <img
+                      src={avatarPreview || avatarUrl}
+                      alt={formData.fullName || "Student"}
+                      className="h-24 w-24 rounded-full object-cover border-2 border-[#F5D26A]/40"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="h-24 w-24 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-3xl font-semibold text-white">
+                      {formData.fullName
+                        ? formData.fullName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                        : "U"}
+                    </div>
+                  )}
                   {isEditing && (
                     <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100">
                       {uploadingAvatar ? (
