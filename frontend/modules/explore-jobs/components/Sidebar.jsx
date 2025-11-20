@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   HiOutlineHome,
   HiOutlineUserCircle,
@@ -29,7 +30,7 @@ const recruiterNavItems = [
   },
 ];
 
-const ExploreJobsSidebar = ({ onCreatePost }) => {
+const ExploreJobsSidebar = ({ onCreatePost, isOpen = true }) => {
   const location = useLocation();
   const { user } = useAuth();
   const isRecruiterDashboard = location.pathname.includes(
@@ -46,7 +47,15 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
   });
 
   return (
-    <aside className="hidden w-[260px] shrink-0 border-r border-white/5 bg-[#050505]/80 backdrop-blur-xl lg:flex lg:flex-col">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.aside
+          initial={{ x: -260, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -260, opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="hidden w-[260px] shrink-0 border-r border-white/5 bg-[#050505]/80 backdrop-blur-xl lg:flex lg:flex-col"
+        >
       <div className="flex h-full flex-col gap-8 px-6 py-8">
         <div className="flex items-center justify-between">
           <div>
@@ -132,7 +141,9 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
             </div>
           </div>
       </div>
-    </aside>
+    </motion.aside>
+      )}
+    </AnimatePresence>
   );
 };
 

@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FaHome,
   FaUsers,
@@ -18,7 +19,7 @@ import {
   FaCreditCard,
 } from "react-icons/fa";
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ isOpen = true }) => {
   const navItems = [
     {
       label: "Dashboard",
@@ -155,59 +156,69 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-50">
-      <div className="flex h-full flex-col pt-25 pb-8">
-        <div className="border-b border-white/10 px-6 pt-12 pb-6">
-          <h2 className="text-lg font-semibold text-[#F5D26A]">Super Admin</h2>
-          <p className="text-xs text-gray-400">Control Panel</p>
-        </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.aside
+          initial={{ x: -256, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -256, opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="fixed left-0 top-0 h-screen w-64 border-r border-white/10 bg-[#0B0F1E]/95 backdrop-blur-xl z-50"
+        >
+          <div className="flex h-full flex-col pt-25 pb-8">
+            <div className="border-b border-white/10 px-6 pt-12 pb-6">
+              <h2 className="text-lg font-semibold text-[#F5D26A]">Super Admin</h2>
+              <p className="text-xs text-gray-400">Control Panel</p>
+            </div>
 
-        <nav className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
-          <div className="space-y-2">
-            {navItems.map((item, index) => (
-              <div key={index}>
-                {item.path ? (
-                  <NavLink
-                    to={item.path}
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
-                        isActive
-                          ? "bg-[#F5D26A]/20 text-[#F5D26A]"
-                          : "text-gray-300 hover:bg-white/5 hover:text-white"
-                      }`
-                    }>
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
-                  </NavLink>
-                ) : (
-                  <>
-                    <div className="mb-2 mt-4 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      {item.label}
-                    </div>
-                    {item.children?.map((child) => (
+            <nav className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+              <div className="space-y-2">
+                {navItems.map((item, index) => (
+                  <div key={index}>
+                    {item.path ? (
                       <NavLink
-                        key={child.path}
-                        to={child.path}
+                        to={item.path}
+                        end
                         className={({ isActive }) =>
-                          `ml-2 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition ${
+                          `flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
                             isActive
                               ? "bg-[#F5D26A]/20 text-[#F5D26A]"
-                              : "text-gray-400 hover:bg-white/5 hover:text-white"
+                              : "text-gray-300 hover:bg-white/5 hover:text-white"
                           }`
                         }>
-                        {child.icon && <child.icon className="h-4 w-4" />}
-                        <span>{child.label}</span>
+                        {item.icon && <item.icon className="h-4 w-4" />}
+                        <span>{item.label}</span>
                       </NavLink>
-                    ))}
-                  </>
-                )}
+                    ) : (
+                      <>
+                        <div className="mb-2 mt-4 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          {item.label}
+                        </div>
+                        {item.children?.map((child) => (
+                          <NavLink
+                            key={child.path}
+                            to={child.path}
+                            className={({ isActive }) =>
+                              `ml-2 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition ${
+                                isActive
+                                  ? "bg-[#F5D26A]/20 text-[#F5D26A]"
+                                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                              }`
+                            }>
+                            {child.icon && <child.icon className="h-4 w-4" />}
+                            <span>{child.label}</span>
+                          </NavLink>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            </nav>
           </div>
-        </nav>
-      </div>
-    </aside>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 };
 

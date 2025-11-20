@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { HiOutlineClock, HiOutlineShieldCheck } from "react-icons/hi2";
 import TeacherSidebar from "../components/TeacherSidebar";
+import SidebarToggle from "../../../src/components/SidebarToggle";
 
 const TeacherLayout = () => {
   const { user, isAuthenticated } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Wait for user to load before checking approval status
   if (!isAuthenticated || !user) {
@@ -55,7 +58,7 @@ const TeacherLayout = () => {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-8 backdrop-blur-sm">
             <div className="flex items-start gap-4 mb-6">
-              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] flex-shrink-0 mt-1" />
+              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] shrink-0 mt-1" />
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-white mb-2">
                   What happens next?
@@ -87,9 +90,16 @@ const TeacherLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
+      <SidebarToggle
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
       <div className="flex">
-        <TeacherSidebar />
-        <main className="ml-64 flex-1">
+        <TeacherSidebar isOpen={isSidebarOpen} />
+        <main
+          className={`flex-1 transition-all duration-300 ${
+            isSidebarOpen ? "ml-64" : "ml-0"
+          }`}>
           <div className="pt-[120px] pl-[30px] pb-[20px] pr-[30px]">
             <Outlet />
           </div>
