@@ -319,7 +319,7 @@ const CourseDetail = () => {
     }
   };
 
-  const handleDownloadBrochure = () => {
+  const handleDownloadBrochure = async () => {
     const brochureUrl = course.brochureUrl || course.metadata?.brochureUrl;
     
     if (!brochureUrl) {
@@ -327,14 +327,37 @@ const CourseDetail = () => {
       return;
     }
     
-    // Open the brochure PDF in a new tab for download
-    const link = document.createElement('a');
-    link.href = brochureUrl;
-    link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Fetch the PDF file from Cloudinary
+      const response = await fetch(brochureUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch brochure");
+      }
+      
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
+      document.body.appendChild(link);
+      
+      // Trigger download
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      toast.success("Brochure download started");
+    } catch (error) {
+      console.error("Error downloading brochure:", error);
+      toast.error("Failed to download brochure. Please try again.");
+    }
   };
 
   return (
