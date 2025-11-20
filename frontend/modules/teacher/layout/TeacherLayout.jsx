@@ -1,17 +1,11 @@
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { motion } from "framer-motion";
-import {
-  HiOutlineClock,
-  HiOutlineShieldCheck,
-  HiOutlineBars3,
-} from "react-icons/hi2";
+import { HiOutlineClock, HiOutlineShieldCheck } from "react-icons/hi2";
 import TeacherSidebar from "../components/TeacherSidebar";
 
 const TeacherLayout = () => {
   const { user, isAuthenticated } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Wait for user to load before checking approval status
   if (!isAuthenticated || !user) {
@@ -61,7 +55,7 @@ const TeacherLayout = () => {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 mb-8 backdrop-blur-sm">
             <div className="flex items-start gap-4 mb-6">
-              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] shrink-0 mt-1" />
+              <HiOutlineShieldCheck className="w-6 h-6 text-[#F5D26A] flex-shrink-0 mt-1" />
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-white mb-2">
                   What happens next?
@@ -93,32 +87,10 @@ const TeacherLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
-      {/* Mobile Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-[55] md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu Button - Only visible when sidebar is closed */}
-      {!isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="fixed top-4 right-4 z-[60] md:hidden p-2 rounded-lg bg-[#0B0F1E]/95 border border-white/10 text-white hover:bg-white/10 transition"
-          aria-label="Open sidebar">
-          <HiOutlineBars3 className="w-6 h-6" />
-        </button>
-      )}
-
       <div className="flex">
-        <TeacherSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <main className="md:ml-64 flex-1 w-full">
-          <div className="pt-[80px] md:pt-[120px] pl-[20px] md:pl-[30px] pb-[20px] pr-[20px] md:pr-[30px]">
+        <TeacherSidebar />
+        <main className="ml-64 flex-1">
+          <div className="pt-[120px] pl-[30px] pb-[20px] pr-[30px]">
             <Outlet />
           </div>
         </main>
