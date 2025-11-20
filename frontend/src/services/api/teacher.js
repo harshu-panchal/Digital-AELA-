@@ -123,3 +123,48 @@ export const compareAnalytics = async (params = {}) => {
   });
 };
 
+/**
+ * Get teacher profile (authenticated)
+ * GET /api/v1/teachers/profile
+ */
+export const getTeacherProfile = async () => {
+  return apiRequest("/teachers/profile", {
+    method: "GET",
+  });
+};
+
+/**
+ * Update teacher profile (authenticated)
+ * PATCH /api/v1/teachers/profile
+ * @param {Object} profileData - Profile data to update
+ * @param {File} profileImage - Optional profile image file
+ */
+export const updateTeacherProfile = async (profileData, profileImage = null) => {
+  const formData = new FormData();
+  
+  // Append all profile fields
+  Object.keys(profileData).forEach((key) => {
+    if (profileData[key] !== null && profileData[key] !== undefined) {
+      if (Array.isArray(profileData[key])) {
+        formData.append(key, JSON.stringify(profileData[key]));
+      } else if (typeof profileData[key] === "object") {
+        formData.append(key, JSON.stringify(profileData[key]));
+      } else {
+        formData.append(key, profileData[key]);
+      }
+    }
+  });
+
+  // Append profile image if provided
+  if (profileImage) {
+    formData.append("profileImage", profileImage);
+  }
+
+  return apiRequest("/teachers/profile", {
+    method: "PATCH",
+    body: formData,
+    // Don't set Content-Type header, let browser set it with boundary for FormData
+    headers: {},
+  });
+};
+
