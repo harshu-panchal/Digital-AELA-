@@ -11,6 +11,7 @@ import {
   HiOutlinePresentationChartLine,
   HiOutlineDocumentText,
   HiOutlineClock,
+  HiOutlineQuestionMarkCircle,
 } from "react-icons/hi2";
 import { FaFilePdf, FaClipboardList, FaShoppingCart, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -23,6 +24,7 @@ import { getTeacherCourses } from "../../src/services/teacherCourses";
 import { fetchTeacherDashboard } from "../../src/services/api/teacher";
 import { useSocket } from "../../src/hooks/useSocket";
 import { getTeacherAssignments } from "../../src/services/api/assignments";
+import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -56,6 +58,8 @@ const TeacherDashboard = () => {
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [doubtTicketStats, setDoubtTicketStats] = useState(null);
+  const [loadingDoubtTickets, setLoadingDoubtTickets] = useState(false);
 
   // Load dashboard data from backend
   const loadDashboard = useCallback(async () => {
@@ -104,6 +108,7 @@ const TeacherDashboard = () => {
     refresh();
     loadDashboard();
     loadAssignments();
+    loadDoubtTicketStats();
   }, [loadDashboard]);
 
   // Load assignments
@@ -848,6 +853,56 @@ const TeacherDashboard = () => {
                 <p className="text-xs text-slate-400">Download slips</p>
               </Link>
             </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineQuestionMarkCircle className="h-5 w-5" />
+                Doubt Ticket Inbox
+              </h2>
+              <Link
+                to="/teacher/doubt-tickets"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {loadingDoubtTickets ? (
+              <div className="text-center py-8 text-sm text-slate-400">Loading...</div>
+            ) : doubtTicketStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Open</p>
+                  <p className="text-2xl font-semibold text-blue-400">{doubtTicketStats.open || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">In Progress</p>
+                  <p className="text-2xl font-semibold text-yellow-400">{doubtTicketStats.inProgress || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Resolved</p>
+                  <p className="text-2xl font-semibold text-emerald-400">{doubtTicketStats.resolved || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total</p>
+                  <p className="text-2xl font-semibold text-white">{doubtTicketStats.total || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                <HiOutlineQuestionMarkCircle className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+                <p>No doubt tickets assigned yet</p>
+              </div>
+            )}
+            <Link
+              to="/teacher/doubt-tickets"
+              className="block w-full mt-4 text-center px-4 py-2 rounded-lg border border-[#F5D26A]/40 bg-[#F5D26A]/10 text-[#F5D26A] text-sm font-semibold hover:bg-[#F5D26A]/20 transition">
+              View All Tickets
+            </Link>
           </motion.section>
 
           <motion.section

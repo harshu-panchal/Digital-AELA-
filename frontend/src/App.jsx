@@ -107,6 +107,11 @@ import AssignmentDetail from "../modules/teacher/AssignmentDetail";
 import StudentAssignmentList from "../modules/student/AssignmentList";
 import StudentAssignmentDetail from "../modules/student/AssignmentDetail";
 import PaymentHistory from "../modules/student/PaymentHistory";
+import DoubtTicketList from "../modules/student/DoubtTicketList";
+import DoubtTicketCreate from "../modules/student/DoubtTicketCreate";
+import DoubtTicketDetail from "../modules/student/DoubtTicketDetail";
+import DoubtTicketInbox from "../modules/teacher/DoubtTicketInbox";
+import TeacherDoubtTicketDetail from "../modules/teacher/DoubtTicketDetail";
 import CertificateList from "../modules/student/CertificateList";
 import TeacherEarnings from "../modules/teacher/TeacherEarnings";
 import PayoutRequests from "../modules/teacher/PayoutRequests";
@@ -290,6 +295,22 @@ export const App = () => {
           }
         />
         <Route
+          path="/teacher/doubt-tickets"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <DoubtTicketInbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/doubt-tickets/:ticketId"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <TeacherDoubtTicketDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/teacher/payout-requests"
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
@@ -324,6 +345,12 @@ export const App = () => {
           />
           <Route path="payments" element={<PaymentHistory />} />
           <Route path="certificates" element={<CertificateList />} />
+          <Route path="doubt-tickets" element={<DoubtTicketList />} />
+          <Route path="doubt-tickets/create" element={<DoubtTicketCreate />} />
+          <Route
+            path="doubt-tickets/:ticketId"
+            element={<DoubtTicketDetail />}
+          />
           <Route path="profile" element={<StudentProfile />} />
         </Route>
         <Route

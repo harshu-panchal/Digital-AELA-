@@ -12,11 +12,10 @@ import {
   FaPlusCircle,
   FaEdit,
   FaStar,
-  FaChartBar,
+  FaChartLine,
   FaCog,
   FaVideo,
   FaCreditCard,
-  FaChartBar,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -29,7 +28,7 @@ const AdminSidebar = () => {
     {
       label: "Analytics",
       path: "/super-admin/analytics",
-      icon: FaChartBar,
+      icon: FaChartLine,
     },
     {
       label: "Settings",
@@ -59,7 +58,7 @@ const AdminSidebar = () => {
     {
       label: "Financial Dashboard",
       path: "/super-admin/financial-dashboard",
-      icon: FaChartBar,
+      icon: FaChartLine,
     },
     {
       label: "User Management",

@@ -14,6 +14,7 @@ import {
   HiOutlineDocumentText,
   HiOutlineExclamationTriangle,
   HiOutlineCreditCard,
+  HiOutlineQuestionMarkCircle,
 } from "react-icons/hi2";
 import { HiOutlineAcademicCap } from "react-icons/hi";
 import { Link } from "react-router-dom";
@@ -25,6 +26,7 @@ import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
 import { getStudentAssignments } from "../../src/services/api/assignments";
+import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -65,6 +67,8 @@ const StudentDashboard = () => {
   const [loadingWidgets, setLoadingWidgets] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [doubtTicketStats, setDoubtTicketStats] = useState(null);
+  const [loadingDoubtTickets, setLoadingDoubtTickets] = useState(false);
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -142,10 +146,28 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
+  // Load doubt ticket stats
+  const loadDoubtTicketStats = useCallback(async () => {
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      return;
+    }
+
+    setLoadingDoubtTickets(true);
+    try {
+      const response = await getDoubtTicketStats();
+      setDoubtTicketStats(response.stats);
+    } catch (error) {
+      console.error("Failed to load doubt ticket stats:", error);
+    } finally {
+      setLoadingDoubtTickets(false);
+    }
+  }, [authUser, tokens]);
+
   useEffect(() => {
     loadDashboard();
     loadWidgets();
     loadAssignments();
+    loadDoubtTicketStats();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
@@ -155,7 +177,7 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [loadDashboard, loadWidgets, loadAssignments]);
+  }, [loadDashboard, loadWidgets, loadAssignments, loadDoubtTicketStats]);
 
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
@@ -508,6 +530,61 @@ const StudentDashboard = () => {
                 View Certificates
               </Link>
             </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineQuestionMarkCircle className="h-5 w-5" />
+                My Doubt Tickets
+              </h2>
+              <Link
+                to="/student/doubt-tickets"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all
+              </Link>
+            </header>
+            {loadingDoubtTickets ? (
+              <div className="text-center py-8 text-sm text-slate-400">Loading...</div>
+            ) : doubtTicketStats ? (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Open</p>
+                  <p className="text-2xl font-semibold text-blue-400">{doubtTicketStats.open || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">In Progress</p>
+                  <p className="text-2xl font-semibold text-yellow-400">{doubtTicketStats.inProgress || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Resolved</p>
+                  <p className="text-2xl font-semibold text-emerald-400">{doubtTicketStats.resolved || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total</p>
+                  <p className="text-2xl font-semibold text-white">{doubtTicketStats.total || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                <HiOutlineQuestionMarkCircle className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+                <p>Ask questions and get help from teachers</p>
+                <Link
+                  to="/student/doubt-tickets/create"
+                  className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
+                  Create Ticket
+                </Link>
+              </div>
+            )}
+            <Link
+              to="/student/doubt-tickets"
+              className="block w-full mt-4 text-center px-4 py-2 rounded-lg border border-sky-400/40 bg-sky-400/10 text-sky-200 text-sm font-semibold hover:bg-sky-400/20 transition">
+              View All Tickets
+            </Link>
           </motion.section>
 
           <motion.section
