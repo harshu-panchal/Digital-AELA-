@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -23,6 +23,18 @@ const QuizAnalytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadAnalytics = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchQuizAnalytics(quizId);
+      setAnalytics(data);
+    } catch (error) {
+      toast.error(error.message || "Failed to load quiz analytics");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [quizId]);
+
   useEffect(() => {
     if (!isAuthenticated || !user || (user.role !== "teacher" && user.role !== "admin")) {
       toast.info("Only teachers and admins can view quiz analytics");
@@ -33,19 +45,7 @@ const QuizAnalytics = () => {
     if (quizId) {
       loadAnalytics();
     }
-  }, [quizId, isAuthenticated, user, navigate]);
-
-  const loadAnalytics = async () => {
-    setIsLoading(true);
-    try {
-      const data = await fetchQuizAnalytics(quizId);
-      setAnalytics(data);
-    } catch (error) {
-      toast.error(error.message || "Failed to load quiz analytics");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [quizId, isAuthenticated, user, navigate, loadAnalytics]);
 
   const formatTime = (seconds) => {
     if (!seconds) return "0s";
