@@ -71,6 +71,11 @@ const AdminSidebar = () => {
       icon: FaUsers,
     },
     {
+      label: "Backups",
+      path: "/super-admin/backups",
+      icon: FaFileAlt,
+    },
+    {
       label: "User Management",
       children: [
         {

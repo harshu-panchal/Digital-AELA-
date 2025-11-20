@@ -119,6 +119,7 @@ import AnnouncementManagement from "../modules/admin/AnnouncementManagement";
 import AdminAnnouncementCreate from "../modules/admin/AnnouncementCreate";
 import AdminAnnouncementDetail from "../modules/admin/AnnouncementDetail";
 import ActiveSessions from "../modules/admin/ActiveSessions";
+import BackupManagement from "../modules/admin/BackupManagement";
 import StudentAnnouncementList from "../modules/student/AnnouncementList";
 import StudentAnnouncementDetail from "../modules/student/AnnouncementDetail";
 import CertificateList from "../modules/student/CertificateList";
@@ -139,6 +140,17 @@ import CourseVideoPlayer from "../modules/student/CourseVideoPlayer";
 export const App = () => {
   const location = useLocation();
   const isAdminLogin = location.pathname === "/admin/login";
+
+  // Check if current path is a dashboard
+  const isDashboard =
+    location.pathname.startsWith("/super-admin") ||
+    location.pathname === "/teacher/dashboard" ||
+    location.pathname.startsWith("/teacher/") ||
+    location.pathname.startsWith("/student/") ||
+    location.pathname.startsWith("/learn-earn") ||
+    location.pathname === "/recruiter/dashboard" ||
+    location.pathname.startsWith("/recruiter/analytics") ||
+    location.pathname.startsWith("/explore-jobs");
 
   return (
     <>
@@ -183,6 +195,8 @@ export const App = () => {
             path="announcements/:announcementId"
             element={<AdminAnnouncementDetail />}
           />
+          <Route path="active-sessions" element={<ActiveSessions />} />
+          <Route path="backups" element={<BackupManagement />} />
         </Route>
         <Route
           path="/teacher/dashboard"
@@ -676,7 +690,7 @@ export const App = () => {
           element={<BranchOwnerRegister />}
         />
       </Routes>
-      {!isAdminLogin && <Footer />}
+      {!isAdminLogin && !isDashboard && <Footer />}
     </>
   );
 };
