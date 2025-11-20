@@ -30,7 +30,7 @@ const TeacherLayout = () => {
 
   if (isTeacherPendingApproval) {
     return (
-      <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
+      <div className="min-h-screen mt-[100px] bg-[#020409] text-white flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
