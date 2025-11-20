@@ -16,6 +16,7 @@ import {
   FaCog,
   FaVideo,
   FaCreditCard,
+  FaChartBar,
 } from "react-icons/fa";
 
 const AdminSidebar = () => {
@@ -49,6 +50,16 @@ const AdminSidebar = () => {
       label: "CRM / Leads",
       path: "/super-admin/crm/leads",
       icon: FaUserFriends,
+    },
+    {
+      label: "Expenses",
+      path: "/super-admin/expenses",
+      icon: FaFileAlt,
+    },
+    {
+      label: "Financial Dashboard",
+      path: "/super-admin/financial-dashboard",
+      icon: FaChartBar,
     },
     {
       label: "User Management",

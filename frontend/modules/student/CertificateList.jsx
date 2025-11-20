@@ -4,12 +4,14 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
   HiOutlineDocumentText,
-  HiOutlineDownload,
-  HiOutlineCheckCircle,
   HiOutlineClock,
   HiOutlineXCircle,
   HiOutlineShare,
 } from "react-icons/hi2";
+import {
+  HiOutlineDownload,
+  HiOutlineCheckCircle,
+} from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { getStudentCertificates, downloadCertificatePDF } from "../../src/services/api/certificates";

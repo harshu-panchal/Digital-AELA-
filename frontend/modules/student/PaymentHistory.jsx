@@ -5,11 +5,11 @@ import { toast } from "react-toastify";
 import {
   HiOutlineCalendar,
   HiOutlineDocumentText,
-  HiOutlineCheckCircle,
   HiOutlineXCircle,
   HiOutlineClock,
   HiOutlineArrowPath,
 } from "react-icons/hi2";
+import { HiOutlineCheckCircle } from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { getPaymentHistory, getInvoice } from "../../src/services/api/payments";
