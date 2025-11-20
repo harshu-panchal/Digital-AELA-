@@ -142,16 +142,18 @@ const EbookUpload = () => {
 
     const file = formData.file;
     if (file.type !== "application/pdf") {
-      toast.error("Only PDF uploads are supported at this stage.");
+      toast.error("Only PDF uploads are supported.");
       return;
     }
 
-    // For now, we'll use the previewUrl or coverImage as downloadUrl
-    // In production, you'd upload the file to a storage service (S3, etc.) and get the URL
-    const downloadUrl = sanitizeUrl(formData.previewUrl) || sanitizeUrl(formData.coverImage) || "";
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF file size must be less than 10MB");
+      return;
+    }
 
-    if (!downloadUrl) {
-      toast.error("Please provide a download URL or preview URL for the ebook file.");
+    if (!formData.pages || formData.pages <= 0) {
+      toast.error("Please enter the number of pages.");
       return;
     }
 
@@ -168,14 +170,12 @@ const EbookUpload = () => {
         .map((tag) => tag.trim())
         .filter(Boolean),
       pages: formData.pages ? Number(formData.pages) : undefined,
-      downloadUrl: downloadUrl,
-      // Note: In production, you'd upload the file and get the URL
-      // For now, using previewUrl or coverImage as downloadUrl placeholder
     };
 
     setIsSubmitting(true);
     try {
-      const created = await createTeacherEbook(payload);
+      // Upload PDF file along with metadata
+      const created = await createTeacherEbook(payload, file);
       toast.success("E-book submitted for approval. It will be reviewed by admin before being published.");
       setFormData(initialFormState);
       navigate("/teacher/dashboard", { replace: true, state: { highlightEbooks: true, ebookId: created.id } });
@@ -433,8 +433,7 @@ const EbookUpload = () => {
               </label>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                Note: The PDF is not permanently uploaded yet. We store its name and size so the backend can request the
-                actual file later.
+                The PDF will be uploaded to Cloudinary when you submit the form. Maximum file size: 10MB.
               </div>
             </section>
 

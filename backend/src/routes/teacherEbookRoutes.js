@@ -6,6 +6,7 @@ import {
   getTeacherEbookById,
   updateTeacherEbook,
 } from "../controllers/teacherEbookController.js";
+import { uploadSinglePdf, handleUploadError } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -13,7 +14,13 @@ const router = express.Router();
 router.use(requireAuth(["teacher"]));
 
 // Create a new ebook (isPublic: false - requires approval)
-router.post("/ebooks", createTeacherEbook);
+// Accepts PDF file upload via multipart/form-data
+router.post(
+  "/ebooks",
+  uploadSinglePdf("pdf"),
+  handleUploadError,
+  createTeacherEbook
+);
 
 // Get all ebooks created by the teacher
 router.get("/ebooks", getTeacherEbooks);

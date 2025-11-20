@@ -34,12 +34,59 @@ export const getTeacherEbookById = async (ebookId) => {
 
 /**
  * Create a new ebook (teacher only - creates with isPublic: false)
+ * Supports both FormData (with PDF file) and JSON payload
  */
-export const createTeacherEbook = async (payload) => {
-  const response = await apiRequest("/teacher/ebooks", {
-    method: "POST",
-    body: payload,
-  });
+export const createTeacherEbook = async (payload, pdfFile = null) => {
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+  const { getStoredTokens } = await import("./api/baseClient");
+  const tokens = getStoredTokens();
+
+  if (!tokens?.accessToken) {
+    throw new Error("Authentication required");
+  }
+
+  let response;
+  if (pdfFile) {
+    // Use FormData for file upload
+    const formData = new FormData();
+    
+    // Append PDF file
+    formData.append("pdf", pdfFile);
+    
+    // Append other fields
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] !== null && payload[key] !== undefined) {
+        if (Array.isArray(payload[key])) {
+          formData.append(key, JSON.stringify(payload[key]));
+        } else {
+          formData.append(key, payload[key]);
+        }
+      }
+    });
+
+    const res = await fetch(`${API_BASE_URL}/teacher/ebooks`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        // Don't set Content-Type header - browser will set it with boundary for FormData
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error?.message || "Failed to create ebook");
+    }
+    response = data;
+  } else {
+    // Use regular JSON API request
+    response = await apiRequest("/teacher/ebooks", {
+      method: "POST",
+      body: payload,
+    });
+  }
+
   // Transform backend response to match frontend expectations
   return {
     id: response.ebook._id,

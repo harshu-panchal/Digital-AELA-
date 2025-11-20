@@ -1,6 +1,7 @@
 import EbookResource from "../models/EbookResource.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
+import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 
 /**
  * Teacher: Create Ebook (with isPublic: false - requires admin approval)
@@ -58,15 +59,6 @@ export const createTeacherEbook = async (req, res, next) => {
       });
     }
 
-    if (!downloadUrl) {
-      return res.status(422).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Download URL is required",
-        },
-      });
-    }
-
     if (!pages || pages <= 0) {
       return res.status(422).json({
         error: {
@@ -76,18 +68,42 @@ export const createTeacherEbook = async (req, res, next) => {
       });
     }
 
+    // Handle PDF file upload if provided
+    let finalDownloadUrl = downloadUrl;
+    if (req.file) {
+      // Upload PDF to Cloudinary
+      const uploadResult = await uploadPdfToCloudinary(
+        req.file.buffer,
+        `digital-aela/ebooks/${userId}`
+      );
+      finalDownloadUrl = uploadResult.url;
+    }
+
+    if (!finalDownloadUrl) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "PDF file or download URL is required",
+        },
+      });
+    }
+
+    const priceValue = price ? Number(price) : 0;
+    const isFree = priceValue === 0;
+
     // Create ebook with isPublic: false (requires admin approval)
     const ebook = await EbookResource.create({
       title,
       description,
       pages: Number(pages),
-      downloadUrl,
+      downloadUrl: finalDownloadUrl,
       categories: category ? [category] : [],
       isPublic: false, // Always false for teacher-created ebooks - requires approval
       publishedAt: null, // Will be set when approved
       metadata: {
         subtitle: subtitle || "",
-        price: price ? Number(price) : 0,
+        price: priceValue,
+        isFree: isFree, // Mark as free if price is 0
         coverImage: coverImage || "",
         previewUrl: previewUrl || "",
         author: userFullName || "Digital AELA", // Store teacher's name as author

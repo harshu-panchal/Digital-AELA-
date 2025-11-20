@@ -509,7 +509,7 @@ export const uploadAdminCourseBrochure = async (req, res, next) => {
  */
 export const createEbook = async (req, res, next) => {
   try {
-    const { userRole } = req.auth || {};
+    const { userRole, userId } = req.auth || {};
 
     if (!req.auth || userRole !== "super-admin") {
       return res.status(403).json({
@@ -554,20 +554,31 @@ export const createEbook = async (req, res, next) => {
       });
     }
 
-    if (!downloadUrl) {
-      return res.status(422).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Download URL is required",
-        },
-      });
-    }
-
     if (!pages || pages <= 0) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
           message: "Number of pages is required and must be greater than 0",
+        },
+      });
+    }
+
+    // Handle PDF file upload if provided
+    let finalDownloadUrl = downloadUrl;
+    if (req.file) {
+      // Upload PDF to Cloudinary
+      const uploadResult = await uploadPdfToCloudinary(
+        req.file.buffer,
+        `digital-aela/ebooks/admin/${userId}`
+      );
+      finalDownloadUrl = uploadResult.url;
+    }
+
+    if (!finalDownloadUrl) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "PDF file or download URL is required",
         },
       });
     }
@@ -590,17 +601,21 @@ export const createEbook = async (req, res, next) => {
       }
     }
 
+    const priceValue = price ? Number(price) : 0;
+    const isFree = priceValue === 0;
+
     const ebook = await EbookResource.create({
       title,
       description,
       pages: Number(pages),
-      downloadUrl,
+      downloadUrl: finalDownloadUrl,
       categories: category ? [category] : categories || [],
       isPublic,
       publishedAt: isPublic ? new Date() : null,
       metadata: {
         subtitle: subtitle || "",
-        price: price ? Number(price) : 0,
+        price: priceValue,
+        isFree: isFree, // Mark as free if price is 0
         coverImage: coverImage || "",
         previewUrl: previewUrl || "",
         author: "Digital AELA",

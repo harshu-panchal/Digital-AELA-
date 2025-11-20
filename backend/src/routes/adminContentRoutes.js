@@ -42,7 +42,13 @@ router.patch("/teachers/:userId/approve", approveTeacher);
 
 // Content creation routes
 router.post("/courses", createCourse);
-router.post("/ebooks", createEbook);
+// Accepts PDF file upload via multipart/form-data
+router.post(
+  "/ebooks",
+  uploadSinglePdf("pdf"),
+  handleUploadError,
+  createEbook
+);
 router.post("/blogs", createBlog);
 
 // Upload course brochure PDF
