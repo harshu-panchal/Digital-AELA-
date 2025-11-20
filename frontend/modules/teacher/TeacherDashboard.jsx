@@ -110,7 +110,7 @@ const TeacherDashboard = () => {
     loadDashboard();
     loadAssignments();
     loadDoubtTicketStats();
-  }, [loadDashboard]);
+  }, [loadDashboard, loadAssignments, loadDoubtTicketStats]);
 
   // Load assignments
   const loadAssignments = useCallback(async () => {
@@ -126,6 +126,23 @@ const TeacherDashboard = () => {
       console.error("Failed to load assignments:", error);
     } finally {
       setLoadingAssignments(false);
+    }
+  }, [user]);
+
+  // Load doubt ticket stats
+  const loadDoubtTicketStats = useCallback(async () => {
+    if (!user || user.role !== "teacher") {
+      return;
+    }
+
+    setLoadingDoubtTickets(true);
+    try {
+      const response = await getDoubtTicketStats();
+      setDoubtTicketStats(response.stats || null);
+    } catch (error) {
+      console.error("Failed to load doubt ticket stats:", error);
+    } finally {
+      setLoadingDoubtTickets(false);
     }
   }, [user]);
 
