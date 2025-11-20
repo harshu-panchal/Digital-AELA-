@@ -6,7 +6,7 @@ import { HiOutlineArrowLeft } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { createDoubtTicket } from "../../src/services/api/doubtTickets";
-import { getAllCourses } from "../../src/services/api/courses";
+import { fetchPublishedCourses } from "../../src/services/api/courses";
 
 const DoubtTicketCreate = () => {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ const DoubtTicketCreate = () => {
 
   const loadCourses = async () => {
     try {
-      const response = await getAllCourses({ page: 1, pageSize: 100 });
+      const response = await fetchPublishedCourses();
       setCourses(response.courses || []);
     } catch (error) {
       console.error("Failed to load courses:", error);

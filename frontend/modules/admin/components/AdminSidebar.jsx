@@ -61,6 +61,16 @@ const AdminSidebar = () => {
       icon: FaChartLine,
     },
     {
+      label: "Announcements",
+      path: "/super-admin/announcements",
+      icon: FaFileAlt,
+    },
+    {
+      label: "Active Sessions",
+      path: "/super-admin/active-sessions",
+      icon: FaUsers,
+    },
+    {
       label: "User Management",
       children: [
         {

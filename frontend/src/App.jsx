@@ -112,6 +112,15 @@ import DoubtTicketCreate from "../modules/student/DoubtTicketCreate";
 import DoubtTicketDetail from "../modules/student/DoubtTicketDetail";
 import DoubtTicketInbox from "../modules/teacher/DoubtTicketInbox";
 import TeacherDoubtTicketDetail from "../modules/teacher/DoubtTicketDetail";
+import AnnouncementList from "../modules/teacher/AnnouncementList";
+import AnnouncementCreate from "../modules/teacher/AnnouncementCreate";
+import AnnouncementDetail from "../modules/teacher/AnnouncementDetail";
+import AnnouncementManagement from "../modules/admin/AnnouncementManagement";
+import AdminAnnouncementCreate from "../modules/admin/AnnouncementCreate";
+import AdminAnnouncementDetail from "../modules/admin/AnnouncementDetail";
+import ActiveSessions from "../modules/admin/ActiveSessions";
+import StudentAnnouncementList from "../modules/student/AnnouncementList";
+import StudentAnnouncementDetail from "../modules/student/AnnouncementDetail";
 import CertificateList from "../modules/student/CertificateList";
 import TeacherEarnings from "../modules/teacher/TeacherEarnings";
 import PayoutRequests from "../modules/teacher/PayoutRequests";
@@ -165,6 +174,15 @@ export const App = () => {
           <Route path="crm/leads/:leadId" element={<LeadDetail />} />
           <Route path="expenses" element={<ExpenseManagement />} />
           <Route path="financial-dashboard" element={<FinancialDashboard />} />
+          <Route path="announcements" element={<AnnouncementManagement />} />
+          <Route
+            path="announcements/create"
+            element={<AdminAnnouncementCreate />}
+          />
+          <Route
+            path="announcements/:announcementId"
+            element={<AdminAnnouncementDetail />}
+          />
         </Route>
         <Route
           path="/teacher/dashboard"
@@ -311,6 +329,30 @@ export const App = () => {
           }
         />
         <Route
+          path="/teacher/announcements"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AnnouncementList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/announcements/create"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AnnouncementCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/announcements/:announcementId"
+          element={
+            <ProtectedRoute roles={["teacher", "super-admin"]}>
+              <AnnouncementDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/teacher/payout-requests"
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
@@ -350,6 +392,11 @@ export const App = () => {
           <Route
             path="doubt-tickets/:ticketId"
             element={<DoubtTicketDetail />}
+          />
+          <Route path="announcements" element={<StudentAnnouncementList />} />
+          <Route
+            path="announcements/:announcementId"
+            element={<StudentAnnouncementDetail />}
           />
           <Route path="profile" element={<StudentProfile />} />
         </Route>

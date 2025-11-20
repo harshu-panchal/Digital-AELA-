@@ -5,15 +5,17 @@ import { toast } from "react-toastify";
 import {
   HiOutlineArrowLeft,
   HiOutlineUser,
-  HiOutlineMail,
   HiOutlinePhone,
   HiOutlineBuildingOffice,
   HiOutlineCalendar,
   HiOutlinePlus,
-  HiOutlineCheckCircle,
   HiOutlineClock,
   HiOutlineXCircle,
 } from "react-icons/hi2";
+import {
+  HiOutlineMail,
+  HiOutlineCheckCircle,
+} from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import {

@@ -7,6 +7,7 @@ import {
   verifyRefreshToken,
 } from "../utils/token.js";
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
+import { createSession } from "../middleware/sessionTracking.js";
 
 const buildAuthResponse = (user) => {
   const userId = user._id?.toString() || user.id;
@@ -253,7 +254,17 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    return res.json(buildAuthResponse(user));
+    const authResponse = buildAuthResponse(user);
+    
+    // Create session after successful login
+    try {
+      await createSession(user._id.toString(), authResponse.accessToken, req);
+    } catch (sessionError) {
+      // Log error but don't fail login
+      console.error("Failed to create session:", sessionError);
+    }
+
+    return res.json(authResponse);
   } catch (error) {
     return next(error);
   }
@@ -294,8 +305,24 @@ export const refreshToken = async (req, res, next) => {
   }
 };
 
-export const logout = async (_req, res, next) => {
+export const logout = async (req, res, next) => {
   try {
+    // End session if token is provided
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "");
+    
+    if (token) {
+      try {
+        const Session = (await import("../models/Session.js")).default;
+        const session = await Session.findOne({ token, isActive: true });
+        if (session) {
+          await session.endSession();
+        }
+      } catch (sessionError) {
+        console.error("Failed to end session:", sessionError);
+      }
+    }
+    
     // Invalidate refresh tokens if stored (redis/whitelist). Placeholder for now.
     return res.status(204).send();
   } catch (error) {

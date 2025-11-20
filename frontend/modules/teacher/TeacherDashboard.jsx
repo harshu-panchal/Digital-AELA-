@@ -12,6 +12,7 @@ import {
   HiOutlineDocumentText,
   HiOutlineClock,
   HiOutlineQuestionMarkCircle,
+  HiOutlineMegaphone,
 } from "react-icons/hi2";
 import { FaFilePdf, FaClipboardList, FaShoppingCart, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -388,6 +389,14 @@ const TeacherDashboard = () => {
         tone: "from-[#3b82f6]/20 to-[#2563eb]/20 border-blue-400/40 text-blue-200",
         icon: HiOutlineDocumentText,
         href: "/teacher/payment-slips",
+      },
+      {
+        title: "Announcements",
+        description: "Create and manage announcements for students",
+        cta: "Manage announcements",
+        tone: "from-[#8b5cf6]/20 to-[#7c3aed]/20 border-purple-400/40 text-purple-200",
+        icon: HiOutlineMegaphone,
+        href: "/teacher/announcements",
       },
     ];
 
@@ -1071,6 +1080,60 @@ const TeacherDashboard = () => {
                   </Link>
                 ))
               )}
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineMegaphone className="h-5 w-5" />
+                Announcements
+              </h2>
+              <Link
+                to="/teacher/announcements"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>Create and send announcements to your students</p>
+              <Link
+                to="/teacher/announcements/create"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
+                Create Announcement
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineMegaphone className="h-5 w-5" />
+                Announcements
+              </h2>
+              <Link
+                to="/teacher/announcements"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>Create and send announcements to your students</p>
+              <Link
+                to="/teacher/announcements/create"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
+                Create Announcement
+              </Link>
             </div>
           </motion.section>
         </section>

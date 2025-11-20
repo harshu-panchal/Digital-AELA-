@@ -8,7 +8,9 @@ import { useAuth } from "../../src/contexts/AuthContext";
 import { fetchDashboardData } from "../../src/services/api/superAdmin";
 import { getAllLeads } from "../../src/services/api/crm";
 import { getFinancialDashboard } from "../../src/services/api/expenses";
-import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle, HiOutlineCurrencyDollar, HiOutlineChartBar } from "react-icons/hi2";
+import { getAnnouncementStats } from "../../src/services/api/announcements";
+import { getSessionStats } from "../../src/services/api/sessions";
+import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle, HiOutlineCurrencyDollar, HiOutlineChartBar, HiOutlineMegaphone, HiOutlineComputerDesktop } from "react-icons/hi2";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -48,6 +50,8 @@ const SuperAdminDashboard = () => {
   });
   const [crmStats, setCrmStats] = useState(null);
   const [financialData, setFinancialData] = useState(null);
+  const [announcementStats, setAnnouncementStats] = useState(null);
+  const [sessionStats, setSessionStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -107,11 +111,38 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  // Load Announcement Stats
+  const loadAnnouncementStats = async () => {
+    try {
+      const response = await getAnnouncementStats();
+      setAnnouncementStats(response.stats);
+    } catch (error) {
+      console.error("Failed to load announcement stats:", error);
+    }
+  };
+
+  // Load Session Stats
+  const loadSessionStats = async () => {
+    try {
+      const response = await getSessionStats();
+      setSessionStats(response.stats);
+    } catch (error) {
+      console.error("Failed to load session stats:", error);
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     loadDashboardData();
     loadCrmStats();
     loadFinancialData();
+    loadAnnouncementStats();
+    loadSessionStats();
+    // Refresh session stats every 30 seconds
+    const interval = setInterval(() => {
+      loadSessionStats();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Auto-refresh every 30 seconds
@@ -593,6 +624,124 @@ const SuperAdminDashboard = () => {
                 to="/super-admin/financial-dashboard"
                 className="block rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
                 View Dashboard
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineMegaphone className="h-5 w-5" />
+                  Announcements
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Create and manage platform announcements
+                </p>
+              </div>
+              <Link
+                to="/super-admin/announcements"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {announcementStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total</p>
+                  <p className="text-xl font-semibold text-white">{announcementStats.total || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Published</p>
+                  <p className="text-xl font-semibold text-emerald-400">{announcementStats.published || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Draft</p>
+                  <p className="text-xl font-semibold text-slate-400">{announcementStats.draft || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Scheduled</p>
+                  <p className="text-xl font-semibold text-blue-400">{announcementStats.scheduled || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading announcement stats...
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                to="/super-admin/announcements"
+                className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10 transition">
+                Manage All
+              </Link>
+              <Link
+                to="/super-admin/announcements/create"
+                className="block rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+                Create New
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineComputerDesktop className="h-5 w-5" />
+                  Active Sessions
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Monitor users currently online
+                </p>
+              </div>
+              <Link
+                to="/super-admin/active-sessions"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {sessionStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Active Now</p>
+                  <p className="text-xl font-semibold text-emerald-400">{sessionStats.active || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Today</p>
+                  <p className="text-xl font-semibold text-white">{sessionStats.today || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">This Week</p>
+                  <p className="text-xl font-semibold text-blue-400">{sessionStats.thisWeek || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">This Month</p>
+                  <p className="text-xl font-semibold text-purple-400">{sessionStats.thisMonth || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading session stats...
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                to="/super-admin/active-sessions"
+                className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10 transition">
+                View All
+              </Link>
+              <Link
+                to="/super-admin/active-sessions"
+                className="block rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+                Monitor
               </Link>
             </div>
           </motion.section>

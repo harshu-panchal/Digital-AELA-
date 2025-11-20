@@ -40,6 +40,7 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
       userRole: user.role,
       userFullName: user.fullName,
       email: user.email,
+      token: token,
     };
 
     return next();

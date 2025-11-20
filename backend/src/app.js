@@ -32,6 +32,10 @@ import earningRoutes from "./routes/earningRoutes.js";
 import crmRoutes from "./routes/crmRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import doubtTicketRoutes from "./routes/doubtTicketRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
+import { authenticate } from "./middleware/authMiddleware.js";
+import { trackSession } from "./middleware/sessionTracking.js";
 
 const app = express();
 
@@ -107,7 +111,13 @@ app.get("/api/v1", (_req, res) => {
   });
 });
 
+// Auth routes (no authentication required)
 app.use("/api/v1/auth", authRoutes);
+
+// Apply authentication middleware to all other API routes
+app.use("/api/v1", authenticate);
+// Track sessions for authenticated users
+app.use("/api/v1", trackSession);
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/recruiter/jobs", jobRoutes);
 app.use("/api/v1/recruiter/blogs", blogRoutes);
@@ -138,6 +148,8 @@ app.use("/api/v1/earnings", earningRoutes);
 app.use("/api/v1/crm", crmRoutes);
 app.use("/api/v1/expenses", expenseRoutes);
 app.use("/api/v1/doubt-tickets", doubtTicketRoutes);
+app.use("/api/v1/announcements", announcementRoutes);
+app.use("/api/v1/sessions", sessionRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

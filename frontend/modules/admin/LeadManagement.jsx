@@ -7,15 +7,17 @@ import {
   HiOutlineMagnifyingGlass,
   HiOutlineFunnel,
   HiOutlineUser,
-  HiOutlineMail,
   HiOutlinePhone,
   HiOutlineBuildingOffice,
   HiOutlineCalendar,
-  HiOutlineCheckCircle,
   HiOutlineXCircle,
   HiOutlineClock,
   HiOutlineArrowPath,
 } from "react-icons/hi2";
+import {
+  HiOutlineMail,
+  HiOutlineCheckCircle,
+} from "react-icons/hi";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import {

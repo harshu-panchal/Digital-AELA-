@@ -15,6 +15,7 @@ import {
   HiOutlineExclamationTriangle,
   HiOutlineCreditCard,
   HiOutlineQuestionMarkCircle,
+  HiOutlineMegaphone,
 } from "react-icons/hi2";
 import { HiOutlineAcademicCap } from "react-icons/hi";
 import { Link } from "react-router-dom";
@@ -585,6 +586,33 @@ const StudentDashboard = () => {
               className="block w-full mt-4 text-center px-4 py-2 rounded-lg border border-sky-400/40 bg-sky-400/10 text-sky-200 text-sm font-semibold hover:bg-sky-400/20 transition">
               View All Tickets
             </Link>
+          </motion.section>
+
+          <motion.section
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <HiOutlineMegaphone className="h-5 w-5" />
+                Announcements
+              </h2>
+              <Link
+                to="/student/announcements"
+                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                View all
+              </Link>
+            </header>
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>Stay updated with platform announcements</p>
+              <Link
+                to="/student/announcements"
+                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
+                View Announcements
+              </Link>
+            </div>
           </motion.section>
 
           <motion.section
