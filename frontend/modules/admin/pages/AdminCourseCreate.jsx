@@ -229,15 +229,14 @@ const AdminCourseCreate = () => {
 
     setIsSubmitting(true);
     try {
-      await createCourse(payload);
+      const created = await createCourse(payload);
 
       // Upload brochure if provided
       if (formData.brochureFile) {
         try {
-          // Note: Admin brochure upload would need to be implemented separately
-          toast.warning(
-            "Course saved but brochure upload is not yet available for admin-created courses."
-          );
+          const { uploadAdminCourseBrochure } = await import("../../../src/services/api/adminContent");
+          await uploadAdminCourseBrochure(created.course._id, formData.brochureFile);
+          toast.success("Course and brochure uploaded successfully!");
         } catch (brochureError) {
           console.error("Failed to upload brochure:", brochureError);
           toast.warning(

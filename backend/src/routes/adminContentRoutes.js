@@ -7,6 +7,7 @@ import {
   createCourse,
   createEbook,
   createBlog,
+  uploadAdminCourseBrochure,
 } from "../controllers/adminContentController.js";
 import {
   getPendingCourses,
@@ -20,6 +21,7 @@ import {
   deleteLiveRoom,
 } from "../controllers/adminLiveRoomController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { uploadSinglePdf, handleUploadError } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
 
@@ -42,6 +44,14 @@ router.patch("/teachers/:userId/approve", approveTeacher);
 router.post("/courses", createCourse);
 router.post("/ebooks", createEbook);
 router.post("/blogs", createBlog);
+
+// Upload course brochure PDF
+router.post(
+  "/courses/:courseId/brochure",
+  uploadSinglePdf("brochure"),
+  handleUploadError,
+  uploadAdminCourseBrochure
+);
 
 // Live Room Moderation routes
 router.get("/live-rooms", getLiveRoomsForModeration);

@@ -4,6 +4,7 @@ import EbookResource from "../models/EbookResource.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import RecruiterBlog from "../models/RecruiterBlog.js";
+import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 
 /**
  * Approve/Reject Course
@@ -408,6 +409,96 @@ export const createCourse = async (req, res, next) => {
       .lean();
 
     return res.status(201).json({ course: populatedCourse });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Upload Course Brochure PDF
+ */
+export const uploadAdminCourseBrochure = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can upload brochures",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    // Verify that the course was created by a super admin (instructor is the admin)
+    if (course.instructor.toString() !== userId) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only upload brochures for courses you created",
+        },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: {
+          code: "FILE_REQUIRED",
+          message: "No PDF file uploaded",
+        },
+      });
+    }
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await uploadPdfToCloudinary(
+      req.file.buffer,
+      `digital-aela/courses/${courseId}/brochures`
+    );
+
+    // Update course with brochure URL
+    course.brochureUrl = uploadResult.url;
+    await course.save();
+
+    const populatedCourse = await Course.findById(course._id)
+      .populate("instructor", "fullName email")
+      .lean();
+
+    return res.status(200).json({
+      message: "Brochure uploaded successfully",
+      course: populatedCourse,
+      brochureUrl: uploadResult.url,
+    });
   } catch (error) {
     return next(error);
   }
