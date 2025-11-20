@@ -5,13 +5,27 @@ import { HiOutlineClock, HiOutlineShieldCheck } from "react-icons/hi2";
 import TeacherSidebar from "../components/TeacherSidebar";
 
 const TeacherLayout = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
-  // Check if teacher is not approved (isActive is false or undefined for teachers)
-  // Default to true if isActive is undefined to avoid blocking access for existing users
+  // Wait for user to load before checking approval status
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
+          <p className="mt-4 text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if teacher is not approved (isActive is false)
+  // Only check if user is a teacher and isActive is explicitly false
+  // If isActive is undefined, allow access (for backward compatibility with existing users)
   const isTeacherPendingApproval = 
-    user?.role === "teacher" && 
-    user?.isActive !== undefined && 
+    user && 
+    user.role === "teacher" && 
+    typeof user.isActive === "boolean" && 
     user.isActive === false;
 
   if (isTeacherPendingApproval) {
