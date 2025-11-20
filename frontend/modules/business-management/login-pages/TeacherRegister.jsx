@@ -36,12 +36,10 @@ const createInitialFormState = () => ({
 });
 
 const TeacherRegister = () => {
-  const [formData, setFormData] = useState(createInitialFormState);
+  const [formData, setFormData] = useState(() => createInitialFormState());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { register: registerUser, getRoleHome } = useAuth();
-
-  motion.div;
+  const { register: registerUser } = useAuth();
 
   const handleChange = (event) => {
     const { name, value, type, checked, files } = event.target;
