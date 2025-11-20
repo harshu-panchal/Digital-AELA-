@@ -105,7 +105,7 @@ const TeacherLayout = () => {
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="fixed top-4 right-4 z-[60] md:hidden p-2 rounded-lg bg-[#0B0F1E]/95 border border-white/10 text-white hover:bg-white/10 transition"
+          className="fixed top-4 left-4 z-[60] md:hidden p-2 rounded-lg bg-[#0B0F1E]/95 border border-white/10 text-white hover:bg-white/10 transition"
           aria-label="Open sidebar">
           <HiOutlineBars3 className="w-6 h-6" />
         </button>
