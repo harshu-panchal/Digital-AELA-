@@ -26,6 +26,7 @@ const buildAuthResponse = (user) => {
       email: user.email,
       fullName: user.fullName,
       createdAt: user.createdAt,
+      isActive: user.isActive !== undefined ? user.isActive : true, // Include isActive status
       metadata: user.metadata || {}, // Include metadata with avatarUrl
     },
   };

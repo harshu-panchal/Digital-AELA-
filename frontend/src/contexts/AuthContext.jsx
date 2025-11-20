@@ -158,6 +158,7 @@ export const AuthProvider = ({ children }) => {
       email: authPayload.user.email,
       fullName: authPayload.user.fullName,
       createdAt: authPayload.user.createdAt,
+      isActive: authPayload.user.isActive !== undefined ? authPayload.user.isActive : true,
       metadata: authPayload.user.metadata ?? {},
       source: "backend",
     };
