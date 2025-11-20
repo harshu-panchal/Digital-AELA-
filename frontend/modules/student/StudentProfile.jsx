@@ -144,7 +144,8 @@ const StudentProfile = () => {
     };
 
     loadStudentProfile();
-  }, [authUser, profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id]); // Only depend on authUser.id to prevent multiple loads
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
