@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { createTeacherCourse } from "../../src/services/teacherCourses";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
+import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
 
 const initialFormState = {
   title: "",
@@ -21,6 +22,8 @@ const initialFormState = {
   learningOutcomes: "",
   requirements: "",
   coverImage: "",
+  coverImageFile: null,
+  coverImagePreview: null,
   introVideoUrl: "",
   syllabus: "",
   tags: "",
@@ -41,6 +44,7 @@ const categories = [
 const CourseCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const navigate = useNavigate();
 
   const priceHelper = useMemo(
@@ -55,20 +59,73 @@ const CourseCreate = () => {
     const { name, value, type, checked, files } = event.target;
     if (type === "file" && files && files[0]) {
       const file = files[0];
-      // Validate PDF file
-      if (file.type !== "application/pdf") {
-        toast.error("Please upload a PDF file");
+      
+      // Handle cover image upload
+      if (name === "coverImageFile") {
+        // Validate image file
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please upload an image file");
+          return;
+        }
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("Image file size must be less than 5MB");
+          return;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            coverImageFile: file,
+            coverImagePreview: reader.result,
+          }));
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload to Cloudinary
+        setIsUploadingImage(true);
+        uploadImageToCloudinary(file, "digital-aela/courses/covers")
+          .then((url) => {
+            setFormData((prev) => ({
+              ...prev,
+              coverImage: url,
+            }));
+            toast.success("Cover image uploaded successfully");
+          })
+          .catch((error) => {
+            toast.error(error.message || "Failed to upload image");
+            setFormData((prev) => ({
+              ...prev,
+              coverImageFile: null,
+              coverImagePreview: null,
+            }));
+          })
+          .finally(() => {
+            setIsUploadingImage(false);
+          });
         return;
       }
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("PDF file size must be less than 10MB");
+      
+      // Handle PDF brochure file
+      if (name === "brochureFile") {
+        // Validate PDF file
+        if (file.type !== "application/pdf") {
+          toast.error("Please upload a PDF file");
+          return;
+        }
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error("PDF file size must be less than 10MB");
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          [name]: file,
+        }));
         return;
       }
-      setFormData((prev) => ({
-        ...prev,
-        [name]: file,
-      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -403,19 +460,47 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="coverImage" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Cover image URL
+                <label htmlFor="coverImageFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Cover Image
                 </label>
-                <input
-                  id="coverImage"
-                  name="coverImage"
-                  type="url"
-                  value={formData.coverImage}
-                  onChange={handleChange}
-                  placeholder="https://example.com/cover.jpg"
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                />
-                <p className="text-[11px] text-slate-400">Use a 16:9 image. You can upload assets in the media manager later.</p>
+                <div className="space-y-3">
+                  <input
+                    id="coverImageFile"
+                    name="coverImageFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleChange}
+                    disabled={isUploadingImage}
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {isUploadingImage && (
+                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                  )}
+                  {formData.coverImagePreview && (
+                    <div className="relative w-full max-w-md">
+                      <img
+                        src={formData.coverImagePreview}
+                        alt="Cover preview"
+                        className="w-full h-auto rounded-lg border border-white/10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            coverImageFile: null,
+                            coverImagePreview: null,
+                            coverImage: "",
+                          }));
+                        }}
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400">Upload a 16:9 cover image (max 5MB). Recommended: 1920x1080px.</p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">

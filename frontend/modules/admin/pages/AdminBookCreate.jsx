@@ -9,6 +9,7 @@ import {
   safeString,
   sanitizeUrl,
 } from "../../../src/utils/registrationHelpers";
+import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -26,6 +27,8 @@ const initialFormState = {
   price: "",
   category: "",
   coverImage: "",
+  coverImageFile: null,
+  coverImagePreview: null,
   previewUrl: "",
   tags: "",
   pages: "",
@@ -48,6 +51,7 @@ const categories = [
 const AdminBookCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [featuredCount, setFeaturedCount] = useState(0);
   const [maxFeatured, setMaxFeatured] = useState(4);
   const navigate = useNavigate();
@@ -78,6 +82,55 @@ const AdminBookCreate = () => {
   const handleInputChange = useCallback(
     (event) => {
       const { name, value, type, checked, files } = event.target;
+      
+      if (name === "coverImageFile" && files && files[0]) {
+        const file = files[0];
+        // Validate image file
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please upload an image file");
+          return;
+        }
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("Image file size must be less than 5MB");
+          return;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            coverImageFile: file,
+            coverImagePreview: reader.result,
+          }));
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload to Cloudinary
+        setIsUploadingImage(true);
+        uploadImageToCloudinary(file, "digital-aela/books/covers")
+          .then((url) => {
+            setFormData((prev) => ({
+              ...prev,
+              coverImage: url,
+            }));
+            toast.success("Cover image uploaded successfully");
+          })
+          .catch((error) => {
+            toast.error(error.message || "Failed to upload image");
+            setFormData((prev) => ({
+              ...prev,
+              coverImageFile: null,
+              coverImagePreview: null,
+            }));
+          })
+          .finally(() => {
+            setIsUploadingImage(false);
+          });
+        return;
+      }
+      
       if (name === "file") {
         const file = files?.[0];
         setFormData((prev) => ({
@@ -335,21 +388,49 @@ const AdminBookCreate = () => {
 
               <div className="space-y-1.5">
                 <label
-                  htmlFor="coverImage"
+                  htmlFor="coverImageFile"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Cover image URL
+                  Cover Image
                 </label>
-                <input
-                  id="coverImage"
-                  name="coverImage"
-                  type="url"
-                  value={formData.coverImage}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                />
+                <div className="space-y-3">
+                  <input
+                    id="coverImageFile"
+                    name="coverImageFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    disabled={isUploadingImage}
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {isUploadingImage && (
+                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                  )}
+                  {formData.coverImagePreview && (
+                    <div className="relative w-full max-w-md">
+                      <img
+                        src={formData.coverImagePreview}
+                        alt="Cover preview"
+                        className="w-full h-auto rounded-lg border border-white/10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            coverImageFile: null,
+                            coverImagePreview: null,
+                            coverImage: "",
+                          }));
+                        }}
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400">
-                  Optional: Provide a public cover image URL for storefronts.
+                  Optional: Upload a cover image for your e-book (max 5MB).
                 </p>
               </div>
 
