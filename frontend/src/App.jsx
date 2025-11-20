@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -84,9 +84,14 @@ import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import UserDetail from "../modules/admin/pages/UserDetail";
 import SystemHealth from "../modules/admin/pages/SystemHealth";
-import TeacherDashboard from "../modules/teacher/TeacherDashboard";
+// Use lazy loading to prevent circular dependency issues
+const TeacherDashboard = lazy(() =>
+  import("../modules/teacher/TeacherDashboard")
+);
 import TeacherMarketplace from "../modules/teacher/TeacherMarketplace";
-import TeacherLayout from "../modules/teacher/layout/TeacherLayout";
+const TeacherLayout = lazy(() =>
+  import("../modules/teacher/layout/TeacherLayout")
+);
 import CourseList from "../modules/teacher/CourseList";
 import EbookList from "../modules/teacher/EbookList";
 import QuizList from "../modules/teacher/QuizList";
@@ -210,10 +215,35 @@ export const App = () => {
           path="/teacher/*"
           element={
             <ProtectedRoute roles={["teacher", "super-admin"]}>
-              <TeacherLayout />
+              <Suspense
+                fallback={
+                  <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
+                      <p className="mt-4 text-gray-400">Loading...</p>
+                    </div>
+                  </div>
+                }>
+                <TeacherLayout />
+              </Suspense>
             </ProtectedRoute>
           }>
-          <Route path="dashboard" element={<TeacherDashboard />} />
+          <Route
+            path="dashboard"
+            element={
+              <Suspense
+                fallback={
+                  <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
+                      <p className="mt-4 text-gray-400">Loading dashboard...</p>
+                    </div>
+                  </div>
+                }>
+                <TeacherDashboard />
+              </Suspense>
+            }
+          />
           <Route path="courses" element={<CourseList />} />
           <Route path="courses/new" element={<CourseCreate />} />
           <Route path="courses/:courseId" element={<TeacherCourseDetail />} />

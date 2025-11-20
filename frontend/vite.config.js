@@ -13,24 +13,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Split vendor chunks to avoid circular dependencies
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('react-router')) {
-              return 'router-vendor';
-            }
-            if (id.includes('framer-motion')) {
-              return 'motion-vendor';
-            }
-            if (id.includes('react-icons')) {
-              return 'icons-vendor';
-            }
-            return 'vendor';
-          }
-        },
+        // Let Vite handle chunking automatically to avoid circular dependencies
+        manualChunks: undefined,
       },
     },
     commonjsOptions: {
@@ -38,6 +22,7 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     chunkSizeWarningLimit: 1000,
+    minify: 'esbuild',
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
