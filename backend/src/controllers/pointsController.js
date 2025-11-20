@@ -175,7 +175,10 @@ export const getPointsHistory = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
     
-    if (!userId) {
+    // Check if userId exists and is a non-empty string
+    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsHistory] Missing or invalid userId. req.auth:", req.auth, "userId:", userId, "type:", typeof userId);
       return res.status(401).json({
         error: {
           code: "UNAUTHORIZED",
@@ -184,24 +187,27 @@ export const getPointsHistory = async (req, res, next) => {
       });
     }
 
+    // Trim whitespace from userId
+    const trimmedUserId = userId.trim();
+
     // Validate and create ObjectId
     let studentObjectId;
     try {
-      if (!mongoose.isValidObjectId(userId)) {
+      if (!mongoose.isValidObjectId(trimmedUserId)) {
         // eslint-disable-next-line no-console
-        console.error("[getPointsHistory] Invalid ObjectId format. userId:", userId, "type:", typeof userId);
+        console.error("[getPointsHistory] Invalid ObjectId format. userId:", trimmedUserId, "type:", typeof trimmedUserId);
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
             message: "Invalid user ID",
-            details: `User ID must be a valid MongoDB ObjectId. Received: ${userId} (${typeof userId})`,
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${trimmedUserId} (${typeof trimmedUserId})`,
           },
         });
       }
-      studentObjectId = new mongoose.Types.ObjectId(userId);
+      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("[getPointsHistory] Error creating ObjectId:", error.message, "userId:", userId, "type:", typeof userId);
+      console.error("[getPointsHistory] Error creating ObjectId:", error.message, "userId:", trimmedUserId, "type:", typeof trimmedUserId);
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
@@ -275,7 +281,10 @@ export const getPointsStats = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
     
-    if (!userId) {
+    // Check if userId exists and is a non-empty string
+    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsStats] Missing or invalid userId. req.auth:", req.auth, "userId:", userId, "type:", typeof userId);
       return res.status(401).json({
         error: {
           code: "UNAUTHORIZED",
@@ -284,28 +293,31 @@ export const getPointsStats = async (req, res, next) => {
       });
     }
 
+    // Trim whitespace from userId
+    const trimmedUserId = userId.trim();
+
     // Validate and create ObjectId
     let studentObjectId;
     try {
-      if (!mongoose.isValidObjectId(userId)) {
+      if (!mongoose.isValidObjectId(trimmedUserId)) {
         // eslint-disable-next-line no-console
-        console.error("[getPointsStats] Invalid ObjectId format. userId:", userId, "type:", typeof userId);
+        console.error("[getPointsStats] Invalid ObjectId format. userId:", trimmedUserId, "type:", typeof trimmedUserId);
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Invalid user ID format",
-            details: `User ID must be a valid MongoDB ObjectId. Received: ${userId} (${typeof userId})`,
+            message: "Invalid user ID",
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${trimmedUserId} (${typeof trimmedUserId})`,
           },
         });
       }
-      studentObjectId = new mongoose.Types.ObjectId(userId);
+      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("[getPointsStats] Error creating ObjectId:", error.message, "userId:", userId, "type:", typeof userId);
+      console.error("[getPointsStats] Error creating ObjectId:", error.message, "userId:", trimmedUserId, "type:", typeof trimmedUserId);
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Invalid user ID format",
+          message: "Invalid user ID",
           details: error.message,
         },
       });
