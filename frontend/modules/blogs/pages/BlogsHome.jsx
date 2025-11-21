@@ -81,7 +81,8 @@ const BlogsHome = () => {
               Stories, strategies, and wins from the Digital AELA community.
             </h1>
             <p className="text-sm text-gray-300 sm:text-base text-balance">
-              Explore the journeys of speakers, educators, and learners. Publish your ideas, grow your influence, and connect with the community.
+              Explore the journeys of speakers, educators, and learners. Publish
+              your ideas, grow your influence, and connect with the community.
             </p>
 
             {isAuthenticated && (
@@ -118,7 +119,8 @@ const BlogsHome = () => {
 
             {loadError && (
               <div className="rounded-2xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-200">
-                {loadError.message || "Unable to load blogs. Please try refreshing."}
+                {loadError.message ||
+                  "Unable to load blogs. Please try refreshing."}
               </div>
             )}
 
@@ -141,8 +143,4 @@ const BlogsHome = () => {
   );
 };
 
-//wedrfghj
-
 export default BlogsHome;
-
-
