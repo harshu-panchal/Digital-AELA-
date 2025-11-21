@@ -445,6 +445,26 @@ const VoiceRoom = () => {
     });
   }, [volume, isMuted]);
 
+  // Calculate derived values (must be before early returns)
+  const speakers = participants.filter((p) => p.role === "speaker" || p.role === "host");
+  const listeners = participants.filter((p) => p.role === "listener");
+  const canApproveRequests = userRole === "host";
+  const hasRequested = speakRequests.some((r) => r.userId === user?.id);
+  const hasHostsOrSpeakers = speakers.length > 0;
+
+  // Debug logging - MUST be before any early returns (Rules of Hooks)
+  useEffect(() => {
+    if (userRole === "host") {
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - speakRequests state:", speakRequests);
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - canApproveRequests:", canApproveRequests);
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - userRole:", userRole);
+    }
+  }, [speakRequests, canApproveRequests, userRole]);
+
+  // Early returns MUST come after all hooks
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -460,24 +480,6 @@ const VoiceRoom = () => {
       </div>
     );
   }
-
-  const speakers = participants.filter((p) => p.role === "speaker" || p.role === "host");
-  const listeners = participants.filter((p) => p.role === "listener");
-  const canApproveRequests = userRole === "host";
-  const hasRequested = speakRequests.some((r) => r.userId === user?.id);
-  const hasHostsOrSpeakers = speakers.length > 0;
-
-  // Debug logging
-  useEffect(() => {
-    if (userRole === "host") {
-      // eslint-disable-next-line no-console
-      console.log("[VoiceRoom] Host - speakRequests state:", speakRequests);
-      // eslint-disable-next-line no-console
-      console.log("[VoiceRoom] Host - canApproveRequests:", canApproveRequests);
-      // eslint-disable-next-line no-console
-      console.log("[VoiceRoom] Host - userRole:", userRole);
-    }
-  }, [speakRequests, canApproveRequests, userRole]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-black to-[#0a0a0a] p-4 sm:p-6">
