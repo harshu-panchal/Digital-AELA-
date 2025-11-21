@@ -25,6 +25,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const rtpCapabilitiesListenerRef = useRef(null); // Persistent listener for RTP capabilities
   const isCleaningUpRef = useRef(false); // Prevent concurrent cleanup calls
   const isSettingUpRef = useRef(false); // Prevent concurrent setup calls
+  const lastSetupKeyRef = useRef(null); // Track last setup key to prevent duplicate runs
+  const effectRunCountRef = useRef(0); // Track how many times effect has run to detect loops
+  const lastEffectDepsRef = useRef(null); // Track last effect dependencies to detect actual changes
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -600,7 +603,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     });
   }, []);
 
-  // Cleanup all
+  // Cleanup all - use batch updates to prevent re-renders during effect execution
   const cleanupAll = useCallback(() => {
     // Prevent concurrent cleanup calls
     if (isCleaningUpRef.current) {
@@ -678,14 +681,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     rtpCapabilitiesRef.current = null;
     rtpCapabilitiesReceivedRef.current = false;
 
-    // Update state in a way that doesn't trigger re-renders during effect execution
-    setRemoteStreams(new Map());
-    setConnectionState("disconnected");
-    
-    // Reset cleanup flag after a brief delay to allow state updates to complete
-    setTimeout(() => {
-      isCleaningUpRef.current = false;
-    }, 100);
+    // Batch state updates using requestAnimationFrame to prevent immediate re-renders
+    // This prevents the effect from re-running immediately after cleanup
+    requestAnimationFrame(() => {
+      setRemoteStreams(new Map());
+      setConnectionState("disconnected");
+      // Reset cleanup flag after state updates complete
+      requestAnimationFrame(() => {
+        isCleaningUpRef.current = false;
+      });
+    });
     
     // eslint-disable-next-line no-console
     console.log("[WebRTC] Cleanup complete");
@@ -789,25 +794,50 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
   // Auto-setup based on role
   useEffect(() => {
-    if (!socket || !roomId || !role) {
-      // Cleanup if we lose socket, roomId, or role
-      if (setupCompleteRef.current && !isCleaningUpRef.current) {
-        setupCompleteRef.current = false;
-        isSettingUpRef.current = false;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        cleanupAll();
-      }
-      lastRoleRef.current = null;
-      lastRoomIdRef.current = null;
+    // Create a stable dependency key to detect actual changes
+    const depsKey = socket && roomId && role 
+      ? `${socket.id || 'no-socket'}-${roomId}-${role}`
+      : null;
+    
+    // CRITICAL: Prevent infinite loops by checking if we've already processed these exact dependencies
+    // Check BEFORE updating the ref
+    if (depsKey && lastEffectDepsRef.current === depsKey) {
+      // Same dependencies as last run - this is a duplicate run, skip it completely
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Duplicate effect run detected with same deps, skipping to prevent infinite loop");
       return;
     }
+    
+    // Track this run only if dependencies actually changed
+    if (depsKey) {
+      lastEffectDepsRef.current = depsKey;
+      effectRunCountRef.current = 1; // Reset to 1 for new dependency set
+    } else {
+      lastEffectDepsRef.current = null;
+      effectRunCountRef.current = 0;
+    }
+    
+    // Early return if dependencies are missing
+    if (!socket || !roomId || !role) {
+      // Reset refs when dependencies are missing
+      lastRoleRef.current = null;
+      lastRoomIdRef.current = null;
+      lastSetupKeyRef.current = null;
+      effectRunCountRef.current = 0;
+      // Don't cleanup here - cleanup will happen in cleanup function
+      return;
+    }
+    
+    // Create a stable key to track this specific setup attempt
+    const setupKey = `${socket?.id || 'no-socket'}-${roomId}-${role}`;
     
     // Check if role or roomId actually changed
     const roleChanged = lastRoleRef.current !== null && lastRoleRef.current !== role;
     const roomIdChanged = lastRoomIdRef.current !== null && lastRoomIdRef.current !== roomId;
+    const setupKeyChanged = lastSetupKeyRef.current !== setupKey;
     
     // Don't setup if already set up and nothing changed
-    if (setupCompleteRef.current && !roleChanged && !roomIdChanged) {
+    if (setupCompleteRef.current && !roleChanged && !roomIdChanged && !setupKeyChanged) {
       return;
     }
     
@@ -818,23 +848,27 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
 
-    // Cleanup if role or room changed (before updating refs)
-    if (setupCompleteRef.current && (roleChanged || roomIdChanged) && !isCleaningUpRef.current) {
+    // If role or room changed and we had a previous setup, mark for cleanup
+    // But don't cleanup here - do it in the cleanup function to avoid state updates during render
+    if (setupCompleteRef.current && (roleChanged || roomIdChanged || setupKeyChanged)) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Cleaning up due to role/room change");
+      console.log("[WebRTC] Role/room changed, will cleanup in effect cleanup function");
       setupCompleteRef.current = false;
       isSettingUpRef.current = false;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      cleanupAll();
-      // Update refs and return - setup will happen on next effect run after cleanup completes
+      // Update refs
       lastRoleRef.current = role;
       lastRoomIdRef.current = roomId;
+      lastSetupKeyRef.current = setupKey;
+      // Reset effect run count when dependencies actually change
+      effectRunCountRef.current = 0;
+      // Return early - cleanup will happen in cleanup function, then effect will run again
       return;
     }
 
     // Update refs BEFORE starting setup to prevent duplicate runs
     lastRoleRef.current = role;
     lastRoomIdRef.current = roomId;
+    lastSetupKeyRef.current = setupKey;
 
     // Mark as setting up to prevent concurrent calls
     isSettingUpRef.current = true;
@@ -856,15 +890,42 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       .then(() => {
         setupCompleteRef.current = true;
         isSettingUpRef.current = false;
+        // Reset effect run count on successful setup
+        effectRunCountRef.current = 0;
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
         console.error("[WebRTC] Failed to setup:", error);
         setupCompleteRef.current = false;
         isSettingUpRef.current = false;
+        // Reset effect run count on error
+        effectRunCountRef.current = 0;
       });
 
-    // No cleanup function here - we handle cleanup in the effect body to prevent infinite loops
+    // Cleanup function - only runs when dependencies actually change or component unmounts
+    // Store the current setup key in a closure to compare against in cleanup
+    const currentSetupKeyForCleanup = setupKey;
+    const currentDepsKeyForCleanup = depsKey;
+    
+    return () => {
+      // Only cleanup if dependencies actually changed (not just re-running)
+      if (lastEffectDepsRef.current !== currentDepsKeyForCleanup) {
+        // Dependencies changed, cleanup is needed
+        if (setupCompleteRef.current) {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Effect cleanup - dependencies changed, cleaning up");
+          setupCompleteRef.current = false;
+          isSettingUpRef.current = false;
+          // Reset effect run count
+          effectRunCountRef.current = 0;
+          // Use requestAnimationFrame to batch state updates and prevent immediate re-renders
+          requestAnimationFrame(() => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            cleanupAll();
+          });
+        }
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, roomId, role]); // Don't include function dependencies - they cause infinite loops
 
