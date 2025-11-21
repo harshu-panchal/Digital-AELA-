@@ -92,13 +92,23 @@ const PDFEbookReader = () => {
               const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
               const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
               
-              // Only throw error if Content-Type is image AND URL ends with image extension
+              // If Content-Type is image AND URL ends with image extension, it's likely a mistake
               if (hasImageExtension) {
-                throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
+                console.error("⚠️ Detected image URL instead of PDF:", {
+                  url: data.downloadUrl,
+                  contentType: contentType,
+                  urlPath: urlPath,
+                });
+                // Show a helpful error message but still allow PDF viewer to attempt loading
+                // (in case it's a false positive or the file can be converted)
+                setError("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. This might be a cover image. Please check the ebook's download URL or contact the administrator to upload the correct PDF file.");
+                toast.error("The ebook URL points to an image file. This might be the cover image instead of the PDF. The PDF viewer will attempt to load it anyway.");
+                // Don't throw - let the PDF viewer try and show its own error if it fails
+              } else {
+                // If Content-Type is image but URL doesn't end with image extension, it might be incorrectly configured
+                // Log a warning but don't block - let the PDF viewer try to load it
+                console.warn("Content-Type indicates image, but URL doesn't match:", contentType, data.downloadUrl);
               }
-              // If Content-Type is image but URL doesn't end with image extension, it might be incorrectly configured
-              // Log a warning but don't block - let the PDF viewer try to load it
-              console.warn("Content-Type indicates image, but URL doesn't match:", contentType, data.downloadUrl);
             } else if (contentTypeLower.includes("pdf") || contentTypeLower.includes("application/pdf")) {
               // Valid PDF Content-Type - proceed
               console.log("Valid PDF Content-Type confirmed:", contentType);
@@ -125,7 +135,14 @@ const PDFEbookReader = () => {
             
             if (hasImageExtension && !urlPath.endsWith('.pdf')) {
               // URL clearly ends with image extension and no PDF - likely an error
-              throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
+              console.error("⚠️ URL ends with image extension but no Content-Type header:", {
+                url: data.downloadUrl,
+                urlPath: urlPath,
+              });
+              // Show error but still allow PDF viewer to attempt loading
+              setError("Invalid PDF URL: The ebook URL appears to point to an image file (ends with image extension). Please check the ebook's download URL or contact the administrator to upload the correct PDF file.");
+              toast.error("The ebook URL appears to be an image file. This might be the cover image. The PDF viewer will attempt to load it anyway.");
+              // Don't throw - let the PDF viewer try and show its own error if it fails
             }
             
             // Check if URL ends with .pdf or is a Cloudinary raw resource
@@ -134,12 +151,16 @@ const PDFEbookReader = () => {
             }
           }
         } catch (testError) {
-          // If it's our validation error, re-throw it
-          if (testError.message && testError.message.includes("Invalid PDF URL")) {
-            throw testError;
-          }
           // For network errors or other issues, log warning but don't block
-          console.warn("Could not verify PDF URL accessibility:", testError);
+          // Only block if it's a CORS or serious error
+          if (testError.name === 'TypeError' && testError.message.includes('fetch')) {
+            console.warn("Could not verify PDF URL accessibility (possible CORS issue):", testError.message);
+            // Don't block - let the PDF viewer try to load it
+          } else if (testError.message && !testError.message.includes("Invalid PDF URL")) {
+            // Only log non-validation errors
+            console.warn("Could not verify PDF URL accessibility:", testError);
+          }
+          // For validation errors, we've already set the error state, so don't re-throw
         }
         
         setPdfUrl(data.downloadUrl);
