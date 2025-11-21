@@ -19,6 +19,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const rtpCapabilitiesRef = useRef(null);
   const rtpCapabilitiesReceivedRef = useRef(false);
   const reconnectAttemptRef = useRef(false);
+  const setupCompleteRef = useRef(false);
+  const lastRoleRef = useRef(null);
+  const lastRoomIdRef = useRef(null);
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -697,6 +700,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       console.log("[WebRTC] Socket reconnected, reinitializing...");
       setConnectionState("reconnecting");
       reconnectAttemptRef.current = true;
+      setupCompleteRef.current = false;
       
       // Cleanup existing resources
       cleanupAll();
@@ -715,11 +719,30 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     return () => {
       socket.off("reconnect", handleReconnect);
     };
-  }, [socket, cleanupAll]);
+  }, [socket]); // Remove cleanupAll from dependencies
 
   // Auto-setup based on role
   useEffect(() => {
-    if (!socket || !roomId || !role) return;
+    if (!socket || !roomId || !role) {
+      // Cleanup if we lose socket, roomId, or role
+      if (setupCompleteRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        cleanupAll();
+        setupCompleteRef.current = false;
+      }
+      lastRoleRef.current = null;
+      lastRoomIdRef.current = null;
+      return;
+    }
+    
+    // Check if role or roomId actually changed
+    const roleChanged = lastRoleRef.current !== null && lastRoleRef.current !== role;
+    const roomIdChanged = lastRoomIdRef.current !== null && lastRoomIdRef.current !== roomId;
+    
+    // Don't setup if already set up and nothing changed
+    if (setupCompleteRef.current && !roleChanged && !roomIdChanged) {
+      return;
+    }
     
     // Don't setup if we're in the middle of a reconnection
     if (reconnectAttemptRef.current) {
@@ -728,29 +751,57 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log("[WebRTC] Auto-setting up for role:", role);
-    if (role === "speaker" || role === "host") {
-      setupAsSpeaker().catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error("[WebRTC] Failed to setup as speaker:", error);
-      });
-    } else if (role === "listener") {
-      setupAsListener().catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error("[WebRTC] Failed to setup as listener:", error);
-      });
+    // Cleanup if role or room changed (before updating refs)
+    if (setupCompleteRef.current && (roleChanged || roomIdChanged)) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Cleaning up due to role/room change");
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      cleanupAll();
+      setupCompleteRef.current = false;
     }
 
-    return () => {
-      // Only cleanup on unmount or role change, not on every render
-      if (socket && roomId) {
+    // Update refs
+    lastRoleRef.current = role;
+    lastRoomIdRef.current = roomId;
+
+    // eslint-disable-next-line no-console
+    console.log("[WebRTC] Auto-setting up for role:", role);
+    
+    let setupPromise;
+    if (role === "speaker" || role === "host") {
+      setupPromise = setupAsSpeaker();
+    } else if (role === "listener") {
+      setupPromise = setupAsListener();
+    } else {
+      return;
+    }
+
+    setupPromise
+      .then(() => {
+        setupCompleteRef.current = true;
+      })
+      .catch((error) => {
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Cleaning up due to role/room change");
+        console.error("[WebRTC] Failed to setup:", error);
+        setupCompleteRef.current = false;
+      });
+
+    // No cleanup function here - we handle cleanup in the effect body to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, roomId, role]); // setupAsSpeaker, setupAsListener, cleanupAll are stable with useCallback
+
+  // Separate effect for cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Only cleanup when component actually unmounts
+      if (setupCompleteRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Component unmounting - cleaning up");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         cleanupAll();
       }
     };
-  }, [socket, roomId, role, setupAsSpeaker, setupAsListener, cleanupAll]);
+  }, []); // Empty deps - only run on mount/unmount
 
   return {
     localStream,
