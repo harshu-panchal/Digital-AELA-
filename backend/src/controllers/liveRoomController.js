@@ -53,8 +53,13 @@ export const getLiveRooms = async (req, res, next) => {
           : [],
         host: room.host
           ? typeof room.host === "object"
+            ? room.host._id.toString()
+            : room.host.toString()
+          : null,
+        hostName: room.host
+          ? typeof room.host === "object"
             ? room.host.fullName
-            : room.host
+            : "Unknown"
           : "Unknown",
         winners: room.winners || [],
         createdAt: room.createdAt,
@@ -123,8 +128,13 @@ export const getLiveRoom = async (req, res, next) => {
         : [],
       host: room.host
         ? typeof room.host === "object"
+          ? room.host._id.toString()
+          : room.host.toString()
+        : null,
+      hostName: room.host
+        ? typeof room.host === "object"
           ? room.host.fullName
-          : room.host
+          : "Unknown"
         : "Unknown",
       winners: room.winners || [],
       createdAt: room.createdAt,

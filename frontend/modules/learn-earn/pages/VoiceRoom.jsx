@@ -55,13 +55,18 @@ const VoiceRoom = () => {
         if (response?.room) {
           setRoom(response.room);
           
-          // Determine user role
-          const isHost = response.room.host === user?.id || 
-                       (typeof response.room.host === "object" && response.room.host._id === user?.id);
+          // Determine user role - check if user is the host
+          const roomHostId = response.room.host?.toString();
+          const currentUserId = user?.id?.toString();
+          const isHost = roomHostId && currentUserId && roomHostId === currentUserId;
           const isSpeaker = response.room.speakers?.some(
-            (s) => s === user?.id || (typeof s === "object" && s._id === user?.id)
+            (s) => {
+              const speakerId = typeof s === "object" ? s._id?.toString() : s?.toString();
+              return speakerId && currentUserId && speakerId === currentUserId;
+            }
           );
           
+          // Set initial role (will be updated when joining voice room)
           setUserRole(isHost ? "host" : isSpeaker ? "speaker" : "listener");
         }
       } catch (error) {
@@ -114,6 +119,10 @@ const VoiceRoom = () => {
 
     const handleVoiceRoomJoined = (data) => {
       setParticipants(data.participants || []);
+      // Update user role from backend (backend auto-detects host/speaker)
+      if (data.role) {
+        setUserRole(data.role);
+      }
       // mediasoup setup happens automatically in useWebRTC hook
     };
 
