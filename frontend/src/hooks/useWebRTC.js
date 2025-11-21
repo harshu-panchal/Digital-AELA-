@@ -709,9 +709,19 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
 
+    // Check if peer connection already exists to avoid duplicates
+    if (peerConnectionsRef.current.has(speakerSocketId)) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Peer connection already exists for:", speakerSocketId);
+      return;
+    }
+
     try {
       // Create peer connection
       const peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+      
+      // Store immediately to prevent duplicate creation
+      peerConnectionsRef.current.set(speakerSocketId, peerConnection);
 
       // Handle remote stream
       peerConnection.ontrack = (event) => {
@@ -770,9 +780,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         offer,
       });
 
-      peerConnectionsRef.current.set(speakerSocketId, peerConnection);
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Created peer connection to speaker:", speakerSocketId);
+      console.log("[WebRTC] Created peer connection to speaker:", speakerSocketId, "Connection state:", peerConnection.connectionState);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error creating peer connection to speaker:", error);
@@ -787,7 +796,24 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     try {
       const { fromSocketId, offer } = data;
-      const peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+      
+      // Check if peer connection already exists
+      let peerConnection = peerConnectionsRef.current.get(fromSocketId);
+      
+      if (!peerConnection) {
+        // Create new peer connection
+        peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+        peerConnectionsRef.current.set(fromSocketId, peerConnection);
+      } else {
+        // Connection already exists - check if we should handle this offer
+        // If connection is in "stable" state, we might have already processed an offer
+        if (peerConnection.signalingState === "stable" || peerConnection.signalingState === "have-local-offer") {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Peer connection already exists and in state:", peerConnection.signalingState, "for:", fromSocketId);
+          // Don't process duplicate offer
+          return;
+        }
+      }
 
       // Add local stream tracks
       localStreamRef.current.getTracks().forEach((track) => {
@@ -817,9 +843,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         answer,
       });
 
-      peerConnectionsRef.current.set(fromSocketId, peerConnection);
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Handled offer from listener:", fromSocketId);
+      console.log("[WebRTC] Handled offer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error handling WebRTC offer:", error);
@@ -836,9 +861,22 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       const { fromSocketId, answer } = data;
       const peerConnection = peerConnectionsRef.current.get(fromSocketId);
       if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        // eslint-disable-next-line no-console
-        console.log("[WebRTC] Handled answer from:", fromSocketId, "Connection state:", peerConnection.connectionState);
+        // Check signaling state before setting remote description
+        // We can only set remote answer if we're in "have-local-offer" state
+        if (peerConnection.signalingState === "have-local-offer") {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Handled answer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState);
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] Cannot set remote answer - wrong signaling state:", peerConnection.signalingState, "for:", fromSocketId);
+          // If we're in "stable" state, the connection might already be established
+          if (peerConnection.signalingState === "stable") {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection already stable, answer might be duplicate");
+          }
+          return;
+        }
         
         // Check connection state
         peerConnection.onconnectionstatechange = () => {
