@@ -881,13 +881,25 @@ export const setupSocketIO = (io) => {
         // Track speaker
         addSpeaker(roomId, socket.id);
 
-        // Notify all listeners in the room
+        // Notify all participants in the room (both listeners and other speakers)
+        // This allows bidirectional connections between speakers
         socket.to(`voice-room:${roomId}`).emit("webrtc-speaker-started", {
           roomId,
           socketId: socket.id,
           userId: socket.userId,
           userName: socket.userFullName,
         });
+        
+        // Also send existing speakers to the new speaker so they can connect back
+        const existingSpeakers = getRoomSpeakers(roomId).filter(sid => sid !== socket.id);
+        if (existingSpeakers.length > 0) {
+          // eslint-disable-next-line no-console
+          console.log(`[VoiceRoom] Sending ${existingSpeakers.length} existing speakers to new speaker`);
+          socket.emit("existing-speakers", {
+            roomId,
+            speakers: existingSpeakers.map((socketId) => ({ socketId })),
+          });
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("[Socket.IO] Error handling speaker started:", error);

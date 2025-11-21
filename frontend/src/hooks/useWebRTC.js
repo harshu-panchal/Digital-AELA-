@@ -716,9 +716,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       // Handle remote stream
       peerConnection.ontrack = (event) => {
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Received remote stream from speaker:", speakerSocketId);
-        const remoteStream = event.streams[0];
-        if (remoteStream) {
+        console.log("[WebRTC] Received remote stream from speaker:", speakerSocketId, event);
+        const remoteStream = event.streams[0] || new MediaStream([event.track]);
+        if (remoteStream && remoteStream.getAudioTracks().length > 0) {
           setRemoteStreams((prev) => {
             const next = new Map(prev);
             next.set(speakerSocketId, remoteStream);
@@ -728,8 +728,23 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           // Create audio element and play
           const audio = document.createElement("audio");
           audio.autoplay = true;
+          audio.playsInline = true;
+          audio.volume = 1.0;
           audio.srcObject = remoteStream;
+          
+          // Append to DOM (hidden) and play
+          audio.style.display = "none";
+          document.body.appendChild(audio);
+          
+          // Explicitly play the audio
+          audio.play().catch((error) => {
+            // eslint-disable-next-line no-console
+            console.error("[WebRTC] Error playing audio:", error);
+          });
+          
           audioElementsRef.current.set(speakerSocketId, audio);
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Audio element created and playing for speaker:", speakerSocketId);
         }
       };
 
@@ -811,7 +826,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     }
   }, [socket, roomId]);
 
-  // Handle WebRTC answer (for listeners)
+  // Handle WebRTC answer (for listeners and speakers)
   const handleWebRTCAnswer = useCallback(async (data) => {
     if (data.roomId !== roomId) {
       return;
@@ -823,7 +838,23 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       if (peerConnection) {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Handled answer from speaker:", fromSocketId);
+        console.log("[WebRTC] Handled answer from:", fromSocketId, "Connection state:", peerConnection.connectionState);
+        
+        // Check connection state
+        peerConnection.onconnectionstatechange = () => {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Peer connection state changed:", peerConnection.connectionState, "for:", fromSocketId);
+          if (peerConnection.connectionState === "connected") {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Peer connection established with:", fromSocketId);
+          } else if (peerConnection.connectionState === "failed" || peerConnection.connectionState === "disconnected") {
+            // eslint-disable-next-line no-console
+            console.warn("[WebRTC] Peer connection failed/disconnected with:", fromSocketId);
+          }
+        };
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] No peer connection found for answer from:", fromSocketId);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -1192,25 +1223,39 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     // Native WebRTC handlers
     const handleExistingSpeakers = async (data) => {
-      if (data.roomId === roomId && role === "listener" && data.speakers && useNativeWebRTCRef.current) {
+      if (data.roomId === roomId && data.speakers && useNativeWebRTCRef.current) {
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Existing speakers for native WebRTC:", data.speakers);
+        console.log("[WebRTC] Existing speakers for native WebRTC:", data.speakers, "My role:", role);
         // Connect to all existing speakers
+        // Listeners connect to speakers, and speakers also connect to other speakers
         for (const speaker of data.speakers) {
           if (speaker.socketId && speaker.socketId !== socket.id) {
-            await createPeerConnectionToSpeaker(speaker.socketId);
+            if (role === "listener") {
+              // Listener connects to speaker
+              await createPeerConnectionToSpeaker(speaker.socketId);
+            } else if (role === "speaker" || role === "host") {
+              // Speaker/host also connects to other speakers/hosts (bidirectional)
+              await createPeerConnectionToSpeaker(speaker.socketId);
+            }
           }
         }
       }
     };
 
     const handleSpeakerStarted = async (data) => {
-      if (data.roomId === roomId && role === "listener" && useNativeWebRTCRef.current) {
+      if (data.roomId === roomId && useNativeWebRTCRef.current) {
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Speaker started (native WebRTC):", data.socketId);
+        console.log("[WebRTC] Speaker started (native WebRTC):", data.socketId, "My role:", role);
         // Connect to the new speaker
+        // Listeners connect to speakers, and speakers also connect to other speakers
         if (data.socketId && data.socketId !== socket.id) {
-          await createPeerConnectionToSpeaker(data.socketId);
+          if (role === "listener") {
+            // Listener connects to speaker
+            await createPeerConnectionToSpeaker(data.socketId);
+          } else if (role === "speaker" || role === "host") {
+            // Speaker/host also connects to other speakers/hosts (bidirectional)
+            await createPeerConnectionToSpeaker(data.socketId);
+          }
         }
       }
     };
@@ -1236,13 +1281,17 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     // Native WebRTC signaling handlers
     const handleWebRTCOfferEvent = (data) => {
-      if (data.roomId === roomId && useNativeWebRTCRef.current && (role === "speaker" || role === "host")) {
-        handleWebRTCOffer(data);
+      if (data.roomId === roomId && useNativeWebRTCRef.current) {
+        // Speakers/hosts handle offers from listeners, and also from other speakers/hosts
+        if (role === "speaker" || role === "host") {
+          handleWebRTCOffer(data);
+        }
       }
     };
 
     const handleWebRTCAnswerEvent = (data) => {
-      if (data.roomId === roomId && useNativeWebRTCRef.current && role === "listener") {
+      if (data.roomId === roomId && useNativeWebRTCRef.current) {
+        // Both listeners and speakers can receive answers
         handleWebRTCAnswer(data);
       }
     };
