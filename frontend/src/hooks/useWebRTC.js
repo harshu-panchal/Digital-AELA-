@@ -442,6 +442,22 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           rtpCapabilitiesReceivedRef.current = true; // Mark as received so setup can proceed
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Native WebRTC config received for room:", currentRoomId);
+          // Verify TURN server configuration
+          if (data.webrtcConfig.iceServers) {
+            const hasTurn = data.webrtcConfig.iceServers.some(server => 
+              server.urls && (server.urls.includes("turn:") || server.urls.includes("turns:"))
+            );
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] WebRTC config verification:", {
+              iceServersCount: data.webrtcConfig.iceServers.length,
+              hasTurnServer: hasTurn,
+              servers: data.webrtcConfig.iceServers.map(s => s.urls || s.url),
+            });
+            if (!hasTurn) {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] ⚠️ No TURN server in config - P2P may fail behind NATs");
+            }
+          }
         } else if (data.rtpCapabilities) {
           // Mediasoup mode
           useNativeWebRTCRef.current = false;
@@ -729,7 +745,41 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         // eslint-disable-next-line no-console
         console.log("[WebRTC] Received remote stream from speaker:", speakerSocketId, event);
         const remoteStream = event.streams[0] || new MediaStream([event.track]);
+        
         if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+          // VERIFICATION: Check track state
+          const audioTracks = remoteStream.getAudioTracks();
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Received audio tracks:", audioTracks.length, "from speaker:", speakerSocketId);
+          
+          audioTracks.forEach((track) => {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Remote track state:", {
+              trackId: track.id,
+              enabled: track.enabled,
+              muted: track.muted,
+              readyState: track.readyState,
+              kind: track.kind,
+              from: speakerSocketId,
+            });
+            
+            // Monitor track state changes
+            track.onended = () => {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Remote track ended:", track.id, "from speaker:", speakerSocketId);
+            };
+            
+            track.onmute = () => {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Remote track muted:", track.id, "from speaker:", speakerSocketId);
+            };
+            
+            track.onunmute = () => {
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Remote track unmuted:", track.id, "from speaker:", speakerSocketId);
+            };
+          });
+          
           setRemoteStreams((prev) => {
             const next = new Map(prev);
             next.set(speakerSocketId, remoteStream);
@@ -760,11 +810,58 @@ export const useWebRTC = (socket, roomId, userId, role) => {
             console.log("[WebRTC] Audio element created for speaker:", speakerSocketId);
           }
           
-          // Explicitly play the audio
-          audio.play().catch((error) => {
+          // IMPROVED: Play audio with better error handling and user interaction fallback
+          const playAudio = async () => {
+            try {
+              await audio.play();
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Audio playing successfully for speaker:", speakerSocketId);
+              
+              // Verify audio is actually playing
+              if (audio.paused) {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Audio element is paused after play() call for speaker:", speakerSocketId);
+              } else {
+                // eslint-disable-next-line no-console
+                console.log("[WebRTC] ✅ Audio element is playing for speaker:", speakerSocketId);
+              }
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error("[WebRTC] Error playing audio:", error, "for speaker:", speakerSocketId);
+              
+              // Handle autoplay restrictions - try to play on user interaction
+              if (error.name === "NotAllowedError") {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Autoplay blocked, will play on user interaction for speaker:", speakerSocketId);
+                
+                // Try to play on next user interaction
+                const playOnInteraction = () => {
+                  audio.play().catch((e) => {
+                    // eslint-disable-next-line no-console
+                    console.error("[WebRTC] Still cannot play audio:", e);
+                  });
+                  document.removeEventListener("click", playOnInteraction);
+                  document.removeEventListener("touchstart", playOnInteraction);
+                };
+                
+                document.addEventListener("click", playOnInteraction, { once: true });
+                document.addEventListener("touchstart", playOnInteraction, { once: true });
+              }
+            }
+          };
+          
+          // Play audio immediately
+          playAudio();
+          
+          // Also try to play when audio element becomes ready
+          audio.addEventListener("loadedmetadata", () => {
             // eslint-disable-next-line no-console
-            console.error("[WebRTC] Error playing audio:", error);
+            console.log("[WebRTC] Audio metadata loaded for speaker:", speakerSocketId);
+            playAudio();
           });
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] Received stream but no audio tracks from speaker:", speakerSocketId);
         }
       };
 
@@ -779,37 +876,226 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         }
       };
 
-      // Track connection state changes
+      // Track connection state changes with quality monitoring
       peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection.connectionState;
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Peer connection state changed:", peerConnection.connectionState, "for:", speakerSocketId);
-        if (peerConnection.connectionState === "connected") {
+        console.log("[WebRTC] Peer connection state changed:", state, "for:", speakerSocketId);
+        
+        if (state === "connected") {
           // eslint-disable-next-line no-console
           console.log("[WebRTC] ✅ Peer connection established with:", speakerSocketId);
-        } else if (peerConnection.connectionState === "failed" || peerConnection.connectionState === "disconnected") {
+          
+          // Monitor connection quality
+          if (peerConnection.getStats) {
+            peerConnection.getStats().then((stats) => {
+              stats.forEach((report) => {
+                if (report.type === "candidate-pair" && report.selected) {
+                  // eslint-disable-next-line no-console
+                  console.log("[WebRTC] Connection quality for:", speakerSocketId, {
+                    localCandidateType: report.localCandidateType,
+                    remoteCandidateType: report.remoteCandidateType,
+                    bytesReceived: report.bytesReceived,
+                    bytesSent: report.bytesSent,
+                  });
+                }
+              });
+            }).catch((err) => {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Error getting stats:", err);
+            });
+          }
+        } else if (state === "failed" || state === "disconnected") {
           // eslint-disable-next-line no-console
           console.warn("[WebRTC] ⚠️ Peer connection failed/disconnected with:", speakerSocketId);
+          
+          // Attempt to reconnect if connection failed
+          if (state === "failed" && socket && roomId) {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Attempting to reconnect to:", speakerSocketId);
+            // Close the failed connection
+            try {
+              peerConnection.close();
+              peerConnectionsRef.current.delete(speakerSocketId);
+            } catch (e) {
+              // Ignore errors
+            }
+            
+            // Retry connection after a short delay
+            setTimeout(() => {
+              if (socket && roomId && webrtcConfigRef.current) {
+                // eslint-disable-next-line no-console
+                console.log("[WebRTC] Retrying connection to:", speakerSocketId);
+                createPeerConnectionToSpeaker(speakerSocketId).catch((err) => {
+                  // eslint-disable-next-line no-console
+                  console.error("[WebRTC] Reconnection failed:", err);
+                });
+              }
+            }, 2000);
+          }
+        } else if (state === "connecting") {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Connecting to:", speakerSocketId);
         }
       };
 
-      // Track ICE connection state
+      // Track ICE connection state with detailed monitoring
       peerConnection.oniceconnectionstatechange = () => {
+        const iceState = peerConnection.iceConnectionState;
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] ICE connection state:", peerConnection.iceConnectionState, "for:", speakerSocketId);
+        console.log("[WebRTC] ICE connection state:", iceState, "for:", speakerSocketId);
+        
+        if (iceState === "connected" || iceState === "completed") {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] ✅ ICE connection established with:", speakerSocketId);
+          
+          // Log connection method (direct/TURN/relay)
+          if (peerConnection.getStats) {
+            peerConnection.getStats().then((stats) => {
+              stats.forEach((report) => {
+                if (report.type === "candidate-pair" && report.selected) {
+                  const connectionType = report.localCandidateType === "relay" || report.remoteCandidateType === "relay"
+                    ? "TURN/Relay"
+                    : report.localCandidateType === "srflx" || report.remoteCandidateType === "srflx"
+                    ? "STUN"
+                    : "Direct";
+                  // eslint-disable-next-line no-console
+                  console.log("[WebRTC] Connection method:", connectionType, "for:", speakerSocketId);
+                }
+              });
+            }).catch((err) => {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Error getting ICE stats:", err);
+            });
+          }
+        } else if (iceState === "failed") {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] ⚠️ ICE connection failed with:", speakerSocketId);
+          
+          // ICE failure might indicate TURN server issues
+          if (webrtcConfigRef.current?.iceServers) {
+            const hasTurn = webrtcConfigRef.current.iceServers.some(server => 
+              server.urls && (server.urls.includes("turn:") || server.urls.includes("turns:"))
+            );
+            if (!hasTurn) {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] ⚠️ ICE failed and no TURN server configured - connection may fail behind NAT");
+            }
+          }
+        } else if (iceState === "checking") {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] ICE connection checking for:", speakerSocketId);
+        }
       };
 
-      // Add local audio tracks if we have a local stream (for speakers)
-      // This ensures the other peer receives our audio
+      // CRITICAL FIX: Add local audio tracks BEFORE creating offer
+      // This ensures tracks are included in the SDP offer
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, localStreamRef.current);
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        if (audioTracks.length === 0) {
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Added local track to peer connection:", track.kind, track.id, "for:", speakerSocketId);
-        });
+          console.warn("[WebRTC] No audio tracks in local stream for:", speakerSocketId);
+        } else {
+          // Add all audio tracks to the peer connection
+          audioTracks.forEach((track) => {
+            // Verify track is enabled before adding
+            if (!track.enabled) {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Track is disabled, enabling it:", track.id);
+              track.enabled = true;
+            }
+            peerConnection.addTrack(track, localStreamRef.current);
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Added local track to peer connection:", {
+              trackId: track.id,
+              kind: track.kind,
+              enabled: track.enabled,
+              muted: track.muted,
+              readyState: track.readyState,
+              for: speakerSocketId,
+            });
+          });
+          
+          // Verify tracks were added by checking senders
+          const senders = peerConnection.getSenders();
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Peer connection senders after adding tracks:", senders.length, "for:", speakerSocketId);
+          
+          // Monitor track transmission
+          senders.forEach((sender) => {
+            if (sender.track) {
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Sender track state:", {
+                trackId: sender.track.id,
+                enabled: sender.track.enabled,
+                muted: sender.track.muted,
+                readyState: sender.track.readyState,
+                for: speakerSocketId,
+              });
+              
+              // Monitor track state changes
+              sender.track.onended = () => {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Local track ended:", sender.track.id, "for:", speakerSocketId);
+              };
+              
+              sender.track.onmute = () => {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Local track muted:", sender.track.id, "for:", speakerSocketId);
+              };
+              
+              sender.track.onunmute = () => {
+                // eslint-disable-next-line no-console
+                console.log("[WebRTC] Local track unmuted:", sender.track.id, "for:", speakerSocketId);
+              };
+              
+              // Monitor transmission stats after connection is established
+              setTimeout(() => {
+                if (peerConnection.connectionState === "connected" && peerConnection.getStats) {
+                  peerConnection.getStats(sender).then((stats) => {
+                    stats.forEach((report) => {
+                      if (report.type === "outbound-rtp" && report.mediaType === "audio") {
+                        // eslint-disable-next-line no-console
+                        console.log("[WebRTC] Track transmission stats for:", speakerSocketId, {
+                          bytesSent: report.bytesSent,
+                          packetsSent: report.packetsSent,
+                          packetsLost: report.packetsLost,
+                          jitter: report.jitter,
+                        });
+                      }
+                    });
+                  }).catch((err) => {
+                    // eslint-disable-next-line no-console
+                    console.warn("[WebRTC] Error getting sender stats:", err);
+                  });
+                }
+              }, 3000); // Check after 3 seconds
+            }
+          });
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] No local stream available (listener mode) for:", speakerSocketId);
       }
 
-      // Create offer
-      const offer = await peerConnection.createOffer();
+      // Create offer AFTER tracks are added
+      // This ensures the SDP includes the audio tracks
+      const offer = await peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      });
+      
+      // Verify offer includes audio tracks
+      if (offer.sdp) {
+        const hasAudio = offer.sdp.includes("m=audio");
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Offer created with audio:", hasAudio, "for:", speakerSocketId);
+        if (!hasAudio && localStreamRef.current) {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] ⚠️ Offer created but no audio in SDP for:", speakerSocketId);
+        }
+      }
+      
       await peerConnection.setLocalDescription(offer);
 
       // Send offer to speaker
@@ -843,32 +1129,64 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         // Create new peer connection
         peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
         peerConnectionsRef.current.set(fromSocketId, peerConnection);
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Created new peer connection for offer from:", fromSocketId);
       } else {
-        // Connection already exists - check if we should handle this offer
-        // If connection is in "stable" state AND actually connected, it's already established
-        if (peerConnection.signalingState === "stable" && 
-            (peerConnection.connectionState === "connected" || peerConnection.connectionState === "connecting")) {
+        // Connection already exists - handle bidirectional connection case
+        const currentState = peerConnection.signalingState;
+        const connectionState = peerConnection.connectionState;
+        
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Existing connection state:", {
+          signalingState: currentState,
+          connectionState: connectionState,
+          from: fromSocketId,
+        });
+        
+        // If connection is fully established, ignore duplicate offer
+        if (currentState === "stable" && 
+            (connectionState === "connected" || connectionState === "connecting")) {
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Peer connection already established (stable and connected) for:", fromSocketId, "- ignoring duplicate offer");
+          console.log("[WebRTC] Peer connection already established for:", fromSocketId, "- ignoring duplicate offer");
           return;
-        } else if (peerConnection.signalingState === "have-local-offer") {
+        }
+        
+        // CRITICAL FIX: Handle simultaneous offer case (both peers create offers)
+        // If we have a local offer and receive a remote offer, we need to handle this properly
+        if (currentState === "have-local-offer") {
+          // We sent an offer, but they also sent us an offer (simultaneous)
+          // We should cancel our offer and accept theirs (or vice versa)
+          // For simplicity, we'll accept their offer and cancel ours
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Already waiting for answer from:", fromSocketId, "- ignoring duplicate offer");
-          return;
-        } else if (peerConnection.signalingState === "have-remote-offer") {
-          // We already have a remote offer, this is a duplicate
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Already processing offer from:", fromSocketId, "- ignoring duplicate");
-          return;
-        } else if (peerConnection.signalingState === "stable" && peerConnection.connectionState === "new") {
-          // Signaling is stable but connection never established - reset and process the offer
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Connection exists but never established (stable/new) - closing and recreating for:", fromSocketId);
+          console.log("[WebRTC] Simultaneous offers detected - we have local offer, accepting remote offer from:", fromSocketId);
+          // Close current connection and create new one to accept their offer
           try {
             peerConnection.close();
           } catch (e) {
             // Ignore errors when closing
           }
+          peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+          peerConnectionsRef.current.set(fromSocketId, peerConnection);
+        } else if (currentState === "have-remote-offer") {
+          // We're already processing an offer from this peer
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Already processing offer from:", fromSocketId, "- ignoring duplicate");
+          return;
+        } else if (currentState === "stable" && connectionState === "new") {
+          // Signaling is stable but connection never established - reset and process the offer
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Connection exists but never established (stable/new) - resetting for:", fromSocketId);
+          try {
+            peerConnection.close();
+          } catch (e) {
+            // Ignore errors when closing
+          }
+          peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+          peerConnectionsRef.current.set(fromSocketId, peerConnection);
+        } else if (currentState === "closed") {
+          // Connection was closed, create new one
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Connection was closed, creating new one for:", fromSocketId);
           peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
           peerConnectionsRef.current.set(fromSocketId, peerConnection);
         }
@@ -897,7 +1215,41 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Received remote stream from peer:", fromSocketId, event);
           const remoteStream = event.streams[0] || new MediaStream([event.track]);
+          
           if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+            // VERIFICATION: Check track state
+            const audioTracks = remoteStream.getAudioTracks();
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Received audio tracks:", audioTracks.length, "from:", fromSocketId);
+            
+            audioTracks.forEach((track) => {
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Remote track state:", {
+                trackId: track.id,
+                enabled: track.enabled,
+                muted: track.muted,
+                readyState: track.readyState,
+                kind: track.kind,
+                from: fromSocketId,
+              });
+              
+              // Monitor track state changes
+              track.onended = () => {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Remote track ended:", track.id, "from:", fromSocketId);
+              };
+              
+              track.onmute = () => {
+                // eslint-disable-next-line no-console
+                console.warn("[WebRTC] Remote track muted:", track.id, "from:", fromSocketId);
+              };
+              
+              track.onunmute = () => {
+                // eslint-disable-next-line no-console
+                console.log("[WebRTC] Remote track unmuted:", track.id, "from:", fromSocketId);
+              };
+            });
+            
             setRemoteStreams((prev) => {
               const next = new Map(prev);
               next.set(fromSocketId, remoteStream);
@@ -928,11 +1280,58 @@ export const useWebRTC = (socket, roomId, userId, role) => {
               console.log("[WebRTC] Audio element created for peer:", fromSocketId);
             }
             
-            // Explicitly play the audio
-            audio.play().catch((error) => {
+            // IMPROVED: Play audio with better error handling and user interaction fallback
+            const playAudio = async () => {
+              try {
+                await audio.play();
+                // eslint-disable-next-line no-console
+                console.log("[WebRTC] Audio playing successfully for:", fromSocketId);
+                
+                // Verify audio is actually playing
+                if (audio.paused) {
+                  // eslint-disable-next-line no-console
+                  console.warn("[WebRTC] Audio element is paused after play() call for:", fromSocketId);
+                } else {
+                  // eslint-disable-next-line no-console
+                  console.log("[WebRTC] ✅ Audio element is playing for:", fromSocketId);
+                }
+              } catch (error) {
+                // eslint-disable-next-line no-console
+                console.error("[WebRTC] Error playing audio:", error, "for:", fromSocketId);
+                
+                // Handle autoplay restrictions - try to play on user interaction
+                if (error.name === "NotAllowedError") {
+                  // eslint-disable-next-line no-console
+                  console.warn("[WebRTC] Autoplay blocked, will play on user interaction for:", fromSocketId);
+                  
+                  // Try to play on next user interaction
+                  const playOnInteraction = () => {
+                    audio.play().catch((e) => {
+                      // eslint-disable-next-line no-console
+                      console.error("[WebRTC] Still cannot play audio:", e);
+                    });
+                    document.removeEventListener("click", playOnInteraction);
+                    document.removeEventListener("touchstart", playOnInteraction);
+                  };
+                  
+                  document.addEventListener("click", playOnInteraction, { once: true });
+                  document.addEventListener("touchstart", playOnInteraction, { once: true });
+                }
+              }
+            };
+            
+            // Play audio immediately
+            playAudio();
+            
+            // Also try to play when audio element becomes ready
+            audio.addEventListener("loadedmetadata", () => {
               // eslint-disable-next-line no-console
-              console.error("[WebRTC] Error playing audio:", error);
+              console.log("[WebRTC] Audio metadata loaded for:", fromSocketId);
+              playAudio();
             });
+          } else {
+            // eslint-disable-next-line no-console
+            console.warn("[WebRTC] Received stream but no audio tracks from:", fromSocketId);
           }
         };
       }
@@ -1095,17 +1494,41 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     if (queue && queue.length > 0) {
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Processing", queue.length, "queued ICE candidates for:", fromSocketId);
+      
+      // Verify remote description is set before processing
+      if (!peerConnection.remoteDescription) {
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] Cannot process queued ICE candidates - remote description not set for:", fromSocketId);
+        return;
+      }
+      
       for (const candidate of queue) {
         try {
+          // Verify candidate is valid before adding
+          if (!candidate || !candidate.candidate) {
+            // eslint-disable-next-line no-console
+            console.warn("[WebRTC] Invalid ICE candidate in queue for:", fromSocketId);
+            continue;
+          }
+          
           await peerConnection.addIceCandidate(candidate);
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Added queued ICE candidate from:", fromSocketId);
+          console.log("[WebRTC] Added queued ICE candidate from:", fromSocketId, "Type:", candidate.type);
         } catch (error) {
           // eslint-disable-next-line no-console
-          console.warn("[WebRTC] Error adding queued ICE candidate:", error);
+          console.warn("[WebRTC] Error adding queued ICE candidate:", error, "for:", fromSocketId);
+          
+          // If candidate is invalid or duplicate, continue with next candidate
+          if (error.message?.includes("Invalid") || error.message?.includes("duplicate")) {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Skipping invalid/duplicate candidate");
+            continue;
+          }
         }
       }
       queuedIceCandidatesRef.current.delete(fromSocketId);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Finished processing queued ICE candidates for:", fromSocketId);
     }
   }, []);
 
@@ -1143,12 +1566,31 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
       // Remote description is set, add the candidate immediately
       try {
+        // Verify candidate is valid
+        if (!iceCandidate || !iceCandidate.candidate) {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] Invalid ICE candidate from:", fromSocketId);
+          return;
+        }
+        
         await peerConnection.addIceCandidate(iceCandidate);
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Added ICE candidate from:", fromSocketId, "ICE state:", peerConnection.iceConnectionState);
+        console.log("[WebRTC] Added ICE candidate from:", fromSocketId, {
+          type: iceCandidate.type,
+          protocol: iceCandidate.protocol,
+          address: iceCandidate.address,
+          port: iceCandidate.port,
+          ICEState: peerConnection.iceConnectionState,
+        });
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("[WebRTC] Error adding ICE candidate:", error, "from:", fromSocketId);
+        
+        // If it's a duplicate or invalid candidate, that's okay - just log it
+        if (error.message?.includes("Invalid") || error.message?.includes("duplicate")) {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] ICE candidate is invalid/duplicate (this is normal)");
+        }
       }
     } catch (error) {
       // eslint-disable-next-line no-console

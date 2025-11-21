@@ -69,14 +69,31 @@ export function getWebRTCConfig() {
   };
 
   // Add TURN server if configured
-  if (process.env.TURN_SERVER_URL && process.env.TURN_SERVER_USERNAME && process.env.TURN_SERVER_CREDENTIAL) {
+  const hasTurnUrl = !!process.env.TURN_SERVER_URL;
+  const hasTurnUsername = !!process.env.TURN_SERVER_USERNAME;
+  const hasTurnCredential = !!process.env.TURN_SERVER_CREDENTIAL;
+  
+  if (hasTurnUrl && hasTurnUsername && hasTurnCredential) {
     config.iceServers.push({
       urls: process.env.TURN_SERVER_URL,
       username: process.env.TURN_SERVER_USERNAME,
       credential: process.env.TURN_SERVER_CREDENTIAL,
     });
+    // eslint-disable-next-line no-console
+    console.log("[WebRTC] TURN server configured:", process.env.TURN_SERVER_URL);
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn("[WebRTC] TURN server not fully configured:", {
+      hasUrl: hasTurnUrl,
+      hasUsername: hasTurnUsername,
+      hasCredential: hasTurnCredential,
+    });
+    // eslint-disable-next-line no-console
+    console.warn("[WebRTC] P2P connections may fail behind NATs without TURN server");
   }
 
+  // eslint-disable-next-line no-console
+  console.log("[WebRTC] WebRTC config created with", config.iceServers.length, "ICE servers");
   return config;
 }
 
