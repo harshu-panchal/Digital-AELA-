@@ -366,24 +366,68 @@ export async function resumeConsumer(socketId, consumerId) {
 }
 
 /**
- * Close transport and cleanup
+ * Close transport and cleanup (complete cleanup)
  */
 export function closeTransport(socketId) {
   const transportData = transports.get(socketId);
   if (transportData) {
-    if (transportData.sendTransport) {
-      transportData.sendTransport.close();
-    }
-    if (transportData.recvTransport) {
-      transportData.recvTransport.close();
-    }
-    if (transportData.producer) {
-      transportData.producer.close();
-    }
-    transportData.consumers.forEach((consumer) => {
-      consumer.close();
+    // eslint-disable-next-line no-console
+    console.log(`[mediasoup] Closing transport for socket ${socketId}`);
+    
+    // Close all consumers first
+    transportData.consumers.forEach((consumer, producerId) => {
+      try {
+        consumer.close();
+        // eslint-disable-next-line no-console
+        console.log(`[mediasoup] Closed consumer ${consumer.id} for producer ${producerId}`);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Error closing consumer:`, error);
+      }
     });
+    transportData.consumers.clear();
+
+    // Close producer
+    if (transportData.producer) {
+      try {
+        transportData.producer.close();
+        // eslint-disable-next-line no-console
+        console.log(`[mediasoup] Closed producer ${transportData.producer.id}`);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Error closing producer:`, error);
+      }
+      transportData.producer = null;
+    }
+
+    // Close transports
+    if (transportData.sendTransport) {
+      try {
+        transportData.sendTransport.close();
+        // eslint-disable-next-line no-console
+        console.log(`[mediasoup] Closed send transport ${transportData.sendTransport.id}`);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Error closing send transport:`, error);
+      }
+      transportData.sendTransport = null;
+    }
+    
+    if (transportData.recvTransport) {
+      try {
+        transportData.recvTransport.close();
+        // eslint-disable-next-line no-console
+        console.log(`[mediasoup] Closed recv transport ${transportData.recvTransport.id}`);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Error closing recv transport:`, error);
+      }
+      transportData.recvTransport = null;
+    }
+
     transports.delete(socketId);
+    // eslint-disable-next-line no-console
+    console.log(`[mediasoup] Transport cleanup complete for socket ${socketId}`);
   }
 }
 
