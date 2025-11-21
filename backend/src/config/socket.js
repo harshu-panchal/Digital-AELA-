@@ -464,7 +464,7 @@ export const setupSocketIO = (io) => {
 
         // Get existing speak requests and send to host/speaker if they just joined
         const existingSpeakRequests = room.speakRequests || [];
-        if ((role === "host" || role === "speaker") && existingSpeakRequests.length > 0) {
+        if (role === "host" && existingSpeakRequests.length > 0) {
           // Populate user info for requests
           const requestsWithUserInfo = await Promise.all(
             existingSpeakRequests.map(async (req) => {
@@ -477,7 +477,10 @@ export const setupSocketIO = (io) => {
             })
           );
           
-          // Send existing requests to the host/speaker who just joined
+          // eslint-disable-next-line no-console
+          console.log(`[Join Voice Room] Host joined, sending ${requestsWithUserInfo.length} existing speak requests`);
+          
+          // Send existing requests to the host who just joined
           socket.emit("existing-speak-requests", {
             roomId,
             requests: requestsWithUserInfo,
@@ -679,7 +682,9 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host") {
+        // Check if user is already a speaker in the room
+        const isAlreadySpeaker = room.speakers.some((s) => s.toString() === socket.userId);
+        if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host" || isAlreadySpeaker) {
           socket.emit("error", { message: "You are already a speaker" });
           return;
         }
@@ -695,6 +700,8 @@ export const setupSocketIO = (io) => {
           (r) => r.userId.toString() === socket.userId
         );
 
+        const isNewRequest = existingRequestIndex < 0;
+        
         if (existingRequestIndex >= 0) {
           // Update existing request with new socketId (in case user rejoined)
           room.speakRequests[existingRequestIndex].socketId = socket.id;
@@ -708,6 +715,9 @@ export const setupSocketIO = (io) => {
           });
         }
         await room.save();
+        
+        // eslint-disable-next-line no-console
+        console.log(`[Request to Speak] Request ${isNewRequest ? 'created' : 'updated'} for user ${socket.userId}`);
 
         // Update participant role to "requested"
         const participant = room.participants.find(
@@ -745,9 +755,14 @@ export const setupSocketIO = (io) => {
 
         // Notify all hosts and speakers
         // eslint-disable-next-line no-console
-        console.log(`[Request to Speak] User ${socket.userId} requested. Notifying ${socketIdsToNotify.size} host(s)/speaker(s)`);
+        console.log(`[Request to Speak] User ${socket.userId} (${socket.userFullName}) requested. Notifying ${socketIdsToNotify.size} host(s)/speaker(s)`);
+        // eslint-disable-next-line no-console
+        console.log(`[Request to Speak] Socket IDs to notify:`, Array.from(socketIdsToNotify));
         
+        // Always send the request notification, even if updating existing request
         socketIdsToNotify.forEach((socketId) => {
+          // eslint-disable-next-line no-console
+          console.log(`[Request to Speak] Sending to socket ${socketId}`);
           io.to(socketId).emit("speak-requested", {
             roomId,
             userId: socket.userId,
@@ -760,6 +775,12 @@ export const setupSocketIO = (io) => {
         if (socketIdsToNotify.size === 0) {
           // eslint-disable-next-line no-console
           console.warn(`[Request to Speak] No hosts/speakers found in room ${roomId} to notify`);
+          // eslint-disable-next-line no-console
+          console.warn(`[Request to Speak] Room participants:`, room.participants.map(p => ({ userId: p.userId.toString(), role: p.role, socketId: p.socketId })));
+          // eslint-disable-next-line no-console
+          console.warn(`[Request to Speak] Room host:`, room.host.toString());
+          // eslint-disable-next-line no-console
+          console.warn(`[Request to Speak] Room speakers:`, room.speakers.map(s => s.toString()));
         }
 
         socket.emit("speak-request-sent", { roomId });

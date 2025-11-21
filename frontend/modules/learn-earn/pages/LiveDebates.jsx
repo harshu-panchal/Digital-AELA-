@@ -107,7 +107,7 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
             <span className="font-semibold text-green-400">● Live</span>
           ) : (
             <>
-              Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
+          Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
             </>
           )}
         </div>
@@ -367,10 +367,10 @@ const LiveDebates = () => {
           setOpenRooms((prev) => [newRoom, ...prev]);
         }
 
-        // Join new room via Socket.io
-        if (socket && isConnected && roomId) {
-          socket.emit("join_room", { roomId });
-          joinedRoomsRef.current.add(roomId);
+          // Join new room via Socket.io
+          if (socket && isConnected && roomId) {
+            socket.emit("join_room", { roomId });
+            joinedRoomsRef.current.add(roomId);
         }
 
         // Reset form and close modal
@@ -586,20 +586,20 @@ const LiveDebates = () => {
                 </div>
 
                 {!formData.startImmediately && (
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-300">
-                      Scheduled Start Time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={formData.scheduledStart}
-                      onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
-                      min={new Date().toISOString().slice(0, 16)}
-                      className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
-                    />
-                    <p className="mt-1 text-xs text-gray-400">
-                      Leave empty to start in 15 minutes (default)
-                    </p>
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Scheduled Start Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduledStart}
+                  onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Leave empty to start in 15 minutes (default)
+                </p>
                   </div>
                 )}
               </div>
