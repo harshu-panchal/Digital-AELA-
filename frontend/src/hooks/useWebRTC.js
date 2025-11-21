@@ -561,6 +561,10 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const setupNativeWebRTCAsSpeaker = useCallback(async () => {
     try {
       setIsConnecting(true);
+      setConnectionState("connecting");
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Requesting microphone access...");
+      
       // Get local stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -571,24 +575,84 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         video: false,
       });
 
+      // Ensure all audio tracks are enabled by default
+      const audioTracks = stream.getAudioTracks();
+      audioTracks.forEach((track) => {
+        track.enabled = true;
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Audio track:", {
+          id: track.id,
+          enabled: track.enabled,
+          kind: track.kind,
+          label: track.label,
+          muted: track.muted,
+          readyState: track.readyState,
+        });
+      });
+
       localStreamRef.current = stream;
       setLocalStream(stream);
+      
+      // Verify microphone is actually working
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        throw new Error("No audio tracks found in stream");
+      }
+      
+      // Ensure all tracks are enabled
+      let allEnabled = true;
+      audioTracks.forEach((track) => {
+        if (!track.enabled) {
+          track.enabled = true;
+          allEnabled = false;
+        }
+      });
+      
+      setIsMicEnabled(true); // Ensure mic is marked as enabled
+      
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Microphone status:", {
+        tracksCount: audioTracks.length,
+        allEnabled,
+        tracks: audioTracks.map(t => ({
+          id: t.id,
+          enabled: t.enabled,
+          muted: t.muted,
+          readyState: t.readyState,
+        })),
+      });
 
       // Notify server that speaker started
       if (socket && roomId) {
         socket.emit("webrtc-speaker-started", { roomId });
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Notified server that speaker started");
       }
 
       setConnectionState("connected");
       setIsConnecting(false);
+      setupCompleteRef.current = true;
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Native WebRTC speaker setup complete");
+      console.log("[WebRTC] Native WebRTC speaker setup complete. Microphone is ON.");
     } catch (error) {
       setIsConnecting(false);
+      setConnectionState("error");
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error setting up native WebRTC as speaker:", error);
-      setConnectionState("error");
-      toast.error("Failed to access microphone");
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error details:", {
+        name: error.name,
+        message: error.message,
+        constraint: error.constraint,
+      });
+      
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        toast.error("Microphone permission denied. Please allow microphone access and try again.");
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        toast.error("No microphone found. Please connect a microphone and try again.");
+      } else {
+        toast.error(`Failed to access microphone: ${error.message}`);
+      }
       throw error;
     }
   }, [socket, roomId]);
@@ -1044,7 +1108,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     const handleMutedByHost = () => {
       if (producerRef.current) {
+        // Mediasoup mode
         producerRef.current.pause();
+        setIsMicEnabled(false);
+        toast.info("You have been muted by the host");
+      } else if (localStreamRef.current) {
+        // Native WebRTC mode
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        audioTracks.forEach((track) => {
+          track.enabled = false;
+        });
         setIsMicEnabled(false);
         toast.info("You have been muted by the host");
       }
@@ -1052,7 +1125,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     const handleUnmutedByHost = () => {
       if (producerRef.current) {
+        // Mediasoup mode
         producerRef.current.resume();
+        setIsMicEnabled(true);
+        toast.info("You have been unmuted by the host");
+      } else if (localStreamRef.current) {
+        // Native WebRTC mode
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        audioTracks.forEach((track) => {
+          track.enabled = true;
+        });
         setIsMicEnabled(true);
         toast.info("You have been unmuted by the host");
       }
@@ -1250,10 +1332,10 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
     
-    // Don't setup if mediasoup is unavailable
-    if (mediasoupUnavailableRef.current) {
+    // Don't setup if mediasoup is unavailable AND we're not using native WebRTC
+    if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
+      console.log("[WebRTC] Skipping setup - mediasoup unavailable and native WebRTC not available");
       setConnectionState("error");
       return;
     }
