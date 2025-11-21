@@ -844,11 +844,11 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         peerConnectionsRef.current.set(fromSocketId, peerConnection);
       } else {
         // Connection already exists - check if we should handle this offer
-        // If connection is in "stable" state, it's already established
-        // If in "have-local-offer", we're waiting for an answer, so we can't handle a new offer
-        if (peerConnection.signalingState === "stable") {
+        // If connection is in "stable" state AND actually connected, it's already established
+        if (peerConnection.signalingState === "stable" && 
+            (peerConnection.connectionState === "connected" || peerConnection.connectionState === "connecting")) {
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Peer connection already established (stable) for:", fromSocketId, "- ignoring duplicate offer");
+          console.log("[WebRTC] Peer connection already established (stable and connected) for:", fromSocketId, "- ignoring duplicate offer");
           return;
         } else if (peerConnection.signalingState === "have-local-offer") {
           // eslint-disable-next-line no-console
@@ -859,13 +859,36 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Already processing offer from:", fromSocketId, "- ignoring duplicate");
           return;
+        } else if (peerConnection.signalingState === "stable" && peerConnection.connectionState === "new") {
+          // Signaling is stable but connection never established - reset and process the offer
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Connection exists but never established (stable/new) - closing and recreating for:", fromSocketId);
+          try {
+            peerConnection.close();
+          } catch (e) {
+            // Ignore errors when closing
+          }
+          peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+          peerConnectionsRef.current.set(fromSocketId, peerConnection);
         }
       }
 
-      // Add local stream tracks
-      localStreamRef.current.getTracks().forEach((track) => {
-        peerConnection.addTrack(track, localStreamRef.current);
-      });
+      // Add local stream tracks (check if already added to avoid duplicates)
+      const existingTracks = peerConnection.getSenders()
+        .map(sender => sender.track)
+        .filter(track => track !== null && track !== undefined);
+      const tracksToAdd = localStreamRef.current.getTracks().filter(track => !existingTracks.includes(track));
+      
+      if (tracksToAdd.length > 0) {
+        tracksToAdd.forEach((track) => {
+          peerConnection.addTrack(track, localStreamRef.current);
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Added local track to peer connection:", track.kind, track.id, "for:", fromSocketId);
+        });
+      } else if (localStreamRef.current.getTracks().length > 0) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Local tracks already added to peer connection for:", fromSocketId);
+      }
 
       // Handle remote stream (receive audio from the peer who sent the offer)
       if (!peerConnection.ontrack) {
@@ -945,8 +968,13 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
       // Set remote description and create answer
       await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Set remote description, signaling state:", peerConnection.signalingState);
+      
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Created and set local answer, signaling state:", peerConnection.signalingState);
 
       // Send answer
       socket.emit("webrtc-answer", {
@@ -956,7 +984,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       });
 
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Handled offer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState);
+      console.log("[WebRTC] Handled offer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState, "ICE state:", peerConnection.iceConnectionState);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error handling WebRTC offer:", error);
