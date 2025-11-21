@@ -945,21 +945,31 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Handled answer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState);
         } else if (peerConnection.signalingState === "stable") {
-          // Connection is already established
+          // Signaling is stable, but check if connection is actually established
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] Connection already stable for:", fromSocketId, "- answer is duplicate, connection already established");
-          // Check current connection state
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Current connection state:", peerConnection.connectionState, "ICE state:", peerConnection.iceConnectionState);
-          // Manually trigger state check
-          if (peerConnection.connectionState === "connected") {
+          console.log("[WebRTC] Signaling stable for:", fromSocketId, "Connection state:", peerConnection.connectionState, "ICE state:", peerConnection.iceConnectionState);
+          
+          // If connection state is still "new", the answer might not have been properly set
+          // or the connection was reset. Try to set the remote description again.
+          if (peerConnection.connectionState === "new" && !peerConnection.remoteDescription) {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection state is 'new' but no remote description - setting answer");
+            try {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Successfully set remote description, new signaling state:", peerConnection.signalingState);
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] Error setting remote description (may already be set):", error);
+            }
+          } else if (peerConnection.connectionState === "connected") {
             // eslint-disable-next-line no-console
             console.log("[WebRTC] ✅ Connection already active:", fromSocketId);
           } else if (peerConnection.connectionState === "new" || peerConnection.connectionState === "connecting") {
+            // Connection is still establishing - this is normal, ICE candidates need to be exchanged
             // eslint-disable-next-line no-console
-            console.log("[WebRTC] Connection still establishing:", peerConnection.connectionState);
+            console.log("[WebRTC] Connection still establishing:", peerConnection.connectionState, "- waiting for ICE candidates");
           }
-          return;
         } else {
           // eslint-disable-next-line no-console
           console.warn("[WebRTC] Cannot set remote answer - wrong signaling state:", peerConnection.signalingState, "for:", fromSocketId);
