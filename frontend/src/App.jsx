@@ -18,8 +18,11 @@ import VoiceRoom from "../modules/learn-earn/pages/VoiceRoom";
 import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
 import QuizPlay from "../modules/learn-earn/pages/QuizPlay";
 import WalletDashboard from "../modules/learn-earn/pages/WalletDashboard";
+import RedemptionHistory from "../modules/learn-earn/pages/RedemptionHistory";
 import RatingsReviews from "../modules/learn-earn/pages/RatingsReviews";
 import AdminControl from "../modules/learn-earn/pages/AdminControl";
+import RewardManagement from "../modules/admin/pages/RewardManagement";
+import RedemptionRequestsManagement from "../modules/admin/pages/RedemptionRequestsManagement";
 import CorporateTrainingCourses from "../modules/business-management/cources-pages/Corporate-training-cources";
 import DigitalMarketingCourses from "../modules/business-management/cources-pages/Digital-marketing-cources";
 import EnglishLanguageCourses from "../modules/business-management/cources-pages/English-language-cources";
@@ -212,6 +215,8 @@ export const App = () => {
           />
           <Route path="active-sessions" element={<ActiveSessions />} />
           <Route path="backups" element={<BackupManagement />} />
+          <Route path="rewards" element={<RewardManagement />} />
+          <Route path="redemption-requests" element={<RedemptionRequestsManagement />} />
         </Route>
         <Route
           path="/teacher/*"
@@ -355,6 +360,7 @@ export const App = () => {
             element={<QuizLeaderboard />}
           />
           <Route path="wallet" element={<WalletDashboard />} />
+          <Route path="redemption-history" element={<RedemptionHistory />} />
           <Route path="ratings" element={<RatingsReviews />} />
           <Route
             path="admin"

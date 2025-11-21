@@ -24,8 +24,8 @@ export const getStudentPoints = async (req, res, next) => {
       });
     }
 
-    // Calculate available coins
-    const availableCoins = (studentPoints.totalCoins || 0) - (studentPoints.redeemedCoins || 0);
+    // Calculate available coins (excluding pending/reserved coins)
+    const availableCoins = (studentPoints.totalCoins || 0) - (studentPoints.redeemedCoins || 0) - (studentPoints.pendingCoins || 0);
 
     // Calculate total earned from transactions
     const totalEarned = (studentPoints.transactions || [])

@@ -17,6 +17,8 @@ import {
   FaVideo,
   FaCreditCard,
   FaTasks,
+  FaGift,
+  FaCheckCircle,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -80,6 +82,16 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Content Management",
       path: "/super-admin/content-management",
       icon: FaTasks,
+    },
+    {
+      label: "Reward Management",
+      path: "/super-admin/rewards",
+      icon: FaGift,
+    },
+    {
+      label: "Redemption Requests",
+      path: "/super-admin/redemption-requests",
+      icon: FaCheckCircle,
     },
     {
       label: "User Management",

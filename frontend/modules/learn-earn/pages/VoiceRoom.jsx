@@ -138,6 +138,12 @@ const VoiceRoom = () => {
       });
     };
 
+    const handleParticipantsUpdated = (data) => {
+      if (data.roomId === roomId && data.participants) {
+        setParticipants(data.participants);
+      }
+    };
+
     const handleParticipantLeft = (data) => {
       setParticipants((prev) => prev.filter((p) => p.userId !== data.userId));
       setMutedParticipants((prev) => {
@@ -204,6 +210,7 @@ const VoiceRoom = () => {
     socket.on("voice-room-joined", handleVoiceRoomJoined);
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
+    socket.on("participants-updated", handleParticipantsUpdated);
     socket.on("speak-requested", handleSpeakRequested);
     socket.on("existing-speak-requests", handleExistingSpeakRequests);
     socket.on("speak-approved", handleSpeakApproved);
@@ -216,6 +223,7 @@ const VoiceRoom = () => {
       socket.off("voice-room-joined", handleVoiceRoomJoined);
       socket.off("participant-joined", handleParticipantJoined);
       socket.off("participant-left", handleParticipantLeft);
+      socket.off("participants-updated", handleParticipantsUpdated);
       socket.off("speak-requested", handleSpeakRequested);
       socket.off("existing-speak-requests", handleExistingSpeakRequests);
       socket.off("speak-approved", handleSpeakApproved);
@@ -323,13 +331,22 @@ const VoiceRoom = () => {
   };
 
   // Leave room
-  const handleLeaveRoom = () => {
-    if (socket && isConnected) {
-      socket.emit("leave-voice-room", { roomId });
+  const handleLeaveRoom = async () => {
+    try {
+      if (socket && isConnected && roomId) {
+        socket.emit("leave-voice-room", { roomId });
+        // Small delay to ensure cleanup completes
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       stopLocalStream();
       cleanupAll();
+      navigate("/learn-earn/live-debates");
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error leaving room:", error);
+      // Navigate anyway
+      navigate("/learn-earn/live-debates");
     }
-    navigate("/learn-earn/live-debates");
   };
 
   // Cleanup on unmount
@@ -370,7 +387,7 @@ const VoiceRoom = () => {
 
   const speakers = participants.filter((p) => p.role === "speaker" || p.role === "host");
   const listeners = participants.filter((p) => p.role === "listener");
-  const canApproveRequests = userRole === "host" || userRole === "speaker";
+  const canApproveRequests = userRole === "host";
   const hasRequested = speakRequests.some((r) => r.userId === user?.id);
   const hasHostsOrSpeakers = speakers.length > 0;
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion as Motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import Confetti from "react-confetti";
 import { toast } from "react-toastify";
 import { HiOutlineArrowPath, HiOutlineArrowUpOnSquare } from "react-icons/hi2";
@@ -18,25 +19,21 @@ import { Line } from "react-chartjs-2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
+import { getRewards } from "../../../src/services/api/rewards";
+import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
-const redeemOptions = [
-  { id: "discount", label: "Course discounts", cost: 500, description: "Save 20% on premium courses" },
-  { id: "cash", label: "Cash rewards", cost: 800, description: "Withdraw to your bank in 24h" },
-  { id: "gift", label: "Gift coins to friends", cost: 200, description: "Support a peer's learning journey" },
-  { id: "certificate", label: "Certificates & rewards", cost: 350, description: "Unlock verified achievements" },
-  { id: "mentor", label: "Chat with mentors", cost: 150, description: "Book a 1:1 mentor slot" },
-  { id: "resume", label: "Resume services", cost: 420, description: "Professional review & feedback" },
-];
-
 const WalletDashboard = () => {
   const { transactions, recordTransaction, totals } = useUser();
-  const { redeemPoints, addPoints } = usePoints();
+  const { redeemPoints, addPoints, refreshPoints } = usePoints();
   const [showConfetti, setShowConfetti] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [sendAmount, setSendAmount] = useState(60);
   const [recipientUserId, setRecipientUserId] = useState("");
+  const [rewards, setRewards] = useState([]);
+  const [loadingRewards, setLoadingRewards] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,6 +42,22 @@ const WalletDashboard = () => {
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
   }, []);
+
+  useEffect(() => {
+    loadRewards();
+  }, []);
+
+  const loadRewards = async () => {
+    try {
+      setLoadingRewards(true);
+      const response = await getRewards({ activeOnly: "true" });
+      setRewards(response.rewards || []);
+    } catch (error) {
+      toast.error(error?.message || "Failed to load rewards");
+    } finally {
+      setLoadingRewards(false);
+    }
+  };
 
   const chartData = useMemo(() => {
     const recent = transactions.slice(0, 6).reverse();
@@ -94,20 +107,28 @@ const WalletDashboard = () => {
     setTimeout(() => setShowConfetti(false), 3200);
   };
 
-  const handleRedeem = (option) => {
-    const success = redeemPoints(option.cost);
-    if (!success) {
-      toast.error("Not enough coins for this reward", { icon: "⚠️" });
-      return;
+  const handleRedeem = async (reward) => {
+    try {
+      // Check if user has enough coins
+      const availableCoins = totals.current;
+      if (availableCoins < reward.cost) {
+        toast.error(`Not enough coins. You need ${reward.cost} coins but only have ${availableCoins} available.`, { icon: "⚠️" });
+        return;
+      }
+
+      // Create redemption request
+      await createRedemptionRequest(reward._id);
+      
+      toast.success(`Redemption request submitted for ${reward.name}. Waiting for admin approval.`, { icon: "🎉" });
+      
+      // Refresh points to update pending coins
+      refreshPoints();
+      
+      // Refresh rewards to update limits
+      loadRewards();
+    } catch (error) {
+      toast.error(error?.message || "Failed to create redemption request", { icon: "⚠️" });
     }
-    recordTransaction({
-      type: "redeemed",
-      label: option.label,
-      amount: option.cost,
-      time: "Just now",
-    });
-    toast.success(`${option.label} unlocked`, { icon: "🎉" });
-    triggerConfetti();
   };
 
   const handleWithdraw = () => {
@@ -245,32 +266,91 @@ const WalletDashboard = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.3 }}
           className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Redeem coins</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {redeemOptions.map((option) => (
-              <Motion.div
-                key={option.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.25 }}
-                className="rounded-2xl border border-white/5 bg-[#111] p-4 text-sm text-gray-300">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-white">{option.label}</p>
-                  <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37]">
-                    {option.cost} coins
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-gray-400">{option.description}</p>
-                <button
-                  type="button"
-                  onClick={() => handleRedeem(option)}
-                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#151515] px-3 py-2 text-[11px] font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
-                  Redeem now
-                </button>
-              </Motion.div>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Redeem coins</p>
+            <Link
+              to="/learn-earn/redemption-history"
+              className="text-xs text-[#D4AF37] hover:text-[#E5C158] transition">
+              View History →
+            </Link>
           </div>
+
+          {/* Category Filter */}
+          {rewards.length > 0 && (
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                onClick={() => setSelectedCategory("")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  selectedCategory === ""
+                    ? "bg-[#D4AF37] text-black"
+                    : "border border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
+                }`}>
+                All
+              </button>
+              {Array.from(new Set(rewards.map((r) => r.category))).map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    selectedCategory === category
+                      ? "bg-[#D4AF37] text-black"
+                      : "border border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
+                  }`}>
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {loadingRewards ? (
+            <div className="text-center py-8 text-gray-400">Loading rewards...</div>
+          ) : rewards.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">No rewards available at the moment</div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {rewards
+                .filter((reward) => !selectedCategory || reward.category === selectedCategory)
+                .map((reward) => {
+                  const canRedeem = totals.current >= reward.cost;
+                  return (
+                    <Motion.div
+                      key={reward._id}
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.25 }}
+                      className="rounded-2xl border border-white/5 bg-[#111] p-4 text-sm text-gray-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {reward.icon && <span className="text-lg">{reward.icon}</span>}
+                          <p className="font-semibold text-white">{reward.name}</p>
+                        </div>
+                        <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37]">
+                          {reward.cost} coins
+                        </span>
+                      </div>
+                      {reward.description && (
+                        <p className="mt-2 text-xs text-gray-400 mb-2">{reward.description}</p>
+                      )}
+                      {reward.limitPerUser && (
+                        <p className="text-xs text-gray-500 mb-2">Limit: {reward.limitPerUser} per user</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRedeem(reward)}
+                        disabled={!canRedeem}
+                        className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold transition ${
+                          canRedeem
+                            ? "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                            : "border-gray-600/40 bg-gray-800/50 text-gray-500 cursor-not-allowed"
+                        }`}>
+                        {canRedeem ? "Request Redemption" : "Insufficient Coins"}
+                      </button>
+                    </Motion.div>
+                  );
+                })}
+            </div>
+          )}
         </Motion.div>
       </section>
     </div>

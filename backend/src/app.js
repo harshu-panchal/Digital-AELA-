@@ -36,6 +36,8 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import backupRoutes from "./routes/backupRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js";
+import redemptionRequestRoutes from "./routes/redemptionRequestRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 
@@ -156,6 +158,8 @@ app.use("/api/v1/announcements", announcementRoutes);
 app.use("/api/v1/sessions", sessionRoutes);
 app.use("/api/v1/backups", backupRoutes);
 app.use("/api/v1/batches", batchRoutes);
+app.use("/api/v1/rewards", rewardRoutes);
+app.use("/api/v1/redemption-requests", redemptionRequestRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

@@ -395,7 +395,11 @@ export const setupSocketIO = (io) => {
         if (room.host.toString() === socket.userId) {
           role = "host";
         } else if (room.speakers.some((s) => s.toString() === socket.userId)) {
+          // User is an approved speaker - they can join as speaker without requesting
           role = "speaker";
+        } else {
+          // Default to listener
+          role = "listener";
         }
 
         // Join Socket.io room
@@ -445,12 +449,18 @@ export const setupSocketIO = (io) => {
 
         await room.save();
 
-        // Get all participants for the room
-        const participants = room.participants.map((p) => ({
-          userId: p.userId.toString(),
-          role: p.role,
-          socketId: p.socketId,
-        }));
+        // Get all participants for the room with user names
+        const participants = await Promise.all(
+          room.participants.map(async (p) => {
+            const user = await User.findById(p.userId).select("fullName").lean();
+            return {
+              userId: p.userId.toString(),
+              userName: user?.fullName || "Unknown User",
+              role: p.role,
+              socketId: p.socketId,
+            };
+          })
+        );
 
         // Get existing speak requests and send to host/speaker if they just joined
         const existingSpeakRequests = room.speakRequests || [];
@@ -482,12 +492,31 @@ export const setupSocketIO = (io) => {
           rtpCapabilities,
         });
 
+        // Broadcast updated participants list to all in room
+        const updatedParticipants = await Promise.all(
+          room.participants.map(async (p) => {
+            const user = await User.findById(p.userId).select("fullName").lean();
+            return {
+              userId: p.userId.toString(),
+              userName: user?.fullName || "Unknown User",
+              role: p.role,
+              socketId: p.socketId,
+            };
+          })
+        );
+
         // Notify others in the room
-        socket.to(`voice-room:${roomId}`).emit("participant-joined", {
+        io.to(`voice-room:${roomId}`).emit("participant-joined", {
           userId: socket.userId,
           userName: socket.userFullName,
           role,
           socketId: socket.id,
+        });
+
+        // Broadcast updated participants list to all
+        io.to(`voice-room:${roomId}`).emit("participants-updated", {
+          roomId,
+          participants: updatedParticipants,
         });
 
         // Send list of existing producers (speakers) to the new participant
@@ -726,8 +755,9 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        if (socket.data.voiceRole !== "host" && socket.data.voiceRole !== "speaker") {
-          socket.emit("error", { message: "Only hosts and speakers can approve requests" });
+        // Only host can approve requests
+        if (socket.data.voiceRole !== "host") {
+          socket.emit("error", { message: "Only the host can approve requests" });
           return;
         }
 
@@ -773,11 +803,30 @@ export const setupSocketIO = (io) => {
           approvedByName: socket.userFullName,
         });
 
+        // Get updated participants list
+        const updatedParticipants = await Promise.all(
+          room.participants.map(async (p) => {
+            const user = await User.findById(p.userId).select("fullName").lean();
+            return {
+              userId: p.userId.toString(),
+              userName: user?.fullName || "Unknown User",
+              role: p.role,
+              socketId: p.socketId,
+            };
+          })
+        );
+
         // Notify all room participants
         io.to(`voice-room:${roomId}`).emit("speaker-promoted", {
           userId: requesterUserId,
-          userName: socket.userFullName, // We'd need to fetch this from DB for accuracy
+          userName: socket.userFullName,
           socketId: requesterSocketId,
+        });
+
+        // Broadcast updated participants list
+        io.to(`voice-room:${roomId}`).emit("participants-updated", {
+          roomId,
+          participants: updatedParticipants,
         });
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -796,8 +845,9 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        if (socket.data.voiceRole !== "host" && socket.data.voiceRole !== "speaker") {
-          socket.emit("error", { message: "Only hosts and speakers can reject requests" });
+        // Only host can reject requests
+        if (socket.data.voiceRole !== "host") {
+          socket.emit("error", { message: "Only the host can reject requests" });
           return;
         }
 
@@ -995,10 +1045,29 @@ export const setupSocketIO = (io) => {
             });
           }
 
+          // Get updated participants list
+          const updatedParticipants = await Promise.all(
+            room.participants.map(async (p) => {
+              const user = await User.findById(p.userId).select("fullName").lean();
+              return {
+                userId: p.userId.toString(),
+                userName: user?.fullName || "Unknown User",
+                role: p.role,
+                socketId: p.socketId,
+              };
+            })
+          );
+
           // Notify others
           socket.to(`voice-room:${roomId}`).emit("participant-left", {
             userId: socket.userId,
             userName: socket.userFullName,
+          });
+
+          // Broadcast updated participants list
+          io.to(`voice-room:${roomId}`).emit("participants-updated", {
+            roomId,
+            participants: updatedParticipants,
           });
         }
 
