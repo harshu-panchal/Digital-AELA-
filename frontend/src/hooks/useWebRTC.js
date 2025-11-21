@@ -23,6 +23,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const lastRoleRef = useRef(null);
   const lastRoomIdRef = useRef(null);
   const rtpCapabilitiesListenerRef = useRef(null); // Persistent listener for RTP capabilities
+  const isCleaningUpRef = useRef(false); // Prevent concurrent cleanup calls
+  const isSettingUpRef = useRef(false); // Prevent concurrent setup calls
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -410,20 +412,28 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
 
-    // Reset capabilities when roomId changes
-    rtpCapabilitiesRef.current = null;
-    rtpCapabilitiesReceivedRef.current = false;
+    // Only reset capabilities if roomId actually changed (not on every render)
+    const currentRoomId = roomId;
+    if (lastRoomIdRef.current !== currentRoomId) {
+      rtpCapabilitiesRef.current = null;
+      rtpCapabilitiesReceivedRef.current = false;
+    }
 
     const handler = (data) => {
       // Store RTP capabilities immediately when received (before waitForRtpCapabilities is called)
       // This fixes the race condition where backend emits before waitForRtpCapabilities sets up listener
-      if (data.roomId === roomId && data.rtpCapabilities) {
+      if (data.roomId === currentRoomId && data.rtpCapabilities) {
         rtpCapabilitiesRef.current = data.rtpCapabilities;
         rtpCapabilitiesReceivedRef.current = true;
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] RTP capabilities received via persistent listener for room:", roomId);
+        console.log("[WebRTC] RTP capabilities received via persistent listener for room:", currentRoomId);
       }
     };
+
+    // Remove old listener if it exists
+    if (rtpCapabilitiesListenerRef.current) {
+      socket.off("voice-room-joined", rtpCapabilitiesListenerRef.current);
+    }
 
     // Set up persistent listener that's always ready
     // This runs BEFORE join-voice-room is emitted, so we never miss the event
@@ -431,13 +441,11 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     rtpCapabilitiesListenerRef.current = handler;
 
     return () => {
-      if (rtpCapabilitiesListenerRef.current) {
+      // Only remove listener if socket or roomId actually changed
+      if (rtpCapabilitiesListenerRef.current && socket) {
         socket.off("voice-room-joined", rtpCapabilitiesListenerRef.current);
         rtpCapabilitiesListenerRef.current = null;
       }
-      // Reset on cleanup
-      rtpCapabilitiesRef.current = null;
-      rtpCapabilitiesReceivedRef.current = false;
     };
   }, [socket, roomId]);
 
@@ -453,7 +461,18 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     // Wait for capabilities with timeout (listener is already set up by persistent effect above)
     return new Promise((resolve, reject) => {
+      // Check immediately first
+      if (rtpCapabilitiesReceivedRef.current && rtpCapabilitiesRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] RTP capabilities already available");
+        resolve(rtpCapabilitiesRef.current);
+        return;
+      }
+
       const timeout = setTimeout(() => {
+        clearInterval(checkInterval);
+        // eslint-disable-next-line no-console
+        console.error("[WebRTC] Timeout waiting for RTP capabilities. RoomId:", roomId);
         reject(new Error("Timeout waiting for RTP capabilities"));
       }, 10000);
 
@@ -467,19 +486,6 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           resolve(rtpCapabilitiesRef.current);
         }
       }, 100); // Check every 100ms
-
-      // Also check immediately
-      if (rtpCapabilitiesReceivedRef.current && rtpCapabilitiesRef.current) {
-        clearTimeout(timeout);
-        clearInterval(checkInterval);
-        resolve(rtpCapabilitiesRef.current);
-        return;
-      }
-
-      // Cleanup on timeout
-      setTimeout(() => {
-        clearInterval(checkInterval);
-      }, 10000);
     });
   }, [roomId]);
 
@@ -596,6 +602,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
   // Cleanup all
   const cleanupAll = useCallback(() => {
+    // Prevent concurrent cleanup calls
+    if (isCleaningUpRef.current) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Cleanup already in progress, skipping");
+      return;
+    }
+    
+    isCleaningUpRef.current = true;
     // eslint-disable-next-line no-console
     console.log("[WebRTC] Cleaning up all resources...");
     
@@ -664,8 +678,15 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     rtpCapabilitiesRef.current = null;
     rtpCapabilitiesReceivedRef.current = false;
 
+    // Update state in a way that doesn't trigger re-renders during effect execution
     setRemoteStreams(new Map());
     setConnectionState("disconnected");
+    
+    // Reset cleanup flag after a brief delay to allow state updates to complete
+    setTimeout(() => {
+      isCleaningUpRef.current = false;
+    }, 100);
+    
     // eslint-disable-next-line no-console
     console.log("[WebRTC] Cleanup complete");
   }, [stopLocalStream]);
@@ -747,6 +768,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       setupCompleteRef.current = false;
       
       // Cleanup existing resources
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       cleanupAll();
       
       // Reset flags
@@ -763,15 +785,17 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     return () => {
       socket.off("reconnect", handleReconnect);
     };
-  }, [socket, cleanupAll]); // Include cleanupAll in dependencies to fix React hooks order
+  }, [socket]); // Don't include cleanupAll - it's stable and causes infinite loops
 
   // Auto-setup based on role
   useEffect(() => {
     if (!socket || !roomId || !role) {
       // Cleanup if we lose socket, roomId, or role
-      if (setupCompleteRef.current) {
-        cleanupAll();
+      if (setupCompleteRef.current && !isCleaningUpRef.current) {
         setupCompleteRef.current = false;
+        isSettingUpRef.current = false;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        cleanupAll();
       }
       lastRoleRef.current = null;
       lastRoomIdRef.current = null;
@@ -787,24 +811,33 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
     
-    // Don't setup if we're in the middle of a reconnection
-    if (reconnectAttemptRef.current) {
+    // Don't setup if we're already setting up, reconnecting, or cleaning up
+    if (isSettingUpRef.current || reconnectAttemptRef.current || isCleaningUpRef.current) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup during reconnection");
+      console.log("[WebRTC] Skipping setup - already in progress, reconnecting, or cleaning up");
       return;
     }
 
     // Cleanup if role or room changed (before updating refs)
-    if (setupCompleteRef.current && (roleChanged || roomIdChanged)) {
+    if (setupCompleteRef.current && (roleChanged || roomIdChanged) && !isCleaningUpRef.current) {
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Cleaning up due to role/room change");
-      cleanupAll();
       setupCompleteRef.current = false;
+      isSettingUpRef.current = false;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      cleanupAll();
+      // Update refs and return - setup will happen on next effect run after cleanup completes
+      lastRoleRef.current = role;
+      lastRoomIdRef.current = roomId;
+      return;
     }
 
-    // Update refs
+    // Update refs BEFORE starting setup to prevent duplicate runs
     lastRoleRef.current = role;
     lastRoomIdRef.current = roomId;
+
+    // Mark as setting up to prevent concurrent calls
+    isSettingUpRef.current = true;
 
     // eslint-disable-next-line no-console
     console.log("[WebRTC] Auto-setting up for role:", role);
@@ -815,21 +848,25 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     } else if (role === "listener") {
       setupPromise = setupAsListener();
     } else {
+      isSettingUpRef.current = false;
       return;
     }
 
     setupPromise
       .then(() => {
         setupCompleteRef.current = true;
+        isSettingUpRef.current = false;
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
         console.error("[WebRTC] Failed to setup:", error);
         setupCompleteRef.current = false;
+        isSettingUpRef.current = false;
       });
 
     // No cleanup function here - we handle cleanup in the effect body to prevent infinite loops
-  }, [socket, roomId, role, cleanupAll, setupAsSpeaker, setupAsListener]); // Include all dependencies to fix React hooks order
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, roomId, role]); // Don't include function dependencies - they cause infinite loops
 
   // Separate effect for cleanup on unmount
   useEffect(() => {
@@ -838,10 +875,11 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       if (setupCompleteRef.current) {
         // eslint-disable-next-line no-console
         console.log("[WebRTC] Component unmounting - cleaning up");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         cleanupAll();
       }
     };
-  }, [cleanupAll]); // Include cleanupAll to fix React hooks order
+  }, []); // Empty deps - only run on unmount
 
   return {
     localStream,
