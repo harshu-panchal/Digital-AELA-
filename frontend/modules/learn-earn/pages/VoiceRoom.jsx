@@ -142,7 +142,14 @@ const VoiceRoom = () => {
       if (data.role) {
         setUserRole(data.role);
       }
-      // mediasoup setup happens automatically in useWebRTC hook
+      // If using native WebRTC, don't show error - it will work
+      if (data.useNativeWebRTC) {
+        // eslint-disable-next-line no-console
+        console.log("[VoiceRoom] Using native WebRTC (mediasoup unavailable)");
+        // Reset error flag since native WebRTC is available
+        mediaServerErrorShownRef.current = false;
+      }
+      // WebRTC setup happens automatically in useWebRTC hook
     };
 
     const handleParticipantJoined = (data) => {

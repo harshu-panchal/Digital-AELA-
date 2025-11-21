@@ -19,6 +19,13 @@ import {
   getRoomProducers,
   isMediasoupAvailable,
 } from "../services/mediasoupService.js";
+import {
+  addSpeaker,
+  removeSpeaker,
+  getRoomSpeakers,
+  getWebRTCConfig,
+  cleanupRoom as cleanupWebRTCRoom,
+} from "../services/webrtcService.js";
 
 export const setupSocketIO = (io) => {
   // Authentication middleware for Socket.io
@@ -447,55 +454,40 @@ export const setupSocketIO = (io) => {
         socket.data.voiceRoomId = roomId;
         socket.data.voiceRole = role;
 
-        // Check mediasoup availability BEFORE attempting to create router
-        if (!isMediasoupAvailable()) {
-          // Only log and emit error once per socket connection to avoid spam
-          if (!socket.data.mediasoupErrorEmitted) {
-            // eslint-disable-next-line no-console
-            console.warn(`[VoiceRoom] mediasoup is not available. Cannot create router for room ${roomId}`);
-            socket.emit("error", { 
-              message: "Voice features are temporarily unavailable. The media server could not be initialized. Please try again later or contact support.",
-              code: "MEDIASOUP_UNAVAILABLE"
-            });
-            socket.data.mediasoupErrorEmitted = true;
-          }
-          return;
-        }
-        
-        // Reset error flag if mediasoup becomes available
-        socket.data.mediasoupErrorEmitted = false;
+        // Use native WebRTC if mediasoup is not available
+        let webrtcConfig = null;
+        let rtpCapabilities = null;
+        const useNativeWebRTC = !isMediasoupAvailable();
 
-        // Create or get mediasoup router for this room
-        let rtpCapabilities;
-        try {
-          await getOrCreateRouter(roomId);
-          
-          // Get router RTP capabilities
-          rtpCapabilities = await getRouterRtpCapabilities(roomId);
-          if (!rtpCapabilities) {
+        if (useNativeWebRTC) {
+          // Use native WebRTC (works on Render)
+          webrtcConfig = getWebRTCConfig();
+          // eslint-disable-next-line no-console
+          console.log(`[VoiceRoom] Using native WebRTC for room ${roomId} (mediasoup unavailable)`);
+        } else {
+          // Use mediasoup if available
+          try {
+            await getOrCreateRouter(roomId);
+            rtpCapabilities = await getRouterRtpCapabilities(roomId);
+            if (!rtpCapabilities) {
+              // eslint-disable-next-line no-console
+              console.error(`[VoiceRoom] No RTP capabilities returned for room ${roomId}`);
+              socket.emit("error", { 
+                message: "Failed to get media capabilities. Please try again.",
+                code: "RTP_CAPABILITIES_MISSING"
+              });
+              return;
+            }
+          } catch (routerError) {
             // eslint-disable-next-line no-console
-            console.error(`[VoiceRoom] No RTP capabilities returned for room ${roomId}`);
+            console.error(`[VoiceRoom] Error creating/getting router for room ${roomId}:`, routerError);
             socket.emit("error", { 
-              message: "Failed to get media capabilities. Please try again.",
-              code: "RTP_CAPABILITIES_MISSING"
+              message: "Failed to initialize media server. Please try again later.",
+              code: "ROUTER_CREATION_FAILED",
+              details: process.env.NODE_ENV === "development" ? routerError.message : undefined
             });
             return;
           }
-        } catch (routerError) {
-          // eslint-disable-next-line no-console
-          console.error(`[VoiceRoom] Error creating/getting router for room ${roomId}:`, routerError);
-          // eslint-disable-next-line no-console
-          console.error(`[VoiceRoom] Router error details:`, {
-            message: routerError.message,
-            stack: routerError.stack,
-            mediasoupAvailable: isMediasoupAvailable()
-          });
-          socket.emit("error", { 
-            message: "Failed to initialize media server. Please try again later.",
-            code: "ROUTER_CREATION_FAILED",
-            details: process.env.NODE_ENV === "development" ? routerError.message : undefined
-          });
-          return;
         }
 
         // Update or add participant (always find by userId to fix stale socketId issue)
@@ -597,12 +589,14 @@ export const setupSocketIO = (io) => {
           })
         );
 
-        // Notify the user who joined with RTP capabilities
+        // Notify the user who joined with RTP capabilities or WebRTC config
         socket.emit("voice-room-joined", {
           roomId,
           role,
           participants: participantsWithNames,
-          rtpCapabilities,
+          rtpCapabilities: useNativeWebRTC ? null : rtpCapabilities,
+          webrtcConfig: useNativeWebRTC ? webrtcConfig : null,
+          useNativeWebRTC,
         });
 
         // Broadcast updated participants list to all in room
@@ -633,20 +627,34 @@ export const setupSocketIO = (io) => {
         });
 
         // Send list of existing producers (speakers) to the new participant
-        const producers = getRoomProducers(roomId);
-        if (producers.length > 0) {
-          // eslint-disable-next-line no-console
-          console.log(`[VoiceRoom] Sending ${producers.length} existing producers to new participant`);
-          socket.emit("existing-producers", {
-            roomId,
-            producers: producers.map((p) => ({
-              socketId: p.socketId,
-              producerId: p.producerId,
-            })),
-          });
+        if (useNativeWebRTC) {
+          // For native WebRTC, send list of active speakers
+          const speakers = getRoomSpeakers(roomId);
+          if (speakers.length > 0) {
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] Sending ${speakers.length} existing speakers to new participant`);
+            socket.emit("existing-speakers", {
+              roomId,
+              speakers: speakers.map((socketId) => ({ socketId })),
+            });
+          }
         } else {
-          // eslint-disable-next-line no-console
-          console.log(`[VoiceRoom] No existing producers to send`);
+          // For mediasoup, send producers
+          const producers = getRoomProducers(roomId);
+          if (producers.length > 0) {
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] Sending ${producers.length} existing producers to new participant`);
+            socket.emit("existing-producers", {
+              roomId,
+              producers: producers.map((p) => ({
+                socketId: p.socketId,
+                producerId: p.producerId,
+              })),
+            });
+          } else {
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] No existing producers to send`);
+          }
         }
 
         // eslint-disable-next-line no-console
@@ -790,6 +798,127 @@ export const setupSocketIO = (io) => {
         if (callback) callback(error.message || "Failed to create consumer");
       }
     });
+
+    // ========== Native WebRTC Signaling Handlers ==========
+    
+    // WebRTC Offer - when a peer creates an offer for another peer
+    socket.on("webrtc-offer", async (data) => {
+      try {
+        const { roomId, targetSocketId, offer } = data;
+        
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          socket.emit("error", { message: "Not in this voice room" });
+          return;
+        }
+
+        // Forward offer to target peer
+        io.to(targetSocketId).emit("webrtc-offer", {
+          roomId,
+          fromSocketId: socket.id,
+          fromUserId: socket.userId,
+          fromUserName: socket.userFullName,
+          offer,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error handling WebRTC offer:", error);
+      }
+    });
+
+    // WebRTC Answer - when a peer responds to an offer
+    socket.on("webrtc-answer", async (data) => {
+      try {
+        const { roomId, targetSocketId, answer } = data;
+        
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          socket.emit("error", { message: "Not in this voice room" });
+          return;
+        }
+
+        // Forward answer to target peer
+        io.to(targetSocketId).emit("webrtc-answer", {
+          roomId,
+          fromSocketId: socket.id,
+          fromUserId: socket.userId,
+          answer,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error handling WebRTC answer:", error);
+      }
+    });
+
+    // WebRTC ICE Candidate - exchange ICE candidates between peers
+    socket.on("webrtc-ice-candidate", async (data) => {
+      try {
+        const { roomId, targetSocketId, candidate } = data;
+        
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          return; // Silently ignore if not in room
+        }
+
+        // Forward ICE candidate to target peer
+        io.to(targetSocketId).emit("webrtc-ice-candidate", {
+          roomId,
+          fromSocketId: socket.id,
+          candidate,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error handling WebRTC ICE candidate:", error);
+      }
+    });
+
+    // WebRTC Speaker Started - notify when a speaker starts streaming
+    socket.on("webrtc-speaker-started", async (data) => {
+      try {
+        const { roomId } = data;
+        
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          return;
+        }
+
+        // Track speaker
+        addSpeaker(roomId, socket.id);
+
+        // Notify all listeners in the room
+        socket.to(`voice-room:${roomId}`).emit("webrtc-speaker-started", {
+          roomId,
+          socketId: socket.id,
+          userId: socket.userId,
+          userName: socket.userFullName,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error handling speaker started:", error);
+      }
+    });
+
+    // WebRTC Speaker Stopped - notify when a speaker stops streaming
+    socket.on("webrtc-speaker-stopped", async (data) => {
+      try {
+        const { roomId } = data;
+        
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          return;
+        }
+
+        // Remove speaker tracking
+        removeSpeaker(roomId, socket.id);
+
+        // Notify all listeners in the room
+        socket.to(`voice-room:${roomId}`).emit("webrtc-speaker-stopped", {
+          roomId,
+          socketId: socket.id,
+          userId: socket.userId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error handling speaker stopped:", error);
+      }
+    });
+
+    // ========== End Native WebRTC Signaling Handlers ==========
 
     // Request to speak
     socket.on("request-to-speak", async (data) => {
@@ -1295,8 +1424,15 @@ export const setupSocketIO = (io) => {
 
       // Clean up voice room participation
       if (socket.data.voiceRoomId) {
-        // Close mediasoup transports
-        closeTransport(socket.id);
+        const roomId = socket.data.voiceRoomId;
+        
+        // Clean up native WebRTC
+        removeSpeaker(roomId, socket.id);
+        
+        // Close mediasoup transports (if using mediasoup)
+        if (isMediasoupAvailable()) {
+          closeTransport(socket.id);
+        }
 
         const room = await LiveRoom.findById(socket.data.voiceRoomId);
         if (room) {

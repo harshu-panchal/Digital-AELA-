@@ -29,6 +29,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const effectRunCountRef = useRef(0); // Track how many times effect has run to detect loops
   const lastEffectDepsRef = useRef(null); // Track last effect dependencies to detect actual changes
   const mediasoupUnavailableRef = useRef(false); // Track if mediasoup is unavailable to prevent setup attempts
+  const useNativeWebRTCRef = useRef(false); // Track if we should use native WebRTC
+  const webrtcConfigRef = useRef(null); // Store WebRTC configuration (STUN/TURN servers)
+  const peerConnectionsRef = useRef(new Map()); // Map<socketId, RTCPeerConnection> for native WebRTC
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -423,16 +426,29 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       rtpCapabilitiesReceivedRef.current = false;
       // Reset mediasoup unavailable flag when changing rooms (new room might have mediasoup available)
       mediasoupUnavailableRef.current = false;
+      useNativeWebRTCRef.current = false;
+      webrtcConfigRef.current = null;
     }
 
     const handler = (data) => {
-      // Store RTP capabilities immediately when received (before waitForRtpCapabilities is called)
+      // Store RTP capabilities or WebRTC config immediately when received
       // This fixes the race condition where backend emits before waitForRtpCapabilities sets up listener
-      if (data.roomId === currentRoomId && data.rtpCapabilities) {
-        rtpCapabilitiesRef.current = data.rtpCapabilities;
-        rtpCapabilitiesReceivedRef.current = true;
-        // eslint-disable-next-line no-console
-        console.log("[WebRTC] RTP capabilities received via persistent listener for room:", currentRoomId);
+      if (data.roomId === currentRoomId) {
+        if (data.useNativeWebRTC && data.webrtcConfig) {
+          // Native WebRTC mode
+          useNativeWebRTCRef.current = true;
+          webrtcConfigRef.current = data.webrtcConfig;
+          rtpCapabilitiesReceivedRef.current = true; // Mark as received so setup can proceed
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Native WebRTC config received for room:", currentRoomId);
+        } else if (data.rtpCapabilities) {
+          // Mediasoup mode
+          useNativeWebRTCRef.current = false;
+          rtpCapabilitiesRef.current = data.rtpCapabilities;
+          rtpCapabilitiesReceivedRef.current = true;
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] RTP capabilities received via persistent listener for room:", currentRoomId);
+        }
       }
     };
 
@@ -455,67 +471,149 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     };
   }, [socket, roomId]);
 
-  // Wait for RTP capabilities with timeout and race condition fix
+  // Wait for RTP capabilities or WebRTC config with timeout and race condition fix
   const waitForRtpCapabilities = useCallback(async () => {
     // CRITICAL: Check if already received FIRST (before waiting)
     // The persistent listener above ensures we catch events even if they arrive early
-    if (rtpCapabilitiesReceivedRef.current && rtpCapabilitiesRef.current) {
-      // eslint-disable-next-line no-console
-      console.log("[WebRTC] RTP capabilities already received");
-      return rtpCapabilitiesRef.current;
+    if (rtpCapabilitiesReceivedRef.current) {
+      if (useNativeWebRTCRef.current && webrtcConfigRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Native WebRTC config already received");
+        return { useNativeWebRTC: true, config: webrtcConfigRef.current };
+      } else if (rtpCapabilitiesRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] RTP capabilities already received");
+        return { useNativeWebRTC: false, rtpCapabilities: rtpCapabilitiesRef.current };
+      }
     }
 
-    // Wait for capabilities with timeout (listener is already set up by persistent effect above)
+    // CRITICAL: Check if mediasoup is unavailable and no native WebRTC - reject immediately
+    if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
+      // eslint-disable-next-line no-console
+      console.warn("[WebRTC] Skipping RTP capabilities wait - mediasoup unavailable and no native WebRTC");
+      throw new Error("Media server is unavailable");
+    }
+
+    // Wait for capabilities/config with timeout (listener is already set up by persistent effect above)
     return new Promise((resolve, reject) => {
       // Check immediately first
-      if (rtpCapabilitiesReceivedRef.current && rtpCapabilitiesRef.current) {
+      if (rtpCapabilitiesReceivedRef.current) {
+        if (useNativeWebRTCRef.current && webrtcConfigRef.current) {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Native WebRTC config already available");
+          resolve({ useNativeWebRTC: true, config: webrtcConfigRef.current });
+          return;
+        } else if (rtpCapabilitiesRef.current) {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] RTP capabilities already available");
+          resolve({ useNativeWebRTC: false, rtpCapabilities: rtpCapabilitiesRef.current });
+          return;
+        }
+      }
+
+      // Check if mediasoup becomes unavailable and no native WebRTC during wait
+      if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] RTP capabilities already available");
-        resolve(rtpCapabilitiesRef.current);
+        console.warn("[WebRTC] Mediasoup unavailable - aborting wait");
+        reject(new Error("Media server is unavailable"));
         return;
       }
 
       const timeout = setTimeout(() => {
         clearInterval(checkInterval);
         // eslint-disable-next-line no-console
-        console.error("[WebRTC] Timeout waiting for RTP capabilities. RoomId:", roomId);
+        console.error("[WebRTC] Timeout waiting for RTP capabilities/config. RoomId:", roomId);
         reject(new Error("Timeout waiting for RTP capabilities"));
       }, 10000);
 
-      // Poll for capabilities (they might arrive via persistent listener)
+      // Poll for capabilities/config (they might arrive via persistent listener)
       const checkInterval = setInterval(() => {
-        if (rtpCapabilitiesReceivedRef.current && rtpCapabilitiesRef.current) {
+        // Check if mediasoup became unavailable and no native WebRTC during polling
+        if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
           clearTimeout(timeout);
           clearInterval(checkInterval);
           // eslint-disable-next-line no-console
-          console.log("[WebRTC] RTP capabilities received during wait");
-          resolve(rtpCapabilitiesRef.current);
+          console.warn("[WebRTC] Mediasoup unavailable during wait - aborting");
+          reject(new Error("Media server is unavailable"));
+          return;
+        }
+
+        if (rtpCapabilitiesReceivedRef.current) {
+          if (useNativeWebRTCRef.current && webrtcConfigRef.current) {
+            clearTimeout(timeout);
+            clearInterval(checkInterval);
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Native WebRTC config received during wait");
+            resolve({ useNativeWebRTC: true, config: webrtcConfigRef.current });
+          } else if (rtpCapabilitiesRef.current) {
+            clearTimeout(timeout);
+            clearInterval(checkInterval);
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] RTP capabilities received during wait");
+            resolve({ useNativeWebRTC: false, rtpCapabilities: rtpCapabilitiesRef.current });
+          }
         }
       }, 100); // Check every 100ms
     });
   }, [roomId]);
 
+  // Setup native WebRTC for speaker (P2P mesh)
+  const setupNativeWebRTCAsSpeaker = useCallback(async () => {
+    try {
+      setIsConnecting(true);
+      // Get local stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
+
+      localStreamRef.current = stream;
+      setLocalStream(stream);
+
+      // Notify server that speaker started
+      if (socket && roomId) {
+        socket.emit("webrtc-speaker-started", { roomId });
+      }
+
+      setConnectionState("connected");
+      setIsConnecting(false);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Native WebRTC speaker setup complete");
+    } catch (error) {
+      setIsConnecting(false);
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error setting up native WebRTC as speaker:", error);
+      setConnectionState("error");
+      toast.error("Failed to access microphone");
+      throw error;
+    }
+  }, [socket, roomId]);
+
   // Setup WebRTC for speaker/host
   const setupAsSpeaker = useCallback(async () => {
-    // Check if mediasoup is unavailable before attempting setup
-    if (mediasoupUnavailableRef.current) {
-      // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
-      setConnectionState("error");
-      return;
-    }
-
     try {
       setIsConnecting(true);
       setConnectionState("connecting");
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Setting up as speaker/host...");
 
-      // Wait for RTP capabilities from server (with timeout)
-      const rtpCapabilities = await waitForRtpCapabilities();
+      // Wait for RTP capabilities or WebRTC config
+      const capabilities = await waitForRtpCapabilities();
 
+      // Check if we should use native WebRTC
+      if (capabilities.useNativeWebRTC) {
+        // Use native WebRTC
+        await setupNativeWebRTCAsSpeaker();
+        return;
+      }
+
+      // Use mediasoup
       // Initialize device
-      await initializeDevice(rtpCapabilities);
+      await initializeDevice(capabilities.rtpCapabilities);
 
       // Initialize local stream
       await initializeLocalStream();
@@ -530,6 +628,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Speaker setup complete");
     } catch (error) {
+      // Don't show toast for mediasoup unavailable errors (already shown by VoiceRoom component)
+      if (error.message?.includes("Media server is unavailable") || mediasoupUnavailableRef.current) {
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] Setup cancelled - mediasoup unavailable");
+        setConnectionState("error");
+        // Don't throw - just return silently
+        return;
+      }
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error setting up as speaker:", error);
       setConnectionState("error");
@@ -538,29 +644,193 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     } finally {
       setIsConnecting(false);
     }
-  }, [waitForRtpCapabilities, initializeDevice, initializeLocalStream, createSendTransport, startProducing]);
+  }, [waitForRtpCapabilities, initializeDevice, initializeLocalStream, createSendTransport, startProducing, setupNativeWebRTCAsSpeaker]);
 
-  // Setup WebRTC for listener
-  const setupAsListener = useCallback(async () => {
-    // Check if mediasoup is unavailable before attempting setup
-    if (mediasoupUnavailableRef.current) {
-      // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
-      setConnectionState("error");
+  // Create peer connection to a speaker (for listeners)
+  const createPeerConnectionToSpeaker = useCallback(async (speakerSocketId) => {
+    if (!webrtcConfigRef.current || !socket || !roomId) {
       return;
     }
 
+    try {
+      // Create peer connection
+      const peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+
+      // Handle remote stream
+      peerConnection.ontrack = (event) => {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Received remote stream from speaker:", speakerSocketId);
+        const remoteStream = event.streams[0];
+        if (remoteStream) {
+          setRemoteStreams((prev) => {
+            const next = new Map(prev);
+            next.set(speakerSocketId, remoteStream);
+            return next;
+          });
+
+          // Create audio element and play
+          const audio = document.createElement("audio");
+          audio.autoplay = true;
+          audio.srcObject = remoteStream;
+          audioElementsRef.current.set(speakerSocketId, audio);
+        }
+      };
+
+      // Handle ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit("webrtc-ice-candidate", {
+            roomId,
+            targetSocketId: speakerSocketId,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      // Create offer
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+
+      // Send offer to speaker
+      socket.emit("webrtc-offer", {
+        roomId,
+        targetSocketId: speakerSocketId,
+        offer,
+      });
+
+      peerConnectionsRef.current.set(speakerSocketId, peerConnection);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Created peer connection to speaker:", speakerSocketId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error creating peer connection to speaker:", error);
+    }
+  }, [socket, roomId]);
+
+  // Handle WebRTC offer (for speakers)
+  const handleWebRTCOffer = useCallback(async (data) => {
+    if (!webrtcConfigRef.current || !localStreamRef.current || data.roomId !== roomId) {
+      return;
+    }
+
+    try {
+      const { fromSocketId, offer } = data;
+      const peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+
+      // Add local stream tracks
+      localStreamRef.current.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStreamRef.current);
+      });
+
+      // Handle ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit("webrtc-ice-candidate", {
+            roomId,
+            targetSocketId: fromSocketId,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      // Set remote description and create answer
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      // Send answer
+      socket.emit("webrtc-answer", {
+        roomId,
+        targetSocketId: fromSocketId,
+        answer,
+      });
+
+      peerConnectionsRef.current.set(fromSocketId, peerConnection);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Handled offer from listener:", fromSocketId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error handling WebRTC offer:", error);
+    }
+  }, [socket, roomId]);
+
+  // Handle WebRTC answer (for listeners)
+  const handleWebRTCAnswer = useCallback(async (data) => {
+    if (data.roomId !== roomId) {
+      return;
+    }
+
+    try {
+      const { fromSocketId, answer } = data;
+      const peerConnection = peerConnectionsRef.current.get(fromSocketId);
+      if (peerConnection) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Handled answer from speaker:", fromSocketId);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error handling WebRTC answer:", error);
+    }
+  }, [roomId]);
+
+  // Handle ICE candidate
+  const handleWebRTCIceCandidate = useCallback(async (data) => {
+    if (data.roomId !== roomId) {
+      return;
+    }
+
+    try {
+      const { fromSocketId, candidate } = data;
+      const peerConnection = peerConnectionsRef.current.get(fromSocketId);
+      if (peerConnection && candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error handling ICE candidate:", error);
+    }
+  }, [roomId]);
+
+  // Setup native WebRTC for listener (wait for speakers)
+  const setupNativeWebRTCAsListener = useCallback(async () => {
+    try {
+      setIsConnecting(true);
+      setConnectionState("connected");
+      setIsConnecting(false);
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Native WebRTC listener setup complete - waiting for speakers");
+      // Listeners will connect to speakers when they start (handled by socket events)
+    } catch (error) {
+      setIsConnecting(false);
+      // eslint-disable-next-line no-console
+      console.error("[WebRTC] Error setting up native WebRTC as listener:", error);
+      setConnectionState("error");
+      throw error;
+    }
+  }, []);
+
+  // Setup WebRTC for listener
+  const setupAsListener = useCallback(async () => {
     try {
       setIsConnecting(true);
       setConnectionState("connecting");
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Setting up as listener...");
 
-      // Wait for RTP capabilities from server (with timeout)
-      const rtpCapabilities = await waitForRtpCapabilities();
+      // Wait for RTP capabilities or WebRTC config
+      const capabilities = await waitForRtpCapabilities();
 
+      // Check if we should use native WebRTC
+      if (capabilities.useNativeWebRTC) {
+        // Use native WebRTC
+        await setupNativeWebRTCAsListener();
+        return;
+      }
+
+      // Use mediasoup
       // Initialize device
-      await initializeDevice(rtpCapabilities);
+      await initializeDevice(capabilities.rtpCapabilities);
 
       // Create recv transport
       await createRecvTransport();
@@ -569,6 +839,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Listener setup complete");
     } catch (error) {
+      // Don't show toast for mediasoup unavailable errors (already shown by VoiceRoom component)
+      if (error.message?.includes("Media server is unavailable") || mediasoupUnavailableRef.current) {
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] Setup cancelled - mediasoup unavailable");
+        setConnectionState("error");
+        // Don't throw - just return silently
+        return;
+      }
       // eslint-disable-next-line no-console
       console.error("[WebRTC] Error setting up as listener:", error);
       setConnectionState("error");
@@ -577,7 +855,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     } finally {
       setIsConnecting(false);
     }
-  }, [waitForRtpCapabilities, initializeDevice, createRecvTransport]);
+  }, [waitForRtpCapabilities, initializeDevice, createRecvTransport, setupNativeWebRTCAsListener]);
 
   // Toggle microphone
   const toggleMic = useCallback(() => {
@@ -696,10 +974,28 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     // Stop local stream
     stopLocalStream();
 
+    // Clean up native WebRTC peer connections
+    peerConnectionsRef.current.forEach((peerConnection) => {
+      try {
+        peerConnection.close();
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[WebRTC] Error closing peer connection:", error);
+      }
+    });
+    peerConnectionsRef.current.clear();
+
+    // Notify server if speaker stopped (native WebRTC)
+    if (useNativeWebRTCRef.current && socket && roomId && (role === "speaker" || role === "host")) {
+      socket.emit("webrtc-speaker-stopped", { roomId });
+    }
+
     // Reset device and capabilities
     deviceRef.current = null;
     rtpCapabilitiesRef.current = null;
     rtpCapabilitiesReceivedRef.current = false;
+    useNativeWebRTCRef.current = false;
+    webrtcConfigRef.current = null;
 
     // CRITICAL: Don't update state here - it causes re-renders which trigger the effect again
     // State will be updated separately when setup starts or component unmounts
@@ -764,9 +1060,11 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     const handleMediaServerError = (data) => {
       // Check if this is a mediasoup unavailable error
-      if (data.code === "MEDIASOUP_UNAVAILABLE" || 
+      // But don't block if we're using native WebRTC
+      if ((data.code === "MEDIASOUP_UNAVAILABLE" || 
           data.message?.includes("media server") || 
-          data.message?.includes("media capabilities")) {
+          data.message?.includes("media capabilities")) &&
+          !useNativeWebRTCRef.current) {
         // Only handle if we haven't already marked it as unavailable
         if (!mediasoupUnavailableRef.current) {
           // eslint-disable-next-line no-console
@@ -780,9 +1078,78 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       }
     };
 
+    // Native WebRTC handlers
+    const handleExistingSpeakers = async (data) => {
+      if (data.roomId === roomId && role === "listener" && data.speakers && useNativeWebRTCRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Existing speakers for native WebRTC:", data.speakers);
+        // Connect to all existing speakers
+        for (const speaker of data.speakers) {
+          if (speaker.socketId && speaker.socketId !== socket.id) {
+            await createPeerConnectionToSpeaker(speaker.socketId);
+          }
+        }
+      }
+    };
+
+    const handleSpeakerStarted = async (data) => {
+      if (data.roomId === roomId && role === "listener" && useNativeWebRTCRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Speaker started (native WebRTC):", data.socketId);
+        // Connect to the new speaker
+        if (data.socketId && data.socketId !== socket.id) {
+          await createPeerConnectionToSpeaker(data.socketId);
+        }
+      }
+    };
+
+    const handleSpeakerStopped = (data) => {
+      if (data.roomId === roomId && useNativeWebRTCRef.current) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Speaker stopped (native WebRTC):", data.socketId);
+        // Clean up peer connection
+        const peerConnection = peerConnectionsRef.current.get(data.socketId);
+        if (peerConnection) {
+          peerConnection.close();
+          peerConnectionsRef.current.delete(data.socketId);
+        }
+        // Remove remote stream
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.delete(data.socketId);
+          return next;
+        });
+      }
+    };
+
+    // Native WebRTC signaling handlers
+    const handleWebRTCOfferEvent = (data) => {
+      if (data.roomId === roomId && useNativeWebRTCRef.current && (role === "speaker" || role === "host")) {
+        handleWebRTCOffer(data);
+      }
+    };
+
+    const handleWebRTCAnswerEvent = (data) => {
+      if (data.roomId === roomId && useNativeWebRTCRef.current && role === "listener") {
+        handleWebRTCAnswer(data);
+      }
+    };
+
+    const handleWebRTCIceCandidateEvent = (data) => {
+      if (data.roomId === roomId && useNativeWebRTCRef.current) {
+        handleWebRTCIceCandidate(data);
+      }
+    };
+
     socket.on("new-producer", handleNewProducer);
     socket.on("producer-closed", handleProducerClosed);
     socket.on("existing-producers", handleExistingProducers);
+    socket.on("existing-speakers", handleExistingSpeakers);
+    socket.on("webrtc-speaker-started", handleSpeakerStarted);
+    socket.on("webrtc-speaker-stopped", handleSpeakerStopped);
+    socket.on("webrtc-offer", handleWebRTCOfferEvent);
+    socket.on("webrtc-answer", handleWebRTCAnswerEvent);
+    socket.on("webrtc-ice-candidate", handleWebRTCIceCandidateEvent);
     socket.on("muted-by-host", handleMutedByHost);
     socket.on("unmuted-by-host", handleUnmutedByHost);
     socket.on("error", handleMediaServerError);
@@ -791,11 +1158,17 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       socket.off("new-producer", handleNewProducer);
       socket.off("producer-closed", handleProducerClosed);
       socket.off("existing-producers", handleExistingProducers);
+      socket.off("existing-speakers", handleExistingSpeakers);
+      socket.off("webrtc-speaker-started", handleSpeakerStarted);
+      socket.off("webrtc-speaker-stopped", handleSpeakerStopped);
+      socket.off("webrtc-offer", handleWebRTCOfferEvent);
+      socket.off("webrtc-answer", handleWebRTCAnswerEvent);
+      socket.off("webrtc-ice-candidate", handleWebRTCIceCandidateEvent);
       socket.off("muted-by-host", handleMutedByHost);
       socket.off("unmuted-by-host", handleUnmutedByHost);
       socket.off("error", handleMediaServerError);
     };
-  }, [socket, roomId, role, startConsuming, cleanupConsumer]);
+  }, [socket, roomId, role, startConsuming, cleanupConsumer, createPeerConnectionToSpeaker, handleWebRTCOffer, handleWebRTCAnswer, handleWebRTCIceCandidate]);
 
   // Handle socket reconnection
   useEffect(() => {
