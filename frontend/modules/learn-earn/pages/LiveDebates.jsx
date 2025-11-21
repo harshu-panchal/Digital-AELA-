@@ -359,19 +359,18 @@ const LiveDebates = () => {
         // Extract room ID (could be _id or id)
         const roomId = response.room._id?.toString() || response.room.id?.toString();
         
-        // Reload rooms
-        const roomsResponse = await fetchLiveRooms();
-        if (roomsResponse?.rooms) {
-          const debates = roomsResponse.rooms.filter((r) => r.type === "debate");
-          const open = roomsResponse.rooms.filter((r) => r.type === "open-room");
-          setLiveDebates(debates);
-          setOpenRooms(open);
+        // Add the newly created room directly to state (more reliable than refetching)
+        const newRoom = response.room;
+        if (newRoom.type === "debate") {
+          setLiveDebates((prev) => [newRoom, ...prev]);
+        } else if (newRoom.type === "open-room") {
+          setOpenRooms((prev) => [newRoom, ...prev]);
+        }
 
-          // Join new room via Socket.io
-          if (socket && isConnected && roomId) {
-            socket.emit("join_room", { roomId });
-            joinedRoomsRef.current.add(roomId);
-          }
+        // Join new room via Socket.io
+        if (socket && isConnected && roomId) {
+          socket.emit("join_room", { roomId });
+          joinedRoomsRef.current.add(roomId);
         }
 
         // Reset form and close modal

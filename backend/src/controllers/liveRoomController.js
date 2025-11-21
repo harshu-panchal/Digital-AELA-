@@ -224,7 +224,41 @@ export const createLiveRoom = async (req, res, next) => {
       .populate("speakers", "fullName avatarUrl")
       .lean();
 
-    return res.status(201).json({ room: populatedRoom });
+    // Format room response to match getLiveRooms format
+    const now = new Date();
+    const scheduledStart = populatedRoom.scheduledStart ? new Date(populatedRoom.scheduledStart) : null;
+    let startInMinutes = 0;
+
+    if (scheduledStart && scheduledStart > now) {
+      startInMinutes = Math.ceil((scheduledStart - now) / (1000 * 60));
+    }
+
+    const formattedRoom = {
+      id: populatedRoom._id.toString(),
+      topic: populatedRoom.topic || populatedRoom.title,
+      title: populatedRoom.title,
+      description: populatedRoom.description,
+      type: populatedRoom.type,
+      status: populatedRoom.status,
+      forVotes: populatedRoom.forVotes || 0,
+      againstVotes: populatedRoom.againstVotes || 0,
+      listeners: populatedRoom.listeners || 0,
+      startInMinutes,
+      scheduledStart: populatedRoom.scheduledStart,
+      actualStart: populatedRoom.actualStart,
+      speakers: populatedRoom.speakers
+        ? populatedRoom.speakers.map((s) => (typeof s === "object" ? s.fullName : s))
+        : [],
+      host: populatedRoom.host
+        ? typeof populatedRoom.host === "object"
+          ? populatedRoom.host.fullName
+          : populatedRoom.host
+        : "Unknown",
+      winners: populatedRoom.winners || [],
+      createdAt: populatedRoom.createdAt,
+    };
+
+    return res.status(201).json({ room: formattedRoom });
   } catch (error) {
     return next(error);
   }
