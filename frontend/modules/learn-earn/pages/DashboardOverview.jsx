@@ -596,7 +596,7 @@ const DashboardOverview = () => {
             })()}
           </div>
           <Link
-            to="/learn-earn/live-debates"
+            to="/learn-earn/live-debate-room"
             className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37]">
             See full leaderboard →
           </Link>

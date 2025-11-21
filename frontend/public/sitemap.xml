@@ -57,6 +57,14 @@
     <priority>0.8</priority>
   </url>
   
+  <!-- Live Debate Room -->
+  <url>
+    <loc>https://digitalaela.com/live-debate-room</loc>
+    <lastmod>2025-11-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  
   <url>
     <loc>https://digitalaela.com/learn-earn/profile</loc>
     <lastmod>2025-11-07</lastmod>
@@ -66,13 +74,6 @@
 
   <url>
     <loc>https://digitalaela.com/learn-earn/chat</loc>
-    <lastmod>2025-11-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <url>
-    <loc>https://digitalaela.com/learn-earn/live-debates</loc>
     <lastmod>2025-11-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>

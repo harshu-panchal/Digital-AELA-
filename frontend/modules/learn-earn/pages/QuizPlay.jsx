@@ -100,6 +100,17 @@ const QuizPlay = () => {
   }, [timeRemaining, results]);
 
   const handleAnswerSelect = (questionIndex, answerIndex) => {
+    // Check if user is authenticated before allowing to answer
+    if (!authUser) {
+      toast.info("Please sign in to attempt this quiz", {
+        icon: "🔐",
+      });
+      navigate("/login/student", {
+        state: { from: `/learn-earn/quiz/${quizId}` },
+      });
+      return;
+    }
+
     setAnswers((prev) => ({
       ...prev,
       [questionIndex]: answerIndex,
@@ -252,6 +263,53 @@ const QuizPlay = () => {
   const currentQuestion = questions[currentQuestionIndex];
   const allQuestionsAnswered = questions.every((_, index) => answers[index] !== undefined);
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
+  // Show login prompt for non-authenticated users
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-[#05060D] text-white">
+        <SEO
+          title={`${quiz.title} | Quiz | Digital AELA`}
+          description={quiz.description || "Take this quiz to earn AELA coins"}
+          keywords="quiz, learn and earn, aela coins"
+          url={`https://digitalaela.com/learn-earn/quiz/${quizId}`}
+        />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-[#0A0E1C] rounded-xl p-8 border border-white/10 text-center">
+            <FaLock className="w-16 h-16 text-[#D4AF37] mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
+            <p className="text-gray-400 mb-6">
+              Please sign in to attempt this quiz and earn AELA coins.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate("/login/student", {
+                  state: { from: `/learn-earn/quiz/${quizId}` },
+                })}
+                className="w-full bg-[#D4AF37] text-black py-3 px-6 rounded-lg font-bold hover:bg-[#E5C158] transition-colors">
+                Sign In to Attempt Quiz
+              </button>
+              <button
+                onClick={() => navigate("/learn-earn/activities")}
+                className="w-full bg-transparent border border-white/20 text-white py-3 px-6 rounded-lg font-bold hover:bg-white/10 transition-colors">
+                Back to Activities
+              </button>
+            </div>
+            {/* Show quiz info for preview */}
+            <div className="mt-8 pt-8 border-t border-white/10 text-left">
+              <h3 className="text-lg font-semibold text-white mb-2">Quiz Preview</h3>
+              <p className="text-gray-300 mb-4">{quiz.description || quiz.title}</p>
+              <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                <span>Questions: {questions.length}</span>
+                {quiz.duration && <span>Duration: {quiz.duration} min</span>}
+                {quiz.rewardCoins && <span>Reward: {quiz.rewardCoins} AELA coins</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#05060D] text-white">

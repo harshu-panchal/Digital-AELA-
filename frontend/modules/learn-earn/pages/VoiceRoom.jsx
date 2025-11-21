@@ -7,6 +7,7 @@ import {
   HiOutlineXMark,
   HiOutlineHandRaised,
   HiOutlineCheck,
+  HiOutlineTrash,
 } from "react-icons/hi2";
 import { HiOutlineX } from "react-icons/hi";
 import { FaSpinner, FaVolumeUp, FaVolumeMute, FaMicrophoneSlash } from "react-icons/fa";
@@ -14,7 +15,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
 import { useWebRTC } from "../../../src/hooks/useWebRTC";
-import { fetchLiveRoom } from "../../../src/services/api/liveRooms";
+import { fetchLiveRoom, deleteLiveRoom } from "../../../src/services/api/liveRooms";
 
 const VoiceRoom = () => {
   const { roomId } = useParams();
@@ -63,30 +64,36 @@ const VoiceRoom = () => {
           setRoom(response.room);
           
           // Determine user role - check if user is the host
-          const roomHostId = response.room.host?.toString();
-          const currentUserId = user?.id?.toString();
-          const isHost = roomHostId && currentUserId && roomHostId === currentUserId;
-          const isSpeaker = response.room.speakers?.some(
-            (s) => {
-              const speakerId = typeof s === "object" ? s._id?.toString() : s?.toString();
-              return speakerId && currentUserId && speakerId === currentUserId;
-            }
-          );
-          
-          // Set initial role (will be updated when joining voice room)
-          setUserRole(isHost ? "host" : isSpeaker ? "speaker" : "listener");
+          // Allow public listening - if no user, they're just a listener
+          if (user) {
+            const roomHostId = response.room.host?.toString();
+            const currentUserId = user?.id?.toString();
+            const isHost = roomHostId && currentUserId && roomHostId === currentUserId;
+            const isSpeaker = response.room.speakers?.some(
+              (s) => {
+                const speakerId = typeof s === "object" ? s._id?.toString() : s?.toString();
+                return speakerId && currentUserId && speakerId === currentUserId;
+              }
+            );
+            
+            // Set initial role (will be updated when joining voice room)
+            setUserRole(isHost ? "host" : isSpeaker ? "speaker" : "listener");
+          } else {
+            // Public listener - no authentication required
+            setUserRole("listener");
+          }
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("Failed to load room:", error);
         toast.error("Failed to load room");
-        navigate("/learn-earn/live-debates");
+        navigate("/learn-earn/live-debate-room");
       } finally {
         setLoading(false);
       }
     };
 
-    if (roomId && user) {
+    if (roomId) {
       loadRoom();
     }
   }, [roomId, user, navigate]);
@@ -98,10 +105,18 @@ const VoiceRoom = () => {
       return;
     }
 
+    // Public listeners can join - no authentication required for listening
+    // Only participation (speaking) requires authentication
+    
     setIsJoining(true);
     try {
       // Join via socket (mediasoup setup happens in useWebRTC hook)
-      socket.emit("join-voice-room", { roomId, role: userRole });
+      // For public listeners, role will be "listener" and userId will be undefined
+      socket.emit("join-voice-room", { 
+        roomId, 
+        role: userRole,
+        userId: user?.id 
+      });
 
       setIsInitialized(true);
     } catch (error) {
@@ -264,12 +279,12 @@ const VoiceRoom = () => {
         // eslint-disable-next-line no-console
         console.error("[VoiceRoom] Socket error:", data);
         toast.error("Room not found");
-        navigate("/learn-earn/live-debates");
+        navigate("/learn-earn/live-debate-room");
       } else if (errorMessage.includes("ended")) {
         // eslint-disable-next-line no-console
         console.error("[VoiceRoom] Socket error:", data);
         toast.error("This room has ended");
-        navigate("/learn-earn/live-debates");
+        navigate("/learn-earn/live-debate-room");
       } else if (errorMessage.includes("not started")) {
         // eslint-disable-next-line no-console
         console.error("[VoiceRoom] Socket error:", data);
@@ -332,6 +347,17 @@ const VoiceRoom = () => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      toast.info("Please sign in to request to speak", {
+        icon: "🔐",
+      });
+      navigate("/login/student", {
+        state: { from: `/learn-earn/live-debate-room/voice-room/${roomId}` },
+      });
+      return;
     }
 
     // eslint-disable-next-line no-console
@@ -457,14 +483,69 @@ const VoiceRoom = () => {
       }
       stopLocalStream();
       cleanupAll();
-      navigate("/learn-earn/live-debates");
+      navigate("/learn-earn/live-debate-room");
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error leaving room:", error);
       // Navigate anyway
-      navigate("/learn-earn/live-debates");
+      navigate("/learn-earn/live-debate-room");
     }
   };
+
+  // Delete room (host only)
+  const handleDeleteRoom = async () => {
+    if (!user) {
+      toast.error("You must be logged in to delete a room");
+      return;
+    }
+
+    if (userRole !== "host") {
+      toast.error("Only the host can delete this room");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this room? This action cannot be undone. All participants will be disconnected.")) {
+      return;
+    }
+
+    try {
+      await deleteLiveRoom(roomId);
+      toast.success("Room deleted successfully", { icon: "🗑️" });
+      
+      // Cleanup WebRTC
+      stopLocalStream();
+      cleanupAll();
+      
+      // Navigate back to live debate room
+      navigate("/learn-earn/live-debate-room");
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to delete room:", error);
+      toast.error(
+        error.response?.data?.error?.message || "Failed to delete room. Please try again."
+      );
+    }
+  };
+
+  // Listen for room deletion events
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleRoomDeleted = (data) => {
+      if (data.roomId === roomId) {
+        toast.info("This room has been deleted by the host");
+        stopLocalStream();
+        cleanupAll();
+        navigate("/learn-earn/live-debate-room");
+      }
+    };
+
+    socket.on("room_deleted", handleRoomDeleted);
+
+    return () => {
+      socket.off("room_deleted", handleRoomDeleted);
+    };
+  }, [socket, isConnected, roomId, navigate, stopLocalStream, cleanupAll]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -542,12 +623,23 @@ const VoiceRoom = () => {
               </span>
             </div>
           </div>
-          <button
-            onClick={handleLeaveRoom}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20">
-            <HiOutlineXMark className="h-5 w-5" />
-            Leave Room
-          </button>
+          <div className="flex items-center gap-2">
+            {userRole === "host" && (
+              <button
+                onClick={handleDeleteRoom}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20"
+                title="Delete room">
+                <HiOutlineTrash className="h-5 w-5" />
+                Delete Room
+              </button>
+            )}
+            <button
+              onClick={handleLeaveRoom}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20">
+              <HiOutlineXMark className="h-5 w-5" />
+              Leave Room
+            </button>
+          </div>
         </div>
 
         {/* Main Content */}

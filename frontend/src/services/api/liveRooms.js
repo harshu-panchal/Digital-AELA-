@@ -56,3 +56,11 @@ export const leaveRoom = (roomId) =>
     skipAuth: true, // Public endpoint
   });
 
+/**
+ * Delete a room (host only)
+ */
+export const deleteLiveRoom = (roomId) =>
+  apiRequest(`/live-rooms/${roomId}`, {
+    method: "DELETE",
+  });
+

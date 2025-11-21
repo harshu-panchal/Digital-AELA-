@@ -9,6 +9,7 @@ import {
   HiOutlineSpeakerWave,
   HiOutlinePlus,
   HiOutlineArrowRight,
+  HiOutlineTrash,
 } from "react-icons/hi2";
 import { FaVoteYea, FaSpinner, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -20,12 +21,14 @@ import {
   joinRoom,
   leaveRoom,
   createLiveRoom,
+  deleteLiveRoom,
 } from "../../../src/services/api/liveRooms";
 
-const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
+const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, currentUserId }) => {
   const navigate = useNavigate();
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(false);
+  const isHost = currentUserId && room.host && currentUserId.toString() === room.host.toString();
   const [localVotes, setLocalVotes] = useState({
     for: room.forVotes || 0,
     against: room.againstVotes || 0,
@@ -97,18 +100,35 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
       transition={{ duration: 0.28 }}
       className="space-y-4 rounded-3xl border border-[#D4AF37]/20 bg-[#101010] p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="flex-1">
           <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Featured debate</p>
           <h3 className="mt-2 text-lg font-semibold text-white">{room.topic}</h3>
-          <p className="mt-1 text-xs text-gray-400">Speakers: {room.speakers.join(" · ")}</p>
+          <p className="mt-1 text-xs text-gray-400">Speakers: {room.speakers?.join(" · ") || "TBD"}</p>
         </div>
-        <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-gray-300">
-          {isLive ? (
-            <span className="font-semibold text-green-400">● Live</span>
-          ) : (
-            <>
-          Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
-            </>
+        <div className="flex items-center gap-2">
+          <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-gray-300">
+            {isLive ? (
+              <span className="font-semibold text-green-400">● Live</span>
+            ) : (
+              <>
+            Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
+              </>
+            )}
+          </div>
+          {isHost && onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
+                  onDelete(room.id);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400/60 hover:bg-red-500/20"
+              title="Delete room">
+              <HiOutlineTrash className="h-4 w-4" />
+              Delete
+            </button>
           )}
         </div>
       </div>
@@ -171,7 +191,7 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
       {room.status === "live" && (
         <button
           type="button"
-          onClick={() => navigate(`/learn-earn/voice-room/${room.id}`)}
+          onClick={() => navigate(`/learn-earn/live-debate-room/voice-room/${room.id}`)}
           className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
           <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
           Join Voice Room
@@ -292,6 +312,17 @@ const LiveDebates = () => {
   }, [socket, isConnected]);
 
   const handleVote = async (roomId, side) => {
+    // Check if user is authenticated
+    if (!authUser) {
+      toast.info("Please sign in to vote", {
+        icon: "🔐",
+      });
+      navigate("/login/student", {
+        state: { from: "/learn-earn/live-debate-room" },
+      });
+      return;
+    }
+
     if (votingRooms.has(roomId)) return;
 
     setVotingRooms((prev) => new Set(prev).add(roomId));
@@ -323,6 +354,17 @@ const LiveDebates = () => {
 
   const handleCreateDebate = async (e) => {
     e.preventDefault();
+
+    // Check if user is authenticated
+    if (!authUser) {
+      toast.info("Please sign in to create a debate", {
+        icon: "🔐",
+      });
+      navigate("/login/student", {
+        state: { from: "/learn-earn/live-debate-room" },
+      });
+      return;
+    }
 
     if (!formData.title || !formData.topic) {
       toast.error("Please fill in title and topic");
@@ -397,9 +439,73 @@ const LiveDebates = () => {
     }
   };
 
+  const handleDeleteRoom = async (roomId) => {
+    if (!authUser) {
+      toast.error("You must be logged in to delete a room");
+      return;
+    }
+
+    try {
+      await deleteLiveRoom(roomId);
+      toast.success("Room deleted successfully", { icon: "🗑️" });
+
+      // Remove from state
+      setLiveDebates((prev) => prev.filter((r) => r.id !== roomId));
+      setOpenRooms((prev) => prev.filter((r) => r.id !== roomId));
+
+      // Leave room via Socket.io
+      if (socket && isConnected) {
+        socket.emit("leave_room", { roomId });
+        joinedRoomsRef.current.delete(roomId);
+      }
+
+      // Navigate back if we're in the voice room
+      if (window.location.pathname.includes(`/voice-room/${roomId}`)) {
+        navigate("/learn-earn/live-debate-room");
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to delete room:", error);
+      toast.error(
+        error.response?.data?.error?.message || "Failed to delete room. Please try again."
+      );
+    }
+  };
+
+  // Listen for room deletion events
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleRoomDeleted = (data) => {
+      const deletedRoomId = data.roomId;
+      
+      // Remove from state
+      setLiveDebates((prev) => prev.filter((r) => r.id !== deletedRoomId));
+      setOpenRooms((prev) => prev.filter((r) => r.id !== deletedRoomId));
+      
+      // Leave room via Socket.io
+      if (joinedRoomsRef.current.has(deletedRoomId)) {
+        socket.emit("leave_room", { roomId: deletedRoomId });
+        joinedRoomsRef.current.delete(deletedRoomId);
+      }
+
+      // Navigate back if we're in the deleted voice room
+      if (window.location.pathname.includes(`/voice-room/${deletedRoomId}`)) {
+        toast.info("This room has been deleted by the host");
+        navigate("/learn-earn/live-debate-room");
+      }
+    };
+
+    socket.on("room_deleted", handleRoomDeleted);
+
+    return () => {
+      socket.off("room_deleted", handleRoomDeleted);
+    };
+  }, [socket, isConnected, navigate]);
+
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-gradient-to-br from-[#121212] via-[#090909] to-black p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-gradient-to-br from-[#121212] via-[#090909] to-black p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Live debate arena</p>
           <h1 className="mt-2 text-2xl font-semibold text-white">Join, vote & climb the leaderboard</h1>
@@ -410,7 +516,18 @@ const LiveDebates = () => {
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              if (!authUser) {
+                toast.info("Please sign in to create a debate", {
+                  icon: "🔐",
+                });
+                navigate("/login/student", {
+                  state: { from: "/learn-earn/live-debate-room" },
+                });
+                return;
+              }
+              setShowCreateModal(true);
+            }}
             className="inline-flex items-center gap-2 rounded-2xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
             <HiOutlinePlus className="h-4 w-4" />
             Create Debate
@@ -445,9 +562,11 @@ const LiveDebates = () => {
               key={debate.id}
               room={debate}
               onVote={handleVote}
+              onDelete={handleDeleteRoom}
               socket={socket}
               isConnected={isConnected}
               isVoting={votingRooms.has(debate.id)}
+              currentUserId={authUser?.id}
             />
           ))
         )}
@@ -463,32 +582,54 @@ const LiveDebates = () => {
             <p className="text-sm text-gray-400">No open rooms available at the moment.</p>
           </div>
         ) : (
-          openRooms.map((room) => (
-          <Motion.div
-            key={room.id}
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28 }}
-            className="rounded-3xl border border-white/5 bg-[#101010] p-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Open discussion room</p>
-            <p className="mt-2 text-lg font-semibold text-white">{room.title}</p>
-            <p className="mt-1 text-xs text-gray-400">Hosted by {room.host}</p>
-            <p className="mt-3 text-sm text-gray-300">Listeners online: {room.listeners}</p>
-            <div className="mt-4 space-y-2 text-xs text-[#D4AF37]">
-              {room.winners.map((winner) => (
-                <p key={winner}>🏆 {winner}</p>
-              ))}
-            </div>
-            {room.status === "live" && (
-              <button
-                onClick={() => navigate(`/learn-earn/voice-room/${room.id}`)}
-                className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
-                <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
-                Join Voice Room
-              </button>
-            )}
-          </Motion.div>
-          ))
+          openRooms.map((room) => {
+            const isHost = authUser?.id && room.host && authUser.id.toString() === room.host.toString();
+            return (
+              <Motion.div
+                key={room.id}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28 }}
+                className="rounded-3xl border border-white/5 bg-[#101010] p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Open discussion room</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{room.title}</p>
+                    <p className="mt-1 text-xs text-gray-400">Hosted by {room.hostName || room.host}</p>
+                    <p className="mt-3 text-sm text-gray-300">Listeners online: {room.listeners}</p>
+                  </div>
+                  {isHost && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
+                          handleDeleteRoom(room.id);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400/60 hover:bg-red-500/20"
+                      title="Delete room">
+                      <HiOutlineTrash className="h-4 w-4" />
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <div className="mt-4 space-y-2 text-xs text-[#D4AF37]">
+                  {room.winners?.map((winner) => (
+                    <p key={winner}>🏆 {winner}</p>
+                  ))}
+                </div>
+                {room.status === "live" && (
+                  <button
+                    onClick={() => navigate(`/learn-earn/live-debate-room/voice-room/${room.id}`)}
+                    className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+                    <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
+                    Join Voice Room
+                  </button>
+                )}
+              </Motion.div>
+            );
+          })
         )}
       </section>
 

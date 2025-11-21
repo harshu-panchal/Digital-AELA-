@@ -21,6 +21,7 @@ import {
 import { FaCoins } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useUser } from "../../../src/contexts/UserContext";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const sideNavLinks = [
   {
@@ -44,8 +45,8 @@ const sideNavLinks = [
     icon: HiOutlineUserPlus,
   },
   {
-    to: "/learn-earn/live-debates",
-    label: "Live Debates",
+    to: "/learn-earn/live-debate-room",
+    label: "Live Debate Room",
     icon: HiOutlineMicrophone,
   },
   {
@@ -68,6 +69,7 @@ const sideNavLinks = [
 const LearnEarnLayout = () => {
   const location = useLocation();
   const { profile, totals, notifications, liveDebates, openRooms } = useUser();
+  const { user: authUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -166,46 +168,62 @@ const LearnEarnLayout = () => {
                 AELA House
               </h2>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-[#0f0f0f]/90 p-4 shadow-inner">
-              <div className="flex items-center gap-3">
-                <img
-                  src={profile.avatar}
-                  alt={profile.name}
-                  className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
-                />
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {profile.name}
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                    {profile.id}
-                  </p>
-                    <button
-                      type="button"
-                      onClick={handleCopyUserId}
-                      className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
-                      title="Copy User ID">
-                      {copied ? (
-                        <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
-                      ) : (
-                        <HiOutlineClipboard className="h-3.5 w-3.5" />
-                      )}
-                    </button>
+            {authUser ? (
+              <div className="rounded-2xl border border-white/5 bg-[#0f0f0f]/90 p-4 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={profile.avatar}
+                    alt={profile.name}
+                    className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
+                  />
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {profile.name}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                      {profile.id}
+                    </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyUserId}
+                        className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                        title="Copy User ID">
+                        {copied ? (
+                          <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <HiOutlineClipboard className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
+                <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
+                  <p className="flex items-center gap-2 text-[#D4AF37]">
+                    <FaCoins className="h-4 w-4" />
+                    Current Balance
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-white">
+                    {totals.current.toLocaleString()}{" "}
+                    <span className="text-sm text-[#D4AF37]">AELA</span>
+                  </p>
+                </div>
               </div>
-              <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
-                <p className="flex items-center gap-2 text-[#D4AF37]">
-                  <FaCoins className="h-4 w-4" />
-                  Current Balance
+            ) : (
+              <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4 shadow-inner">
+                <p className="text-sm font-semibold text-white mb-2">
+                  Welcome to Learn & Earn
                 </p>
-                <p className="mt-1 text-2xl font-bold text-white">
-                  {totals.current.toLocaleString()}{" "}
-                  <span className="text-sm text-[#D4AF37]">AELA</span>
+                <p className="text-xs text-gray-300 mb-4">
+                  Sign in to track your progress, earn coins, and access exclusive features.
                 </p>
+                <Link
+                  to="/login/student"
+                  className="inline-flex items-center justify-center w-full rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+                  Sign In
+                </Link>
               </div>
-            </div>
+            )}
             {renderNavLinks()}
 
             <div className="mt-auto rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
@@ -219,7 +237,7 @@ const LearnEarnLayout = () => {
               </p>
               {liveRoomsCount > 0 && (
               <Link
-                to="/learn-earn/live-debates"
+                to="/learn-earn/live-debate-room"
                 className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
                 Jump in
               </Link>
@@ -336,34 +354,51 @@ const LearnEarnLayout = () => {
                 <HiOutlineXMark className="h-5 w-5" />
               </button>
               <div className="mt-8 flex flex-col gap-6">
-                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0f0f0f] p-3">
-                  <img
-                    src={profile.avatar}
-                    alt={profile.name}
-                    className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
-                  />
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {profile.name}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                      {profile.id}
-                    </p>
-                      <button
-                        type="button"
-                        onClick={handleCopyUserId}
-                        className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
-                        title="Copy User ID">
-                        {copied ? (
-                          <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        ) : (
-                          <HiOutlineClipboard className="h-3.5 w-3.5" />
-                        )}
-                      </button>
+                {authUser ? (
+                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0f0f0f] p-3">
+                    <img
+                      src={profile.avatar}
+                      alt={profile.name}
+                      className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
+                    />
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {profile.name}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                        {profile.id}
+                      </p>
+                        <button
+                          type="button"
+                          onClick={handleCopyUserId}
+                          className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                          title="Copy User ID">
+                          {copied ? (
+                            <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                          ) : (
+                            <HiOutlineClipboard className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4">
+                    <p className="text-sm font-semibold text-white mb-2">
+                      Welcome to Learn & Earn
+                    </p>
+                    <p className="text-xs text-gray-300 mb-4">
+                      Sign in to track your progress and earn coins.
+                    </p>
+                    <Link
+                      to="/login/student"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="inline-flex items-center justify-center w-full rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+                      Sign In
+                    </Link>
+                  </div>
+                )}
                 {renderNavLinks(true)}
               </div>
             </Motion.aside>

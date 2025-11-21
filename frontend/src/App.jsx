@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "../modules/business-management/business-components/Navbar";
 import Footer from "../modules/business-management/business-components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import FloatingDebateButton from "./components/FloatingDebateButton";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "../modules/business-management/business-pages/Home";
 import LearnEarnLayout from "../modules/learn-earn/layout/LearnEarnLayout";
@@ -332,36 +333,136 @@ export const App = () => {
         />
         <Route
           path="/learn-earn"
-          element={
-            <ProtectedRoute
-              roles={[
-                "student",
-                "teacher",
-                "influencer",
-                "freelancer",
-                "super-admin",
-              ]}>
-              <LearnEarnLayout />
-            </ProtectedRoute>
-          }
+          element={<LearnEarnLayout />}
           key="learn-earn">
-          <Route index element={<DashboardOverview />} />
-          <Route path="dashboard" element={<DashboardOverview />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="chat" element={<ChatCentre />} />
+          {/* Public routes - accessible without login */}
+          <Route path="live-debate-room" element={<LiveDebates />} />
+          <Route path="live-debate-room/voice-room/:roomId" element={<VoiceRoom />} />
+          <Route path="activities" element={<ActivitiesHub />} />
+          
+          {/* Protected routes - require login (show login prompt instead of redirecting) */}
+          <Route
+            index
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <DashboardOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <DashboardOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="chat"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <ChatCentre />
+              </ProtectedRoute>
+            }
+          />
           <Route path="find-learners" element={<FindLearners />} />
           <Route path="user/:userId" element={<UserProfileView />} />
-          <Route path="live-debates" element={<LiveDebates />} />
-          <Route path="voice-room/:roomId" element={<VoiceRoom />} />
-          <Route path="activities" element={<ActivitiesHub />} />
-          <Route path="quiz/:quizId" element={<QuizPlay />} />
+          <Route
+            path="quiz/:quizId"
+            element={<QuizPlay />}
+          />
           <Route
             path="quiz/:quizId/leaderboard"
             element={<QuizLeaderboard />}
           />
-          <Route path="wallet" element={<WalletDashboard />} />
-          <Route path="redemption-history" element={<RedemptionHistory />} />
-          <Route path="ratings" element={<RatingsReviews />} />
+          <Route
+            path="wallet"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <WalletDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="redemption-history"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <RedemptionHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ratings"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <RatingsReviews />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="admin"
             element={
@@ -611,6 +712,7 @@ export const App = () => {
         />
       </Routes>
       {!isAdminLogin && !isDashboard && <Footer />}
+      {!isAdminLogin && <FloatingDebateButton />}
     </>
   );
 };

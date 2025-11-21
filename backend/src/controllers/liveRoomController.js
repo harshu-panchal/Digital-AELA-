@@ -464,3 +464,112 @@ export const leaveRoom = async (req, res, next) => {
   }
 };
 
+/**
+ * Delete a live room (host only)
+ */
+export const deleteRoom = async (req, res, next) => {
+  try {
+    if (!req.auth || !req.auth.userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    const { roomId } = req.params;
+    const userId = req.auth.userId.toString();
+
+    if (!mongoose.isValidObjectId(roomId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid room ID",
+        },
+      });
+    }
+
+    const room = await LiveRoom.findById(roomId);
+    if (!room) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Room not found",
+        },
+      });
+    }
+
+    // Check if user is the host
+    const roomHostId = room.host
+      ? typeof room.host === "object"
+        ? room.host._id.toString()
+        : room.host.toString()
+      : null;
+
+    if (!roomHostId || roomHostId !== userId) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only the host can delete this room",
+        },
+      });
+    }
+
+    // Import cleanup functions
+    const { cleanupRoom: cleanupMediasoup } = await import("../services/mediasoupService.js");
+    const { cleanupRoom: cleanupWebRTC } = await import("../services/webrtcService.js");
+
+    // Cleanup mediasoup resources
+    try {
+      await cleanupMediasoup(roomId);
+    } catch (cleanupError) {
+      // eslint-disable-next-line no-console
+      console.error("Error cleaning up mediasoup resources:", cleanupError);
+      // Continue with deletion even if cleanup fails
+    }
+
+    // Cleanup WebRTC resources
+    try {
+      cleanupWebRTC(roomId);
+    } catch (cleanupError) {
+      // eslint-disable-next-line no-console
+      console.error("Error cleaning up WebRTC resources:", cleanupError);
+      // Continue with deletion even if cleanup fails
+    }
+
+    // Delete the room
+    const deletedRoomId = room._id.toString();
+    await room.deleteOne();
+
+    // Emit socket event to notify all clients
+    const { getSocketIO } = await import("../utils/socketEmitter.js");
+    const io = getSocketIO();
+    if (io) {
+      // Emit to all users (broadcast)
+      io.emit("room_deleted", {
+        roomId: deletedRoomId,
+      });
+      // Also emit to specific room rooms in case they're listening
+      io.to(`room:${deletedRoomId}`).emit("room_deleted", {
+        roomId: deletedRoomId,
+      });
+      io.to(`voice-room:${deletedRoomId}`).emit("room_deleted", {
+        roomId: deletedRoomId,
+      });
+    }
+
+    return res.json({
+      message: "Room deleted successfully",
+      socketEvent: {
+        event: "room_deleted",
+        data: {
+          roomId: deletedRoomId,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
