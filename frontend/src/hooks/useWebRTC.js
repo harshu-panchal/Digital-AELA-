@@ -603,7 +603,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     });
   }, []);
 
-  // Cleanup all - use batch updates to prevent re-renders during effect execution
+  // Cleanup all - NO STATE UPDATES to prevent infinite loops
+  // State will be updated separately when needed
   const cleanupAll = useCallback(() => {
     // Prevent concurrent cleanup calls
     if (isCleaningUpRef.current) {
@@ -681,19 +682,15 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     rtpCapabilitiesRef.current = null;
     rtpCapabilitiesReceivedRef.current = false;
 
-    // Batch state updates using requestAnimationFrame to prevent immediate re-renders
-    // This prevents the effect from re-running immediately after cleanup
-    requestAnimationFrame(() => {
-      setRemoteStreams(new Map());
-      setConnectionState("disconnected");
-      // Reset cleanup flag after state updates complete
-      requestAnimationFrame(() => {
-        isCleaningUpRef.current = false;
-      });
-    });
+    // CRITICAL: Don't update state here - it causes re-renders which trigger the effect again
+    // State will be updated separately when setup starts or component unmounts
+    // Use a ref to track that cleanup happened, and update state in a separate effect
+    
+    // Reset cleanup flag immediately (no state updates means no re-render)
+    isCleaningUpRef.current = false;
     
     // eslint-disable-next-line no-console
-    console.log("[WebRTC] Cleanup complete");
+    console.log("[WebRTC] Cleanup complete (state not updated to prevent loops)");
   }, [stopLocalStream]);
 
   // Setup socket listeners for mediasoup events
@@ -848,21 +845,25 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
 
-    // If role or room changed and we had a previous setup, mark for cleanup
-    // But don't cleanup here - do it in the cleanup function to avoid state updates during render
+    // If role or room changed and we had a previous setup, cleanup first
     if (setupCompleteRef.current && (roleChanged || roomIdChanged || setupKeyChanged)) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Role/room changed, will cleanup in effect cleanup function");
+      console.log("[WebRTC] Role/room changed, cleaning up before new setup");
       setupCompleteRef.current = false;
       isSettingUpRef.current = false;
+      // Cleanup immediately (no state updates, so no re-render)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      cleanupAll();
+      // Update state to reflect disconnected state (but do it after cleanup)
+      setRemoteStreams(new Map());
+      setConnectionState("disconnected");
       // Update refs
       lastRoleRef.current = role;
       lastRoomIdRef.current = roomId;
       lastSetupKeyRef.current = setupKey;
       // Reset effect run count when dependencies actually change
       effectRunCountRef.current = 0;
-      // Return early - cleanup will happen in cleanup function, then effect will run again
-      return;
+      // Continue to setup after cleanup
     }
 
     // Update refs BEFORE starting setup to prevent duplicate runs
@@ -872,6 +873,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
     // Mark as setting up to prevent concurrent calls
     isSettingUpRef.current = true;
+    
+    // Update connection state to "connecting" before starting setup
+    setConnectionState("connecting");
 
     // eslint-disable-next-line no-console
     console.log("[WebRTC] Auto-setting up for role:", role);
@@ -892,6 +896,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         isSettingUpRef.current = false;
         // Reset effect run count on successful setup
         effectRunCountRef.current = 0;
+        // Update connection state on successful setup
+        setConnectionState("connected");
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
@@ -900,6 +906,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         isSettingUpRef.current = false;
         // Reset effect run count on error
         effectRunCountRef.current = 0;
+        // Update connection state on error
+        setConnectionState("error");
       });
 
     // Cleanup function - only runs when dependencies actually change or component unmounts
@@ -918,11 +926,12 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           isSettingUpRef.current = false;
           // Reset effect run count
           effectRunCountRef.current = 0;
-          // Use requestAnimationFrame to batch state updates and prevent immediate re-renders
-          requestAnimationFrame(() => {
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-            cleanupAll();
-          });
+          // Cleanup without state updates (prevents re-render loop)
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          cleanupAll();
+          // Update state separately after cleanup completes
+          setRemoteStreams(new Map());
+          setConnectionState("disconnected");
         }
       }
     };
@@ -936,8 +945,12 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       if (setupCompleteRef.current) {
         // eslint-disable-next-line no-console
         console.log("[WebRTC] Component unmounting - cleaning up");
+        // Cleanup without state updates (component is unmounting anyway)
         // eslint-disable-next-line react-hooks/exhaustive-deps
         cleanupAll();
+        // Update state one final time
+        setRemoteStreams(new Map());
+        setConnectionState("disconnected");
       }
     };
   }, []); // Empty deps - only run on unmount
