@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import {
   HiOutlineMicrophone,
+  HiOutlineMicrophoneSlash,
   HiOutlineSpeakerWave,
   HiOutlineXMark,
   HiOutlineHandRaised,
