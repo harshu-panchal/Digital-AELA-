@@ -6,6 +6,18 @@ import Enrollment from "../models/Enrollment.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Course from "../models/Course.js";
 import mongoose from "mongoose";
+import {
+  getOrCreateRouter,
+  getRouterRtpCapabilities,
+  createTransport,
+  connectTransport,
+  createProducer,
+  createConsumer,
+  pauseProducer,
+  resumeProducer,
+  closeTransport,
+  getRoomProducers,
+} from "../services/mediasoupService.js";
 
 export const setupSocketIO = (io) => {
   // Authentication middleware for Socket.io
@@ -359,7 +371,7 @@ export const setupSocketIO = (io) => {
       socket.leave("activity_feed");
     });
 
-    // ========== WebRTC Voice Room Signaling ==========
+    // ========== WebRTC Voice Room Signaling (mediasoup SFU) ==========
     
     // Join voice room with role
     socket.on("join-voice-room", async (data) => {
@@ -383,6 +395,12 @@ export const setupSocketIO = (io) => {
         socket.join(`voice-room:${roomId}`);
         socket.data.voiceRoomId = roomId;
         socket.data.voiceRole = role;
+
+        // Create or get mediasoup router for this room
+        await getOrCreateRouter(roomId);
+
+        // Get router RTP capabilities
+        const rtpCapabilities = await getRouterRtpCapabilities(roomId);
 
         // Update or add participant
         const participantIndex = room.participants.findIndex(
@@ -427,11 +445,12 @@ export const setupSocketIO = (io) => {
           socketId: p.socketId,
         }));
 
-        // Notify the user who joined
+        // Notify the user who joined with RTP capabilities
         socket.emit("voice-room-joined", {
           roomId,
           role,
           participants,
+          rtpCapabilities,
         });
 
         // Notify others in the room
@@ -442,14 +461,14 @@ export const setupSocketIO = (io) => {
           socketId: socket.id,
         });
 
-        // Send list of existing speakers to the new participant
-        const speakers = participants.filter((p) => p.role === "speaker" || p.role === "host");
-        if (speakers.length > 0) {
-          socket.emit("existing-speakers", {
+        // Send list of existing producers (speakers) to the new participant
+        const producers = getRoomProducers(roomId);
+        if (producers.length > 0) {
+          socket.emit("existing-producers", {
             roomId,
-            speakers: speakers.map((s) => ({
-              userId: s.userId,
-              socketId: s.socketId,
+            producers: producers.map((p) => ({
+              socketId: p.socketId,
+              producerId: p.producerId,
             })),
           });
         }
@@ -460,27 +479,124 @@ export const setupSocketIO = (io) => {
       }
     });
 
-    // Handle WebRTC signaling (offer, answer, ice-candidate)
-    socket.on("signal", (data) => {
+    // Create WebRTC transport (send or recv)
+    socket.on("create-transport", async (data, callback) => {
       try {
-        const { toSocketId, type, payload } = data;
-        
-        if (!toSocketId || !type || !payload) {
-          socket.emit("error", { message: "Invalid signal data" });
+        const { roomId, direction } = data; // 'send' or 'recv'
+
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          if (callback) callback("Not in this voice room");
           return;
         }
 
-        // Forward signal to target socket
-        io.to(toSocketId).emit("signal", {
-          from: socket.id,
-          fromUserId: socket.userId,
-          type, // 'offer', 'answer', 'ice-candidate'
-          payload,
-        });
+        const transport = await createTransport(roomId, socket.id, direction);
+
+        if (callback) {
+          callback(null, {
+            roomId,
+            direction,
+            transport,
+          });
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("[Socket.IO] Error forwarding signal:", error);
-        socket.emit("error", { message: "Failed to forward signal" });
+        console.error("[Socket.IO] Error creating transport:", error);
+        if (callback) callback(error.message || "Failed to create transport");
+      }
+    });
+
+    // Connect transport
+    socket.on("connect-transport", async (data, callback) => {
+      try {
+        const { roomId, transportId, dtlsParameters } = data;
+
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          if (callback) callback("Not in this voice room");
+          return;
+        }
+
+        await connectTransport(roomId, socket.id, transportId, dtlsParameters);
+
+        if (callback) {
+          callback(null, {
+            roomId,
+            transportId,
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error connecting transport:", error);
+        if (callback) callback(error.message || "Failed to connect transport");
+      }
+    });
+
+    // Create producer (for speakers)
+    socket.on("create-producer", async (data, callback) => {
+      try {
+        const { roomId, transportId, rtpParameters } = data;
+
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          if (callback) callback("Not in this voice room");
+          return;
+        }
+
+        if (socket.data.voiceRole !== "speaker" && socket.data.voiceRole !== "host") {
+          if (callback) callback("Only speakers can produce audio");
+          return;
+        }
+
+        const producer = await createProducer(roomId, socket.id, transportId, rtpParameters);
+
+        // Notify all listeners about new producer
+        socket.to(`voice-room:${roomId}`).emit("new-producer", {
+          roomId,
+          socketId: socket.id,
+          producerId: producer.id,
+          userId: socket.userId,
+          userName: socket.userFullName,
+        });
+
+        if (callback) {
+          callback(null, {
+            roomId,
+            producer,
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error creating producer:", error);
+        if (callback) callback(error.message || "Failed to create producer");
+      }
+    });
+
+    // Create consumer (for listeners)
+    socket.on("create-consumer", async (data, callback) => {
+      try {
+        const { roomId, transportId, producerId, rtpCapabilities } = data;
+
+        if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
+          if (callback) callback("Not in this voice room");
+          return;
+        }
+
+        const consumer = await createConsumer(
+          roomId,
+          socket.id,
+          transportId,
+          producerId,
+          rtpCapabilities
+        );
+
+        if (callback) {
+          callback(null, {
+            roomId,
+            consumer,
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error creating consumer:", error);
+        if (callback) callback(error.message || "Failed to create consumer");
       }
     });
 
@@ -668,6 +784,125 @@ export const setupSocketIO = (io) => {
       }
     });
 
+    // Host mute/unmute participant
+    socket.on("mute-participant", async (data) => {
+      try {
+        const { roomId, targetSocketId, targetUserId } = data;
+
+        if (!roomId || socket.data.voiceRoomId !== roomId) {
+          socket.emit("error", { message: "Not in this voice room" });
+          return;
+        }
+
+        // Only host can mute participants
+        if (socket.data.voiceRole !== "host") {
+          socket.emit("error", { message: "Only host can mute participants" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Verify target is in the room
+        const targetParticipant = room.participants.find(
+          (p) => p.userId.toString() === targetUserId
+        );
+        if (!targetParticipant) {
+          socket.emit("error", { message: "Participant not found in room" });
+          return;
+        }
+
+        // Pause producer (mute)
+        await pauseProducer(targetSocketId);
+
+        // Notify target user
+        io.to(targetSocketId).emit("muted-by-host", {
+          roomId,
+          mutedBy: socket.userId,
+          mutedByName: socket.userFullName,
+        });
+
+        // Notify all room participants
+        io.to(`voice-room:${roomId}`).emit("participant-muted", {
+          roomId,
+          userId: targetUserId,
+          socketId: targetSocketId,
+          mutedBy: socket.userId,
+        });
+
+        socket.emit("participant-muted-success", {
+          roomId,
+          userId: targetUserId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error muting participant:", error);
+        socket.emit("error", { message: "Failed to mute participant" });
+      }
+    });
+
+    socket.on("unmute-participant", async (data) => {
+      try {
+        const { roomId, targetSocketId, targetUserId } = data;
+
+        if (!roomId || socket.data.voiceRoomId !== roomId) {
+          socket.emit("error", { message: "Not in this voice room" });
+          return;
+        }
+
+        // Only host can unmute participants
+        if (socket.data.voiceRole !== "host") {
+          socket.emit("error", { message: "Only host can unmute participants" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Verify target is in the room
+        const targetParticipant = room.participants.find(
+          (p) => p.userId.toString() === targetUserId
+        );
+        if (!targetParticipant) {
+          socket.emit("error", { message: "Participant not found in room" });
+          return;
+        }
+
+        // Resume producer (unmute)
+        await resumeProducer(targetSocketId);
+
+        // Notify target user
+        io.to(targetSocketId).emit("unmuted-by-host", {
+          roomId,
+          unmutedBy: socket.userId,
+          unmutedByName: socket.userFullName,
+        });
+
+        // Notify all room participants
+        io.to(`voice-room:${roomId}`).emit("participant-unmuted", {
+          roomId,
+          userId: targetUserId,
+          socketId: targetSocketId,
+          unmutedBy: socket.userId,
+        });
+
+        socket.emit("participant-unmuted-success", {
+          roomId,
+          userId: targetUserId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error unmuting participant:", error);
+        socket.emit("error", { message: "Failed to unmute participant" });
+      }
+    });
+
     // Leave voice room
     socket.on("leave-voice-room", async (data) => {
       try {
@@ -676,6 +911,9 @@ export const setupSocketIO = (io) => {
         if (!roomId) {
           return;
         }
+
+        // Close mediasoup transports
+        closeTransport(socket.id);
 
         socket.leave(`voice-room:${roomId}`);
         
@@ -697,6 +935,15 @@ export const setupSocketIO = (io) => {
           }
 
           await room.save();
+
+          // Notify others about producer leaving (if was a speaker)
+          if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host") {
+            socket.to(`voice-room:${roomId}`).emit("producer-closed", {
+              roomId,
+              socketId: socket.id,
+              userId: socket.userId,
+            });
+          }
 
           // Notify others
           socket.to(`voice-room:${roomId}`).emit("participant-left", {
@@ -726,6 +973,9 @@ export const setupSocketIO = (io) => {
 
       // Clean up voice room participation
       if (socket.data.voiceRoomId) {
+        // Close mediasoup transports
+        closeTransport(socket.id);
+
         const room = await LiveRoom.findById(socket.data.voiceRoomId);
         if (room) {
           room.participants = room.participants.filter(
@@ -738,6 +988,15 @@ export const setupSocketIO = (io) => {
             room.listeners = Math.max(0, (room.listeners || 0) - 1);
           }
           await room.save();
+
+          // Notify others about producer leaving (if was a speaker)
+          if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host") {
+            socket.to(`voice-room:${socket.data.voiceRoomId}`).emit("producer-closed", {
+              roomId: socket.data.voiceRoomId,
+              socketId: socket.id,
+              userId: socket.userId,
+            });
+          }
 
           socket.to(`voice-room:${socket.data.voiceRoomId}`).emit("participant-left", {
             userId: socket.userId,

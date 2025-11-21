@@ -6,6 +6,7 @@ import connectDatabase from "./config/db.js";
 import { setupSocketIO } from "./config/socket.js";
 import { setSocketIO } from "./utils/socketEmitter.js";
 import { setupJobExpirationCron } from "./utils/jobExpirationCron.js";
+import { initializeWorkers } from "./services/mediasoupService.js";
 
 dotenv.config();
 
@@ -13,6 +14,9 @@ const PORT = process.env.PORT || 5000;
 
 const start = async () => {
   await connectDatabase();
+
+  // Initialize mediasoup workers
+  await initializeWorkers();
 
   const httpServer = createServer(app);
   

@@ -94,15 +94,24 @@ const PDFEbookReader = () => {
               
               // If Content-Type is image AND URL ends with image extension, it's likely a mistake
               if (hasImageExtension) {
+                // Check if it's specifically a cover image path
+                const isCoverImage = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
+                const errorMessage = isCoverImage
+                  ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. This is likely a configuration error - the cover image URL was saved to the download URL field. Please contact the administrator to fix this ebook's download URL."
+                  : "Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please check the ebook's download URL or contact the administrator to upload the correct PDF file.";
+                
                 console.error("⚠️ Detected image URL instead of PDF:", {
                   url: data.downloadUrl,
                   contentType: contentType,
                   urlPath: urlPath,
+                  isCoverImage: isCoverImage,
                 });
+                
                 // Show a helpful error message but still allow PDF viewer to attempt loading
-                // (in case it's a false positive or the file can be converted)
-                setError("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. This might be a cover image. Please check the ebook's download URL or contact the administrator to upload the correct PDF file.");
-                toast.error("The ebook URL points to an image file. This might be the cover image instead of the PDF. The PDF viewer will attempt to load it anyway.");
+                setError(errorMessage);
+                toast.error(isCoverImage 
+                  ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
+                  : "The ebook URL points to an image file instead of a PDF. The PDF viewer will attempt to load it anyway.");
                 // Don't throw - let the PDF viewer try and show its own error if it fails
               } else {
                 // If Content-Type is image but URL doesn't end with image extension, it might be incorrectly configured
@@ -134,14 +143,22 @@ const PDFEbookReader = () => {
             const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
             
             if (hasImageExtension && !urlPath.endsWith('.pdf')) {
-              // URL clearly ends with image extension and no PDF - likely an error
+              // Check if it's specifically a cover image path
+              const isCoverImage = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
+              const errorMessage = isCoverImage
+                ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. This is likely a configuration error - the cover image URL was saved to the download URL field. Please contact the administrator to fix this ebook's download URL."
+                : "Invalid PDF URL: The ebook URL appears to point to an image file (ends with image extension). Please check the ebook's download URL or contact the administrator to upload the correct PDF file.";
+              
               console.error("⚠️ URL ends with image extension but no Content-Type header:", {
                 url: data.downloadUrl,
                 urlPath: urlPath,
+                isCoverImage: isCoverImage,
               });
               // Show error but still allow PDF viewer to attempt loading
-              setError("Invalid PDF URL: The ebook URL appears to point to an image file (ends with image extension). Please check the ebook's download URL or contact the administrator to upload the correct PDF file.");
-              toast.error("The ebook URL appears to be an image file. This might be the cover image. The PDF viewer will attempt to load it anyway.");
+              setError(errorMessage);
+              toast.error(isCoverImage 
+                ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
+                : "The ebook URL appears to be an image file. This might be the cover image. The PDF viewer will attempt to load it anyway.");
               // Don't throw - let the PDF viewer try and show its own error if it fails
             }
             

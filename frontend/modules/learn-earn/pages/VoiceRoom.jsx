@@ -40,11 +40,11 @@ const VoiceRoom = () => {
     isMicEnabled, 
     initializeLocalStream, 
     stopLocalStream, 
-    connectToSpeakers, 
     toggleMic,
-    cleanupPeerConnection,
     cleanupAll,
   } = useWebRTC(socket, roomId, user?.id, userRole);
+  
+  const [mutedParticipants, setMutedParticipants] = useState(new Set());
 
   // Load room data
   useEffect(() => {
@@ -88,12 +88,7 @@ const VoiceRoom = () => {
 
     setIsJoining(true);
     try {
-      // Initialize local stream if speaker/host
-      if (userRole === "speaker" || userRole === "host") {
-        await initializeLocalStream();
-      }
-
-      // Join via socket
+      // Join via socket (mediasoup setup happens in useWebRTC hook)
       socket.emit("join-voice-room", { roomId, role: userRole });
 
       setIsInitialized(true);
@@ -104,7 +99,7 @@ const VoiceRoom = () => {
     } finally {
       setIsJoining(false);
     }
-  }, [socket, isConnected, roomId, userRole, initializeLocalStream]);
+  }, [socket, isConnected, roomId, userRole]);
 
   // Auto-join when connected
   useEffect(() => {
@@ -119,16 +114,7 @@ const VoiceRoom = () => {
 
     const handleVoiceRoomJoined = (data) => {
       setParticipants(data.participants || []);
-      
-      // Connect to existing speakers
-      if (data.participants) {
-        const speakers = data.participants.filter(
-          (p) => (p.role === "speaker" || p.role === "host") && p.socketId
-        );
-        if (speakers.length > 0) {
-          connectToSpeakers(speakers);
-        }
-      }
+      // mediasoup setup happens automatically in useWebRTC hook
     };
 
     const handleParticipantJoined = (data) => {
@@ -141,32 +127,15 @@ const VoiceRoom = () => {
         }
         return [...prev, data];
       });
-
-      // If we're a speaker/host and a new participant joined, send them an offer
-      if ((userRole === "speaker" || userRole === "host") && data.socketId && data.userId !== user?.id) {
-        // Small delay to ensure peer connection is ready
-        setTimeout(() => {
-          connectToSpeakers([{ userId: data.userId, socketId: data.socketId }]);
-        }, 500);
-      }
-      
-      // If we're a listener and a new speaker joined, create peer connection to receive their audio
-      if (userRole === "listener" && (data.role === "speaker" || data.role === "host") && data.socketId) {
-        setTimeout(() => {
-          connectToSpeakers([{ userId: data.userId, socketId: data.socketId }]);
-        }, 500);
-      }
     };
 
     const handleParticipantLeft = (data) => {
       setParticipants((prev) => prev.filter((p) => p.userId !== data.userId));
-      cleanupPeerConnection(data.socketId);
-    };
-
-    const handleExistingSpeakers = (data) => {
-      if (data.speakers && data.speakers.length > 0) {
-        connectToSpeakers(data.speakers);
-      }
+      setMutedParticipants((prev) => {
+        const next = new Set(prev);
+        next.delete(data.userId);
+        return next;
+      });
     };
 
     const handleSpeakRequested = (data) => {
@@ -182,14 +151,7 @@ const VoiceRoom = () => {
         setUserRole("speaker");
         setSpeakRequests((prev) => prev.filter((r) => r.userId !== user?.id));
         toast.success("Your request to speak has been approved!");
-        
-        // Initialize mic and connect to other speakers
-        initializeLocalStream().then(() => {
-          const currentSpeakers = participants.filter(
-            (p) => (p.role === "speaker" || p.role === "host") && p.socketId
-          );
-          connectToSpeakers(currentSpeakers);
-        });
+        // mediasoup setup happens automatically in useWebRTC hook when role changes
       }
     };
 
@@ -208,35 +170,44 @@ const VoiceRoom = () => {
       );
     };
 
+    const handleParticipantMuted = (data) => {
+      if (data.roomId === roomId) {
+        setMutedParticipants((prev) => new Set(prev).add(data.userId));
+      }
+    };
+
+    const handleParticipantUnmuted = (data) => {
+      if (data.roomId === roomId) {
+        setMutedParticipants((prev) => {
+          const next = new Set(prev);
+          next.delete(data.userId);
+          return next;
+        });
+      }
+    };
+
     socket.on("voice-room-joined", handleVoiceRoomJoined);
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
-    socket.on("existing-speakers", handleExistingSpeakers);
     socket.on("speak-requested", handleSpeakRequested);
     socket.on("speak-approved", handleSpeakApproved);
     socket.on("speak-rejected", handleSpeakRejected);
     socket.on("speaker-promoted", handleSpeakerPromoted);
+    socket.on("participant-muted", handleParticipantMuted);
+    socket.on("participant-unmuted", handleParticipantUnmuted);
 
     return () => {
       socket.off("voice-room-joined", handleVoiceRoomJoined);
       socket.off("participant-joined", handleParticipantJoined);
       socket.off("participant-left", handleParticipantLeft);
-      socket.off("existing-speakers", handleExistingSpeakers);
       socket.off("speak-requested", handleSpeakRequested);
       socket.off("speak-approved", handleSpeakApproved);
       socket.off("speak-rejected", handleSpeakRejected);
       socket.off("speaker-promoted", handleSpeakerPromoted);
+      socket.off("participant-muted", handleParticipantMuted);
+      socket.off("participant-unmuted", handleParticipantUnmuted);
     };
-  }, [
-    socket,
-    isConnected,
-    roomId,
-    user?.id,
-    participants,
-    connectToSpeakers,
-    cleanupPeerConnection,
-    initializeLocalStream,
-  ]);
+  }, [socket, isConnected, roomId, user?.id]);
 
   // Request to speak
   const handleRequestToSpeak = async () => {
@@ -279,6 +250,29 @@ const VoiceRoom = () => {
       requesterUserId,
     });
     setSpeakRequests((prev) => prev.filter((r) => r.userId !== requesterUserId));
+  };
+
+  // Host mute/unmute participant
+  const handleMuteParticipant = (targetSocketId, targetUserId) => {
+    if (!socket || !isConnected) return;
+    if (userRole !== "host") return;
+
+    socket.emit("mute-participant", {
+      roomId,
+      targetSocketId,
+      targetUserId,
+    });
+  };
+
+  const handleUnmuteParticipant = (targetSocketId, targetUserId) => {
+    if (!socket || !isConnected) return;
+    if (userRole !== "host") return;
+
+    socket.emit("unmute-participant", {
+      roomId,
+      targetSocketId,
+      targetUserId,
+    });
   };
 
   // Leave room
@@ -370,42 +364,83 @@ const VoiceRoom = () => {
                 <p className="text-sm text-gray-400">No active speakers</p>
               ) : (
                 <div className="space-y-3">
-                  {speakers.map((speaker) => (
-                    <div
-                      key={speaker.userId}
-                      className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#151515] p-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#D4AF37] to-[#E5C158] text-sm font-semibold text-black">
-                        {speaker.userName?.[0]?.toUpperCase() || "S"}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">
-                          {speaker.userName || "Speaker"}
-                          {speaker.role === "host" && (
-                            <span className="ml-2 text-xs text-[#D4AF37]">(Host)</span>
+                  {speakers.map((speaker) => {
+                    const isMuted = mutedParticipants.has(speaker.userId);
+                    const isCurrentUser = speaker.userId === user?.id;
+                    const isHost = userRole === "host";
+                    const canMute = isHost && !isCurrentUser;
+
+                    return (
+                      <div
+                        key={speaker.userId}
+                        className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#151515] p-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#D4AF37] to-[#E5C158] text-sm font-semibold text-black">
+                          {speaker.userName?.[0]?.toUpperCase() || "S"}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">
+                            {speaker.userName || "Speaker"}
+                            {speaker.role === "host" && (
+                              <span className="ml-2 text-xs text-[#D4AF37]">(Host)</span>
+                            )}
+                            {isMuted && (
+                              <span className="ml-2 text-xs text-red-400">(Muted)</span>
+                            )}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            {isMuted ? (
+                              <>
+                                <div className="h-2 w-2 rounded-full bg-red-400" />
+                                <span className="text-xs text-gray-400">Muted</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                                <span className="text-xs text-gray-400">Speaking</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isCurrentUser && (
+                            <button
+                              onClick={toggleMic}
+                              className={`rounded-lg p-2 transition ${
+                                isMicEnabled
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : "bg-gray-500/20 text-gray-400"
+                              }`}>
+                              {isMicEnabled ? (
+                                <HiOutlineMicrophone className="h-5 w-5" />
+                              ) : (
+                                <HiOutlineMicrophoneSlash className="h-5 w-5" />
+                              )}
+                            </button>
                           )}
-                        </p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                          <span className="text-xs text-gray-400">Speaking</span>
+                          {canMute && (
+                            <button
+                              onClick={() =>
+                                isMuted
+                                  ? handleUnmuteParticipant(speaker.socketId, speaker.userId)
+                                  : handleMuteParticipant(speaker.socketId, speaker.userId)
+                              }
+                              className={`rounded-lg p-2 transition ${
+                                isMuted
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : "bg-red-500/20 text-red-300"
+                              }`}
+                              title={isMuted ? "Unmute" : "Mute"}>
+                              {isMuted ? (
+                                <HiOutlineMicrophone className="h-5 w-5" />
+                              ) : (
+                                <HiOutlineMicrophoneSlash className="h-5 w-5" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
-                      {speaker.userId === user?.id && (
-                        <button
-                          onClick={toggleMic}
-                          className={`rounded-lg p-2 transition ${
-                            isMicEnabled
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-gray-500/20 text-gray-400"
-                          }`}>
-                          {isMicEnabled ? (
-                            <HiOutlineMicrophone className="h-5 w-5" />
-                          ) : (
-                            <FaMicrophoneSlash className="h-5 w-5" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
