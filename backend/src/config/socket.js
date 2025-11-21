@@ -691,18 +691,23 @@ export const setupSocketIO = (io) => {
         }
 
         // Check if request already exists
-        const existingRequest = room.speakRequests.find(
+        const existingRequestIndex = room.speakRequests.findIndex(
           (r) => r.userId.toString() === socket.userId
         );
 
-        if (!existingRequest) {
+        if (existingRequestIndex >= 0) {
+          // Update existing request with new socketId (in case user rejoined)
+          room.speakRequests[existingRequestIndex].socketId = socket.id;
+          room.speakRequests[existingRequestIndex].requestedAt = new Date();
+        } else {
+          // Add new request
           room.speakRequests.push({
             userId: new mongoose.Types.ObjectId(socket.userId),
             socketId: socket.id,
             requestedAt: new Date(),
           });
-          await room.save();
         }
+        await room.save();
 
         // Update participant role to "requested"
         const participant = room.participants.find(
@@ -739,6 +744,9 @@ export const setupSocketIO = (io) => {
         });
 
         // Notify all hosts and speakers
+        // eslint-disable-next-line no-console
+        console.log(`[Request to Speak] User ${socket.userId} requested. Notifying ${socketIdsToNotify.size} host(s)/speaker(s)`);
+        
         socketIdsToNotify.forEach((socketId) => {
           io.to(socketId).emit("speak-requested", {
             roomId,
@@ -747,6 +755,12 @@ export const setupSocketIO = (io) => {
             socketId: socket.id,
           });
         });
+
+        // If no hosts/speakers found, log a warning
+        if (socketIdsToNotify.size === 0) {
+          // eslint-disable-next-line no-console
+          console.warn(`[Request to Speak] No hosts/speakers found in room ${roomId} to notify`);
+        }
 
         socket.emit("speak-request-sent", { roomId });
       } catch (error) {

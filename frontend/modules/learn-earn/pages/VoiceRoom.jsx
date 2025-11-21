@@ -163,7 +163,12 @@ const VoiceRoom = () => {
     const handleSpeakRequested = (data) => {
       setSpeakRequests((prev) => {
         const exists = prev.find((r) => r.userId === data.userId);
-        if (exists) return prev;
+        if (exists) {
+          // Update existing request (in case user rejoined with new socketId)
+          return prev.map((r) =>
+            r.userId === data.userId ? { ...r, ...data } : r
+          );
+        }
         return [...prev, data];
       });
     };
