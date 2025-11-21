@@ -61,31 +61,84 @@ const PDFEbookReader = () => {
           throw new Error("PDF URL not found in ebook data");
         }
         
-        // Validate that the URL points to a PDF file, not an image
-        const urlLower = data.downloadUrl.toLowerCase();
-        if (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.gif') || urlLower.includes('.webp')) {
-          throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
-        }
-        
-        // Check if URL ends with .pdf or is a Cloudinary raw resource
-        if (!urlLower.includes('.pdf') && !urlLower.includes('/raw/upload/')) {
-          console.warn("PDF URL might not be a valid PDF file:", data.downloadUrl);
-        }
-        
         console.log("PDF URL:", data.downloadUrl);
         
-        // Try to verify the PDF URL is accessible
+        // Try to verify the PDF URL is accessible and check Content-Type
         try {
           const pdfTestResponse = await fetch(data.downloadUrl, { method: "HEAD" });
           if (!pdfTestResponse.ok) {
             console.warn("PDF URL might not be accessible:", pdfTestResponse.status);
           }
-          // Check content type
+          
+          // Check content type first - this is the most reliable indicator
           const contentType = pdfTestResponse.headers.get("content-type");
-          if (contentType && !contentType.includes("pdf") && !contentType.includes("application/pdf")) {
-            console.warn("Content-Type is not PDF:", contentType);
+          if (contentType) {
+            const contentTypeLower = contentType.toLowerCase();
+            
+            // If Content-Type indicates an image, check if URL actually ends with image extension
+            if (contentTypeLower.includes("image/") && !contentTypeLower.includes("pdf")) {
+              const urlLower = data.downloadUrl.toLowerCase();
+              let urlPath = '';
+              
+              // Try to extract the pathname from URL (remove query params and hash)
+              try {
+                urlPath = new URL(data.downloadUrl).pathname.toLowerCase();
+              } catch (urlError) {
+                // If URL parsing fails, use the full URL path
+                urlPath = urlLower.split('?')[0].split('#')[0];
+              }
+              
+              // Check if the actual filename/path ends with an image extension
+              const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+              const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
+              
+              // Only throw error if Content-Type is image AND URL ends with image extension
+              if (hasImageExtension) {
+                throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
+              }
+              // If Content-Type is image but URL doesn't end with image extension, it might be incorrectly configured
+              // Log a warning but don't block - let the PDF viewer try to load it
+              console.warn("Content-Type indicates image, but URL doesn't match:", contentType, data.downloadUrl);
+            } else if (contentTypeLower.includes("pdf") || contentTypeLower.includes("application/pdf")) {
+              // Valid PDF Content-Type - proceed
+              console.log("Valid PDF Content-Type confirmed:", contentType);
+            } else {
+              // Unknown Content-Type - log warning but don't block
+              console.warn("Content-Type is not clearly PDF:", contentType);
+            }
+          } else {
+            // No Content-Type header - check URL pattern as fallback
+            const urlLower = data.downloadUrl.toLowerCase();
+            let urlPath = '';
+            
+            // Try to extract the pathname from URL
+            try {
+              urlPath = new URL(data.downloadUrl).pathname.toLowerCase();
+            } catch (urlError) {
+              // If URL parsing fails, use the full URL path
+              urlPath = urlLower.split('?')[0].split('#')[0];
+            }
+            
+            // Check if URL path ends with image extension (not just contains it)
+            const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+            const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
+            
+            if (hasImageExtension && !urlPath.endsWith('.pdf')) {
+              // URL clearly ends with image extension and no PDF - likely an error
+              throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
+            }
+            
+            // Check if URL ends with .pdf or is a Cloudinary raw resource
+            if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
+              console.warn("PDF URL might not be a valid PDF file:", data.downloadUrl);
+            }
           }
         } catch (testError) {
+          // If it's our validation error, re-throw it
+          if (testError.message && testError.message.includes("Invalid PDF URL")) {
+            throw testError;
+          }
+          // For network errors or other issues, log warning but don't block
           console.warn("Could not verify PDF URL accessibility:", testError);
         }
         
