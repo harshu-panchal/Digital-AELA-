@@ -61,6 +61,17 @@ const PDFEbookReader = () => {
           throw new Error("PDF URL not found in ebook data");
         }
         
+        // Validate that the URL points to a PDF file, not an image
+        const urlLower = data.downloadUrl.toLowerCase();
+        if (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.gif') || urlLower.includes('.webp')) {
+          throw new Error("Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please contact the administrator to upload the correct PDF file.");
+        }
+        
+        // Check if URL ends with .pdf or is a Cloudinary raw resource
+        if (!urlLower.includes('.pdf') && !urlLower.includes('/raw/upload/')) {
+          console.warn("PDF URL might not be a valid PDF file:", data.downloadUrl);
+        }
+        
         console.log("PDF URL:", data.downloadUrl);
         
         // Try to verify the PDF URL is accessible
@@ -68,6 +79,11 @@ const PDFEbookReader = () => {
           const pdfTestResponse = await fetch(data.downloadUrl, { method: "HEAD" });
           if (!pdfTestResponse.ok) {
             console.warn("PDF URL might not be accessible:", pdfTestResponse.status);
+          }
+          // Check content type
+          const contentType = pdfTestResponse.headers.get("content-type");
+          if (contentType && !contentType.includes("pdf") && !contentType.includes("application/pdf")) {
+            console.warn("Content-Type is not PDF:", contentType);
           }
         } catch (testError) {
           console.warn("Could not verify PDF URL accessibility:", testError);
