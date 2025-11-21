@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "lint": "eslint \"src/**/*.js\"",
     "create-admin": "node scripts/createSuperAdmin.js",
-    "create-job-index": "node scripts/createJobTextIndex.js"
+    "create-job-index": "node scripts/createJobTextIndex.js",
+    "postinstall": "node scripts/build-mediasoup.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
