@@ -740,16 +740,20 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        // Check if user is already a speaker in the room
-        const isAlreadySpeaker = room.speakers.some((s) => s.toString() === socket.userId);
-        if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host" || isAlreadySpeaker) {
-          socket.emit("error", { message: "You are already a speaker" });
-          return;
-        }
-
+        // Fetch room first
         const room = await LiveRoom.findById(roomId);
         if (!room) {
           socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if user is already a speaker in the room
+        const isAlreadySpeaker = room.speakers && room.speakers.some((s) => {
+          const speakerId = typeof s === "object" ? s._id?.toString() || s.toString() : s?.toString();
+          return speakerId === socket.userId;
+        });
+        if (socket.data.voiceRole === "speaker" || socket.data.voiceRole === "host" || isAlreadySpeaker) {
+          socket.emit("error", { message: "You are already a speaker" });
           return;
         }
 
