@@ -164,6 +164,8 @@ export const apiRequest = async (
       unauthorizedError.code = payload?.error?.code ?? error.code ?? "UNAUTHORIZED";
       unauthorizedError.details = payload ?? error.details;
       unauthorizedError.requiresLogin = true;
+      // Suppress console errors for expected 401s (token expired, user logged out)
+      unauthorizedError.suppressConsoleError = true;
       throw unauthorizedError;
     }
   }
@@ -172,6 +174,17 @@ export const apiRequest = async (
   if (!skipAuth && response.status === 401) {
     clearStoredTokens();
     notifyAuthUpdate(null);
+    
+    // Mark as suppressible error for expected 401s
+    const message =
+      payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.code = payload?.error?.code;
+    error.details = payload;
+    error.requiresLogin = true;
+    error.suppressConsoleError = true;
+    throw error;
   }
 
   const message =

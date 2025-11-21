@@ -8,6 +8,12 @@ const SOCKET_URL =
   import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, "") ||
   "http://localhost:5000";
 
+// Global socket instance to prevent multiple connections
+let globalSocketInstance = null;
+let globalSocketToken = null;
+let globalSocketListeners = new Set();
+let hasLoggedConnection = false;
+
 export const useSocket = () => {
   const { tokens } = useAuth();
   const [socket, setSocket] = useState(null);
@@ -15,6 +21,7 @@ export const useSocket = () => {
   const socketRef = useRef(null);
   const connectionAttemptRef = useRef(null);
   const lastTokenRef = useRef(null);
+  const listenerIdRef = useRef(Symbol());
 
   useEffect(() => {
     // Clear any pending connection attempts
@@ -34,9 +41,32 @@ export const useSocket = () => {
         }
         socketRef.current = null;
       }
+      // Remove this listener from global set
+      globalSocketListeners.delete(listenerIdRef.current);
+      // Clean up global socket if no listeners remain
+      if (globalSocketListeners.size === 0 && globalSocketInstance) {
+        try {
+          globalSocketInstance.removeAllListeners();
+          globalSocketInstance.disconnect();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        globalSocketInstance = null;
+        globalSocketToken = null;
+      }
       setSocket(null);
       setIsConnected(false);
       lastTokenRef.current = null;
+      return;
+    }
+
+    // Use global socket instance if it exists and token matches
+    if (globalSocketInstance && globalSocketToken === tokens.accessToken && globalSocketInstance.connected) {
+      globalSocketListeners.add(listenerIdRef.current);
+      socketRef.current = globalSocketInstance;
+      setSocket(globalSocketInstance);
+      setIsConnected(globalSocketInstance.connected);
+      lastTokenRef.current = tokens.accessToken;
       return;
     }
 
@@ -97,14 +127,27 @@ export const useSocket = () => {
       };
 
       newSocket.on("connect", () => {
-        // eslint-disable-next-line no-console
-        console.log("[Socket.IO] Connected");
         setIsConnected(true);
         lastTokenRef.current = tokens.accessToken;
+        // Store as global instance
+        globalSocketInstance = newSocket;
+        globalSocketToken = tokens.accessToken;
+        globalSocketListeners.add(listenerIdRef.current);
+        
+        // Only log the first connection, not subsequent ones from the same socket
+        if (!hasLoggedConnection) {
+          // eslint-disable-next-line no-console
+          console.log("[Socket.IO] Connected");
+          hasLoggedConnection = true;
+        }
       });
 
       newSocket.on("disconnect", (reason) => {
         setIsConnected(false);
+        // Reset connection log flag on disconnect
+        if (reason === "io client disconnect" || reason === "io server disconnect") {
+          hasLoggedConnection = false;
+        }
         // Only log disconnects if they're not expected
         if (reason !== "io server disconnect" && reason !== "transport close" && reason !== "transport error") {
           // Only log in development
@@ -177,16 +220,21 @@ export const useSocket = () => {
         clearTimeout(connectionAttemptRef.current);
         connectionAttemptRef.current = null;
       }
-      if (socketRef.current) {
-        // Gracefully disconnect without triggering error handlers
+      // Remove this listener from global set
+      globalSocketListeners.delete(listenerIdRef.current);
+      // Only disconnect global socket if no listeners remain
+      if (globalSocketListeners.size === 0 && globalSocketInstance) {
         try {
-          socketRef.current.removeAllListeners();
-          socketRef.current.disconnect();
+          globalSocketInstance.removeAllListeners();
+          globalSocketInstance.disconnect();
         } catch (e) {
           // Ignore errors during cleanup
         }
-        socketRef.current = null;
+        globalSocketInstance = null;
+        globalSocketToken = null;
+        hasLoggedConnection = false;
       }
+      socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
     };

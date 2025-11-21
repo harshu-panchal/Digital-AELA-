@@ -38,6 +38,7 @@ const VoiceRoom = () => {
     localStream, 
     remoteStreams, 
     isMicEnabled, 
+    connectionState,
     initializeLocalStream, 
     stopLocalStream, 
     toggleMic,
@@ -161,20 +162,35 @@ const VoiceRoom = () => {
     };
 
     const handleSpeakRequested = (data) => {
+      // eslint-disable-next-line no-console
+      console.log("[Frontend] Received speak-requested event:", data);
+      if (data.roomId !== roomId) {
+        // eslint-disable-next-line no-console
+        console.log("[Frontend] Request is for different room, ignoring");
+        return;
+      }
       setSpeakRequests((prev) => {
         const exists = prev.find((r) => r.userId === data.userId);
         if (exists) {
           // Update existing request (in case user rejoined with new socketId)
+          // eslint-disable-next-line no-console
+          console.log("[Frontend] Updating existing request for user:", data.userId);
           return prev.map((r) =>
             r.userId === data.userId ? { ...r, ...data } : r
           );
         }
+        // eslint-disable-next-line no-console
+        console.log("[Frontend] Adding new request for user:", data.userId);
         return [...prev, data];
       });
     };
 
     const handleExistingSpeakRequests = (data) => {
+      // eslint-disable-next-line no-console
+      console.log("[Frontend] Received existing-speak-requests:", data);
       if (data.roomId === roomId && data.requests) {
+        // eslint-disable-next-line no-console
+        console.log("[Frontend] Setting", data.requests.length, "existing requests");
         setSpeakRequests(data.requests);
       }
     };
@@ -219,6 +235,27 @@ const VoiceRoom = () => {
       }
     };
 
+    const handleError = (data) => {
+      // eslint-disable-next-line no-console
+      console.error("[VoiceRoom] Socket error:", data);
+      const errorMessage = data.message || "An error occurred";
+      
+      // Handle specific error types
+      if (errorMessage.includes("Room not found") || errorMessage.includes("Invalid room ID")) {
+        toast.error("Room not found");
+        navigate("/learn-earn/live-debates");
+      } else if (errorMessage.includes("ended")) {
+        toast.error("This room has ended");
+        navigate("/learn-earn/live-debates");
+      } else if (errorMessage.includes("not started")) {
+        toast.error("Room has not started yet");
+      } else if (errorMessage.includes("not live")) {
+        toast.error("Room is not live");
+      } else {
+        toast.error(errorMessage);
+      }
+    };
+
     socket.on("voice-room-joined", handleVoiceRoomJoined);
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
@@ -230,6 +267,7 @@ const VoiceRoom = () => {
     socket.on("speaker-promoted", handleSpeakerPromoted);
     socket.on("participant-muted", handleParticipantMuted);
     socket.on("participant-unmuted", handleParticipantUnmuted);
+    socket.on("error", handleError);
 
     return () => {
       socket.off("voice-room-joined", handleVoiceRoomJoined);
@@ -243,8 +281,9 @@ const VoiceRoom = () => {
       socket.off("speaker-promoted", handleSpeakerPromoted);
       socket.off("participant-muted", handleParticipantMuted);
       socket.off("participant-unmuted", handleParticipantUnmuted);
+      socket.off("error", handleError);
     };
-  }, [socket, isConnected, roomId, user?.id]);
+  }, [socket, isConnected, roomId, user?.id, navigate]);
 
   // Request to speak
   const handleRequestToSpeak = async (e) => {
@@ -428,6 +467,18 @@ const VoiceRoom = () => {
   const hasRequested = speakRequests.some((r) => r.userId === user?.id);
   const hasHostsOrSpeakers = speakers.length > 0;
 
+  // Debug logging
+  useEffect(() => {
+    if (userRole === "host") {
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - speakRequests state:", speakRequests);
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - canApproveRequests:", canApproveRequests);
+      // eslint-disable-next-line no-console
+      console.log("[VoiceRoom] Host - userRole:", userRole);
+    }
+  }, [speakRequests, canApproveRequests, userRole]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-black to-[#0a0a0a] p-4 sm:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -578,6 +629,52 @@ const VoiceRoom = () => {
 
           {/* Controls Sidebar */}
           <div className="space-y-4">
+            {/* Connection Status */}
+            <div className="rounded-3xl border border-white/5 bg-[#101010] p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Connection Status
+                </span>
+                <div className="flex items-center gap-2">
+                  {connectionState === "connected" && (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-xs text-green-400">Connected</span>
+                    </>
+                  )}
+                  {connectionState === "connecting" && (
+                    <>
+                      <FaSpinner className="h-3 w-3 animate-spin text-yellow-400" />
+                      <span className="text-xs text-yellow-400">Connecting...</span>
+                    </>
+                  )}
+                  {connectionState === "reconnecting" && (
+                    <>
+                      <FaSpinner className="h-3 w-3 animate-spin text-orange-400" />
+                      <span className="text-xs text-orange-400">Reconnecting...</span>
+                    </>
+                  )}
+                  {connectionState === "error" && (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-red-400" />
+                      <span className="text-xs text-red-400">Error</span>
+                      <button
+                        onClick={joinVoiceRoom}
+                        className="ml-2 rounded px-2 py-1 text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
+                        Retry
+                      </button>
+                    </>
+                  )}
+                  {connectionState === "disconnected" && (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-gray-400" />
+                      <span className="text-xs text-gray-400">Disconnected</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* User Controls */}
             <div className="rounded-3xl border border-white/5 bg-[#101010] p-6">
               <h3 className="mb-4 text-sm font-semibold text-white uppercase tracking-wider">

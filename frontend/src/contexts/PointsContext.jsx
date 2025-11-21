@@ -122,24 +122,58 @@ export const PointsProvider = ({ children }) => {
   }, [authUser, tokens]);
 
   useEffect(() => {
-    loadPointsFromBackend();
+    let interval = null;
+    let shouldContinuePolling = true;
+
+    const pollPoints = async () => {
+      if (!shouldContinuePolling || !authUser || authUser.role !== "student" || !tokens?.accessToken) {
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+        }
+        return;
+      }
+
+      try {
+        await loadPointsFromBackend();
+      } catch (error) {
+        // Stop polling if we get a 401 error (unauthorized) after token refresh fails
+        if (error.status === 401 && error.requiresLogin) {
+          shouldContinuePolling = false;
+          if (interval) {
+            clearInterval(interval);
+            interval = null;
+          }
+          return;
+        }
+        // For other errors, continue polling (network errors are expected)
+      }
+    };
+
+    // Initial load
+    pollPoints();
     
     // Refresh wallet data every 30 seconds to keep it live
-    const interval = setInterval(loadPointsFromBackend, 30000);
+    interval = setInterval(pollPoints, 30000);
     
     // Listen for transaction completion to refresh wallet immediately
     const handleTransactionCompleted = () => {
-      loadPointsFromBackend();
+      if (shouldContinuePolling) {
+        loadPointsFromBackend();
+      }
     };
     window.addEventListener("transactionCompleted", handleTransactionCompleted);
     window.addEventListener("refreshWallet", handleTransactionCompleted);
     
     return () => {
-      clearInterval(interval);
+      shouldContinuePolling = false;
+      if (interval) {
+        clearInterval(interval);
+      }
       window.removeEventListener("transactionCompleted", handleTransactionCompleted);
       window.removeEventListener("refreshWallet", handleTransactionCompleted);
     };
-  }, [loadPointsFromBackend]);
+  }, [loadPointsFromBackend, authUser, tokens?.accessToken]);
 
   // Save to localStorage whenever points change
   useEffect(() => {

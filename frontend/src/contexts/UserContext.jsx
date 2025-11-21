@@ -555,8 +555,15 @@ export const UserProvider = ({ children }) => {
 
   // Load Learn & Earn dashboard data from backend
   useEffect(() => {
+    let interval = null;
+    let shouldContinuePolling = true;
+
     const loadDashboardData = async () => {
-      if (!authUser?.id || !tokens?.accessToken) {
+      if (!shouldContinuePolling || !authUser?.id || !tokens?.accessToken) {
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+        }
         return;
       }
 
@@ -617,6 +624,15 @@ export const UserProvider = ({ children }) => {
           setStreak(dashboardData.streak || 0);
         }
       } catch (error) {
+        // Stop polling if we get a 401 error (unauthorized) after token refresh fails
+        if (error.status === 401 && error.requiresLogin) {
+          shouldContinuePolling = false;
+          if (interval) {
+            clearInterval(interval);
+            interval = null;
+          }
+          return;
+        }
         // Only log non-network errors to reduce console noise when server is down
         if (!isNetworkError(error)) {
           // eslint-disable-next-line no-console
@@ -626,12 +642,18 @@ export const UserProvider = ({ children }) => {
       }
     };
 
+    // Initial load
     loadDashboardData();
     
     // Refresh dashboard data every 30 seconds to keep it live
-    const interval = setInterval(loadDashboardData, 30000);
+    interval = setInterval(loadDashboardData, 30000);
     
-    return () => clearInterval(interval);
+    return () => {
+      shouldContinuePolling = false;
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [authUser, tokens?.accessToken]);
 
   // Real-time message updates via Socket.io
