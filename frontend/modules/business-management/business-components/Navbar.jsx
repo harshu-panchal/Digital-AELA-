@@ -95,6 +95,10 @@ const Navbar = () => {
       path: "/learn-earn",
     },
     {
+      label: "Speaking Club",
+      path: "/learn-earn/live-debate-room",
+    },
+    {
       label: "Resources",
       path: "/resources",
       dropdown: [
@@ -234,7 +238,7 @@ const Navbar = () => {
         }}
         className={`absolute top-2 z-[70] pointer-events-auto ${
           isDashboardRoute
-            ? "left-1/2 -translate-x-1/2 md:left-1/2 md:-translate-x-1/2"
+            ? "left-1/2 -translate-x-1/2 md:left-4 lg:left-[132px]"
             : "left-4 md:left-[132px]"
         } md:top-[43px]`}>
         <Link to="/" className="block">

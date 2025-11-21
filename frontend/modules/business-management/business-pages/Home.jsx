@@ -2240,16 +2240,28 @@ const Home = () => {
                             whileTap={{ scale: 0.98 }}
                             onClick={(e) => {
                               e.preventDefault();
-                              window.location.href = `/books/${book.id}/payment`;
+                              e.stopPropagation();
+                              const isFreeBook = book.price === 0 || book.price === "Free";
+                              const isEbook = book.badge === "E-Book" || book.format === "ebook";
+                              
+                              if (isFreeBook && isEbook) {
+                                // Free ebook - redirect to free library reader
+                                navigate(`/free-library/ebook/${book.id}/read`);
+                              } else {
+                                // Paid book or physical book - go to payment page
+                                window.location.href = `/books/${book.id}/payment`;
+                              }
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                             {book.price > 0 ? "Buy Now" : "Get Free"}
                           </motion.button>
-                          <GiftButton
-                            className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                            size="sm">
-                            Gift
-                          </GiftButton>
+                          {book.price > 0 && (
+                            <GiftButton
+                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                              size="sm">
+                              Gift
+                            </GiftButton>
+                          )}
                         </div>
                       </div>
                     </Link>

@@ -8,6 +8,9 @@ import {
   HiOutlinePaperAirplane,
   HiOutlineFlag,
   HiOutlineUserMinus,
+  HiOutlineArrowLeft,
+  HiOutlineMagnifyingGlass,
+  HiOutlineChatBubbleOvalLeft,
 } from "react-icons/hi2";
 import { FaCoins, FaSpinner } from "react-icons/fa";
 import { useUser } from "../../../src/contexts/UserContext";
@@ -48,6 +51,8 @@ const ChatCentre = () => {
   const isNearBottomRef = useRef(true); // Track if user is near bottom of scroll container
   const prevMessagesLengthRef = useRef(0); // Track previous messages length to detect new messages
   const initialScrollTimeoutRef = useRef(null); // Track initial scroll timeout to cancel if needed
+  const [showChatView, setShowChatView] = useState(false); // For mobile: control which view to show
+  const [friendListSearch, setFriendListSearch] = useState(""); // Search within friend list
 
   // Load conversations on mount (only once, or when authUser changes)
   useEffect(() => {
@@ -546,118 +551,199 @@ const ChatCentre = () => {
     toast.warn("User blocked – you can unblock anytime", { icon: "🛑" });
   };
 
-  // Filter conversations based on search query
+  // Filter conversations based on search query (from outlet context or friend list search)
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) {
+    const query = searchQuery.trim() || friendListSearch.trim();
+    if (!query) {
       return conversations;
     }
-    const query = searchQuery.toLowerCase().trim();
+    const lowerQuery = query.toLowerCase().trim();
     return conversations.filter((chat) => {
-      const nameMatch = chat.name?.toLowerCase().includes(query);
-      const userIdMatch = chat.userId?.toLowerCase().includes(query);
-      const previewMatch = chat.preview?.toLowerCase().includes(query);
+      const nameMatch = chat.name?.toLowerCase().includes(lowerQuery);
+      const userIdMatch = chat.userId?.toLowerCase().includes(lowerQuery);
+      const previewMatch = chat.preview?.toLowerCase().includes(lowerQuery);
       return nameMatch || userIdMatch || previewMatch;
     });
-  }, [conversations, searchQuery]);
+  }, [conversations, searchQuery, friendListSearch]);
+
+  // Handle friend card click - open chat and on mobile, switch to chat view
+  const handleFriendClick = (chatId) => {
+    setActiveChatId(chatId);
+    // On mobile (smaller screens), show chat view after selecting a friend
+    if (window.innerWidth < 768) {
+      setShowChatView(true);
+    }
+  };
+
+  // Handle back button on mobile - return to friend list
+  const handleBackToFriends = () => {
+    setShowChatView(false);
+  };
+
+  // Handle window resize - adjust view on mobile/desktop transition
+  useEffect(() => {
+    const handleResize = () => {
+      // On desktop, always show both views
+      if (window.innerWidth >= 768 && activeChatId) {
+        setShowChatView(false); // Reset to show both views on desktop
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initial check
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeChatId]);
+
+  // Reset showChatView when activeChatId changes and we're on desktop
+  useEffect(() => {
+    if (window.innerWidth >= 768) {
+      setShowChatView(false); // Always show both on desktop
+    } else if (activeChatId && window.innerWidth < 768) {
+      setShowChatView(true); // Show chat view on mobile when chat is selected
+    }
+  }, [activeChatId]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
-      <aside className="h-full rounded-3xl border border-white/5 bg-[#0f0f0f] p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-            Connections
-          </p>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
-            <HiOutlinePlusCircle className="h-4 w-4" />
-            New
-          </button>
+    <div className="flex h-full w-full overflow-hidden rounded-3xl border border-white/5 bg-[#0f0f0f]">
+      {/* Friends List Sidebar - Left Side (35% on desktop, hidden on mobile when chat is open) */}
+      <aside
+        className={`flex h-full flex-col border-r border-white/5 bg-[#0f0f0f] transition-all duration-300 ${
+          showChatView && activeChat
+            ? "hidden md:flex md:w-[35%]"
+            : "w-full md:w-[35%]"
+        }`}>
+        {/* Friends List Header */}
+        <div className="flex flex-col border-b border-white/5 bg-[#151515] p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">Chats</h2>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
+              <HiOutlinePlusCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">New</span>
+            </button>
+          </div>
+          {/* Search Bar */}
+          <div className="mt-3 relative">
+            <HiOutlineMagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <input
+              type="search"
+              value={friendListSearch}
+              onChange={(e) => setFriendListSearch(e.target.value)}
+              placeholder="Search or start new chat"
+              className="w-full rounded-lg border border-white/10 bg-[#101010] py-2 pl-10 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
+            />
+          </div>
         </div>
 
-        <div className="mt-4 space-y-3">
+        {/* Friends List */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <FaSpinner className="h-5 w-5 animate-spin text-[#D4AF37]" />
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">
+            <div className="py-8 text-center text-sm text-gray-400 px-4">
               {conversations.length === 0
                 ? "No conversations yet. Start chatting with other users!"
-                : searchQuery.trim()
-                ? `No conversations found matching "${searchQuery}"`
+                : (searchQuery.trim() || friendListSearch.trim())
+                ? `No conversations found`
                 : "No conversations yet. Start chatting with other users!"}
             </div>
           ) : (
-            filteredConversations.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
-              className={`flex w-full items-center gap-3 rounded-2xl border border-white/5 px-3 py-3 text-left transition ${
-                activeChatId === chat.id
-                  ? "bg-[#151515] text-white"
-                  : "bg-[#101010] text-gray-300 hover:bg-[#151515]"
-              }`}>
-              <img
-                src={chat.avatar}
-                alt={chat.name}
-                className="h-10 w-10 rounded-full border border-[#D4AF37]/30 object-cover"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold">{chat.name}</span>
-                  <span className="text-gray-500">{chat.timestamp}</span>
-                </div>
-                <p className="mt-1 text-[11px] text-gray-400">{chat.preview}</p>
-              </div>
-              {chat.unread > 0 && (
-                <span className="rounded-full bg-[#D4AF37]/80 px-2 py-0.5 text-[10px] font-bold text-black">
-                  {chat.unread}
-                </span>
-              )}
-            </button>
-            ))
+            <div className="divide-y divide-white/5">
+              {filteredConversations.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => handleFriendClick(chat.id)}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
+                    activeChatId === chat.id
+                      ? "bg-[#151515] text-white"
+                      : "bg-[#0f0f0f] text-gray-300 hover:bg-[#151515] active:bg-[#1a1a1a]"
+                  }`}>
+                  <img
+                    src={chat.avatar}
+                    alt={chat.name}
+                    className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/30 object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium truncate">{chat.name}</span>
+                      {chat.timestamp && (
+                        <span className="text-xs text-gray-500 flex-shrink-0">{chat.timestamp}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <p className="text-xs text-gray-400 truncate">{chat.preview}</p>
+                      {chat.unread > 0 && (
+                        <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-bold text-black flex-shrink-0">
+                          {chat.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </aside>
 
-      <section className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
+      {/* Chat Area - Right Side (65% on desktop, full width on mobile when chat is open) */}
+      <section
+        className={`flex h-full flex-col bg-[#0f0f0f] transition-all duration-300 ${
+          showChatView && activeChat
+            ? "w-full"
+            : activeChat
+            ? "hidden md:flex md:w-[65%]"
+            : "hidden md:flex md:w-[65%]"
+        }`}>
         {activeChat ? (
           <>
-            <header className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            {/* Chat Header */}
+            <header className="flex items-center justify-between border-b border-white/5 bg-[#151515] px-4 py-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Back button for mobile */}
+                <button
+                  type="button"
+                  onClick={handleBackToFriends}
+                  className="md:hidden inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#101010] p-2 text-gray-300 transition hover:bg-[#1a1a1a] flex-shrink-0">
+                  <HiOutlineArrowLeft className="h-5 w-5" />
+                </button>
                 <img
                   src={activeChat.avatar}
                   alt={activeChat.name}
-                  className="h-12 w-12 rounded-full border border-[#D4AF37]/30 object-cover"
+                  className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/30 object-cover"
                 />
-                <div>
-                  <p className="text-sm font-semibold text-white">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">
                     {activeChat.name}
                   </p>
-                  <p className="text-xs text-gray-400">{activeChat.userId}</p>
+                  <p className="text-xs text-gray-400 truncate">{activeChat.userId}</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
                   onClick={handleReport}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
+                  className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
                   <HiOutlineFlag className="h-4 w-4" />
-                  Report
+                  <span className="hidden md:inline">Report</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleBlock}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
+                  className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
                   <HiOutlineUserMinus className="h-4 w-4" />
-                  Block
+                  <span className="hidden md:inline">Block</span>
                 </button>
               </div>
             </header>
 
-            <div className="flex-1 overflow-hidden">
+            {/* Messages Area */}
+            <div className="flex-1 overflow-hidden bg-[#0f0f0f]">
               <div 
                 ref={messagesContainerRef}
                 onScroll={(e) => {
@@ -701,7 +787,7 @@ const ChatCentre = () => {
                     isUserScrollingRef.current = false;
                   }, 300);
                 }}
-                className="custom-scrollbar h-[360px] space-y-3 overflow-y-auto rounded-2xl bg-[#101010] p-4">
+                className="custom-scrollbar h-full space-y-3 overflow-y-auto bg-[#0f0f0f] p-4">
                 {loadingMessages ? (
                   <div className="flex h-full items-center justify-center text-sm text-gray-400">
                     <FaSpinner className="mr-2 h-5 w-5 animate-spin text-[#D4AF37]" />
@@ -747,12 +833,13 @@ const ChatCentre = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-[#101010] p-4">
-              <div className="flex flex-wrap items-center gap-3">
+            {/* Message Input Area */}
+            <div className="border-t border-white/5 bg-[#151515] p-4">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleVoiceMessage}
-                  className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#151515] p-3 text-gray-200 transition hover:text-[#D4AF37]">
+                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#101010] p-2.5 text-gray-200 transition hover:text-[#D4AF37] flex-shrink-0">
                   <HiOutlineMicrophone className="h-5 w-5" />
                 </button>
                 <input
@@ -770,13 +857,13 @@ const ChatCentre = () => {
                   onKeyPress={handleKeyPress}
                   placeholder="Type a message"
                   disabled={!isConnected || sending}
-                  className="flex-1 rounded-xl border border-white/10 bg-[#151515] px-4 py-3 text-sm text-gray-100 focus:border-[#D4AF37]/50 focus:outline-none disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-white/10 bg-[#101010] px-4 py-2.5 text-sm text-gray-100 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={!isConnected || sending || !messageText.trim()}
-                  className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-sm font-semibold text-black hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
                   {sending ? (
                     <FaSpinner className="h-5 w-5 animate-spin" />
                   ) : (
@@ -784,15 +871,14 @@ const ChatCentre = () => {
                   )}
                 </button>
               </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/5 bg-[#101010] p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                    Share coins
+              
+              {/* Share Coins Section */}
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-white/5 bg-[#101010] p-3">
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-[#D4AF37]">
+                    Share Coins
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-0.5 text-[10px] text-gray-400">
                     Reward your peers for helping you grow
                   </p>
                 </div>
@@ -805,13 +891,13 @@ const ChatCentre = () => {
                     onChange={(event) =>
                       setCoinAmount(Number(event.target.value))
                     }
-                    className="w-24 rounded-xl border border-white/10 bg-[#151515] px-3 py-2 text-sm text-gray-100 focus:border-[#D4AF37]/50 focus:outline-none"
+                    className="w-20 rounded-lg border border-white/10 bg-[#151515] px-2.5 py-1.5 text-xs text-gray-100 focus:border-[#D4AF37]/50 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleShareCoins}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#D4AF37]/40 bg-[#151515] px-4 py-2 text-xs font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
-                    <FaCoins className="h-4 w-4" />
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#D4AF37]/40 bg-[#151515] px-3 py-1.5 text-xs font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
+                    <FaCoins className="h-3.5 w-3.5" />
                     Send
                   </button>
                 </div>
@@ -819,7 +905,7 @@ const ChatCentre = () => {
             </div>
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-gray-400">
+          <div className="hidden h-full flex-col items-center justify-center gap-2 text-sm text-gray-400 md:flex">
             {loading ? (
               <>
                 <FaSpinner className="h-6 w-6 animate-spin text-[#D4AF37]" />
@@ -827,9 +913,13 @@ const ChatCentre = () => {
               </>
             ) : (
               <>
-                <p>Select a conversation to get started.</p>
+                <div className="text-center">
+                  <HiOutlineChatBubbleOvalLeft className="mx-auto h-12 w-12 text-gray-600 mb-3" />
+                  <p className="text-base font-medium text-gray-300">Select a conversation</p>
+                  <p className="mt-1 text-xs text-gray-500">Choose a friend from the list to start chatting</p>
+                </div>
                 {!isConnected && (
-                  <p className="text-xs text-yellow-500">
+                  <p className="mt-4 text-xs text-yellow-500">
                     Connecting to chat server...
                   </p>
                 )}

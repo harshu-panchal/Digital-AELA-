@@ -4,7 +4,6 @@ import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import {
   HiOutlineMicrophone,
-  HiOutlineVideoCamera,
   HiOutlineNoSymbol,
   HiOutlineSpeakerWave,
   HiOutlinePlus,
@@ -27,7 +26,6 @@ import {
 const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, currentUserId }) => {
   const navigate = useNavigate();
   const [micEnabled, setMicEnabled] = useState(true);
-  const [camEnabled, setCamEnabled] = useState(false);
   const isHost = currentUserId && room.host && currentUserId.toString() === room.host.toString();
   const [localVotes, setLocalVotes] = useState({
     for: room.forVotes || 0,
@@ -89,8 +87,6 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
   const isLive = room.status === "live" || (room.scheduledStart && new Date(room.scheduledStart) <= new Date());
 
   const totalVotes = localVotes.for + localVotes.against || 1;
-  const forPercent = Math.round((localVotes.for / totalVotes) * 100);
-  const againstPercent = 100 - forPercent;
 
   return (
     <Motion.div
@@ -104,6 +100,9 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
           <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Featured debate</p>
           <h3 className="mt-2 text-lg font-semibold text-white">{room.topic}</h3>
           <p className="mt-1 text-xs text-gray-400">Speakers: {room.speakers?.join(" · ") || "TBD"}</p>
+          {room.description && (
+            <p className="mt-2 text-sm text-gray-300 truncate">{room.description}</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-gray-300">
@@ -133,35 +132,6 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => onVote(room.id, "for")}
-          disabled={isVoting || !isConnected}
-          className="group flex flex-col rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-left transition hover:border-emerald-400/60 disabled:opacity-50 disabled:cursor-not-allowed">
-          <span className="text-xs uppercase tracking-[0.3em] text-emerald-200">For</span>
-          <span className="mt-2 text-xl font-semibold text-white">{localVotes.for}</span>
-          <span className="mt-1 text-xs text-emerald-200">{forPercent}% support</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onVote(room.id, "against")}
-          disabled={isVoting || !isConnected}
-          className="group flex flex-col rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-left transition hover:border-rose-400/60 disabled:opacity-50 disabled:cursor-not-allowed">
-          <span className="text-xs uppercase tracking-[0.3em] text-rose-200">Against</span>
-          <span className="mt-2 text-xl font-semibold text-white">{localVotes.against}</span>
-          <span className="mt-1 text-xs text-rose-200">{againstPercent}% votes</span>
-        </button>
-      </div>
-
-      <div className="h-3 rounded-full bg-[#0a0a0a]">
-        <div
-          className="flex h-full overflow-hidden rounded-full"
-          style={{ width: "100%" }}>
-          <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300" style={{ width: `${forPercent}%` }} />
-          <div className="h-full bg-gradient-to-r from-rose-500 to-rose-300" style={{ width: `${againstPercent}%` }} />
-        </div>
-      </div>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <button
@@ -174,16 +144,6 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
           }`}>
           {micEnabled ? <HiOutlineMicrophone className="h-4 w-4" /> : <HiOutlineNoSymbol className="h-4 w-4" />}
           Mic {micEnabled ? "on" : "off"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setCamEnabled((prev) => !prev)}
-          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 transition ${
-            camEnabled
-              ? "border-sky-400/40 bg-sky-500/10 text-sky-200"
-              : "border-white/10 bg-[#151515] text-gray-300"
-          }`}>
-          <HiOutlineVideoCamera className="h-4 w-4" /> Cam {camEnabled ? "on" : "off"}
         </button>
         <span className="rounded-full border border-white/10 px-4 py-2 text-gray-300">Audience votes: {totalVotes}</span>
       </div>
@@ -233,15 +193,9 @@ const LiveDebates = () => {
           setLiveDebates(debates);
           setOpenRooms(open);
 
-          // Join all rooms via Socket.io for real-time updates
-          if (socket && isConnected) {
-            response.rooms.forEach((room) => {
-              if (!joinedRoomsRef.current.has(room.id)) {
-                socket.emit("join_room", { roomId: room.id });
-                joinedRoomsRef.current.add(room.id);
-              }
-            });
-          }
+          // Note: We don't join rooms here to avoid inflating listener counts.
+          // Listener counts should only increment when users actually enter voice rooms.
+          // Socket updates for room changes will still work via global events or when needed.
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -534,11 +488,17 @@ const LiveDebates = () => {
           </button>
         <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
             <HiOutlineSpeakerWave className="h-5 w-5" />{" "}
-            {liveDebates.length + openRooms.length} rooms{" "}
-            {liveDebates.some((r) => r.status === "live") ? "live" : "scheduled"} ·{" "}
-            {liveDebates.reduce((sum, r) => sum + (r.listeners || 0), 0) +
-              openRooms.reduce((sum, r) => sum + (r.listeners || 0), 0)}{" "}
-            learners {liveDebates.some((r) => r.status === "live") ? "debating" : "waiting"} now
+            {(() => {
+              const liveRooms = [...liveDebates, ...openRooms].filter((r) => r.status === "live");
+              const liveCount = liveRooms.length;
+              // Only count listeners from live rooms
+              const totalListeners = liveRooms.reduce((sum, r) => sum + (r.listeners || 0), 0);
+              
+              if (liveCount === 0) {
+                return "No rooms live";
+              }
+              return `${liveCount} rooms live · ${totalListeners} learners debating now`;
+            })()}
             {!isConnected && (
               <span className="ml-2 text-yellow-400">(Connecting...)</span>
             )}

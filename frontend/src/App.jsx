@@ -14,6 +14,7 @@ import ProfilePage from "../modules/learn-earn/pages/ProfilePage";
 import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
 import FindLearners from "../modules/learn-earn/pages/FindLearners";
 import UserProfileView from "../modules/learn-earn/pages/UserProfileView";
+import FullLeaderboard from "../modules/learn-earn/pages/FullLeaderboard";
 import LiveDebates from "../modules/learn-earn/pages/LiveDebates";
 import VoiceRoom from "../modules/learn-earn/pages/VoiceRoom";
 import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
@@ -460,6 +461,22 @@ export const App = () => {
                   "super-admin",
                 ]}>
                 <RatingsReviews />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="leaderboard"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <FullLeaderboard />
               </ProtectedRoute>
             }
           />

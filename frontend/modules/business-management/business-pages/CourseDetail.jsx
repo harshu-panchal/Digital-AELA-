@@ -277,7 +277,7 @@ const CourseDetail = () => {
       return;
     }
 
-    // If course has _id, use API enrollment
+    // If course has _id, use API enrollment (works for both free and paid)
     if (course._id) {
       setIsEnrolling(true);
       try {
@@ -297,7 +297,14 @@ const CourseDetail = () => {
         setIsEnrolling(false);
       }
     } else {
-      // Fallback to payment flow for catalog courses
+      // For catalog courses without _id, check if it's free
+      if (isFreeCourse) {
+        // Free catalog course - show message that enrollment requires backend course
+        toast.info("This free course requires backend setup. Please contact support.");
+        return;
+      }
+      
+      // Paid catalog course - go to payment flow
       const payload = {
         ...course,
         price: priceDisplay,

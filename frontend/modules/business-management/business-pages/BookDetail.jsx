@@ -484,19 +484,33 @@ const BookDetail = () => {
 
               {/* Price */}
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-4xl font-bold text-[#D4AF37] font-display">
-                  ₹{book.price}
-                </span>
-                {book.originalPrice > book.price && (
-                  <>
-                    <span className="text-xl text-gray-500 line-through">
-                      ₹{book.originalPrice}
-                    </span>
-                    <span className="text-sm text-[#D4AF37] font-semibold">
-                      Save ₹{book.originalPrice - book.price}
-                    </span>
-                  </>
-                )}
+                {(() => {
+                  const isFreeBook = book.price === 0 || book.price === "Free";
+                  if (isFreeBook) {
+                    return (
+                      <span className="text-4xl font-bold text-green-400 font-display">
+                        Free
+                      </span>
+                    );
+                  }
+                  return (
+                    <>
+                      <span className="text-4xl font-bold text-[#D4AF37] font-display">
+                        ₹{book.price}
+                      </span>
+                      {book.originalPrice > book.price && (
+                        <>
+                          <span className="text-xl text-gray-500 line-through">
+                            ₹{book.originalPrice}
+                          </span>
+                          <span className="text-sm text-[#D4AF37] font-semibold">
+                            Save ₹{book.originalPrice - book.price}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Description */}
@@ -572,20 +586,56 @@ const BookDetail = () => {
               )}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    window.location.href = `/books/${book.id}/payment`;
-                  }}
-                  className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                  Buy Now - ₹{book.price}
-                </motion.button>
-                <GiftButton
-                  className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black"
-                  size="lg">
-                  Gift
-                </GiftButton>
+                {(() => {
+                  const isFreeBook = book.price === 0 || book.price === "Free" || (book.format === "ebook" && book.price === 0);
+                  
+                  if (isFreeBook && book.format === "ebook") {
+                    // Free ebook - allow direct access to reading
+                    return (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          navigate(`/free-library/ebook/${book.id}/read`);
+                        }}
+                        className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+                        <FaBookOpen className="inline mr-2" />
+                        Read for Free
+                      </motion.button>
+                    );
+                  } else if (isFreeBook) {
+                    // Free physical book - show free message
+                    return (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        disabled
+                        className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg opacity-80 cursor-not-allowed">
+                        Free - Contact for Delivery
+                      </motion.button>
+                    );
+                  } else {
+                    // Paid book - go to payment
+                    return (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            window.location.href = `/books/${book.id}/payment`;
+                          }}
+                          className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+                          Buy Now - ₹{book.price}
+                        </motion.button>
+                        <GiftButton
+                          className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black"
+                          size="lg">
+                          Gift
+                        </GiftButton>
+                      </>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Ebook Actions (Download, Bookmark) */}
@@ -638,9 +688,18 @@ const BookDetail = () => {
 
               {/* Additional Info */}
               <p className="text-xs text-gray-500 text-center">
-                {book.format === "ebook"
-                  ? "Instant download after payment"
-                  : "Free shipping available"}
+                {(() => {
+                  const isFreeBook = book.price === 0 || book.price === "Free";
+                  if (isFreeBook && book.format === "ebook") {
+                    return "Free ebook - Start reading immediately";
+                  } else if (isFreeBook) {
+                    return "Free - Contact us for delivery options";
+                  } else if (book.format === "ebook") {
+                    return "Instant download after payment";
+                  } else {
+                    return "Free shipping available";
+                  }
+                })()}
               </p>
             </motion.div>
           </div>

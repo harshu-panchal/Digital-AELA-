@@ -32,7 +32,11 @@ const FindLearners = () => {
 
     setLoading(true);
     try {
-      const response = await searchLearnersAPI(query, { page: 1, pageSize: 50 });
+      const response = await searchLearnersAPI({ 
+        q: query.trim(), 
+        page: 1, 
+        pageSize: 50 
+      });
       if (response?.learners) {
         setLearners(response.learners);
       } else {

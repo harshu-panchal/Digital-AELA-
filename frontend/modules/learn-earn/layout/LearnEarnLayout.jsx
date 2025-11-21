@@ -157,9 +157,13 @@ const LearnEarnLayout = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] md:pt-[104px] text-white">
       <div className="mx-auto flex w-full max-w-[1440px] flex-col lg:flex-row">
-        {/* Desktop Sidebar */}
-        <aside className="hidden w-full max-w-[250px] border-r border-white/5 bg-black/60 backdrop-blur-xl lg:block">
-          <div className="sticky top-[124px] md:top-[104px] flex h-[calc(100vh-140px)] flex-col gap-6 overflow-y-auto px-6 pb-8 pt-12">
+        {/* Desktop Sidebar - Fixed */}
+        <aside 
+          className="hidden fixed top-[124px] md:top-[104px] z-20 w-[250px] h-[calc(100vh-124px)] md:h-[calc(100vh-104px)] border-r border-white/5 bg-black/60 backdrop-blur-xl lg:block"
+          style={{
+            left: 'max(0px, calc((100vw - 1440px) / 2))'
+          }}>
+          <div className="flex h-full flex-col gap-6 overflow-y-auto overflow-x-hidden px-6 pb-8 pt-12 custom-scrollbar">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-[#D4AF37]/70">
                 Learn & Earn
@@ -169,46 +173,46 @@ const LearnEarnLayout = () => {
               </h2>
             </div>
             {authUser ? (
-              <div className="rounded-2xl border border-white/5 bg-[#0f0f0f]/90 p-4 shadow-inner">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={profile.avatar}
-                    alt={profile.name}
-                    className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
-                  />
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {profile.name}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                      {profile.id}
-                    </p>
-                      <button
-                        type="button"
-                        onClick={handleCopyUserId}
-                        className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
-                        title="Copy User ID">
-                        {copied ? (
-                          <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        ) : (
-                          <HiOutlineClipboard className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
+            <div className="rounded-2xl border border-white/5 bg-[#0f0f0f]/90 p-4 shadow-inner">
+              <div className="flex items-center gap-3">
+                <img
+                  src={profile.avatar}
+                  alt={profile.name}
+                  className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
+                />
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-sm font-semibold text-white truncate">
+                    {profile.name}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                    {profile.id}
+                  </p>
+                    <button
+                      type="button"
+                      onClick={handleCopyUserId}
+                      className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                      title="Copy User ID">
+                      {copied ? (
+                        <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : (
+                        <HiOutlineClipboard className="h-3.5 w-3.5" />
+                      )}
+                    </button>
                   </div>
                 </div>
-                <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
-                  <p className="flex items-center gap-2 text-[#D4AF37]">
-                    <FaCoins className="h-4 w-4" />
-                    Current Balance
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-white">
-                    {totals.current.toLocaleString()}{" "}
-                    <span className="text-sm text-[#D4AF37]">AELA</span>
-                  </p>
-                </div>
               </div>
+              <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
+                <p className="flex items-center gap-2 text-[#D4AF37]">
+                  <FaCoins className="h-4 w-4" />
+                  Current Balance
+                </p>
+                <p className="mt-1 text-2xl font-bold text-white">
+                  {totals.current.toLocaleString()}{" "}
+                  <span className="text-sm text-[#D4AF37]">AELA</span>
+                </p>
+              </div>
+            </div>
             ) : (
               <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4 shadow-inner">
                 <p className="text-sm font-semibold text-white mb-2">
@@ -247,7 +251,7 @@ const LearnEarnLayout = () => {
         </aside>
 
         {/* Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 lg:pl-[250px]">
           {/* Top Navigation */}
           <header className="sticky top-[124px] md:top-[104px] z-30 border-b border-white/5 bg-black/80 backdrop-blur-xl">
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -355,34 +359,34 @@ const LearnEarnLayout = () => {
               </button>
               <div className="mt-8 flex flex-col gap-6">
                 {authUser ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0f0f0f] p-3">
-                    <img
-                      src={profile.avatar}
-                      alt={profile.name}
-                      className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
-                    />
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {profile.name}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                        {profile.id}
-                      </p>
-                        <button
-                          type="button"
-                          onClick={handleCopyUserId}
-                          className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
-                          title="Copy User ID">
-                          {copied ? (
-                            <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
-                          ) : (
-                            <HiOutlineClipboard className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0f0f0f] p-3">
+                  <img
+                    src={profile.avatar}
+                    alt={profile.name}
+                    className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
+                  />
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {profile.name}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
+                      {profile.id}
+                    </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyUserId}
+                        className="flex-shrink-0 rounded p-1 text-gray-400 transition hover:bg-white/5 hover:text-[#D4AF37] active:scale-95"
+                        title="Copy User ID">
+                        {copied ? (
+                          <HiOutlineClipboardDocumentCheck className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <HiOutlineClipboard className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
+                </div>
                 ) : (
                   <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4">
                     <p className="text-sm font-semibold text-white mb-2">

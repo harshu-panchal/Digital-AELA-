@@ -596,8 +596,8 @@ const DashboardOverview = () => {
             })()}
           </div>
           <Link
-            to="/learn-earn/live-debate-room"
-            className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37]">
+            to="/learn-earn/leaderboard"
+            className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37] transition hover:text-[#E5C158]">
             See full leaderboard →
           </Link>
         </Motion.div>
