@@ -7,6 +7,373 @@ import RecruiterBlog from "../models/RecruiterBlog.js";
 import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 
 /**
+ * Super Admin: Get Content Management Statistics
+ */
+export const getContentManagementStats = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    // Get all super admin users
+    const superAdmins = await User.find({ role: "super-admin" }).select("_id").lean();
+    const superAdminIds = superAdmins.map((admin) => admin._id);
+
+    // Get statistics
+    const [
+      totalBooks,
+      booksByAdmin,
+      totalCourses,
+      coursesByAdmin,
+    ] = await Promise.all([
+      // Total books
+      EbookResource.countDocuments({}),
+      // Books uploaded by super admin
+      EbookResource.countDocuments({
+        $or: [
+          { "metadata.uploadedBy": { $in: superAdminIds } },
+          { "metadata.author": "Digital AELA" },
+        ],
+      }),
+      // Total courses
+      Course.countDocuments({}),
+      // Courses created by super admin
+      Course.countDocuments({
+        instructor: { $in: superAdminIds },
+      }),
+    ]);
+
+    return res.json({
+      stats: {
+        totalBooks,
+        booksByAdmin,
+        totalCourses,
+        coursesByAdmin,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Get All Courses for Management
+ */
+export const getAllCoursesForManagement = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { page = 1, pageSize = 20, status, search } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const query = {};
+    if (status) {
+      query.status = status;
+    }
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [courses, total] = await Promise.all([
+      Course.find(query)
+        .populate("instructor", "fullName email role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize))
+        .lean(),
+      Course.countDocuments(query),
+    ]);
+
+    return res.json({
+      courses,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Get All Books for Management
+ */
+export const getAllBooksForManagement = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { page = 1, pageSize = 20, isPublic, search } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const query = {};
+    if (isPublic !== undefined) {
+      query.isPublic = isPublic === "true" || isPublic === true;
+    }
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [books, total] = await Promise.all([
+      EbookResource.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(pageSize))
+        .lean(),
+      EbookResource.countDocuments(query),
+    ]);
+
+    return res.json({
+      books,
+      meta: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Delete Course
+ */
+export const deleteCourse = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const course = await Course.findByIdAndDelete(courseId);
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    return res.json({
+      message: "Course deleted successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Delete Book
+ */
+export const deleteBook = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { bookId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid book ID",
+        },
+      });
+    }
+
+    const book = await EbookResource.findByIdAndDelete(bookId);
+
+    if (!book) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Book not found",
+        },
+      });
+    }
+
+    return res.json({
+      message: "Book deleted successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Toggle Course Visibility (Hide/Show)
+ */
+export const toggleCourseVisibility = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+    const { isVisible } = req.body;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    // Toggle visibility: if visible, set to archived (hidden), otherwise set to published (visible)
+    if (isVisible === true || isVisible === "true") {
+      course.status = "published";
+    } else {
+      course.status = "archived";
+    }
+
+    await course.save();
+
+    return res.json({
+      course,
+      message: `Course ${course.status === "published" ? "shown" : "hidden"} successfully`,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Toggle Book Visibility (Hide/Show)
+ */
+export const toggleBookVisibility = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { bookId } = req.params;
+    const { isVisible } = req.body;
+
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid book ID",
+        },
+      });
+    }
+
+    const book = await EbookResource.findById(bookId);
+
+    if (!book) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Book not found",
+        },
+      });
+    }
+
+    // Toggle visibility
+    book.isPublic = isVisible === true || isVisible === "true";
+    if (book.isPublic && !book.publishedAt) {
+      book.publishedAt = new Date();
+    }
+
+    await book.save();
+
+    return res.json({
+      book,
+      message: `Book ${book.isPublic ? "shown" : "hidden"} successfully`,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Approve/Reject Course
  */
 export const approveCourse = async (req, res, next) => {

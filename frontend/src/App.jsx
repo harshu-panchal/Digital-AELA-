@@ -83,6 +83,7 @@ import SystemSettings from "../modules/admin/pages/SystemSettings";
 import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
 import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
+import ContentManagement from "../modules/admin/pages/ContentManagement";
 import UserDetail from "../modules/admin/pages/UserDetail";
 import SystemHealth from "../modules/admin/pages/SystemHealth";
 // Use lazy loading to prevent circular dependency issues
@@ -193,6 +194,7 @@ export const App = () => {
           <Route path="create/course" element={<AdminCourseCreate />} />
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />
+          <Route path="content-management" element={<ContentManagement />} />
           <Route path="payments" element={<PaymentManagement />} />
           <Route path="certificates" element={<CertificateManagement />} />
           <Route path="crm/leads" element={<LeadManagement />} />

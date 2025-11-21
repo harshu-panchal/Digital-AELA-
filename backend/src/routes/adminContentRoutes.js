@@ -8,6 +8,13 @@ import {
   createEbook,
   createBlog,
   uploadAdminCourseBrochure,
+  getContentManagementStats,
+  getAllCoursesForManagement,
+  getAllBooksForManagement,
+  deleteCourse,
+  deleteBook,
+  toggleCourseVisibility,
+  toggleBookVisibility,
 } from "../controllers/adminContentController.js";
 import {
   getPendingCourses,
@@ -63,6 +70,15 @@ router.post(
 router.get("/live-rooms", getLiveRoomsForModeration);
 router.patch("/live-rooms/:roomId/moderate", moderateLiveRoom);
 router.delete("/live-rooms/:roomId", deleteLiveRoom);
+
+// Content Management routes
+router.get("/content/stats", getContentManagementStats);
+router.get("/content/courses", getAllCoursesForManagement);
+router.get("/content/books", getAllBooksForManagement);
+router.delete("/content/courses/:courseId", deleteCourse);
+router.delete("/content/books/:bookId", deleteBook);
+router.patch("/content/courses/:courseId/visibility", toggleCourseVisibility);
+router.patch("/content/books/:bookId/visibility", toggleBookVisibility);
 
 export default router;
 

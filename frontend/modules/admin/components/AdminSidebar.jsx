@@ -16,6 +16,7 @@ import {
   FaCog,
   FaVideo,
   FaCreditCard,
+  FaTasks,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -74,6 +75,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Backups",
       path: "/super-admin/backups",
       icon: FaFileAlt,
+    },
+    {
+      label: "Content Management",
+      path: "/super-admin/content-management",
+      icon: FaTasks,
     },
     {
       label: "User Management",
