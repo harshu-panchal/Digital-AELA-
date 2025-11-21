@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import {
   HiOutlineMicrophone,
-  HiOutlineMicrophoneSlash,
   HiOutlineSpeakerWave,
   HiOutlineXMark,
   HiOutlineHandRaised,
@@ -486,7 +485,7 @@ const VoiceRoom = () => {
                               {isMicEnabled ? (
                                 <HiOutlineMicrophone className="h-5 w-5" />
                               ) : (
-                                <HiOutlineMicrophoneSlash className="h-5 w-5" />
+                                <FaMicrophoneSlash className="h-5 w-5" />
                               )}
                             </button>
                           )}
@@ -506,7 +505,7 @@ const VoiceRoom = () => {
                               {isMuted ? (
                                 <HiOutlineMicrophone className="h-5 w-5" />
                               ) : (
-                                <HiOutlineMicrophoneSlash className="h-5 w-5" />
+                                <FaMicrophoneSlash className="h-5 w-5" />
                               )}
                             </button>
                           )}
