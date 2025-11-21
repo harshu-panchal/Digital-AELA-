@@ -674,12 +674,33 @@ export const setupSocketIO = (io) => {
         }
 
         // Notify hosts and speakers
+        // Get all participants who are hosts or speakers and have a socketId (are in voice room)
         const hostsAndSpeakers = room.participants.filter(
-          (p) => (p.role === "host" || p.role === "speaker") && p.socketId
+          (p) => {
+            const isHost = p.role === "host" || p.userId.toString() === room.host.toString();
+            const isSpeaker = p.role === "speaker" || room.speakers.some(s => s.toString() === p.userId.toString());
+            return (isHost || isSpeaker) && p.socketId;
+          }
         );
 
+        // Also get all sockets in the voice room and check their roles
+        const voiceRoomSockets = await io.in(`voice-room:${roomId}`).fetchSockets();
+        const hostAndSpeakerSockets = voiceRoomSockets.filter((s) => {
+          return s.data.voiceRole === "host" || s.data.voiceRole === "speaker";
+        });
+
+        // Combine socket IDs from both sources
+        const socketIdsToNotify = new Set();
         hostsAndSpeakers.forEach((p) => {
-          io.to(p.socketId).emit("speak-requested", {
+          if (p.socketId) socketIdsToNotify.add(p.socketId);
+        });
+        hostAndSpeakerSockets.forEach((s) => {
+          socketIdsToNotify.add(s.id);
+        });
+
+        // Notify all hosts and speakers
+        socketIdsToNotify.forEach((socketId) => {
+          io.to(socketId).emit("speak-requested", {
             roomId,
             userId: socket.userId,
             userName: socket.userFullName,

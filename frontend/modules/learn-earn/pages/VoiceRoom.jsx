@@ -222,9 +222,28 @@ const VoiceRoom = () => {
     if (!socket || !isConnected || isRequesting) return;
 
     // Check if there are hosts/speakers in the room
-    const hasHostsOrSpeakers = participants.some(
+    // Check participants list (people who have joined the voice room)
+    const hasHostsOrSpeakersInVoiceRoom = participants.some(
       (p) => (p.role === "host" || p.role === "speaker") && p.userId !== user?.id
     );
+    
+    // Also check if room has a host assigned (even if they haven't joined voice room yet)
+    let roomHasHost = false;
+    if (room) {
+      const roomHostId = typeof room.host === "object" ? room.host._id : room.host;
+      const currentUserId = user?.id;
+      if (roomHostId && roomHostId !== currentUserId) {
+        roomHasHost = true;
+      }
+      if (!roomHasHost && room.speakers && Array.isArray(room.speakers)) {
+        roomHasHost = room.speakers.some((s) => {
+          const speakerId = typeof s === "object" ? s._id : s;
+          return speakerId && speakerId !== currentUserId;
+        });
+      }
+    }
+
+    const hasHostsOrSpeakers = hasHostsOrSpeakersInVoiceRoom || roomHasHost;
 
     if (!hasHostsOrSpeakers) {
       toast.warning("No hosts or speakers in the room. Your request will be pending until someone joins as host.");
@@ -233,7 +252,9 @@ const VoiceRoom = () => {
     setIsRequesting(true);
     try {
       socket.emit("request-to-speak", { roomId });
-      toast.info("Request to speak sent. Waiting for host/speaker approval...");
+      if (hasHostsOrSpeakers) {
+        toast.info("Request to speak sent. Waiting for host/speaker approval...");
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Failed to request to speak:", error);

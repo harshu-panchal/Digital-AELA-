@@ -225,12 +225,11 @@ export const createLiveRoom = async (req, res, next) => {
       .lean();
 
     // Format room response to match getLiveRooms format
-    const now = new Date();
-    const scheduledStart = populatedRoom.scheduledStart ? new Date(populatedRoom.scheduledStart) : null;
+    const scheduledStartDate = populatedRoom.scheduledStart ? new Date(populatedRoom.scheduledStart) : null;
     let startInMinutes = 0;
 
-    if (scheduledStart && scheduledStart > now) {
-      startInMinutes = Math.ceil((scheduledStart - now) / (1000 * 60));
+    if (scheduledStartDate && scheduledStartDate > now) {
+      startInMinutes = Math.ceil((scheduledStartDate - now) / (1000 * 60));
     }
 
     const formattedRoom = {
