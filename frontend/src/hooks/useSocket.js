@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "../contexts/AuthContext";
+import { clearStoredTokens, notifyAuthUpdate } from "../services/api/baseClient";
 
 // Socket.io connects to the base server URL (without /api/v1)
 const SOCKET_URL =
@@ -116,6 +117,20 @@ export const useSocket = () => {
 
       newSocket.on("connect_error", (error) => {
         setIsConnected(false);
+        
+        // Handle authentication errors - clear tokens if auth fails
+        if (error.message?.includes("Authentication error") || error.message?.includes("Auth error")) {
+          // Clear tokens on auth failure
+          clearStoredTokens();
+          notifyAuthUpdate(null);
+          
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn("[Socket.IO] Authentication failed - tokens cleared. Please log in again.");
+          }
+          return;
+        }
+        
         // Suppress all WebSocket and connection errors - these are expected in production
         const shouldSuppress = 
           error.message?.includes("xhr poll error") ||
@@ -131,11 +146,6 @@ export const useSocket = () => {
           error.message?.includes("ERR_CONNECTION") ||
           error.message?.includes("ERR_INTERNET_DISCONNECTED");
         
-        // Only log authentication errors in development
-        if (!shouldSuppress && error.message?.includes("Authentication error") && import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.warn("[Socket.IO] Authentication error:", error.message);
-        }
         // Silent fail for all other connection errors - socket will retry automatically
       });
 

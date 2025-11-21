@@ -151,16 +151,27 @@ export const apiRequest = async (
         _retry: true,
       });
     } catch (error) {
+      // If token refresh fails, clear tokens and notify auth handler
+      clearStoredTokens();
+      notifyAuthUpdate(null);
+      
       const message =
         payload?.error?.message ??
         error.message ??
-        `Request to ${endpoint} failed with status ${response.status}`;
+        `Request to ${endpoint} failed with status ${response.status}. Please log in again.`;
       const unauthorizedError = new Error(message);
       unauthorizedError.status = response.status;
-      unauthorizedError.code = payload?.error?.code ?? error.code;
+      unauthorizedError.code = payload?.error?.code ?? error.code ?? "UNAUTHORIZED";
       unauthorizedError.details = payload ?? error.details;
+      unauthorizedError.requiresLogin = true;
       throw unauthorizedError;
     }
+  }
+
+  // If 401 and no refresh token or refresh already attempted, clear tokens
+  if (!skipAuth && response.status === 401) {
+    clearStoredTokens();
+    notifyAuthUpdate(null);
   }
 
   const message =
