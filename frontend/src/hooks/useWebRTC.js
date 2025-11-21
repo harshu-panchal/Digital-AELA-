@@ -908,6 +908,36 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       const { fromSocketId, answer } = data;
       const peerConnection = peerConnectionsRef.current.get(fromSocketId);
       if (peerConnection) {
+        // Always set up connection state listeners (even if answer is duplicate)
+        // This ensures we track connection progress
+        if (!peerConnection.onconnectionstatechange) {
+          peerConnection.onconnectionstatechange = () => {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Peer connection state changed:", peerConnection.connectionState, "for:", fromSocketId);
+            if (peerConnection.connectionState === "connected") {
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] ✅ Peer connection established with:", fromSocketId);
+            } else if (peerConnection.connectionState === "failed" || peerConnection.connectionState === "disconnected") {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] ⚠️ Peer connection failed/disconnected with:", fromSocketId);
+            }
+          };
+        }
+        
+        if (!peerConnection.oniceconnectionstatechange) {
+          peerConnection.oniceconnectionstatechange = () => {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] ICE connection state:", peerConnection.iceConnectionState, "for:", fromSocketId);
+            if (peerConnection.iceConnectionState === "connected" || peerConnection.iceConnectionState === "completed") {
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] ✅ ICE connection established with:", fromSocketId);
+            } else if (peerConnection.iceConnectionState === "failed") {
+              // eslint-disable-next-line no-console
+              console.warn("[WebRTC] ⚠️ ICE connection failed with:", fromSocketId);
+            }
+          };
+        }
+        
         // Check signaling state before setting remote description
         // We can only set remote answer if we're in "have-local-offer" state
         if (peerConnection.signalingState === "have-local-offer") {
@@ -918,10 +948,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           // Connection is already established
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Connection already stable for:", fromSocketId, "- answer is duplicate, connection already established");
-          // Check if connection is actually working
-          if (peerConnection.connectionState === "connected" || peerConnection.connectionState === "connecting") {
+          // Check current connection state
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Current connection state:", peerConnection.connectionState, "ICE state:", peerConnection.iceConnectionState);
+          // Manually trigger state check
+          if (peerConnection.connectionState === "connected") {
             // eslint-disable-next-line no-console
-            console.log("[WebRTC] Connection is active:", peerConnection.connectionState);
+            console.log("[WebRTC] ✅ Connection already active:", fromSocketId);
+          } else if (peerConnection.connectionState === "new" || peerConnection.connectionState === "connecting") {
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection still establishing:", peerConnection.connectionState);
           }
           return;
         } else {
@@ -929,19 +965,6 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           console.warn("[WebRTC] Cannot set remote answer - wrong signaling state:", peerConnection.signalingState, "for:", fromSocketId);
           return;
         }
-        
-        // Check connection state
-        peerConnection.onconnectionstatechange = () => {
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Peer connection state changed:", peerConnection.connectionState, "for:", fromSocketId);
-          if (peerConnection.connectionState === "connected") {
-            // eslint-disable-next-line no-console
-            console.log("[WebRTC] Peer connection established with:", fromSocketId);
-          } else if (peerConnection.connectionState === "failed" || peerConnection.connectionState === "disconnected") {
-            // eslint-disable-next-line no-console
-            console.warn("[WebRTC] Peer connection failed/disconnected with:", fromSocketId);
-          }
-        };
       } else {
         // eslint-disable-next-line no-console
         console.warn("[WebRTC] No peer connection found for answer from:", fromSocketId);
@@ -963,10 +986,15 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       const peerConnection = peerConnectionsRef.current.get(fromSocketId);
       if (peerConnection && candidate) {
         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Added ICE candidate from:", fromSocketId, "ICE state:", peerConnection.iceConnectionState);
+      } else if (!peerConnection) {
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] No peer connection found for ICE candidate from:", fromSocketId);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("[WebRTC] Error handling ICE candidate:", error);
+      console.error("[WebRTC] Error handling ICE candidate:", error, "from:", data?.fromSocketId);
     }
   }, [roomId]);
 
