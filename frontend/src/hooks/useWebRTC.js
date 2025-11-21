@@ -28,6 +28,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const lastSetupKeyRef = useRef(null); // Track last setup key to prevent duplicate runs
   const effectRunCountRef = useRef(0); // Track how many times effect has run to detect loops
   const lastEffectDepsRef = useRef(null); // Track last effect dependencies to detect actual changes
+  const mediasoupUnavailableRef = useRef(false); // Track if mediasoup is unavailable to prevent setup attempts
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -420,6 +421,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     if (lastRoomIdRef.current !== currentRoomId) {
       rtpCapabilitiesRef.current = null;
       rtpCapabilitiesReceivedRef.current = false;
+      // Reset mediasoup unavailable flag when changing rooms (new room might have mediasoup available)
+      mediasoupUnavailableRef.current = false;
     }
 
     const handler = (data) => {
@@ -494,6 +497,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
   // Setup WebRTC for speaker/host
   const setupAsSpeaker = useCallback(async () => {
+    // Check if mediasoup is unavailable before attempting setup
+    if (mediasoupUnavailableRef.current) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
+      setConnectionState("error");
+      return;
+    }
+
     try {
       setIsConnecting(true);
       setConnectionState("connecting");
@@ -531,6 +542,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
   // Setup WebRTC for listener
   const setupAsListener = useCallback(async () => {
+    // Check if mediasoup is unavailable before attempting setup
+    if (mediasoupUnavailableRef.current) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
+      setConnectionState("error");
+      return;
+    }
+
     try {
       setIsConnecting(true);
       setConnectionState("connecting");
@@ -743,11 +762,27 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       }
     };
 
+    const handleMediaServerError = (data) => {
+      // Check if this is a mediasoup unavailable error
+      if (data.code === "MEDIASOUP_UNAVAILABLE" || 
+          data.message?.includes("media server") || 
+          data.message?.includes("media capabilities")) {
+        // eslint-disable-next-line no-console
+        console.error("[WebRTC] Media server unavailable - stopping WebRTC setup");
+        mediasoupUnavailableRef.current = true;
+        setConnectionState("error");
+        setIsConnecting(false);
+        setupCompleteRef.current = false;
+        // Don't show toast here - VoiceRoom component will handle it
+      }
+    };
+
     socket.on("new-producer", handleNewProducer);
     socket.on("producer-closed", handleProducerClosed);
     socket.on("existing-producers", handleExistingProducers);
     socket.on("muted-by-host", handleMutedByHost);
     socket.on("unmuted-by-host", handleUnmutedByHost);
+    socket.on("error", handleMediaServerError);
 
     return () => {
       socket.off("new-producer", handleNewProducer);
@@ -755,6 +790,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       socket.off("existing-producers", handleExistingProducers);
       socket.off("muted-by-host", handleMutedByHost);
       socket.off("unmuted-by-host", handleUnmutedByHost);
+      socket.off("error", handleMediaServerError);
     };
   }, [socket, roomId, role, startConsuming, cleanupConsumer]);
 
@@ -838,6 +874,14 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       return;
     }
     
+    // Don't setup if mediasoup is unavailable
+    if (mediasoupUnavailableRef.current) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Skipping setup - mediasoup unavailable");
+      setConnectionState("error");
+      return;
+    }
+
     // Don't setup if we're already setting up, reconnecting, or cleaning up
     // But allow setup if cleanup just completed (give it a small delay to ensure flags are reset)
     if (isSettingUpRef.current || reconnectAttemptRef.current) {

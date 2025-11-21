@@ -17,6 +17,7 @@ import {
   resumeProducer,
   closeTransport,
   getRoomProducers,
+  isMediasoupAvailable,
 } from "../services/mediasoupService.js";
 
 export const setupSocketIO = (io) => {
@@ -446,30 +447,47 @@ export const setupSocketIO = (io) => {
         socket.data.voiceRoomId = roomId;
         socket.data.voiceRole = role;
 
-        // Create or get mediasoup router for this room
-        try {
-          await getOrCreateRouter(roomId);
-        } catch (routerError) {
+        // Check mediasoup availability BEFORE attempting to create router
+        if (!isMediasoupAvailable()) {
           // eslint-disable-next-line no-console
-          console.error(`[VoiceRoom] Error creating/getting router for room ${roomId}:`, routerError);
-          socket.emit("error", { message: "Failed to initialize media server" });
+          console.error(`[VoiceRoom] mediasoup is not available. Cannot create router for room ${roomId}`);
+          socket.emit("error", { 
+            message: "Voice features are temporarily unavailable. The media server could not be initialized. Please try again later or contact support.",
+            code: "MEDIASOUP_UNAVAILABLE"
+          });
           return;
         }
 
-        // Get router RTP capabilities
+        // Create or get mediasoup router for this room
         let rtpCapabilities;
         try {
+          await getOrCreateRouter(roomId);
+          
+          // Get router RTP capabilities
           rtpCapabilities = await getRouterRtpCapabilities(roomId);
           if (!rtpCapabilities) {
             // eslint-disable-next-line no-console
             console.error(`[VoiceRoom] No RTP capabilities returned for room ${roomId}`);
-            socket.emit("error", { message: "Failed to get media capabilities" });
+            socket.emit("error", { 
+              message: "Failed to get media capabilities. Please try again.",
+              code: "RTP_CAPABILITIES_MISSING"
+            });
             return;
           }
-        } catch (rtpError) {
+        } catch (routerError) {
           // eslint-disable-next-line no-console
-          console.error(`[VoiceRoom] Error getting RTP capabilities for room ${roomId}:`, rtpError);
-          socket.emit("error", { message: "Failed to get media capabilities" });
+          console.error(`[VoiceRoom] Error creating/getting router for room ${roomId}:`, routerError);
+          // eslint-disable-next-line no-console
+          console.error(`[VoiceRoom] Router error details:`, {
+            message: routerError.message,
+            stack: routerError.stack,
+            mediasoupAvailable: isMediasoupAvailable()
+          });
+          socket.emit("error", { 
+            message: "Failed to initialize media server. Please try again later.",
+            code: "ROUTER_CREATION_FAILED",
+            details: process.env.NODE_ENV === "development" ? routerError.message : undefined
+          });
           return;
         }
 

@@ -239,6 +239,7 @@ const VoiceRoom = () => {
       // eslint-disable-next-line no-console
       console.error("[VoiceRoom] Socket error:", data);
       const errorMessage = data.message || "An error occurred";
+      const errorCode = data.code;
       
       // Handle specific error types
       if (errorMessage.includes("Room not found") || errorMessage.includes("Invalid room ID")) {
@@ -251,6 +252,12 @@ const VoiceRoom = () => {
         toast.error("Room has not started yet");
       } else if (errorMessage.includes("not live")) {
         toast.error("Room is not live");
+      } else if (errorCode === "MEDIASOUP_UNAVAILABLE" || errorMessage.includes("media server") || errorMessage.includes("media capabilities")) {
+        // Media server initialization failed - prevent WebRTC setup attempts
+        toast.error("Voice features are temporarily unavailable. Please try again in a few moments.");
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Media server unavailable - WebRTC setup will be skipped");
+        setIsInitialized(false); // Prevent further setup attempts
       } else {
         toast.error(errorMessage);
       }

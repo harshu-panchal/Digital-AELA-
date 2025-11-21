@@ -52,33 +52,76 @@ export async function initializeWorkers() {
   try {
     // eslint-disable-next-line no-console
     console.log(`[mediasoup] Creating ${mediasoupConfig.numWorkers} workers...`);
+    // eslint-disable-next-line no-console
+    console.log(`[mediasoup] Worker settings:`, {
+      rtcMinPort: mediasoupConfig.workerSettings.rtcMinPort,
+      rtcMaxPort: mediasoupConfig.workerSettings.rtcMaxPort,
+      logLevel: mediasoupConfig.workerSettings.logLevel,
+    });
 
     for (let i = 0; i < mediasoupConfig.numWorkers; i++) {
-      const worker = await mediasoup.createWorker({
-        ...mediasoupConfig.workerSettings,
-      });
+      try {
+        const worker = await mediasoup.createWorker({
+          ...mediasoupConfig.workerSettings,
+        });
 
-      worker.on("died", () => {
+        worker.on("died", () => {
+          // eslint-disable-next-line no-console
+          console.error(
+            "[mediasoup] Worker died, exiting in 2 seconds... [pid:%d]",
+            worker.pid
+          );
+          setTimeout(() => process.exit(1), 2000);
+        });
+
+        workers.push(worker);
         // eslint-disable-next-line no-console
-        console.error(
-          "[mediasoup] Worker died, exiting in 2 seconds... [pid:%d]",
-          worker.pid
-        );
-        setTimeout(() => process.exit(1), 2000);
-      });
+        console.log(`[mediasoup] Worker ${i + 1}/${mediasoupConfig.numWorkers} created [pid:${worker.pid}]`);
+      } catch (workerError) {
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Failed to create worker ${i + 1}:`, workerError);
+        // eslint-disable-next-line no-console
+        console.error(`[mediasoup] Worker error details:`, {
+          message: workerError.message,
+          code: workerError.code,
+          errno: workerError.errno,
+          syscall: workerError.syscall,
+        });
+        // Continue trying to create other workers
+      }
+    }
 
-      workers.push(worker);
+    if (workers.length === 0) {
       // eslint-disable-next-line no-console
-      console.log(`[mediasoup] Worker created [pid:${worker.pid}]`);
+      console.error("[mediasoup] Failed to create any workers. Voice features will be disabled.");
+      // eslint-disable-next-line no-console
+      console.error("[mediasoup] This may be due to:");
+      // eslint-disable-next-line no-console
+      console.error("[mediasoup] - Platform restrictions (e.g., Render, Heroku)");
+      // eslint-disable-next-line no-console
+      console.error("[mediasoup] - Missing native dependencies");
+      // eslint-disable-next-line no-console
+      console.error("[mediasoup] - Port binding restrictions");
+      // eslint-disable-next-line no-console
+      console.error("[mediasoup] - Network/firewall issues");
+      mediasoupAvailable = false;
+      return [];
     }
 
     // eslint-disable-next-line no-console
-    console.log(`[mediasoup] ${workers.length} workers created`);
+    console.log(`[mediasoup] Successfully created ${workers.length}/${mediasoupConfig.numWorkers} workers`);
     mediasoupAvailable = true;
     return workers;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("[mediasoup] Error creating workers:", error);
+    console.error("[mediasoup] Critical error during worker initialization:", error);
+    // eslint-disable-next-line no-console
+    console.error("[mediasoup] Error details:", {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      errno: error.errno,
+    });
     mediasoupAvailable = false;
     // Don't throw - allow server to start without mediasoup
     return [];
