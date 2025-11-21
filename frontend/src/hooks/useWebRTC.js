@@ -727,10 +727,31 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     }
 
     // Check if peer connection already exists to avoid duplicates
-    if (peerConnectionsRef.current.has(speakerSocketId)) {
+    const existingConnection = peerConnectionsRef.current.get(speakerSocketId);
+    if (existingConnection) {
+      // Check if connection is already established or in progress
+      if (existingConnection.signalingState === "stable" && 
+          (existingConnection.connectionState === "connected" || existingConnection.connectionState === "connecting")) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Peer connection already established for:", speakerSocketId);
+        return;
+      }
+      // If connection exists but not established, check if we should create offer or wait
+      if (existingConnection.signalingState === "have-local-offer" || existingConnection.signalingState === "have-remote-offer") {
+        // Connection is in progress, don't create duplicate
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Peer connection already in progress for:", speakerSocketId, "state:", existingConnection.signalingState);
+        return;
+      }
+      // Connection exists but in bad state, close it and recreate
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Peer connection already exists for:", speakerSocketId);
-      return;
+      console.log("[WebRTC] Peer connection exists but in bad state, recreating for:", speakerSocketId);
+      try {
+        existingConnection.close();
+      } catch (e) {
+        // Ignore errors
+      }
+      peerConnectionsRef.current.delete(speakerSocketId);
     }
 
     try {
@@ -1078,32 +1099,65 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         console.log("[WebRTC] No local stream available (listener mode) for:", speakerSocketId);
       }
 
-      // Create offer AFTER tracks are added
-      // This ensures the SDP includes the audio tracks
-      const offer = await peerConnection.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false,
-      });
+      // CRITICAL FIX: Use deterministic offerer selection to avoid simultaneous offers
+      // Compare socket IDs - the peer with "lower" socket ID becomes the offerer
+      // This ensures only one peer creates an offer, preventing conflicts
+      const ourSocketId = socket.id;
+      const theirSocketId = speakerSocketId;
+      const weShouldBeOfferer = ourSocketId < theirSocketId;
       
-      // Verify offer includes audio tracks
-      if (offer.sdp) {
-        const hasAudio = offer.sdp.includes("m=audio");
+      if (weShouldBeOfferer) {
+        // We should create the offer
         // eslint-disable-next-line no-console
-        console.log("[WebRTC] Offer created with audio:", hasAudio, "for:", speakerSocketId);
-        if (!hasAudio && localStreamRef.current) {
+        console.log("[WebRTC] We are offerer (socketId comparison), creating offer for:", speakerSocketId);
+        
+        // Create offer AFTER tracks are added
+        // This ensures the SDP includes the audio tracks
+        const offer = await peerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false,
+        });
+        
+        // Verify offer includes audio tracks
+        if (offer.sdp) {
+          const hasAudio = offer.sdp.includes("m=audio");
           // eslint-disable-next-line no-console
-          console.warn("[WebRTC] ⚠️ Offer created but no audio in SDP for:", speakerSocketId);
+          console.log("[WebRTC] Offer created with audio:", hasAudio, "for:", speakerSocketId);
+          if (!hasAudio && localStreamRef.current) {
+            // eslint-disable-next-line no-console
+            console.warn("[WebRTC] ⚠️ Offer created but no audio in SDP for:", speakerSocketId);
+          }
         }
-      }
-      
-      await peerConnection.setLocalDescription(offer);
+        
+        await peerConnection.setLocalDescription(offer);
 
-      // Send offer to speaker
-      socket.emit("webrtc-offer", {
-        roomId,
-        targetSocketId: speakerSocketId,
-        offer,
-      });
+        // Send offer to speaker
+        socket.emit("webrtc-offer", {
+          roomId,
+          targetSocketId: speakerSocketId,
+          offer,
+        });
+        
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Offer sent to:", speakerSocketId);
+      } else {
+        // They should create the offer - we'll wait for their offer
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] They are offerer (socketId comparison), waiting for offer from:", speakerSocketId);
+        // Don't create offer - just wait for them to send us one
+        // The connection is already set up with tracks, so when we receive their offer,
+        // we can respond with an answer
+        // Set up ICE candidate handler for when we receive their offer
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate && socket) {
+            socket.emit("webrtc-ice-candidate", {
+              roomId,
+              targetSocketId: speakerSocketId,
+              candidate: event.candidate,
+            });
+          }
+        };
+      }
 
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Created peer connection to speaker:", speakerSocketId, "Connection state:", peerConnection.connectionState);
@@ -1152,37 +1206,65 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         }
         
         // CRITICAL FIX: Handle simultaneous offer case (both peers create offers)
-        // If we have a local offer and receive a remote offer, we need to handle this properly
+        // When both peers create offers simultaneously, we need to ensure bidirectional connection works
+        // Strategy: Use deterministic offerer selection based on socket ID comparison
+        // The peer with the "lower" socket ID becomes the offerer, the other becomes the answerer
         if (currentState === "have-local-offer") {
           // We sent an offer, but they also sent us an offer (simultaneous)
-          // We should cancel our offer and accept theirs (or vice versa)
-          // For simplicity, we'll accept their offer and cancel ours
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Simultaneous offers detected - we have local offer, accepting remote offer from:", fromSocketId);
-          // Close current connection and create new one to accept their offer
-          try {
-            peerConnection.close();
-          } catch (e) {
-            // Ignore errors when closing
+          // Determine which peer should be the offerer based on socket ID comparison
+          const ourSocketId = socket.id;
+          const theirSocketId = fromSocketId;
+          const weShouldBeOfferer = ourSocketId < theirSocketId;
+          
+          if (weShouldBeOfferer) {
+            // We should be the offerer - ignore their offer, wait for their answer to our offer
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Simultaneous offers - we are offerer (socketId comparison), ignoring remote offer from:", fromSocketId);
+            return;
+          } else {
+            // They should be the offerer - cancel our offer and accept theirs
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Simultaneous offers - they are offerer (socketId comparison), canceling our offer and accepting theirs from:", fromSocketId);
+            // Close current connection and create new one to accept their offer
+            try {
+              peerConnection.close();
+            } catch (e) {
+              // Ignore errors when closing
+            }
+            peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+            peerConnectionsRef.current.set(fromSocketId, peerConnection);
           }
-          peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
-          peerConnectionsRef.current.set(fromSocketId, peerConnection);
         } else if (currentState === "have-remote-offer") {
           // We're already processing an offer from this peer
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Already processing offer from:", fromSocketId, "- ignoring duplicate");
           return;
-        } else if (currentState === "stable" && connectionState === "new") {
-          // Signaling is stable but connection never established - reset and process the offer
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Connection exists but never established (stable/new) - resetting for:", fromSocketId);
-          try {
-            peerConnection.close();
-          } catch (e) {
-            // Ignore errors when closing
+        } else if (currentState === "stable") {
+          // Connection is in stable state - this means we were waiting for an offer
+          // Check if we have tracks already added (we were waiting)
+          const hasTracks = peerConnection.getSenders().length > 0;
+          if (hasTracks && connectionState === "new") {
+            // We were waiting for their offer - process it now
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection in stable state waiting for offer - processing offer from:", fromSocketId);
+            // Continue to process the offer below
+          } else if (connectionState === "new" && !hasTracks) {
+            // Connection exists but never established and no tracks - reset
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection exists but never established (stable/new) - resetting for:", fromSocketId);
+            try {
+              peerConnection.close();
+            } catch (e) {
+              // Ignore errors when closing
+            }
+            peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
+            peerConnectionsRef.current.set(fromSocketId, peerConnection);
+          } else if (connectionState === "connected" || connectionState === "connecting") {
+            // Connection is already established - ignore duplicate offer
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Connection already established (stable/connected) - ignoring duplicate offer from:", fromSocketId);
+            return;
           }
-          peerConnection = new RTCPeerConnection(webrtcConfigRef.current);
-          peerConnectionsRef.current.set(fromSocketId, peerConnection);
         } else if (currentState === "closed") {
           // Connection was closed, create new one
           // eslint-disable-next-line no-console
