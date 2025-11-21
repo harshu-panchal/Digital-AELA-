@@ -37,7 +37,7 @@ export const registerAuthUpdateHandler = (handler) => {
   authUpdateHandler = handler;
 };
 
-const notifyAuthUpdate = (payload) => {
+export const notifyAuthUpdate = (payload) => {
   if (typeof authUpdateHandler === "function") {
     authUpdateHandler(payload);
   }
