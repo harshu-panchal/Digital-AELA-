@@ -839,9 +839,17 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     }
     
     // Don't setup if we're already setting up, reconnecting, or cleaning up
-    if (isSettingUpRef.current || reconnectAttemptRef.current || isCleaningUpRef.current) {
+    // But allow setup if cleanup just completed (give it a small delay to ensure flags are reset)
+    if (isSettingUpRef.current || reconnectAttemptRef.current) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - already in progress, reconnecting, or cleaning up");
+      console.log("[WebRTC] Skipping setup - already in progress or reconnecting");
+      return;
+    }
+    
+    // Only skip if cleanup is actively happening (not just completed)
+    if (isCleaningUpRef.current) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Skipping setup - cleanup in progress");
       return;
     }
 

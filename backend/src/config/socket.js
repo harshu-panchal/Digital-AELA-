@@ -428,9 +428,12 @@ export const setupSocketIO = (io) => {
         }
 
         // Auto-detect role: if user is room host, set as host
-        if (room.host.toString() === socket.userId) {
+        if (room.host && room.host.toString() === socket.userId) {
           role = "host";
-        } else if (room.speakers.some((s) => s.toString() === socket.userId)) {
+        } else if (room.speakers && Array.isArray(room.speakers) && room.speakers.some((s) => {
+          const speakerId = typeof s === "object" ? s._id?.toString() || s.toString() : s?.toString();
+          return speakerId === socket.userId;
+        })) {
           // User is an approved speaker - they can join as speaker without requesting
           role = "speaker";
         } else {
@@ -444,10 +447,31 @@ export const setupSocketIO = (io) => {
         socket.data.voiceRole = role;
 
         // Create or get mediasoup router for this room
-        await getOrCreateRouter(roomId);
+        try {
+          await getOrCreateRouter(roomId);
+        } catch (routerError) {
+          // eslint-disable-next-line no-console
+          console.error(`[VoiceRoom] Error creating/getting router for room ${roomId}:`, routerError);
+          socket.emit("error", { message: "Failed to initialize media server" });
+          return;
+        }
 
         // Get router RTP capabilities
-        const rtpCapabilities = await getRouterRtpCapabilities(roomId);
+        let rtpCapabilities;
+        try {
+          rtpCapabilities = await getRouterRtpCapabilities(roomId);
+          if (!rtpCapabilities) {
+            // eslint-disable-next-line no-console
+            console.error(`[VoiceRoom] No RTP capabilities returned for room ${roomId}`);
+            socket.emit("error", { message: "Failed to get media capabilities" });
+            return;
+          }
+        } catch (rtpError) {
+          // eslint-disable-next-line no-console
+          console.error(`[VoiceRoom] Error getting RTP capabilities for room ${roomId}:`, rtpError);
+          socket.emit("error", { message: "Failed to get media capabilities" });
+          return;
+        }
 
         // Update or add participant (always find by userId to fix stale socketId issue)
         const participantIndex = room.participants.findIndex(
@@ -605,7 +629,19 @@ export const setupSocketIO = (io) => {
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("[Socket.IO] Error joining voice room:", error);
-        socket.emit("error", { message: "Failed to join voice room" });
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error stack:", error.stack);
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error details:", {
+          roomId: data?.roomId,
+          role: data?.role,
+          userId: socket.userId,
+          socketId: socket.id,
+        });
+        socket.emit("error", { 
+          message: "Failed to join voice room",
+          details: error.message 
+        });
       }
     });
 
