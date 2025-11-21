@@ -158,6 +158,7 @@ export const createLiveRoom = async (req, res, next) => {
       description,
       scheduledStart,
       speakers = [],
+      startImmediately = false,
     } = req.body;
 
     if (!title) {
@@ -186,6 +187,26 @@ export const createLiveRoom = async (req, res, next) => {
       .filter((s) => mongoose.isValidObjectId(s))
       .map((s) => new mongoose.Types.ObjectId(s));
 
+    // Determine start time and status
+    const now = new Date();
+    let roomScheduledStart = scheduledStart ? new Date(scheduledStart) : now;
+    let roomStatus = "scheduled";
+
+    if (startImmediately) {
+      // Start immediately
+      roomScheduledStart = now;
+      roomStatus = "live";
+    } else if (scheduledStart) {
+      // Check if scheduled time has passed
+      const scheduled = new Date(scheduledStart);
+      if (scheduled <= now) {
+        roomStatus = "live";
+      }
+    } else {
+      // Default: 15 minutes from now
+      roomScheduledStart = new Date(now.getTime() + 15 * 60 * 1000);
+    }
+
     const room = await LiveRoom.create({
       title,
       host: hostObjectId,
@@ -193,8 +214,9 @@ export const createLiveRoom = async (req, res, next) => {
       topic: topic || title,
       description,
       speakers: speakerObjectIds,
-      scheduledStart: scheduledStart ? new Date(scheduledStart) : new Date(),
-      status: "scheduled",
+      scheduledStart: roomScheduledStart,
+      status: roomStatus,
+      actualStart: roomStatus === "live" ? now : undefined,
     });
 
     const populatedRoom = await LiveRoom.findById(room._id)

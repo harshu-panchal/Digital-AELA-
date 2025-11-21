@@ -60,18 +60,30 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
   }, [socket, isConnected, room.id]);
 
   const expiry = useMemo(() => {
+    if (room.status === "live") {
+      // Room is already live, show as live
+      return new Date(Date.now() - 1000); // Past time so timer shows 00:00
+    }
     if (room.scheduledStart) {
-      return new Date(room.scheduledStart);
+      const scheduled = new Date(room.scheduledStart);
+      const now = new Date();
+      // If scheduled time has passed, room should be live
+      if (scheduled <= now) {
+        return new Date(Date.now() - 1000); // Past time so timer shows 00:00
+      }
+      return scheduled;
     }
     const end = new Date();
     end.setMinutes(end.getMinutes() + (room.startInMinutes || 0));
     return end;
-  }, [room.startInMinutes, room.scheduledStart]);
+  }, [room.startInMinutes, room.scheduledStart, room.status]);
 
   const { minutes, seconds } = useTimer({
     expiryTimestamp: expiry,
     autoStart: true,
   });
+
+  const isLive = room.status === "live" || (room.scheduledStart && new Date(room.scheduledStart) <= new Date());
 
   const totalVotes = localVotes.for + localVotes.against || 1;
   const forPercent = Math.round((localVotes.for / totalVotes) * 100);
@@ -91,7 +103,13 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
           <p className="mt-1 text-xs text-gray-400">Speakers: {room.speakers.join(" · ")}</p>
         </div>
         <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-gray-300">
-          Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
+          {isLive ? (
+            <span className="font-semibold text-green-400">● Live</span>
+          ) : (
+            <>
+              Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -180,6 +198,7 @@ const LiveDebates = () => {
     description: "",
     scheduledStart: "",
     type: "debate",
+    startImmediately: false,
   });
 
   // Load live rooms on mount
@@ -313,9 +332,13 @@ const LiveDebates = () => {
     setCreating(true);
 
     try {
-      // Calculate scheduled start time (default: 15 minutes from now)
+      // Calculate scheduled start time
       let scheduledStart = formData.scheduledStart;
-      if (!scheduledStart) {
+      if (formData.startImmediately) {
+        // Start immediately - set to current time
+        scheduledStart = new Date().toISOString();
+      } else if (!scheduledStart) {
+        // Default: 15 minutes from now
         const futureDate = new Date();
         futureDate.setMinutes(futureDate.getMinutes() + 15);
         scheduledStart = futureDate.toISOString();
@@ -327,6 +350,7 @@ const LiveDebates = () => {
         description: formData.description || "",
         type: "debate",
         scheduledStart,
+        startImmediately: formData.startImmediately,
       });
 
       if (response?.room) {
@@ -357,6 +381,7 @@ const LiveDebates = () => {
           description: "",
           scheduledStart: "",
           type: "debate",
+          startImmediately: false,
         });
         setShowCreateModal(false);
       }
@@ -541,20 +566,43 @@ const LiveDebates = () => {
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-xs font-semibold text-gray-300">
-                  Scheduled Start Time
-                </label>
-                <input
-                  type="datetime-local"
-                  value={formData.scheduledStart}
-                  onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
-                  min={new Date().toISOString().slice(0, 16)}
-                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
-                />
-                <p className="mt-1 text-xs text-gray-400">
-                  Leave empty to start in 15 minutes (default)
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="startImmediately"
+                    checked={formData.startImmediately}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        startImmediately: e.target.checked,
+                        scheduledStart: e.target.checked ? "" : formData.scheduledStart,
+                      });
+                    }}
+                    className="h-4 w-4 rounded border-white/20 bg-[#111] text-[#D4AF37] focus:ring-[#D4AF37]/50"
+                  />
+                  <label htmlFor="startImmediately" className="text-sm font-medium text-white cursor-pointer">
+                    Start immediately
+                  </label>
+                </div>
+
+                {!formData.startImmediately && (
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold text-gray-300">
+                      Scheduled Start Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.scheduledStart}
+                      onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
+                      min={new Date().toISOString().slice(0, 16)}
+                      className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                    />
+                    <p className="mt-1 text-xs text-gray-400">
+                      Leave empty to start in 15 minutes (default)
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -568,6 +616,7 @@ const LiveDebates = () => {
                       description: "",
                       scheduledStart: "",
                       type: "debate",
+                      startImmediately: false,
                     });
                   }}
                   className="flex-1 rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm font-semibold text-gray-300 transition hover:bg-white/5">
