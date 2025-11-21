@@ -735,26 +735,35 @@ export const useWebRTC = (socket, roomId, userId, role) => {
             return next;
           });
 
-          // Create audio element and play
-          const audio = document.createElement("audio");
-          audio.autoplay = true;
-          audio.playsInline = true;
-          audio.volume = 1.0;
-          audio.srcObject = remoteStream;
-          
-          // Append to DOM (hidden) and play
-          audio.style.display = "none";
-          document.body.appendChild(audio);
+          // Check if audio element already exists, reuse it or create new one
+          let audio = audioElementsRef.current.get(speakerSocketId);
+          if (audio) {
+            // Update existing audio element with new stream
+            audio.srcObject = remoteStream;
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Updated existing audio element for speaker:", speakerSocketId);
+          } else {
+            // Create new audio element and play
+            audio = document.createElement("audio");
+            audio.autoplay = true;
+            audio.playsInline = true;
+            audio.volume = 1.0;
+            audio.srcObject = remoteStream;
+            
+            // Append to DOM (hidden) and play
+            audio.style.display = "none";
+            document.body.appendChild(audio);
+            
+            audioElementsRef.current.set(speakerSocketId, audio);
+            // eslint-disable-next-line no-console
+            console.log("[WebRTC] Audio element created for speaker:", speakerSocketId);
+          }
           
           // Explicitly play the audio
           audio.play().catch((error) => {
             // eslint-disable-next-line no-console
             console.error("[WebRTC] Error playing audio:", error);
           });
-          
-          audioElementsRef.current.set(speakerSocketId, audio);
-          // eslint-disable-next-line no-console
-          console.log("[WebRTC] Audio element created and playing for speaker:", speakerSocketId);
         }
       };
 
@@ -787,6 +796,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         // eslint-disable-next-line no-console
         console.log("[WebRTC] ICE connection state:", peerConnection.iceConnectionState, "for:", speakerSocketId);
       };
+
+      // Add local audio tracks if we have a local stream (for speakers)
+      // This ensures the other peer receives our audio
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, localStreamRef.current);
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Added local track to peer connection:", track.kind, track.id, "for:", speakerSocketId);
+        });
+      }
 
       // Create offer
       const offer = await peerConnection.createOffer();
@@ -847,6 +866,52 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       localStreamRef.current.getTracks().forEach((track) => {
         peerConnection.addTrack(track, localStreamRef.current);
       });
+
+      // Handle remote stream (receive audio from the peer who sent the offer)
+      if (!peerConnection.ontrack) {
+        peerConnection.ontrack = (event) => {
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Received remote stream from peer:", fromSocketId, event);
+          const remoteStream = event.streams[0] || new MediaStream([event.track]);
+          if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+            setRemoteStreams((prev) => {
+              const next = new Map(prev);
+              next.set(fromSocketId, remoteStream);
+              return next;
+            });
+
+            // Check if audio element already exists, reuse it or create new one
+            let audio = audioElementsRef.current.get(fromSocketId);
+            if (audio) {
+              // Update existing audio element with new stream
+              audio.srcObject = remoteStream;
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Updated existing audio element for peer:", fromSocketId);
+            } else {
+              // Create new audio element and play
+              audio = document.createElement("audio");
+              audio.autoplay = true;
+              audio.playsInline = true;
+              audio.volume = 1.0;
+              audio.srcObject = remoteStream;
+              
+              // Append to DOM (hidden) and play
+              audio.style.display = "none";
+              document.body.appendChild(audio);
+              
+              audioElementsRef.current.set(fromSocketId, audio);
+              // eslint-disable-next-line no-console
+              console.log("[WebRTC] Audio element created for peer:", fromSocketId);
+            }
+            
+            // Explicitly play the audio
+            audio.play().catch((error) => {
+              // eslint-disable-next-line no-console
+              console.error("[WebRTC] Error playing audio:", error);
+            });
+          }
+        };
+      }
 
       // Handle ICE candidates
       peerConnection.onicecandidate = (event) => {
