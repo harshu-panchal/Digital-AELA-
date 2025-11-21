@@ -71,12 +71,35 @@ export const createTeacherEbook = async (req, res, next) => {
     // Handle PDF file upload if provided
     let finalDownloadUrl = downloadUrl;
     if (req.file) {
+      console.log("📄 PDF file received:", {
+        filename: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        userId: userId,
+      });
       // Upload PDF to Cloudinary
-      const uploadResult = await uploadPdfToCloudinary(
-        req.file.buffer,
-        `digital-aela/ebooks/${userId}`
-      );
-      finalDownloadUrl = uploadResult.url;
+      try {
+        const uploadResult = await uploadPdfToCloudinary(
+          req.file.buffer,
+          `digital-aela/ebooks/${userId}`
+        );
+        finalDownloadUrl = uploadResult.url;
+        console.log("✅ PDF uploaded to Cloudinary successfully:", {
+          url: uploadResult.url,
+          public_id: uploadResult.public_id,
+          size: uploadResult.bytes,
+        });
+      } catch (uploadError) {
+        console.error("❌ Failed to upload PDF to Cloudinary:", uploadError);
+        return res.status(500).json({
+          error: {
+            code: "UPLOAD_ERROR",
+            message: "Failed to upload PDF to Cloudinary. Please try again.",
+          },
+        });
+      }
+    } else {
+      console.log("⚠️ No PDF file received in request");
     }
 
     if (!finalDownloadUrl) {
@@ -111,7 +134,16 @@ export const createTeacherEbook = async (req, res, next) => {
         tags: tags
           ? Array.isArray(tags)
             ? tags
-            : tags.split(",").map((t) => t.trim())
+            : (() => {
+                // Try parsing as JSON first (if stringified from FormData)
+                try {
+                  const parsed = JSON.parse(tags);
+                  return Array.isArray(parsed) ? parsed : tags.split(",").map((t) => t.trim());
+                } catch {
+                  // Not JSON, treat as comma-separated string
+                  return tags.split(",").map((t) => t.trim()).filter(Boolean);
+                }
+              })()
           : [],
       },
     });

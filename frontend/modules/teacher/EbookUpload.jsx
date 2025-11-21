@@ -407,7 +407,7 @@ const EbookUpload = () => {
               <header>
                 <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
                 <p className="text-xs text-slate-400">
-                  Upload the final PDF. Actual storage will connect to backend later; we keep metadata for now.
+                  Upload the final PDF file. It will be automatically uploaded to Cloudinary when you submit the form.
                 </p>
               </header>
 

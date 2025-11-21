@@ -48,6 +48,11 @@ export const createTeacherEbook = async (payload, pdfFile = null) => {
 
   let response;
   if (pdfFile) {
+    console.log("📤 Preparing to upload PDF:", {
+      filename: pdfFile.name,
+      type: pdfFile.type,
+      size: pdfFile.size,
+    });
     // Use FormData for file upload
     const formData = new FormData();
     
