@@ -575,10 +575,19 @@ export const useWebRTC = (socket, roomId, userId, role) => {
         video: false,
       });
 
-      // Ensure all audio tracks are enabled by default
+      // Verify microphone is actually working
       const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        throw new Error("No audio tracks found in stream");
+      }
+      
+      // Ensure all tracks are enabled by default
+      let allEnabled = true;
       audioTracks.forEach((track) => {
-        track.enabled = true;
+        if (!track.enabled) {
+          track.enabled = true;
+          allEnabled = false;
+        }
         // eslint-disable-next-line no-console
         console.log("[WebRTC] Audio track:", {
           id: track.id,
@@ -589,25 +598,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           readyState: track.readyState,
         });
       });
-
+      
       localStreamRef.current = stream;
       setLocalStream(stream);
-      
-      // Verify microphone is actually working
-      const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length === 0) {
-        throw new Error("No audio tracks found in stream");
-      }
-      
-      // Ensure all tracks are enabled
-      let allEnabled = true;
-      audioTracks.forEach((track) => {
-        if (!track.enabled) {
-          track.enabled = true;
-          allEnabled = false;
-        }
-      });
-      
       setIsMicEnabled(true); // Ensure mic is marked as enabled
       
       // eslint-disable-next-line no-console
@@ -923,21 +916,58 @@ export const useWebRTC = (socket, roomId, userId, role) => {
 
   // Toggle microphone
   const toggleMic = useCallback(() => {
-    if (producerRef.current) {
-      if (isMicEnabled) {
-        producerRef.current.pause();
+    // Use functional state update to avoid stale closure issues
+    setIsMicEnabled((prevEnabled) => {
+      const newState = !prevEnabled;
+      
+      if (producerRef.current) {
+        // Mediasoup mode
+        if (newState) {
+          producerRef.current.resume();
+        } else {
+          producerRef.current.pause();
+        }
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Microphone toggled (mediasoup):", newState ? "ON" : "OFF");
+      } else if (localStreamRef.current) {
+        // Native WebRTC mode
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        if (audioTracks.length === 0) {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] No audio tracks found in local stream");
+          toast.warning("Microphone not available");
+          return prevEnabled; // Don't change state if no tracks
+        }
+        
+        audioTracks.forEach((track) => {
+          track.enabled = newState;
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Audio track enabled set to:", newState, {
+            trackId: track.id,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState,
+          });
+        });
+        
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Microphone toggled (native WebRTC):", newState ? "ON" : "OFF", {
+          tracksCount: audioTracks.length,
+          allTracksEnabled: audioTracks.every(t => t.enabled === newState),
+        });
       } else {
-        producerRef.current.resume();
+        // eslint-disable-next-line no-console
+        console.warn("[WebRTC] Cannot toggle mic - no local stream or producer available");
+        // Defer toast to avoid React render warnings
+        setTimeout(() => {
+          toast.warning("Microphone not available. Please wait for setup to complete.");
+        }, 0);
+        return prevEnabled; // Don't change state if no stream
       }
-      setIsMicEnabled(!isMicEnabled);
-    } else if (localStreamRef.current) {
-      const audioTracks = localStreamRef.current.getAudioTracks();
-      audioTracks.forEach((track) => {
-        track.enabled = !isMicEnabled;
-      });
-      setIsMicEnabled(!isMicEnabled);
-    }
-  }, [isMicEnabled]);
+      
+      return newState;
+    });
+  }, []);
 
   // Cleanup consumer
   const cleanupConsumer = useCallback((producerId) => {
@@ -1328,24 +1358,59 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     const setupKeyChanged = lastSetupKeyRef.current !== setupKey;
     
     // Don't setup if already set up and nothing changed
-    if (setupCompleteRef.current && !roleChanged && !roomIdChanged && !setupKeyChanged) {
+    // BUT: Always allow setup if role changed to speaker/host (they need mic access)
+    const roleChangedToSpeaker = roleChanged && (role === "speaker" || role === "host");
+    if (setupCompleteRef.current && !roleChanged && !roomIdChanged && !setupKeyChanged && !roleChangedToSpeaker) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Skipping setup - already complete and nothing changed");
       return;
     }
     
-    // Don't setup if mediasoup is unavailable AND we're not using native WebRTC
-    if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
+    // If role changed to speaker/host, reset setup complete flag to allow new setup
+    // CRITICAL: Reset flags BEFORE any blocking checks
+    if (roleChangedToSpeaker) {
       // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - mediasoup unavailable and native WebRTC not available");
-      setConnectionState("error");
-      return;
+      console.log("[WebRTC] Role changed to speaker/host - resetting setup to enable microphone");
+      setupCompleteRef.current = false;
+      // Reset setting up flag to allow new setup
+      isSettingUpRef.current = false;
+      reconnectAttemptRef.current = false;
+      // Also reset cleanup flag if it's set
+      isCleaningUpRef.current = false;
+    }
+
+    // Don't setup if mediasoup is unavailable AND we're not using native WebRTC
+    // BUT: If we're a speaker/host and native WebRTC config might be coming, wait a bit
+    if (mediasoupUnavailableRef.current && !useNativeWebRTCRef.current) {
+      // If we're a speaker/host, the native WebRTC config might arrive via voice-room-joined
+      // Give it a moment before giving up
+      if (role === "speaker" || role === "host") {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Mediasoup unavailable, but waiting for native WebRTC config (role:", role, ")");
+        // Don't return - let it proceed and waitForRtpCapabilities will handle it
+      } else {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Skipping setup - mediasoup unavailable and native WebRTC not available");
+        setConnectionState("error");
+        return;
+      }
     }
 
     // Don't setup if we're already setting up, reconnecting, or cleaning up
-    // But allow setup if cleanup just completed (give it a small delay to ensure flags are reset)
+    // BUT: Allow setup if role changed to speaker/host (they need mic access)
+    // Note: roleChangedToSpeaker already reset the flags above, so this check should pass
     if (isSettingUpRef.current || reconnectAttemptRef.current) {
-      // eslint-disable-next-line no-console
-      console.log("[WebRTC] Skipping setup - already in progress or reconnecting");
-      return;
+      if (roleChangedToSpeaker) {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Role changed to speaker/host - forcing setup despite flags being set");
+        // Flags were already reset above, but double-check
+        isSettingUpRef.current = false;
+        reconnectAttemptRef.current = false;
+      } else {
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Skipping setup - already in progress or reconnecting");
+        return;
+      }
     }
     
     // Only skip if cleanup is actively happening (not just completed)
@@ -1388,14 +1453,28 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     setConnectionState("connecting");
 
     // eslint-disable-next-line no-console
-    console.log("[WebRTC] Auto-setting up for role:", role);
+    console.log("[WebRTC] Auto-setting up for role:", role, {
+      roomId,
+      socketId: socket?.id,
+      mediasoupUnavailable: mediasoupUnavailableRef.current,
+      useNativeWebRTC: useNativeWebRTCRef.current,
+      hasWebRTCConfig: !!webrtcConfigRef.current,
+      setupComplete: setupCompleteRef.current,
+      roleChanged,
+      roomIdChanged,
+      setupKeyChanged,
+    });
     
     let setupPromise;
     if (role === "speaker" || role === "host") {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Starting speaker/host setup - microphone will be requested");
       setupPromise = setupAsSpeaker();
     } else if (role === "listener") {
       setupPromise = setupAsListener();
     } else {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Unknown role, skipping setup:", role);
       isSettingUpRef.current = false;
       return;
     }
