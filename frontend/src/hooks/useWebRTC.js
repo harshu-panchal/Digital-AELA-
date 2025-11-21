@@ -32,6 +32,7 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   const useNativeWebRTCRef = useRef(false); // Track if we should use native WebRTC
   const webrtcConfigRef = useRef(null); // Store WebRTC configuration (STUN/TURN servers)
   const peerConnectionsRef = useRef(new Map()); // Map<socketId, RTCPeerConnection> for native WebRTC
+  const queuedIceCandidatesRef = useRef(new Map()); // Map<socketId, RTCIceCandidate[]> - queue ICE candidates until remote description is set
 
   // Utility: Timeout wrapper for async operations
   const withTimeout = useCallback(async (promise, timeoutMs = 15000, errorMessage = "Operation timed out") => {
@@ -971,6 +972,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       // eslint-disable-next-line no-console
       console.log("[WebRTC] Set remote description, signaling state:", peerConnection.signalingState);
       
+      // Process any queued ICE candidates now that remote description is set
+      await processQueuedIceCandidates(peerConnection, fromSocketId);
+      
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
       // eslint-disable-next-line no-console
@@ -1037,6 +1041,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
           // eslint-disable-next-line no-console
           console.log("[WebRTC] Handled answer from:", fromSocketId, "Connection state:", peerConnection.connectionState, "Signaling state:", peerConnection.signalingState);
+          
+          // Process any queued ICE candidates now that remote description is set
+          await processQueuedIceCandidates(peerConnection, fromSocketId);
         } else if (peerConnection.signalingState === "stable") {
           // Signaling is stable, but check if connection is actually established
           // eslint-disable-next-line no-console
@@ -1051,6 +1058,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
               await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
               // eslint-disable-next-line no-console
               console.log("[WebRTC] Successfully set remote description, new signaling state:", peerConnection.signalingState);
+              
+              // Process any queued ICE candidates now that remote description is set
+              await processQueuedIceCandidates(peerConnection, fromSocketId);
             } catch (error) {
               // eslint-disable-next-line no-console
               console.warn("[WebRTC] Error setting remote description (may already be set):", error);
@@ -1079,6 +1089,26 @@ export const useWebRTC = (socket, roomId, userId, role) => {
   }, [roomId]);
 
   // Handle ICE candidate
+  // Process queued ICE candidates for a peer connection
+  const processQueuedIceCandidates = useCallback(async (peerConnection, fromSocketId) => {
+    const queue = queuedIceCandidatesRef.current.get(fromSocketId);
+    if (queue && queue.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log("[WebRTC] Processing", queue.length, "queued ICE candidates for:", fromSocketId);
+      for (const candidate of queue) {
+        try {
+          await peerConnection.addIceCandidate(candidate);
+          // eslint-disable-next-line no-console
+          console.log("[WebRTC] Added queued ICE candidate from:", fromSocketId);
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] Error adding queued ICE candidate:", error);
+        }
+      }
+      queuedIceCandidatesRef.current.delete(fromSocketId);
+    }
+  }, []);
+
   const handleWebRTCIceCandidate = useCallback(async (data) => {
     if (data.roomId !== roomId) {
       return;
@@ -1087,13 +1117,38 @@ export const useWebRTC = (socket, roomId, userId, role) => {
     try {
       const { fromSocketId, candidate } = data;
       const peerConnection = peerConnectionsRef.current.get(fromSocketId);
-      if (peerConnection && candidate) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-        // eslint-disable-next-line no-console
-        console.log("[WebRTC] Added ICE candidate from:", fromSocketId, "ICE state:", peerConnection.iceConnectionState);
-      } else if (!peerConnection) {
+      if (!peerConnection) {
         // eslint-disable-next-line no-console
         console.warn("[WebRTC] No peer connection found for ICE candidate from:", fromSocketId);
+        return;
+      }
+
+      if (!candidate) {
+        return;
+      }
+
+      const iceCandidate = new RTCIceCandidate(candidate);
+
+      // Check if remote description is set - if not, queue the candidate
+      if (!peerConnection.remoteDescription) {
+        // Queue the candidate
+        if (!queuedIceCandidatesRef.current.has(fromSocketId)) {
+          queuedIceCandidatesRef.current.set(fromSocketId, []);
+        }
+        queuedIceCandidatesRef.current.get(fromSocketId).push(iceCandidate);
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Queued ICE candidate from:", fromSocketId, "(remote description not set yet)");
+        return;
+      }
+
+      // Remote description is set, add the candidate immediately
+      try {
+        await peerConnection.addIceCandidate(iceCandidate);
+        // eslint-disable-next-line no-console
+        console.log("[WebRTC] Added ICE candidate from:", fromSocketId, "ICE state:", peerConnection.iceConnectionState);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[WebRTC] Error adding ICE candidate:", error, "from:", fromSocketId);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -1330,6 +1385,9 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       }
     });
     peerConnectionsRef.current.clear();
+    
+    // Clear queued ICE candidates
+    queuedIceCandidatesRef.current.clear();
 
     // Notify server if speaker stopped (native WebRTC)
     if (useNativeWebRTCRef.current && socket && roomId && (role === "speaker" || role === "host")) {
@@ -1491,6 +1549,8 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           peerConnection.close();
           peerConnectionsRef.current.delete(data.socketId);
         }
+        // Clear queued ICE candidates for this peer
+        queuedIceCandidatesRef.current.delete(data.socketId);
         // Remove remote stream
         setRemoteStreams((prev) => {
           const next = new Map(prev);
