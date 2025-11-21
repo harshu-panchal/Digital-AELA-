@@ -247,8 +247,31 @@ const VoiceRoom = () => {
   }, [socket, isConnected, roomId, user?.id]);
 
   // Request to speak
-  const handleRequestToSpeak = async () => {
-    if (!socket || !isConnected || isRequesting) return;
+  const handleRequestToSpeak = async (e) => {
+    // Prevent default and stop propagation for mobile
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // eslint-disable-next-line no-console
+    console.log("Request to speak clicked", { socket: !!socket, isConnected, isRequesting, hasRequested });
+
+    if (!socket || !isConnected) {
+      toast.error("Not connected to server. Please wait...");
+      return;
+    }
+
+    if (isRequesting) {
+      // eslint-disable-next-line no-console
+      console.log("Already requesting, ignoring click");
+      return;
+    }
+
+    if (hasRequested) {
+      toast.info("You have already requested to speak. Please wait for approval.");
+      return;
+    }
 
     // Check if there are hosts/speakers in the room
     // Check participants list (people who have joined the voice room)
@@ -280,6 +303,8 @@ const VoiceRoom = () => {
 
     setIsRequesting(true);
     try {
+      // eslint-disable-next-line no-console
+      console.log("Emitting request-to-speak", { roomId });
       socket.emit("request-to-speak", { roomId });
       if (hasHostsOrSpeakers) {
         toast.info("Request to speak sent. Waiting for host/speaker approval...");
@@ -562,9 +587,30 @@ const VoiceRoom = () => {
               {userRole === "listener" && (
                 <div className="space-y-2">
                   <button
+                    type="button"
                     onClick={handleRequestToSpeak}
+                    onTouchStart={(e) => {
+                      // Prevent double-tap zoom on mobile
+                      if (e.touches.length > 1) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!isRequesting && !hasRequested) {
+                        handleRequestToSpeak(e);
+                      }
+                    }}
                     disabled={isRequesting || hasRequested}
-                    className="w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                    style={{ 
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation',
+                      WebkitTouchCallout: 'none',
+                      userSelect: 'none',
+                      cursor: (isRequesting || hasRequested) ? 'not-allowed' : 'pointer'
+                    }}>
                     {isRequesting ? (
                       <>
                         <FaSpinner className="mr-2 inline h-4 w-4 animate-spin" />
