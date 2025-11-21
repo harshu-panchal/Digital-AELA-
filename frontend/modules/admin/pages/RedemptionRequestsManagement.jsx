@@ -8,7 +8,7 @@ import {
   getRedemptionRequest,
   approveRedemptionRequest,
   rejectRedemptionRequest,
-} from "../../../src/services/api/redemptionRequests";
+} from "../../../src/services/api/redemptionRequests.js";
 
 const statusOptions = ["pending", "approved", "rejected"];
 const categories = ["Cash", "Discounts", "Services", "Certificates", "Gifts", "Other"];

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock } from "react-icons/hi2";
-import { getMyRedemptionRequests } from "../../../src/services/api/redemptionRequests";
+import { getMyRedemptionRequests } from "../../../src/services/api/redemptionRequests.js";
 
 const RedemptionHistory = () => {
   const [requests, setRequests] = useState([]);

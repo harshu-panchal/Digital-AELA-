@@ -19,8 +19,8 @@ import { Line } from "react-chartjs-2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
-import { getRewards } from "../../../src/services/api/rewards";
-import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
+import { getRewards } from "../../../src/services/api/rewards.js";
+import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests.js";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 

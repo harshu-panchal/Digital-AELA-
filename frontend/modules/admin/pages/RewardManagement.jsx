@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX } from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
-import { getRewards, createReward, updateReward, deleteReward, getRewardAnalytics } from "../../../src/services/api/rewards";
+import { getRewards, createReward, updateReward, deleteReward, getRewardAnalytics } from "../../../src/services/api/rewards.js";
 
 const categories = ["Cash", "Discounts", "Services", "Certificates", "Gifts", "Other"];
 
