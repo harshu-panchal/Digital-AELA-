@@ -449,14 +449,21 @@ export const setupSocketIO = (io) => {
 
         // Check mediasoup availability BEFORE attempting to create router
         if (!isMediasoupAvailable()) {
-          // eslint-disable-next-line no-console
-          console.error(`[VoiceRoom] mediasoup is not available. Cannot create router for room ${roomId}`);
-          socket.emit("error", { 
-            message: "Voice features are temporarily unavailable. The media server could not be initialized. Please try again later or contact support.",
-            code: "MEDIASOUP_UNAVAILABLE"
-          });
+          // Only log and emit error once per socket connection to avoid spam
+          if (!socket.data.mediasoupErrorEmitted) {
+            // eslint-disable-next-line no-console
+            console.warn(`[VoiceRoom] mediasoup is not available. Cannot create router for room ${roomId}`);
+            socket.emit("error", { 
+              message: "Voice features are temporarily unavailable. The media server could not be initialized. Please try again later or contact support.",
+              code: "MEDIASOUP_UNAVAILABLE"
+            });
+            socket.data.mediasoupErrorEmitted = true;
+          }
           return;
         }
+        
+        // Reset error flag if mediasoup becomes available
+        socket.data.mediasoupErrorEmitted = false;
 
         // Create or get mediasoup router for this room
         let rtpCapabilities;

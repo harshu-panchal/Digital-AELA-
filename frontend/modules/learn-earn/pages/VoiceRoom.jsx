@@ -113,9 +113,16 @@ const VoiceRoom = () => {
     }
   }, [socket, isConnected, roomId, userRole]);
 
-  // Auto-join when connected
+  // Auto-join when connected (only once per room)
+  const hasJoinedRef = useRef(false);
   useEffect(() => {
-    if (socket && isConnected && roomId && !isInitialized && !loading) {
+    // Reset join flag when room changes
+    hasJoinedRef.current = false;
+  }, [roomId]);
+
+  useEffect(() => {
+    if (socket && isConnected && roomId && !isInitialized && !loading && !hasJoinedRef.current) {
+      hasJoinedRef.current = true;
       joinVoiceRoom();
     }
   }, [socket, isConnected, roomId, isInitialized, loading, joinVoiceRoom]);
@@ -242,35 +249,43 @@ const VoiceRoom = () => {
     };
 
     const handleError = (data) => {
-      // eslint-disable-next-line no-console
-      console.error("[VoiceRoom] Socket error:", data);
       const errorMessage = data.message || "An error occurred";
       const errorCode = data.code;
       
       // Handle specific error types
       if (errorMessage.includes("Room not found") || errorMessage.includes("Invalid room ID")) {
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Socket error:", data);
         toast.error("Room not found");
         navigate("/learn-earn/live-debates");
       } else if (errorMessage.includes("ended")) {
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Socket error:", data);
         toast.error("This room has ended");
         navigate("/learn-earn/live-debates");
       } else if (errorMessage.includes("not started")) {
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Socket error:", data);
         toast.error("Room has not started yet");
       } else if (errorMessage.includes("not live")) {
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Socket error:", data);
         toast.error("Room is not live");
       } else if (errorCode === "MEDIASOUP_UNAVAILABLE" || errorMessage.includes("media server") || errorMessage.includes("media capabilities")) {
         // Media server initialization failed - prevent WebRTC setup attempts
-        // Only show toast once (deduplicate)
+        // Only show toast and log once (deduplicate)
         if (!mediaServerErrorShownRef.current) {
+          // eslint-disable-next-line no-console
+          console.warn("[VoiceRoom] Media server unavailable - WebRTC setup will be skipped");
           toast.error("Voice features are temporarily unavailable. The media server could not be initialized. Please try again later.", {
             autoClose: 5000,
           });
           mediaServerErrorShownRef.current = true;
         }
-        // eslint-disable-next-line no-console
-        console.warn("[VoiceRoom] Media server unavailable - WebRTC setup will be skipped");
         setIsInitialized(false); // Prevent further setup attempts
       } else {
+        // eslint-disable-next-line no-console
+        console.error("[VoiceRoom] Socket error:", data);
         toast.error(errorMessage);
       }
     };
