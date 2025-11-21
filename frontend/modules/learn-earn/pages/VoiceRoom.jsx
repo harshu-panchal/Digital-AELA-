@@ -119,7 +119,12 @@ const VoiceRoom = () => {
     if (!socket || !isConnected) return;
 
     const handleVoiceRoomJoined = (data) => {
-      setParticipants(data.participants || []);
+      // eslint-disable-next-line no-console
+      console.log("Voice room joined:", data);
+      // Set participants if provided
+      if (data.participants) {
+        setParticipants(data.participants);
+      }
       // Update user role from backend (backend auto-detects host/speaker)
       if (data.role) {
         setUserRole(data.role);
@@ -141,6 +146,8 @@ const VoiceRoom = () => {
 
     const handleParticipantsUpdated = (data) => {
       if (data.roomId === roomId && data.participants) {
+        // eslint-disable-next-line no-console
+        console.log("Participants updated:", data.participants);
         setParticipants(data.participants);
       }
     };

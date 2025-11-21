@@ -484,11 +484,22 @@ export const setupSocketIO = (io) => {
           });
         }
 
+        // Get participants with user names for the person who just joined
+        const participantsWithNames = await Promise.all(
+          participants.map(async (p) => {
+            const user = await User.findById(p.userId).select("fullName").lean();
+            return {
+              ...p,
+              userName: user?.fullName || "Unknown User",
+            };
+          })
+        );
+
         // Notify the user who joined with RTP capabilities
         socket.emit("voice-room-joined", {
           roomId,
           role,
-          participants,
+          participants: participantsWithNames,
           rtpCapabilities,
         });
 
@@ -513,8 +524,8 @@ export const setupSocketIO = (io) => {
           socketId: socket.id,
         });
 
-        // Broadcast updated participants list to all
-        io.to(`voice-room:${roomId}`).emit("participants-updated", {
+        // Broadcast updated participants list to all (including the person who just joined)
+        io.in(`voice-room:${roomId}`).emit("participants-updated", {
           roomId,
           participants: updatedParticipants,
         });
@@ -823,8 +834,8 @@ export const setupSocketIO = (io) => {
           socketId: requesterSocketId,
         });
 
-        // Broadcast updated participants list
-        io.to(`voice-room:${roomId}`).emit("participants-updated", {
+        // Broadcast updated participants list to all
+        io.in(`voice-room:${roomId}`).emit("participants-updated", {
           roomId,
           participants: updatedParticipants,
         });
