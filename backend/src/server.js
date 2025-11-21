@@ -15,8 +15,15 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   await connectDatabase();
 
-  // Initialize mediasoup workers
-  await initializeWorkers();
+  // Initialize mediasoup workers (optional - server will start even if this fails)
+  try {
+    await initializeWorkers();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn("[Server] mediasoup initialization failed, continuing without voice features:", error.message);
+    // eslint-disable-next-line no-console
+    console.warn("[Server] Voice room features will not be available, but the server will continue to run.");
+  }
 
   const httpServer = createServer(app);
   

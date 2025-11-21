@@ -17,6 +17,7 @@ import {
   resumeProducer,
   closeTransport,
   getRoomProducers,
+  isMediasoupAvailable,
 } from "../services/mediasoupService.js";
 
 export const setupSocketIO = (io) => {
@@ -388,6 +389,14 @@ export const setupSocketIO = (io) => {
         
         if (!room) {
           socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if mediasoup is available
+        if (!isMediasoupAvailable()) {
+          socket.emit("error", { 
+            message: "Voice features are currently unavailable. Please try again later." 
+          });
           return;
         }
 

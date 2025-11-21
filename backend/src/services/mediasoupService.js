@@ -7,6 +7,7 @@ import mediasoup from "mediasoup";
 
 let workers = [];
 let nextWorkerIndex = 0;
+let mediasoupAvailable = false;
 
 // mediasoup configuration
 const mediasoupConfig = {
@@ -73,18 +74,31 @@ export async function initializeWorkers() {
 
     // eslint-disable-next-line no-console
     console.log(`[mediasoup] ${workers.length} workers created`);
+    mediasoupAvailable = true;
     return workers;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("[mediasoup] Error creating workers:", error);
-    throw error;
+    mediasoupAvailable = false;
+    // Don't throw - allow server to start without mediasoup
+    return [];
   }
+}
+
+/**
+ * Check if mediasoup is available
+ */
+export function isMediasoupAvailable() {
+  return mediasoupAvailable && workers.length > 0;
 }
 
 /**
  * Get next available worker (round-robin)
  */
 function getNextWorker() {
+  if (!mediasoupAvailable || workers.length === 0) {
+    throw new Error("mediasoup workers are not available");
+  }
   const worker = workers[nextWorkerIndex];
   nextWorkerIndex = (nextWorkerIndex + 1) % workers.length;
   return worker;
@@ -94,6 +108,10 @@ function getNextWorker() {
  * Get or create router for a room
  */
 export async function getOrCreateRouter(roomId) {
+  if (!mediasoupAvailable || workers.length === 0) {
+    throw new Error("mediasoup is not available. Voice features are disabled.");
+  }
+
   if (routers.has(roomId)) {
     return routers.get(roomId);
   }

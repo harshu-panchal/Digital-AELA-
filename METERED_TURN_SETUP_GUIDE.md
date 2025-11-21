@@ -13,6 +13,7 @@ This guide will walk you through setting up Metered TURN and testing your voice 
 2. **Click "Sign Up"** (top right corner)
 
 3. **Fill in the form:**
+
    - Email address
    - Password (choose a strong one)
    - Confirm password
@@ -28,9 +29,11 @@ This guide will walk you through setting up Metered TURN and testing your voice 
 1. **After logging in**, you'll see the dashboard
 
 2. **Look for "TURN Servers"** in the left sidebar (or main menu)
+
    - Click on it
 
 3. **You'll see your TURN server details:**
+
    - **Server URL**: Something like `turn:your-domain.metered.ca:443`
    - **Username**: Auto-generated username
    - **Password**: Auto-generated password
@@ -39,6 +42,7 @@ This guide will walk you through setting up Metered TURN and testing your voice 
    - Write them down or keep the tab open
 
 **Example of what you'll see:**
+
 ```
 Server URL: turn:your-account.metered.ca:443
 Username: your-username-here
@@ -52,6 +56,7 @@ Password: your-password-here
 ### Step 1: Locate Your .env File
 
 1. **Navigate to your backend folder:**
+
    ```bash
    cd backend
    ```
@@ -63,6 +68,7 @@ Password: your-password-here
 ### Step 2: Add TURN Server Configuration
 
 1. **Add these lines to your `.env` file:**
+
    ```env
    # TURN Server Configuration (Metered TURN)
    TURN_SERVER_URL=turn:your-account.metered.ca:443
@@ -71,11 +77,13 @@ Password: your-password-here
    ```
 
 2. **Replace the values:**
+
    - `turn:your-account.metered.ca:443` → Your actual Server URL from Metered dashboard
    - `your-username-here` → Your actual Username from Metered dashboard
    - `your-password-here` → Your actual Password from Metered dashboard
 
-3. **Important:** 
+3. **Important:**
+
    - No spaces around the `=` sign
    - No quotes needed
    - Keep the `turn:` prefix in the URL
@@ -105,6 +113,7 @@ TURN_SERVER_CREDENTIAL=pass_xyz789abc
 ### Step 1: Stop Your Current Server
 
 If your backend is running, stop it:
+
 - Press `Ctrl + C` in the terminal where it's running
 - Or if using PM2: `pm2 stop all`
 
@@ -124,6 +133,7 @@ npm run dev
 ### Step 3: Verify Server Started Successfully
 
 Look for these messages in the console:
+
 ```
 [Server] Listening on port 5000
 [Socket.IO] Server initialized
@@ -133,6 +143,7 @@ Look for these messages in the console:
 ```
 
 **If you see errors**, check:
+
 1. `.env` file format is correct
 2. No typos in the TURN server credentials
 3. All required environment variables are set
@@ -144,6 +155,7 @@ Look for these messages in the console:
 ### Test 1: Browser-Based Test (Recommended)
 
 1. **Open your browser** and go to:
+
    ```
    https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
    ```
@@ -151,6 +163,7 @@ Look for these messages in the console:
 2. **Click "Add Server"** button
 
 3. **Fill in the form:**
+
    - **STUN or TURN URI**: Your `TURN_SERVER_URL` from `.env`
      - Example: `turn:abc123.metered.ca:443`
    - **TURN username**: Your `TURN_SERVER_USERNAME` from `.env`
@@ -166,6 +179,7 @@ Look for these messages in the console:
    - ❌ **FAILED**: Only "host" candidates (TURN not working)
 
 **Expected successful output:**
+
 ```
 host 192.168.1.100:54321 (your local IP)
 srflx 123.45.67.89:54322 (your public IP via STUN)
@@ -179,12 +193,14 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Step 1: Start Your Application
 
 1. **Start backend** (if not already running):
+
    ```bash
    cd backend
    npm start
    ```
 
 2. **Start frontend** (in a new terminal):
+
    ```bash
    cd frontend
    npm run dev
@@ -201,6 +217,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 2. **Navigate to Learn & Earn → Live Debates**
 
 3. **Create or join a voice room:**
+
    - Click "Join Voice Room" on any open room
    - Or create a new debate room
 
@@ -216,6 +233,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 2. **Allow microphone permission** when prompted
 
 3. **Check console for:**
+
    ```
    [WebRTC] Device loaded
    [WebRTC] Send transport created
@@ -231,6 +249,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 1. **Join a room as listener** (or have another user join)
 
 2. **Check console for:**
+
    ```
    [WebRTC] Device loaded
    [WebRTC] Recv transport created
@@ -242,10 +261,12 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Step 5: Test Multiple Users
 
 1. **Open multiple browser windows/tabs**
+
    - Or use different devices
    - Or have friends join
 
 2. **Join the same room:**
+
    - One as host/speaker
    - Others as listeners
 
@@ -263,6 +284,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Check Backend Logs
 
 1. **Look at your backend console** for messages like:
+
    ```
    [mediasoup] Transport created for room abc123
    [mediasoup] Producer created for socket xyz789
@@ -290,6 +312,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Issue: "Authentication failed" in browser test
 
 **Solution:**
+
 1. Double-check username and password in `.env`
 2. Make sure no extra spaces
 3. Verify credentials in Metered dashboard
@@ -298,6 +321,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Issue: No "relay" candidates in browser test
 
 **Solution:**
+
 1. Check TURN server URL format: `turn:domain.com:443` (not `turn://`)
 2. Verify port is correct (usually 443 for Metered)
 3. Check firewall isn't blocking (shouldn't be issue with managed service)
@@ -306,6 +330,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Issue: Voice room not connecting
 
 **Solution:**
+
 1. Check browser console for errors
 2. Check backend console for errors
 3. Verify `.env` variables are loaded:
@@ -319,6 +344,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Issue: Can't hear audio
 
 **Solution:**
+
 1. Check browser audio permissions
 2. Check system volume
 3. Verify microphone is working (test in other apps)
@@ -328,6 +354,7 @@ relay 203.0.113.1:54323 (TURN relay server) ← This is what we want!
 ### Issue: Backend errors on startup
 
 **Solution:**
+
 1. Check `.env` file syntax (no quotes, no spaces around `=`)
 2. Verify all required variables are set
 3. Check Node.js version (should be 18+)
@@ -414,4 +441,3 @@ pm2 restart all
 6. ✅ Test voice room functionality
 
 **Let me know when you've completed these steps and we'll test together!** 🚀
-
