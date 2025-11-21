@@ -23,6 +23,7 @@ import {
 } from "../../../src/services/api/liveRooms";
 
 const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
+  const navigate = useNavigate();
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(false);
   const [localVotes, setLocalVotes] = useState({
@@ -148,6 +149,16 @@ const DebateCard = ({ room, onVote, socket, isConnected, isVoting }) => {
         </button>
         <span className="rounded-full border border-white/10 px-4 py-2 text-gray-300">Audience votes: {totalVotes}</span>
       </div>
+
+      {room.status === "live" && (
+        <button
+          type="button"
+          onClick={() => navigate(`/learn-earn/voice-room/${room.id}`)}
+          className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
+          <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
+          Join Voice Room
+        </button>
+      )}
     </Motion.div>
   );
 };
