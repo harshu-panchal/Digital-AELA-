@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX } from "react-icons/hi2";
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineXMark } from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
-import { getRewards, createReward, updateReward, deleteReward, getRewardAnalytics } from "../../../src/services/api/rewards.js";
+import { getRewards, createReward, updateReward, deleteReward, getRewardAnalytics } from "../../../src/services/api/rewards";
 
 const categories = ["Cash", "Discounts", "Services", "Certificates", "Gifts", "Other"];
 
@@ -252,7 +252,7 @@ const RewardManagement = () => {
               <button
                 onClick={handleCloseModal}
                 className="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition">
-                <HiOutlineX className="h-5 w-5 text-white" />
+                <HiOutlineXMark className="h-5 w-5 text-white" />
               </button>
             </div>
 

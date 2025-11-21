@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineEye, HiOutlineX, HiOutlineFilter } from "react-icons/hi2";
+import { HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineEye, HiOutlineXMark, HiOutlineFunnel } from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
 import {
   getAllRedemptionRequests,
   getRedemptionRequest,
   approveRedemptionRequest,
   rejectRedemptionRequest,
-} from "../../../src/services/api/redemptionRequests.js";
+} from "../../../src/services/api/redemptionRequests";
 
 const statusOptions = ["pending", "approved", "rejected"];
 const categories = ["Cash", "Discounts", "Services", "Certificates", "Gifts", "Other"];
@@ -134,7 +134,7 @@ const RedemptionRequestsManagement = () => {
       {/* Filters */}
       <div className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <HiOutlineFilter className="h-5 w-5 text-[#F5D26A]" />
+          <HiOutlineFunnel className="h-5 w-5 text-[#F5D26A]" />
           <h2 className="text-lg font-semibold text-white">Filters</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -321,7 +321,7 @@ const RedemptionRequestsManagement = () => {
                   setSelectedRequest(null);
                 }}
                 className="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition">
-                <HiOutlineX className="h-5 w-5 text-white" />
+                <HiOutlineXMark className="h-5 w-5 text-white" />
               </button>
             </div>
 
@@ -466,7 +466,7 @@ const RedemptionRequestsManagement = () => {
                   setActionNotes("");
                 }}
                 className="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition">
-                <HiOutlineX className="h-5 w-5 text-white" />
+                <HiOutlineXMark className="h-5 w-5 text-white" />
               </button>
             </div>
 
