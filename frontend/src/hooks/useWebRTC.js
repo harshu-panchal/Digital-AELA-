@@ -767,13 +767,16 @@ export const useWebRTC = (socket, roomId, userId, role) => {
       if (data.code === "MEDIASOUP_UNAVAILABLE" || 
           data.message?.includes("media server") || 
           data.message?.includes("media capabilities")) {
-        // eslint-disable-next-line no-console
-        console.error("[WebRTC] Media server unavailable - stopping WebRTC setup");
-        mediasoupUnavailableRef.current = true;
-        setConnectionState("error");
-        setIsConnecting(false);
-        setupCompleteRef.current = false;
-        // Don't show toast here - VoiceRoom component will handle it
+        // Only handle if we haven't already marked it as unavailable
+        if (!mediasoupUnavailableRef.current) {
+          // eslint-disable-next-line no-console
+          console.warn("[WebRTC] Media server unavailable - stopping WebRTC setup");
+          mediasoupUnavailableRef.current = true;
+          setConnectionState("error");
+          setIsConnecting(false);
+          setupCompleteRef.current = false;
+          // Don't show toast here - VoiceRoom component will handle it
+        }
       }
     };
 

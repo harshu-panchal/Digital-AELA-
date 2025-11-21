@@ -46,6 +46,12 @@ const VoiceRoom = () => {
   } = useWebRTC(socket, roomId, user?.id, userRole);
   
   const [mutedParticipants, setMutedParticipants] = useState(new Set());
+  const mediaServerErrorShownRef = useRef(false); // Track if we've already shown the media server error
+
+  // Reset error flag when room changes
+  useEffect(() => {
+    mediaServerErrorShownRef.current = false;
+  }, [roomId]);
 
   // Load room data
   useEffect(() => {
@@ -254,9 +260,15 @@ const VoiceRoom = () => {
         toast.error("Room is not live");
       } else if (errorCode === "MEDIASOUP_UNAVAILABLE" || errorMessage.includes("media server") || errorMessage.includes("media capabilities")) {
         // Media server initialization failed - prevent WebRTC setup attempts
-        toast.error("Voice features are temporarily unavailable. Please try again in a few moments.");
+        // Only show toast once (deduplicate)
+        if (!mediaServerErrorShownRef.current) {
+          toast.error("Voice features are temporarily unavailable. The media server could not be initialized. Please try again later.", {
+            autoClose: 5000,
+          });
+          mediaServerErrorShownRef.current = true;
+        }
         // eslint-disable-next-line no-console
-        console.error("[VoiceRoom] Media server unavailable - WebRTC setup will be skipped");
+        console.warn("[VoiceRoom] Media server unavailable - WebRTC setup will be skipped");
         setIsInitialized(false); // Prevent further setup attempts
       } else {
         toast.error(errorMessage);
