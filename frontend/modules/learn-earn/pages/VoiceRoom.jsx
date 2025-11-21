@@ -146,6 +146,12 @@ const VoiceRoom = () => {
       });
     };
 
+    const handleExistingSpeakRequests = (data) => {
+      if (data.roomId === roomId && data.requests) {
+        setSpeakRequests(data.requests);
+      }
+    };
+
     const handleSpeakApproved = (data) => {
       if (data.roomId === roomId) {
         setUserRole("speaker");
@@ -190,6 +196,7 @@ const VoiceRoom = () => {
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("speak-requested", handleSpeakRequested);
+    socket.on("existing-speak-requests", handleExistingSpeakRequests);
     socket.on("speak-approved", handleSpeakApproved);
     socket.on("speak-rejected", handleSpeakRejected);
     socket.on("speaker-promoted", handleSpeakerPromoted);
@@ -201,6 +208,7 @@ const VoiceRoom = () => {
       socket.off("participant-joined", handleParticipantJoined);
       socket.off("participant-left", handleParticipantLeft);
       socket.off("speak-requested", handleSpeakRequested);
+      socket.off("existing-speak-requests", handleExistingSpeakRequests);
       socket.off("speak-approved", handleSpeakApproved);
       socket.off("speak-rejected", handleSpeakRejected);
       socket.off("speaker-promoted", handleSpeakerPromoted);
@@ -213,10 +221,19 @@ const VoiceRoom = () => {
   const handleRequestToSpeak = async () => {
     if (!socket || !isConnected || isRequesting) return;
 
+    // Check if there are hosts/speakers in the room
+    const hasHostsOrSpeakers = participants.some(
+      (p) => (p.role === "host" || p.role === "speaker") && p.userId !== user?.id
+    );
+
+    if (!hasHostsOrSpeakers) {
+      toast.warning("No hosts or speakers in the room. Your request will be pending until someone joins as host.");
+    }
+
     setIsRequesting(true);
     try {
       socket.emit("request-to-speak", { roomId });
-      toast.info("Request to speak sent");
+      toast.info("Request to speak sent. Waiting for host/speaker approval...");
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Failed to request to speak:", error);
@@ -325,6 +342,7 @@ const VoiceRoom = () => {
   const listeners = participants.filter((p) => p.role === "listener");
   const canApproveRequests = userRole === "host" || userRole === "speaker";
   const hasRequested = speakRequests.some((r) => r.userId === user?.id);
+  const hasHostsOrSpeakers = speakers.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-black to-[#0a0a0a] p-4 sm:p-6">
@@ -483,27 +501,36 @@ const VoiceRoom = () => {
               </h3>
               
               {userRole === "listener" && (
-                <button
-                  onClick={handleRequestToSpeak}
-                  disabled={isRequesting || hasRequested}
-                  className="w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isRequesting ? (
-                    <>
-                      <FaSpinner className="mr-2 inline h-4 w-4 animate-spin" />
-                      Requesting...
-                    </>
-                  ) : hasRequested ? (
-                    <>
-                      <HiOutlineHandRaised className="mr-2 inline h-4 w-4" />
-                      Request Pending
-                    </>
-                  ) : (
-                    <>
-                      <HiOutlineHandRaised className="mr-2 inline h-4 w-4" />
-                      Request to Speak
-                    </>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleRequestToSpeak}
+                    disabled={isRequesting || hasRequested}
+                    className="w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isRequesting ? (
+                      <>
+                        <FaSpinner className="mr-2 inline h-4 w-4 animate-spin" />
+                        Requesting...
+                      </>
+                    ) : hasRequested ? (
+                      <>
+                        <HiOutlineHandRaised className="mr-2 inline h-4 w-4" />
+                        Request Pending
+                      </>
+                    ) : (
+                      <>
+                        <HiOutlineHandRaised className="mr-2 inline h-4 w-4" />
+                        Request to Speak
+                      </>
+                    )}
+                  </button>
+                  {hasRequested && (
+                    <p className="text-xs text-gray-400 text-center">
+                      {hasHostsOrSpeakers 
+                        ? "Waiting for host/speaker approval..."
+                        : "No hosts/speakers in room. Request will be visible when they join."}
+                    </p>
                   )}
-                </button>
+                </div>
               )}
 
               {(userRole === "speaker" || userRole === "host") && (
@@ -553,11 +580,16 @@ const VoiceRoom = () => {
             </div>
 
             {/* Speak Requests (for hosts/speakers) */}
-            {canApproveRequests && speakRequests.length > 0 && (
+            {canApproveRequests && (
               <div className="rounded-3xl border border-white/5 bg-[#101010] p-6">
                 <h3 className="mb-4 text-sm font-semibold text-white uppercase tracking-wider">
-                  Speak Requests ({speakRequests.length})
+                  Speak Requests {speakRequests.length > 0 && `(${speakRequests.length})`}
                 </h3>
+                {speakRequests.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-4">
+                    No pending requests
+                  </p>
+                ) : (
                 <div className="space-y-3">
                   {speakRequests.map((request) => (
                     <div
@@ -586,6 +618,7 @@ const VoiceRoom = () => {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
           </div>

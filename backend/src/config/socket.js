@@ -17,7 +17,6 @@ import {
   resumeProducer,
   closeTransport,
   getRoomProducers,
-  isMediasoupAvailable,
 } from "../services/mediasoupService.js";
 
 export const setupSocketIO = (io) => {
@@ -377,7 +376,7 @@ export const setupSocketIO = (io) => {
     // Join voice room with role
     socket.on("join-voice-room", async (data) => {
       try {
-        const { roomId, role = "listener" } = data;
+        let { roomId, role = "listener" } = data;
         
         if (!roomId || !mongoose.isValidObjectId(roomId)) {
           socket.emit("error", { message: "Invalid room ID" });
@@ -392,12 +391,11 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        // Check if mediasoup is available
-        if (!isMediasoupAvailable()) {
-          socket.emit("error", { 
-            message: "Voice features are currently unavailable. Please try again later." 
-          });
-          return;
+        // Auto-detect role: if user is room host, set as host
+        if (room.host.toString() === socket.userId) {
+          role = "host";
+        } else if (room.speakers.some((s) => s.toString() === socket.userId)) {
+          role = "speaker";
         }
 
         // Join Socket.io room
@@ -453,6 +451,28 @@ export const setupSocketIO = (io) => {
           role: p.role,
           socketId: p.socketId,
         }));
+
+        // Get existing speak requests and send to host/speaker if they just joined
+        const existingSpeakRequests = room.speakRequests || [];
+        if ((role === "host" || role === "speaker") && existingSpeakRequests.length > 0) {
+          // Populate user info for requests
+          const requestsWithUserInfo = await Promise.all(
+            existingSpeakRequests.map(async (req) => {
+              const user = await User.findById(req.userId).select("fullName").lean();
+              return {
+                userId: req.userId.toString(),
+                userName: user?.fullName || "Unknown User",
+                socketId: req.socketId,
+              };
+            })
+          );
+          
+          // Send existing requests to the host/speaker who just joined
+          socket.emit("existing-speak-requests", {
+            roomId,
+            requests: requestsWithUserInfo,
+          });
+        }
 
         // Notify the user who joined with RTP capabilities
         socket.emit("voice-room-joined", {
