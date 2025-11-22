@@ -303,10 +303,10 @@ const TeacherRegister = () => {
                   name="preferredDelivery"
                   value={formData.preferredDelivery}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option value="online">Online</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="on-site">On-site</option>
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option value="online" style={{ backgroundColor: "#000000" }}>Online</option>
+                  <option value="hybrid" style={{ backgroundColor: "#000000" }}>Hybrid</option>
+                  <option value="on-site" style={{ backgroundColor: "#000000" }}>On-site</option>
                 </select>
               </label>
               <label className="block space-y-2">
@@ -317,11 +317,11 @@ const TeacherRegister = () => {
                   name="timeZones"
                   value={formData.timeZones}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option>Gulf Standard Time (GST)</option>
-                  <option>India Standard Time (IST)</option>
-                  <option>British Standard Time (BST)</option>
-                  <option>Eastern Time (ET)</option>
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option style={{ backgroundColor: "#000000" }}>Gulf Standard Time (GST)</option>
+                  <option style={{ backgroundColor: "#000000" }}>India Standard Time (IST)</option>
+                  <option style={{ backgroundColor: "#000000" }}>British Standard Time (BST)</option>
+                  <option style={{ backgroundColor: "#000000" }}>Eastern Time (ET)</option>
                 </select>
               </label>
             </div>

@@ -308,12 +308,12 @@ const StudentRegister = () => {
                   name="ageGroup"
                   value={formData.ageGroup}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option value="">Select your age group</option>
-                  <option value="13-17">13 – 17</option>
-                  <option value="18-24">18 – 24</option>
-                  <option value="25-34">25 – 34</option>
-                  <option value="35+">35+</option>
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option value="" style={{ backgroundColor: "#000000" }}>Select your age group</option>
+                  <option value="13-17" style={{ backgroundColor: "#000000" }}>13 – 17</option>
+                  <option value="18-24" style={{ backgroundColor: "#000000" }}>18 – 24</option>
+                  <option value="25-34" style={{ backgroundColor: "#000000" }}>25 – 34</option>
+                  <option value="35+" style={{ backgroundColor: "#000000" }}>35+</option>
                 </select>
               </label>
               <label className="block space-y-2">
@@ -324,14 +324,14 @@ const StudentRegister = () => {
                   name="currentStatus"
                   value={formData.currentStatus}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option value="">Tell us about you</option>
-                  <option value="school-student">School Student</option>
-                  <option value="college-graduate">College / University</option>
-                  <option value="working-professional">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option value="" style={{ backgroundColor: "#000000" }}>Tell us about you</option>
+                  <option value="school-student" style={{ backgroundColor: "#000000" }}>School Student</option>
+                  <option value="college-graduate" style={{ backgroundColor: "#000000" }}>College / University</option>
+                  <option value="working-professional" style={{ backgroundColor: "#000000" }}>
                     Working Professional
                   </option>
-                  <option value="career-switcher">Career Switcher</option>
+                  <option value="career-switcher" style={{ backgroundColor: "#000000" }}>Career Switcher</option>
                 </select>
               </label>
             </div>
@@ -345,18 +345,18 @@ const StudentRegister = () => {
                   name="preferredProgram"
                   value={formData.preferredProgram}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option value="">Select a program</option>
-                  <option value="english-language">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option value="" style={{ backgroundColor: "#000000" }}>Select a program</option>
+                  <option value="english-language" style={{ backgroundColor: "#000000" }}>
                     English Language Labs
                   </option>
-                  <option value="digital-marketing">
+                  <option value="digital-marketing" style={{ backgroundColor: "#000000" }}>
                     Digital Marketing Cohort
                   </option>
-                  <option value="corporate-training">
+                  <option value="corporate-training" style={{ backgroundColor: "#000000" }}>
                     Corporate Training Tracks
                   </option>
-                  <option value="career-counselling">
+                  <option value="career-counselling" style={{ backgroundColor: "#000000" }}>
                     Career Counselling + Placement
                   </option>
                 </select>
@@ -369,13 +369,13 @@ const StudentRegister = () => {
                   name="referralSource"
                   value={formData.referralSource}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
-                  <option value="">Choose an option</option>
-                  <option value="social-media">Instagram / Facebook</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="referral">Friend / Alumni</option>
-                  <option value="event">Workshop / Event</option>
-                  <option value="search">Google Search</option>
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  <option value="" style={{ backgroundColor: "#000000" }}>Choose an option</option>
+                  <option value="social-media" style={{ backgroundColor: "#000000" }}>Instagram / Facebook</option>
+                  <option value="youtube" style={{ backgroundColor: "#000000" }}>YouTube</option>
+                  <option value="referral" style={{ backgroundColor: "#000000" }}>Friend / Alumni</option>
+                  <option value="event" style={{ backgroundColor: "#000000" }}>Workshop / Event</option>
+                  <option value="search" style={{ backgroundColor: "#000000" }}>Google Search</option>
                 </select>
               </label>
             </div>

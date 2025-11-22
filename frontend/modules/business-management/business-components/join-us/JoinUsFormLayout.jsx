@@ -142,7 +142,7 @@ const JoinUsFormLayout = ({
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
               {formConfig.map((field) => {
                 const baseClasses =
-                  "w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 backdrop-blur supports-[backdrop-filter]:bg-white/15";
+                  "w-full rounded-2xl border border-white/15 bg-black px-4 py-3 text-sm placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 backdrop-blur";
 
                 const commonProps = {
                   id: field.name,
@@ -165,10 +165,10 @@ const JoinUsFormLayout = ({
                     {field.type === "select" ? (
                       <select
                         {...commonProps}
-                        className={`${baseClasses} text-black`}>
-                        <option value="">Select an option</option>
+                        className={`${baseClasses} text-white`}>
+                        <option value="" style={{ backgroundColor: "#000000" }}>Select an option</option>
                         {(field.options ?? []).map((option) => (
-                          <option key={option} value={option}>
+                          <option key={option} value={option} style={{ backgroundColor: "#000000" }}>
                             {option}
                           </option>
                         ))}

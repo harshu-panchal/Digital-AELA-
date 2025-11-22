@@ -729,7 +729,7 @@ export const App = () => {
         />
       </Routes>
       {!isAdminLogin && !isDashboard && <Footer />}
-      {!isAdminLogin && <FloatingDebateButton />}
+      {!isAdminLogin && (location.pathname === "/" || location.pathname === "/home") && <FloatingDebateButton />}
     </>
   );
 };
