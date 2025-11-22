@@ -8,10 +8,11 @@ const PostDetailPage = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { getPostById } = useExploreJobs();
+  const { getPostById, applyToJob, appliedPostIds } = useExploreJobs();
 
   const post = getPostById(id);
   const backgroundLocation = location.state?.backgroundLocation;
+  const hasApplied = post ? appliedPostIds.has(post.id) : false;
 
   const handleBack = () => {
     if (backgroundLocation?.pathname) {
@@ -35,7 +36,12 @@ const PostDetailPage = () => {
       </button>
 
       <div className="rounded-[32px] border border-white/10 bg-white/5">
-        <PostDetailContent post={post} variant="page" />
+        <PostDetailContent 
+          post={post} 
+          variant="page" 
+          onApply={applyToJob}
+          hasApplied={hasApplied}
+        />
       </div>
     </div>
   );

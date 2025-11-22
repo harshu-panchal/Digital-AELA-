@@ -128,6 +128,18 @@ export const deleteFollowUp = async (followUpId) => {
 };
 
 /**
+ * Create Public Lead (from Free Library form)
+ * POST /api/v1/crm/leads/public
+ */
+export const createPublicLead = async (payload) => {
+  return apiRequest("/crm/leads/public", {
+    method: "POST",
+    body: payload,
+    skipAuth: true,
+  });
+};
+
+/**
  * Get Team Members
  * GET /api/v1/crm/team-members
  */

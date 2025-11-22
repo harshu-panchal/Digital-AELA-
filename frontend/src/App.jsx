@@ -669,19 +669,9 @@ export const App = () => {
         <Route
           path="/explore-jobs/*"
           element={
-            <ProtectedRoute
-              roles={[
-                "student",
-                "teacher",
-                "recruiter",
-                "influencer",
-                "freelancer",
-                "super-admin",
-              ]}>
-              <ExploreJobsProvider>
-                <ExploreJobsLayout />
-              </ExploreJobsProvider>
-            </ProtectedRoute>
+            <ExploreJobsProvider>
+              <ExploreJobsLayout />
+            </ExploreJobsProvider>
           }>
           <Route index element={<ExploreFeed />} />
           <Route

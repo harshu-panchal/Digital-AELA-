@@ -92,3 +92,16 @@ export const shareBlog = (blogId, platform) =>
     skipAuth: true,
   });
 
+/**
+ * Get user's pending blogs
+ * GET /api/v1/recruiter/blogs?status=pending
+ */
+export const fetchUserPendingBlogs = (params = {}) => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("status", "pending");
+  if (params.page) searchParams.set("page", params.page);
+  if (params.pageSize) searchParams.set("pageSize", params.pageSize);
+  const query = searchParams.toString();
+  return apiRequest(`/recruiter/blogs?${query}`);
+};
+

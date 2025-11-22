@@ -779,6 +779,75 @@ export const deleteFollowUp = async (req, res, next) => {
 };
 
 /**
+ * Create Public Lead (from Free Library form)
+ * POST /api/v1/crm/leads/public
+ */
+export const createPublicLead = async (req, res, next) => {
+  try {
+    const leadData = req.body;
+    const { firstName, lastName, email, phone, bookPreferences } = leadData;
+
+    // Validation
+    if (!email || !firstName) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and first name are required",
+        },
+      });
+    }
+
+    // Check if lead with same email exists
+    const existingLead = await Lead.findOne({ email: email.toLowerCase().trim() }).lean();
+    if (existingLead) {
+      return res.status(409).json({
+        error: {
+          code: "ALREADY_EXISTS",
+          message: "This email is already registered. Please use a different email address.",
+        },
+      });
+    }
+
+    // Prepare customFields with book preferences
+    const customFields = {};
+    if (bookPreferences && Array.isArray(bookPreferences) && bookPreferences.length > 0) {
+      customFields.bookPreferences = bookPreferences;
+    }
+
+    // Create description from book preferences if available
+    let description = "";
+    if (bookPreferences && Array.isArray(bookPreferences) && bookPreferences.length > 0) {
+      description = `Book Preferences: ${bookPreferences.join(", ")}`;
+    }
+
+    const lead = await Lead.create({
+      firstName: firstName.trim(),
+      lastName: lastName ? lastName.trim() : "",
+      email: email.toLowerCase().trim(),
+      phone: phone ? phone.trim() : "",
+      source: "free_library",
+      status: "new",
+      priority: "medium",
+      customFields,
+      description: description || undefined,
+    });
+
+    const populatedLead = await Lead.findById(lead._id)
+      .populate("assignedTo", "fullName email")
+      .populate("assignedBy", "fullName")
+      .populate("createdBy", "fullName")
+      .lean();
+
+    return res.status(201).json({
+      lead: populatedLead,
+      message: "Lead created successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Get Team Members (for assignment)
  * GET /api/v1/crm/team-members
  */

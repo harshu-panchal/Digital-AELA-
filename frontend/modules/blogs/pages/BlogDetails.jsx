@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import {
   HiOutlineArrowLeft,
   HiOutlineChatBubbleOvalLeft,
+  HiOutlineHandThumbUp,
   HiOutlineHeart,
   HiOutlineMegaphone,
 } from "react-icons/hi2";
@@ -26,6 +27,7 @@ const BlogDetails = () => {
   } = useBlogs();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const blog = useMemo(() => blogs.find((item) => item.id === id), [blogs, id]);
 
@@ -70,11 +72,17 @@ const BlogDetails = () => {
     };
   }, [blog]);
 
+  // Register view only once when blog ID changes, not when blog object changes
   useEffect(() => {
-    if (blog) {
-      registerView(blog.id);
+    if (id) {
+      registerView(id);
     }
-  }, [blog, registerView]);
+  }, [id, registerView]); // Only depend on id and registerView, not blog object (which changes when views update)
+
+  // Scroll to top and reset when blog ID or location changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id, location.key]);
 
   if (!blog) {
     return (
@@ -136,7 +144,7 @@ const BlogDetails = () => {
       {structuredData && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       )}
-      <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-10 px-4 pb-20 sm:px-6 lg:px-10">
+      <div key={blog.id} className="mx-auto flex w-full max-w-[1080px] flex-col gap-10 px-4 pb-20 sm:px-6 lg:px-10">
         <header className="flex flex-col gap-4 pt-4">
           <button
             type="button"
@@ -148,6 +156,7 @@ const BlogDetails = () => {
 
           <div className="space-y-4">
             <Motion.h1
+              key={`title-${blog.id}`}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -165,6 +174,7 @@ const BlogDetails = () => {
         </header>
 
         <Motion.div
+          key={`banner-${blog.id}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
@@ -293,7 +303,7 @@ const BlogDetails = () => {
           </div>
         </section>
 
-        <article className="prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-[#F5D26A] prose-blockquote:border-[#D4AF37]/40 prose-blockquote:text-[#F5D26A] prose-h1:text-3xl prose-h1:font-bold prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-5 prose-h3:mb-2 prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-2 max-w-none rounded-3xl border border-white/10 bg-[#050505]/80 p-8 shadow-[0_28px_75px_rgba(0,0,0,0.55)]">
+        <article className="prose prose-invert max-w-none rounded-3xl border border-white/10 bg-[#050505]/80 p-8 shadow-[0_28px_75px_rgba(0,0,0,0.55)] [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-2 [&_h4]:text-white [&_p]:text-gray-300 [&_p]:my-4 [&_strong]:text-[#F5D26A] [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:text-base [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0">
           <div dangerouslySetInnerHTML={{ __html: blog.content }} />
         </article>
 

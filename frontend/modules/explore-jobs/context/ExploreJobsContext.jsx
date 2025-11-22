@@ -216,10 +216,23 @@ export const ExploreJobsProvider = ({ children }) => {
     if (!target) return;
 
     const tokens = getStoredTokens();
+
+    // Check if user is authenticated
+    if (!authUser || !tokens?.accessToken) {
+      toast.info("Please log in to apply for this job. Redirecting to login...", {
+        autoClose: 3000,
+      });
+      // Navigate to login page after a short delay
+      setTimeout(() => {
+        window.location.href = "/login/student";
+      }, 1500);
+      return;
+    }
+
     const jobId = target.backendId || target.id;
 
-    // If user has backend tokens, submit to API
-    if (tokens?.accessToken && jobId) {
+    // User is authenticated, submit to API
+    if (jobId) {
       try {
         await submitJobApplication(jobId, {
           candidateName: authUser?.fullName || "Student",
@@ -230,19 +243,16 @@ export const ExploreJobsProvider = ({ children }) => {
       } catch (error) {
         if (error.status === 409) {
           toast.error("You have already applied to this job");
+        } else if (error.status === 401) {
+          toast.error("Please log in to apply for this job");
         } else {
           toast.error(error.message || "Failed to submit application");
         }
         return; // Don't update UI if API call failed
       }
-    } else if (!tokens?.accessToken) {
-      // User doesn't have backend tokens - this is a mock application
-      toast.warning(
-        "Application saved locally. Please log in with backend authentication to submit your application.",
-        { autoClose: 5000 }
-      );
-      // eslint-disable-next-line no-console
-      console.warn("Student applied without backend tokens - application not saved to backend");
+    } else {
+      toast.error("Unable to apply: Job ID not found");
+      return;
     }
 
     // Update local state

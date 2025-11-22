@@ -37,6 +37,16 @@ const cardVariants = {
   }
 };
 
+// Utility function to strip HTML tags and get plain text
+const stripHtmlTags = (html) => {
+  if (!html) return "";
+  // Create a temporary DOM element to parse HTML
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  // Get text content and clean up extra whitespace
+  return tmp.textContent || tmp.innerText || ""; 
+};
+
 const BlogList = ({
   title,
   description,
@@ -93,83 +103,89 @@ const BlogList = ({
             whileHover={{ y: -6, scale: 1.01 }}
             style={{ opacity: 1 }}
             className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50">
-            <div className="relative h-48 w-full overflow-hidden">
-              <img
-                src={blog.thumbnail}
-                alt={blog.title}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                loading="lazy"
-              />
-              <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                {blog.category}
-              </span>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-4 p-6">
-              <div className="flex items-center gap-3">
+            <Link
+              to={`/blogs/${blog.id}`}
+              onClick={() => registerView(blog.id)}
+              className="flex h-full flex-col">
+              <div className="relative h-48 w-full overflow-hidden">
                 <img
-                  src={blog.author.avatar}
-                  alt={blog.author.name}
-                  className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover"
+                  src={blog.thumbnail}
+                  alt={blog.title}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  loading="lazy"
                 />
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    {blog.author.name}
-                  </p>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                    {formatTimestamp(blog.publishedAt)}
-                  </p>
-                </div>
+                <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
+                  {blog.category}
+                </span>
               </div>
 
-              <div className="space-y-3">
-                <Link
-                  to={`/blogs/${blog.id}`}
-                  onClick={() => registerView(blog.id)}
-                  className="block text-lg font-semibold text-white transition hover:text-[#D4AF37]">
-                  {blog.title}
-                </Link>
-                <p className="text-sm text-gray-300 line-clamp-3">
-                  {blog.excerpt}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {blog.tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex max-w-full items-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#F5D26A]">
-                      <span className="truncate">#{tag}</span>
+              <div className="flex flex-1 flex-col gap-4 p-6">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={blog.author.avatar}
+                    alt={blog.author.name}
+                    className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {blog.author.name}
+                    </p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+                      {formatTimestamp(blog.publishedAt)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="block text-lg font-semibold text-white transition hover:text-[#D4AF37]">
+                    {blog.title}
+                  </h3>
+                  <p className="text-sm text-gray-300 line-clamp-3">
+                    {stripHtmlTags(blog.excerpt)}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {blog.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex max-w-full items-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#F5D26A]">
+                        <span className="truncate">#{tag}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-auto flex items-center justify-between text-sm text-gray-300">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1">
+                      <HiOutlineClock className="h-4 w-4 text-[#D4AF37]" />
+                      {blog.readTime} min read
                     </span>
-                  ))}
+                    <span className="inline-flex items-center gap-1">
+                      <FaRegEye className="h-4 w-4 text-[#D4AF37]" />
+                      {blog.views.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleLike(blog.id);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[#111]/80 px-3 py-1 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                      <HiOutlineHeart className="h-4 w-4" />
+                      {blog.likeCount}
+                    </button>
+                    <span className="inline-flex items-center gap-1 text-xs">
+                      <HiOutlineChatBubbleLeftRight className="h-4 w-4 text-[#D4AF37]" />
+                      {blog.commentCount}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              <div className="mt-auto flex items-center justify-between text-sm text-gray-300">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1">
-                    <HiOutlineClock className="h-4 w-4 text-[#D4AF37]" />
-                    {blog.readTime} min read
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <FaRegEye className="h-4 w-4 text-[#D4AF37]" />
-                    {blog.views.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleLike(blog.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[#111]/80 px-3 py-1 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
-                    <HiOutlineHeart className="h-4 w-4" />
-                    {blog.likeCount}
-                  </button>
-                  <span className="inline-flex items-center gap-1 text-xs">
-                    <HiOutlineChatBubbleLeftRight className="h-4 w-4 text-[#D4AF37]" />
-                    {blog.commentCount}
-                  </span>
-                </div>
-              </div>
-            </div>
+            </Link>
           </Motion.article>
         ))}
       </Motion.div>

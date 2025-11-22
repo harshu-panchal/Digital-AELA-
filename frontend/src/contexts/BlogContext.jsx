@@ -20,6 +20,7 @@ import {
   addBlogReaction,
   removeBlogReaction,
   shareBlog,
+  fetchUserPendingBlogs,
 } from "../services/api/blogs";
 import { isNetworkError } from "../services/api/baseClient";
 
@@ -240,6 +241,7 @@ export const BlogProvider = ({ children }) => {
     source: "seed",
   })));
   const [drafts, setDrafts] = useState([]);
+  const [pendingBlogs, setPendingBlogs] = useState([]);
   const [followingAuthors, setFollowingAuthors] = useState(() => new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilters, setActiveFilters] = useState({
@@ -394,6 +396,9 @@ export const BlogProvider = ({ children }) => {
         profile.avatar || 
         "https://i.pravatar.cc/150?img=11";
       
+      // Check if user is super-admin (can publish directly)
+      const isSuperAdmin = authUser?.role === "super-admin";
+      
       // Try to save to backend if user is authenticated
       let savedBlog = null;
       if (authUser) {
@@ -404,7 +409,7 @@ export const BlogProvider = ({ children }) => {
             content: blog.content ?? "",
             coverImage: blog.thumbnail || blog.banner || null,
             tags: blog.tags ?? [],
-            status: "published",
+            status: isSuperAdmin ? "published" : "published", // Backend will handle pending for non-super-admins
           };
           
           savedBlog = await createBlog(blogPayload);
@@ -422,42 +427,65 @@ export const BlogProvider = ({ children }) => {
             // eslint-disable-next-line no-console
             console.log("Mapped blog for state:", backendBlog);
             
-            // Add the blog to state immediately
-            setBlogs((prev) => {
-              // Check if blog already exists to avoid duplicates
-              const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
-              if (existingIndex >= 0) {
-                // Update existing blog
-                const updated = [...prev];
-                updated[existingIndex] = backendBlog;
-                return updated;
-              }
-              // Add new blog at the beginning
-              const newBlogs = [backendBlog, ...prev];
-              // eslint-disable-next-line no-console
-              console.log("Updated blogs state, new count:", newBlogs.length);
-              return newBlogs;
-            });
+            const blogStatus = savedBlog.status || backendBlog.status;
+            const isPending = blogStatus === "pending";
+            const isPublished = blogStatus === "published";
+            
+            if (isPublished) {
+              // Add published blog to blogs list
+              setBlogs((prev) => {
+                // Check if blog already exists to avoid duplicates
+                const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
+                if (existingIndex >= 0) {
+                  // Update existing blog
+                  const updated = [...prev];
+                  updated[existingIndex] = backendBlog;
+                  return updated;
+                }
+                // Add new blog at the beginning
+                const newBlogs = [backendBlog, ...prev];
+                // eslint-disable-next-line no-console
+                console.log("Updated blogs state, new count:", newBlogs.length);
+                return newBlogs;
+              });
+              
+              toast.success("Blog published successfully!", {
+                toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
+              });
+            } else if (isPending) {
+              // Add pending blog to pending list
+              setPendingBlogs((prev) => {
+                const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
+                if (existingIndex >= 0) {
+                  const updated = [...prev];
+                  updated[existingIndex] = backendBlog;
+                  return updated;
+                }
+                return [backendBlog, ...prev];
+              });
+              
+              toast.success("Blog submitted for approval. You'll be notified once it's reviewed.", {
+                toastId: `blog-pending-${savedBlog._id || savedBlog.id}`,
+              });
+            }
             
             // Remove from drafts
             setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
             
-            toast.success("Blog published successfully!", {
-              toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
-            });
-            
             // Refresh blogs list in background after a delay to ensure DB has saved
             // This ensures all users see the newly published blog when they visit the blogs page
             // Use a longer delay to ensure the database transaction has completed
-            setTimeout(() => {
-              refreshBlogs().then(() => {
-                // eslint-disable-next-line no-console
-                console.log("Blogs refreshed successfully after publish");
-              }).catch((err) => {
-                // eslint-disable-next-line no-console
-                console.warn("Background refresh failed:", err);
-              });
-            }, 1500); // Delay to ensure DB save completes and blog is queryable
+            if (isPublished) {
+              setTimeout(() => {
+                refreshBlogs().then(() => {
+                  // eslint-disable-next-line no-console
+                  console.log("Blogs refreshed successfully after publish");
+                }).catch((err) => {
+                  // eslint-disable-next-line no-console
+                  console.warn("Background refresh failed:", err);
+                });
+              }, 1500); // Delay to ensure DB save completes and blog is queryable
+            }
             
             return backendBlog;
           } else {
@@ -907,10 +935,28 @@ export const BlogProvider = ({ children }) => {
     }
   }, []);
 
+  // Fetch pending blogs for the current user
+  const refreshPendingBlogs = useCallback(async () => {
+    if (!authUser) return;
+    
+    try {
+      const response = await fetchUserPendingBlogs();
+      const pending = response?.data ?? [];
+      const formattedPending = pending.map(mapApiBlog);
+      setPendingBlogs(formattedPending);
+    } catch (error) {
+      if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to fetch pending blogs:", error);
+      }
+    }
+  }, [authUser]);
+
   const value = useMemo(
     () => ({
       blogs,
       drafts,
+      pendingBlogs,
       filteredBlogs,
       trendingBlogs,
       recentBlogs,
@@ -934,6 +980,7 @@ export const BlogProvider = ({ children }) => {
       isLoading,
       loadError,
       refreshBlogs,
+      refreshPendingBlogs,
       categories,
       tags,
       performSearch,

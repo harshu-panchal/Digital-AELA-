@@ -2527,7 +2527,7 @@ const Home = () => {
                         {blog.title}
                       </h3>
                       <p className="flex-1 text-sm text-gray-300 leading-relaxed line-clamp-3">
-                        {blog.excerpt}
+                        {blog.excerpt?.replace(/<[^>]+>/g, "") || ""}
                       </p>
                       <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
                         Read Story

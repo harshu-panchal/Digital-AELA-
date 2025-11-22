@@ -18,12 +18,20 @@ export const listBlogs = async (req, res, next) => {
       RecruiterBlog.find(criteria)
         .sort({ updatedAt: -1 })
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(),
       RecruiterBlog.countDocuments(criteria),
     ]);
 
+    // Format items to include rejection info
+    const formattedItems = items.map((item) => ({
+      ...item,
+      rejectedAt: item.rejectedAt || null,
+      rejectionReason: item.rejectionReason || null,
+    }));
+
     return res.json({
-      data: items,
+      data: formattedItems,
       meta: {
         page: Number(page),
         pageSize: Number(pageSize),
@@ -37,17 +45,29 @@ export const listBlogs = async (req, res, next) => {
 
 export const createBlog = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId, userRole } = req.auth;
     const { status, ...blogData } = req.body;
     
-    // Set publishedAt when status is "published"
+    // Super admins can publish directly, regular users go to pending
+    let finalStatus = status || "draft";
+    if (status === "published") {
+      if (userRole === "super-admin") {
+        // Super admin can publish directly
+        finalStatus = "published";
+      } else {
+        // Regular users go to pending approval
+        finalStatus = "pending";
+      }
+    }
+    
     const blogPayload = {
       ...blogData,
       author: userId,
-      status: status || "draft",
+      status: finalStatus,
     };
     
-    if (status === "published") {
+    // Set publishedAt only if actually published (not pending)
+    if (finalStatus === "published") {
       blogPayload.publishedAt = new Date();
     }
     
@@ -72,6 +92,8 @@ export const createBlog = async (req, res, next) => {
       tags: populatedBlog.tags || [],
       status: populatedBlog.status,
       publishedAt: populatedBlog.publishedAt || null,
+      rejectedAt: populatedBlog.rejectedAt || null,
+      rejectionReason: populatedBlog.rejectionReason || null,
       updatedAt: populatedBlog.updatedAt,
       createdAt: populatedBlog.createdAt,
       author: populatedBlog.author
@@ -120,17 +142,10 @@ export const updateBlog = async (req, res, next) => {
 
 export const publishBlog = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId, userRole } = req.auth;
     const { blogId } = req.params;
 
-    const blog = await RecruiterBlog.findOneAndUpdate(
-      { _id: blogId, author: userId },
-      {
-        status: "published",
-        publishedAt: new Date(),
-      },
-      { new: true }
-    );
+    const blog = await RecruiterBlog.findOne({ _id: blogId, author: userId });
 
     if (!blog) {
       return res.status(404).json({
@@ -141,7 +156,25 @@ export const publishBlog = async (req, res, next) => {
       });
     }
 
-    return res.json(blog);
+    // Super admins can publish directly, regular users go to pending
+    let newStatus = "pending";
+    let updateData = { status: newStatus };
+    
+    if (userRole === "super-admin") {
+      newStatus = "published";
+      updateData = {
+        status: newStatus,
+        publishedAt: new Date(),
+      };
+    }
+
+    const updatedBlog = await RecruiterBlog.findByIdAndUpdate(
+      blogId,
+      updateData,
+      { new: true }
+    );
+
+    return res.json(updatedBlog);
   } catch (error) {
     return next(error);
   }

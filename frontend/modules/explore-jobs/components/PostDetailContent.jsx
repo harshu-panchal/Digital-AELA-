@@ -12,6 +12,7 @@ import {
   HiOutlinePhoneArrowUpRight,
 } from "react-icons/hi2";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const StatPill = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-200">
@@ -43,7 +44,10 @@ const Section = ({ title, children, action }) => (
 const formatTimeAgo = (dateString) =>
   formatDistanceToNow(new Date(dateString), { addSuffix: true });
 
-const PostDetailContent = ({ post }) => {
+const PostDetailContent = ({ post, onApply, hasApplied }) => {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+
   if (!post) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-12 text-center">
@@ -57,6 +61,12 @@ const PostDetailContent = ({ post }) => {
   }
 
   const isJob = post.type === "job";
+
+  const handleApply = () => {
+    if (onApply && post.id) {
+      onApply(post.id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -112,12 +122,28 @@ const PostDetailContent = ({ post }) => {
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
-          <HiOutlineSparkles className="h-5 w-5" />
-          {isJob ? "Instant Apply" : "Refer Candidate"}
-        </button>
+        {isJob && (
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={hasApplied}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+              hasApplied
+                ? "cursor-not-allowed border border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                : "bg-white text-black hover:-translate-y-0.5"
+            }`}>
+            <HiOutlineSparkles className="h-5 w-5" />
+            {hasApplied ? "Applied" : "Instant Apply"}
+          </button>
+        )}
+        {!isJob && (
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
+            <HiOutlineSparkles className="h-5 w-5" />
+            Refer Candidate
+          </button>
+        )}
         <button
           type="button"
           className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/70 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30">
@@ -147,9 +173,15 @@ const PostDetailContent = ({ post }) => {
             action={
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:-translate-y-0.5">
+                onClick={handleApply}
+                disabled={hasApplied}
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  hasApplied
+                    ? "cursor-not-allowed border border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                    : "bg-white text-black hover:-translate-y-0.5"
+                }`}>
                 <HiOutlineSparkles className="h-5 w-5" />
-                Apply Now
+                {hasApplied ? "Applied" : "Apply Now"}
               </button>
             }>
             <div className="grid gap-4">

@@ -19,6 +19,7 @@ import {
   FaTasks,
   FaGift,
   FaCheckCircle,
+  FaBlog,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -141,6 +142,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           label: "Teacher Applications",
           path: "/super-admin/approvals/teachers",
           icon: FaChalkboardTeacher,
+        },
+        {
+          label: "Blogs",
+          path: "/super-admin/approvals/blogs",
+          icon: FaBlog,
         },
         {
           label: "Course Reviews",

@@ -3,10 +3,13 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineXMark } from "react-icons/hi2";
 import PostDetailContent from "./PostDetailContent";
+import { useExploreJobs } from "../context/ExploreJobsContext";
 
 const modalRoot = typeof document !== "undefined" ? document.body : null;
 
 const PostModal = ({ post, isOpen, onClose }) => {
+  const { applyToJob, appliedPostIds } = useExploreJobs();
+  const hasApplied = post ? appliedPostIds.has(post.id) : false;
   useEffect(() => {
     if (!isOpen) return;
 
@@ -43,7 +46,12 @@ const PostModal = ({ post, isOpen, onClose }) => {
               <HiOutlineXMark className="h-6 w-6" />
             </button>
             <div className="h-full overflow-y-auto">
-              <PostDetailContent post={post} variant="modal" />
+              <PostDetailContent 
+                post={post} 
+                variant="modal" 
+                onApply={applyToJob}
+                hasApplied={hasApplied}
+              />
             </div>
           </motion.div>
         </motion.div>

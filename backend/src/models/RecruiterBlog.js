@@ -27,11 +27,16 @@ const recruiterBlogSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["draft", "scheduled", "published"],
+      enum: ["draft", "pending", "scheduled", "published", "rejected"],
       default: "draft",
     },
     scheduledAt: Date,
     publishedAt: Date,
+    rejectedAt: Date,
+    rejectionReason: {
+      type: String,
+      trim: true,
+    },
     likes: {
       type: Number,
       default: 0,

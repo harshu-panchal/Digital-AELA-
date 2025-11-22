@@ -80,3 +80,47 @@ export const approveTeacher = (userId, action) =>
     body: { action },
   });
 
+/**
+ * Get pending blogs
+ */
+export const fetchPendingBlogs = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append("page", params.page);
+  if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+  const queryString = queryParams.toString();
+  return apiRequest(`/admin/pending/blogs${queryString ? `?${queryString}` : ""}`);
+};
+
+/**
+ * Approve/Reject blog
+ */
+export const approveBlog = (blogId, action, rejectionReason = null) =>
+  apiRequest(`/admin/blogs/${blogId}/approve`, {
+    method: "PATCH",
+    body: { action, rejectionReason },
+  });
+
+/**
+ * Get blog preview (full content)
+ */
+export const fetchBlogPreview = (blogId) =>
+  apiRequest(`/admin/pending/blogs/${blogId}/preview`);
+
+/**
+ * Get course preview (full content with videos/modules list)
+ */
+export const fetchCoursePreview = (courseId) =>
+  apiRequest(`/admin/pending/courses/${courseId}/preview`);
+
+/**
+ * Get ebook preview (full content)
+ */
+export const fetchEbookPreview = (ebookId) =>
+  apiRequest(`/admin/pending/ebooks/${ebookId}/preview`);
+
+/**
+ * Get job post preview (full content)
+ */
+export const fetchJobPreview = (jobId) =>
+  apiRequest(`/admin/pending/jobs/${jobId}/preview`);
+

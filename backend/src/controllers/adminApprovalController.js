@@ -3,6 +3,7 @@ import Course from "../models/Course.js";
 import EbookResource from "../models/EbookResource.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
+import CourseVideo from "../models/CourseVideo.js";
 
 /**
  * Get pending courses
@@ -173,6 +174,165 @@ export const getPendingTeachers = async (req, res, next) => {
         total,
         totalPages: Math.ceil(total / parseInt(pageSize)),
       },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get course preview (full content for super admin)
+ */
+export const getCoursePreview = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const course = await Course.findById(courseId)
+      .populate("instructor", "fullName email")
+      .lean();
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    // Get course videos (metadata only, no videoUrl)
+    const videos = await CourseVideo.find({ course: courseId })
+      .select("title description duration order isPreview thumbnailUrl")
+      .sort({ order: 1, createdAt: 1 })
+      .lean();
+
+    return res.json({
+      course: {
+        ...course,
+        videos: videos.map((video) => ({
+          _id: video._id,
+          title: video.title,
+          description: video.description,
+          duration: video.duration,
+          order: video.order,
+          isPreview: video.isPreview,
+          thumbnailUrl: video.thumbnailUrl,
+        })),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get ebook preview (full content for super admin)
+ */
+export const getEbookPreview = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { ebookId } = req.params;
+
+    if (!mongoose.isValidObjectId(ebookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid ebook ID",
+        },
+      });
+    }
+
+    const ebook = await EbookResource.findById(ebookId).lean();
+
+    if (!ebook) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Ebook not found",
+        },
+      });
+    }
+
+    return res.json({
+      ebook,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get job post preview (full content for super admin)
+ */
+export const getJobPreview = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { jobId } = req.params;
+
+    if (!mongoose.isValidObjectId(jobId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid job ID",
+        },
+      });
+    }
+
+    const job = await JobPost.findById(jobId)
+      .populate("owner", "fullName email")
+      .lean();
+
+    if (!job) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Job post not found",
+        },
+      });
+    }
+
+    return res.json({
+      job,
     });
   } catch (error) {
     return next(error);

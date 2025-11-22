@@ -15,9 +15,6 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
       StarterKit.configure({
         heading: { 
           levels: [1, 2, 3, 4],
-          HTMLAttributes: {
-            class: 'heading',
-          },
         },
       }),
         Underline,
@@ -28,6 +25,7 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
         Placeholder.configure({ placeholder }),
       ],
       content: value,
+      editable: true,
       onUpdate: ({ editor: tiptap }) => {
         const html = tiptap.getHTML();
         onChange(html === "<p></p>" ? "" : html);
@@ -52,13 +50,31 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
     [editor]
   );
 
-  const isActive = (name, attrs) => editor?.isActive(name, attrs);
+  const isActive = (name, attrs) => {
+    if (!editor) return false;
+    return editor.isActive(name, attrs);
+  };
 
   const toggle = (command, attrs) => {
     if (!editor) return;
-    const chain = editor.chain().focus();
-    if (typeof chain[command] !== "function") return;
-    chain[command](attrs).run();
+    
+    try {
+      const chain = editor.chain().focus();
+      
+      if (attrs !== undefined && attrs !== null) {
+        // Commands with attributes (like toggleHeading with level)
+        if (typeof chain[command] === "function") {
+          chain[command](attrs).run();
+        }
+      } else {
+        // Commands without attributes
+        if (typeof chain[command] === "function") {
+          chain[command]().run();
+        }
+      }
+    } catch (error) {
+      console.warn(`TipTap command ${command} failed:`, error);
+    }
   };
 
   const setLink = () => {
@@ -96,7 +112,11 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
               <button
                 key={level}
                 type="button"
-                onClick={() => toggle("toggleHeading", { level })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggle("toggleHeading", { level });
+                }}
                 className={`${toolbarButtonStyles} ${
                   isActive("heading", { level }) ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
                 }`}>
@@ -141,7 +161,11 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => toggle("toggleBulletList")}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggle("toggleBulletList");
+              }}
               className={`${toolbarButtonStyles} ${
                 isActive("bulletList") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
@@ -149,7 +173,11 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
             </button>
             <button
               type="button"
-              onClick={() => toggle("toggleOrderedList")}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggle("toggleOrderedList");
+              }}
               className={`${toolbarButtonStyles} ${
                 isActive("orderedList") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
@@ -157,7 +185,11 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
             </button>
             <button
               type="button"
-              onClick={() => toggle("toggleBlockquote")}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggle("toggleBlockquote");
+              }}
               className={`${toolbarButtonStyles} ${
                 isActive("blockquote") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
@@ -192,7 +224,7 @@ const BlogEditor = ({ value, onChange, placeholder = "Start crafting your AELA s
         <div className="rounded-2xl border border-white/10 bg-[#050505]/90 p-4 text-sm text-gray-100 md:p-6">
           <EditorContent 
             editor={editor} 
-            className="prose prose-invert max-w-none prose-headings:text-white prose-h1:text-3xl prose-h1:font-bold prose-h2:text-2xl prose-h2:font-bold prose-h3:text-xl prose-h3:font-semibold prose-h4:text-lg prose-h4:font-semibold" 
+            className="prose prose-invert max-w-none [&_.ProseMirror]:outline-none [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-white [&_p]:text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0" 
           />
         </div>
       </div>

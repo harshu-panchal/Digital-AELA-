@@ -23,7 +23,15 @@ import {
   getPendingEbooks,
   getPendingJobs,
   getPendingTeachers,
+  getCoursePreview,
+  getEbookPreview,
+  getJobPreview,
 } from "../controllers/adminApprovalController.js";
+import {
+  getPendingBlogs,
+  approveBlog,
+  getBlogPreview,
+} from "../controllers/adminBlogApprovalController.js";
 import {
   getLiveRoomsForModeration,
   moderateLiveRoom,
@@ -42,12 +50,20 @@ router.get("/pending/courses", getPendingCourses);
 router.get("/pending/ebooks", getPendingEbooks);
 router.get("/pending/jobs", getPendingJobs);
 router.get("/pending/teachers", getPendingTeachers);
+router.get("/pending/blogs", getPendingBlogs);
+
+// Preview routes (full content for super admin)
+router.get("/pending/blogs/:blogId/preview", getBlogPreview);
+router.get("/pending/courses/:courseId/preview", getCoursePreview);
+router.get("/pending/ebooks/:ebookId/preview", getEbookPreview);
+router.get("/pending/jobs/:jobId/preview", getJobPreview);
 
 // Approval routes
 router.patch("/courses/:courseId/approve", approveCourse);
 router.patch("/ebooks/:ebookId/approve", approveEbook);
 router.patch("/jobs/:jobId/approve", approveJob);
 router.patch("/teachers/:userId/approve", approveTeacher);
+router.patch("/blogs/:blogId/approve", approveBlog);
 
 // Content creation routes
 router.post("/courses", createCourse);

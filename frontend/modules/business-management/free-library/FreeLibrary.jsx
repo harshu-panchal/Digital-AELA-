@@ -3,13 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { getFreeEbooks } from "../../../src/services/ebooks";
+import LeadCaptureModal from "./LeadCaptureModal";
 
 const FreeLibrary = () => {
   const navigate = useNavigate();
   const [ebooks, setEbooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showLeadModal, setShowLeadModal] = useState(false);
 
   useEffect(() => {
+    // Check if form has been submitted
+    const hasSubmitted = localStorage.getItem("freeLibraryLeadSubmitted") === "true";
+    if (!hasSubmitted) {
+      setShowLeadModal(true);
+    }
+
     const fetchEbooks = async () => {
       try {
         setLoading(true);
@@ -26,12 +34,19 @@ const FreeLibrary = () => {
     fetchEbooks();
   }, []);
 
+  const handleLeadModalSuccess = () => {
+    setShowLeadModal(false);
+  };
+
   const handleOpenReader = (bookId) => {
     navigate(`/free-library/ebook/${bookId}/read`);
   };
 
   return (
     <main className="relative min-h-screen bg-[#04060F] pt-36 pb-20 text-white md:pt-40">
+      {/* Lead Capture Modal */}
+      <LeadCaptureModal isOpen={showLeadModal} onSuccess={handleLeadModalSuccess} />
+
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0d1325_0%,#04060F_55%,#010205_100%)] opacity-90" />
       <div className="relative layout-container flex flex-col gap-12">
         <header className="mx-auto max-w-3xl text-center space-y-4">

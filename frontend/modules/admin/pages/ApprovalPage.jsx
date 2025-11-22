@@ -2,23 +2,40 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher, FaEdit, FaEye } from "react-icons/fa";
 import {
   fetchPendingCourses,
   fetchPendingEbooks,
   fetchPendingJobs,
   fetchPendingTeachers,
+  fetchPendingBlogs,
   approveCourse,
   approveEbook,
   approveJob,
   approveTeacher,
+  approveBlog,
+  fetchBlogPreview,
+  fetchCoursePreview,
+  fetchEbookPreview,
+  fetchJobPreview,
 } from "../../../src/services/api/adminApprovals";
+import PreviewModal from "../components/PreviewModal";
+import BlogPreview from "../components/previews/BlogPreview";
+import CoursePreview from "../components/previews/CoursePreview";
+import BookPreview from "../components/previews/BookPreview";
+import JobPreview from "../components/previews/JobPreview";
 
 const ApprovalPage = () => {
   const { type } = useParams();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(new Set());
+  const [rejectionReason, setRejectionReason] = useState({});
+  const [showRejectModal, setShowRejectModal] = useState({});
+  const [previewData, setPreviewData] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const configs = {
     courses: {
@@ -67,6 +84,22 @@ const ApprovalPage = () => {
         return details;
       },
     },
+    blogs: {
+      label: "Blogs",
+      icon: FaEdit,
+      fetchFn: fetchPendingBlogs,
+      approveFn: approveBlog,
+      getTitle: (item) => item.title,
+      getOwner: (item) => item.author?.fullName || item.author?.email || "Unknown",
+      getDetails: (item) => {
+        const details = [];
+        if (item.excerpt) details.push(`Excerpt: ${item.excerpt.substring(0, 100)}...`);
+        if (item.tags && item.tags.length > 0) {
+          details.push(`Tags: ${item.tags.join(", ")}`);
+        }
+        return details;
+      },
+    },
   };
 
   const config = configs[type];
@@ -77,7 +110,8 @@ const ApprovalPage = () => {
       setLoading(true);
       const response = await config.fetchFn();
       if (response) {
-        setItems(response[type === "books" ? "ebooks" : type] || []);
+        const responseKey = type === "books" ? "ebooks" : type;
+        setItems(response[responseKey] || response.blogs || []);
       }
     } catch (error) {
       toast.error(`Failed to load ${config.label}: ${error.message}`);
@@ -96,11 +130,30 @@ const ApprovalPage = () => {
     const itemId = item._id || item.id;
     if (processing.has(itemId)) return;
 
+    // For blogs, show rejection reason modal if rejecting
+    if (type === "blogs" && action === "reject") {
+      setShowRejectModal((prev) => ({ ...prev, [itemId]: true }));
+      return;
+    }
+
     setProcessing((prev) => new Set(prev).add(itemId));
 
     try {
-      await config.approveFn(itemId, action);
+      const rejectionReasonValue = type === "blogs" && action === "reject" 
+        ? rejectionReason[itemId] || "" 
+        : null;
+      await config.approveFn(itemId, action, rejectionReasonValue);
       toast.success(`${config.label.slice(0, -1)} ${action === "approve" ? "approved" : "rejected"} successfully`);
+      setShowRejectModal((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+      setRejectionReason((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
       loadItems();
     } catch (error) {
       toast.error(`Failed to ${action} ${config.label.toLowerCase()}: ${error.message}`);
@@ -110,6 +163,65 @@ const ApprovalPage = () => {
         next.delete(itemId);
         return next;
       });
+    }
+  };
+
+  const handleRejectWithReason = async (item) => {
+    const itemId = item._id || item.id;
+    await handleApprove(item, "reject");
+  };
+
+  const handlePreview = async (item) => {
+    const itemId = item._id || item.id;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    setPreviewData(null);
+    setShowPreviewModal(true);
+
+    try {
+      let data;
+      switch (type) {
+        case "blogs":
+          data = await fetchBlogPreview(itemId);
+          setPreviewData(data.blog);
+          break;
+        case "courses":
+          data = await fetchCoursePreview(itemId);
+          setPreviewData(data.course);
+          break;
+        case "books":
+          data = await fetchEbookPreview(itemId);
+          setPreviewData(data.ebook);
+          break;
+        case "jobs":
+          data = await fetchJobPreview(itemId);
+          setPreviewData(data.job);
+          break;
+        default:
+          throw new Error("Preview not available for this type");
+      }
+    } catch (error) {
+      setPreviewError(error.message || "Failed to load preview");
+      toast.error(`Failed to load preview: ${error.message}`);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const renderPreviewContent = () => {
+    if (!previewData) return null;
+
+    switch (type) {
+      case "blogs":
+        return <BlogPreview blog={previewData} />;
+      case "courses":
+        return <CoursePreview course={previewData} />;
+      case "books":
+        return <BookPreview ebook={previewData} />;
+      case "jobs":
+        return <JobPreview job={previewData} />;
+      default:
+        return null;
     }
   };
 
@@ -168,7 +280,15 @@ const ApprovalPage = () => {
                         Applied: {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="ml-4 flex gap-2">
+                    <div className="ml-4 flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(item)}
+                        disabled={isProcessing}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37]/20 px-4 py-2 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/30 disabled:opacity-50">
+                        <FaEye className="h-4 w-4" />
+                        Preview
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleApprove(item, "approve")}
@@ -193,12 +313,78 @@ const ApprovalPage = () => {
                       </button>
                     </div>
                   </div>
+                  {showRejectModal[itemId] && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F1E] p-6">
+                        <h3 className="mb-4 text-lg font-semibold text-white">Reject Blog</h3>
+                        <p className="mb-2 text-sm text-gray-400">Please provide a reason for rejection:</p>
+                        <textarea
+                          value={rejectionReason[itemId] || ""}
+                          onChange={(e) =>
+                            setRejectionReason((prev) => ({
+                              ...prev,
+                              [itemId]: e.target.value,
+                            }))
+                          }
+                          placeholder="Enter rejection reason..."
+                          className="mb-4 w-full rounded-lg border border-white/10 bg-[#111] p-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                          rows={4}
+                        />
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowRejectModal((prev) => {
+                                const next = { ...prev };
+                                delete next[itemId];
+                                return next;
+                              });
+                              setRejectionReason((prev) => {
+                                const next = { ...prev };
+                                delete next[itemId];
+                                return next;
+                              });
+                            }}
+                            className="flex-1 rounded-lg border border-white/10 bg-[#111] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5">
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRejectWithReason(item)}
+                            disabled={processing.has(itemId)}
+                            className="flex-1 rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/30 disabled:opacity-50">
+                            {processing.has(itemId) ? (
+                              <FaSpinner className="mx-auto h-4 w-4 animate-spin" />
+                            ) : (
+                              "Confirm Reject"
+                            )}
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setPreviewData(null);
+          setPreviewError(null);
+        }}
+        loading={previewLoading}
+        error={previewError}>
+        {renderPreviewContent()}
+      </PreviewModal>
     </div>
   );
 };
