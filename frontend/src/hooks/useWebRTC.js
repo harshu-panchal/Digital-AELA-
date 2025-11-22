@@ -851,22 +851,50 @@ export const useWebRTC = (socket, roomId, userId, role) => {
               console.error("[WebRTC] Error playing audio:", error, "for speaker:", speakerSocketId);
               
               // Handle autoplay restrictions - try to play on user interaction
-              if (error.name === "NotAllowedError") {
+              if (error.name === "NotAllowedError" || error.name === "NotSupportedError") {
                 // eslint-disable-next-line no-console
                 console.warn("[WebRTC] Autoplay blocked, will play on user interaction for speaker:", speakerSocketId);
                 
-                // Try to play on next user interaction
-                const playOnInteraction = () => {
-                  audio.play().catch((e) => {
+                // Track if we've already set up the interaction handler
+                if (audio.dataset.autoplayHandlerSet === "true") {
+                  return; // Already set up, don't add duplicate listeners
+                }
+                audio.dataset.autoplayHandlerSet = "true";
+                
+                // Try to play on next user interaction (multiple event types for better compatibility)
+                const playOnInteraction = async () => {
+                  try {
+                    await audio.play();
                     // eslint-disable-next-line no-console
-                    console.error("[WebRTC] Still cannot play audio:", e);
-                  });
-                  document.removeEventListener("click", playOnInteraction);
-                  document.removeEventListener("touchstart", playOnInteraction);
+                    console.log("[WebRTC] ✅ Audio started playing after user interaction for speaker:", speakerSocketId);
+                    // Clean up listeners after successful play
+                    cleanupInteractionListeners();
+                  } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console.warn("[WebRTC] Still cannot play audio after interaction:", e);
+                    // Keep listeners active for retry
+                  }
                 };
                 
-                document.addEventListener("click", playOnInteraction, { once: true });
-                document.addEventListener("touchstart", playOnInteraction, { once: true });
+                // Cleanup function
+                const cleanupInteractionListeners = () => {
+                  document.removeEventListener("click", playOnInteraction);
+                  document.removeEventListener("touchstart", playOnInteraction);
+                  document.removeEventListener("keydown", playOnInteraction);
+                  window.removeEventListener("focus", playOnInteraction);
+                  audio.dataset.autoplayHandlerSet = "false";
+                };
+                
+                // Add multiple interaction listeners for better compatibility
+                document.addEventListener("click", playOnInteraction, { once: false, passive: true });
+                document.addEventListener("touchstart", playOnInteraction, { once: false, passive: true });
+                document.addEventListener("keydown", playOnInteraction, { once: false, passive: true });
+                window.addEventListener("focus", playOnInteraction, { once: false, passive: true });
+                
+                // Also try to play when audio element gets focus or becomes interactive
+                audio.addEventListener("play", () => {
+                  cleanupInteractionListeners();
+                }, { once: true });
               }
             }
           };
