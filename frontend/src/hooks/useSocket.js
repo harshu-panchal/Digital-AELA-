@@ -92,8 +92,11 @@ export const useSocket = () => {
 
     // Debounce connection attempts to prevent rapid reconnections
     connectionAttemptRef.current = setTimeout(() => {
+      // Capture token value at execution time to avoid closure issues
+      const currentToken = tokens?.accessToken || null;
+      
       // Check if token changed during debounce
-      if (lastTokenRef.current === tokens?.accessToken && socketRef.current?.connected) {
+      if (lastTokenRef.current === currentToken && socketRef.current?.connected) {
         return;
       }
 
@@ -112,8 +115,8 @@ export const useSocket = () => {
       // Use polling first for better compatibility with Render and other hosting services
       // Allow connections without tokens for guest listeners
       const newSocket = io(SOCKET_URL, {
-        auth: tokens?.accessToken ? {
-          token: tokens?.accessToken,
+        auth: currentToken ? {
+          token: currentToken,
         } : {},
         // Try polling first, then upgrade to websocket if available
         transports: ["polling", "websocket"],
@@ -144,10 +147,12 @@ export const useSocket = () => {
 
       newSocket.on("connect", () => {
         setIsConnected(true);
-        lastTokenRef.current = tokens?.accessToken || null;
+        // Use the captured token value, not from closure
+        const tokenValue = tokens?.accessToken || null;
+        lastTokenRef.current = tokenValue;
         // Store as global instance
         globalSocketInstance = newSocket;
-        globalSocketToken = tokens?.accessToken || null;
+        globalSocketToken = tokenValue;
         globalSocketListeners.add(listenerIdRef.current);
         
         // Only log the first connection, not subsequent ones from the same socket
@@ -179,7 +184,9 @@ export const useSocket = () => {
         
         // Handle authentication errors - only clear tokens if we had tokens
         // Guest listeners should be able to connect even with auth errors
-        if ((error.message?.includes("Authentication error") || error.message?.includes("Auth error")) && tokens?.accessToken) {
+        // Use captured token value to avoid closure issues
+        const tokenValue = tokens?.accessToken || null;
+        if ((error.message?.includes("Authentication error") || error.message?.includes("Auth error")) && tokenValue) {
           // Clear tokens on auth failure only if we had tokens
           clearStoredTokens();
           notifyAuthUpdate(null);
