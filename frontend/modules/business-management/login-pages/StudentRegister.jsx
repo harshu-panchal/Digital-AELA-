@@ -308,7 +308,8 @@ const StudentRegister = () => {
                   name="ageGroup"
                   value={formData.ageGroup}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  style={{ backgroundColor: "#000000" }}>
                   <option value="" style={{ backgroundColor: "#000000" }}>Select your age group</option>
                   <option value="13-17" style={{ backgroundColor: "#000000" }}>13 – 17</option>
                   <option value="18-24" style={{ backgroundColor: "#000000" }}>18 – 24</option>
@@ -324,7 +325,8 @@ const StudentRegister = () => {
                   name="currentStatus"
                   value={formData.currentStatus}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  style={{ backgroundColor: "#000000" }}>
                   <option value="" style={{ backgroundColor: "#000000" }}>Tell us about you</option>
                   <option value="school-student" style={{ backgroundColor: "#000000" }}>School Student</option>
                   <option value="college-graduate" style={{ backgroundColor: "#000000" }}>College / University</option>
@@ -345,7 +347,8 @@ const StudentRegister = () => {
                   name="preferredProgram"
                   value={formData.preferredProgram}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  style={{ backgroundColor: "#000000" }}>
                   <option value="" style={{ backgroundColor: "#000000" }}>Select a program</option>
                   <option value="english-language" style={{ backgroundColor: "#000000" }}>
                     English Language Labs
@@ -369,7 +372,8 @@ const StudentRegister = () => {
                   name="referralSource"
                   value={formData.referralSource}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur">
+                  className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
+                  style={{ backgroundColor: "#000000" }}>
                   <option value="" style={{ backgroundColor: "#000000" }}>Choose an option</option>
                   <option value="social-media" style={{ backgroundColor: "#000000" }}>Instagram / Facebook</option>
                   <option value="youtube" style={{ backgroundColor: "#000000" }}>YouTube</option>

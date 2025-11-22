@@ -86,6 +86,7 @@ import LiveRoomModeration from "../modules/admin/pages/LiveRoomModeration";
 import AdvancedAnalytics from "../modules/admin/pages/AdvancedAnalytics";
 import SystemSettings from "../modules/admin/pages/SystemSettings";
 import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
+import AdminCourseDetail from "../modules/admin/pages/AdminCourseDetail";
 import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import ContentManagement from "../modules/admin/pages/ContentManagement";
@@ -197,6 +198,7 @@ export const App = () => {
           <Route path="settings" element={<SystemSettings />} />
           <Route path="system-health" element={<SystemHealth />} />
           <Route path="create/course" element={<AdminCourseCreate />} />
+          <Route path="courses/:courseId" element={<AdminCourseDetail />} />
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />
           <Route path="content-management" element={<ContentManagement />} />

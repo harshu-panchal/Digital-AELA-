@@ -8,6 +8,8 @@ import {
   createEbook,
   createBlog,
   uploadAdminCourseBrochure,
+  getAdminCourseById,
+  updateAdminCourse,
   getContentManagementStats,
   getAllCoursesForManagement,
   getAllBooksForManagement,
@@ -49,6 +51,10 @@ router.patch("/teachers/:userId/approve", approveTeacher);
 
 // Content creation routes
 router.post("/courses", createCourse);
+// Get course by ID (super admin can view their own courses)
+router.get("/courses/:courseId", getAdminCourseById);
+// Update course (super admin can edit their own courses)
+router.put("/courses/:courseId", updateAdminCourse);
 // Accepts PDF file upload via multipart/form-data
 router.post(
   "/ebooks",

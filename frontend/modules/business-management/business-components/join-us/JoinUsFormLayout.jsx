@@ -165,7 +165,8 @@ const JoinUsFormLayout = ({
                     {field.type === "select" ? (
                       <select
                         {...commonProps}
-                        className={`${baseClasses} text-white`}>
+                        className={`${baseClasses} text-white`}
+                        style={{ backgroundColor: "#000000" }}>
                         <option value="" style={{ backgroundColor: "#000000" }}>Select an option</option>
                         {(field.options ?? []).map((option) => (
                           <option key={option} value={option} style={{ backgroundColor: "#000000" }}>

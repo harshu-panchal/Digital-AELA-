@@ -8,6 +8,7 @@ import {
   HiOutlineChartBar,
   HiOutlineCalendar,
   HiOutlineTag,
+  HiOutlineClock,
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
@@ -147,10 +148,11 @@ const FinancialDashboard = () => {
                 <select
                   value={filters.month}
                   onChange={(e) => setFilters({ ...filters, month: e.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none">
-                  <option value="">All Months</option>
+                  className="w-full rounded-xl border border-white/10 bg-black px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>All Months</option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month}>
+                    <option key={month} value={month} style={{ backgroundColor: "#000000" }}>
                       {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
                     </option>
                   ))}
@@ -310,10 +312,11 @@ const FinancialDashboard = () => {
                 <select
                   value={filters.month}
                   onChange={(e) => setFilters({ ...filters, month: e.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none">
-                  <option value="">All Months</option>
+                  className="w-full rounded-xl border border-white/10 bg-black px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>All Months</option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month}>
+                    <option key={month} value={month} style={{ backgroundColor: "#000000" }}>
                       {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
                     </option>
                   ))}

@@ -852,11 +852,12 @@ const CourseDetail = () => {
                           name="lessonType"
                           value={moduleForm.lessonType}
                           onChange={handleModuleFormChange}
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                          <option value="video">Video</option>
-                          <option value="pdf">PDF</option>
-                          <option value="audio">Audio</option>
-                          <option value="assignment">Assignment</option>
+                          className="w-full rounded-xl border border-white/15 bg-black px-3 py-2.5 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                          style={{ backgroundColor: "#000000" }}>
+                          <option value="video" style={{ backgroundColor: "#000000" }}>Video</option>
+                          <option value="pdf" style={{ backgroundColor: "#000000" }}>PDF</option>
+                          <option value="audio" style={{ backgroundColor: "#000000" }}>Audio</option>
+                          <option value="assignment" style={{ backgroundColor: "#000000" }}>Assignment</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
@@ -1010,11 +1011,12 @@ const CourseDetail = () => {
                                 name="contentType"
                                 value={lessonForm.contentType}
                                 onChange={handleLessonFormChange}
-                                className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30">
-                                <option value="video">Video</option>
-                                <option value="pdf">PDF</option>
-                                <option value="audio">Audio</option>
-                                <option value="assignment">Assignment</option>
+                                className="rounded-lg border border-white/15 bg-black px-3 py-2 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                                style={{ backgroundColor: "#000000" }}>
+                                <option value="video" style={{ backgroundColor: "#000000" }}>Video</option>
+                                <option value="pdf" style={{ backgroundColor: "#000000" }}>PDF</option>
+                                <option value="audio" style={{ backgroundColor: "#000000" }}>Audio</option>
+                                <option value="assignment" style={{ backgroundColor: "#000000" }}>Assignment</option>
                               </select>
                               <input
                                 name="durationMinutes"
@@ -1175,10 +1177,11 @@ const CourseDetail = () => {
                           name="selectedQuizId"
                           value={selectedQuizId}
                           onChange={(e) => setSelectedQuizId(e.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30">
-                          <option value="">Select a quiz...</option>
+                          className="w-full rounded-xl border border-white/15 bg-black px-3 py-2.5 text-sm text-white focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                          style={{ backgroundColor: "#000000" }}>
+                          <option value="" style={{ backgroundColor: "#000000" }}>Select a quiz...</option>
                           {linkableQuizzes.map((quiz) => (
-                            <option key={quiz.id} value={quiz.id}>
+                            <option key={quiz.id} value={quiz.id} style={{ backgroundColor: "#000000" }}>
                               {quiz.title}
                             </option>
                           ))}

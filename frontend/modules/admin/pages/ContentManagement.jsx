@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
@@ -9,10 +10,13 @@ import {
   FaTrash,
   FaSearch,
   FaFilter,
+  FaEdit,
 } from "react-icons/fa";
 import { apiRequest } from "../../../src/services/api/baseClient";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const ContentManagement = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalBooks: 0,
     booksByAdmin: 0,
@@ -20,12 +24,14 @@ const ContentManagement = () => {
     coursesByAdmin: 0,
   });
   const [courses, setCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]); // Store all courses before filtering
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("courses"); // "courses" or "books"
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // "all", "published", "archived"
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // "all", "visible", "hidden"
+  const [courseTypeFilter, setCourseTypeFilter] = useState("all"); // "all", "my-courses", "teacher-courses"
 
   // Fetch statistics
   const fetchStats = async () => {
@@ -52,7 +58,30 @@ const ContentManagement = () => {
       const response = await apiRequest(`/admin/content/courses?${params}`, {
         method: "GET",
       });
-      setCourses(response.courses || []);
+      const allCoursesData = response.courses || [];
+      setAllCourses(allCoursesData);
+      
+      // Filter courses based on courseTypeFilter
+      let filtered = allCoursesData;
+      if (courseTypeFilter === "my-courses" && user?.id) {
+        // Show only courses created by current admin
+        filtered = allCoursesData.filter(
+          (course) => {
+            const instructorId = course.instructor?._id || course.instructor?.id;
+            const instructorIdStr = instructorId?.toString();
+            const userIdStr = user.id?.toString();
+            // Match by ID (handles both ObjectId and string formats)
+            return instructorIdStr === userIdStr || instructorId === user.id;
+          }
+        );
+      } else if (courseTypeFilter === "teacher-courses") {
+        // Show only courses created by teachers
+        filtered = allCoursesData.filter(
+          (course) => course.instructor?.role === "teacher"
+        );
+      }
+      // If "all", show all courses
+      setCourses(filtered);
     } catch (error) {
       console.error("Error fetching courses:", error);
       toast.error("Failed to load courses");
@@ -99,7 +128,7 @@ const ContentManagement = () => {
       }
     };
     loadData();
-  }, [activeTab, searchQuery, statusFilter, visibilityFilter]);
+  }, [activeTab, searchQuery, statusFilter, visibilityFilter, courseTypeFilter, user]);
 
   // Delete course
   const handleDeleteCourse = async (courseId) => {
@@ -238,7 +267,7 @@ const ContentManagement = () => {
                   ? "bg-[#F5D26A]/20 text-[#F5D26A]"
                   : "text-gray-400 hover:text-white"
               }`}>
-              Courses ({courses.length})
+              Courses ({courseTypeFilter === "all" ? allCourses.length : courses.length})
             </button>
             <button
               onClick={() => setActiveTab("books")}
@@ -265,22 +294,35 @@ const ContentManagement = () => {
 
           {/* Filters */}
           {activeTab === "courses" ? (
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50">
-              <option value="all">All Status</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={courseTypeFilter}
+                onChange={(e) => setCourseTypeFilter(e.target.value)}
+                className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
+                style={{ backgroundColor: "#000000" }}>
+                <option value="all" style={{ backgroundColor: "#000000" }}>All Courses</option>
+                <option value="my-courses" style={{ backgroundColor: "#000000" }}>My Courses (Editable)</option>
+                <option value="teacher-courses" style={{ backgroundColor: "#000000" }}>Teacher Courses</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
+                style={{ backgroundColor: "#000000" }}>
+                <option value="all" style={{ backgroundColor: "#000000" }}>All Status</option>
+                <option value="published" style={{ backgroundColor: "#000000" }}>Published</option>
+                <option value="archived" style={{ backgroundColor: "#000000" }}>Archived</option>
+              </select>
+            </div>
           ) : (
             <select
               value={visibilityFilter}
               onChange={(e) => setVisibilityFilter(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50">
-              <option value="all">All Visibility</option>
-              <option value="visible">Visible</option>
-              <option value="hidden">Hidden</option>
+              className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
+              style={{ backgroundColor: "#000000" }}>
+              <option value="all" style={{ backgroundColor: "#000000" }}>All Visibility</option>
+              <option value="visible" style={{ backgroundColor: "#000000" }}>Visible</option>
+              <option value="hidden" style={{ backgroundColor: "#000000" }}>Hidden</option>
             </select>
           )}
         </div>
@@ -307,7 +349,7 @@ const ContentManagement = () => {
                       <p className="text-gray-400 text-sm mt-1">
                         By: {course.instructor?.fullName || "Unknown"} ({course.instructor?.role || "N/A"})
                       </p>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 flex-wrap">
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
                             course.status === "published"
@@ -319,9 +361,36 @@ const ContentManagement = () => {
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-500/20 text-blue-400">
                           {course.price || 0} AED
                         </span>
+                        {/* Show editable badge for admin's own courses */}
+                        {(() => {
+                          const instructorId = course.instructor?._id || course.instructor?.id;
+                          const instructorIdStr = instructorId?.toString();
+                          const userIdStr = user?.id?.toString();
+                          const isMyCourse = instructorIdStr === userIdStr || instructorId === user?.id;
+                          return isMyCourse ? (
+                            <span className="px-2 py-1 rounded text-xs font-semibold bg-[#F5D26A]/20 text-[#F5D26A]">
+                              Editable
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
+                      {/* Show Edit button only for courses created by current admin */}
+                      {(() => {
+                        const instructorId = course.instructor?._id || course.instructor?.id;
+                        const instructorIdStr = instructorId?.toString();
+                        const userIdStr = user?.id?.toString();
+                        const isMyCourse = instructorIdStr === userIdStr || instructorId === user?.id;
+                        return isMyCourse ? (
+                          <Link
+                            to={`/super-admin/courses/${course._id}`}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
+                            title="Edit Course">
+                            <FaEdit className="text-[#F5D26A]" />
+                          </Link>
+                        ) : null;
+                      })()}
                       <button
                         onClick={() => handleToggleCourseVisibility(course._id, course.status)}
                         className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"

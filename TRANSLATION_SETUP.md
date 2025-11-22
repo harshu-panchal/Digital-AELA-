@@ -1,6 +1,6 @@
 # Translation System Setup Guide
 
-This document explains how to set up and use the Google Cloud Translate API integration for the Digital AELA project.
+This document explains how to set up and use the Google Cloud Translate API integration for the Digital AELA project using only an API key.
 
 ## Architecture Overview
 
@@ -21,33 +21,96 @@ cd backend
 npm install @google-cloud/translate
 ```
 
-### 2. Configure Google Cloud Credentials
+### 2. Get Google Cloud Translate API Key
 
-You need to set up Google Cloud credentials. Choose one of these options:
+Follow these simple steps to get your API key:
 
-#### Option A: API Key (Simpler)
+#### Step 1: Create a Google Cloud Account (if you don't have one)
 
-1. Get a Google Cloud Translate API key from [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable the Cloud Translation API
-3. Add to your `.env` file:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Sign in with your Google account or create a new account
+3. Complete the signup process if needed (requires credit card, but you get free credits)
+
+#### Step 2: Create a New Project (or use existing)
+
+1. In the Google Cloud Console, click on the **project dropdown** at the top
+2. Click **"New Project"** (or select an existing project)
+3. Enter a project name (e.g., "digital-aela-translations")
+4. Click **"Create"**
+5. Wait for the project to be created, then select it from the dropdown
+
+#### Step 3: Enable Cloud Translation API
+
+1. In the left sidebar, go to **"APIs & Services"** → **"Library"**
+2. Search for **"Cloud Translation API"**
+3. Click on **"Cloud Translation API"** from the results
+4. Click **"Enable"** button
+5. Wait for the API to be enabled (this may take a minute)
+
+#### Step 4: Create API Key
+
+1. In the left sidebar, go to **"APIs & Services"** → **"Credentials"**
+2. Click **"Create Credentials"** at the top
+3. Select **"API Key"** from the dropdown
+4. A new API key will be created and displayed
+5. **Copy the API key** - you'll need it in the next step
+
+#### Step 5: (Recommended) Restrict the API Key
+
+For security, restrict your API key to only work with the Cloud Translation API:
+
+1. Click on the API key you just created (or click "Edit API key" from the popup)
+2. Under **"API restrictions"**, select **"Restrict key"**
+3. Choose **"Cloud Translation API"** from the list
+4. Click **"Save"**
+
+**⚠️ Security Note:** Keep your API key secure and never commit it to version control!
+
+### 3. Configure Your `.env` File
+
+1. Go to your `backend` directory
+2. Create a `.env` file if it doesn't exist (or open existing one)
+3. Add this line with your API key:
 
 ```
 GOOGLE_CLOUD_TRANSLATE_API_KEY=your_api_key_here
-GOOGLE_CLOUD_PROJECT_ID=your_project_id_here
 ```
 
-#### Option B: Service Account (Recommended for Production)
+**That's it!** You don't need a Project ID or JSON file. Just the API key is sufficient.
 
-1. Create a service account in Google Cloud Console
-2. Download the credentials JSON file
-3. Add to your `.env` file:
+**Example `.env` file:**
 
 ```
-GOOGLE_CLOUD_CREDENTIALS_PATH=/path/to/credentials.json
-GOOGLE_CLOUD_PROJECT_ID=your_project_id_here
+GOOGLE_CLOUD_TRANSLATE_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstuvw
 ```
 
-### 3. API Endpoints
+### 4. Verify Your `.gitignore` File
+
+Make sure your `backend/.gitignore` includes:
+
+```
+.env
+```
+
+This ensures your API key is never committed to version control.
+
+### 5. Test the Setup
+
+1. Start your backend server:
+
+```bash
+cd backend
+npm run dev
+```
+
+2. Check the console logs - you should see: `[Google Cloud] Translate client initialized successfully`
+
+3. If you see a warning, double-check that:
+   - Your API key is correctly set in the `.env` file
+   - The Cloud Translation API is enabled in your Google Cloud project
+   - There are no extra spaces or quotes around the API key in the `.env` file
+
+### 6. API Endpoints
 
 The translation API is available at:
 
@@ -211,10 +274,32 @@ npm run dev
 
 ### Translations not working?
 
-1. Check Google Cloud credentials are set correctly
-2. Verify Google Cloud Translate API is enabled
-3. Check browser console for errors
-4. Verify translation files exist in `public/locales`
+1. **Check API Key**: Verify your API key is correctly set in `backend/.env` file
+
+   - Make sure there are no extra spaces or quotes
+   - The format should be: `GOOGLE_CLOUD_TRANSLATE_API_KEY=AIzaSy...`
+
+2. **Verify API is Enabled**: Check that Cloud Translation API is enabled in Google Cloud Console
+
+   - Go to "APIs & Services" → "Library"
+   - Search for "Cloud Translation API" and ensure it shows "Enabled"
+
+3. **Check API Key Restrictions**: If you restricted the API key, make sure it's allowed for Cloud Translation API
+
+   - Go to "APIs & Services" → "Credentials"
+   - Click on your API key and check "API restrictions"
+
+4. **Check Backend Logs**: Look at your backend console for error messages
+
+   - You should see: `[Google Cloud] Translate client initialized successfully`
+   - If you see errors, they will help identify the issue
+
+5. **Check Browser Console**: Look for errors in the browser console
+
+   - Network errors might indicate API key issues
+   - Verify translation files exist in `public/locales`
+
+6. **Verify .env File**: Make sure your `.env` file is in the `backend` directory (not `backend/src`)
 
 ### Performance issues?
 
@@ -222,9 +307,52 @@ npm run dev
 2. Verify batch translation is used for multiple texts
 3. Check network tab for API call patterns
 
+### Common Issues
+
+**Issue**: "No credentials found" warning
+
+**Solution**: Make sure `GOOGLE_CLOUD_TRANSLATE_API_KEY` is set in your `backend/.env` file
+
+**Issue**: "Failed to initialize Translate client" error
+
+**Solution**:
+
+- Verify your API key is valid
+- Make sure the Cloud Translation API is enabled
+- Check that there are no typos in the API key
+
+**Issue**: Translations work but are slow
+
+**Solution**:
+
+- Check that caching is working (look for cached results in IndexedDB)
+- Verify batch translation is being used for multiple texts
+
 ## Next Steps
 
 - Add more translation keys as needed
 - Update more components to use translations
 - Add translation keys for all static content
 - Implement SEO-friendly translated URLs (optional)
+
+## FAQ
+
+### Do I need a Project ID?
+
+**No.** When using API key authentication, you only need the API key. The Project ID is optional.
+
+### Do I need a JSON credentials file?
+
+**No.** API key authentication doesn't require any JSON file. Just add your API key to the `.env` file.
+
+### Can I use this in production?
+
+Yes! API key authentication works perfectly for production. Just make sure to:
+
+- Restrict your API key to only Cloud Translation API
+- Set up usage quotas and billing alerts in Google Cloud Console
+- Never commit your API key to version control
+
+### What if I exceed the free quota?
+
+Google Cloud offers a free tier for Cloud Translation API. If you exceed it, you'll be charged based on usage. Set up billing alerts in Google Cloud Console to monitor costs.

@@ -59,6 +59,24 @@
     font: inherit;
   }
 
+  /* Ensure all select dropdowns have black backgrounds */
+  select {
+    background-color: #000000 !important;
+    color: #ffffff;
+  }
+
+  /* Ensure all option elements have black backgrounds */
+  select option {
+    background-color: #000000 !important;
+    color: #ffffff;
+  }
+
+  /* Ensure select dropdown list background is black */
+  select:focus,
+  select:active {
+    background-color: #000000 !important;
+  }
+
   a,
   button {
     touch-action: manipulation;

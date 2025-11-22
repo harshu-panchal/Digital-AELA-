@@ -26,17 +26,25 @@ const initializeTranslateClient = () => {
 
   try {
     if (credentialsPath) {
-      // Use service account credentials file
+      // Use service account credentials file (requires projectId)
+      if (!projectId) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          "[Google Cloud] Project ID is required when using credentials file. Set GOOGLE_CLOUD_PROJECT_ID"
+        );
+        return null;
+      }
       translateClient = new Translate({
         projectId: projectId,
         keyFilename: credentialsPath,
       });
     } else if (apiKey) {
-      // Use API key (simpler setup)
-      translateClient = new Translate({
-        projectId: projectId,
-        key: apiKey,
-      });
+      // Use API key (simpler setup - projectId is optional)
+      const config = { key: apiKey };
+      if (projectId) {
+        config.projectId = projectId;
+      }
+      translateClient = new Translate(config);
     }
 
     // eslint-disable-next-line no-console

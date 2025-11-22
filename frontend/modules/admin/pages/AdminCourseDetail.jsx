@@ -1,0 +1,763 @@
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { HiOutlineArrowUturnLeft } from "react-icons/hi2";
+import SEO from "../../../src/components/SEO";
+import { getAdminCourseById, updateAdminCourse } from "../../../src/services/api/adminContent";
+import { getPremiumCourseCount } from "../../../src/services/api/courses";
+import {
+  safeString,
+  sanitizeUrl,
+} from "../../../src/utils/registrationHelpers";
+import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
+
+const categories = [
+  "English Language",
+  "Digital Marketing",
+  "Corporate Training",
+  "Other",
+];
+
+const AdminCourseDetail = () => {
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const [course, setCourse] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [premiumCount, setPremiumCount] = useState(0);
+  const [maxPremium, setMaxPremium] = useState(6);
+  const [formData, setFormData] = useState({
+    title: "",
+    subtitle: "",
+    category: "",
+    difficulty: "Intermediate",
+    price: "",
+    discountPrice: "",
+    language: "English",
+    deliveryMode: "Live cohort",
+    duration: "",
+    lessonCount: "",
+    description: "",
+    learningOutcomes: "",
+    requirements: "",
+    coverImage: "",
+    coverImageFile: null,
+    coverImagePreview: null,
+    introVideoUrl: "",
+    syllabus: "",
+    tags: "",
+    status: "draft",
+    isPremium: false,
+  });
+
+  // Fetch premium course count on mount
+  useEffect(() => {
+    const fetchPremiumCount = async () => {
+      try {
+        const response = await getPremiumCourseCount();
+        if (response) {
+          setPremiumCount(response.count || 0);
+          setMaxPremium(response.maxAllowed || 6);
+        }
+      } catch (error) {
+        console.error("Failed to fetch premium course count:", error);
+      }
+    };
+    fetchPremiumCount();
+  }, []);
+
+  // Load course data
+  useEffect(() => {
+    const loadCourse = async () => {
+      if (!courseId) return;
+      
+      try {
+        setIsLoading(true);
+        const existing = await getAdminCourseById(courseId);
+
+        if (!existing) {
+          toast.error("Course not found or you don't have permission to edit it.");
+          navigate("/super-admin", { replace: true });
+          return;
+        }
+
+        setCourse(existing);
+        setFormData({
+          title: existing.title || "",
+          subtitle: existing.metadata?.subtitle || "",
+          category: existing.category || "",
+          difficulty: existing.metadata?.difficulty || "Intermediate",
+          price: existing.price?.toString() || "",
+          discountPrice: existing.metadata?.discountPrice?.toString() || "",
+          language: existing.metadata?.language || "English",
+          deliveryMode: existing.metadata?.deliveryMode || "Live cohort",
+          duration: existing.duration?.toString() || "",
+          lessonCount: existing.metadata?.lessonCount || "",
+          description: existing.description || "",
+          learningOutcomes: existing.metadata?.learningOutcomes || "",
+          requirements: existing.metadata?.requirements || "",
+          coverImage: existing.thumbnailUrl || "",
+          coverImageFile: null,
+          coverImagePreview: existing.thumbnailUrl || null,
+          introVideoUrl: existing.metadata?.introVideoUrl || "",
+          syllabus: existing.metadata?.syllabus || "",
+          tags: Array.isArray(existing.metadata?.tags) 
+            ? existing.metadata.tags.join(", ") 
+            : safeString(existing.metadata?.tags),
+          status: existing.status || "draft",
+          isPremium: existing.metadata?.isPremium || false,
+        });
+      } catch (error) {
+        console.error("Failed to load course:", error);
+        toast.error("Failed to load course details.");
+        navigate("/super-admin", { replace: true });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCourse();
+  }, [courseId, navigate]);
+
+  const priceHelper = useMemo(
+    () => ({
+      price: "Enter price in AED. You can offer discounts later.",
+      discount: "Optional. Leave blank if you don't want to run a promo.",
+    }),
+    []
+  );
+
+  const handleChange = useCallback(
+    (event) => {
+      const { name, value, type, checked, files } = event.target;
+      if (type === "file" && files && files[0]) {
+        const file = files[0];
+        
+        // Handle cover image upload
+        if (name === "coverImageFile") {
+          // Validate image file
+          if (!file.type.startsWith("image/")) {
+            toast.error("Please upload an image file");
+            return;
+          }
+          // Validate file size (5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image file size must be less than 5MB");
+            return;
+          }
+          
+          // Create preview
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setFormData((prev) => ({
+              ...prev,
+              coverImageFile: file,
+              coverImagePreview: reader.result,
+            }));
+          };
+          reader.readAsDataURL(file);
+        }
+      } else if (type === "checkbox") {
+        setFormData((prev) => ({ ...prev, [name]: checked }));
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      }
+    },
+    []
+  );
+
+  const handleImageUpload = async () => {
+    if (!formData.coverImageFile) {
+      toast.error("Please select an image file first");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(formData.coverImageFile);
+      setFormData((prev) => ({
+        ...prev,
+        coverImage: imageUrl,
+        coverImagePreview: imageUrl,
+      }));
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Image upload error:", error);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!course) return;
+
+    const trimmedTitle = safeString(formData.title).trim();
+    const trimmedDescription = safeString(formData.description).trim();
+    const trimmedPrice = safeString(formData.price).trim();
+
+    if (!trimmedTitle) {
+      toast.error("Course title is required.");
+      return;
+    }
+
+    if (!trimmedDescription || trimmedDescription.length < 60) {
+      toast.error("Description must be at least 60 characters.");
+      return;
+    }
+
+    if (!trimmedPrice || isNaN(Number(trimmedPrice))) {
+      toast.error("Valid price is required (use 0 for free courses).");
+      return;
+    }
+
+    // Check premium course limit if setting to premium
+    if (formData.isPremium) {
+      const currentIsPremium = course.metadata?.isPremium || false;
+      if (!currentIsPremium && premiumCount >= maxPremium) {
+        toast.error(`Maximum of ${maxPremium} premium courses allowed. Please unmark another premium course first.`);
+        return;
+      }
+    }
+
+    const payload = {
+      title: trimmedTitle,
+      subtitle: safeString(formData.subtitle),
+      category: formData.category || "Uncategorised",
+      difficulty: formData.difficulty,
+      price: Number(trimmedPrice),
+      discountPrice: formData.discountPrice
+        ? Number(formData.discountPrice)
+        : null,
+      language: formData.language,
+      deliveryMode: formData.deliveryMode,
+      duration: safeString(formData.duration),
+      lessonCount: safeString(formData.lessonCount),
+      description: trimmedDescription,
+      learningOutcomes: safeString(formData.learningOutcomes),
+      requirements: safeString(formData.requirements),
+      coverImage: sanitizeUrl(formData.coverImage),
+      introVideoUrl: formData.introVideoUrl
+        ? sanitizeUrl(formData.introVideoUrl)
+        : "",
+      syllabus: safeString(formData.syllabus),
+      tags: safeString(formData.tags)
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      status: formData.status,
+      isPremium: formData.isPremium || false,
+    };
+
+    setIsSaving(true);
+    try {
+      const updated = await updateAdminCourse(courseId, payload);
+      setCourse(updated);
+      toast.success("Course updated successfully.");
+    } catch (error) {
+      const message =
+        (error?.details?.error?.message || error?.message) ??
+        "We couldn't update your course. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#05060D] text-white">
+        <p className="text-sm text-slate-300/80">Loading course...</p>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#05060D] text-white">
+      <SEO
+        title={`Edit ${formData.title || "Course"} | Digital AELA Super Admin`}
+        description="Edit course details for the Digital AELA platform."
+        keywords="edit course, admin course editing"
+        url={`https://digitalaela.com/super-admin/courses/${courseId}`}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,210,106,0.15),transparent_70%)]" />
+
+      <main className="relative z-10 pt-4 pb-20">
+        <section className="layout-container space-y-8">
+          <header className="space-y-3">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10 transition">
+                <HiOutlineArrowUturnLeft className="h-4 w-4" />
+                Back
+              </button>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/30 bg-[#F5D26A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
+                Edit Course
+              </span>
+            </div>
+            <h1 className="text-2xl font-semibold md:text-3xl">
+              Edit Course: {formData.title || "Untitled"}
+            </h1>
+            <p className="text-sm text-slate-300/80 md:max-w-2xl">
+              Update course details, outcomes, and media. Changes are saved immediately.
+            </p>
+          </header>
+
+          <motion.form
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            onSubmit={handleSubmit}
+            className="space-y-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
+            <section className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="title"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Course title*
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="Executive Presentation Mastery"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="subtitle"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Subtitle
+                </label>
+                <input
+                  id="subtitle"
+                  name="subtitle"
+                  type="text"
+                  value={formData.subtitle}
+                  onChange={handleChange}
+                  placeholder="Advanced storytelling for boardroom presentations"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="category"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Category*
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  required
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    Select category
+                  </option>
+                  {categories.map((option) => (
+                    <option
+                      key={option}
+                      value={option}
+                      style={{ backgroundColor: "#000000" }}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="difficulty"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Difficulty
+                  </label>
+                  <select
+                    id="difficulty"
+                    name="difficulty"
+                    value={formData.difficulty}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                    style={{ backgroundColor: "#000000" }}>
+                    <option value="Beginner" style={{ backgroundColor: "#000000" }}>
+                      Beginner
+                    </option>
+                    <option value="Intermediate" style={{ backgroundColor: "#000000" }}>
+                      Intermediate
+                    </option>
+                    <option value="Advanced" style={{ backgroundColor: "#000000" }}>
+                      Advanced
+                    </option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="language"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Language
+                  </label>
+                  <select
+                    id="language"
+                    name="language"
+                    value={formData.language}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                    style={{ backgroundColor: "#000000" }}>
+                    <option value="English" style={{ backgroundColor: "#000000" }}>
+                      English
+                    </option>
+                    <option value="Arabic" style={{ backgroundColor: "#000000" }}>
+                      Arabic
+                    </option>
+                    <option value="Hindi" style={{ backgroundColor: "#000000" }}>
+                      Hindi
+                    </option>
+                    <option value="Urdu" style={{ backgroundColor: "#000000" }}>
+                      Urdu
+                    </option>
+                    <option value="Other" style={{ backgroundColor: "#000000" }}>
+                      Other
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label
+                  htmlFor="description"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Course description*
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={6}
+                  placeholder="Explain what learners will master, the format of the sessions, and any transformations they can expect..."
+                  className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="learningOutcomes"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Learning outcomes
+                </label>
+                <textarea
+                  id="learningOutcomes"
+                  name="learningOutcomes"
+                  value={formData.learningOutcomes}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="List bullet-style outcomes (e.g., Master 5 persuasive frameworks...)"
+                  className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="requirements"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Requirements
+                </label>
+                <textarea
+                  id="requirements"
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Any prerequisites or expectations from learners"
+                  className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="price"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Price (AED)*
+                  </label>
+                  <input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="899"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                    required
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    {priceHelper.price}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="discountPrice"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Discount price
+                  </label>
+                  <input
+                    id="discountPrice"
+                    name="discountPrice"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.discountPrice}
+                    onChange={handleChange}
+                    placeholder="749"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    {priceHelper.discount}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="duration"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Duration
+                  </label>
+                  <input
+                    id="duration"
+                    name="duration"
+                    type="text"
+                    value={formData.duration}
+                    onChange={handleChange}
+                    placeholder="6 weeks · 18 sessions"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="lessonCount"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Lessons
+                  </label>
+                  <input
+                    id="lessonCount"
+                    name="lessonCount"
+                    type="text"
+                    value={formData.lessonCount}
+                    onChange={handleChange}
+                    placeholder="12 video lessons"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="deliveryMode"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Delivery mode
+                </label>
+                <select
+                  id="deliveryMode"
+                  name="deliveryMode"
+                  value={formData.deliveryMode}
+                  onChange={handleChange}
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="Live cohort" style={{ backgroundColor: "#000000" }}>
+                    Live cohort
+                  </option>
+                  <option value="Self-paced video" style={{ backgroundColor: "#000000" }}>
+                    Self-paced video
+                  </option>
+                  <option value="Hybrid" style={{ backgroundColor: "#000000" }}>
+                    Hybrid
+                  </option>
+                  <option value="Learn & Earn challenge" style={{ backgroundColor: "#000000" }}>
+                    Learn & Earn challenge
+                  </option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label
+                  htmlFor="coverImageFile"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Cover Image
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    id="coverImageFile"
+                    name="coverImageFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] hover:file:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                  {formData.coverImageFile && (
+                    <button
+                      type="button"
+                      onClick={handleImageUpload}
+                      disabled={isUploadingImage}
+                      className="rounded-xl border border-[#F5D26A]/30 bg-[#F5D26A]/20 px-4 py-2 text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
+                      {isUploadingImage ? "Uploading..." : "Upload"}
+                    </button>
+                  )}
+                </div>
+                {formData.coverImagePreview && (
+                  <div className="mt-3">
+                    <img
+                      src={formData.coverImagePreview}
+                      alt="Cover preview"
+                      className="h-32 w-auto rounded-lg object-cover"
+                    />
+                  </div>
+                )}
+                <input
+                  type="text"
+                  name="coverImage"
+                  value={formData.coverImage}
+                  onChange={handleChange}
+                  placeholder="Or paste image URL directly"
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="introVideoUrl"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Intro Video URL
+                </label>
+                <input
+                  id="introVideoUrl"
+                  name="introVideoUrl"
+                  type="url"
+                  value={formData.introVideoUrl}
+                  onChange={handleChange}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="status"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Status
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="draft" style={{ backgroundColor: "#000000" }}>
+                    Draft
+                  </option>
+                  <option value="published" style={{ backgroundColor: "#000000" }}>
+                    Published
+                  </option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label
+                  htmlFor="syllabus"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Syllabus
+                </label>
+                <textarea
+                  id="syllabus"
+                  name="syllabus"
+                  value={formData.syllabus}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Detailed course outline and curriculum..."
+                  className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label
+                  htmlFor="tags"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Tags (comma-separated)
+                </label>
+                <input
+                  id="tags"
+                  name="tags"
+                  type="text"
+                  value={formData.tags}
+                  onChange={handleChange}
+                  placeholder="business, leadership, communication"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
+                <input
+                  id="isPremium"
+                  name="isPremium"
+                  type="checkbox"
+                  checked={formData.isPremium}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-[#F5D26A] focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+                <label
+                  htmlFor="isPremium"
+                  className="text-sm text-white">
+                  Mark as Premium Course
+                  {formData.isPremium && (
+                    <span className="ml-2 text-xs text-slate-400">
+                      ({premiumCount}/{maxPremium} premium courses)
+                    </span>
+                  )}
+                </label>
+              </div>
+            </section>
+
+            <div className="flex items-center justify-end gap-4 border-t border-white/10 pt-6">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="rounded-xl bg-[#F5D26A]/20 px-6 py-3 text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </motion.form>
+        </section>
+      </main>
+    </div>
+  );
+};
+
+export default AdminCourseDetail;
+

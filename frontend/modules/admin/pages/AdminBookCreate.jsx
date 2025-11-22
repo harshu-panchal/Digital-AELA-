@@ -307,16 +307,16 @@ const AdminBookCreate = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                  style={{ backgroundColor: "#0a0d19" }}>
-                  <option value="" style={{ backgroundColor: "#0a0d19" }}>
+                  className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
                     Select a category
                   </option>
                   {categories.map((option) => (
                     <option
                       key={option}
                       value={option}
-                      style={{ backgroundColor: "#0a0d19" }}>
+                      style={{ backgroundColor: "#000000" }}>
                       {option}
                     </option>
                   ))}

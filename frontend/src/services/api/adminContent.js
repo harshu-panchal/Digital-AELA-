@@ -10,6 +10,47 @@ export const createCourse = (payload) =>
   });
 
 /**
+ * Get course by ID (super admin)
+ */
+export const getAdminCourseById = async (courseId) => {
+  try {
+    const response = await apiRequest(`/admin/courses/${courseId}`, {
+      method: "GET",
+    });
+    // Transform backend response to match frontend expectations
+    return {
+      id: response.course._id,
+      ...response.course,
+      modules: response.course.modules || [],
+      resources: response.course.resources || [],
+      enrolments: response.course.enrolments || [],
+      quizzes: response.course.quizzes || [],
+    };
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Update course (super admin)
+ */
+export const updateAdminCourse = async (courseId, updates) => {
+  const response = await apiRequest(`/admin/courses/${courseId}`, {
+    method: "PUT",
+    body: updates,
+  });
+  // Transform backend response to match frontend expectations
+  return {
+    id: response.course._id,
+    ...response.course,
+    modules: response.course.modules || [],
+    resources: response.course.resources || [],
+    enrolments: response.course.enrolments || [],
+    quizzes: response.course.quizzes || [],
+  };
+};
+
+/**
  * Create ebook (super admin)
  * Supports both FormData (with PDF file) and JSON payload
  */
