@@ -158,13 +158,6 @@ const Navbar = () => {
     });
   }
 
-  if (user?.role === "super-admin") {
-    baseNavItems.splice(1, 0, {
-      label: "Admin",
-      path: "/super-admin",
-    });
-  }
-
   const handleLogout = useCallback(() => {
     logout();
     setActiveDropdown(null);

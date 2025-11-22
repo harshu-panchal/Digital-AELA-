@@ -36,7 +36,7 @@ const generateId = (prefix) => {
 export const ROLE_DETAILS = {
   "super-admin": {
     label: "Super Admin",
-    landing: "/learn-earn/admin",
+    landing: "/super-admin",
     description: "Platform oversight, approvals, and analytics.",
   },
   teacher: {

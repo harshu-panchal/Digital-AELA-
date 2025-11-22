@@ -173,16 +173,22 @@ export const updateSettings = async (req, res, next) => {
           continue;
         }
 
+        // Automatically set isPublic to true for social media settings
+        const finalCategory = category || "general";
+        const shouldBePublic = isPublic !== undefined 
+          ? isPublic 
+          : (finalCategory === "social" || key.startsWith("social."));
+
         // Update or create setting
         const updatedSetting = await Settings.findOneAndUpdate(
           { key },
           {
             value: validatedValue,
-            category: category || "general",
+            category: finalCategory,
             type: type || inferType(validatedValue),
             label: label || null,
             description: description || null,
-            isPublic: isPublic || false,
+            isPublic: shouldBePublic,
             isEncrypted: isEncrypted || false,
             updatedBy: userId,
           },
@@ -253,7 +259,14 @@ export const updateSetting = async (req, res, next) => {
     if (type) setting.type = type;
     if (label !== undefined) setting.label = label;
     if (description !== undefined) setting.description = description;
-    if (isPublic !== undefined) setting.isPublic = isPublic;
+    
+    // Automatically set isPublic to true for social media settings
+    if (isPublic !== undefined) {
+      setting.isPublic = isPublic;
+    } else if (setting.category === "social" || setting.key.startsWith("social.")) {
+      setting.isPublic = true;
+    }
+    
     if (isEncrypted !== undefined) setting.isEncrypted = isEncrypted;
     setting.updatedBy = userId;
 
@@ -416,6 +429,16 @@ export const initializeDefaultSettings = async (req, res, next) => {
           });
           await setting.save();
           results.push(settingData.key);
+        } else {
+          // Update existing social media settings to ensure they're public
+          if (settingData.category === "social" || settingData.key?.startsWith("social.")) {
+            if (!existing.isPublic) {
+              existing.isPublic = true;
+              existing.updatedBy = userId;
+              await existing.save();
+              results.push(settingData.key + " (updated to public)");
+            }
+          }
         }
       } catch (error) {
         errors.push({ key: settingData.key, error: error.message });

@@ -121,6 +121,13 @@ const SystemSettings = () => {
       if (response) {
         toast.success(`Successfully updated ${settingsToUpdate.length} setting(s)`);
         await loadSettings(); // Reload to get updated data
+        
+        // If social media settings were updated, clear the cache and notify
+        const hasSocialSettings = settingsToUpdate.some(s => s.category === "social" || s.key?.startsWith("social."));
+        if (hasSocialSettings) {
+          // Dispatch event to clear cache in useSocialMedia hook
+          window.dispatchEvent(new Event('socialSettingsUpdated'));
+        }
       }
     } catch (error) {
       console.error("Failed to save settings:", error);

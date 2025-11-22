@@ -34,16 +34,21 @@ export const fetchPublicSettings = async (params = {}) => {
 export const fetchSocialMediaLinks = async () => {
   try {
     const response = await fetchPublicSettings({ category: "social" });
+    
     if (response?.settings?.social) {
       const socialSettings = response.settings.social;
-      return {
+      
+      const links = {
         facebook: socialSettings.find((s) => s.key === "social.facebook")?.value || "",
         twitter: socialSettings.find((s) => s.key === "social.twitter")?.value || "",
         linkedin: socialSettings.find((s) => s.key === "social.linkedin")?.value || "",
         instagram: socialSettings.find((s) => s.key === "social.instagram")?.value || "",
         youtube: socialSettings.find((s) => s.key === "social.youtube")?.value || "",
       };
+      
+      return links;
     }
+    
     return {
       facebook: "",
       twitter: "",

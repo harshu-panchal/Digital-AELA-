@@ -7,7 +7,13 @@ import { fetchSocialMediaLinks } from "../services/api/publicSettings";
  */
 let cachedSocialLinks = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (reduced for faster updates)
+
+// Function to clear cache (can be called after admin updates)
+export const clearSocialMediaCache = () => {
+  cachedSocialLinks = null;
+  cacheTimestamp = null;
+};
 
 export const useSocialMedia = () => {
   const [socialLinks, setSocialLinks] = useState({
@@ -43,6 +49,19 @@ export const useSocialMedia = () => {
     };
 
     loadSocialLinks();
+    
+    // Listen for storage events to clear cache when settings are updated
+    const handleStorageChange = () => {
+      clearSocialMediaCache();
+      loadSocialLinks();
+    };
+    
+    // Listen for custom event that can be dispatched after settings update
+    window.addEventListener('socialSettingsUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('socialSettingsUpdated', handleStorageChange);
+    };
   }, []);
 
   // Function to refresh social links (useful after admin updates)
