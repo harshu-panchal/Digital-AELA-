@@ -60,7 +60,7 @@ export const getTeacherCourseById = async (courseId) => {
 };
 
 /**
- * Update a course (only if draft status)
+ * Update a course (any status - draft, pending, or published)
  */
 export const updateTeacherCourse = async (courseId, updates) => {
   const response = await apiRequest(`/teacher/courses/${courseId}`, {
@@ -76,6 +76,16 @@ export const updateTeacherCourse = async (courseId, updates) => {
     enrolments: response.course.enrolments || [],
     quizzes: response.course.quizzes || [],
   };
+};
+
+/**
+ * Delete a course (any status)
+ */
+export const deleteTeacherCourse = async (courseId) => {
+  const response = await apiRequest(`/teacher/courses/${courseId}`, {
+    method: "DELETE",
+  });
+  return response;
 };
 
 /**

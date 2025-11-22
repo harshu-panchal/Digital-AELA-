@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlineArrowUturnLeft, HiOutlineDocumentText, HiOutlinePlus, HiOutlineSparkles } from "react-icons/hi2";
+import { HiOutlineArrowUturnLeft, HiOutlineDocumentText, HiOutlinePlus, HiOutlineSparkles, HiOutlineTrash } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import {
   getTeacherCourseById,
   updateTeacherCourse,
+  deleteTeacherCourse,
   addCourseModule,
   addLessonToModule,
   linkCourseQuiz,
@@ -553,6 +554,24 @@ const CourseDetail = () => {
     }
   };
 
+  const handleDeleteCourse = async () => {
+    if (!course) return;
+
+    const courseTitle = course.title || formData.title || "this course";
+    
+    if (!window.confirm(`Are you sure you want to delete "${courseTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteTeacherCourse(course.id || course._id || courseId);
+      toast.success("Course deleted successfully");
+      navigate("/teacher/courses");
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete course");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#05060D] text-white">
@@ -600,6 +619,12 @@ const CourseDetail = () => {
                 Last updated ·{" "}
                 {course?.updatedAt ? new Date(course.updatedAt).toLocaleString() : "Just now"}
               </span>
+              <button
+                onClick={handleDeleteCourse}
+                className="inline-flex items-center gap-2 rounded-full border border-red-400/40 bg-red-500/15 px-4 py-2 text-red-100 transition hover:bg-red-500/25">
+                <HiOutlineTrash className="h-4 w-4" />
+                Delete
+              </button>
             </div>
           </header>
 

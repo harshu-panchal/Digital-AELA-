@@ -290,15 +290,8 @@ export const updateTeacherCourse = async (req, res, next) => {
       });
     }
 
-    // Only allow updating if course is still in draft
-    if (course.status !== "draft") {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "Only draft courses can be updated",
-        },
-      });
-    }
+    // Allow updating courses in any status (draft, pending, published)
+    // Teachers can update their courses even after publishing
 
     const {
       title,
@@ -351,6 +344,73 @@ export const updateTeacherCourse = async (req, res, next) => {
       .lean();
 
     return res.status(200).json({ course: populatedCourse });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Teacher: Delete Course
+ * DELETE /api/v1/teacher/courses/:courseId
+ */
+export const deleteTeacherCourse = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only teachers can delete courses",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const instructorObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    const course = await Course.findOne({
+      _id: courseId,
+      instructor: instructorObjectId,
+    });
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    // Teachers can delete their courses regardless of status
+    await Course.findByIdAndDelete(courseId);
+
+    return res.status(200).json({
+      message: "Course deleted successfully",
+      courseId: courseId,
+    });
   } catch (error) {
     return next(error);
   }
@@ -443,21 +503,12 @@ export const bulkCourseOperations = async (req, res, next) => {
 
     switch (operation) {
       case "delete":
-        // Bulk delete courses (only if draft status)
-        const draftCourses = courses.filter((c) => c.status === "draft");
-        if (draftCourses.length !== courses.length) {
-          return res.status(422).json({
-            error: {
-              code: "VALIDATION_ERROR",
-              message: "Only draft courses can be deleted",
-            },
-          });
-        }
+        // Bulk delete courses (any status)
         await Course.deleteMany({ _id: { $in: validCourseIds } });
         result = {
           operation: "delete",
-          deleted: draftCourses.length,
-          courseIds: draftCourses.map((c) => c._id.toString()),
+          deleted: courses.length,
+          courseIds: courses.map((c) => c._id.toString()),
         };
         break;
 

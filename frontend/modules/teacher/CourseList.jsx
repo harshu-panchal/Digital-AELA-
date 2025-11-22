@@ -1,41 +1,64 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlinePlus, HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from "react-icons/hi2";
+import {
+  HiOutlinePlus,
+  HiOutlineEye,
+  HiOutlinePencil,
+  HiOutlineTrash,
+} from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
-import { useAuth } from "../../src/contexts/AuthContext";
-import { getTeacherCourses } from "../../src/services/teacherCourses";
+import {
+  getTeacherCourses,
+  deleteTeacherCourse,
+} from "../../src/services/teacherCourses";
 
 const CourseList = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, published, draft
 
-  useEffect(() => {
-    loadCourses();
-  }, [filter]);
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setIsLoading(true);
     try {
       const coursesData = await getTeacherCourses();
       let filtered = Array.isArray(coursesData) ? coursesData : [];
-      
+
       if (filter === "published") {
         filtered = filtered.filter((c) => c.status === "published");
       } else if (filter === "draft") {
         filtered = filtered.filter((c) => c.status === "draft");
       }
-      
+
       setCourses(filtered);
     } catch (error) {
       toast.error(error.message || "Failed to load courses");
       setCourses([]);
     } finally {
       setIsLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
+
+  const handleDeleteCourse = async (courseId, courseTitle) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${courseTitle}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteTeacherCourse(courseId);
+      toast.success("Course deleted successfully");
+      loadCourses(); // Reload the courses list
+    } catch (error) {
+      toast.error(error.message || "Failed to delete course");
     }
   };
 
@@ -53,7 +76,9 @@ const CourseList = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-white">My Courses</h1>
-            <p className="text-sm text-gray-400 mt-1">Manage and organize your courses</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Manage and organize your courses
+            </p>
           </div>
           <Link
             to="/teacher/courses/new"
@@ -96,7 +121,9 @@ const CourseList = () => {
 
         {/* Courses List */}
         {isLoading ? (
-          <div className="text-center py-12 text-gray-400">Loading courses...</div>
+          <div className="text-center py-12 text-gray-400">
+            Loading courses...
+          </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-400 mb-4">No courses found</p>
@@ -117,8 +144,12 @@ const CourseList = () => {
                 className="rounded-xl border border-white/10 bg-[#060A17]/90 p-6 hover:border-[#F5D26A]/40 transition">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{course.title}</h3>
-                    <p className="text-sm text-gray-400 line-clamp-2">{course.description}</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-gray-400 line-clamp-2">
+                      {course.description}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span
@@ -146,6 +177,16 @@ const CourseList = () => {
                       <HiOutlinePencil className="h-4 w-4" />
                       Edit
                     </Link>
+                    <button
+                      onClick={() =>
+                        handleDeleteCourse(
+                          course._id || course.id,
+                          course.title
+                        )
+                      }
+                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition text-sm">
+                      <HiOutlineTrash className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -158,4 +199,3 @@ const CourseList = () => {
 };
 
 export default CourseList;
-

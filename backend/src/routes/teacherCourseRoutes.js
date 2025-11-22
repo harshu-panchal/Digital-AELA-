@@ -5,6 +5,7 @@ import {
   getTeacherCourses,
   getTeacherCourseById,
   updateTeacherCourse,
+  deleteTeacherCourse,
   uploadCourseBrochure,
   bulkCourseOperations,
 } from "../controllers/teacherCourseController.js";
@@ -45,8 +46,11 @@ router.post("/courses/bulk", bulkCourseOperations);
 // Get a specific course by ID
 router.get("/courses/:courseId", getTeacherCourseById);
 
-// Update a course (only if draft)
+// Update a course (any status)
 router.put("/courses/:courseId", updateTeacherCourse);
+
+// Delete a course (any status)
+router.delete("/courses/:courseId", deleteTeacherCourse);
 
 // Upload course brochure PDF
 router.post(
