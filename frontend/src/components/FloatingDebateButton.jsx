@@ -7,7 +7,7 @@ const FloatingDebateButton = () => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
-    navigate("/live-debate-room");
+    navigate("/learn-earn/live-debate-room");
   };
 
   return (

@@ -1,43 +1,69 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Document, Page, pdfjs } from "react-pdf";
+import {
+  Viewer,
+  Worker,
+  SpecialZoomLevel,
+  ScrollMode,
+} from "@react-pdf-viewer/core";
+import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
 import { AnimatePresence, motion } from "framer-motion";
+// Import worker file from pdfjs-dist
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
 import {
   FaArrowLeft,
   FaArrowRight,
   FaExpand,
   FaCompress,
-  FaMinus,
-  FaPlus,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
-// Set up PDF.js worker - use jsdelivr CDN (more reliable)
-if (typeof window !== "undefined") {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-}
-
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 2.0;
-const SCALE_STEP = 0.25;
+// Import styles
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import "@react-pdf-viewer/page-navigation/lib/styles/index.css";
 
 const PDFEbookReader = () => {
   const { ebookId } = useParams();
   const navigate = useNavigate();
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [ebookData, setEbookData] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [numPages, setNumPages] = useState(0);
   const [direction, setDirection] = useState(1);
-  
-  // Touch/swipe handling
+  const [isPageTurning, setIsPageTurning] = useState(false);
+
+  // Touch/swipe handling for page-turn animation
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
   const containerRef = useRef(null);
+  const viewerContainerRef = useRef(null);
+
+  // Configure plugins
+  const pageNavigationPluginInstance = pageNavigationPlugin({
+    enableShortcuts: true,
+  });
+  const { jumpToPage } = pageNavigationPluginInstance;
+
+  const defaultLayoutPluginInstance = defaultLayoutPlugin({
+    sidebarTabs: () => [],
+    toolbarPlugin: {
+      fullScreenPlugin: {
+        onEnterFullScreen: () => {
+          setIsFullscreen(true);
+        },
+        onExitFullScreen: () => {
+          setIsFullscreen(false);
+        },
+      },
+    },
+  });
 
   // Fetch ebook data
   useEffect(() => {
@@ -45,141 +71,71 @@ const PDFEbookReader = () => {
       try {
         setLoading(true);
         const API_BASE_URL =
-          import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
-        
-        const response = await fetch(`${API_BASE_URL}/resources/ebooks/${ebookId}`);
-        
+          import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+          "http://localhost:5000/api/v1";
+
+        const response = await fetch(
+          `${API_BASE_URL}/resources/ebooks/${ebookId}`
+        );
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch ebook: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch ebook: ${response.status} ${response.statusText}`
+          );
         }
-        
+
         const data = await response.json();
         setEbookData(data);
-        
-        // Verify PDF URL exists
+
         if (!data.downloadUrl) {
           throw new Error("PDF URL not found in ebook data");
         }
-        
-        console.log("PDF URL:", data.downloadUrl);
-        
-        // Try to verify the PDF URL is accessible and check Content-Type
+
+        // Validate PDF URL
         try {
-          const pdfTestResponse = await fetch(data.downloadUrl, { method: "HEAD" });
-          if (!pdfTestResponse.ok) {
-            console.warn("PDF URL might not be accessible:", pdfTestResponse.status);
-          }
-          
-          // Check content type first - this is the most reliable indicator
+          const pdfTestResponse = await fetch(data.downloadUrl, {
+            method: "HEAD",
+          });
           const contentType = pdfTestResponse.headers.get("content-type");
           if (contentType) {
             const contentTypeLower = contentType.toLowerCase();
-            
-            // If Content-Type indicates an image, check if URL actually ends with image extension
-            if (contentTypeLower.includes("image/") && !contentTypeLower.includes("pdf")) {
+            if (
+              contentTypeLower.includes("image/") &&
+              !contentTypeLower.includes("pdf")
+            ) {
               const urlLower = data.downloadUrl.toLowerCase();
-              let urlPath = '';
-              
-              // Try to extract the pathname from URL (remove query params and hash)
-              try {
-                urlPath = new URL(data.downloadUrl).pathname.toLowerCase();
-              } catch (urlError) {
-                // If URL parsing fails, use the full URL path
-                urlPath = urlLower.split('?')[0].split('#')[0];
-              }
-              
-              // Check if the actual filename/path ends with an image extension
-              const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-              const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
-              
-              // If Content-Type is image AND URL ends with image extension, it's likely a mistake
-              if (hasImageExtension) {
-                // Check if it's specifically a cover image path
-                const isCoverImage = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
+              const urlPath = urlLower.split("?")[0].split("#")[0];
+              const imageExtensions = [
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".webp",
+              ];
+              const hasImageExtension = imageExtensions.some((ext) =>
+                urlPath.endsWith(ext)
+              );
+              const isCoverImage =
+                urlLower.includes("/books/covers/") ||
+                urlLower.includes("/covers/");
+
+              if (hasImageExtension || isCoverImage) {
                 const errorMessage = isCoverImage
-                  ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. This is likely a configuration error - the cover image URL was saved to the download URL field. Please contact the administrator to fix this ebook's download URL."
-                  : "Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file. Please check the ebook's download URL or contact the administrator to upload the correct PDF file.";
-                
-                console.error("⚠️ Detected image URL instead of PDF:", {
-                  url: data.downloadUrl,
-                  contentType: contentType,
-                  urlPath: urlPath,
-                  isCoverImage: isCoverImage,
-                });
-                
-                // Show a helpful error message but still allow PDF viewer to attempt loading
+                  ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. Please contact the administrator to fix this."
+                  : "Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file.";
                 setError(errorMessage);
-                toast.error(isCoverImage 
-                  ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
-                  : "The ebook URL points to an image file instead of a PDF. The PDF viewer will attempt to load it anyway.");
-                // Don't throw - let the PDF viewer try and show its own error if it fails
-              } else {
-                // If Content-Type is image but URL doesn't end with image extension, it might be incorrectly configured
-                // Log a warning but don't block - let the PDF viewer try to load it
-                console.warn("Content-Type indicates image, but URL doesn't match:", contentType, data.downloadUrl);
+                toast.error(
+                  isCoverImage
+                    ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
+                    : "The ebook URL points to an image file instead of a PDF."
+                );
               }
-            } else if (contentTypeLower.includes("pdf") || contentTypeLower.includes("application/pdf")) {
-              // Valid PDF Content-Type - proceed
-              console.log("Valid PDF Content-Type confirmed:", contentType);
-            } else {
-              // Unknown Content-Type - log warning but don't block
-              console.warn("Content-Type is not clearly PDF:", contentType);
-            }
-          } else {
-            // No Content-Type header - check URL pattern as fallback
-            const urlLower = data.downloadUrl.toLowerCase();
-            let urlPath = '';
-            
-            // Try to extract the pathname from URL
-            try {
-              urlPath = new URL(data.downloadUrl).pathname.toLowerCase();
-            } catch (urlError) {
-              // If URL parsing fails, use the full URL path
-              urlPath = urlLower.split('?')[0].split('#')[0];
-            }
-            
-            // Check if URL path ends with image extension (not just contains it)
-            const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-            const hasImageExtension = imageExtensions.some(ext => urlPath.endsWith(ext));
-            
-            if (hasImageExtension && !urlPath.endsWith('.pdf')) {
-              // Check if it's specifically a cover image path
-              const isCoverImage = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
-              const errorMessage = isCoverImage
-                ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. This is likely a configuration error - the cover image URL was saved to the download URL field. Please contact the administrator to fix this ebook's download URL."
-                : "Invalid PDF URL: The ebook URL appears to point to an image file (ends with image extension). Please check the ebook's download URL or contact the administrator to upload the correct PDF file.";
-              
-              console.error("⚠️ URL ends with image extension but no Content-Type header:", {
-                url: data.downloadUrl,
-                urlPath: urlPath,
-                isCoverImage: isCoverImage,
-              });
-              // Show error but still allow PDF viewer to attempt loading
-              setError(errorMessage);
-              toast.error(isCoverImage 
-                ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
-                : "The ebook URL appears to be an image file. This might be the cover image. The PDF viewer will attempt to load it anyway.");
-              // Don't throw - let the PDF viewer try and show its own error if it fails
-            }
-            
-            // Check if URL ends with .pdf or is a Cloudinary raw resource
-            if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
-              console.warn("PDF URL might not be a valid PDF file:", data.downloadUrl);
             }
           }
         } catch (testError) {
-          // For network errors or other issues, log warning but don't block
-          // Only block if it's a CORS or serious error
-          if (testError.name === 'TypeError' && testError.message.includes('fetch')) {
-            console.warn("Could not verify PDF URL accessibility (possible CORS issue):", testError.message);
-            // Don't block - let the PDF viewer try to load it
-          } else if (testError.message && !testError.message.includes("Invalid PDF URL")) {
-            // Only log non-validation errors
-            console.warn("Could not verify PDF URL accessibility:", testError);
-          }
-          // For validation errors, we've already set the error state, so don't re-throw
+          console.warn("Could not verify PDF URL:", testError.message);
         }
-        
+
         setPdfUrl(data.downloadUrl);
       } catch (err) {
         console.error("Error fetching ebook:", err);
@@ -194,99 +150,198 @@ const PDFEbookReader = () => {
     }
   }, [ebookId]);
 
-  const onDocumentLoadSuccess = useCallback(({ numPages }) => {
-    setNumPages(numPages);
+  const onDocumentLoad = useCallback((e) => {
+    setNumPages(e.doc.numPages);
     setLoading(false);
     setError(null);
   }, []);
 
   const onDocumentLoadError = useCallback((error) => {
     console.error("PDF Load Error:", error);
-    const errorMessage = error?.message || "Failed to load PDF. Please check if the file is valid.";
+    const errorMessage =
+      error?.message ||
+      "Failed to load PDF. Please check if the file is valid.";
     setError(errorMessage);
     setLoading(false);
     toast.error(`Failed to load PDF: ${errorMessage}`);
   }, []);
 
-  const goToPrevPage = useCallback(() => {
-    if (pageNumber > 1) {
-      setDirection(-1);
-      setPageNumber((prev) => prev - 1);
-    }
-  }, [pageNumber]);
-
-  const goToNextPage = useCallback(() => {
-    if (pageNumber < numPages) {
-      setDirection(1);
-      setPageNumber((prev) => prev + 1);
-    }
-  }, [pageNumber, numPages]);
-
-  // Keyboard navigation
+  // Track page changes by monitoring the toolbar and viewer
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        goToNextPage();
+    if (!pdfUrl || loading) return;
+
+    const updateCurrentPage = () => {
+      // Method 1: Check toolbar page input
+      const pageInput = document.querySelector('input[type="number"][min="1"]');
+      if (pageInput) {
+        const pageNum = parseInt(pageInput.value || "1");
+        if (pageNum > 0) {
+          const newPage = pageNum - 1; // Convert to 0-based
+          if (newPage !== currentPage && newPage >= 0 && newPage < numPages) {
+            setCurrentPage(newPage);
+          }
+        }
       }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        goToPrevPage();
-      }
-      if (event.key === "+" || event.key === "=") {
-        event.preventDefault();
-        setScale((prev) => Math.min(prev + SCALE_STEP, MAX_SCALE));
-      }
-      if (event.key === "-") {
-        event.preventDefault();
-        setScale((prev) => Math.max(prev - SCALE_STEP, MIN_SCALE));
-      }
-      if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
-        toggleFullscreen();
+
+      // Method 2: Check visible page elements
+      const pageElements = document.querySelectorAll("[data-page-number]");
+      if (pageElements.length > 0) {
+        const visiblePage = Array.from(pageElements).find((el) => {
+          const rect = el.getBoundingClientRect();
+          return rect.top >= 0 && rect.top < window.innerHeight / 2;
+        });
+        if (visiblePage) {
+          const pageNum = parseInt(
+            visiblePage.getAttribute("data-page-number") || "0"
+          );
+          if (pageNum !== currentPage && pageNum >= 0) {
+            setCurrentPage(pageNum);
+          }
+        }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goToNextPage, goToPrevPage]);
+    // Update immediately and on interval
+    const timeout = setTimeout(updateCurrentPage, 500);
+    const interval = setInterval(updateCurrentPage, 300);
 
-  // Touch/swipe handlers
+    // Listen for changes in page input
+    const handlePageChange = (e) => {
+      if (e.target.type === "number" && e.target.getAttribute("min") === "1") {
+        setTimeout(updateCurrentPage, 100);
+      }
+    };
+
+    document.addEventListener("change", handlePageChange);
+    document.addEventListener("input", handlePageChange);
+
+    // Listen for scroll events (pages might change on scroll)
+    const handleScroll = () => {
+      setTimeout(updateCurrentPage, 100);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+      document.removeEventListener("change", handlePageChange);
+      document.removeEventListener("input", handlePageChange);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [pdfUrl, loading, numPages]);
+
+  // Navigation functions that use the plugin's methods
+  // Note: jumpToPage uses 0-based page index
+  const goToNextPage = useCallback(() => {
+    if (jumpToPage && numPages > 0) {
+      // Get current page from DOM to ensure accuracy
+      const pageInput = document.querySelector('input[type="number"][min="1"]');
+      let actualCurrentPage = currentPage;
+      if (pageInput) {
+        const pageNum = parseInt(pageInput.value || "1");
+        actualCurrentPage = pageNum - 1;
+      }
+
+      const nextPage = Math.min(numPages - 1, actualCurrentPage + 1);
+
+      if (nextPage !== actualCurrentPage) {
+        jumpToPage(nextPage);
+        setCurrentPage(nextPage);
+      }
+    }
+  }, [jumpToPage, currentPage, numPages]);
+
+  const goToPreviousPage = useCallback(() => {
+    if (jumpToPage) {
+      // Get current page from DOM to ensure accuracy
+      const pageInput = document.querySelector('input[type="number"][min="1"]');
+      let actualCurrentPage = currentPage;
+      if (pageInput) {
+        const pageNum = parseInt(pageInput.value || "1");
+        actualCurrentPage = pageNum - 1;
+      }
+
+      const prevPage = Math.max(0, actualCurrentPage - 1);
+
+      if (prevPage !== actualCurrentPage) {
+        jumpToPage(prevPage);
+        setCurrentPage(prevPage);
+      }
+    }
+  }, [jumpToPage, currentPage]);
+
+  // Enhanced touch handlers with page-turn animation and navigation
   const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
   }, []);
 
   const handleTouchMove = useCallback((e) => {
-    touchEndX.current = e.touches[0].clientX;
+    if (!touchStartX.current || !touchStartY.current) return;
+
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+
+    if (deltaX > deltaY && deltaX > 10) {
+      isSwiping.current = true;
+      touchEndX.current = e.touches[0].clientX;
+    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    
+    if (!touchStartX.current || !touchEndX.current || !isSwiping.current) {
+      touchStartX.current = 0;
+      touchEndX.current = 0;
+      isSwiping.current = false;
+      return;
+    }
+
     const distance = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 50;
 
-    if (Math.abs(distance) > minSwipeDistance) {
-      if (distance > 0) {
+    if (Math.abs(distance) > minSwipeDistance && jumpToPage) {
+      const swipeDirection = distance > 0 ? 1 : -1;
+      setDirection(swipeDirection);
+      setIsPageTurning(true);
+
+      // Trigger page turn animation
+      if (viewerContainerRef.current) {
+        viewerContainerRef.current.style.transform = `perspective(1000px) rotateY(${
+          swipeDirection * -15
+        }deg)`;
+        viewerContainerRef.current.style.transition = "transform 0.4s ease-out";
+      }
+
+      // Navigate to next/previous page
+      if (swipeDirection > 0) {
         // Swipe left - next page
         goToNextPage();
       } else {
         // Swipe right - previous page
-        goToPrevPage();
+        goToPreviousPage();
       }
+
+      // Reset animation
+      setTimeout(() => {
+        if (viewerContainerRef.current) {
+          viewerContainerRef.current.style.transform =
+            "perspective(1000px) rotateY(0deg)";
+          setTimeout(() => {
+            setIsPageTurning(false);
+            if (viewerContainerRef.current) {
+              viewerContainerRef.current.style.transition = "";
+            }
+          }, 400);
+        }
+      }, 200);
     }
 
     touchStartX.current = 0;
     touchEndX.current = 0;
-  }, [goToNextPage, goToPrevPage]);
-
-  const handleZoomIn = useCallback(() => {
-    setScale((prev) => Math.min(prev + SCALE_STEP, MAX_SCALE));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setScale((prev) => Math.max(prev - SCALE_STEP, MIN_SCALE));
-  }, []);
+    isSwiping.current = false;
+  }, [goToNextPage, goToPreviousPage]);
 
   const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
@@ -298,7 +353,6 @@ const PDFEbookReader = () => {
         document.exitFullscreen();
       }
     }
-    setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
   useEffect(() => {
@@ -307,14 +361,121 @@ const PDFEbookReader = () => {
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Don't prevent default for shortcuts that the plugin handles
+      if (event.key === "ArrowRight" || event.key === "PageDown") {
+        setDirection(1);
+        goToNextPage();
+      } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        setDirection(-1);
+        goToPreviousPage();
+      } else if (event.key === "f" || event.key === "F") {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNextPage, goToPreviousPage, toggleFullscreen]);
+
+  // Add custom CSS for PDF viewer to ensure full page display
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      .rpv-core__viewer {
+        height: 100% !important;
+        width: 100% !important;
+      }
+      .rpv-core__inner {
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+      }
+      /* Vertical scroll mode styles */
+      .rpv-core__viewer[data-scroll-mode="vertical"] .rpv-core__inner-pages {
+        height: 100% !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="vertical"] .rpv-core__page-layer {
+        align-items: center !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="vertical"] .rpv-core__page {
+        margin: 0 auto !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="vertical"] .rpv-core__page canvas {
+        margin: 0 auto !important;
+      }
+      /* Horizontal scroll mode styles */
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__inner {
+        width: auto !important;
+        min-width: 100% !important;
+        justify-content: flex-start !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__inner-pages {
+        width: auto !important;
+        min-width: fit-content !important;
+        height: 100% !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__page-layer {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        width: auto !important;
+        min-width: fit-content !important;
+        height: 100% !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__page-layer > div {
+        width: auto !important;
+        flex-shrink: 0 !important;
+        margin: 0 8px !important;
+        display: block !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__page {
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        display: block !important;
+      }
+      .rpv-core__viewer[data-scroll-mode="horizontal"] .rpv-core__page canvas {
+        width: auto !important;
+        height: auto !important;
+        display: block !important;
+        margin: 0 !important;
+      }
+    `;
+
+    style.id = "pdf-viewer-custom-style";
+    document.head.appendChild(style);
+
+    return () => {
+      const existingStyle = document.getElementById("pdf-viewer-custom-style");
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
   }, []);
 
   if (error && !pdfUrl) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-[#04060F] px-6 text-center text-white">
         <div className="max-w-xl space-y-6 rounded-3xl border border-white/10 bg-white/5 px-10 py-12 backdrop-blur-xl">
-          <h1 className="text-3xl font-semibold text-[#F5D26A]">Error Loading Ebook</h1>
+          <h1 className="text-3xl font-semibold text-[#F5D26A]">
+            Error Loading Ebook
+          </h1>
           <p className="text-base text-slate-200/85">{error}</p>
           <button
             type="button"
@@ -330,12 +491,12 @@ const PDFEbookReader = () => {
   return (
     <main
       ref={containerRef}
-      className="relative min-h-screen bg-[#02040B] pb-20 pt-32 text-white md:pt-36"
+      className="relative min-h-screen bg-[#02040B] pb-16 md:pb-20 pt-24 md:pt-32 text-white"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0d1325_0%,#02040B_60%,#010205_100%)] opacity-95" />
-      
+
       <div className="relative layout-container flex flex-col gap-6">
         {/* Header */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -356,41 +517,24 @@ const PDFEbookReader = () => {
           )}
 
           <div className="flex items-center gap-2">
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-2">
-              <button
-                type="button"
-                onClick={handleZoomOut}
-                disabled={scale <= MIN_SCALE}
-                className="inline-flex items-center justify-center rounded-full p-2 text-xs text-slate-200/75 transition hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Zoom out">
-                <FaMinus />
-              </button>
-              <span className="px-3 text-xs font-semibold uppercase tracking-wider text-[#F5D26A]">
-                {Math.round(scale * 100)}%
-              </span>
-              <button
-                type="button"
-                onClick={handleZoomIn}
-                disabled={scale >= MAX_SCALE}
-                className="inline-flex items-center justify-center rounded-full p-2 text-xs text-slate-200/75 transition hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Zoom in">
-                <FaPlus />
-              </button>
-            </div>
-
             {/* Fullscreen Toggle */}
             <button
               type="button"
               onClick={toggleFullscreen}
               className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-200/80 transition hover:border-[#F5D26A]/60 hover:bg-[#F5D26A]/15">
-              {isFullscreen ? <FaCompress className="text-sm text-[#F5D26A]" /> : <FaExpand className="text-sm text-[#F5D26A]" />}
+              {isFullscreen ? (
+                <FaCompress className="text-sm text-[#F5D26A]" />
+              ) : (
+                <FaExpand className="text-sm text-[#F5D26A]" />
+              )}
             </button>
           </div>
         </header>
 
         {/* PDF Viewer */}
-        <div className="flex flex-1 items-center justify-center overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 backdrop-blur-xl">
+        <div
+          className="flex flex-1 items-center justify-center rounded-3xl border border-white/12 bg-white/5 p-4 md:p-6 backdrop-blur-xl shadow-2xl mx-auto"
+          style={{ minHeight: "600px", maxWidth: "700px", width: "100%" }}>
           {loading && (
             <div className="flex flex-col items-center gap-4">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#F5D26A]/30 border-t-[#F5D26A]" />
@@ -405,93 +549,85 @@ const PDFEbookReader = () => {
           )}
 
           {pdfUrl && !error && (
-            <div className="relative w-full overflow-auto" style={{ maxHeight: "calc(100vh - 300px)" }}>
-              <Document
-                file={pdfUrl}
-                options={{
-                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                  cMapPacked: true,
-                }}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={onDocumentLoadError}
-                loading={
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#F5D26A]/30 border-t-[#F5D26A]" />
-                    <p className="text-sm text-slate-300">Loading PDF...</p>
-                  </div>
-                }
-                error={
-                  <div className="text-center text-red-400">
-                    <p>Failed to load PDF</p>
-                    <p className="text-xs mt-2 text-slate-400">URL: {pdfUrl.substring(0, 50)}...</p>
-                  </div>
-                }>
+            <div
+              ref={viewerContainerRef}
+              className="relative w-full rounded-2xl overflow-hidden flex justify-center items-start"
+              style={{
+                height: "calc(100vh - 280px)",
+                minHeight: "600px",
+                maxHeight: "calc(100vh - 280px)",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+              }}>
+              <Worker workerUrl={pdfjsWorker}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
-                    key={pageNumber}
-                    initial={{ opacity: 0, x: direction * 60 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: direction * -60 }}
+                    key="pdf-viewer"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="flex justify-center">
-                    <Page
-                      pageNumber={pageNumber}
-                      scale={scale}
-                      renderTextLayer={true}
-                      renderAnnotationLayer={true}
-                      className="shadow-2xl"
+                    className="w-full h-full rounded-2xl"
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      maxWidth: "100%",
+                      boxShadow: isPageTurning
+                        ? `0 ${
+                            direction > 0 ? "-" : ""
+                          }25px 50px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(245, 210, 106, 0.1)`
+                        : "0 15px 35px rgba(0, 0, 0, 0.25), 0 5px 15px rgba(0, 0, 0, 0.15)",
+                      transition:
+                        "box-shadow 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                      transform: isPageTurning
+                        ? `perspective(1000px) rotateY(${direction * 2}deg)`
+                        : "perspective(1000px) rotateY(0deg)",
+                    }}>
+                    <Viewer
+                      fileUrl={pdfUrl}
+                      plugins={[
+                        defaultLayoutPluginInstance,
+                        pageNavigationPluginInstance,
+                      ]}
+                      onDocumentLoad={onDocumentLoad}
+                      onDocumentLoadError={onDocumentLoadError}
+                      defaultScale={SpecialZoomLevel.PageFit}
+                      scrollMode={ScrollMode.Horizontal}
+                      theme={{
+                        theme: "dark",
+                      }}
+                      renderError={(error) => (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-red-400 p-8">
+                          <p className="text-lg font-semibold mb-2">
+                            Failed to load PDF
+                          </p>
+                          <p className="text-sm text-slate-400">
+                            {error.message || "Unknown error"}
+                          </p>
+                          <p className="text-xs mt-4 text-slate-500">
+                            URL: {pdfUrl.substring(0, 50)}...
+                          </p>
+                        </div>
+                      )}
                     />
                   </motion.div>
                 </AnimatePresence>
-              </Document>
+              </Worker>
             </div>
           )}
         </div>
 
-        {/* Navigation Controls */}
-        {numPages && (
-          <div className="flex flex-col gap-4 rounded-3xl border border-white/12 bg-white/5 px-6 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <motion.button
-                type="button"
-                onClick={goToPrevPage}
-                disabled={pageNumber <= 1}
-                whileTap={{ scale: 0.94 }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200/80 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-[#F5D26A]/60 hover:bg-[#F5D26A]/15">
-                <FaArrowLeft className="text-sm" />
-                Prev
-              </motion.button>
-              <motion.button
-                type="button"
-                onClick={goToNextPage}
-                disabled={pageNumber >= numPages}
-                whileTap={{ scale: 0.94 }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200/80 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-[#F5D26A]/60 hover:bg-[#F5D26A]/15">
-                Next
-                <FaArrowRight className="text-sm" />
-              </motion.button>
-            </div>
-            <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/85">
-              <span>Page</span>
-              <div className="rounded-full border border-[#F5D26A]/30 bg-[#F5D26A]/10 px-3 py-1 text-[#F5D26A]">
-                {String(pageNumber).padStart(2, "0")}
-              </div>
-              <span className="text-slate-200/70">of</span>
-              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-slate-200/90">
-                {String(numPages).padStart(2, "0")}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Instructions */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+        {/* Instructions - Hidden on mobile for better space */}
+        <div className="hidden md:block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300 backdrop-blur-sm">
           <p className="mb-2 font-semibold text-[#F5D26A]">Navigation Tips:</p>
           <ul className="list-inside list-disc space-y-1">
-            <li>Swipe left/right on mobile to navigate pages</li>
-            <li>Use arrow keys on desktop to navigate</li>
-            <li>Use +/- keys or buttons to zoom</li>
+            <li>
+              Swipe left/right on mobile to navigate pages with page-turn
+              animation
+            </li>
+            <li>Use arrow keys or Page Up/Down on desktop to navigate</li>
             <li>Press F for fullscreen mode</li>
+            <li>Use zoom controls in the toolbar</li>
           </ul>
         </div>
       </div>
@@ -500,4 +636,3 @@ const PDFEbookReader = () => {
 };
 
 export default PDFEbookReader;
-

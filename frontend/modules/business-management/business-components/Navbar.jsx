@@ -28,7 +28,7 @@ const Navbar = () => {
   const [navbarOffset, setNavbarOffset] = useState(0);
   const [logoOffset, setLogoOffset] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const { language, languages, changeLanguage } = useLanguage();
+  const { language, languages, changeLanguage, t } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
 
   // Check if we're on a dashboard route
@@ -78,71 +78,71 @@ const Navbar = () => {
 
   const baseNavItems = [
     {
-      label: "Home",
+      label: t("nav.home", { defaultValue: "Home" }),
       path: "/",
     },
     {
-      label: "Courses",
+      label: t("nav.courses", { defaultValue: "Courses" }),
       path: "/courses",
       dropdown: [
-        { label: "English Language", path: "/courses/english-language" },
-        { label: "Digital Marketing", path: "/courses/digital-marketing" },
-        { label: "Corporate Training", path: "/courses/corporate-training" },
+        { label: t("nav.englishLanguage", { defaultValue: "English Language" }), path: "/courses/english-language" },
+        { label: t("nav.digitalMarketing", { defaultValue: "Digital Marketing" }), path: "/courses/digital-marketing" },
+        { label: t("nav.corporateTraining", { defaultValue: "Corporate Training" }), path: "/courses/corporate-training" },
       ],
     },
     {
-      label: "Learn & Earn",
+      label: t("nav.learnEarn", { defaultValue: "Learn & Earn" }),
       path: "/learn-earn",
     },
     {
-      label: "Speaking Club",
+      label: t("nav.speakingClub", { defaultValue: "Speaking Club" }),
       path: "/learn-earn/live-debate-room",
     },
     {
-      label: "Resources",
+      label: t("nav.resources", { defaultValue: "Resources" }),
       path: "/resources",
       dropdown: [
-        { label: "AELA Blogs", path: "/blogs" },
+        { label: t("nav.aelaBlogs", { defaultValue: "AELA Blogs" }), path: "/blogs" },
         {
           label: "YouTube",
           external: true,
           href: "https://www.youtube.com/@digitalaela_dubai",
         },
-        { label: "Free Library", path: "/free-library" },
-        { label: "Books", path: "/books" },
-        { label: "Explore Jobs", path: "/explore-jobs" },
+        { label: t("nav.freeLibrary", { defaultValue: "Free Library" }), path: "/free-library" },
+        { label: t("nav.books", { defaultValue: "Books" }), path: "/books" },
+        { label: t("nav.exploreJobs", { defaultValue: "Explore Jobs" }), path: "/explore-jobs" },
       ],
     },
     {
-      label: "Join Us",
+      label: t("nav.joinUs", { defaultValue: "Join Us" }),
       path: "/join-us",
       dropdown: [
-        { label: "As Teacher", path: "/join-us/teacher" },
-        { label: "Influencer / Freelancer", path: "/join-us/influencer" },
-        { label: "Build Your Afterlife", path: "/join-us/afterlife" },
+        { label: t("nav.asTeacher", { defaultValue: "As Teacher" }), path: "/join-us/teacher" },
+        { label: t("nav.influencerFreelancer", { defaultValue: "Influencer / Freelancer" }), path: "/join-us/influencer" },
+        { label: t("nav.buildYourAfterlife", { defaultValue: "Build Your Afterlife" }), path: "/join-us/afterlife" },
       ],
     },
     {
-      label: "About",
+      label: t("nav.about", { defaultValue: "About" }),
       path: "/about",
       dropdown: [
-        { label: "Our Story", path: "/about/our-story" },
-        { label: "Mission & Vision", path: "/about/mission-vision" },
-        { label: "Meet the Founder", path: "/about/founder" },
-        { label: "Our Achievement", path: "/about/success-stories" },
+        { label: t("nav.ourStory", { defaultValue: "Our Story" }), path: "/about/our-story" },
+        { label: t("nav.missionVision", { defaultValue: "Mission & Vision" }), path: "/about/mission-vision" },
+        { label: t("nav.meetTheFounder", { defaultValue: "Meet the Founder" }), path: "/about/founder" },
+        { label: t("nav.successStories", { defaultValue: "Our Achievement" }), path: "/about/success-stories" },
       ],
     },
     {
-      label: "Contact",
+      label: t("nav.contact", { defaultValue: "Contact" }),
       path: "/contact",
       dropdown: [
-        { label: "Book a Demo Class", path: "/contact/book-demo" },
+        { label: t("nav.bookDemo", { defaultValue: "Book a Demo Class" }), path: "/contact/book-demo" },
         {
-          label: "Request Business Collaboration",
+          label: t("nav.businessCollaboration", { defaultValue: "Request Business Collaboration" }),
           path: "/contact/business-collaboration",
         },
         {
-          label: "Franchise Partnership Inquiry",
+          label: t("nav.franchisePartnership", { defaultValue: "Franchise Partnership Inquiry" }),
           path: "/contact/franchise-partnership",
         },
       ],
@@ -827,7 +827,7 @@ const Navbar = () => {
                 {/* Language Selection in Mobile Menu */}
                 <div className="mt-4 border-t border-white/10 pt-4">
                   <p className="text-[#B8831A] text-sm font-semibold mb-2 font-accent px-2">
-                    Language
+                    {t("nav.language", { defaultValue: "Language" })}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(languages).map(([code, option]) => (

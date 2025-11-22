@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import i18n, { normalizeLanguageCode, denormalizeLanguageCode } from "../config/i18n.js";
 
 const LanguageContext = createContext();
 
@@ -12,6 +13,7 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
+
   const languages = {
     en: {
       label: "English",
@@ -94,25 +96,72 @@ export const LanguageProvider = ({ children }) => {
   };
 
   const [language, setLanguage] = useState(getInitialLanguage);
+  const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+
+  // Sync language with i18next
+  useEffect(() => {
+    const normalizedLang = normalizeLanguageCode(language);
+    if (i18n.language !== normalizedLang) {
+      setIsChangingLanguage(true);
+      i18n.changeLanguage(normalizedLang).then(() => {
+        setIsChangingLanguage(false);
+      });
+    } else {
+      setIsChangingLanguage(false);
+    }
+  }, [language]);
+
+  // Update language state when i18next language changes
+  useEffect(() => {
+    const handleLanguageChanged = (lng) => {
+      const frontendLang = denormalizeLanguageCode(lng);
+      if (frontendLang !== language && Object.prototype.hasOwnProperty.call(languages, frontendLang)) {
+        setLanguage(frontendLang);
+      }
+    };
+
+    i18n.on("languageChanged", handleLanguageChanged);
+
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [language, languages]);
 
   useEffect(() => {
     // Save language preference to localStorage
     localStorage.setItem("selectedLanguage", language);
   }, [language]);
 
-  const changeLanguage = (langCode) => {
+  const changeLanguage = useCallback(async (langCode) => {
+    if (!Object.prototype.hasOwnProperty.call(languages, langCode)) {
+      // eslint-disable-next-line no-console
+      console.warn(`[LanguageContext] Invalid language code: ${langCode}`);
+      return;
+    }
+
+    setIsChangingLanguage(true);
     setLanguage(langCode);
-  };
+
+    // i18next language change is handled in useEffect
+  }, [languages]);
+
+  // Translation function that uses i18next
+  const t = useCallback((key, options = {}) => {
+    if (!i18n.isInitialized) {
+      return options.defaultValue || key;
+    }
+
+    // Use i18next's t function directly
+    return i18n.t(key, options);
+  }, []);
 
   const value = {
     language,
     languages,
     changeLanguage,
-    t: (key, fallback = key) => {
-      // Simple translation function - can be expanded with actual translation files
-      // For now, returns the fallback (English text)
-      return fallback;
-    },
+    t,
+    isChangingLanguage,
+    i18nReady: i18n.isInitialized,
   };
 
   return (

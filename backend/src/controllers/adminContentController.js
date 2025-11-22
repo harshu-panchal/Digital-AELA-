@@ -939,6 +939,32 @@ export const createEbook = async (req, res, next) => {
         `digital-aela/ebooks/admin/${userId}`
       );
       finalDownloadUrl = uploadResult.url;
+    } else if (downloadUrl) {
+      // Validate that downloadUrl is a PDF, not an image
+      const urlLower = downloadUrl.toLowerCase();
+      const urlPath = urlLower.split('?')[0].split('#')[0];
+      const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+      const isImageUrl = imageExtensions.some(ext => urlPath.endsWith(ext));
+      const isCoverImagePath = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
+      
+      if (isImageUrl || isCoverImagePath) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Download URL must point to a PDF file, not an image. Please provide a valid PDF URL or upload a PDF file.",
+          },
+        });
+      }
+      
+      // Check if URL ends with .pdf or is a Cloudinary raw resource
+      if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Download URL must point to a PDF file. Please provide a valid PDF URL or upload a PDF file.",
+          },
+        });
+      }
     }
 
     if (!finalDownloadUrl) {

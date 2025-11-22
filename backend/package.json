@@ -11,19 +11,21 @@
     "postinstall": "node scripts/build-mediasoup.js"
   },
   "dependencies": {
+    "@google-cloud/translate": "^9.3.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "i18next-http-backend": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "mediasoup": "^3.15.4",
     "mongodb": "^7.0.0",
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
-    "nodemailer": "^6.9.8",
-    "mediasoup": "^3.15.4",
     "node-cron": "^3.0.3",
+    "nodemailer": "^7.0.10",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },

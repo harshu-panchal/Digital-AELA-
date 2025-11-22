@@ -605,7 +605,7 @@ const ChatCentre = () => {
   }, [activeChatId]);
 
   return (
-    <div className="flex h-full w-full overflow-hidden rounded-3xl border border-white/5 bg-[#0f0f0f]">
+    <div className="flex h-[calc(100vh-280px)] md:h-[calc(100vh-260px)] max-h-[800px] w-full overflow-hidden rounded-3xl border border-white/5 bg-[#0f0f0f]">
       {/* Friends List Sidebar - Left Side (35% on desktop, hidden on mobile when chat is open) */}
       <aside
         className={`flex h-full flex-col border-r border-white/5 bg-[#0f0f0f] transition-all duration-300 ${
@@ -638,7 +638,7 @@ const ChatCentre = () => {
         </div>
 
         {/* Friends List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <FaSpinner className="h-5 w-5 animate-spin text-[#D4AF37]" />
@@ -743,7 +743,7 @@ const ChatCentre = () => {
             </header>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-hidden bg-[#0f0f0f]">
+            <div className="flex-1 overflow-hidden bg-[#0f0f0f] flex flex-col min-h-0">
               <div 
                 ref={messagesContainerRef}
                 onScroll={(e) => {
@@ -787,7 +787,7 @@ const ChatCentre = () => {
                     isUserScrollingRef.current = false;
                   }, 300);
                 }}
-                className="custom-scrollbar h-full space-y-3 overflow-y-auto bg-[#0f0f0f] p-4">
+                className="custom-scrollbar flex-1 space-y-3 overflow-y-auto bg-[#0f0f0f] p-4 min-h-0">
                 {loadingMessages ? (
                   <div className="flex h-full items-center justify-center text-sm text-gray-400">
                     <FaSpinner className="mr-2 h-5 w-5 animate-spin text-[#D4AF37]" />

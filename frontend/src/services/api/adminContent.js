@@ -11,12 +11,42 @@ export const createCourse = (payload) =>
 
 /**
  * Create ebook (super admin)
+ * Supports both FormData (with PDF file) and JSON payload
  */
-export const createEbook = (payload) =>
-  apiRequest("/admin/ebooks", {
-    method: "POST",
-    body: payload,
-  });
+export const createEbook = async (payload, isFormData = false) => {
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+  const { getStoredTokens } = await import("./baseClient");
+  const tokens = getStoredTokens();
+
+  if (!tokens?.accessToken) {
+    throw new Error("Authentication required");
+  }
+
+  if (isFormData) {
+    // Use FormData for file upload
+    const response = await fetch(`${API_BASE_URL}/admin/ebooks`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        // Don't set Content-Type header - browser will set it with boundary for FormData
+      },
+      body: payload, // payload is already FormData
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error?.message || "Failed to create ebook");
+    }
+    return data;
+  } else {
+    // Use regular JSON API request
+    return apiRequest("/admin/ebooks", {
+      method: "POST",
+      body: payload,
+    });
+  }
+};
 
 /**
  * Upload course brochure PDF (super admin)
