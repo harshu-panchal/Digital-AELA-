@@ -93,7 +93,7 @@ export const useSocket = () => {
     // Debounce connection attempts to prevent rapid reconnections
     connectionAttemptRef.current = setTimeout(() => {
       // Check if token changed during debounce
-      if (lastTokenRef.current === tokens.accessToken && socketRef.current?.connected) {
+      if (lastTokenRef.current === tokens?.accessToken && socketRef.current?.connected) {
         return;
       }
 
@@ -113,7 +113,7 @@ export const useSocket = () => {
       // Allow connections without tokens for guest listeners
       const newSocket = io(SOCKET_URL, {
         auth: tokens?.accessToken ? {
-          token: tokens.accessToken,
+          token: tokens?.accessToken,
         } : {},
         // Try polling first, then upgrade to websocket if available
         transports: ["polling", "websocket"],
