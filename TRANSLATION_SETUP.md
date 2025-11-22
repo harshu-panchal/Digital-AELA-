@@ -69,8 +69,11 @@ For security, restrict your API key to only work with the Cloud Translation API:
 ### 3. Configure Your `.env` File
 
 1. Go to your `backend` directory
-2. Create a `.env` file if it doesn't exist (or open existing one)
-3. Add this line with your API key:
+2. **Copy the example file** (if you don't have a `.env` file yet):
+   ```bash
+   cp .env.example .env
+   ```
+3. Open the `.env` file and add your API key:
 
 ```
 GOOGLE_CLOUD_TRANSLATE_API_KEY=your_api_key_here
@@ -84,15 +87,36 @@ GOOGLE_CLOUD_TRANSLATE_API_KEY=your_api_key_here
 GOOGLE_CLOUD_TRANSLATE_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstuvw
 ```
 
-### 4. Verify Your `.gitignore` File
+### 4. ⚠️ CRITICAL SECURITY: Verify Your `.gitignore` File
 
-Make sure your `backend/.gitignore` includes:
+**BEFORE PUSHING TO GITHUB, VERIFY:**
+
+1. **Check that `.gitignore` exists** in both root and `backend/` directories
+2. **Verify `.env` is listed** in `.gitignore` files
+3. **Check if `.env` was already committed** (see troubleshooting below)
+4. **Never commit your `.env` file** - it contains sensitive secrets!
+
+The `.gitignore` files should already be configured, but double-check:
+
+**Root `.gitignore` should include:**
+
+```
+.env
+backend/.env
+```
+
+**Backend `.gitignore` should include:**
 
 ```
 .env
 ```
 
-This ensures your API key is never committed to version control.
+**If you accidentally committed `.env` to Git:**
+
+1. Remove it from Git tracking: `git rm --cached backend/.env`
+2. Commit the removal: `git commit -m "Remove .env file from version control"`
+3. If you already pushed, **immediately rotate/regenerate all your API keys and secrets**
+4. Add `.env` to `.gitignore` if it's not already there
 
 ### 5. Test the Setup
 
@@ -269,6 +293,37 @@ npm run dev
    - Verify UI text changes
    - Check browser console for translation API calls
    - Verify translations are cached in IndexedDB
+
+## ⚠️ SECURITY CHECKLIST BEFORE DEPLOYING TO GITHUB
+
+**BEFORE pushing your code to GitHub, verify these security measures:**
+
+- [ ] **`.env` file is in `.gitignore`** (check both root and `backend/.gitignore`)
+- [ ] **`.env` file is NOT in Git** (run `git status` - `.env` should not appear)
+- [ ] **`.env.example` exists** as a template (without actual secrets)
+- [ ] **No secrets in code files** (check for hardcoded API keys)
+- [ ] **No credentials JSON files committed** (check for `*-credentials.json` files)
+- [ ] **All API keys are unique** (not shared or reused)
+- [ ] **API keys are restricted** (in Google Cloud Console)
+
+**Quick Verification Commands:**
+
+```bash
+# Check if .env is tracked by Git
+git ls-files | grep .env
+
+# Check if .env is in .gitignore
+grep -r "\.env" .gitignore backend/.gitignore
+
+# See what files will be committed
+git status
+```
+
+**If `.env` shows up in `git ls-files` or `git status`:**
+
+1. Remove it: `git rm --cached backend/.env`
+2. Commit: `git commit -m "Remove .env from version control"`
+3. **IMPORTANT:** Rotate all your API keys immediately if you already pushed to GitHub!
 
 ## Troubleshooting
 
