@@ -30,8 +30,14 @@ export const useSocket = () => {
       connectionAttemptRef.current = null;
     }
 
-    if (!tokens?.accessToken) {
-      // Disconnect if no token
+    // Allow connections without tokens for listeners (they can join voice rooms)
+    // Only disconnect if we had a token before and now we don't (user logged out)
+    // But allow new connections without tokens for guest listeners
+    const hasToken = !!tokens?.accessToken;
+    const hadToken = !!lastTokenRef.current;
+    
+    // If we had a token and now we don't, disconnect (user logged out)
+    if (hadToken && !hasToken) {
       if (socketRef.current) {
         try {
           socketRef.current.removeAllListeners();
@@ -59,19 +65,28 @@ export const useSocket = () => {
       lastTokenRef.current = null;
       return;
     }
+    
+    // If no token and we already have a guest connection, keep it
+    if (!hasToken && socketRef.current?.connected) {
+      return;
+    }
 
-    // Use global socket instance if it exists and token matches
-    if (globalSocketInstance && globalSocketToken === tokens.accessToken && globalSocketInstance.connected) {
+    // Use global socket instance if it exists and token matches (or both are null for guests)
+    const tokenMatches = (globalSocketToken === tokens?.accessToken) || 
+                         (!globalSocketToken && !tokens?.accessToken);
+    if (globalSocketInstance && tokenMatches && globalSocketInstance.connected) {
       globalSocketListeners.add(listenerIdRef.current);
       socketRef.current = globalSocketInstance;
       setSocket(globalSocketInstance);
       setIsConnected(globalSocketInstance.connected);
-      lastTokenRef.current = tokens.accessToken;
+      lastTokenRef.current = tokens?.accessToken || null;
       return;
     }
 
-    // Prevent duplicate connections with the same token
-    if (lastTokenRef.current === tokens.accessToken && socketRef.current?.connected) {
+    // Prevent duplicate connections with the same token (or both null for guests)
+    const sameToken = (lastTokenRef.current === tokens?.accessToken) ||
+                      (!lastTokenRef.current && !tokens?.accessToken);
+    if (sameToken && socketRef.current?.connected) {
       return;
     }
 
@@ -95,10 +110,11 @@ export const useSocket = () => {
 
       // Initialize socket connection with quiet error handling
       // Use polling first for better compatibility with Render and other hosting services
+      // Allow connections without tokens for guest listeners
       const newSocket = io(SOCKET_URL, {
-        auth: {
+        auth: tokens?.accessToken ? {
           token: tokens.accessToken,
-        },
+        } : {},
         // Try polling first, then upgrade to websocket if available
         transports: ["polling", "websocket"],
         upgrade: true,
@@ -128,10 +144,10 @@ export const useSocket = () => {
 
       newSocket.on("connect", () => {
         setIsConnected(true);
-        lastTokenRef.current = tokens.accessToken;
+        lastTokenRef.current = tokens?.accessToken || null;
         // Store as global instance
         globalSocketInstance = newSocket;
-        globalSocketToken = tokens.accessToken;
+        globalSocketToken = tokens?.accessToken || null;
         globalSocketListeners.add(listenerIdRef.current);
         
         // Only log the first connection, not subsequent ones from the same socket
@@ -161,9 +177,10 @@ export const useSocket = () => {
       newSocket.on("connect_error", (error) => {
         setIsConnected(false);
         
-        // Handle authentication errors - clear tokens if auth fails
-        if (error.message?.includes("Authentication error") || error.message?.includes("Auth error")) {
-          // Clear tokens on auth failure
+        // Handle authentication errors - only clear tokens if we had tokens
+        // Guest listeners should be able to connect even with auth errors
+        if ((error.message?.includes("Authentication error") || error.message?.includes("Auth error")) && tokens?.accessToken) {
+          // Clear tokens on auth failure only if we had tokens
           clearStoredTokens();
           notifyAuthUpdate(null);
           

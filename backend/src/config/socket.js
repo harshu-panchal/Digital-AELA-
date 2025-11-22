@@ -29,38 +29,57 @@ import {
 } from "../services/webrtcService.js";
 
 export const setupSocketIO = (io) => {
-  // Authentication middleware for Socket.io
+  // Authentication middleware for Socket.io - optional for listeners
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace("Bearer ", "");
 
       if (!token) {
-        return next(new Error("Authentication error: Token missing"));
+        // Allow connection without token for listeners (they can join voice rooms to listen)
+        socket.userId = null;
+        socket.userRole = null;
+        socket.userFullName = null;
+        socket.isAuthenticated = false;
+        return next();
       }
 
       const payload = verifyAccessToken(token);
       const user = await User.findById(payload.sub);
 
       if (!user) {
-        return next(new Error("Authentication error: User not found"));
+        // Allow connection even if user not found (for listeners)
+        socket.userId = null;
+        socket.userRole = null;
+        socket.userFullName = null;
+        socket.isAuthenticated = false;
+        return next();
       }
 
       socket.userId = user._id.toString();
       socket.userRole = user.role;
       socket.userFullName = user.fullName;
+      socket.isAuthenticated = true;
 
       return next();
     } catch (error) {
-      return next(new Error("Authentication error: Invalid token"));
+      // Allow connection even with invalid token (for listeners)
+      socket.userId = null;
+      socket.userRole = null;
+      socket.userFullName = null;
+      socket.isAuthenticated = false;
+      return next();
     }
   });
 
   io.on("connection", (socket) => {
     // eslint-disable-next-line no-console
-    console.log(`[Socket.IO] User connected: ${socket.userId} (${socket.userFullName})`);
-
-    // Join user's personal room
-    socket.join(`user:${socket.userId}`);
+    if (socket.isAuthenticated) {
+      console.log(`[Socket.IO] User connected: ${socket.userId} (${socket.userFullName})`);
+      // Join user's personal room only if authenticated
+      socket.join(`user:${socket.userId}`);
+    } else {
+      console.log(`[Socket.IO] Guest listener connected: ${socket.id}`);
+    }
 
     // Handle sending a message
     socket.on("send_message", async (data) => {
@@ -387,8 +406,14 @@ export const setupSocketIO = (io) => {
       try {
         let { roomId, role = "listener" } = data;
         
-        // eslint-disable-next-line no-console
-        console.log(`[VoiceRoom] User ${socket.userId} (${socket.userFullName}) attempting to join room ${roomId}`);
+        // Log connection attempt
+        if (socket.isAuthenticated) {
+          // eslint-disable-next-line no-console
+          console.log(`[VoiceRoom] User ${socket.userId} (${socket.userFullName}) attempting to join room ${roomId}`);
+        } else {
+          // eslint-disable-next-line no-console
+          console.log(`[VoiceRoom] Guest listener (${socket.id}) attempting to join room ${roomId}`);
+        }
         
         if (!roomId || !mongoose.isValidObjectId(roomId)) {
           // eslint-disable-next-line no-console
@@ -436,18 +461,23 @@ export const setupSocketIO = (io) => {
           return;
         }
 
-        // Auto-detect role: if user is room host, set as host
-        if (room.host && room.host.toString() === socket.userId) {
-          role = "host";
-        } else if (room.speakers && Array.isArray(room.speakers) && room.speakers.some((s) => {
-          const speakerId = typeof s === "object" ? s._id?.toString() || s.toString() : s?.toString();
-          return speakerId === socket.userId;
-        })) {
-          // User is an approved speaker - they can join as speaker without requesting
-          role = "speaker";
-        } else {
-          // Default to listener
+        // For unauthenticated users, force listener role (they can only listen)
+        if (!socket.isAuthenticated) {
           role = "listener";
+        } else {
+          // Auto-detect role: if user is room host, set as host
+          if (room.host && room.host.toString() === socket.userId) {
+            role = "host";
+          } else if (room.speakers && Array.isArray(room.speakers) && room.speakers.some((s) => {
+            const speakerId = typeof s === "object" ? s._id?.toString() || s.toString() : s?.toString();
+            return speakerId === socket.userId;
+          })) {
+            // User is an approved speaker - they can join as speaker without requesting
+            role = "speaker";
+          } else {
+            // Default to listener
+            role = "listener";
+          }
         }
 
         // Join Socket.io room
@@ -491,38 +521,41 @@ export const setupSocketIO = (io) => {
           }
         }
 
-        // Update or add participant (always find by userId to fix stale socketId issue)
-        const participantIndex = room.participants.findIndex(
-          (p) => p.userId.toString() === socket.userId
-        );
+        // Only update participants in database if user is authenticated
+        if (socket.isAuthenticated && socket.userId) {
+          // Update or add participant (always find by userId to fix stale socketId issue)
+          const participantIndex = room.participants.findIndex(
+            (p) => p.userId.toString() === socket.userId
+          );
 
-        if (participantIndex >= 0) {
-          // Update existing participant - always update socketId (fixes stale socketId issue)
-          room.participants[participantIndex].role = role;
-          room.participants[participantIndex].socketId = socket.id; // Always update socketId
-          room.participants[participantIndex].joinedAt = new Date();
-          // eslint-disable-next-line no-console
-          console.log(`[VoiceRoom] Updated existing participant ${socket.userId} with new socketId ${socket.id}`);
-        } else {
-          // Add new participant
-          room.participants.push({
-            userId: new mongoose.Types.ObjectId(socket.userId),
-            role,
-            socketId: socket.id,
-            joinedAt: new Date(),
-          });
-          // eslint-disable-next-line no-console
-          console.log(`[VoiceRoom] Added new participant ${socket.userId} with socketId ${socket.id}`);
-        }
+          if (participantIndex >= 0) {
+            // Update existing participant - always update socketId (fixes stale socketId issue)
+            room.participants[participantIndex].role = role;
+            room.participants[participantIndex].socketId = socket.id; // Always update socketId
+            room.participants[participantIndex].joinedAt = new Date();
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] Updated existing participant ${socket.userId} with new socketId ${socket.id}`);
+          } else {
+            // Add new participant
+            room.participants.push({
+              userId: new mongoose.Types.ObjectId(socket.userId),
+              role,
+              socketId: socket.id,
+              joinedAt: new Date(),
+            });
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] Added new participant ${socket.userId} with socketId ${socket.id}`);
+          }
 
-        // Update socketId in speakRequests if user has pending request
-        const speakRequestIndex = room.speakRequests.findIndex(
-          (r) => r.userId.toString() === socket.userId
-        );
-        if (speakRequestIndex >= 0) {
-          room.speakRequests[speakRequestIndex].socketId = socket.id;
-          // eslint-disable-next-line no-console
-          console.log(`[VoiceRoom] Updated speak request socketId for user ${socket.userId}`);
+          // Update socketId in speakRequests if user has pending request
+          const speakRequestIndex = room.speakRequests.findIndex(
+            (r) => r.userId.toString() === socket.userId
+          );
+          if (speakRequestIndex >= 0) {
+            room.speakRequests[speakRequestIndex].socketId = socket.id;
+            // eslint-disable-next-line no-console
+            console.log(`[VoiceRoom] Updated speak request socketId for user ${socket.userId}`);
+          }
         }
 
         // Update listener count if joining as listener
@@ -648,8 +681,8 @@ export const setupSocketIO = (io) => {
 
         // Notify others in the room
         io.to(`voice-room:${roomId}`).emit("participant-joined", {
-          userId: socket.userId,
-          userName: socket.userFullName,
+          userId: socket.userId || socket.id, // Use socket.id for unauthenticated users
+          userName: socket.userFullName || "Guest Listener",
           role,
           socketId: socket.id,
         });
@@ -692,7 +725,11 @@ export const setupSocketIO = (io) => {
         }
 
         // eslint-disable-next-line no-console
-        console.log(`[VoiceRoom] User ${socket.userId} successfully joined room ${roomId} as ${role}`);
+        if (socket.isAuthenticated) {
+          console.log(`[VoiceRoom] User ${socket.userId} successfully joined room ${roomId} as ${role}`);
+        } else {
+          console.log(`[VoiceRoom] Guest listener ${socket.id} successfully joined room ${roomId} as ${role}`);
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("[Socket.IO] Error joining voice room:", error);
@@ -785,8 +822,8 @@ export const setupSocketIO = (io) => {
           roomId,
           socketId: socket.id,
           producerId: producer.id,
-          userId: socket.userId,
-          userName: socket.userFullName,
+          userId: socket.userId || socket.id,
+          userName: socket.userFullName || "Speaker",
         });
 
         if (callback) {
@@ -849,8 +886,8 @@ export const setupSocketIO = (io) => {
         io.to(targetSocketId).emit("webrtc-offer", {
           roomId,
           fromSocketId: socket.id,
-          fromUserId: socket.userId,
-          fromUserName: socket.userFullName,
+          fromUserId: socket.userId || socket.id,
+          fromUserName: socket.userFullName || "Speaker",
           offer,
         });
       } catch (error) {
@@ -873,7 +910,7 @@ export const setupSocketIO = (io) => {
         io.to(targetSocketId).emit("webrtc-answer", {
           roomId,
           fromSocketId: socket.id,
-          fromUserId: socket.userId,
+          fromUserId: socket.userId || socket.id,
           answer,
         });
       } catch (error) {
@@ -920,8 +957,8 @@ export const setupSocketIO = (io) => {
         socket.to(`voice-room:${roomId}`).emit("webrtc-speaker-started", {
           roomId,
           socketId: socket.id,
-          userId: socket.userId,
-          userName: socket.userFullName,
+          userId: socket.userId || socket.id,
+          userName: socket.userFullName || "Speaker",
         });
         
         // Also send existing speakers to the new speaker so they can connect back
@@ -956,7 +993,7 @@ export const setupSocketIO = (io) => {
         socket.to(`voice-room:${roomId}`).emit("webrtc-speaker-stopped", {
           roomId,
           socketId: socket.id,
-          userId: socket.userId,
+          userId: socket.userId || socket.id,
         });
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -970,6 +1007,12 @@ export const setupSocketIO = (io) => {
     socket.on("request-to-speak", async (data) => {
       try {
         const { roomId } = data;
+        
+        // Require authentication for requesting to speak
+        if (!socket.isAuthenticated || !socket.userId) {
+          socket.emit("error", { message: "You must be logged in to request to speak" });
+          return;
+        }
         
         if (!roomId || !socket.data.voiceRoomId || socket.data.voiceRoomId !== roomId) {
           socket.emit("error", { message: "Not in this voice room" });
@@ -1384,7 +1427,11 @@ export const setupSocketIO = (io) => {
         const { roomId } = data;
         
         // eslint-disable-next-line no-console
-        console.log(`[VoiceRoom] User ${socket.userId} leaving room ${roomId}`);
+        if (socket.isAuthenticated) {
+          console.log(`[VoiceRoom] User ${socket.userId} leaving room ${roomId}`);
+        } else {
+          console.log(`[VoiceRoom] Guest listener ${socket.id} leaving room ${roomId}`);
+        }
         
         if (!roomId) {
           return;
@@ -1397,15 +1444,18 @@ export const setupSocketIO = (io) => {
         
         const room = await LiveRoom.findById(roomId);
         if (room) {
-          // Remove participant
-          room.participants = room.participants.filter(
-            (p) => p.userId.toString() !== socket.userId
-          );
+          // Only remove from database if authenticated
+          if (socket.isAuthenticated && socket.userId) {
+            // Remove participant
+            room.participants = room.participants.filter(
+              (p) => p.userId.toString() !== socket.userId
+            );
 
-          // Remove from speak requests
-          room.speakRequests = room.speakRequests.filter(
-            (r) => r.userId.toString() !== socket.userId
-          );
+            // Remove from speak requests
+            room.speakRequests = room.speakRequests.filter(
+              (r) => r.userId.toString() !== socket.userId
+            );
+          }
 
           // Decrement listener count if was listener
           if (socket.data.voiceRole === "listener") {
@@ -1419,7 +1469,7 @@ export const setupSocketIO = (io) => {
             socket.to(`voice-room:${roomId}`).emit("producer-closed", {
               roomId,
               socketId: socket.id,
-              userId: socket.userId,
+              userId: socket.userId || socket.id,
             });
           }
 
@@ -1438,8 +1488,8 @@ export const setupSocketIO = (io) => {
 
           // Notify others
           socket.to(`voice-room:${roomId}`).emit("participant-left", {
-            userId: socket.userId,
-            userName: socket.userFullName,
+            userId: socket.userId || socket.id,
+            userName: socket.userFullName || "Guest Listener",
           });
 
           // Broadcast updated participants list
@@ -1764,13 +1814,16 @@ export const setupSocketIO = (io) => {
     // Handle disconnect
     socket.on("disconnect", async () => {
       // eslint-disable-next-line no-console
-      console.log(`[Socket.IO] User disconnected: ${socket.userId}`);
-
-      // Broadcast user is offline
-      io.emit("user_offline", {
-        userId: socket.userId,
-        userName: socket.userFullName,
-      });
+      if (socket.isAuthenticated) {
+        console.log(`[Socket.IO] User disconnected: ${socket.userId}`);
+        // Broadcast user is offline only if authenticated
+        io.emit("user_offline", {
+          userId: socket.userId,
+          userName: socket.userFullName,
+        });
+      } else {
+        console.log(`[Socket.IO] Guest listener disconnected: ${socket.id}`);
+      }
 
       // Clean up voice room participation
       if (socket.data.voiceRoomId) {
@@ -1786,12 +1839,15 @@ export const setupSocketIO = (io) => {
 
         const room = await LiveRoom.findById(socket.data.voiceRoomId);
         if (room) {
-          room.participants = room.participants.filter(
-            (p) => p.userId.toString() !== socket.userId
-          );
-          room.speakRequests = room.speakRequests.filter(
-            (r) => r.userId.toString() !== socket.userId
-          );
+          // Only remove from database if authenticated
+          if (socket.isAuthenticated && socket.userId) {
+            room.participants = room.participants.filter(
+              (p) => p.userId.toString() !== socket.userId
+            );
+            room.speakRequests = room.speakRequests.filter(
+              (r) => r.userId.toString() !== socket.userId
+            );
+          }
           if (socket.data.voiceRole === "listener") {
             room.listeners = Math.max(0, (room.listeners || 0) - 1);
           }
@@ -1802,13 +1858,13 @@ export const setupSocketIO = (io) => {
             socket.to(`voice-room:${socket.data.voiceRoomId}`).emit("producer-closed", {
               roomId: socket.data.voiceRoomId,
               socketId: socket.id,
-              userId: socket.userId,
+              userId: socket.userId || socket.id,
             });
           }
 
           socket.to(`voice-room:${socket.data.voiceRoomId}`).emit("participant-left", {
-            userId: socket.userId,
-            userName: socket.userFullName,
+            userId: socket.userId || socket.id,
+            userName: socket.userFullName || "Guest Listener",
           });
         }
       }
