@@ -16,6 +16,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
 import { useWebRTC } from "../../../src/hooks/useWebRTC";
 import { fetchLiveRoom, deleteLiveRoom } from "../../../src/services/api/liveRooms";
+import RoomChat from "../components/RoomChat.jsx";
 
 const VoiceRoom = () => {
   const { roomId } = useParams();
@@ -646,6 +647,10 @@ const VoiceRoom = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Speakers Section */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Chat Section - Mobile First (shown below on mobile, in sidebar on desktop) */}
+            <div className="lg:hidden">
+              <RoomChat roomId={roomId} userRole={userRole} socket={socket} isConnected={isConnected} />
+            </div>
             <div className="rounded-3xl border border-white/5 bg-[#101010] p-6">
               <h2 className="mb-4 text-lg font-semibold text-white">Speakers</h2>
               {speakers.length === 0 ? (
@@ -958,6 +963,11 @@ const VoiceRoom = () => {
                 )}
               </div>
             )}
+
+            {/* Chat Section - Desktop (shown in sidebar) */}
+            <div className="hidden lg:block">
+              <RoomChat roomId={roomId} userRole={userRole} socket={socket} isConnected={isConnected} />
+            </div>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { verifyAccessToken } from "../utils/token.js";
 import User from "../models/User.js";
 import Message from "../models/Message.js";
 import LiveRoom from "../models/LiveRoom.js";
+import RoomMessage from "../models/RoomMessage.js";
 import Enrollment from "../models/Enrollment.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Course from "../models/Course.js";
@@ -598,6 +599,39 @@ export const setupSocketIO = (io) => {
           webrtcConfig: useNativeWebRTC ? webrtcConfig : null,
           useNativeWebRTC,
         });
+
+        // Load and send chat history when joining room
+        try {
+          const chatMessages = await RoomMessage.find({
+            roomId: new mongoose.Types.ObjectId(roomId),
+            deletedAt: null,
+          })
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .populate("sender", "fullName metadata")
+            .lean();
+
+          const formattedMessages = chatMessages.reverse().map((msg) => ({
+            id: msg._id.toString(),
+            senderId: msg.sender._id.toString(),
+            senderName: msg.sender.fullName || "Unknown User",
+            content: msg.content,
+            type: msg.type,
+            timestamp: msg.createdAt,
+          }));
+
+          const mutedChatUsers = room.metadata?.mutedChatUsers || [];
+
+          socket.emit("room-chat-history", {
+            roomId,
+            messages: formattedMessages,
+            mutedChatUsers,
+          });
+        } catch (chatError) {
+          // eslint-disable-next-line no-console
+          console.error(`[VoiceRoom] Error loading chat history for room ${roomId}:`, chatError);
+          // Don't fail the join if chat history fails to load
+        }
 
         // Broadcast updated participants list to all in room
         const updatedParticipants = await Promise.all(
@@ -1420,6 +1454,310 @@ export const setupSocketIO = (io) => {
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("[Socket.IO] Error leaving voice room:", error);
+      }
+    });
+
+    // ========== Room Chat Handlers ==========
+
+    // Join room chat (load chat history when joining voice room)
+    socket.on("join-room-chat", async (data) => {
+      try {
+        const { roomId } = data;
+
+        if (!roomId || !mongoose.isValidObjectId(roomId)) {
+          socket.emit("error", { message: "Invalid room ID" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if user is in the room
+        const isParticipant = room.participants.some(
+          (p) => p.userId.toString() === socket.userId
+        );
+
+        if (!isParticipant) {
+          socket.emit("error", { message: "You are not a participant in this room" });
+          return;
+        }
+
+        // Load recent chat history (last 50 non-deleted messages)
+        const messages = await RoomMessage.find({
+          roomId: new mongoose.Types.ObjectId(roomId),
+          deletedAt: null,
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .populate("sender", "fullName metadata")
+          .lean();
+
+        // Reverse to show oldest first
+        const formattedMessages = messages.reverse().map((msg) => ({
+          id: msg._id.toString(),
+          senderId: msg.sender._id.toString(),
+          senderName: msg.sender.fullName || "Unknown User",
+          content: msg.content,
+          type: msg.type,
+          timestamp: msg.createdAt,
+        }));
+
+        // Get muted users from room metadata
+        const mutedChatUsers = room.metadata?.mutedChatUsers || [];
+
+        socket.emit("room-chat-history", {
+          roomId,
+          messages: formattedMessages,
+          mutedChatUsers,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error joining room chat:", error);
+        socket.emit("error", { message: "Failed to load chat history" });
+      }
+    });
+
+    // Send room message
+    socket.on("send-room-message", async (data) => {
+      try {
+        const { roomId, content } = data;
+
+        // Validate user is authenticated
+        if (!socket.userId) {
+          socket.emit("error", { message: "You must be logged in to send messages" });
+          return;
+        }
+
+        if (!roomId || !content || !content.trim()) {
+          socket.emit("error", { message: "Room ID and message content are required" });
+          return;
+        }
+
+        if (!mongoose.isValidObjectId(roomId)) {
+          socket.emit("error", { message: "Invalid room ID" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Validate room is live
+        if (room.status !== "live") {
+          socket.emit("error", { message: "Room is not live" });
+          return;
+        }
+
+        // Check if user is a participant
+        const isParticipant = room.participants.some(
+          (p) => p.userId.toString() === socket.userId
+        );
+
+        if (!isParticipant) {
+          socket.emit("error", { message: "You are not a participant in this room" });
+          return;
+        }
+
+        // Check if user is muted
+        const mutedChatUsers = room.metadata?.mutedChatUsers || [];
+        if (mutedChatUsers.includes(socket.userId)) {
+          socket.emit("error", { message: "You are muted and cannot send messages" });
+          return;
+        }
+
+        // Create message
+        const message = await RoomMessage.create({
+          roomId: new mongoose.Types.ObjectId(roomId),
+          sender: new mongoose.Types.ObjectId(socket.userId),
+          content: content.trim(),
+          type: "text",
+        });
+
+        // Populate sender info
+        const populatedMessage = await RoomMessage.findById(message._id)
+          .populate("sender", "fullName metadata")
+          .lean();
+
+        const formattedMessage = {
+          id: populatedMessage._id.toString(),
+          senderId: populatedMessage.sender._id.toString(),
+          senderName: populatedMessage.sender.fullName || "Unknown User",
+          content: populatedMessage.content,
+          type: populatedMessage.type,
+          timestamp: populatedMessage.createdAt,
+        };
+
+        // Broadcast to all participants in the room
+        io.to(`voice-room:${roomId}`).emit("room-message", formattedMessage);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error sending room message:", error);
+        socket.emit("error", { message: "Failed to send message" });
+      }
+    });
+
+    // Delete room message (host only)
+    socket.on("delete-room-message", async (data) => {
+      try {
+        const { roomId, messageId } = data;
+
+        if (!roomId || !messageId) {
+          socket.emit("error", { message: "Room ID and message ID are required" });
+          return;
+        }
+
+        if (!socket.userId) {
+          socket.emit("error", { message: "Authentication required" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if user is host
+        if (room.host.toString() !== socket.userId) {
+          socket.emit("error", { message: "Only the host can delete messages" });
+          return;
+        }
+
+        // Soft delete message
+        const message = await RoomMessage.findOneAndUpdate(
+          {
+            _id: new mongoose.Types.ObjectId(messageId),
+            roomId: new mongoose.Types.ObjectId(roomId),
+          },
+          { deletedAt: new Date() },
+          { new: true }
+        );
+
+        if (!message) {
+          socket.emit("error", { message: "Message not found" });
+          return;
+        }
+
+        // Broadcast deletion to all participants
+        io.to(`voice-room:${roomId}`).emit("room-message-deleted", {
+          roomId,
+          messageId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error deleting room message:", error);
+        socket.emit("error", { message: "Failed to delete message" });
+      }
+    });
+
+    // Mute user from chat (host only)
+    socket.on("mute-user-chat", async (data) => {
+      try {
+        const { roomId, userId } = data;
+
+        if (!roomId || !userId) {
+          socket.emit("error", { message: "Room ID and user ID are required" });
+          return;
+        }
+
+        if (!socket.userId) {
+          socket.emit("error", { message: "Authentication required" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if user is host
+        if (room.host.toString() !== socket.userId) {
+          socket.emit("error", { message: "Only the host can mute users" });
+          return;
+        }
+
+        // Initialize metadata if needed
+        if (!room.metadata) {
+          room.metadata = {};
+        }
+        if (!room.metadata.mutedChatUsers) {
+          room.metadata.mutedChatUsers = [];
+        }
+
+        // Add user to muted list if not already muted
+        if (!room.metadata.mutedChatUsers.includes(userId)) {
+          room.metadata.mutedChatUsers.push(userId);
+          await room.save();
+        }
+
+        // Broadcast to all participants
+        io.to(`voice-room:${roomId}`).emit("user-chat-muted", {
+          roomId,
+          userId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error muting user chat:", error);
+        socket.emit("error", { message: "Failed to mute user" });
+      }
+    });
+
+    // Unmute user from chat (host only)
+    socket.on("unmute-user-chat", async (data) => {
+      try {
+        const { roomId, userId } = data;
+
+        if (!roomId || !userId) {
+          socket.emit("error", { message: "Room ID and user ID are required" });
+          return;
+        }
+
+        if (!socket.userId) {
+          socket.emit("error", { message: "Authentication required" });
+          return;
+        }
+
+        const room = await LiveRoom.findById(roomId);
+        if (!room) {
+          socket.emit("error", { message: "Room not found" });
+          return;
+        }
+
+        // Check if user is host
+        if (room.host.toString() !== socket.userId) {
+          socket.emit("error", { message: "Only the host can unmute users" });
+          return;
+        }
+
+        // Initialize metadata if needed
+        if (!room.metadata) {
+          room.metadata = {};
+        }
+        if (!room.metadata.mutedChatUsers) {
+          room.metadata.mutedChatUsers = [];
+        }
+
+        // Remove user from muted list
+        room.metadata.mutedChatUsers = room.metadata.mutedChatUsers.filter(
+          (id) => id !== userId
+        );
+        await room.save();
+
+        // Broadcast to all participants
+        io.to(`voice-room:${roomId}`).emit("user-chat-unmuted", {
+          roomId,
+          userId,
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Socket.IO] Error unmuting user chat:", error);
+        socket.emit("error", { message: "Failed to unmute user" });
       }
     });
 

@@ -9,6 +9,7 @@ import {
   deleteRoom,
 } from "../controllers/liveRoomController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import roomMessageRoutes from "./roomMessageRoutes.js";
 
 const router = Router();
 
@@ -32,6 +33,9 @@ router.post("/:roomId/leave", leaveRoom);
 
 // Delete a room (host only, authenticated)
 router.delete("/:roomId", requireAuth([]), deleteRoom);
+
+// Nested routes for room messages
+router.use("/:roomId/messages", roomMessageRoutes);
 
 export default router;
 
