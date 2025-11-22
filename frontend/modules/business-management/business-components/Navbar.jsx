@@ -16,6 +16,7 @@ import {
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSidebarSafe } from "../../../src/contexts/SidebarContext";
+import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import { toast } from "react-toastify";
 import logo from "../../../src/assets/MainLogo.png";
 
@@ -30,6 +31,7 @@ const Navbar = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const { language, languages, changeLanguage, t } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
+  const { socialLinks } = useSocialMedia();
 
   // Check if we're on a dashboard route
   const isDashboardRoute =
@@ -103,11 +105,11 @@ const Navbar = () => {
       path: "/resources",
       dropdown: [
         { label: t("nav.aelaBlogs", { defaultValue: "AELA Blogs" }), path: "/blogs" },
-        {
+        ...(socialLinks.youtube ? [{
           label: "YouTube",
           external: true,
-          href: "https://www.youtube.com/@digitalaela_dubai",
-        },
+          href: socialLinks.youtube,
+        }] : []),
         { label: t("nav.freeLibrary", { defaultValue: "Free Library" }), path: "/free-library" },
         { label: t("nav.books", { defaultValue: "Books" }), path: "/books" },
         { label: t("nav.exploreJobs", { defaultValue: "Explore Jobs" }), path: "/explore-jobs" },
@@ -297,13 +299,15 @@ const Navbar = () => {
 
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
                   <div className="flex items-center gap-2 text-[#F5D26A]">
-                    <a
-                      href="https://www.facebook.com/share/18nAj4v2LM/"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
-                      <FaFacebookF className="h-3.5 w-3.5" />
-                    </a>
+                    {socialLinks.facebook && (
+                      <a
+                        href={socialLinks.facebook}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                        <FaFacebookF className="h-3.5 w-3.5" />
+                      </a>
+                    )}
                     <a
                       href="https://wa.me/971502270625"
                       target="_blank"
@@ -311,27 +315,33 @@ const Navbar = () => {
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-green-500/70 hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.6)]">
                       <FaWhatsapp className="h-3.5 w-3.5" />
                     </a>
-                    <a
-                      href="https://www.instagram.com/digitalaela?igsh=d3ZmdmgwYzNsejh2"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-pink-500/70 hover:bg-pink-500/20 hover:text-pink-300 hover:shadow-[0_0_15px_rgba(236,72,153,0.6)]">
-                      <FaInstagram className="h-3.5 w-3.5" />
-                    </a>
-                    <a
-                      href="https://www.linkedin.com/"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
-                      <FaLinkedinIn className="h-3.5 w-3.5" />
-                    </a>
-                    <a
-                      href="https://youtube.com/@digitalaela?si=rMIZ-tX2BqiYkJQN"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]">
-                      <FaYoutube className="h-3.5 w-3.5" />
-                    </a>
+                    {socialLinks.instagram && (
+                      <a
+                        href={socialLinks.instagram}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-pink-500/70 hover:bg-pink-500/20 hover:text-pink-300 hover:shadow-[0_0_15px_rgba(236,72,153,0.6)]">
+                        <FaInstagram className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                    {socialLinks.linkedin && (
+                      <a
+                        href={socialLinks.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+                        <FaLinkedinIn className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                    {socialLinks.youtube && (
+                      <a
+                        href={socialLinks.youtube}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+                        <FaYoutube className="h-3.5 w-3.5" />
+                      </a>
+                    )}
                   </div>
 
                   <div className="hidden h-6 w-px bg-white/15 sm:block" />

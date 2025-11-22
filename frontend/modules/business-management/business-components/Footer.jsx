@@ -1,11 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import logo from "../../../src/assets/MainLogo.png";
 import googlePlay from "../../../src/assets/googlePlay.png";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { socialLinks } = useSocialMedia();
 
   const footerColumns = [
     {
@@ -69,12 +71,13 @@ export const Footer = () => {
     },
   ];
 
-  const socialLinks = [
-    { label: "LinkedIn", url: "https://linkedin.com" },
-    { label: "Instagram", url: "https://instagram.com" },
-    { label: "YouTube", url: "https://youtube.com" },
-    { label: "Facebook", url: "https://facebook.com" },
-  ];
+  // Build social links array from dynamic settings
+  const socialLinksArray = [
+    { label: "LinkedIn", url: socialLinks.linkedin },
+    { label: "Instagram", url: socialLinks.instagram },
+    { label: "YouTube", url: socialLinks.youtube },
+    { label: "Facebook", url: socialLinks.facebook },
+  ].filter((link) => link.url); // Only show links that have URLs
 
   return (
     <footer className="relative bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-[#D4AF37]/20 text-[#F5D26A] shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
@@ -117,7 +120,7 @@ export const Footer = () => {
               experiences.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              {socialLinks.map((social) => (
+              {socialLinksArray.map((social) => (
                 <a
                   key={social.label}
                   href={social.url}

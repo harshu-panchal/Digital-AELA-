@@ -1,6 +1,54 @@
 import Settings from "../models/Settings.js";
 
 /**
+ * Get public settings (no authentication required)
+ * GET /api/v1/public/settings?category=social
+ */
+export const getPublicSettings = async (req, res, next) => {
+  try {
+    const { category } = req.query;
+
+    const query = { isPublic: true }; // Only return public settings
+    if (category) {
+      query.category = category;
+    }
+
+    const settings = await Settings.find(query).sort({ category: 1, key: 1 });
+
+    // Group settings by category
+    const groupedSettings = settings.reduce((acc, setting) => {
+      if (!acc[setting.category]) {
+        acc[setting.category] = [];
+      }
+      acc[setting.category].push({
+        key: setting.key,
+        value: setting.value,
+        type: setting.type,
+        label: setting.label,
+        description: setting.description,
+        updatedAt: setting.updatedAt,
+      });
+      return acc;
+    }, {});
+
+    return res.json({
+      settings: groupedSettings,
+      flat: settings.map((s) => ({
+        key: s.key,
+        value: s.value,
+        category: s.category,
+        type: s.type,
+        label: s.label,
+        description: s.description,
+        updatedAt: s.updatedAt,
+      })),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Get all settings or by category
  * GET /api/v1/admin/settings
  */
@@ -342,12 +390,12 @@ export const initializeDefaultSettings = async (req, res, next) => {
       { key: "maintenance.enabled", value: false, category: "maintenance", type: "boolean", label: "Maintenance Mode", description: "Enable maintenance mode" },
       { key: "maintenance.message", value: "We are currently performing maintenance. Please check back soon.", category: "maintenance", type: "string", label: "Maintenance Message", description: "Message shown during maintenance" },
 
-      // Social Media
-      { key: "social.facebook", value: "", category: "social", type: "string", label: "Facebook URL", description: "Facebook page URL" },
-      { key: "social.twitter", value: "", category: "social", type: "string", label: "Twitter URL", description: "Twitter profile URL" },
-      { key: "social.linkedin", value: "", category: "social", type: "string", label: "LinkedIn URL", description: "LinkedIn page URL" },
-      { key: "social.instagram", value: "", category: "social", type: "string", label: "Instagram URL", description: "Instagram profile URL" },
-      { key: "social.youtube", value: "", category: "social", type: "string", label: "YouTube URL", description: "YouTube channel URL" },
+      // Social Media (marked as public so they can be accessed without authentication)
+      { key: "social.facebook", value: "", category: "social", type: "string", label: "Facebook URL", description: "Facebook page URL", isPublic: true },
+      { key: "social.twitter", value: "", category: "social", type: "string", label: "Twitter URL", description: "Twitter profile URL", isPublic: true },
+      { key: "social.linkedin", value: "", category: "social", type: "string", label: "LinkedIn URL", description: "LinkedIn page URL", isPublic: true },
+      { key: "social.instagram", value: "", category: "social", type: "string", label: "Instagram URL", description: "Instagram profile URL", isPublic: true },
+      { key: "social.youtube", value: "", category: "social", type: "string", label: "YouTube URL", description: "YouTube channel URL", isPublic: true },
 
       // SEO Settings
       { key: "seo.meta.title", value: "Digital AELA - Learn, Earn, and Grow", category: "seo", type: "string", label: "Meta Title", description: "Default meta title for SEO" },
