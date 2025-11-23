@@ -2,6 +2,7 @@ import CourseVideo from "../models/CourseVideo.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import VideoProgress from "../models/VideoProgress.js";
+import LessonCompletion from "../models/LessonCompletion.js";
 import mongoose from "mongoose";
 import { uploadVideoToCloudinary } from "../middleware/videoUploadMiddleware.js";
 
@@ -431,6 +432,16 @@ export const updateVideoProgress = async (req, res, next) => {
         : 0;
     const isCompleted = progressPercentage >= 90; // Consider 90% as completed
 
+    // Check if this was already completed before
+    const existingProgress = await VideoProgress.findOne({
+      student: userId,
+      course: video.course._id,
+      video: videoId,
+    });
+
+    const wasAlreadyCompleted = existingProgress?.isCompleted || false;
+    const isNewlyCompleted = isCompleted && !wasAlreadyCompleted;
+
     const progress = await VideoProgress.findOneAndUpdate(
       { student: userId, course: video.course._id, video: videoId },
       {
@@ -449,6 +460,40 @@ export const updateVideoProgress = async (req, res, next) => {
     )
       .populate("video", "title duration")
       .lean();
+
+    // Create LessonCompletion record when video is completed for the first time
+    if (isNewlyCompleted && !video.isPreview) {
+      try {
+        // Calculate duration in minutes (video duration is in seconds)
+        const durationInMinutes = video.duration ? Math.round(video.duration / 60) : 0;
+
+        // Create or update lesson completion record
+        await LessonCompletion.findOneAndUpdate(
+          {
+            student: userId,
+            course: video.course._id,
+            lessonId: videoId.toString(),
+          },
+          {
+            student: userId,
+            course: video.course._id,
+            lessonId: videoId.toString(),
+            lessonTitle: video.title,
+            duration: durationInMinutes,
+            completedAt: new Date(),
+            metadata: {
+              videoId: videoId.toString(),
+              source: "video",
+            },
+          },
+          { upsert: true, new: true }
+        );
+      } catch (completionError) {
+        // Log error but don't fail the request if completion record creation fails
+        // eslint-disable-next-line no-console
+        console.error("Error creating lesson completion record:", completionError);
+      }
+    }
 
     return res.status(200).json({
       progress: {

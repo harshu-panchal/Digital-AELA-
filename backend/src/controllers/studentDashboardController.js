@@ -10,6 +10,7 @@ import RecruiterBlog from "../models/RecruiterBlog.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
+import Batch from "../models/Batch.js";
 
 export const getStudentDashboard = async (req, res, next) => {
   try {
@@ -85,11 +86,29 @@ export const getStudentDashboard = async (req, res, next) => {
 
     const activeCoursesCount = activeEnrollments.length;
 
-    // Get courses with upcoming sessions (this week)
-    const now = new Date();
-    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    // This is a placeholder - you'd need a Session model for real data
-    const liveCohortsThisWeek = 0; // TODO: Implement when Session model exists
+    // Get courses with upcoming sessions (this week) from Batch records
+    let liveCohortsThisWeek = 0;
+    try {
+      const now = new Date();
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      
+      // Find batches where:
+      // 1. Student is enrolled (in students array)
+      // 2. Batch is active or upcoming
+      // 3. Batch has sessions scheduled for this week (startDate is within next 7 days)
+      const batchesThisWeek = await Batch.find({
+        students: studentObjectId,
+        status: { $in: ["active", "upcoming"] },
+        startDate: { $lte: nextWeek },
+        endDate: { $gte: now },
+      }).lean();
+      
+      liveCohortsThisWeek = batchesThisWeek.length;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching live cohorts:", error);
+      liveCohortsThisWeek = 0;
+    }
 
     // Get AELA Coins
     let studentPoints = null;
@@ -209,12 +228,51 @@ export const getStudentDashboard = async (req, res, next) => {
           }
         }
 
+        // Get next session from Batch records
+        let nextSession = "Check schedule";
+        try {
+          const batches = await Batch.find({
+            course: course._id,
+            students: studentObjectId,
+            status: { $in: ["active", "upcoming"] },
+            endDate: { $gte: new Date() },
+          })
+            .sort({ startDate: 1 })
+            .limit(1)
+            .lean();
+
+          if (batches.length > 0) {
+            const batch = batches[0];
+            const startDate = new Date(batch.startDate);
+            const now = new Date();
+            const daysUntil = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntil === 0) {
+              nextSession = "Today";
+            } else if (daysUntil === 1) {
+              nextSession = "Tomorrow";
+            } else if (daysUntil < 7) {
+              nextSession = startDate.toLocaleDateString("en-US", { weekday: "long" });
+            } else {
+              nextSession = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            }
+            
+            // Add time if available
+            if (batch.schedule?.time?.start) {
+              nextSession += ` · ${batch.schedule.time.start}`;
+            }
+          }
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error fetching next session:", error);
+        }
+
         return {
           id: course._id.toString(),
           title: course.title || "Untitled Course",
           mentor: instructorName,
           progress: Math.round(progress),
-          nextSession: "Check schedule", // TODO: Get from Session model
+          nextSession,
           access: enrollment.status === "active" ? "Active enrollment" : enrollment.status,
           route: `/learn-earn/courses/${course._id}`,
         };

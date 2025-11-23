@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { useTimer } from "react-timer-hook";
 import { toast } from "react-toastify";
-import { FaPuzzlePiece, FaHeadset, FaBookReader, FaSpinner } from "react-icons/fa";
+import { FaBookReader, FaSpinner } from "react-icons/fa";
 import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
@@ -274,18 +274,6 @@ const ActivitiesHub = () => {
         title: "Quizzes",
         icon: FaBookReader,
         description: "Test your knowledge and earn coins with interactive quizzes covering various topics.",
-        items: [],
-      },
-      vocabulary: {
-        title: "Vocabulary Games",
-        icon: FaPuzzlePiece,
-        description: "Gamified flashcards, match-ups, and speed rounds to boost recall.",
-        items: [],
-      },
-      speaking: {
-        title: "Listening & Speaking",
-        icon: FaHeadset,
-        description: "Voice prompts, interview drills, and pronunciation feedback sessions.",
         items: [],
       },
     };

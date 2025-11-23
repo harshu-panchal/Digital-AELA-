@@ -79,13 +79,32 @@ const StudentDashboard = () => {
         ongoingCourses: backendData.ongoingCourses || mockData.ongoingCourses,
         learnEarnProgress: backendData.learnEarnProgress || mockData.learnEarnProgress,
       });
+      // Clear any previous errors on successful load
+      setLoadError(null);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load dashboard from backend:", error);
-      setLoadError(error.message);
-      // Fall back to mock data
-      setDashboardData(getStudentDashboard());
-      toast.warning("Using cached data. Some metrics may not be up to date.");
+      
+      // Extract meaningful error message
+      const errorMessage = error?.response?.data?.error?.message 
+        || error?.message 
+        || "Failed to load dashboard data";
+      const errorCode = error?.response?.data?.error?.code || error?.code || "UNKNOWN_ERROR";
+      
+      setLoadError(`${errorCode}: ${errorMessage}`);
+      
+      // Fall back to mock data but show clear warning
+      const mockData = getStudentDashboard();
+      setDashboardData(mockData);
+      
+      // Show detailed error toast
+      toast.error(
+        `Dashboard data unavailable: ${errorMessage}. Showing placeholder data.`,
+        {
+          icon: "⚠️",
+          autoClose: 5000,
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -226,6 +245,15 @@ const StudentDashboard = () => {
             initial="hidden"
             animate="show"
             className="space-y-4">
+            {loadError && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+                <p className="font-semibold mb-1">⚠️ Data Loading Issue</p>
+                <p className="text-xs text-amber-300/80">{loadError}</p>
+                <p className="text-xs text-amber-300/60 mt-2">
+                  Some metrics may show placeholder values. Please refresh or contact support if this persists.
+                </p>
+              </div>
+            )}
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
