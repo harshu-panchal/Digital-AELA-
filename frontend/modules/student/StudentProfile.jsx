@@ -607,7 +607,7 @@ const StudentProfile = () => {
 
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-                    <HiOutlineCalendarDays className="h-4 w-4" />
+                    <HiOutlineCalendarDays className="h-4 w-4 text-white" />
                     Date of Birth
                   </label>
                   {isEditing ? (

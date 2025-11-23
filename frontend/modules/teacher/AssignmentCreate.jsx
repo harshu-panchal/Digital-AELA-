@@ -156,7 +156,7 @@ const AssignmentCreate = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    <HiOutlineCalendar className="inline h-4 w-4 mr-1" />
+                    <HiOutlineCalendar className="inline h-4 w-4 mr-1 text-white" />
                     Due Date <span className="text-red-400">*</span>
                   </label>
                   <input

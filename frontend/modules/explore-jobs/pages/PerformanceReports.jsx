@@ -89,7 +89,7 @@ const PerformanceReports = () => {
         <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <HiOutlineCalendar className="w-5 h-5 text-gray-400" />
+              <HiOutlineCalendar className="w-5 h-5 text-white" />
               <span className="text-gray-400">Date Range</span>
             </div>
             <input
