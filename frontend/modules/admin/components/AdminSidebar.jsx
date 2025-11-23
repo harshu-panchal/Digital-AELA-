@@ -20,6 +20,7 @@ import {
   FaGift,
   FaCheckCircle,
   FaBlog,
+  FaUserPlus,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -152,6 +153,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           label: "Blogs",
           path: "/super-admin/approvals/blogs",
           icon: FaBlog,
+        },
+        {
+          label: "Join Us Applications",
+          path: "/super-admin/approvals/join-us-applications",
+          icon: FaUserPlus,
         },
         {
           label: "Course Reviews",

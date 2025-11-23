@@ -404,6 +404,14 @@ const LeadDetail = () => {
                   <span className="text-slate-400">Source: </span>
                   <span className="text-white">{lead.source}</span>
                 </div>
+                {lead.formSource && (
+                  <div>
+                    <span className="text-slate-400">Form Source: </span>
+                    <span className="px-2 py-1 rounded-md bg-[#D4AF37]/20 text-[#D4AF37] text-xs font-semibold">
+                      {lead.formSource.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <span className="text-slate-400">Created: </span>
                   <span className="text-white">{formatDate(lead.createdAt)}</span>

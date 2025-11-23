@@ -1,8 +1,20 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { usePoints } from "./PointsContext";
 import { useAuth } from "./AuthContext";
-import { fetchSocialStats, fetchFollowers, fetchFollowing } from "../services/api/social";
+import {
+  fetchSocialStats,
+  fetchFollowers,
+  fetchFollowing,
+} from "../services/api/social";
 import { fetchDashboardData } from "../services/api/learnEarn";
 import { useSocket } from "../hooks/useSocket";
 import { fetchConversations } from "../services/api/messages";
@@ -33,15 +45,33 @@ const defaultProfile = {
   profession: "Founder & Mentor",
   experience: "12 years of coaching & leadership",
   maritalStatus: "Married",
-  interests: ["Public Speaking", "Leadership", "Storytelling", "Debates", "Gamified Learning"],
+  interests: [
+    "Public Speaking",
+    "Leadership",
+    "Storytelling",
+    "Debates",
+    "Gamified Learning",
+  ],
   followers: 18240,
   following: 642,
   coins: 0,
   rating: 4.6,
   badges: [
-    { id: "coach", label: "Elite Coach", color: "bg-[#D4AF37]/20 text-[#D4AF37]" },
-    { id: "mentor", label: "Community Mentor", color: "bg-emerald-500/15 text-emerald-300" },
-    { id: "speaker", label: "Top Speaker", color: "bg-sky-500/15 text-sky-300" },
+    {
+      id: "coach",
+      label: "Elite Coach",
+      color: "bg-[#D4AF37]/20 text-[#D4AF37]",
+    },
+    {
+      id: "mentor",
+      label: "Community Mentor",
+      color: "bg-emerald-500/15 text-emerald-300",
+    },
+    {
+      id: "speaker",
+      label: "Top Speaker",
+      color: "bg-sky-500/15 text-sky-300",
+    },
   ],
   socialLinks: [
     {
@@ -303,26 +333,51 @@ const defaultRatings = {
   ],
 };
 
-const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+const isDevelopment =
+  import.meta.env.DEV || import.meta.env.MODE === "development";
 
 export const UserProvider = ({ children }) => {
-  const { aelaPoints, addPoints, redeemPoints, totalEarned, totalRedeemed } = usePoints();
-  const { user: authUser, tokens, updateUserMetadata, getRoleLabel } = useAuth();
+  const { aelaPoints, addPoints, redeemPoints, totalEarned, totalRedeemed } =
+    usePoints();
+  const {
+    user: authUser,
+    tokens,
+    updateUserMetadata,
+    getRoleLabel,
+  } = useAuth();
   const { socket, isConnected } = useSocket();
 
   // Initialize with empty data in production, dummy data only in development
-  const [profile, setProfile] = useState(() => 
-    isDevelopment ? defaultProfile : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
+  const [profile, setProfile] = useState(() =>
+    isDevelopment
+      ? defaultProfile
+      : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
   );
-  const [followers, setFollowers] = useState(() => isDevelopment ? defaultFollowers : []);
-  const [following, setFollowing] = useState(() => isDevelopment ? defaultFollowers.slice(0, 3) : []);
-  const [messages, setMessages] = useState(() => isDevelopment ? defaultMessages : []);
-  const [notifications, setNotifications] = useState(() => isDevelopment ? defaultNotifications : []);
-  const [transactions, setTransactions] = useState(() => isDevelopment ? defaultTransactions : []);
-  const [groups, setGroups] = useState(() => isDevelopment ? defaultGroups : []);
-  const [liveDebates, setLiveDebates] = useState(() => isDevelopment ? defaultLiveDebates : []);
-  const [openRooms, setOpenRooms] = useState(() => isDevelopment ? defaultOpenRooms : []);
-  const [ratings, setRatings] = useState(() => 
+  const [followers, setFollowers] = useState(() =>
+    isDevelopment ? defaultFollowers : []
+  );
+  const [following, setFollowing] = useState(() =>
+    isDevelopment ? defaultFollowers.slice(0, 3) : []
+  );
+  const [messages, setMessages] = useState(() =>
+    isDevelopment ? defaultMessages : []
+  );
+  const [notifications, setNotifications] = useState(() =>
+    isDevelopment ? defaultNotifications : []
+  );
+  const [transactions, setTransactions] = useState(() =>
+    isDevelopment ? defaultTransactions : []
+  );
+  const [groups, setGroups] = useState(() =>
+    isDevelopment ? defaultGroups : []
+  );
+  const [liveDebates, setLiveDebates] = useState(() =>
+    isDevelopment ? defaultLiveDebates : []
+  );
+  const [openRooms, setOpenRooms] = useState(() =>
+    isDevelopment ? defaultOpenRooms : []
+  );
+  const [ratings, setRatings] = useState(() =>
     isDevelopment ? defaultRatings : { average: 0, votes: 0, tags: [] }
   );
   const [socialStatsLoaded, setSocialStatsLoaded] = useState(false);
@@ -338,9 +393,9 @@ export const UserProvider = ({ children }) => {
 
   // Load social stats from backend (runs after profile is initialized)
   const loadSocialStats = useCallback(async () => {
-      if (!authUser?.id) {
-        return;
-      }
+    if (!authUser?.id) {
+      return;
+    }
 
     // Prevent duplicate simultaneous calls
     if (isLoadingSocialStatsRef.current) {
@@ -349,103 +404,119 @@ export const UserProvider = ({ children }) => {
 
     isLoadingSocialStatsRef.current = true;
 
-      // Small delay to ensure profile is initialized first
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    // Small delay to ensure profile is initialized first
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-      try {
-        // Pass userId to fetchSocialStats so it works even without tokens
-        const stats = await fetchSocialStats(authUser.id);
-        
-        if (stats) {
-          setProfile((prev) => {
-            // Only update if we got valid data from backend and values have changed
-            const updated = { ...prev };
-            let hasChanges = false;
-            
-            // Use backend values even if 0 (means no data yet), only fallback if undefined/null
-            if (stats.followers !== undefined && stats.followers !== null && prev.followers !== stats.followers) {
-              updated.followers = stats.followers;
-              hasChanges = true;
+    try {
+      // Pass userId to fetchSocialStats so it works even without tokens
+      const stats = await fetchSocialStats(authUser.id);
+
+      if (stats) {
+        setProfile((prev) => {
+          // Only update if we got valid data from backend and values have changed
+          const updated = { ...prev };
+          let hasChanges = false;
+
+          // Use backend values even if 0 (means no data yet), only fallback if undefined/null
+          if (
+            stats.followers !== undefined &&
+            stats.followers !== null &&
+            prev.followers !== stats.followers
+          ) {
+            updated.followers = stats.followers;
+            hasChanges = true;
+          }
+          if (
+            stats.following !== undefined &&
+            stats.following !== null &&
+            prev.following !== stats.following
+          ) {
+            updated.following = stats.following;
+            hasChanges = true;
+          }
+          if (
+            stats.rating !== undefined &&
+            stats.rating !== null &&
+            prev.rating !== stats.rating
+          ) {
+            updated.rating = stats.rating;
+            hasChanges = true;
+          }
+
+          // Only return new object if there are actual changes
+          return hasChanges ? updated : prev;
+        });
+
+        // Update ratings with quiz attempts count (totalRatings) - only if changed
+        if (stats.totalRatings !== undefined && stats.totalRatings !== null) {
+          setRatings((prev) => {
+            const newVotes = stats.totalRatings;
+            const newAverage = stats.rating || prev.average;
+            // Only update if values have changed
+            if (prev.votes !== newVotes || prev.average !== newAverage) {
+              return {
+                ...prev,
+                votes: newVotes,
+                average: newAverage,
+              };
             }
-            if (stats.following !== undefined && stats.following !== null && prev.following !== stats.following) {
-              updated.following = stats.following;
-              hasChanges = true;
-            }
-            if (stats.rating !== undefined && stats.rating !== null && prev.rating !== stats.rating) {
-              updated.rating = stats.rating;
-              hasChanges = true;
-            }
-            
-            // Only return new object if there are actual changes
-            return hasChanges ? updated : prev;
+            return prev;
           });
-          
-          // Update ratings with quiz attempts count (totalRatings) - only if changed
-          if (stats.totalRatings !== undefined && stats.totalRatings !== null) {
-            setRatings((prev) => {
-              const newVotes = stats.totalRatings;
-              const newAverage = stats.rating || prev.average;
-              // Only update if values have changed
-              if (prev.votes !== newVotes || prev.average !== newAverage) {
-                return {
-                  ...prev,
-                  votes: newVotes,
-                  average: newAverage,
-                };
-              }
-              return prev;
-            });
-          } else if (stats.rating !== undefined && stats.rating !== null) {
-            setRatings((prev) => {
-              // Only update if rating has changed
-              if (prev.average !== stats.rating) {
-                return {
-                  ...prev,
-                  average: stats.rating,
-                };
-              }
-              return prev;
-            });
-          }
+        } else if (stats.rating !== undefined && stats.rating !== null) {
+          setRatings((prev) => {
+            // Only update if rating has changed
+            if (prev.average !== stats.rating) {
+              return {
+                ...prev,
+                average: stats.rating,
+              };
+            }
+            return prev;
+          });
+        }
 
-          // Update badges from backend - only if changed
-          if (stats.badges && Array.isArray(stats.badges)) {
-            setProfile((prev) => {
-              const newBadges = stats.badges.length > 0 ? stats.badges : prev.badges || [];
-              // Compare badges arrays
-              const badgesChanged = JSON.stringify(prev.badges || []) !== JSON.stringify(newBadges);
-              if (badgesChanged) {
-                return {
-                  ...prev,
-                  badges: newBadges,
-                };
-              }
-              return prev;
-            });
-          }
-          
-          setSocialStatsLoaded(true);
+        // Update badges from backend - only if changed
+        if (stats.badges && Array.isArray(stats.badges)) {
+          setProfile((prev) => {
+            const newBadges =
+              stats.badges.length > 0 ? stats.badges : prev.badges || [];
+            // Compare badges arrays
+            const badgesChanged =
+              JSON.stringify(prev.badges || []) !== JSON.stringify(newBadges);
+            if (badgesChanged) {
+              return {
+                ...prev,
+                badges: newBadges,
+              };
+            }
+            return prev;
+          });
         }
-      } catch (error) {
-        // Log errors appropriately based on environment
-        if (isNetworkError(error)) {
-          if (!isDevelopment) {
-            // In production, log network errors to help debug API issues
-            console.error("[UserContext] Failed to connect to API:", {
-              message: error.message,
-              code: error.code,
-              url: import.meta.env.VITE_API_URL || "Not set - using default"
-            });
-          }
-          setApiError("Unable to connect to server. Please check your connection.");
-        } else {
-          // eslint-disable-next-line no-console
-          console.warn("Failed to load social stats from backend:", error);
+
+        setSocialStatsLoaded(true);
+      }
+    } catch (error) {
+      // Log errors appropriately based on environment
+      if (isNetworkError(error)) {
+        if (!isDevelopment) {
+          // In production, log network errors to help debug API issues
+          console.error("[UserContext] Failed to connect to API:", {
+            message: error.message,
+            code: error.code,
+            url: import.meta.env.VITE_API_URL || "Not set - using default",
+          });
         }
-        // Keep existing values, don't reset to defaults
+        setApiError(
+          "Unable to connect to server. Please check your connection."
+        );
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load social stats from backend:", error);
+      }
+      // Keep existing values, don't reset to defaults
     } finally {
       isLoadingSocialStatsRef.current = false;
-      }
+    }
   }, [authUser?.id]);
 
   // Use authUser?.id directly as dependency instead of loadSocialStats to prevent unnecessary re-runs
@@ -464,87 +535,87 @@ export const UserProvider = ({ children }) => {
     // Create maps for quick lookup by id or userId
     const map1 = new Map();
     const map2 = new Map();
-    
+
     arr1.forEach((item) => {
       const id = item.id || item.userId;
       if (id) {
         map1.set(id, JSON.stringify(item));
       }
     });
-    
+
     arr2.forEach((item) => {
       const id = item.id || item.userId;
       if (id) {
         map2.set(id, JSON.stringify(item));
       }
     });
-    
+
     // Check if all keys exist and values match
     if (map1.size !== map2.size) {
       return false;
     }
-    
+
     for (const [key, value] of map1) {
       if (map2.get(key) !== value) {
         return false;
       }
     }
-    
+
     return true;
   }, []);
 
   // Helper functions to reload followers and following lists
   const reloadFollowers = useCallback(async () => {
-      if (!authUser?.id) {
-        return;
-      }
+    if (!authUser?.id) {
+      return;
+    }
 
-      try {
-        const response = await fetchFollowers(authUser.id, { pageSize: 20 });
+    try {
+      const response = await fetchFollowers(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
-          const newData = response.data || [];
-          // Only update state if data has actually changed
-          setFollowers((prev) => {
-            if (arraysEqual(prev, newData)) {
-              return prev; // Return previous reference if data is the same
-            }
-            return newData;
-          });
-        }
-      } catch (error) {
-        if (isNetworkError(error) && !isDevelopment) {
-          console.error("[UserContext] Failed to load followers:", error.message);
-        } else if (!isNetworkError(error)) {
-          // eslint-disable-next-line no-console
-          console.warn("Failed to refresh followers:", error);
-        }
+        const newData = response.data || [];
+        // Only update state if data has actually changed
+        setFollowers((prev) => {
+          if (arraysEqual(prev, newData)) {
+            return prev; // Return previous reference if data is the same
+          }
+          return newData;
+        });
+      }
+    } catch (error) {
+      if (isNetworkError(error) && !isDevelopment) {
+        console.error("[UserContext] Failed to load followers:", error.message);
+      } else if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to refresh followers:", error);
+      }
     }
   }, [authUser?.id, arraysEqual]);
 
   const reloadFollowing = useCallback(async () => {
-      if (!authUser?.id) {
-        return;
-      }
+    if (!authUser?.id) {
+      return;
+    }
 
-      try {
-        const response = await fetchFollowing(authUser.id, { pageSize: 20 });
+    try {
+      const response = await fetchFollowing(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
-          const newData = response.data || [];
-          // Only update state if data has actually changed
-          setFollowing((prev) => {
-            if (arraysEqual(prev, newData)) {
-              return prev; // Return previous reference if data is the same
-            }
-            return newData;
-          });
-        }
-      } catch (error) {
-        if (isNetworkError(error) && !isDevelopment) {
-          console.error("[UserContext] Failed to load following:", error.message);
-        } else if (!isNetworkError(error)) {
-          // eslint-disable-next-line no-console
-          console.warn("Failed to refresh following:", error);
-        }
+        const newData = response.data || [];
+        // Only update state if data has actually changed
+        setFollowing((prev) => {
+          if (arraysEqual(prev, newData)) {
+            return prev; // Return previous reference if data is the same
+          }
+          return newData;
+        });
+      }
+    } catch (error) {
+      if (isNetworkError(error) && !isDevelopment) {
+        console.error("[UserContext] Failed to load following:", error.message);
+      } else if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to refresh following:", error);
+      }
     }
   }, [authUser?.id, arraysEqual]);
 
@@ -642,7 +713,7 @@ export const UserProvider = ({ children }) => {
 
     // Listen for quiz completion (coins earned)
     window.addEventListener("quizCompleted", handleCoinEarned);
-    
+
     // Listen for any coin earning events
     window.addEventListener("coinsEarned", handleCoinEarned);
     window.addEventListener("transactionCompleted", handleCoinEarned);
@@ -661,7 +732,7 @@ export const UserProvider = ({ children }) => {
     }
 
     const dashboardData = await fetchDashboardData();
-    
+
     // Always update messages (even if empty array) to show real data
     if (dashboardData.messages !== undefined) {
       setMessages(dashboardData.messages || []);
@@ -722,7 +793,10 @@ export const UserProvider = ({ children }) => {
     maxConsecutiveFailures: 3,
     onError: (error) => {
       if (isNetworkError(error) && !isDevelopment) {
-        console.error("[UserContext] Failed to load dashboard data:", error.message);
+        console.error(
+          "[UserContext] Failed to load dashboard data:",
+          error.message
+        );
       } else if (!isNetworkError(error)) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load dashboard data from backend:", error);
@@ -740,26 +814,33 @@ export const UserProvider = ({ children }) => {
       // Update messages list when a new message is received
       setMessages((prev) => {
         // Check if conversation already exists
-        const conversationPartnerId = 
-          messageData.senderId === authUser.id 
-            ? messageData.recipientId 
+        const conversationPartnerId =
+          messageData.senderId === authUser.id
+            ? messageData.recipientId
             : messageData.senderId;
-        
-        const existingIndex = prev.findIndex((msg) => 
-          msg.userId === conversationPartnerId || msg.id === `chat-${conversationPartnerId}`
+
+        const existingIndex = prev.findIndex(
+          (msg) =>
+            msg.userId === conversationPartnerId ||
+            msg.id === `chat-${conversationPartnerId}`
         );
 
         const newConversation = {
           id: `chat-${conversationPartnerId}`,
           userId: conversationPartnerId,
           name: messageData.senderName || "User",
-          avatar: messageData.senderAvatar || `https://i.pravatar.cc/150?img=${conversationPartnerId.slice(-2)}`,
+          avatar:
+            messageData.senderAvatar ||
+            `https://i.pravatar.cc/150?img=${conversationPartnerId.slice(-2)}`,
           preview: messageData.content || "",
           timestamp: new Date(messageData.timestamp).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           }),
-          unread: messageData.senderId === authUser.id ? 0 : (prev[existingIndex]?.unread || 0) + 1,
+          unread:
+            messageData.senderId === authUser.id
+              ? 0
+              : (prev[existingIndex]?.unread || 0) + 1,
         };
 
         if (existingIndex >= 0) {
@@ -804,7 +885,11 @@ export const UserProvider = ({ children }) => {
             id: conv.userId || conv.id,
             userId: conv.userId || conv.id,
             name: conv.name || "Unknown User",
-            avatar: conv.avatar || `https://i.pravatar.cc/150?img=${(conv.userId || conv.id).slice(-2)}`,
+            avatar:
+              conv.avatar ||
+              `https://i.pravatar.cc/150?img=${(conv.userId || conv.id).slice(
+                -2
+              )}`,
             preview: conv.preview || "No messages yet",
             timestamp: conv.timestamp || "",
             unread: conv.unread || 0,
@@ -813,7 +898,10 @@ export const UserProvider = ({ children }) => {
         }
       } catch (error) {
         if (isNetworkError(error) && !isDevelopment) {
-          console.error("[UserContext] Failed to refresh conversations:", error.message);
+          console.error(
+            "[UserContext] Failed to refresh conversations:",
+            error.message
+          );
         } else if (!isNetworkError(error)) {
           // eslint-disable-next-line no-console
           console.warn("Failed to refresh conversations:", error);
@@ -836,7 +924,11 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     if (!authUser) {
       // Reset to default profile when logged out (use development defaults only in dev)
-      setProfile(isDevelopment ? defaultProfile : { ...defaultProfile, followers: 0, following: 0, coins: 0 });
+      setProfile(
+        isDevelopment
+          ? defaultProfile
+          : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
+      );
       setApiError(null);
       return;
     }
@@ -856,22 +948,28 @@ export const UserProvider = ({ children }) => {
     const loadAvatar = async () => {
       if (authUser.role === "student" && authUser.id && tokens?.accessToken) {
         try {
-          const { fetchStudentProfile } = await import("../services/api/student");
-          const { fetchStudentDashboard } = await import("../services/api/student");
-          
+          const { fetchStudentProfile } = await import(
+            "../services/api/student"
+          );
+          const { fetchStudentDashboard } = await import(
+            "../services/api/student"
+          );
+
           // Load StudentProfile for detailed info
           const profileData = await fetchStudentProfile(authUser.id);
-          
+
           // Load dashboard data for badges
           let badgesData = [];
           try {
             const dashboardData = await fetchStudentDashboard();
             if (dashboardData?.learnEarnProgress?.badges) {
-              badgesData = dashboardData.learnEarnProgress.badges.map((badge) => ({
-                id: badge.label.toLowerCase().replace(/\s+/g, "-"),
-                label: badge.label,
-                color: "bg-[#D4AF37]/20 text-[#D4AF37]",
-              }));
+              badgesData = dashboardData.learnEarnProgress.badges.map(
+                (badge) => ({
+                  id: badge.label.toLowerCase().replace(/\s+/g, "-"),
+                  label: badge.label,
+                  color: "bg-[#D4AF37]/20 text-[#D4AF37]",
+                })
+              );
             }
           } catch (error) {
             // Only log non-network errors to reduce console noise when server is down
@@ -880,10 +978,14 @@ export const UserProvider = ({ children }) => {
               console.warn("Failed to load badges from dashboard:", error);
             }
           }
-          
+
           // Priority: StudentProfile.avatarUrl > User.metadata.avatarUrl > default
-          const avatarUrl = profileData?.avatarUrl || metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
-          
+          const avatarUrl =
+            profileData?.avatarUrl ||
+            metadata.avatarUrl ||
+            metadata.avatar ||
+            defaultProfile.avatar;
+
           // Format experience from StudentProfile
           let experienceText = defaultProfile.experience;
           if (profileData?.experience) {
@@ -897,7 +999,7 @@ export const UserProvider = ({ children }) => {
           } else if (metadata.experienceYears) {
             experienceText = `${metadata.experienceYears} years of experience`;
           }
-          
+
           setProfile((prev) => ({
             ...defaultProfile,
             ...prev,
@@ -905,19 +1007,51 @@ export const UserProvider = ({ children }) => {
             name: authUser.fullName || authUser.email?.split("@")[0] || "User",
             title:
               metadata.title ??
-              (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
-            bio: profileData?.bio || profileData?.headline || metadata.bio || metadata.goals || defaultProfile.bio,
-            country: profileData?.location?.country || metadata.country || metadata.region || defaultProfile.country,
-            city: profileData?.location?.city || metadata.city || defaultProfile.city,
-            profession: profileData?.profession || metadata.profession || metadata.currentStatus || defaultProfile.profession,
-            englishLevel: profileData?.englishLevel || metadata.englishLevel || defaultProfile.englishLevel,
+              (authUser.role
+                ? `${getRoleLabel(authUser.role)} · Digital AELA`
+                : defaultProfile.title),
+            bio:
+              profileData?.bio ||
+              profileData?.headline ||
+              metadata.bio ||
+              metadata.goals ||
+              defaultProfile.bio,
+            country:
+              profileData?.location?.country ||
+              metadata.country ||
+              metadata.region ||
+              defaultProfile.country,
+            city:
+              profileData?.location?.city ||
+              metadata.city ||
+              defaultProfile.city,
+            profession:
+              profileData?.profession ||
+              metadata.profession ||
+              metadata.currentStatus ||
+              defaultProfile.profession,
+            englishLevel:
+              profileData?.englishLevel ||
+              metadata.englishLevel ||
+              defaultProfile.englishLevel,
             experience: experienceText,
-            maritalStatus: profileData?.maritalStatus || metadata.maritalStatus || defaultProfile.maritalStatus,
-            interests: profileData?.interests || metadata.interests || metadata.contentThemes || defaultProfile.interests,
+            maritalStatus:
+              profileData?.maritalStatus ||
+              metadata.maritalStatus ||
+              defaultProfile.maritalStatus,
+            interests:
+              profileData?.interests ||
+              metadata.interests ||
+              metadata.contentThemes ||
+              defaultProfile.interests,
             avatar: avatarUrl, // Use StudentProfile avatar or metadata avatar from registration
-            bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
+            bannerGradient:
+              metadata.bannerGradient ?? defaultProfile.bannerGradient,
             coins: aelaPoints,
-            badges: badgesData.length > 0 ? badgesData : (prev.badges || defaultProfile.badges),
+            badges:
+              badgesData.length > 0
+                ? badgesData
+                : prev.badges || defaultProfile.badges,
             metadata,
             role: authUser.role,
             contact: {
@@ -925,15 +1059,24 @@ export const UserProvider = ({ children }) => {
               phone: profileData?.phone || metadata.phone,
               whatsapp: metadata.whatsapp,
             },
-            followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
-            following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
-            rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
+            followers: socialStatsLoaded
+              ? prev.followers
+              : prev.followers ?? defaultProfile.followers,
+            following: socialStatsLoaded
+              ? prev.following
+              : prev.following ?? defaultProfile.following,
+            rating: socialStatsLoaded
+              ? prev.rating
+              : prev.rating ?? defaultProfile.rating,
           }));
           return;
         } catch (error) {
           // Profile might not exist yet, continue with metadata fallback
           if (isNetworkError(error) && !isDevelopment) {
-            console.error("[UserContext] Failed to load student profile:", error.message);
+            console.error(
+              "[UserContext] Failed to load student profile:",
+              error.message
+            );
           } else if (!isNetworkError(error)) {
             // eslint-disable-next-line no-console
             console.warn("Failed to load student profile:", error);
@@ -942,7 +1085,8 @@ export const UserProvider = ({ children }) => {
       }
 
       // For non-students or if StudentProfile fetch failed, use metadata
-      const avatarUrl = metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
+      const avatarUrl =
+        metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
 
       setProfile((prev) => ({
         ...defaultProfile,
@@ -951,20 +1095,29 @@ export const UserProvider = ({ children }) => {
         name: authUser.fullName || authUser.email?.split("@")[0] || "User",
         title:
           metadata.title ??
-          (authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : defaultProfile.title),
+          (authUser.role
+            ? `${getRoleLabel(authUser.role)} · Digital AELA`
+            : defaultProfile.title),
         bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
         country: metadata.country ?? metadata.region ?? defaultProfile.country,
         city: metadata.city ?? defaultProfile.city,
-        profession: metadata.profession ?? metadata.currentStatus ?? defaultProfile.profession,
+        profession:
+          metadata.profession ??
+          metadata.currentStatus ??
+          defaultProfile.profession,
         experience:
           metadata.experience ??
           (metadata.experienceYears
             ? `${metadata.experienceYears} years of experience`
             : defaultProfile.experience),
         maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
-        interests: metadata.interests ?? metadata.contentThemes ?? defaultProfile.interests,
+        interests:
+          metadata.interests ??
+          metadata.contentThemes ??
+          defaultProfile.interests,
         avatar: avatarUrl, // Use Cloudinary URL from registration metadata
-        bannerGradient: metadata.bannerGradient ?? defaultProfile.bannerGradient,
+        bannerGradient:
+          metadata.bannerGradient ?? defaultProfile.bannerGradient,
         coins: aelaPoints,
         metadata,
         role: authUser.role,
@@ -974,50 +1127,65 @@ export const UserProvider = ({ children }) => {
           whatsapp: metadata.whatsapp,
         },
         // Preserve social stats from backend (don't overwrite if already loaded from backend)
-        followers: socialStatsLoaded ? prev.followers : (prev.followers ?? defaultProfile.followers),
-        following: socialStatsLoaded ? prev.following : (prev.following ?? defaultProfile.following),
-        rating: socialStatsLoaded ? prev.rating : (prev.rating ?? defaultProfile.rating),
+        followers: socialStatsLoaded
+          ? prev.followers
+          : prev.followers ?? defaultProfile.followers,
+        following: socialStatsLoaded
+          ? prev.following
+          : prev.following ?? defaultProfile.following,
+        rating: socialStatsLoaded
+          ? prev.rating
+          : prev.rating ?? defaultProfile.rating,
       }));
     };
 
     loadAvatar();
-    
+
     // Refresh profile data every 30 seconds to keep it live
     const interval = setInterval(loadAvatar, 30000);
-    
+
     return () => clearInterval(interval);
-  }, [authUser, aelaPoints, getRoleLabel, socialStatsLoaded, tokens?.accessToken]);
+  }, [
+    authUser,
+    aelaPoints,
+    getRoleLabel,
+    socialStatsLoaded,
+    tokens?.accessToken,
+  ]);
 
-  const updateProfile = useCallback((updates) => {
-    setProfile((prev) => ({ ...prev, ...updates }));
+  const updateProfile = useCallback(
+    (updates) => {
+      setProfile((prev) => ({ ...prev, ...updates }));
 
-    if (!authUser) {
-      return;
-    }
+      if (!authUser) {
+        return;
+      }
 
-    const metadataUpdates = Object.fromEntries(
-      Object.entries(updates).filter(
-        ([key]) =>
-          ![
-            "id",
-            "coins",
-            "followers",
-            "following",
-            "badges",
-            "socialLinks",
-            "metadata",
-          ].includes(key)
-      )
-    );
+      const metadataUpdates = Object.fromEntries(
+        Object.entries(updates).filter(
+          ([key]) =>
+            ![
+              "id",
+              "coins",
+              "followers",
+              "following",
+              "badges",
+              "socialLinks",
+              "metadata",
+            ].includes(key)
+        )
+      );
 
-    updateUserMetadata({
-      fullName: typeof updates.name === "string" ? updates.name : undefined,
-      metadata: {
-        ...metadataUpdates,
-        ...(updates.metadata ?? {}),
-      },
-    });
-  }, [authUser, updateUserMetadata]);
+      updateUserMetadata({
+        fullName: typeof updates.name === "string" ? updates.name : undefined,
+        metadata: {
+          ...metadataUpdates,
+          ...(updates.metadata ?? {}),
+        },
+      });
+    },
+    [authUser, updateUserMetadata]
+  );
 
   const markConversationRead = useCallback((conversationId) => {
     setMessages((prev) =>
@@ -1038,9 +1206,15 @@ export const UserProvider = ({ children }) => {
         chat.id === conversationId
           ? {
               ...chat,
-              preview: message.type === "voice" ? "Voice message sent" : message.content,
+              preview:
+                message.type === "voice"
+                  ? "Voice message sent"
+                  : message.content,
               timestamp: "Now",
-              history: [...chat.history, { ...message, id: crypto.randomUUID() }],
+              history: [
+                ...chat.history,
+                { ...message, id: crypto.randomUUID() },
+              ],
             }
           : chat
       )
@@ -1122,7 +1296,10 @@ export const UserProvider = ({ children }) => {
     setLiveDebates((prev) =>
       prev.map((room) => {
         if (room.id !== debateId) return room;
-        const increment = side === "for" ? { forVotes: room.forVotes + 1 } : { againstVotes: room.againstVotes + 1 };
+        const increment =
+          side === "for"
+            ? { forVotes: room.forVotes + 1 }
+            : { againstVotes: room.againstVotes + 1 };
         return { ...room, ...increment };
       })
     );
@@ -1218,5 +1395,3 @@ export const UserProvider = ({ children }) => {
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
-
-

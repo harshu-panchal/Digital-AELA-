@@ -55,7 +55,7 @@ const DashboardOverview = () => {
 
     // Listen for quiz completion (coins earned)
     window.addEventListener("quizCompleted", handleCoinEarned);
-    
+
     // Listen for any coin earning events
     window.addEventListener("coinsEarned", handleCoinEarned);
     window.addEventListener("transactionCompleted", handleCoinEarned);
@@ -128,19 +128,19 @@ const DashboardOverview = () => {
   // Combine followers and following lists, removing duplicates and preserving totalEarned
   const combinedFollowersFollowing = useMemo(() => {
     const followersMap = new Map();
-    
+
     // Add followers first, preserving totalEarned
     followers.forEach((follower) => {
       const id = follower.id || follower.userId;
       if (id) {
-        followersMap.set(id, { 
-          ...follower, 
+        followersMap.set(id, {
+          ...follower,
           relationshipType: "follower",
-          totalEarned: follower.totalEarned || 0 // Ensure totalEarned is preserved
+          totalEarned: follower.totalEarned || 0, // Ensure totalEarned is preserved
         });
       }
     });
-    
+
     // Add following, preserving followers if they already exist (mutual)
     // If both exist, preserve the higher totalEarned value
     following.forEach((followedUser) => {
@@ -153,27 +153,30 @@ const DashboardOverview = () => {
             existing.totalEarned || 0,
             followedUser.totalEarned || 0
           );
-          followersMap.set(id, { 
-            ...existing, 
+          followersMap.set(id, {
+            ...existing,
             ...followedUser,
             relationshipType: "mutual",
-            totalEarned: maxEarned
+            totalEarned: maxEarned,
           });
         } else {
           // You follow them but they don't follow you back
-          followersMap.set(id, { 
-            ...followedUser, 
+          followersMap.set(id, {
+            ...followedUser,
             relationshipType: "following",
-            totalEarned: followedUser.totalEarned || 0
+            totalEarned: followedUser.totalEarned || 0,
           });
         }
       }
     });
-    
+
     return Array.from(followersMap.values());
   }, [followers, following]);
 
-  const followerCount = useMemo(() => combinedFollowersFollowing.length, [combinedFollowersFollowing]);
+  const followerCount = useMemo(
+    () => combinedFollowersFollowing.length,
+    [combinedFollowersFollowing]
+  );
   // Get actual follower and following counts from arrays
   const actualFollowersCount = useMemo(() => followers.length, [followers]);
   const actualFollowingCount = useMemo(() => following.length, [following]);
@@ -282,13 +285,13 @@ const DashboardOverview = () => {
         ) : (
           combinedFollowersFollowing.map((user) => {
             const userId = user.id || user.userId;
-            const relationshipLabel = 
-              user.relationshipType === "mutual" 
-                ? "Mutual" 
+            const relationshipLabel =
+              user.relationshipType === "mutual"
+                ? "Mutual"
                 : user.relationshipType === "follower"
                 ? "Follows you"
                 : "Following";
-            
+
             return (
               <Motion.div
                 key={userId}
@@ -306,7 +309,7 @@ const DashboardOverview = () => {
                     />
                   </Link>
                   <div className="flex-1">
-                    <Link 
+                    <Link
                       to={`/learn-earn/user/${userId}`}
                       className="block hover:text-[#D4AF37] transition">
                       <p className="text-sm font-semibold text-white">
@@ -314,22 +317,29 @@ const DashboardOverview = () => {
                       </p>
                     </Link>
                     <p className="text-[11px] text-gray-400">{userId}</p>
-                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      user.relationshipType === "mutual"
-                        ? "bg-green-500/20 text-green-400"
-                        : user.relationshipType === "follower"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}>
+                    <span
+                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        user.relationshipType === "mutual"
+                          ? "bg-green-500/20 text-green-400"
+                          : user.relationshipType === "follower"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}>
                       {relationshipLabel}
                     </span>
                   </div>
                 </div>
-                <p className="mt-3 text-sm text-gray-300">{user.tagline || user.headline || "Learner"}</p>
+                <p className="mt-3 text-sm text-gray-300">
+                  {user.tagline || user.headline || "Learner"}
+                </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
                   <span>⭐ {(user.rating || 0).toFixed(1)}</span>
-                  {user.mutuals !== undefined && <span>{user.mutuals} mutuals</span>}
-                  {user.coinsShared !== undefined && <span>{user.coinsShared} coins shared</span>}
+                  {user.mutuals !== undefined && (
+                    <span>{user.mutuals} mutuals</span>
+                  )}
+                  {user.coinsShared !== undefined && (
+                    <span>{user.coinsShared} coins shared</span>
+                  )}
                 </div>
                 <Link
                   to={`/learn-earn/chat?userId=${userId}`}
@@ -419,7 +429,9 @@ const DashboardOverview = () => {
           <p className="mt-6 text-[13px] text-gray-400">
             Daily streak:{" "}
             <span className="font-semibold text-emerald-300">
-              {streak > 0 ? `Active · ${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start your streak'}
+              {streak > 0
+                ? `Active · ${streak} ${streak === 1 ? "day" : "days"}`
+                : "Start your streak"}
             </span>
           </p>
         </Motion.div>
@@ -560,7 +572,10 @@ const DashboardOverview = () => {
               // Filter out users with no totalEarned data (or 0) for better sorting
               // Sort combinedFollowersFollowing by totalEarned (descending)
               const sortedLeaderboard = [...combinedFollowersFollowing]
-                .filter((user) => user.totalEarned !== undefined && user.totalEarned !== null)
+                .filter(
+                  (user) =>
+                    user.totalEarned !== undefined && user.totalEarned !== null
+                )
                 .sort((a, b) => {
                   const aEarned = a.totalEarned || 0;
                   const bEarned = b.totalEarned || 0;
@@ -570,7 +585,7 @@ const DashboardOverview = () => {
 
               return sortedLeaderboard.length === 0 ? (
                 <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3 text-center text-sm text-gray-400">
-                  {combinedFollowersFollowing.length === 0 
+                  {combinedFollowersFollowing.length === 0
                     ? "No leaderboard data available yet. Follow users to see their earnings!"
                     : "Loading earnings data..."}
                 </div>

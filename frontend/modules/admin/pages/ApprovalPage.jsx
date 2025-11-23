@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher, FaEdit, FaEye, FaUser } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher, FaEdit, FaEye, FaUser, FaUserPlus } from "react-icons/fa";
 import {
   fetchPendingCourses,
   fetchPendingEbooks,
@@ -10,22 +10,26 @@ import {
   fetchPendingTeachers,
   fetchPendingStudents,
   fetchPendingBlogs,
+  fetchPendingJoinUsApplications,
   approveCourse,
   approveEbook,
   approveJob,
   approveTeacher,
   approveStudent,
   approveBlog,
+  approveJoinUsApplication,
   fetchBlogPreview,
   fetchCoursePreview,
   fetchEbookPreview,
   fetchJobPreview,
+  fetchJoinUsApplicationById,
 } from "../../../src/services/api/adminApprovals";
 import PreviewModal from "../components/PreviewModal";
 import BlogPreview from "../components/previews/BlogPreview";
 import CoursePreview from "../components/previews/CoursePreview";
 import BookPreview from "../components/previews/BookPreview";
 import JobPreview from "../components/previews/JobPreview";
+import JoinUsApplicationPreview from "../components/previews/JoinUsApplicationPreview";
 
 const ApprovalPage = () => {
   const { type } = useParams();
@@ -119,6 +123,25 @@ const ApprovalPage = () => {
         return details;
       },
     },
+    "join-us-applications": {
+      label: "Join Us Applications",
+      icon: FaUserPlus,
+      fetchFn: fetchPendingJoinUsApplications,
+      approveFn: approveJoinUsApplication,
+      getTitle: (item) => `${item.formData?.fullName || "Unknown"} - ${item.applicationType || ""}`,
+      getOwner: (item) => item.formData?.email || "N/A",
+      getDetails: (item) => {
+        const details = [];
+        if (item.formData?.phone) details.push(`Phone: ${item.formData.phone}`);
+        if (item.applicationType === "teacher" && item.formData?.experience) {
+          details.push(`Experience: ${item.formData.experience}`);
+        }
+        if (item.applicationType === "influencer" && item.formData?.collaborationType) {
+          details.push(`Type: ${item.formData.collaborationType}`);
+        }
+        return details;
+      },
+    },
   };
 
   const config = configs[type];
@@ -129,7 +152,7 @@ const ApprovalPage = () => {
       setLoading(true);
       const response = await config.fetchFn();
       if (response) {
-        const responseKey = type === "books" ? "ebooks" : type;
+        const responseKey = type === "books" ? "ebooks" : type === "join-us-applications" ? "applications" : type;
         setItems(response[responseKey] || response.blogs || response.students || []);
       }
     } catch (error) {
@@ -149,8 +172,8 @@ const ApprovalPage = () => {
     const itemId = item._id || item.id;
     if (processing.has(itemId)) return;
 
-    // For blogs, show rejection reason modal if rejecting
-    if (type === "blogs" && action === "reject") {
+    // For blogs and join-us-applications, show rejection reason modal if rejecting
+    if ((type === "blogs" || type === "join-us-applications") && action === "reject") {
       setShowRejectModal((prev) => ({ ...prev, [itemId]: true }));
       return;
     }
@@ -158,7 +181,7 @@ const ApprovalPage = () => {
     setProcessing((prev) => new Set(prev).add(itemId));
 
     try {
-      const rejectionReasonValue = type === "blogs" && action === "reject" 
+      const rejectionReasonValue = (type === "blogs" || type === "join-us-applications") && action === "reject" 
         ? rejectionReason[itemId] || "" 
         : null;
       await config.approveFn(itemId, action, rejectionReasonValue);
@@ -216,6 +239,10 @@ const ApprovalPage = () => {
           data = await fetchJobPreview(itemId);
           setPreviewData(data.job);
           break;
+        case "join-us-applications":
+          data = await fetchJoinUsApplicationById(itemId);
+          setPreviewData(data.application);
+          break;
         default:
           throw new Error("Preview not available for this type");
       }
@@ -239,6 +266,8 @@ const ApprovalPage = () => {
         return <BookPreview ebook={previewData} />;
       case "jobs":
         return <JobPreview job={previewData} />;
+      case "join-us-applications":
+        return <JoinUsApplicationPreview application={previewData} />;
       default:
         return null;
     }
@@ -338,7 +367,9 @@ const ApprovalPage = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F1E] p-6">
-                        <h3 className="mb-4 text-lg font-semibold text-white">Reject Blog</h3>
+                        <h3 className="mb-4 text-lg font-semibold text-white">
+                          Reject {type === "blogs" ? "Blog" : type === "join-us-applications" ? "Application" : "Item"}
+                        </h3>
                         <p className="mb-2 text-sm text-gray-400">Please provide a reason for rejection:</p>
                         <textarea
                           value={rejectionReason[itemId] || ""}

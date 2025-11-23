@@ -377,6 +377,13 @@ const LeadManagement = () => {
                           <span>{lead.assignedTo.fullName}</span>
                         </div>
                       )}
+                      {lead.formSource && (
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 rounded-md bg-[#D4AF37]/20 text-[#D4AF37] text-xs font-semibold">
+                            Form: {lead.formSource.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <HiOutlineCalendar className="h-4 w-4" />
                         <span>{formatDate(lead.createdAt)}</span>

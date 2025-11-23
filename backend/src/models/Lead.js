@@ -33,6 +33,12 @@ const leadSchema = new mongoose.Schema(
       enum: ["website", "referral", "social_media", "email", "phone", "event", "free_library", "book_demo", "business_collaboration", "franchise_inquiry", "other"],
       default: "website",
     },
+    formSource: {
+      type: String,
+      trim: true,
+      required: false,
+      // Stores the exact form ID that generated the lead (e.g., "book-demo", "general-inquiry", "request-callback", etc.)
+    },
     status: {
       type: String,
       enum: ["new", "contacted", "qualified", "proposal", "negotiation", "converted", "lost", "nurturing"],
@@ -114,6 +120,7 @@ leadSchema.index({ status: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ priority: 1 });
 leadSchema.index({ source: 1 });
+leadSchema.index({ formSource: 1 });
 leadSchema.index({ createdAt: -1 });
 leadSchema.index({ nextFollowUpAt: 1 });
 leadSchema.index({ status: 1, assignedTo: 1 });

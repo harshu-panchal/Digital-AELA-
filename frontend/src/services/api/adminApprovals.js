@@ -144,3 +144,47 @@ export const fetchEbookPreview = (ebookId) =>
 export const fetchJobPreview = (jobId) =>
   apiRequest(`/admin/pending/jobs/${jobId}/preview`);
 
+/**
+ * Get pending join-us applications
+ */
+export const fetchPendingJoinUsApplications = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append("page", params.page);
+  if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+  if (params.applicationType) queryParams.append("applicationType", params.applicationType);
+  const queryString = queryParams.toString();
+  return apiRequest(`/admin/pending/join-us-applications${queryString ? `?${queryString}` : ""}`);
+};
+
+/**
+ * Get join-us application by ID (full details)
+ */
+export const fetchJoinUsApplicationById = (applicationId) =>
+  apiRequest(`/admin/pending/join-us-applications/${applicationId}`);
+
+/**
+ * Approve/Reject join-us application
+ */
+export const approveJoinUsApplication = (applicationId, action, rejectionReason = null) => {
+  if (action === "reject") {
+    return apiRequest(`/admin/join-us-applications/${applicationId}/reject`, {
+      method: "PATCH",
+      body: { rejectionReason },
+    });
+  } else {
+    return apiRequest(`/admin/join-us-applications/${applicationId}/approve`, {
+      method: "PATCH",
+      body: {},
+    });
+  }
+};
+
+/**
+ * Reject join-us application with reason
+ */
+export const rejectJoinUsApplication = (applicationId, rejectionReason) =>
+  apiRequest(`/admin/join-us-applications/${applicationId}/reject`, {
+    method: "PATCH",
+    body: { rejectionReason },
+  });
+

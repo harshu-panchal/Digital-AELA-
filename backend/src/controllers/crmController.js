@@ -856,22 +856,27 @@ export const createFormLead = async (req, res, next) => {
     const formData = req.body;
     const { formId, ...payload } = formData;
 
-    // Map formId to source
+    if (!formId) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Form ID is required",
+        },
+      });
+    }
+
+    // Map formId to source enum for backward compatibility
     const sourceMap = {
       "book-demo": "book_demo",
       "business-collaboration": "business_collaboration",
       "franchise-inquiry": "franchise_inquiry",
+      "general-inquiry": "website",
+      "request-callback": "website",
+      "workshop-enrollment": "website",
     };
 
-    const source = sourceMap[formId];
-    if (!source) {
-      return res.status(422).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid form type",
-        },
-      });
-    }
+    // Use mapped source or default to "website" for new form types
+    const source = sourceMap[formId] || "website";
 
     // Extract and map fields based on form type
     let firstName = "";
@@ -966,6 +971,40 @@ export const createFormLead = async (req, res, next) => {
       if (payload.timeframe) descParts.push(`Timeframe: ${payload.timeframe}`);
       if (payload.message) descParts.push(`Message: ${payload.message}`);
       description = descParts.join(" | ");
+    } else {
+      // Handle other form types (general-inquiry, request-callback, workshop-enrollment, etc.)
+      // Generic extraction for forms with fullName or firstName/lastName
+      if (payload.fullName) {
+        const fullName = payload.fullName?.trim() || "";
+        const nameParts = fullName.split(" ");
+        firstName = nameParts[0] || "";
+        lastName = nameParts.slice(1).join(" ") || "";
+      } else {
+        firstName = payload.firstName?.trim() || "";
+        lastName = payload.lastName?.trim() || "";
+      }
+      
+      email = payload.email?.toLowerCase().trim() || "";
+      phone = payload.phone?.trim() || "";
+      company = payload.company?.trim() || payload.organizationName?.trim() || payload.companyName?.trim() || "";
+
+      // Store all other fields in customFields
+      Object.keys(payload).forEach((key) => {
+        if (!["firstName", "lastName", "fullName", "email", "phone", "company", "organizationName", "companyName"].includes(key)) {
+          if (payload[key]) {
+            customFields[key] = payload[key];
+          }
+        }
+      });
+
+      // Create description from key fields
+      const descParts = [];
+      if (payload.subject) descParts.push(`Subject: ${payload.subject}`);
+      if (payload.message) descParts.push(`Message: ${payload.message}`);
+      if (payload.callPurpose) descParts.push(`Purpose: ${payload.callPurpose}`);
+      if (payload.workshopSelection) descParts.push(`Workshop: ${payload.workshopSelection}`);
+      if (payload.department) descParts.push(`Department: ${payload.department}`);
+      description = descParts.length > 0 ? descParts.join(" | ") : undefined;
     }
 
     // Validation
@@ -988,6 +1027,7 @@ export const createFormLead = async (req, res, next) => {
       phone: phone.trim() || "",
       company: company.trim() || "",
       source: source,
+      formSource: formId, // Store the exact form ID that generated this lead
       status: "new",
       priority: "medium",
       customFields: customFields,

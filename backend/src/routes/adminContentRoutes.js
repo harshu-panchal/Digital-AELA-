@@ -35,6 +35,12 @@ import {
   getBlogPreview,
 } from "../controllers/adminBlogApprovalController.js";
 import {
+  getPendingJoinUsApplications,
+  getJoinUsApplicationById,
+  approveJoinUsApplication,
+  rejectJoinUsApplication,
+} from "../controllers/joinUsApplicationController.js";
+import {
   getLiveRoomsForModeration,
   moderateLiveRoom,
   deleteLiveRoom,
@@ -54,12 +60,14 @@ router.get("/pending/jobs", getPendingJobs);
 router.get("/pending/teachers", getPendingTeachers);
 router.get("/pending/students", getPendingStudents);
 router.get("/pending/blogs", getPendingBlogs);
+router.get("/pending/join-us-applications", getPendingJoinUsApplications);
 
 // Preview routes (full content for super admin)
 router.get("/pending/blogs/:blogId/preview", getBlogPreview);
 router.get("/pending/courses/:courseId/preview", getCoursePreview);
 router.get("/pending/ebooks/:ebookId/preview", getEbookPreview);
 router.get("/pending/jobs/:jobId/preview", getJobPreview);
+router.get("/pending/join-us-applications/:applicationId", getJoinUsApplicationById);
 
 // Approval routes
 router.patch("/courses/:courseId/approve", approveCourse);
@@ -68,6 +76,8 @@ router.patch("/jobs/:jobId/approve", approveJob);
 router.patch("/teachers/:userId/approve", approveTeacher);
 router.patch("/students/:userId/approve", approveStudent);
 router.patch("/blogs/:blogId/approve", approveBlog);
+router.patch("/join-us-applications/:applicationId/approve", approveJoinUsApplication);
+router.patch("/join-us-applications/:applicationId/reject", rejectJoinUsApplication);
 
 // Content creation routes
 router.post("/courses", createCourse);

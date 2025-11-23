@@ -44,12 +44,12 @@ const ContactForm = ({
     const normalizedData = fields.reduce((acc, field) => {
       const rawValue = formData[field.name];
       
-      // Handle file inputs separately
+      // Handle file inputs separately - pass File object directly
       if (field.type === "file") {
         if (rawValue instanceof File) {
-          acc[field.name] = rawValue.name; // Store filename for now
+          acc[field.name] = rawValue; // Pass File object for upload
         } else {
-          acc[field.name] = "";
+          // If no file, skip this field (don't add empty string)
         }
         return acc;
       }
