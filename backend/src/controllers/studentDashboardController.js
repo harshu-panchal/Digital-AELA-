@@ -149,7 +149,7 @@ export const getStudentDashboard = async (req, res, next) => {
     const totalCoins = studentPoints.totalCoins || 0;
     const pendingCoins = studentPoints.pendingCoins || 0;
     const redeemedCoins = studentPoints.redeemedCoins || 0;
-    const availableCoins = totalCoins - redeemedCoins;
+    const availableCoins = totalCoins - redeemedCoins - pendingCoins;
 
     // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
     let totalEarned = 0;
@@ -573,7 +573,8 @@ export const getPublicUserStats = async (req, res, next) => {
 
     const totalCoins = studentPoints?.totalCoins || 0;
     const redeemedCoins = studentPoints?.redeemedCoins || 0;
-    const availableCoins = totalCoins - redeemedCoins;
+    const pendingCoins = studentPoints?.pendingCoins || 0;
+    const availableCoins = totalCoins - redeemedCoins - pendingCoins;
 
     // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
     let totalEarned = 0;
