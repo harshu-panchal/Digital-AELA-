@@ -152,6 +152,17 @@ export const createFormLead = async (payload) => {
 };
 
 /**
+ * Check if form has been submitted by email
+ * GET /api/v1/crm/leads/check-submission?email=xxx&formId=xxx
+ */
+export const checkFormSubmission = async (email, formId) => {
+  return apiRequest(`/crm/leads/check-submission?email=${encodeURIComponent(email)}&formId=${encodeURIComponent(formId)}`, {
+    method: "GET",
+    skipAuth: true,
+  });
+};
+
+/**
  * Get Team Members
  * GET /api/v1/crm/team-members
  */

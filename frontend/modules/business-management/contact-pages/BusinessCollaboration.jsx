@@ -126,6 +126,8 @@ const BusinessCollaboration = () => {
             successMessage="Thank you! Our partnerships team will reach out with the next steps within one business day."
             disclaimer="We sign NDAs upon request. Your project details are kept confidential and viewed only by senior partnership managers."
             onSubmit={handleSubmit}
+            formId="business-collaboration"
+            pendingMessage="Your collaboration request is pending approval. Our partnerships team will review it and get back to you within one business day."
           />
         </div>
 

@@ -143,6 +143,8 @@ const JoinAsTeacher = () => {
           successMessage="Application received! Our academic partnerships team will get in touch soon."
           disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."
           onSubmit={handleSubmit}
+          formId="teacher"
+          pendingMessage="Your application is pending approval. Our academic partnerships team will review it and get in touch soon."
         />
       </div>
     </ContactPageLayout>

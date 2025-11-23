@@ -127,6 +127,8 @@ const BookDemo = () => {
             successMessage="Demo request received! Our academic advisor will reach out within 24 hours to confirm your session."
             disclaimer="By submitting this form you consent to be contacted by Digital AELA's programme advisors via phone, email, or WhatsApp."
             onSubmit={handleSubmit}
+            formId="book-demo"
+            pendingMessage="Your demo request is pending approval. Our team will review it and contact you within 24 hours."
           />
         </div>
 

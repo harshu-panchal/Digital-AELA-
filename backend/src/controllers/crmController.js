@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Lead from "../models/Lead.js";
 import FollowUp from "../models/FollowUp.js";
 import User from "../models/User.js";
+import JoinUsApplication from "../models/JoinUsApplication.js";
 
 /**
  * Create Lead
@@ -1043,6 +1044,65 @@ export const createFormLead = async (req, res, next) => {
     return res.status(201).json({
       lead: populatedLead,
       message: "Lead created successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Check if form has been submitted by email
+ * GET /api/v1/crm/leads/check-submission?email=xxx&formId=xxx
+ */
+export const checkFormSubmission = async (req, res, next) => {
+  try {
+    const { email, formId } = req.query;
+
+    if (!email || !formId) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and formId are required",
+        },
+      });
+    }
+
+    // Check if it's a join-us form (teacher or influencer)
+    if (formId === "teacher" || formId === "influencer") {
+      const application = await JoinUsApplication.findOne({
+        applicationType: formId,
+        "formData.email": email.toLowerCase().trim(),
+      })
+        .select("status submittedAt")
+        .lean();
+
+      if (application) {
+        return res.json({
+          submitted: true,
+          status: application.status,
+          submittedAt: application.submittedAt,
+        });
+      }
+    } else {
+      // Check contact forms in Lead model
+      const lead = await Lead.findOne({
+        email: email.toLowerCase().trim(),
+        formSource: formId,
+      })
+        .select("status createdAt")
+        .lean();
+
+      if (lead) {
+        return res.json({
+          submitted: true,
+          status: lead.status,
+          submittedAt: lead.createdAt,
+        });
+      }
+    }
+
+    return res.json({
+      submitted: false,
     });
   } catch (error) {
     return next(error);

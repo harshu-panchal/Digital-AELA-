@@ -3,6 +3,37 @@ import { motion } from "framer-motion";
 import { validateContactForm, sanitizeUrl, safeString } from "../../../../src/utils/registrationHelpers";
 import { toast } from "react-toastify";
 
+const STORAGE_KEY = "aela.form.submissions";
+
+const getStoredSubmissions = () => {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const storeSubmission = (formId, email) => {
+  if (typeof window === "undefined") return;
+  try {
+    const submissions = getStoredSubmissions();
+    submissions[`${formId}:${email.toLowerCase().trim()}`] = {
+      submittedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const checkSubmission = (formId, email) => {
+  if (!formId || !email) return false;
+  const submissions = getStoredSubmissions();
+  return !!submissions[`${formId}:${email.toLowerCase().trim()}`];
+};
+
 const ContactForm = ({
   fields,
   submitLabel = "Submit",
@@ -10,6 +41,8 @@ const ContactForm = ({
   disclaimer,
   onSubmit,
   errorMessage = "We couldn't submit your request. Please try again.",
+  formId,
+  pendingMessage = "Your submission is pending approval. We will review it and get back to you soon.",
 }) => {
   const initialValues = useMemo(() => {
     return fields.reduce((acc, field) => {
@@ -21,10 +54,19 @@ const ContactForm = ({
   const [formData, setFormData] = useState(initialValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
+  const [isAlreadySubmitted, setIsAlreadySubmitted] = useState(false);
 
   useEffect(() => {
     setFormData(initialValues);
   }, [initialValues]);
+
+  // Check if form has been submitted when email changes
+  useEffect(() => {
+    if (formId && formData.email) {
+      const submitted = checkSubmission(formId, formData.email);
+      setIsAlreadySubmitted(submitted);
+    }
+  }, [formId, formData.email]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -76,9 +118,14 @@ const ContactForm = ({
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
+      // Store submission in localStorage
+      if (formId && normalizedData.email) {
+        storeSubmission(formId, normalizedData.email);
+        setIsAlreadySubmitted(true);
+      }
+
       setStatus("success");
       setFormData(initialValues);
-      // Keep success state - don't reset to show form again
     } catch (error) {
       const message =
         (error && typeof error === "object" && "message" in error && error.message) ||
@@ -89,70 +136,17 @@ const ContactForm = ({
     }
   };
 
-  // Show success state instead of form
-  if (status === "success") {
+  // Show thank you message if already submitted
+  if (isAlreadySubmitted) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-8 md:p-10 shadow-[0_0_24px_rgba(212,175,55,0.06)] text-center space-y-6">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="mx-auto w-20 h-20 rounded-full bg-[#4ade80]/20 flex items-center justify-center">
-          <svg
-            className="w-12 h-12 text-[#4ade80]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </motion.div>
-
-        <div className="space-y-3">
-          <h3 className="text-2xl md:text-3xl font-bold text-white">
-            Thank You!
-          </h3>
-          <p className="text-base md:text-lg text-gray-300 leading-relaxed">
-            {successMessage}
-          </p>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="border border-[#D4AF37]/30 bg-[#D4AF37]/10 rounded-xl p-4 md:p-5">
-          <div className="flex items-start gap-3">
-            <svg
-              className="w-6 h-6 text-[#D4AF37] flex-shrink-0 mt-0.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div className="text-left">
-              <p className="text-sm md:text-base font-semibold text-[#D4AF37] mb-1">
-                Pending Approval
-              </p>
-              <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
-                Your submission has been received and is pending review. Our team will get back to you soon.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-8 md:p-10 shadow-[0_0_24px_rgba(212,175,55,0.06)] text-center space-y-4">
+        <div className="text-5xl mb-4">✓</div>
+        <h3 className="text-2xl font-semibold text-white mb-2">Thank You!</h3>
+        <p className="text-[#D4AF37] text-lg mb-4">{successMessage}</p>
+        <p className="text-gray-400 text-sm">{pendingMessage}</p>
       </motion.div>
     );
   }
@@ -165,6 +159,15 @@ const ContactForm = ({
       transition={{ duration: 0.4, ease: "easeOut" }}
       onSubmit={handleSubmit}
       className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-5 md:p-7 shadow-[0_0_24px_rgba(212,175,55,0.06)] space-y-5">
+      {status === "success" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border border-[#4ade80]/30 bg-[#1a2e23] text-[#9ef6c5] px-4 py-2.5 rounded-xl text-xs md:text-sm">
+          {successMessage}
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fields.map((field) => {
           const {

@@ -1,6 +1,7 @@
 import { createFormLead } from "./api/crm";
 
 const STORAGE_KEY = "aela.contact.submissions";
+const FORM_SUBMISSIONS_KEY = "aela.form.submissions";
 
 const loadSubmissions = () => {
   if (typeof window === "undefined") {
@@ -30,6 +31,20 @@ const persistSubmissions = (entries) => {
   }
 };
 
+const storeFormSubmission = (formId, email) => {
+  if (typeof window === "undefined" || !email) return;
+  try {
+    const stored = window.localStorage.getItem(FORM_SUBMISSIONS_KEY);
+    const submissions = stored ? JSON.parse(stored) : {};
+    submissions[`${formId}:${email.toLowerCase().trim()}`] = {
+      submittedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(FORM_SUBMISSIONS_KEY, JSON.stringify(submissions));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 export const submitContactLead = async (formId, payload) => {
   const timestamp = new Date().toISOString();
   const entry = {
@@ -50,6 +65,12 @@ export const submitContactLead = async (formId, payload) => {
       formId,
       ...payload,
     });
+    
+    // Store form submission for tracking (same format as ContactForm uses)
+    if (payload.email) {
+      storeFormSubmission(formId, payload.email);
+    }
+    
     return { ...entry, leadId: response.lead?._id };
   } catch (error) {
     // If API call fails, still return the entry (stored in localStorage)

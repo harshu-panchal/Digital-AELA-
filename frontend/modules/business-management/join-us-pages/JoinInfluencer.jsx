@@ -204,6 +204,8 @@ const JoinInfluencer = () => {
           successMessage="Thanks for reaching out! Our partnerships team will respond within 5 business days."
           disclaimer="Only our partnerships team will review these details. We will reach out within 5 business days."
           onSubmit={handleSubmit}
+          formId="influencer"
+          pendingMessage="Your application is pending approval. Our partnerships team will review it and respond within 5 business days."
         />
       </div>
     </ContactPageLayout>

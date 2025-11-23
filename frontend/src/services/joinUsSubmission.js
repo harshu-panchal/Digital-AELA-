@@ -1,5 +1,21 @@
 import { API_BASE_URL } from "../config/api.js";
 
+const STORAGE_KEY = "aela.form.submissions";
+
+const storeSubmission = (formId, email) => {
+  if (typeof window === "undefined") return;
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const submissions = stored ? JSON.parse(stored) : {};
+    submissions[`${formId}:${email.toLowerCase().trim()}`] = {
+      submittedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 /**
  * Submit Join Us application with file uploads
  * @param {string} program - Application type: "teacher" or "influencer"
@@ -53,6 +69,11 @@ export const submitJoinUsLead = async (program, payload) => {
   if (!response.ok) {
     const errorMessage = result?.error?.message || "Failed to submit application";
     throw new Error(errorMessage);
+  }
+
+  // Store submission in localStorage
+  if (payload.email) {
+    storeSubmission(program, payload.email);
   }
 
   return result;

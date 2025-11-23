@@ -119,6 +119,8 @@ const FranchiseInquiry = () => {
             successMessage="Thank you for your interest! Our expansion team will reach out with the franchise information deck."
             disclaimer="Submitting this form does not create a legal obligation. We will schedule a discovery call before sharing agreements."
             onSubmit={handleSubmit}
+            formId="franchise-inquiry"
+            pendingMessage="Your franchise inquiry is pending approval. Our expansion team will review it and contact you soon."
           />
         </div>
 

@@ -3,6 +3,7 @@ import {
   createLead,
   createPublicLead,
   createFormLead,
+  checkFormSubmission,
   getAllLeads,
   getLeadDetails,
   updateLead,
@@ -25,6 +26,7 @@ router.get("/team-members", authenticate, getTeamMembers);
 // Public endpoints for form submissions (no authentication required)
 router.post("/leads/public", createPublicLead);
 router.post("/leads/form", createFormLead);
+router.get("/leads/check-submission", checkFormSubmission);
 router.post("/leads", authenticate, createLead);
 router.get("/leads", authenticate, getAllLeads);
 router.get("/leads/:leadId", authenticate, getLeadDetails);
