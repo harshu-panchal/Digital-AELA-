@@ -1,4 +1,5 @@
 import Settings from "../models/Settings.js";
+import { clearSettingsCache } from "../utils/settingsHelper.js";
 
 /**
  * Get public settings (no authentication required)
@@ -210,6 +211,9 @@ export const updateSettings = async (req, res, next) => {
       }
     }
 
+    // Clear settings cache after update
+    clearSettingsCache();
+
     return res.json({
       success: true,
       updated: results,
@@ -272,6 +276,9 @@ export const updateSetting = async (req, res, next) => {
 
     await setting.save();
 
+    // Clear settings cache after update
+    clearSettingsCache();
+
     return res.json({
       success: true,
       setting: {
@@ -308,6 +315,9 @@ export const deleteSetting = async (req, res, next) => {
         },
       });
     }
+
+    // Clear settings cache after deletion
+    clearSettingsCache();
 
     return res.json({
       success: true,
@@ -390,14 +400,14 @@ export const initializeDefaultSettings = async (req, res, next) => {
       { key: "payment.gateway.paypal.clientId", value: "", category: "payment", type: "string", label: "PayPal Client ID", description: "PayPal client ID", isEncrypted: true },
       { key: "payment.gateway.paypal.secret", value: "", category: "payment", type: "string", label: "PayPal Secret", description: "PayPal client secret", isEncrypted: true },
 
-      // Feature Flags
-      { key: "features.courses.enabled", value: true, category: "features", type: "boolean", label: "Courses Enabled", description: "Enable course functionality" },
-      { key: "features.jobs.enabled", value: true, category: "features", type: "boolean", label: "Jobs Enabled", description: "Enable job portal functionality" },
-      { key: "features.blog.enabled", value: true, category: "features", type: "boolean", label: "Blog Enabled", description: "Enable blog functionality" },
-      { key: "features.ebooks.enabled", value: true, category: "features", type: "boolean", label: "Ebooks Enabled", description: "Enable ebook functionality" },
-      { key: "features.quizzes.enabled", value: true, category: "features", type: "boolean", label: "Quizzes Enabled", description: "Enable quiz functionality" },
-      { key: "features.points.enabled", value: true, category: "features", type: "boolean", label: "Points System Enabled", description: "Enable points/rewards system" },
-      { key: "features.messaging.enabled", value: true, category: "features", type: "boolean", label: "Messaging Enabled", description: "Enable messaging functionality" },
+      // Feature Flags (marked as public so frontend can check them)
+      { key: "features.courses.enabled", value: true, category: "features", type: "boolean", label: "Courses Enabled", description: "Enable course functionality", isPublic: true },
+      { key: "features.jobs.enabled", value: true, category: "features", type: "boolean", label: "Jobs Enabled", description: "Enable job portal functionality", isPublic: true },
+      { key: "features.blog.enabled", value: true, category: "features", type: "boolean", label: "Blog Enabled", description: "Enable blog functionality", isPublic: true },
+      { key: "features.ebooks.enabled", value: true, category: "features", type: "boolean", label: "Ebooks Enabled", description: "Enable ebook functionality", isPublic: true },
+      { key: "features.quizzes.enabled", value: true, category: "features", type: "boolean", label: "Quizzes Enabled", description: "Enable quiz functionality", isPublic: true },
+      { key: "features.points.enabled", value: true, category: "features", type: "boolean", label: "Points System Enabled", description: "Enable points/rewards system", isPublic: true },
+      { key: "features.messaging.enabled", value: true, category: "features", type: "boolean", label: "Messaging Enabled", description: "Enable messaging functionality", isPublic: true },
 
       // Maintenance
       { key: "maintenance.enabled", value: false, category: "maintenance", type: "boolean", label: "Maintenance Mode", description: "Enable maintenance mode" },
@@ -439,11 +449,23 @@ export const initializeDefaultSettings = async (req, res, next) => {
               results.push(settingData.key + " (updated to public)");
             }
           }
+          // Update existing feature flags to ensure they're public
+          if (settingData.category === "features" || settingData.key?.startsWith("features.")) {
+            if (settingData.isPublic && !existing.isPublic) {
+              existing.isPublic = true;
+              existing.updatedBy = userId;
+              await existing.save();
+              results.push(settingData.key + " (updated to public)");
+            }
+          }
         }
       } catch (error) {
         errors.push({ key: settingData.key, error: error.message });
       }
     }
+
+    // Clear settings cache after initialization
+    clearSettingsCache();
 
     return res.json({
       success: true,

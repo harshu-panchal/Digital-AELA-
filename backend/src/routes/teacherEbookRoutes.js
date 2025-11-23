@@ -7,8 +7,12 @@ import {
   updateTeacherEbook,
 } from "../controllers/teacherEbookController.js";
 import { uploadSinglePdf, handleUploadError } from "../middleware/uploadMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = express.Router();
+
+// Apply feature flag check for ebooks
+router.use(requireFeature("ebooks"));
 
 // All routes require teacher authentication
 router.use(requireAuth(["teacher"]));

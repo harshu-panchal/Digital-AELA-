@@ -11,8 +11,12 @@ import {
   getQuizLeaderboard,
 } from "../controllers/quizController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
+
+// Apply feature flag check for quizzes
+router.use(requireFeature("quizzes"));
 
 // Get all published quizzes (public endpoint)
 router.get("/", getPublishedQuizzes);

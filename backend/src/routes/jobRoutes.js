@@ -10,9 +10,13 @@ import {
   updateJob,
 } from "../controllers/jobController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
 const recruiterOnly = requireAuth(["recruiter"]);
+
+// Apply feature flag check for jobs
+router.use(requireFeature("jobs"));
 
 router.get("/", recruiterOnly, listMyJobs);
 router.post("/", recruiterOnly, createJob);

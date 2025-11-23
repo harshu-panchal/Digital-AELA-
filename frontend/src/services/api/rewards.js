@@ -27,7 +27,7 @@ export const getReward = (rewardId) =>
 export const createReward = (payload) =>
   apiRequest("/rewards", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 
 /**
@@ -36,7 +36,7 @@ export const createReward = (payload) =>
 export const updateReward = (rewardId, payload) =>
   apiRequest(`/rewards/${rewardId}`, {
     method: "PATCH",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 
 /**

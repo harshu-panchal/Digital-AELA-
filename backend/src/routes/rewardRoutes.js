@@ -8,8 +8,12 @@ import {
   getRewardAnalytics,
 } from "../controllers/rewardController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
+
+// Apply feature flag check for points system
+router.use(requireFeature("points"));
 
 // Public routes
 router.get("/", getRewards);

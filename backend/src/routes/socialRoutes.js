@@ -8,6 +8,7 @@ import {
   shareCoins,
 } from "../controllers/socialController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
 
@@ -32,8 +33,8 @@ router.post("/follow", requireAuth([]), followUser);
 // Unfollow a user (authenticated)
 router.delete("/follow/:targetUserId", requireAuth([]), unfollowUser);
 
-// Share coins with another user (authenticated)
-router.post("/share-coins", requireAuth(["student"]), shareCoins);
+// Share coins with another user (authenticated) - requires points feature
+router.post("/share-coins", requireFeature("points"), requireAuth(["student"]), shareCoins);
 
 // Note: bulkShareCoins, getCoinSharingHistory, getCoinSharingLimits
 // are not yet implemented in socialController.js

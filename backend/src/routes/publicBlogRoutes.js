@@ -9,8 +9,12 @@ import {
   shareBlog,
 } from "../controllers/blogEnhancementController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
+
+// Apply feature flag check for blog
+router.use(requireFeature("blog"));
 
 // Public routes
 router.get("/", listPublishedBlogs);

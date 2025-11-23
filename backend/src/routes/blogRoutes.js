@@ -6,10 +6,14 @@ import {
   updateBlog,
 } from "../controllers/blogController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
 // Allow all authenticated users to create and manage blogs
 const authenticated = requireAuth();
+
+// Apply feature flag check for blog
+router.use(requireFeature("blog"));
 
 router.get("/", authenticated, listBlogs);
 router.post("/", authenticated, createBlog);

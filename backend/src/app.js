@@ -42,6 +42,7 @@ import translationRoutes from "./routes/translationRoutes.js";
 import publicSettingsRoutes from "./routes/publicSettingsRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
+import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
 
 const app = express();
 
@@ -122,6 +123,9 @@ app.use("/api/v1/auth", authRoutes);
 
 // Public settings routes (no authentication required)
 app.use("/api/v1/public", publicSettingsRoutes);
+
+// Check maintenance mode for all API routes (except auth and public)
+app.use("/api/v1", checkMaintenanceMode);
 
 // Apply optional authentication middleware to all other API routes
 // This allows public endpoints to work without auth, but sets req.auth when token is provided

@@ -7,8 +7,12 @@ import {
   getApplicationStats,
 } from "../controllers/jobController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
+
+// Apply feature flag check for jobs
+router.use(requireFeature("jobs"));
 
 // Public endpoint - anyone can view published jobs
 router.get("/", listPublishedJobs);

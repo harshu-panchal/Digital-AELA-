@@ -8,8 +8,12 @@ import {
   getRewardSystemStats,
 } from "../controllers/learnEarnController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireFeature } from "../middleware/featureFlagMiddleware.js";
 
 const router = Router();
+
+// Apply feature flag check for points system
+router.use(requireFeature("points"));
 
 // Get Learn & Earn dashboard data (authenticated user)
 router.get("/dashboard", requireAuth([]), getDashboardData);
