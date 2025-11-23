@@ -77,7 +77,7 @@ const sessionSchema = new mongoose.Schema(
 sessionSchema.index({ user: 1, isActive: 1 });
 sessionSchema.index({ isActive: 1, lastActivity: -1 });
 sessionSchema.index({ loginAt: -1 });
-sessionSchema.index({ token: 1 });
+// token index is already created by unique: true in field definition
 
 // Method to update last activity
 sessionSchema.methods.updateActivity = function () {

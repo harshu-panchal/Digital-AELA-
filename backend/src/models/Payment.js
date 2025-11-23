@@ -105,7 +105,7 @@ paymentSchema.index({ user: 1, createdAt: -1 });
 paymentSchema.index({ course: 1 });
 paymentSchema.index({ status: 1 });
 paymentSchema.index({ gatewayTransactionId: 1 });
-paymentSchema.index({ invoiceNumber: 1 });
+// invoiceNumber index is already created by unique: true in field definition
 paymentSchema.index({ createdAt: -1 });
 
 const Payment = mongoose.model("Payment", paymentSchema);

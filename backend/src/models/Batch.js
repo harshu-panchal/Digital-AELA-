@@ -96,7 +96,7 @@ const batchSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient queries
-batchSchema.index({ code: 1 });
+// code index is already created by unique: true in field definition
 batchSchema.index({ status: 1 });
 batchSchema.index({ startDate: 1, endDate: 1 });
 batchSchema.index({ students: 1 });

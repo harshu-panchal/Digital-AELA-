@@ -73,7 +73,7 @@ paymentSlipSchema.pre("save", async function (next) {
 
 paymentSlipSchema.index({ teacher: 1, createdAt: -1 });
 paymentSlipSchema.index({ payoutRequest: 1 });
-paymentSlipSchema.index({ slipNumber: 1 });
+// slipNumber index is already created by unique: true in field definition
 
 const PaymentSlip = mongoose.model("PaymentSlip", paymentSlipSchema);
 

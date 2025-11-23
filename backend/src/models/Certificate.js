@@ -103,8 +103,8 @@ certificateSchema.pre("save", async function (next) {
 // Indexes for efficient queries
 certificateSchema.index({ student: 1, createdAt: -1 });
 certificateSchema.index({ course: 1 });
-certificateSchema.index({ verificationCode: 1 });
-certificateSchema.index({ certificateNumber: 1 });
+// verificationCode index is already created by unique: true in field definition
+// certificateNumber index is already created by unique: true in field definition
 certificateSchema.index({ status: 1 });
 certificateSchema.index({ issuedAt: -1 });
 
