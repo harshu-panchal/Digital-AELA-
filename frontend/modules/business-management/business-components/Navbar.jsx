@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import {
   FaYoutube,
   FaBars,
   FaTimes,
+  FaMicrophone,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
@@ -95,10 +96,6 @@ const Navbar = () => {
     {
       label: t("nav.learnEarn", { defaultValue: "Learn & Earn" }),
       path: "/learn-earn",
-    },
-    {
-      label: t("nav.speakingClub", { defaultValue: "Speaking Club" }),
-      path: "/learn-earn/live-debate-room",
     },
     {
       label: t("nav.resources", { defaultValue: "Resources" }),
@@ -492,12 +489,14 @@ const Navbar = () => {
 
             {/* Navigation Links - Right Side */}
             <div className="hidden lg:flex flex-1 items-center justify-center gap-5">
-              {navItems.map((item, index) => (
-                <div
-                  key={item.label}
-                  className="relative"
-                  onMouseEnter={() => handleMouseEnter(index)}
-                  onMouseLeave={handleMouseLeave}>
+              {navItems.map((item, index) => {
+                const isLastItem = index === navItems.length - 1;
+                return (
+                  <React.Fragment key={item.label}>
+                    <div
+                      className="relative"
+                      onMouseEnter={() => handleMouseEnter(index)}
+                      onMouseLeave={handleMouseLeave}>
                   {item.dropdown ? (
                     <span className="relative group cursor-pointer">
                       <motion.span
@@ -649,8 +648,28 @@ const Navbar = () => {
                       )}
                     </AnimatePresence>
                   )}
-                </div>
-              ))}
+                    </div>
+                    {/* Speaking Club Live Indicator - After Login Button */}
+                    {isLastItem && (
+                      <Link
+                        to="/learn-earn/live-debate-room"
+                        className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group">
+                        {/* Blinking dot */}
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                        </span>
+                        {/* Microphone icon */}
+                        <FaMicrophone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
+                        {/* Label */}
+                        <span className="text-xs font-semibold text-green-300 group-hover:text-green-200 whitespace-nowrap">
+                          {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
+                        </span>
+                      </Link>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             {/* Mobile Menu Button */}
@@ -707,6 +726,23 @@ const Navbar = () => {
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(212,175,55,0.2)]">
               <div className="flex max-h-[calc(100vh-160px)] flex-col gap-2 overflow-y-auto px-2 pr-1 sm:px-4 sm:pr-2">
+                {/* Speaking Club Live Indicator for Mobile */}
+                <Link
+                  to="/learn-earn/live-debate-room"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group">
+                  {/* Blinking dot */}
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                  </span>
+                  {/* Microphone icon */}
+                  <FaMicrophone className="h-4 w-4 text-green-400 group-hover:text-green-300 transition-colors" />
+                  {/* Label */}
+                  <span className="text-sm font-semibold text-green-300 group-hover:text-green-200">
+                    {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
+                  </span>
+                </Link>
                 {navItems.map((item) => (
                   <div key={item.label}>
                     {item.dropdown ? (

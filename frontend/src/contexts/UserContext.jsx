@@ -7,6 +7,7 @@ import { fetchDashboardData } from "../services/api/learnEarn";
 import { useSocket } from "../hooks/useSocket";
 import { fetchConversations } from "../services/api/messages";
 import { isNetworkError } from "../services/api/baseClient";
+import { useSmartPolling } from "../hooks/useSmartPolling";
 
 const UserContext = createContext(null);
 
@@ -507,25 +508,23 @@ export const UserProvider = ({ children }) => {
     };
   }, [socket, isConnected, authUser?.id]);
 
-  // Load followers list from backend
-  useEffect(() => {
-    reloadFollowers();
-    
-    // Refresh followers every 15 seconds to keep leaderboard updated
-    const interval = setInterval(reloadFollowers, 15000);
-    
-    return () => clearInterval(interval);
-  }, [reloadFollowers]);
+  // Load followers list from backend with smart polling
+  useSmartPolling(reloadFollowers, 15000, {
+    enabled: !!authUser?.id,
+    maxConsecutiveFailures: 3,
+    onError: (error) => {
+      // Errors are already handled in reloadFollowers, no need to log again
+    },
+  });
 
-  // Load following list from backend
-  useEffect(() => {
-    reloadFollowing();
-    
-    // Refresh following every 15 seconds to keep leaderboard updated
-    const interval = setInterval(reloadFollowing, 15000);
-    
-    return () => clearInterval(interval);
-  }, [reloadFollowing]);
+  // Load following list from backend with smart polling
+  useSmartPolling(reloadFollowing, 15000, {
+    enabled: !!authUser?.id,
+    maxConsecutiveFailures: 3,
+    onError: (error) => {
+      // Errors are already handled in reloadFollowing, no need to log again
+    },
+  });
 
   // Listen for coin earning events to refresh leaderboard data and rating/badges
   useEffect(() => {
@@ -553,108 +552,80 @@ export const UserProvider = ({ children }) => {
     };
   }, [reloadFollowers, reloadFollowing, refreshSocialStats]);
 
-  // Load Learn & Earn dashboard data from backend
-  useEffect(() => {
-    let interval = null;
-    let shouldContinuePolling = true;
+  // Load Learn & Earn dashboard data from backend with smart polling
+  const loadDashboardData = useCallback(async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      return;
+    }
 
-    const loadDashboardData = async () => {
-      if (!shouldContinuePolling || !authUser?.id || !tokens?.accessToken) {
-        if (interval) {
-          clearInterval(interval);
-          interval = null;
-        }
-        return;
-      }
+    const dashboardData = await fetchDashboardData();
+    
+    // Always update messages (even if empty array) to show real data
+    if (dashboardData.messages !== undefined) {
+      setMessages(dashboardData.messages || []);
+    }
 
-      try {
-        const dashboardData = await fetchDashboardData();
-        
-        // Always update messages (even if empty array) to show real data
-        if (dashboardData.messages !== undefined) {
-          setMessages(dashboardData.messages || []);
-        }
+    // Always update notifications (even if empty array)
+    if (dashboardData.notifications !== undefined) {
+      setNotifications(dashboardData.notifications || []);
+    }
 
-        // Always update notifications (even if empty array)
-        if (dashboardData.notifications !== undefined) {
-          setNotifications(dashboardData.notifications || []);
-        }
+    // Always update live debates (even if empty array)
+    if (dashboardData.liveDebates !== undefined) {
+      setLiveDebates(dashboardData.liveDebates || []);
+    }
 
-        // Always update live debates (even if empty array)
-        if (dashboardData.liveDebates !== undefined) {
-          setLiveDebates(dashboardData.liveDebates || []);
-        }
+    // Always update open rooms (even if empty array)
+    if (dashboardData.openRooms !== undefined) {
+      setOpenRooms(dashboardData.openRooms || []);
+    }
 
-        // Always update open rooms (even if empty array)
-        if (dashboardData.openRooms !== undefined) {
-          setOpenRooms(dashboardData.openRooms || []);
-        }
-
-        // Update leaderboard (top followers)
-        if (dashboardData.leaderboard && dashboardData.leaderboard.length > 0) {
-          // Merge leaderboard data with existing followers
-          setFollowers((prev) => {
-            const leaderboardMap = new Map(
-              dashboardData.leaderboard.map((item) => [item.id, item])
-            );
-            // Update existing followers with leaderboard data
-            const updated = prev.map((follower) => {
-              const leaderboardItem = leaderboardMap.get(follower.id);
-              return leaderboardItem
-                ? { ...follower, ...leaderboardItem }
-                : follower;
-            });
-            // Add new leaderboard items not in followers
-            dashboardData.leaderboard.forEach((item) => {
-              if (!prev.find((f) => f.id === item.id)) {
-                updated.push(item);
-              }
-            });
-            return updated;
-          });
-        }
-
-        // Update profile avatar if available from dashboard data
-        if (dashboardData.profileAvatar) {
-          setProfile((prev) => ({ ...prev, avatar: dashboardData.profileAvatar }));
-        }
-
-        // Update streak from dashboard data
-        if (dashboardData.streak !== undefined) {
-          setStreak(dashboardData.streak || 0);
-        }
-      } catch (error) {
-        // Stop polling if we get a 401 error (unauthorized) after token refresh fails
-        if (error.status === 401 && error.requiresLogin) {
-          shouldContinuePolling = false;
-          if (interval) {
-            clearInterval(interval);
-            interval = null;
+    // Update leaderboard (top followers)
+    if (dashboardData.leaderboard && dashboardData.leaderboard.length > 0) {
+      // Merge leaderboard data with existing followers
+      setFollowers((prev) => {
+        const leaderboardMap = new Map(
+          dashboardData.leaderboard.map((item) => [item.id, item])
+        );
+        // Update existing followers with leaderboard data
+        const updated = prev.map((follower) => {
+          const leaderboardItem = leaderboardMap.get(follower.id);
+          return leaderboardItem
+            ? { ...follower, ...leaderboardItem }
+            : follower;
+        });
+        // Add new leaderboard items not in followers
+        dashboardData.leaderboard.forEach((item) => {
+          if (!prev.find((f) => f.id === item.id)) {
+            updated.push(item);
           }
-          return;
-        }
-        // Only log non-network errors to reduce console noise when server is down
-        if (!isNetworkError(error)) {
-          // eslint-disable-next-line no-console
-          console.warn("Failed to load dashboard data from backend:", error);
-        }
-        // Keep default data only if there's an error
-      }
-    };
+        });
+        return updated;
+      });
+    }
 
-    // Initial load
-    loadDashboardData();
-    
-    // Refresh dashboard data every 30 seconds to keep it live
-    interval = setInterval(loadDashboardData, 30000);
-    
-    return () => {
-      shouldContinuePolling = false;
-      if (interval) {
-        clearInterval(interval);
+    // Update profile avatar if available from dashboard data
+    if (dashboardData.profileAvatar) {
+      setProfile((prev) => ({ ...prev, avatar: dashboardData.profileAvatar }));
+    }
+
+    // Update streak from dashboard data
+    if (dashboardData.streak !== undefined) {
+      setStreak(dashboardData.streak || 0);
+    }
+  }, [authUser?.id, tokens?.accessToken]);
+
+  useSmartPolling(loadDashboardData, 30000, {
+    enabled: !!authUser?.id && !!tokens?.accessToken,
+    maxConsecutiveFailures: 3,
+    onError: (error) => {
+      // Only log non-network errors to reduce console noise when server is down
+      if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load dashboard data from backend:", error);
       }
-    };
-  }, [authUser, tokens?.accessToken]);
+    },
+  });
 
   // Real-time message updates via Socket.io
   useEffect(() => {

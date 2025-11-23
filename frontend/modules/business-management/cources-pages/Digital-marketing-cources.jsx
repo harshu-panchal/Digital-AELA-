@@ -248,20 +248,19 @@ const DigitalMarketingCourses = () => {
                   />
                 </div>
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                  <div className="min-h-[28px] mb-4"></div>
-                  <div className="mb-4">
-                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                  <div className="flex-shrink-0 mb-4">
+                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
                       {course.description}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                  <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
                     <span className="flex items-center gap-2">
                       <svg
-                        className="w-4 h-4 text-[#D4AF37]"
+                        className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -276,7 +275,7 @@ const DigitalMarketingCourses = () => {
                     </span>
                     <span className="flex items-center gap-2">
                       <svg
-                        className="w-4 h-4 text-[#D4AF37]"
+                        className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -292,22 +291,22 @@ const DigitalMarketingCourses = () => {
                   </div>
 
                   {course.features && course.features.length > 0 && (
-                    <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
+                    <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
                         Key Highlights
                       </p>
                       <ul className="space-y-2 text-xs md:text-sm text-gray-300">
                         {course.features.slice(0, 3).map((feature, idx) => (
                           <li key={idx} className="flex items-center gap-2">
-                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                            {feature}
+                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
+                            <span className="line-clamp-1">{feature}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                    <div className="flex flex-col gap-3 mt-auto">
+                    <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
                         <span>Course Fee</span>
                         <span className="text-lg font-semibold text-[#F5D26A]">

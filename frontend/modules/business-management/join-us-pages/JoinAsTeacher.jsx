@@ -1,5 +1,7 @@
 import { useCallback } from "react";
-import JoinUsFormLayout from "../business-components/join-us/JoinUsFormLayout";
+import { motion } from "framer-motion";
+import ContactPageLayout from "../business-components/contact/ContactPageLayout";
+import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 
 const JoinAsTeacher = () => {
@@ -8,35 +10,7 @@ const JoinAsTeacher = () => {
     []
   );
 
-  return (
-    <JoinUsFormLayout
-      title="Teach with Digital AELA"
-      subtitle="Mentor learners across the globe, host immersive sessions, and co-create transformative learning journeys with our community."
-      image="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80"
-      imageAlt="Instructor guiding students in an interactive session"
-      benefits={[
-        {
-          title: "Global class rooms",
-          description:
-            "Engage with motivated learners across 30+ countries in flexible time slots.",
-        },
-        {
-          title: "Curriculum support",
-          description:
-            "Access digital toolkits, lesson templates, and coaching playbooks designed by our team.",
-        },
-        {
-          title: "Earn & grow",
-          description:
-            "Competitive compensation, bonuses, and visibility across our Learn & Earn ecosystem.",
-        },
-        {
-          title: "Creator community",
-          description:
-            "Collaborate with public speakers, language experts, and master mentors.",
-        },
-      ]}
-      formConfig={[
+  const fields = [
         {
           name: "fullName",
           label: "Full Name",
@@ -91,6 +65,8 @@ const JoinAsTeacher = () => {
           rows: 3,
           placeholder:
             "Share notable certifications, awards, or teaching licenses.",
+          required: false,
+          fullWidth: true,
         },
         {
           name: "sessionFormat",
@@ -122,8 +98,8 @@ const JoinAsTeacher = () => {
           label: "Portfolio / LinkedIn / Session Recording",
           type: "text",
           placeholder: "https://linkedin.com/in/yourprofile",
-          helperText:
-            "Add any link that showcases your teaching style or impact.",
+          help: "Add any link that showcases your teaching style or impact.",
+          required: false,
         },
         {
           name: "motivation",
@@ -133,13 +109,14 @@ const JoinAsTeacher = () => {
           placeholder:
             "Tell us about your mission, teaching philosophy, and the impact you want to create.",
           required: true,
+          fullWidth: true,
         },
         {
           name: "resume",
           label: "Attach Resume (PDF, under 10MB)",
           type: "file",
           accept: ".pdf,.doc,.docx",
-          helperText: "Upload your latest resume (max file size 10 MB).",
+          help: "Upload your latest resume (max file size 10 MB).",
           required: true,
         },
         {
@@ -147,16 +124,28 @@ const JoinAsTeacher = () => {
           label: "Attach Your Video Introduction (minimum 3 minutes)",
           type: "file",
           accept: "video/mp4,video/webm,video/quicktime",
-          helperText:
+          help:
             "Share a video introduction (MP4/WEBM/MOV) at least 3 minutes long to showcase your teaching style.",
           required: true,
         },
-      ]}
-      ctaLabel="Apply as Teacher"
-      disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."
-      onSubmit={handleSubmit}
-      successMessage="Application received! Our academic partnerships team will get in touch soon."
-    />
+      ];
+
+  return (
+    <ContactPageLayout
+      badge="Join Digital AELA"
+      title="Teach with Digital AELA"
+      subtitle="Mentor learners across the globe, host immersive sessions, and co-create transformative learning journeys with our community."
+      description="Share your expertise and join a global community of educators making a real impact.">
+      <div className="max-w-4xl mx-auto">
+        <ContactForm
+          fields={fields}
+          submitLabel="Apply"
+          successMessage="Application received! Our academic partnerships team will get in touch soon."
+          disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </ContactPageLayout>
   );
 };
 

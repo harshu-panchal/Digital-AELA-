@@ -80,8 +80,8 @@ export const Footer = () => {
   ].filter((link) => link.url); // Only show links that have URLs
 
   return (
-    <footer className="relative bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-[#D4AF37]/20 text-[#F5D26A] shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(212,175,55,0.1),transparent_55%)] opacity-60"></div>
+    <footer className="relative bg-white/5 backdrop-blur-xl border-t-2 border-[#D4AF37]/40 text-[#F5D26A] shadow-[0_-8px_32px_rgba(255,255,255,0.1)]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-transparent"></div>
       <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent"></div>
 
       <div className="layout-container py-1 sm:py-1 space-y-1 relative z-1">
@@ -98,20 +98,9 @@ export const Footer = () => {
                 <img
                   src={logo}
                   alt="Digital AELA Logo"
-                  className="h-12 md:h-14 w-auto"
+                  className="h-16 md:h-20 lg:h-24 w-auto"
                 />
               </Link>
-              <a
-                href="https://play.google.com/store/apps/details?id=co.alexis.ynbij"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block transition-transform duration-200 hover:scale-105">
-                <img
-                  src={googlePlay}
-                  alt="Download on Google Play"
-                  className="h-42 w-41"
-                />
-              </a>
             </div>
             <p className="text-xs md:text-sm text-white/80 leading-relaxed">
               Digital AELA is a leading educational platform dedicated to
@@ -119,18 +108,6 @@ export const Footer = () => {
               comprehensive training programs, and transformative learning
               experiences.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              {socialLinksArray.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs md:text-sm text-[#F5D26A]/80 hover:text-[#FFE28A] transition-colors duration-200">
-                  {social.label}
-                </a>
-              ))}
-            </div>
           </motion.div>
 
           {/* Footer Links Columns - Right Side */}
@@ -178,6 +155,26 @@ export const Footer = () => {
                       )}
                     </motion.li>
                   ))}
+                  {column.title === "Explore" && (
+                    <motion.li
+                      initial={{ opacity: 0, x: -8 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.25, delay: 0.1 }}
+                      className="-mt-[40px]">
+                      <a
+                        href="https://play.google.com/store/apps/details?id=co.alexis.ynbij"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block transition-transform duration-200 hover:scale-105">
+                        <img
+                          src={googlePlay}
+                          alt="Download on Google Play"
+                          className="h-40 w-auto max-w-[400px]"
+                        />
+                      </a>
+                    </motion.li>
+                  )}
                 </ul>
               </motion.div>
             ))}
@@ -190,6 +187,51 @@ export const Footer = () => {
           <p className="text-[11px] md:text-xs text-[#F5D26A]/60">
             © {currentYear} Digital AELA. All rights reserved.
           </p>
+          <div className="flex flex-wrap items-center gap-3 justify-end">
+            {socialLinksArray.length > 0 ? (
+              socialLinksArray.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
+                  {social.label}
+                </a>
+              ))
+            ) : (
+              <>
+                <a
+                  href={socialLinks.linkedin || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
+                  LinkedIn
+                </a>
+                <a
+                  href={socialLinks.instagram || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
+                  Instagram
+                </a>
+                <a
+                  href={socialLinks.youtube || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
+                  YouTube
+                </a>
+                <a
+                  href={socialLinks.facebook || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
+                  Facebook
+                </a>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </footer>

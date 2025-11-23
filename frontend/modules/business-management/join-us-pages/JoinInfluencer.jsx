@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import JoinUsFormLayout from "../business-components/join-us/JoinUsFormLayout";
+import ContactPageLayout from "../business-components/contact/ContactPageLayout";
+import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 
 const JoinInfluencer = () => {
@@ -8,35 +9,7 @@ const JoinInfluencer = () => {
     []
   );
 
-  return (
-    <JoinUsFormLayout
-      title="Collaborate as an Influencer / Freelancer"
-      subtitle="Co-create campaigns, programs, and learner experiences with Digital AELA—whether you move communities online or build projects behind the scenes."
-      image="https://images.unsplash.com/photo-1522199710521-72d69614c702?auto=format&fit=crop&w=1600&q=80"
-      imageAlt="Creator collaborating with team members around a laptop"
-      benefits={[
-        {
-          title: "Launch signature drops",
-          description:
-            "Design challenge series, live workshops, or community funnels powered by AELA’s learning products.",
-        },
-        {
-          title: "Flexible engagements",
-          description:
-            "Choose between one-off campaigns, retained projects, or performance-based collaborations that match your schedule.",
-        },
-        {
-          title: "Scale your influence & revenue",
-          description:
-            "Access 100K+ engaged learners, analytics dashboards, and structured payouts for every milestone you achieve.",
-        },
-        {
-          title: "Creator & builder toolkit",
-          description:
-            "Use our content playbooks, project templates, and success team to keep your audience inspired and your clients delighted.",
-        },
-      ]}
-      formConfig={[
+  const fields = [
         {
           name: "fullName",
           label: "Full Name",
@@ -81,6 +54,7 @@ const JoinInfluencer = () => {
             "Podcast",
             "Other",
           ],
+          required: false,
         },
         {
           name: "profileLink",
@@ -94,12 +68,14 @@ const JoinInfluencer = () => {
           label: "Audience Size (if applicable)",
           type: "select",
           options: ["Under 10K", "10K - 50K", "50K - 250K", "250K - 1M", "1M+"],
+          required: false,
         },
         {
           name: "audienceRegions",
           label: "Top Audience Regions",
           type: "text",
           placeholder: "GCC, South Asia, North America",
+          required: false,
         },
         {
           name: "contentThemes",
@@ -108,6 +84,8 @@ const JoinInfluencer = () => {
           rows: 3,
           placeholder:
             "Public speaking, communication hacks, professional storytelling, creator economy...",
+          required: false,
+          fullWidth: true,
         },
         {
           name: "interests",
@@ -116,6 +94,8 @@ const JoinInfluencer = () => {
           rows: 3,
           placeholder:
             "e.g. Edtech partnerships, youth mentoring, creator economy, growth marketing...",
+          required: false,
+          fullWidth: true,
         },
         {
           name: "serviceCategory",
@@ -129,12 +109,14 @@ const JoinInfluencer = () => {
             "Operations & Community",
             "Other Specialized Services",
           ],
+          required: false,
         },
         {
           name: "experienceLevel",
           label: "Years of Professional Experience",
           type: "select",
           options: ["0 - 2 years", "3 - 5 years", "6 - 10 years", "10+ years"],
+          required: false,
         },
         {
           name: "skills",
@@ -143,6 +125,8 @@ const JoinInfluencer = () => {
           rows: 4,
           placeholder:
             "Figma, Webflow, React, Social storytelling, CRM automations...",
+          required: false,
+          fullWidth: true,
         },
         {
           name: "availability",
@@ -160,12 +144,14 @@ const JoinInfluencer = () => {
           label: "Preferred Time Zone(s)",
           type: "text",
           placeholder: "Gulf Standard Time, flexible overlap with EST",
+          required: false,
         },
         {
           name: "rateExpectation",
           label: "Rate Expectation (Specify currency)",
           type: "text",
           placeholder: "AED 120 / hour",
+          required: false,
         },
         {
           name: "collaborationGoals",
@@ -175,6 +161,7 @@ const JoinInfluencer = () => {
           placeholder:
             "Share your vision—co-branded workshops, retained design sprints, growth campaigns, mentorship live streams, etc.",
           required: true,
+          fullWidth: true,
         },
         {
           name: "country",
@@ -188,7 +175,7 @@ const JoinInfluencer = () => {
           label: "Attach Social Media Profile Picture",
           type: "file",
           accept: "image/png,image/jpeg,image/webp",
-          helperText:
+          help:
             "Upload a recent profile image (PNG/JPG/WebP, up to 5 MB).",
           required: true,
         },
@@ -199,13 +186,27 @@ const JoinInfluencer = () => {
           rows: 3,
           placeholder:
             "List campaigns, brands, or client projects that highlight your impact.",
+          required: false,
+          fullWidth: true,
         },
-      ]}
-      ctaLabel="Submit Collaboration Profile"
-      disclaimer="Only our partnerships team will review these details. We will reach out within 5 business days."
-      onSubmit={handleSubmit}
-      successMessage="Thanks for reaching out! Our partnerships team will respond within 5 business days."
-    />
+      ];
+
+  return (
+    <ContactPageLayout
+      badge="Join Digital AELA"
+      title="Collaborate as an Influencer / Freelancer"
+      subtitle="Co-create campaigns, programs, and learner experiences with Digital AELA—whether you move communities online or build projects behind the scenes."
+      description="Join our creator community and scale your influence while making a meaningful impact.">
+      <div className="max-w-4xl mx-auto">
+        <ContactForm
+          fields={fields}
+          submitLabel="Apply"
+          successMessage="Thanks for reaching out! Our partnerships team will respond within 5 business days."
+          disclaimer="Only our partnerships team will review these details. We will reach out within 5 business days."
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </ContactPageLayout>
   );
 };
 

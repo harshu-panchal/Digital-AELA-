@@ -157,7 +157,7 @@ const OurStory = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#D4AF37] text-black px-6 py-3 rounded-lg font-bold text-sm md:text-base hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
-                  Find Jobs
+                  LinkedIn
                   <svg
                     className="w-4 h-4"
                     fill="none"

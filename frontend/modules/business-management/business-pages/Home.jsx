@@ -1378,7 +1378,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
                   <FaCalendarCheck className="w-8 h-8 text-white" />
                 </div>
@@ -1386,7 +1386,7 @@ const Home = () => {
                   Step 1: Book a Free Demo Class
                 </h3>
               </div>
-              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+              <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
                 Apni level ko check karein, trainer se interact karein aur
                 course ka real demo experience lein.
               </p>
@@ -1404,7 +1404,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.2 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
                   <FaCheckCircle className="w-8 h-8 text-white" />
                 </div>
@@ -1412,7 +1412,7 @@ const Home = () => {
                   Step 2: Enroll in the Right Course
                 </h3>
               </div>
-              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+              <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
                 Beginner, Intermediate ya Spoken English - apne goal ke hisaab
                 se course select karke enroll karein.
               </p>
@@ -1430,7 +1430,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
                   <FaPlayCircle className="w-8 h-8 text-white" />
                 </div>
@@ -1438,7 +1438,7 @@ const Home = () => {
                   Step 3: Get Trained (Online + Books)
                 </h3>
               </div>
-              <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+              <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
                 40+ video lessons, 3 printed books, live Q&A sessions, aur
                 practice groups se daily learning ko strong banayein.
               </p>
@@ -1460,7 +1460,7 @@ const Home = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: 0.4 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
                     <FaCertificate className="w-8 h-8 text-black" />
                   </div>
@@ -1468,7 +1468,7 @@ const Home = () => {
                     Step 4: Get Certified
                   </h3>
                 </div>
-                <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
                   Complete your course, pass the assessment, aur internationally
                   recognized certificate hasil karein.
                 </p>
@@ -1486,7 +1486,7 @@ const Home = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: 0.5 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
                     <FaGlobe className="w-8 h-8 text-white" />
                   </div>
@@ -1494,7 +1494,7 @@ const Home = () => {
                     Step 5: Placement & Abroad Opportunities
                   </h3>
                 </div>
-                <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-6 grow">
+                <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
                   Advanced batches, communication training aur interview support -
                   Gulf countries aur global opportunities ke liye tayyar ho
                   jayein.
@@ -1601,7 +1601,7 @@ const Home = () => {
                           ease: [0.25, 0.1, 0.25, 1],
                         }}
                         whileHover={{ y: -6 }}
-                        className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                        className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full min-h-[500px]"
                         role="button"
                         tabIndex={0}
                         onClick={() =>
@@ -1613,7 +1613,7 @@ const Home = () => {
                             handleViewCourseDetail(course, "home-featured");
                           }
                         }}>
-                        <div className="h-40 w-full overflow-hidden">
+                        <div className="flex-shrink-0 h-40 w-full overflow-hidden">
                           <img
                             src={
                               course.image ||
@@ -1624,21 +1624,20 @@ const Home = () => {
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>
-                        <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                          <div className="min-h-[28px] mb-4"></div>
-                          <div className="mb-4">
-                            <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300">
+                        <div className="flex flex-1 flex-col p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] min-h-0">
+                          <div className="flex-shrink-0 mb-4">
+                            <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
                               {course.title}
                             </h3>
-                            <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+                            <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
                               {course.description}
                             </p>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                          <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
                             <span className="flex items-center gap-2">
                               <svg
-                                className="w-4 h-4 text-[#D4AF37]"
+                                className="w-4 h-4 text-[#D4AF37] shrink-0"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24">
@@ -1649,11 +1648,11 @@ const Home = () => {
                                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                               </svg>
-                              {course.duration}
+                              {course.duration || "N/A"}
                             </span>
                             <span className="flex items-center gap-2">
                               <svg
-                                className="w-4 h-4 text-[#D4AF37]"
+                                className="w-4 h-4 text-[#D4AF37] shrink-0"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24">
@@ -1664,12 +1663,12 @@ const Home = () => {
                                   d="M17 8l4 4m0 0l-4 4m4-4H3"
                                 />
                               </svg>
-                              {course.format}
+                              {course.format || "Online"}
                             </span>
                           </div>
 
-                          {course.features && course.features.length > 0 && (
-                            <div className="border-t border-[#D4AF37]/15 pt-4 mb-4">
+                          {course.features && course.features.length > 0 ? (
+                            <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                               <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
                                 Key Highlights
                               </p>
@@ -1680,15 +1679,17 @@ const Home = () => {
                                     <li
                                       key={idx}
                                       className="flex items-center gap-2">
-                                      <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                                      {feature}
+                                      <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 shrink-0"></span>
+                                      <span className="line-clamp-1">{feature}</span>
                                     </li>
                                   ))}
                               </ul>
                             </div>
+                          ) : (
+                            <div className="flex-shrink-0 mb-4 min-h-[60px]"></div>
                           )}
 
-                          <div className="flex flex-col gap-3 mt-auto">
+                          <div className="flex-shrink-0 flex flex-col gap-3 mt-auto pt-2">
                             <div className="flex items-center justify-between text-sm text-gray-300">
                               <span>Course Fee</span>
                               <span className="text-lg font-semibold text-[#F5D26A]">
@@ -1925,9 +1926,9 @@ const Home = () => {
                 ease: [0.25, 0.1, 0.25, 1],
               }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Play Icon */}
-              <div className="flex justify-center mb-6">
+              <div className="flex-shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -1939,12 +1940,12 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Free Demo Class
               </h3>
 
               {/* Description */}
-              <p className="text-gray-300 mb-6 leading-relaxed">
+              <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
                 Join our interactive demo class and experience our teaching
                 methodology firsthand.
               </p>
@@ -1973,9 +1974,9 @@ const Home = () => {
                 ease: [0.25, 0.1, 0.25, 1],
               }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Download Icon */}
-              <div className="flex justify-center mb-6">
+              <div className="flex-shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -1993,12 +1994,12 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Free English Guide
               </h3>
 
               {/* Description */}
-              <p className="text-gray-300 mb-6 leading-relaxed">
+              <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
                 Download our comprehensive English learning guide with tips,
                 tricks, and study resources.
               </p>
@@ -2027,9 +2028,9 @@ const Home = () => {
                 ease: [0.25, 0.1, 0.25, 1],
               }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Gift Icon */}
-              <div className="flex justify-center mb-6">
+              <div className="flex-shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -2047,12 +2048,12 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Gift a Future
               </h3>
 
               {/* Description */}
-              <p className="text-gray-300 mb-6 leading-relaxed">
+              <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
                 Sponsor a classroom, dedicate scholarships, and help transform
                 lives through education.
               </p>
@@ -2147,8 +2148,8 @@ const Home = () => {
                       ease: [0.25, 0.1, 0.25, 1],
                     }}
                     whileHover={{ y: -8, scale: 1.02 }}
-                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-                    <Link to={`/books/${book.id}`}>
+                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
+                    <Link to={`/books/${book.id}`} className="flex flex-col h-full">
                       {/* Book Image */}
                       <div className="relative h-48 w-full overflow-hidden">
                         <img
@@ -2181,24 +2182,24 @@ const Home = () => {
                       </div>
 
                       {/* Book Content */}
-                      <div className="p-4">
+                      <div className="flex flex-1 flex-col p-4">
                         {/* Category */}
-                        <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                        <span className="flex-shrink-0 text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
                           {book.category}
                         </span>
 
                         {/* Title */}
-                        <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                        <h3 className="flex-shrink-0 text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
                           {book.title}
                         </h3>
 
                         {/* Author */}
-                        <p className="text-xs text-gray-400 mb-2">
+                        <p className="flex-shrink-0 text-xs text-gray-400 mb-2">
                           by {book.author}
                         </p>
 
                         {/* Rating */}
-                        <div className="flex items-center gap-1.5 mb-3">
+                        <div className="flex-shrink-0 flex items-center gap-1.5 mb-3">
                           <div className="flex items-center gap-0.5">
                             {[...Array(5)].map((_, i) => (
                               <FaStar
@@ -2222,7 +2223,7 @@ const Home = () => {
                         </div>
 
                         {/* Price */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex-shrink-0 flex items-center gap-2 mb-3">
                           <span className="text-lg font-bold text-[#D4AF37] font-display">
                             {displayPrice}
                           </span>
@@ -2234,7 +2235,7 @@ const Home = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="flex-shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -2349,19 +2350,19 @@ const Home = () => {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
                 whileHover={{ y: -8, scale: 1.03 }}
-                className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+                className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
                 {/* Icon */}
-                <div className="flex justify-center mb-4">
+                <div className="flex-shrink-0 flex justify-center mb-4">
                   {renderIcon(benefit.icon)}
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
+                <h3 className="flex-shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
                   {benefit.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-300 leading-relaxed">
+                <p className="flex-1 text-gray-300 leading-relaxed">
                   {benefit.description}
                 </p>
               </motion.div>
@@ -2489,7 +2490,7 @@ const Home = () => {
                   <Link
                     to={`/blogs/${blog.id}`}
                     className="flex h-full flex-col">
-                    <div className="relative h-56 w-full overflow-hidden">
+                    <div className="relative h-56 w-full overflow-hidden flex-shrink-0">
                       <img
                         src={blog.thumbnail}
                         alt={blog.title}
@@ -2505,31 +2506,31 @@ const Home = () => {
                       </span>
                     </div>
                     <div className="flex flex-1 flex-col p-6">
-                      <div className="mb-4 flex items-center gap-3 text-xs text-gray-400">
-                        <span className="inline-flex items-center gap-2">
+                      <div className="flex-shrink-0 mb-4 flex items-center gap-3 text-xs text-gray-400">
+                        <span className="inline-flex items-center gap-2 min-w-0">
                           <img
                             src={blog.author.avatar}
                             alt={blog.author.name}
-                            className="h-8 w-8 rounded-full object-cover"
+                            className="h-8 w-8 rounded-full object-cover flex-shrink-0"
                           />
-                          <span className="font-semibold text-white/90">
+                          <span className="font-semibold text-white/90 truncate">
                             {blog.author.name}
                           </span>
                         </span>
-                        <span className="h-1 w-1 rounded-full bg-gray-600" />
-                        <span>
+                        <span className="h-1 w-1 rounded-full bg-gray-600 flex-shrink-0" />
+                        <span className="flex-shrink-0">
                           {new Date(blog.publishedAt).toLocaleDateString(
                             "en-GB"
                           )}
                         </span>
                       </div>
-                      <h3 className="mb-3 text-xl font-semibold text-white font-display leading-tight group-hover:text-[#F5D26A]">
+                      <h3 className="flex-shrink-0 mb-3 text-xl font-semibold text-white font-display leading-tight group-hover:text-[#F5D26A] line-clamp-2">
                         {blog.title}
                       </h3>
-                      <p className="flex-1 text-sm text-gray-300 leading-relaxed line-clamp-3">
+                      <p className="flex-1 text-sm text-gray-300 leading-relaxed line-clamp-3 min-h-0">
                         {blog.excerpt?.replace(/<[^>]+>/g, "") || ""}
                       </p>
-                      <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
+                      <span className="flex-shrink-0 mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
                         Read Story
                         <FaArrowRight className="h-4 w-4" />
                       </span>
@@ -2694,9 +2695,9 @@ const Home = () => {
                 <motion.article
                   key={item.id}
                   whileHover={{ y: -6, scale: 1.01 }}
-                  className="flex flex-col rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                  className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
+                  <div className="flex-shrink-0 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
                         <img
                           src={item.avatar}
@@ -2705,19 +2706,19 @@ const Home = () => {
                           loading="lazy"
                         />
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white truncate">
                           {item.name}
                         </p>
-                        <p className="text-xs text-gray-400">{item.role}</p>
+                        <p className="text-xs text-gray-400 truncate">{item.role}</p>
                       </div>
                     </div>
-                    <span className="rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
+                    <span className="flex-shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
                       Verified
                     </span>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-1">
+                  <div className="flex-shrink-0 mt-3 flex items-center gap-1">
                     {[...Array(item.rating)].map((_, i) => (
                       <svg
                         key={i}
@@ -2729,8 +2730,8 @@ const Home = () => {
                     ))}
                   </div>
 
-                  <p className="mt-4 text-sm text-gray-200 leading-relaxed">
-                    “{item.text}”
+                  <p className="flex-1 mt-4 text-sm text-gray-200 leading-relaxed">
+                    "{item.text}"
                   </p>
                 </motion.article>
               ))}

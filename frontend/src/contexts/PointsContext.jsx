@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 import { fetchStudentDashboard } from "../services/api/student";
 import { fetchStudentPoints } from "../services/api/points";
 import { isNetworkError } from "../services/api/baseClient";
+import { useSmartPolling } from "../hooks/useSmartPolling";
 
 const PointsContext = createContext();
 
@@ -121,44 +122,23 @@ export const PointsProvider = ({ children }) => {
     }
   }, [authUser, tokens]);
 
+  // Smart polling for points with circuit breaker
+  const pollPoints = useCallback(async () => {
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      return;
+    }
+    await loadPointsFromBackend();
+  }, [loadPointsFromBackend, authUser, tokens?.accessToken]);
+
+  useSmartPolling(pollPoints, 30000, {
+    enabled: !!authUser && authUser.role === "student" && !!tokens?.accessToken,
+    maxConsecutiveFailures: 3,
+  });
+
+  // Listen for transaction completion to refresh wallet immediately
   useEffect(() => {
-    let interval = null;
-    let shouldContinuePolling = true;
-
-    const pollPoints = async () => {
-      if (!shouldContinuePolling || !authUser || authUser.role !== "student" || !tokens?.accessToken) {
-        if (interval) {
-          clearInterval(interval);
-          interval = null;
-        }
-        return;
-      }
-
-      try {
-        await loadPointsFromBackend();
-      } catch (error) {
-        // Stop polling if we get a 401 error (unauthorized) after token refresh fails
-        if (error.status === 401 && error.requiresLogin) {
-          shouldContinuePolling = false;
-          if (interval) {
-            clearInterval(interval);
-            interval = null;
-          }
-          return;
-        }
-        // For other errors, continue polling (network errors are expected)
-      }
-    };
-
-    // Initial load
-    pollPoints();
-    
-    // Refresh wallet data every 30 seconds to keep it live
-    interval = setInterval(pollPoints, 30000);
-    
-    // Listen for transaction completion to refresh wallet immediately
     const handleTransactionCompleted = () => {
-      if (shouldContinuePolling) {
+      if (authUser && authUser.role === "student" && tokens?.accessToken) {
         loadPointsFromBackend();
       }
     };
@@ -166,10 +146,6 @@ export const PointsProvider = ({ children }) => {
     window.addEventListener("refreshWallet", handleTransactionCompleted);
     
     return () => {
-      shouldContinuePolling = false;
-      if (interval) {
-        clearInterval(interval);
-      }
       window.removeEventListener("transactionCompleted", handleTransactionCompleted);
       window.removeEventListener("refreshWallet", handleTransactionCompleted);
     };

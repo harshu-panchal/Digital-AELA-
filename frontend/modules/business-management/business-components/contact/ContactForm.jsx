@@ -43,6 +43,17 @@ const ContactForm = ({
 
     const normalizedData = fields.reduce((acc, field) => {
       const rawValue = formData[field.name];
+      
+      // Handle file inputs separately
+      if (field.type === "file") {
+        if (rawValue instanceof File) {
+          acc[field.name] = rawValue.name; // Store filename for now
+        } else {
+          acc[field.name] = "";
+        }
+        return acc;
+      }
+      
       const value = safeString(rawValue);
       if (!value) {
         acc[field.name] = "";
@@ -157,6 +168,22 @@ const ContactForm = ({
                     );
                   })}
                 </select>
+              ) : type === "file" ? (
+                <input
+                  id={name}
+                  name={name}
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Store file object in formData
+                      setFormData((prev) => ({ ...prev, [name]: file }));
+                    }
+                  }}
+                  accept={field.accept}
+                  required={required}
+                  className={sharedClasses}
+                />
               ) : (
                 <input
                   id={name}

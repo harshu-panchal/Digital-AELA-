@@ -326,10 +326,10 @@ const Books = () => {
                     ease: [0.25, 0.1, 0.25, 1],
                   }}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
-                  <Link to={`/books/${book.id}`}>
+                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
+                  <Link to={`/books/${book.id}`} className="flex flex-col h-full">
                     {/* Book Image */}
-                    <div className="relative h-48 w-full overflow-hidden">
+                    <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
                       <img
                         src={book.image}
                         alt={book.imageAlt || `${book.title} cover`}
@@ -365,24 +365,24 @@ const Books = () => {
                     </div>
 
                     {/* Book Content */}
-                    <div className="p-4">
+                    <div className="flex flex-1 flex-col p-4">
                       {/* Category */}
-                      <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                      <span className="flex-shrink-0 text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
                         {book.category}
                       </span>
 
                       {/* Title */}
-                      <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                      <h3 className="flex-shrink-0 text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
                         {book.title}
                       </h3>
 
                       {/* Author */}
-                      <p className="text-xs text-gray-400 mb-2">
+                      <p className="flex-shrink-0 text-xs text-gray-400 mb-2">
                         by {book.author}
                       </p>
 
                       {/* Rating */}
-                      <div className="flex items-center gap-1.5 mb-3">
+                      <div className="flex-shrink-0 flex items-center gap-1.5 mb-3">
                         <div className="flex items-center gap-0.5">
                           {[...Array(5)].map((_, i) => (
                             <FaStar
@@ -404,7 +404,7 @@ const Books = () => {
                       </div>
 
                       {/* Price */}
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex-shrink-0 flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
                           {book.price > 0 ? `₹${book.price}` : "Free"}
                         </span>
@@ -415,7 +415,7 @@ const Books = () => {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="flex-shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}

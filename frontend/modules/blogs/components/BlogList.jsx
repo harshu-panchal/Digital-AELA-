@@ -102,7 +102,7 @@ const BlogList = ({
             animate="show"
             whileHover={{ y: -6, scale: 1.01 }}
             style={{ opacity: 1 }}
-            className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50">
+            className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50">
             <Link
               to={`/blogs/${blog.id}`}
               onClick={() => registerView(blog.id)}
@@ -120,14 +120,14 @@ const BlogList = ({
               </div>
 
               <div className="flex flex-1 flex-col gap-4 p-6">
-                <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 flex items-center gap-3">
                   <img
                     src={blog.author.avatar}
                     alt={blog.author.name}
-                    className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover"
+                    className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover flex-shrink-0"
                   />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">
                       {blog.author.name}
                     </p>
                     <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
@@ -136,8 +136,8 @@ const BlogList = ({
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="block text-lg font-semibold text-white transition hover:text-[#D4AF37]">
+                <div className="flex-1 min-h-0 space-y-3">
+                  <h3 className="block text-lg font-semibold text-white transition hover:text-[#D4AF37] line-clamp-2">
                     {blog.title}
                   </h3>
                   <p className="text-sm text-gray-300 line-clamp-3">
@@ -154,7 +154,7 @@ const BlogList = ({
                   </div>
                 </div>
 
-                <div className="mt-auto flex items-center justify-between text-sm text-gray-300">
+                <div className="flex-shrink-0 mt-auto flex items-center justify-between text-sm text-gray-300">
                   <div className="flex items-center gap-3">
                     <span className="inline-flex items-center gap-1">
                       <HiOutlineClock className="h-4 w-4 text-[#D4AF37]" />

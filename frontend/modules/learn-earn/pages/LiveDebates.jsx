@@ -595,7 +595,7 @@ const LiveDebates = () => {
 
       {/* Create Debate Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
           <Motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

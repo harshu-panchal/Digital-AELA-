@@ -97,8 +97,8 @@ const PostCard = ({
         </div>
       </button>
 
-      <div className="flex flex-1 flex-col gap-5 px-4 py-5 sm:px-5">
-        <div>
+      <div className="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-5">
+        <div className="flex-shrink-0">
           <h3 className="text-lg font-semibold leading-tight text-white">
             {post.title}
           </h3>
@@ -109,45 +109,47 @@ const PostCard = ({
           )}
         </div>
 
-        {isJob ? (
-          <div className="space-y-3 text-sm text-gray-300">
-            <p className="flex items-center gap-2">
-              <HiOutlineMapPin className="h-5 w-5 text-white/70" />
-              {post.location}
-            </p>
-            {post.salary && (
+        <div className="flex-1 min-h-0">
+          {isJob ? (
+            <div className="space-y-3 text-sm text-gray-300">
               <p className="flex items-center gap-2">
-                <HiOutlineCurrencyRupee className="h-5 w-5 text-white/70" />
-                {post.salary}
+                <HiOutlineMapPin className="h-5 w-5 text-white/70 flex-shrink-0" />
+                {post.location}
               </p>
-            )}
-            <p className="flex items-center gap-2">
-              <HiOutlineBriefcase className="h-5 w-5 text-white/70" />
-              {post.employmentType}
-            </p>
-            {post.experience && (
+              {post.salary && (
+                <p className="flex items-center gap-2">
+                  <HiOutlineCurrencyRupee className="h-5 w-5 text-white/70 flex-shrink-0" />
+                  {post.salary}
+                </p>
+              )}
               <p className="flex items-center gap-2">
-                <HiOutlineClock className="h-5 w-5 text-white/70" />
-                {post.experience}
+                <HiOutlineBriefcase className="h-5 w-5 text-white/70 flex-shrink-0" />
+                {post.employmentType}
               </p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-300 line-clamp-3">{post.summary}</p>
-            <div className="flex flex-wrap gap-2">
-              {post.skills?.slice(0, 4).map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-200">
-                  {skill}
-                </span>
-              ))}
+              {post.experience && (
+                <p className="flex items-center gap-2">
+                  <HiOutlineClock className="h-5 w-5 text-white/70 flex-shrink-0" />
+                  {post.experience}
+                </p>
+              )}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-300 line-clamp-3">{post.summary}</p>
+              <div className="flex flex-wrap gap-2">
+                {post.skills?.slice(0, 4).map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex-shrink-0 flex flex-wrap items-center gap-2">
           {(post.tags ?? post.skills ?? []).slice(0, isCompact ? 2 : 4).map((tag) => (
             <span
               key={tag}
@@ -157,7 +159,7 @@ const PostCard = ({
           ))}
         </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-white/5 pt-4">
+        <div className="flex-shrink-0 mt-auto flex items-center justify-between border-t border-white/5 pt-4">
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span className="inline-flex items-center gap-1">
               <HiOutlineHeart className="h-4 w-4" />
