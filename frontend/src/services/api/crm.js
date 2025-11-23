@@ -140,6 +140,18 @@ export const createPublicLead = async (payload) => {
 };
 
 /**
+ * Create Form Lead (from Book Demo, Business Collaboration, Franchise Partnership forms)
+ * POST /api/v1/crm/leads/form
+ */
+export const createFormLead = async (payload) => {
+  return apiRequest("/crm/leads/form", {
+    method: "POST",
+    body: payload,
+    skipAuth: true,
+  });
+};
+
+/**
  * Get Team Members
  * GET /api/v1/crm/team-members
  */

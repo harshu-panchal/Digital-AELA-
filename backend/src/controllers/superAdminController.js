@@ -418,6 +418,7 @@ export const getDashboardData = async (req, res, next) => {
       learnersLastMonth,
       verifiedTeachers,
       pendingTeachers,
+      pendingStudents,
       enrollmentsThisMonth,
       enrollmentsLastMonth,
       openJobs,
@@ -426,6 +427,7 @@ export const getDashboardData = async (req, res, next) => {
       pendingEbooks,
       pendingJobs,
       pendingTeachersList,
+      pendingStudentsList,
       recentEnrollments,
       recentCompletions,
       recentApplications,
@@ -436,6 +438,7 @@ export const getDashboardData = async (req, res, next) => {
       safeQuery(() => User.countDocuments({ role: "student", isActive: true, createdAt: { $gte: lastMonth } }), 0),
       safeQuery(() => User.countDocuments({ role: "teacher", isActive: true }), 0),
       safeQuery(() => User.countDocuments({ role: "teacher", isActive: false }), 0),
+      safeQuery(() => User.countDocuments({ role: "student", isActive: false }), 0),
       safeQuery(() => Enrollment.find({ createdAt: { $gte: thisMonthStart } }).populate("course", "price currency").lean(), []),
       safeQuery(() => Enrollment.countDocuments({ createdAt: { $gte: lastMonthStart, $lt: thisMonthStart } }), 0),
       safeQuery(() => JobPost.countDocuments({ status: "published" }), 0),
@@ -444,6 +447,7 @@ export const getDashboardData = async (req, res, next) => {
       safeQuery(() => EbookResource.find({ isPublic: false }).sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => JobPost.find({ status: "draft" }).populate("owner", "fullName").sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => User.find({ role: "teacher", isActive: false }).select("-passwordHash").sort({ createdAt: -1 }).limit(10).lean(), []),
+      safeQuery(() => User.find({ role: "student", isActive: false }).select("-passwordHash").sort({ createdAt: -1 }).limit(10).lean(), []),
       safeQuery(() => Enrollment.find().populate("student", "fullName").populate("course", "title").sort({ createdAt: -1 }).limit(5).lean(), []),
       safeQuery(() => LessonCompletion.aggregate([
         { $group: { _id: "$student", lastCompleted: { $max: "$completedAt" }, courseId: { $first: "$course" } } },
@@ -571,6 +575,7 @@ export const getDashboardData = async (req, res, next) => {
 
     // Calculate quick actions data
     const pendingTeachersCount = pendingTeachers || 0;
+    const pendingStudentsCount = pendingStudents || 0;
     const pendingCoursesCount = (pendingCourses || []).length;
     const pendingEbooksCount = (pendingEbooks || []).length;
     const totalPendingSubmissions = pendingCoursesCount + pendingEbooksCount;
@@ -624,6 +629,18 @@ export const getDashboardData = async (req, res, next) => {
           href: "/super-admin/approvals/teachers",
         },
         {
+          id: "students",
+          title: "Student Applications",
+          items: (pendingStudentsList || []).map((student) => ({
+            id: student._id?.toString() || student.id || "",
+            title: student.fullName || "Unknown",
+            owner: student.email || "No email",
+            submitted: formatTimeAgo(student.createdAt || new Date()),
+          })),
+          cta: "Review applications",
+          href: "/super-admin/approvals/students",
+        },
+        {
           id: "courses",
           title: "Courses Pending Approval",
           items: (pendingCourses || []).map((course) => ({
@@ -668,6 +685,13 @@ export const getDashboardData = async (req, res, next) => {
             ? `${pendingTeachersCount} awaiting verification` 
             : "All teachers verified",
           href: "/super-admin/approvals/teachers",
+        },
+        {
+          label: "Approve students",
+          description: pendingStudentsCount > 0 
+            ? `${pendingStudentsCount} awaiting verification` 
+            : "All students verified",
+          href: "/super-admin/approvals/students",
         },
         {
           label: "Moderate course catalog",

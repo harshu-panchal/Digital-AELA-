@@ -144,6 +144,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           icon: FaChalkboardTeacher,
         },
         {
+          label: "Student Applications",
+          path: "/super-admin/approvals/students",
+          icon: FaUsers,
+        },
+        {
           label: "Blogs",
           path: "/super-admin/approvals/blogs",
           icon: FaBlog,

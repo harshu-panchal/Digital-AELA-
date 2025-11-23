@@ -660,6 +660,79 @@ export const approveTeacher = async (req, res, next) => {
 };
 
 /**
+ * Approve/Reject Student Application
+ */
+export const approveStudent = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { userId } = req.params;
+    const { action } = req.body; // "approve" or "reject"
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Action must be 'approve' or 'reject'",
+        },
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    if (user.role !== "student") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User is not a student",
+        },
+      });
+    }
+
+    if (action === "approve") {
+      user.isActive = true;
+    } else {
+      user.isActive = false;
+    }
+
+    await user.save();
+
+    return res.json({
+      user: await User.findById(userId).select("-passwordHash").lean(),
+      message: `Student ${action === "approve" ? "approved" : "rejected"} successfully`,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Super Admin: Create Course
  */
 export const createCourse = async (req, res, next) => {

@@ -2,6 +2,7 @@ import express from "express";
 import {
   createLead,
   createPublicLead,
+  createFormLead,
   getAllLeads,
   getLeadDetails,
   updateLead,
@@ -21,8 +22,9 @@ const router = express.Router();
 router.get("/team-members", authenticate, getTeamMembers);
 
 // Leads
-// Public endpoint for free library lead capture (no authentication required)
+// Public endpoints for form submissions (no authentication required)
 router.post("/leads/public", createPublicLead);
+router.post("/leads/form", createFormLead);
 router.post("/leads", authenticate, createLead);
 router.get("/leads", authenticate, getAllLeads);
 router.get("/leads/:leadId", authenticate, getLeadDetails);

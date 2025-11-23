@@ -166,8 +166,8 @@ export const registerUser = async (req, res, next) => {
       };
     }
     
-    // For teachers, set isActive to false by default (requires admin approval)
-    const isActive = role === "teacher" ? false : true;
+    // For teachers and students, set isActive to false by default (requires admin approval)
+    const isActive = role === "teacher" || role === "student" ? false : true;
     
     const user = await User.create({
       email: normalizedEmail,
@@ -274,6 +274,16 @@ export const loginUser = async (req, res, next) => {
         error: {
           code: "ACCOUNT_PENDING_APPROVAL",
           message: "Your teacher account is pending approval from the administrator. You will be able to login once your account is approved.",
+        },
+      });
+    }
+
+    // Check if student account is approved (isActive must be true for students)
+    if (user.role === "student" && !user.isActive) {
+      return res.status(403).json({
+        error: {
+          code: "ACCOUNT_PENDING_APPROVAL",
+          message: "Your student account is pending approval from the administrator. You will be able to login once your account is approved.",
         },
       });
     }

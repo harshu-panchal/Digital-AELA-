@@ -30,7 +30,7 @@ const leadSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["website", "referral", "social_media", "email", "phone", "event", "free_library", "other"],
+      enum: ["website", "referral", "social_media", "email", "phone", "event", "free_library", "book_demo", "business_collaboration", "franchise_inquiry", "other"],
       default: "website",
     },
     status: {

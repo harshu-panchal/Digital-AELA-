@@ -2,17 +2,19 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher, FaEdit, FaEye } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSpinner, FaBook, FaGraduationCap, FaBriefcase, FaChalkboardTeacher, FaEdit, FaEye, FaUser } from "react-icons/fa";
 import {
   fetchPendingCourses,
   fetchPendingEbooks,
   fetchPendingJobs,
   fetchPendingTeachers,
+  fetchPendingStudents,
   fetchPendingBlogs,
   approveCourse,
   approveEbook,
   approveJob,
   approveTeacher,
+  approveStudent,
   approveBlog,
   fetchBlogPreview,
   fetchCoursePreview,
@@ -84,6 +86,23 @@ const ApprovalPage = () => {
         return details;
       },
     },
+    students: {
+      label: "Student Applications",
+      icon: FaUser,
+      fetchFn: fetchPendingStudents,
+      approveFn: approveStudent,
+      getTitle: (item) => item.fullName,
+      getOwner: (item) => item.email,
+      getDetails: (item) => {
+        const meta = item.metadata || {};
+        const details = [];
+        if (meta.phone) details.push(`Phone: ${meta.phone}`);
+        // Note: Student profile data (location, preferredProgram, etc.) is in StudentProfile model
+        // For now, we show basic info from User metadata
+        // Additional details can be fetched from StudentProfile if needed
+        return details;
+      },
+    },
     blogs: {
       label: "Blogs",
       icon: FaEdit,
@@ -111,7 +130,7 @@ const ApprovalPage = () => {
       const response = await config.fetchFn();
       if (response) {
         const responseKey = type === "books" ? "ebooks" : type;
-        setItems(response[responseKey] || response.blogs || []);
+        setItems(response[responseKey] || response.blogs || response.students || []);
       }
     } catch (error) {
       toast.error(`Failed to load ${config.label}: ${error.message}`);

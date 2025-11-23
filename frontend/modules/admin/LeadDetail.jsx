@@ -278,6 +278,55 @@ const LeadDetail = () => {
               </div>
             </div>
 
+            {lead.customFields && Object.keys(lead.customFields).length > 0 && (
+              <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Form Details</h2>
+                <div className="space-y-4">
+                  {Object.entries(lead.customFields).map(([key, value]) => {
+                    // Format field name (convert camelCase to Title Case)
+                    const formatFieldName = (str) => {
+                      return str
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/^./, (str) => str.toUpperCase())
+                        .trim();
+                    };
+
+                    // Skip empty values
+                    if (!value || (Array.isArray(value) && value.length === 0)) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          {formatFieldName(key)}
+                        </label>
+                        <div className="text-white">
+                          {Array.isArray(value) ? (
+                            <div className="flex flex-wrap gap-2">
+                              {value.map((item, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-3 py-1 rounded-lg bg-[#111] border border-white/10 text-sm">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          ) : typeof value === "object" ? (
+                            <pre className="text-sm bg-[#111] p-3 rounded-lg border border-white/10 overflow-x-auto">
+                              {JSON.stringify(value, null, 2)}
+                            </pre>
+                          ) : (
+                            <p className="text-sm">{String(value)}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-white">Follow-Ups</h2>

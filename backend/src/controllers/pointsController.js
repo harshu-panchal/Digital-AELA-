@@ -279,12 +279,8 @@ export const getPointsHistory = async (req, res, next) => {
  */
 export const getPointsStats = async (req, res, next) => {
   try {
-    const { userId } = req.auth || {};
-    
-    // Check if userId exists and is a non-empty string
-    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
-      // eslint-disable-next-line no-console
-      console.error("[getPointsStats] Missing or invalid userId. req.auth:", req.auth, "userId:", userId, "type:", typeof userId);
+    // requireAuth middleware ensures req.auth exists and userId is valid
+    if (!req.auth || !req.auth.userId) {
       return res.status(401).json({
         error: {
           code: "UNAUTHORIZED",
@@ -293,35 +289,8 @@ export const getPointsStats = async (req, res, next) => {
       });
     }
 
-    // Trim whitespace from userId
-    const trimmedUserId = userId.trim();
-
-    // Validate and create ObjectId
-    let studentObjectId;
-    try {
-      if (!mongoose.isValidObjectId(trimmedUserId)) {
-        // eslint-disable-next-line no-console
-        console.error("[getPointsStats] Invalid ObjectId format. userId:", trimmedUserId, "type:", typeof trimmedUserId);
-        return res.status(400).json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Invalid user ID",
-            details: `User ID must be a valid MongoDB ObjectId. Received: ${trimmedUserId} (${typeof trimmedUserId})`,
-          },
-        });
-      }
-      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[getPointsStats] Error creating ObjectId:", error.message, "userId:", trimmedUserId, "type:", typeof trimmedUserId);
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid user ID",
-          details: error.message,
-        },
-      });
-    }
+    const { userId } = req.auth;
+    const studentObjectId = new mongoose.Types.ObjectId(userId);
 
     let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
 
@@ -370,7 +339,7 @@ export const getPointsStats = async (req, res, next) => {
       .filter((txn) => txn.type === "redeemed")
       .reduce((sum, txn) => sum + (txn.amount || 0), 0);
 
-    const availableCoins = (studentPoints.totalCoins || 0) - (studentPoints.redeemedCoins || 0);
+    const availableCoins = (studentPoints.totalCoins || 0) - (studentPoints.redeemedCoins || 0) - (studentPoints.pendingCoins || 0);
 
     return res.status(200).json({
       stats: {

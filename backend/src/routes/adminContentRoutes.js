@@ -4,6 +4,7 @@ import {
   approveEbook,
   approveJob,
   approveTeacher,
+  approveStudent,
   createCourse,
   createEbook,
   createBlog,
@@ -23,6 +24,7 @@ import {
   getPendingEbooks,
   getPendingJobs,
   getPendingTeachers,
+  getPendingStudents,
   getCoursePreview,
   getEbookPreview,
   getJobPreview,
@@ -50,6 +52,7 @@ router.get("/pending/courses", getPendingCourses);
 router.get("/pending/ebooks", getPendingEbooks);
 router.get("/pending/jobs", getPendingJobs);
 router.get("/pending/teachers", getPendingTeachers);
+router.get("/pending/students", getPendingStudents);
 router.get("/pending/blogs", getPendingBlogs);
 
 // Preview routes (full content for super admin)
@@ -63,6 +66,7 @@ router.patch("/courses/:courseId/approve", approveCourse);
 router.patch("/ebooks/:ebookId/approve", approveEbook);
 router.patch("/jobs/:jobId/approve", approveJob);
 router.patch("/teachers/:userId/approve", approveTeacher);
+router.patch("/students/:userId/approve", approveStudent);
 router.patch("/blogs/:blogId/approve", approveBlog);
 
 // Content creation routes

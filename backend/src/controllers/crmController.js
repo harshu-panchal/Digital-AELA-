@@ -848,6 +848,168 @@ export const createPublicLead = async (req, res, next) => {
 };
 
 /**
+ * Create Form Lead (from Book Demo, Business Collaboration, Franchise Partnership forms)
+ * POST /api/v1/crm/leads/form
+ */
+export const createFormLead = async (req, res, next) => {
+  try {
+    const formData = req.body;
+    const { formId, ...payload } = formData;
+
+    // Map formId to source
+    const sourceMap = {
+      "book-demo": "book_demo",
+      "business-collaboration": "business_collaboration",
+      "franchise-inquiry": "franchise_inquiry",
+    };
+
+    const source = sourceMap[formId];
+    if (!source) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid form type",
+        },
+      });
+    }
+
+    // Extract and map fields based on form type
+    let firstName = "";
+    let lastName = "";
+    let email = "";
+    let phone = "";
+    let company = "";
+    let description = "";
+    const customFields = {};
+
+    if (source === "book_demo") {
+      // BookDemo form fields: firstName, lastName, email, phone, preferredCourse, preferredMode, preferredDate, preferredTime, organization, participants, goals
+      firstName = payload.firstName?.trim() || "";
+      lastName = payload.lastName?.trim() || "";
+      email = payload.email?.toLowerCase().trim() || "";
+      phone = payload.phone?.trim() || "";
+      company = payload.organization?.trim() || "";
+
+      // Store form-specific fields in customFields
+      if (payload.preferredCourse) customFields.preferredCourse = payload.preferredCourse;
+      if (payload.preferredMode) customFields.preferredMode = payload.preferredMode;
+      if (payload.preferredDate) customFields.preferredDate = payload.preferredDate;
+      if (payload.preferredTime) customFields.preferredTime = payload.preferredTime;
+      if (payload.organization) customFields.organization = payload.organization;
+      if (payload.participants) customFields.participants = payload.participants;
+      if (payload.goals) customFields.goals = payload.goals;
+
+      // Create description
+      const descParts = [];
+      if (payload.preferredCourse) descParts.push(`Course: ${payload.preferredCourse}`);
+      if (payload.preferredMode) descParts.push(`Mode: ${payload.preferredMode}`);
+      if (payload.preferredDate) descParts.push(`Date: ${payload.preferredDate}`);
+      if (payload.participants) descParts.push(`Participants: ${payload.participants}`);
+      if (payload.goals) descParts.push(`Goals: ${payload.goals}`);
+      description = descParts.join(" | ");
+    } else if (source === "business_collaboration") {
+      // BusinessCollaboration form fields: companyName, contactPerson, email, phone, companyWebsite, industry, teamSize, collaborationType, location, timeline, message
+      const contactPerson = payload.contactPerson?.trim() || "";
+      // Try to split contactPerson into firstName and lastName
+      const nameParts = contactPerson.split(" ");
+      firstName = nameParts[0] || "";
+      lastName = nameParts.slice(1).join(" ") || "";
+      email = payload.email?.toLowerCase().trim() || "";
+      phone = payload.phone?.trim() || "";
+      company = payload.companyName?.trim() || "";
+
+      // Store form-specific fields in customFields
+      if (payload.companyName) customFields.companyName = payload.companyName;
+      if (payload.contactPerson) customFields.contactPerson = payload.contactPerson;
+      if (payload.companyWebsite) customFields.companyWebsite = payload.companyWebsite;
+      if (payload.industry) customFields.industry = payload.industry;
+      if (payload.teamSize) customFields.teamSize = payload.teamSize;
+      if (payload.collaborationType) customFields.collaborationType = payload.collaborationType;
+      if (payload.location) customFields.location = payload.location;
+      if (payload.timeline) customFields.timeline = payload.timeline;
+      if (payload.message) customFields.message = payload.message;
+
+      // Create description
+      const descParts = [];
+      if (payload.companyName) descParts.push(`Company: ${payload.companyName}`);
+      if (payload.industry) descParts.push(`Industry: ${payload.industry}`);
+      if (payload.collaborationType) descParts.push(`Type: ${payload.collaborationType}`);
+      if (payload.timeline) descParts.push(`Timeline: ${payload.timeline}`);
+      if (payload.message) descParts.push(`Message: ${payload.message}`);
+      description = descParts.join(" | ");
+    } else if (source === "franchise_inquiry") {
+      // FranchiseInquiry form fields: fullName, email, phone, city, country, investmentCapacity, experience, timeframe, hearAbout, message
+      const fullName = payload.fullName?.trim() || "";
+      // Try to split fullName into firstName and lastName
+      const nameParts = fullName.split(" ");
+      firstName = nameParts[0] || "";
+      lastName = nameParts.slice(1).join(" ") || "";
+      email = payload.email?.toLowerCase().trim() || "";
+      phone = payload.phone?.trim() || "";
+
+      // Store form-specific fields in customFields
+      if (payload.fullName) customFields.fullName = payload.fullName;
+      if (payload.city) customFields.city = payload.city;
+      if (payload.country) customFields.country = payload.country;
+      if (payload.investmentCapacity) customFields.investmentCapacity = payload.investmentCapacity;
+      if (payload.experience) customFields.experience = payload.experience;
+      if (payload.timeframe) customFields.timeframe = payload.timeframe;
+      if (payload.hearAbout) customFields.hearAbout = payload.hearAbout;
+      if (payload.message) customFields.message = payload.message;
+
+      // Create description
+      const descParts = [];
+      if (payload.city) descParts.push(`City: ${payload.city}`);
+      if (payload.country) descParts.push(`Country: ${payload.country}`);
+      if (payload.investmentCapacity) descParts.push(`Investment: ${payload.investmentCapacity}`);
+      if (payload.experience) descParts.push(`Experience: ${payload.experience}`);
+      if (payload.timeframe) descParts.push(`Timeframe: ${payload.timeframe}`);
+      if (payload.message) descParts.push(`Message: ${payload.message}`);
+      description = descParts.join(" | ");
+    }
+
+    // Validation
+    if (!email || !firstName) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and first name are required",
+        },
+      });
+    }
+
+    // Note: We allow duplicate emails as per requirement (create separate leads)
+    // No duplicate check needed
+
+    const lead = await Lead.create({
+      firstName: firstName.trim(),
+      lastName: lastName.trim() || "",
+      email: email.toLowerCase().trim(),
+      phone: phone.trim() || "",
+      company: company.trim() || "",
+      source: source,
+      status: "new",
+      priority: "medium",
+      customFields: customFields,
+      description: description || undefined,
+    });
+
+    const populatedLead = await Lead.findById(lead._id)
+      .populate("assignedTo", "fullName email")
+      .populate("assignedBy", "fullName")
+      .populate("createdBy", "fullName")
+      .lean();
+
+    return res.status(201).json({
+      lead: populatedLead,
+      message: "Lead created successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Get Team Members (for assignment)
  * GET /api/v1/crm/team-members
  */

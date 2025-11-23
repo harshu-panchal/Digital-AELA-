@@ -305,6 +305,10 @@ const LeadManagement = () => {
               }}
               className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none">
               <option value="">All Sources</option>
+              <option value="book_demo">Book Demo</option>
+              <option value="business_collaboration">Business Collaboration</option>
+              <option value="franchise_inquiry">Franchise Partnership</option>
+              <option value="free_library">Free Library</option>
               <option value="website">Website</option>
               <option value="referral">Referral</option>
               <option value="social_media">Social Media</option>

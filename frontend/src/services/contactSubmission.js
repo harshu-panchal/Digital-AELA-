@@ -1,3 +1,5 @@
+import { createFormLead } from "./api/crm";
+
 const STORAGE_KEY = "aela.contact.submissions";
 
 const loadSubmissions = () => {
@@ -37,12 +39,24 @@ export const submitContactLead = async (formId, payload) => {
     payload,
   };
 
+  // Store in localStorage as backup
   const submissions = loadSubmissions();
   submissions.unshift(entry);
   persistSubmissions(submissions.slice(0, 200));
 
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return entry;
+  // Submit to backend API to create lead
+  try {
+    const response = await createFormLead({
+      formId,
+      ...payload,
+    });
+    return { ...entry, leadId: response.lead?._id };
+  } catch (error) {
+    // If API call fails, still return the entry (stored in localStorage)
+    // The error will be handled by the form component
+    console.error("Failed to submit lead to backend:", error);
+    throw error;
+  }
 };
 
 export const getContactSubmissions = () => loadSubmissions();

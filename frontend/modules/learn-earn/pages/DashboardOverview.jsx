@@ -173,12 +173,18 @@ const DashboardOverview = () => {
     return Array.from(followersMap.values());
   }, [followers, following]);
 
-  const followerCount = combinedFollowersFollowing.length;
+  const followerCount = useMemo(() => combinedFollowersFollowing.length, [combinedFollowersFollowing]);
   // Get actual follower and following counts from arrays
-  const actualFollowersCount = followers.length;
-  const actualFollowingCount = following.length;
-  const notificationCount = notifications.filter((n) => n.type !== "archived").length;
-  const liveRoomCount = liveDebates.length + openRooms.length;
+  const actualFollowersCount = useMemo(() => followers.length, [followers]);
+  const actualFollowingCount = useMemo(() => following.length, [following]);
+  const notificationCount = useMemo(
+    () => notifications.filter((n) => n.type !== "archived").length,
+    [notifications]
+  );
+  const liveRoomCount = useMemo(
+    () => liveDebates.length + openRooms.length,
+    [liveDebates, openRooms]
+  );
   const totalCoins = totals.current;
 
   const tabConfig = useMemo(

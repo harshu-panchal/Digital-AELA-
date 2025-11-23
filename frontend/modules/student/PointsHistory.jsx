@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineArrowDown,
@@ -75,19 +75,10 @@ const PointsHistory = () => {
     source: "",
   });
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== "student") {
-      toast.info("Please log in as a student to view points history");
-      return;
-    }
-
-    loadData();
-  }, [isAuthenticated, user, pagination.page, filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [historyResult, statsResult] = await Promise.all([
+      const [historyResult, statsResult] = await Promise.allSettled([
         fetchPointsHistory({
           page: pagination.page,
           pageSize: pagination.pageSize,
@@ -97,16 +88,44 @@ const PointsHistory = () => {
         fetchPointsStats(),
       ]);
 
-      setTransactions(historyResult.transactions || []);
-      setPagination(historyResult.pagination || pagination);
-      setStats(statsResult.stats || null);
+      // Handle history result
+      if (historyResult.status === "fulfilled") {
+        setTransactions(historyResult.value.transactions || []);
+        setPagination((prev) => historyResult.value.pagination || prev);
+      } else {
+        console.error("Failed to load points history:", historyResult.reason);
+        toast.error(historyResult.reason?.message || "Failed to load points history");
+        setTransactions([]);
+      }
+
+      // Handle stats result
+      if (statsResult.status === "fulfilled") {
+        setStats(statsResult.value.stats || null);
+      } else {
+        console.error("Failed to load points stats:", statsResult.reason);
+        // Only show error toast if history also failed, to avoid duplicate toasts
+        if (historyResult.status === "fulfilled") {
+          toast.error(statsResult.reason?.message || "Failed to load points statistics");
+        }
+        // Don't clear existing stats on error - keep them visible
+      }
     } catch (error) {
-      toast.error(error.message || "Failed to load points history");
+      console.error("Unexpected error loading points data:", error);
+      toast.error(error.message || "Failed to load points data");
       setTransactions([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.pageSize, filters.type, filters.source]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "student") {
+      toast.info("Please log in as a student to view points history");
+      return;
+    }
+
+    loadData();
+  }, [isAuthenticated, user, loadData]);
 
   const handleFilterChange = (filterType, value) => {
     setFilters((prev) => ({

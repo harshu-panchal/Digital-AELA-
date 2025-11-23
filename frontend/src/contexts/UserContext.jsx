@@ -358,43 +358,70 @@ export const UserProvider = ({ children }) => {
         
         if (stats) {
           setProfile((prev) => {
-            // Only update if we got valid data from backend
+            // Only update if we got valid data from backend and values have changed
             const updated = { ...prev };
+            let hasChanges = false;
             
             // Use backend values even if 0 (means no data yet), only fallback if undefined/null
-            if (stats.followers !== undefined && stats.followers !== null) {
+            if (stats.followers !== undefined && stats.followers !== null && prev.followers !== stats.followers) {
               updated.followers = stats.followers;
+              hasChanges = true;
             }
-            if (stats.following !== undefined && stats.following !== null) {
+            if (stats.following !== undefined && stats.following !== null && prev.following !== stats.following) {
               updated.following = stats.following;
+              hasChanges = true;
             }
-            if (stats.rating !== undefined && stats.rating !== null) {
+            if (stats.rating !== undefined && stats.rating !== null && prev.rating !== stats.rating) {
               updated.rating = stats.rating;
+              hasChanges = true;
             }
             
-            return updated;
+            // Only return new object if there are actual changes
+            return hasChanges ? updated : prev;
           });
           
-          // Update ratings with quiz attempts count (totalRatings)
+          // Update ratings with quiz attempts count (totalRatings) - only if changed
           if (stats.totalRatings !== undefined && stats.totalRatings !== null) {
-            setRatings((prev) => ({
-              ...prev,
-              votes: stats.totalRatings, // This is now quiz attempts count
-              average: stats.rating || prev.average,
-            }));
+            setRatings((prev) => {
+              const newVotes = stats.totalRatings;
+              const newAverage = stats.rating || prev.average;
+              // Only update if values have changed
+              if (prev.votes !== newVotes || prev.average !== newAverage) {
+                return {
+                  ...prev,
+                  votes: newVotes,
+                  average: newAverage,
+                };
+              }
+              return prev;
+            });
           } else if (stats.rating !== undefined && stats.rating !== null) {
-            setRatings((prev) => ({
-              ...prev,
-              average: stats.rating,
-            }));
+            setRatings((prev) => {
+              // Only update if rating has changed
+              if (prev.average !== stats.rating) {
+                return {
+                  ...prev,
+                  average: stats.rating,
+                };
+              }
+              return prev;
+            });
           }
 
-          // Update badges from backend
+          // Update badges from backend - only if changed
           if (stats.badges && Array.isArray(stats.badges)) {
-            setProfile((prev) => ({
-              ...prev,
-              badges: stats.badges.length > 0 ? stats.badges : prev.badges || [],
-            }));
+            setProfile((prev) => {
+              const newBadges = stats.badges.length > 0 ? stats.badges : prev.badges || [];
+              // Compare badges arrays
+              const badgesChanged = JSON.stringify(prev.badges || []) !== JSON.stringify(newBadges);
+              if (badgesChanged) {
+                return {
+                  ...prev,
+                  badges: newBadges,
+                };
+              }
+              return prev;
+            });
           }
           
           setSocialStatsLoaded(true);
@@ -421,9 +448,50 @@ export const UserProvider = ({ children }) => {
       }
   }, [authUser?.id]);
 
+  // Use authUser?.id directly as dependency instead of loadSocialStats to prevent unnecessary re-runs
   useEffect(() => {
-    loadSocialStats();
-  }, [loadSocialStats]);
+    if (authUser?.id) {
+      loadSocialStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id]);
+
+  // Helper function to compare arrays and determine if data has changed
+  const arraysEqual = useCallback((arr1, arr2) => {
+    if (arr1.length !== arr2.length) {
+      return false;
+    }
+    // Create maps for quick lookup by id or userId
+    const map1 = new Map();
+    const map2 = new Map();
+    
+    arr1.forEach((item) => {
+      const id = item.id || item.userId;
+      if (id) {
+        map1.set(id, JSON.stringify(item));
+      }
+    });
+    
+    arr2.forEach((item) => {
+      const id = item.id || item.userId;
+      if (id) {
+        map2.set(id, JSON.stringify(item));
+      }
+    });
+    
+    // Check if all keys exist and values match
+    if (map1.size !== map2.size) {
+      return false;
+    }
+    
+    for (const [key, value] of map1) {
+      if (map2.get(key) !== value) {
+        return false;
+      }
+    }
+    
+    return true;
+  }, []);
 
   // Helper functions to reload followers and following lists
   const reloadFollowers = useCallback(async () => {
@@ -434,7 +502,14 @@ export const UserProvider = ({ children }) => {
       try {
         const response = await fetchFollowers(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
-          setFollowers(response.data || []);
+          const newData = response.data || [];
+          // Only update state if data has actually changed
+          setFollowers((prev) => {
+            if (arraysEqual(prev, newData)) {
+              return prev; // Return previous reference if data is the same
+            }
+            return newData;
+          });
         }
       } catch (error) {
         if (isNetworkError(error) && !isDevelopment) {
@@ -444,7 +519,7 @@ export const UserProvider = ({ children }) => {
           console.warn("Failed to refresh followers:", error);
         }
     }
-  }, [authUser?.id]);
+  }, [authUser?.id, arraysEqual]);
 
   const reloadFollowing = useCallback(async () => {
       if (!authUser?.id) {
@@ -454,7 +529,14 @@ export const UserProvider = ({ children }) => {
       try {
         const response = await fetchFollowing(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
-        setFollowing(response.data || []);
+          const newData = response.data || [];
+          // Only update state if data has actually changed
+          setFollowing((prev) => {
+            if (arraysEqual(prev, newData)) {
+              return prev; // Return previous reference if data is the same
+            }
+            return newData;
+          });
         }
       } catch (error) {
         if (isNetworkError(error) && !isDevelopment) {
@@ -464,7 +546,7 @@ export const UserProvider = ({ children }) => {
           console.warn("Failed to refresh following:", error);
         }
     }
-  }, [authUser?.id]);
+  }, [authUser?.id, arraysEqual]);
 
   // Refresh social stats function (can be called manually)
   // Use useCallback with stable dependencies to prevent recreation
@@ -529,7 +611,7 @@ export const UserProvider = ({ children }) => {
   }, [socket, isConnected, authUser?.id]);
 
   // Load followers list from backend with smart polling
-  useSmartPolling(reloadFollowers, 15000, {
+  useSmartPolling(reloadFollowers, 60000, {
     enabled: !!authUser?.id,
     maxConsecutiveFailures: 3,
     onError: (error) => {
@@ -538,7 +620,7 @@ export const UserProvider = ({ children }) => {
   });
 
   // Load following list from backend with smart polling
-  useSmartPolling(reloadFollowing, 15000, {
+  useSmartPolling(reloadFollowing, 60000, {
     enabled: !!authUser?.id,
     maxConsecutiveFailures: 3,
     onError: (error) => {

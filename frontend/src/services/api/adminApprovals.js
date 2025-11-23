@@ -45,6 +45,17 @@ export const fetchPendingTeachers = (params = {}) => {
 };
 
 /**
+ * Get pending students
+ */
+export const fetchPendingStudents = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.append("page", params.page);
+  if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+  const queryString = queryParams.toString();
+  return apiRequest(`/admin/pending/students${queryString ? `?${queryString}` : ""}`);
+};
+
+/**
  * Approve/Reject course
  */
 export const approveCourse = (courseId, action) =>
@@ -76,6 +87,15 @@ export const approveJob = (jobId, action) =>
  */
 export const approveTeacher = (userId, action) =>
   apiRequest(`/admin/teachers/${userId}/approve`, {
+    method: "PATCH",
+    body: { action },
+  });
+
+/**
+ * Approve/Reject student
+ */
+export const approveStudent = (userId, action) =>
+  apiRequest(`/admin/students/${userId}/approve`, {
     method: "PATCH",
     body: { action },
   });
