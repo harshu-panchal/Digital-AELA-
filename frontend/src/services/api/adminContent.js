@@ -1,4 +1,5 @@
 import { apiRequest } from "./baseClient";
+import { API_BASE_URL } from "../../config/api.js";
 
 /**
  * Create course (super admin)
@@ -55,7 +56,6 @@ export const updateAdminCourse = async (courseId, updates) => {
  * Supports both FormData (with PDF file) and JSON payload
  */
 export const createEbook = async (payload, isFormData = false) => {
-  import { API_BASE_URL } from "../../config/api.js";
   const { getStoredTokens } = await import("./baseClient");
   const tokens = getStoredTokens();
 
