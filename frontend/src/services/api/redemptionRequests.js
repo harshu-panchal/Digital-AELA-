@@ -6,7 +6,7 @@ import { apiRequest } from "./baseClient";
 export const createRedemptionRequest = (rewardId) =>
   apiRequest("/redemption-requests", {
     method: "POST",
-    body: JSON.stringify({ rewardId }),
+    body: { rewardId },
   });
 
 /**
@@ -48,7 +48,7 @@ export const getAllRedemptionRequests = (params = {}) => {
 export const approveRedemptionRequest = (requestId, adminNotes = "") =>
   apiRequest(`/redemption-requests/${requestId}/approve`, {
     method: "PATCH",
-    body: JSON.stringify({ adminNotes }),
+    body: { adminNotes },
   });
 
 /**
@@ -57,6 +57,6 @@ export const approveRedemptionRequest = (requestId, adminNotes = "") =>
 export const rejectRedemptionRequest = (requestId, rejectionReason = "", adminNotes = "") =>
   apiRequest(`/redemption-requests/${requestId}/reject`, {
     method: "PATCH",
-    body: JSON.stringify({ rejectionReason, adminNotes }),
+    body: { rejectionReason, adminNotes },
   });
 
