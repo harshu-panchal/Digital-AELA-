@@ -530,11 +530,12 @@ export const publishAnnouncement = async (req, res, next) => {
         user: userId,
         type: "announcement",
         title: "New Announcement",
-        message: announcement.title,
-        data: {
-          announcementId: announcement._id,
+        description: announcement.title,
+        metadata: {
+          announcementId: announcement._id.toString(),
         },
-        read: false,
+        isRead: false,
+        actionUrl: `/announcements/${announcement._id}`,
       }));
 
       await Notification.insertMany(notifications);

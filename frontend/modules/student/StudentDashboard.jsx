@@ -20,6 +20,7 @@ import { usePoints } from "../../src/contexts/PointsContext";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
 import { getStudentAssignments } from "../../src/services/api/assignments";
+import { getStudentAnnouncements } from "../../src/services/api/announcements";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -57,6 +58,8 @@ const StudentDashboard = () => {
   const [loadingWidgets, setLoadingWidgets] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
 
   // Load real-time data from backend
   const loadDashboard = useCallback(async () => {
@@ -145,11 +148,29 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
+  // Load announcements
+  const loadAnnouncements = useCallback(async () => {
+    if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
+      return;
+    }
+
+    setLoadingAnnouncements(true);
+    try {
+      const response = await getStudentAnnouncements({ page: 1, pageSize: 3 });
+      setAnnouncements(response.announcements || []);
+    } catch (error) {
+      console.error("Failed to load announcements:", error);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  }, [authUser, tokens]);
+
 
   useEffect(() => {
     loadDashboard();
     loadWidgets();
     loadAssignments();
+    loadAnnouncements();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {
@@ -159,7 +180,7 @@ const StudentDashboard = () => {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [loadDashboard, loadWidgets, loadAssignments]);
+  }, [loadDashboard, loadWidgets, loadAssignments, loadAnnouncements]);
 
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
@@ -438,15 +459,68 @@ const StudentDashboard = () => {
                 View all
               </Link>
             </header>
-            <div className="text-center py-8 text-sm text-slate-400">
-              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>Stay updated with platform announcements</p>
-              <Link
-                to="/student/announcements"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition">
-                View Announcements
-              </Link>
-            </div>
+            {loadingAnnouncements ? (
+              <div className="py-8 text-center text-sm text-slate-400">Loading announcements...</div>
+            ) : announcements.length === 0 ? (
+              <div className="text-center py-8 text-sm text-slate-400">
+                <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+                <p>No announcements at the moment</p>
+                <p className="mt-2 text-xs text-slate-500">Stay tuned for updates!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {announcements.map((announcement) => {
+                  const isRead = announcement.isRead || false;
+                  const publishedDate = announcement.publishedAt || announcement.createdAt;
+                  const timeAgo = publishedDate
+                    ? new Date(publishedDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Recently";
+
+                  return (
+                    <Link
+                      key={announcement._id}
+                      to={`/student/announcements/${announcement._id}`}
+                      className={`block rounded-2xl border px-4 py-3 text-sm transition ${
+                        isRead
+                          ? "border-white/5 bg-white/5 text-slate-300"
+                          : "border-sky-400/30 bg-sky-400/10 text-white hover:border-sky-400/50"
+                      }`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-semibold ${isRead ? "text-slate-200" : "text-white"}`}>
+                              {announcement.title}
+                            </p>
+                            {!isRead && (
+                              <span className="h-2 w-2 rounded-full bg-sky-400 flex-shrink-0 mt-1"></span>
+                            )}
+                          </div>
+                          <p className={`text-xs line-clamp-2 ${isRead ? "text-slate-400" : "text-slate-300"}`}>
+                            {announcement.content?.substring(0, 100)}
+                            {announcement.content?.length > 100 ? "..." : ""}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-2">{timeAgo}</p>
+                        </div>
+                        {announcement.priority === "urgent" && (
+                          <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-1 text-[10px] font-semibold text-red-400 uppercase">
+                            Urgent
+                          </span>
+                        )}
+                        {announcement.priority === "high" && (
+                          <span className="rounded-full bg-yellow-500/20 border border-yellow-500/40 px-2 py-1 text-[10px] font-semibold text-yellow-400 uppercase">
+                            High
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </motion.section>
 
           <motion.section

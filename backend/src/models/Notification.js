@@ -18,7 +18,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["coins", "event", "social", "achievement", "system"],
+      enum: ["coins", "event", "social", "achievement", "system", "announcement"],
       default: "system",
     },
     isRead: {
