@@ -18,6 +18,7 @@ import {
   FaCompress,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { API_BASE_URL } from "../../../src/config/api.js";
 
 // Import styles
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -70,8 +71,6 @@ const PDFEbookReader = () => {
     const fetchEbook = async () => {
       try {
         setLoading(true);
-        const { API_BASE_URL } = await import("../../../src/config/api.js");
-
         const response = await fetch(
           `${API_BASE_URL}/resources/ebooks/${ebookId}`
         );

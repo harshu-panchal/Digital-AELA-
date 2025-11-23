@@ -13,6 +13,7 @@ import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { getStudentAssignmentDetails, submitAssignment } from "../../src/services/api/assignments";
 import { getStoredTokens } from "../../src/services/api/baseClient";
+import { API_BASE_URL } from "../../src/config/api.js";
 
 const AssignmentDetail = () => {
   const navigate = useNavigate();
@@ -56,7 +57,6 @@ const AssignmentDetail = () => {
   };
 
   const handleFileUpload = async (file) => {
-    const { API_BASE_URL } = await import("../../../src/config/api.js");
     const tokens = getStoredTokens();
 
     if (!tokens?.accessToken) {
