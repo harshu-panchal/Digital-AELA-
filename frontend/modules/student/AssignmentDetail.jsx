@@ -56,8 +56,7 @@ const AssignmentDetail = () => {
   };
 
   const handleFileUpload = async (file) => {
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+    const { API_BASE_URL } = await import("../../../src/config/api.js");
     const tokens = getStoredTokens();
 
     if (!tokens?.accessToken) {

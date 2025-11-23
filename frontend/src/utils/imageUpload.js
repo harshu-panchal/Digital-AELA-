@@ -4,9 +4,9 @@
  * @param {string} folder - Optional Cloudinary folder path (default: "digital-aela")
  * @returns {Promise<string>} - The Cloudinary URL of the uploaded image
  */
+import { API_BASE_URL } from "../config/api.js";
+
 export const uploadImageToCloudinary = async (file, folder = "digital-aela") => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
   // Get stored tokens
   const { getStoredTokens } = await import("../services/api/baseClient");

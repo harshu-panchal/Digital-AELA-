@@ -303,23 +303,31 @@ const defaultRatings = {
   ],
 };
 
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
 export const UserProvider = ({ children }) => {
   const { aelaPoints, addPoints, redeemPoints, totalEarned, totalRedeemed } = usePoints();
   const { user: authUser, tokens, updateUserMetadata, getRoleLabel } = useAuth();
   const { socket, isConnected } = useSocket();
 
-  const [profile, setProfile] = useState(defaultProfile);
-  const [followers, setFollowers] = useState(defaultFollowers);
-  const [following, setFollowing] = useState(() => defaultFollowers.slice(0, 3));
-  const [messages, setMessages] = useState(defaultMessages);
-  const [notifications, setNotifications] = useState(defaultNotifications);
-  const [transactions, setTransactions] = useState(defaultTransactions);
-  const [groups, setGroups] = useState(defaultGroups);
-  const [liveDebates, setLiveDebates] = useState(defaultLiveDebates);
-  const [openRooms, setOpenRooms] = useState(defaultOpenRooms);
-  const [ratings, setRatings] = useState(defaultRatings);
+  // Initialize with empty data in production, dummy data only in development
+  const [profile, setProfile] = useState(() => 
+    isDevelopment ? defaultProfile : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
+  );
+  const [followers, setFollowers] = useState(() => isDevelopment ? defaultFollowers : []);
+  const [following, setFollowing] = useState(() => isDevelopment ? defaultFollowers.slice(0, 3) : []);
+  const [messages, setMessages] = useState(() => isDevelopment ? defaultMessages : []);
+  const [notifications, setNotifications] = useState(() => isDevelopment ? defaultNotifications : []);
+  const [transactions, setTransactions] = useState(() => isDevelopment ? defaultTransactions : []);
+  const [groups, setGroups] = useState(() => isDevelopment ? defaultGroups : []);
+  const [liveDebates, setLiveDebates] = useState(() => isDevelopment ? defaultLiveDebates : []);
+  const [openRooms, setOpenRooms] = useState(() => isDevelopment ? defaultOpenRooms : []);
+  const [ratings, setRatings] = useState(() => 
+    isDevelopment ? defaultRatings : { average: 0, votes: 0, tags: [] }
+  );
   const [socialStatsLoaded, setSocialStatsLoaded] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [apiError, setApiError] = useState(null);
 
   useEffect(() => {
     setProfile((prev) => ({ ...prev, coins: aelaPoints }));
@@ -392,8 +400,18 @@ export const UserProvider = ({ children }) => {
           setSocialStatsLoaded(true);
         }
       } catch (error) {
-        // Only log non-network errors to reduce console noise when server is down
-        if (!isNetworkError(error)) {
+        // Log errors appropriately based on environment
+        if (isNetworkError(error)) {
+          if (!isDevelopment) {
+            // In production, log network errors to help debug API issues
+            console.error("[UserContext] Failed to connect to API:", {
+              message: error.message,
+              code: error.code,
+              url: import.meta.env.VITE_API_URL || "Not set - using default"
+            });
+          }
+          setApiError("Unable to connect to server. Please check your connection.");
+        } else {
           // eslint-disable-next-line no-console
           console.warn("Failed to load social stats from backend:", error);
         }
@@ -419,8 +437,9 @@ export const UserProvider = ({ children }) => {
           setFollowers(response.data || []);
         }
       } catch (error) {
-        // Only log non-network errors to reduce console noise when server is down
-        if (!isNetworkError(error)) {
+        if (isNetworkError(error) && !isDevelopment) {
+          console.error("[UserContext] Failed to load followers:", error.message);
+        } else if (!isNetworkError(error)) {
           // eslint-disable-next-line no-console
           console.warn("Failed to refresh followers:", error);
         }
@@ -438,8 +457,9 @@ export const UserProvider = ({ children }) => {
         setFollowing(response.data || []);
         }
       } catch (error) {
-        // Only log non-network errors to reduce console noise when server is down
-        if (!isNetworkError(error)) {
+        if (isNetworkError(error) && !isDevelopment) {
+          console.error("[UserContext] Failed to load following:", error.message);
+        } else if (!isNetworkError(error)) {
           // eslint-disable-next-line no-console
           console.warn("Failed to refresh following:", error);
         }
@@ -619,8 +639,9 @@ export const UserProvider = ({ children }) => {
     enabled: !!authUser?.id && !!tokens?.accessToken,
     maxConsecutiveFailures: 3,
     onError: (error) => {
-      // Only log non-network errors to reduce console noise when server is down
-      if (!isNetworkError(error)) {
+      if (isNetworkError(error) && !isDevelopment) {
+        console.error("[UserContext] Failed to load dashboard data:", error.message);
+      } else if (!isNetworkError(error)) {
         // eslint-disable-next-line no-console
         console.warn("Failed to load dashboard data from backend:", error);
       }
@@ -709,8 +730,9 @@ export const UserProvider = ({ children }) => {
           setMessages(formatted);
         }
       } catch (error) {
-        // Only log non-network errors to reduce console noise when server is down
-        if (!isNetworkError(error)) {
+        if (isNetworkError(error) && !isDevelopment) {
+          console.error("[UserContext] Failed to refresh conversations:", error.message);
+        } else if (!isNetworkError(error)) {
           // eslint-disable-next-line no-console
           console.warn("Failed to refresh conversations:", error);
         }
@@ -731,8 +753,9 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (!authUser) {
-      // Reset to default profile when logged out
-      setProfile(defaultProfile);
+      // Reset to default profile when logged out (use development defaults only in dev)
+      setProfile(isDevelopment ? defaultProfile : { ...defaultProfile, followers: 0, following: 0, coins: 0 });
+      setApiError(null);
       return;
     }
 
@@ -827,8 +850,9 @@ export const UserProvider = ({ children }) => {
           return;
         } catch (error) {
           // Profile might not exist yet, continue with metadata fallback
-          // Only log non-network errors to reduce console noise when server is down
-          if (!isNetworkError(error)) {
+          if (isNetworkError(error) && !isDevelopment) {
+            console.error("[UserContext] Failed to load student profile:", error.message);
+          } else if (!isNetworkError(error)) {
             // eslint-disable-next-line no-console
             console.warn("Failed to load student profile:", error);
           }
@@ -1078,6 +1102,7 @@ export const UserProvider = ({ children }) => {
         redeemed: totalRedeemed,
       },
       streak,
+      apiError,
     }),
     [
       profile,
@@ -1105,6 +1130,7 @@ export const UserProvider = ({ children }) => {
       totalEarned,
       totalRedeemed,
       streak,
+      apiError,
     ]
   );
 

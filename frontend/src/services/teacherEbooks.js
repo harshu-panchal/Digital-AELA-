@@ -36,9 +36,9 @@ export const getTeacherEbookById = async (ebookId) => {
  * Create a new ebook (teacher only - creates with isPublic: false)
  * Supports both FormData (with PDF file) and JSON payload
  */
+import { API_BASE_URL } from "../config/api.js";
+
 export const createTeacherEbook = async (payload, pdfFile = null) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
   const { getStoredTokens } = await import("./api/baseClient");
   const tokens = getStoredTokens();
 

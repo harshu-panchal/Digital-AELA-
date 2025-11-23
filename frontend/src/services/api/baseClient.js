@@ -1,7 +1,8 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+import { API_BASE_URL } from "../../config/api.js";
 
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
+
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
 const loadTokens = () => {
   if (typeof window === "undefined") return null;
@@ -113,6 +114,19 @@ export const apiRequest = async (
       connectionError.code = "CONNECTION_ERROR";
       connectionError.isNetworkError = true;
       connectionError.isCorsError = networkError.message?.includes("CORS") || false;
+      
+      // Log connection errors in production to help debug API issues
+      if (!isDevelopment) {
+        console.error("[API] Connection error:", {
+          endpoint,
+          method,
+          apiUrl: API_BASE_URL,
+          error: networkError.message,
+          isCors: connectionError.isCorsError,
+          hint: "Check if VITE_API_URL is set correctly in production environment"
+        });
+      }
+      
       throw connectionError;
     }
     throw networkError;
@@ -126,6 +140,17 @@ export const apiRequest = async (
     badGatewayError.status = 502;
     badGatewayError.code = "BAD_GATEWAY";
     badGatewayError.isNetworkError = true;
+    
+    // Log 502 errors in production
+    if (!isDevelopment) {
+      console.error("[API] Bad Gateway (502):", {
+        endpoint,
+        method,
+        apiUrl: API_BASE_URL,
+        hint: "Backend server may be down or restarting"
+      });
+    }
+    
     throw badGatewayError;
   }
 
@@ -193,6 +218,19 @@ export const apiRequest = async (
   error.status = response.status;
   error.code = payload?.error?.code;
   error.details = payload;
+  
+  // Log non-401 errors in production (401s are expected for auth failures)
+  if (!isDevelopment && response.status !== 401) {
+    console.error("[API] Request failed:", {
+      endpoint,
+      method,
+      status: response.status,
+      code: error.code,
+      message: error.message,
+      apiUrl: API_BASE_URL
+    });
+  }
+  
   throw error;
 };
 

@@ -5,9 +5,9 @@
 /**
  * Get all free ebooks (public access)
  */
+import { API_BASE_URL } from "../config/api.js";
+
 export const getFreeEbooks = async (page = 1, pageSize = 20) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
   try {
     const response = await fetch(`${API_BASE_URL}/resources/ebooks/free?page=${page}&pageSize=${pageSize}`);
@@ -28,8 +28,6 @@ export const getFreeEbooks = async (page = 1, pageSize = 20) => {
  * Get a single ebook by ID (public access for free ebooks)
  */
 export const getEbookById = async (ebookId) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
   try {
     const response = await fetch(`${API_BASE_URL}/resources/ebooks/${ebookId}`);
@@ -50,8 +48,6 @@ export const getEbookById = async (ebookId) => {
  * Get all public ebooks (with optional featured filter)
  */
 export const getPublicEbooks = async (page = 1, pageSize = 20, featured = false) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
   try {
     const featuredParam = featured ? "&featured=true" : "";

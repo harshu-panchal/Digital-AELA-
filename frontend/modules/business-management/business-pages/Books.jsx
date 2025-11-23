@@ -127,12 +127,30 @@ const staticBooks = [
   ];
 
 const BOOKS_STORAGE_KEY = "aela.books.cache";
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
 const Books = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [books, setBooks] = useState(() => {
-    // Try to load from sessionStorage first
+    // In production, start with empty array; only use static books in development
+    if (!isDevelopment) {
+      // Try to load from sessionStorage first
+      try {
+        const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
+      return [];
+    }
+    
+    // In development, use static books as fallback
     try {
       const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
       if (cached) {
@@ -177,7 +195,10 @@ const Books = () => {
             isbn: ebook._id,
           };
         });
-        const finalBooks = ebooksFromApi.length > 0 ? ebooksFromApi : staticBooks;
+        // In production, only use API data; in development, fallback to static books
+        const finalBooks = ebooksFromApi.length > 0 
+          ? ebooksFromApi 
+          : (isDevelopment ? staticBooks : []);
         setBooks(finalBooks);
         // Cache in sessionStorage for faster initial render on next visit
         try {
@@ -186,12 +207,16 @@ const Books = () => {
           // Ignore storage errors
         }
       } catch (error) {
-        // Only log non-network errors to reduce console noise when server is down
         const isNetworkError = error?.isNetworkError || error?.code === "CONNECTION_ERROR" || error?.status === 0;
-        if (!isNetworkError) {
+        
+        // Log errors appropriately
+        if (isNetworkError && !isDevelopment) {
+          console.error("[Books] Failed to connect to API:", error.message);
+        } else if (!isNetworkError) {
           console.error("Failed to load books:", error);
         }
-        // Only fallback to static books if we don't have cached data
+        
+        // Try to use cached data first
         try {
           const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
           if (cached) {
@@ -205,14 +230,21 @@ const Books = () => {
         } catch (e) {
           // Ignore storage errors
         }
-        // Final fallback to static books
-        setBooks(staticBooks);
-        try {
-          sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(staticBooks));
-        } catch (e) {
-          // Ignore storage errors
+        
+        // Final fallback: only use static books in development
+        if (isDevelopment) {
+          setBooks(staticBooks);
+          try {
+            sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(staticBooks));
+          } catch (e) {
+            // Ignore storage errors
+          }
+          toast.error("Failed to load books. Showing demo data.");
+        } else {
+          // In production, show empty state
+          setBooks([]);
+          toast.error("Failed to load books. Please check your connection and try again.");
         }
-        toast.error("Failed to load books. Showing cached data.");
       } finally {
         setLoading(false);
       }

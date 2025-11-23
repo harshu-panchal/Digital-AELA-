@@ -55,8 +55,7 @@ export const updateAdminCourse = async (courseId, updates) => {
  * Supports both FormData (with PDF file) and JSON payload
  */
 export const createEbook = async (payload, isFormData = false) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+  import { API_BASE_URL } from "../../config/api.js";
   const { getStoredTokens } = await import("./baseClient");
   const tokens = getStoredTokens();
 

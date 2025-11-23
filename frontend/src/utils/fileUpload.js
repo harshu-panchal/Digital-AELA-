@@ -4,9 +4,9 @@
  * @param {Object} registrationData - The registration data (email, password, fullName, role, profile)
  * @returns {Promise<Object>} - The registration response
  */
+import { API_BASE_URL } from "../config/api.js";
+
 export const registerWithFile = async (file, registrationData) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
   // Create FormData
   const formData = new FormData();

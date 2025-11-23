@@ -1,5 +1,7 @@
 import { apiRequest } from "./baseClient";
 import { fetchSocialLinks } from "./socialVerification";
+import { API_BASE_URL } from "../../config/api.js";
+import { getStoredTokens } from "./baseClient";
 
 export const fetchStudentDashboard = () => apiRequest("/students/dashboard");
 
@@ -24,9 +26,6 @@ export const createStudentProfile = (payload) =>
   });
 
 export const uploadProfileImage = async (file) => {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
-  
   const tokens = getStoredTokens();
   if (!tokens?.accessToken) {
     throw new Error("Authentication required");
@@ -55,17 +54,6 @@ export const uploadProfileImage = async (file) => {
   }
 
   return payload.data?.url || payload.url;
-};
-
-const getStoredTokens = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem("aela.auth.tokens");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
 };
 
 export { fetchSocialLinks };

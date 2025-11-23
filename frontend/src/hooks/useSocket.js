@@ -3,10 +3,10 @@ import { io } from "socket.io-client";
 import { useAuth } from "../contexts/AuthContext";
 import { clearStoredTokens, notifyAuthUpdate } from "../services/api/baseClient";
 
+import { getApiBaseUrlWithoutPath } from "../config/api.js";
+
 // Socket.io connects to the base server URL (without /api/v1)
-const SOCKET_URL =
-  import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, "") ||
-  "http://localhost:5000";
+const SOCKET_URL = getApiBaseUrlWithoutPath() || "http://localhost:5000";
 
 // Global socket instance to prevent multiple connections
 let globalSocketInstance = null;

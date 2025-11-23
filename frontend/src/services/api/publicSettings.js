@@ -3,7 +3,7 @@
  * These endpoints don't require authentication
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
+import { API_BASE_URL } from "../../config/api.js";
 
 /**
  * Get public settings (no authentication required)
@@ -13,13 +13,16 @@ export const fetchPublicSettings = async (params = {}) => {
   const searchParams = new URLSearchParams();
   if (params.category) searchParams.set("category", params.category);
   const query = searchParams.toString();
-  
-  const response = await fetch(`${API_BASE_URL}/public/settings${query ? `?${query}` : ""}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/public/settings${query ? `?${query}` : ""}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch public settings: ${response.statusText}`);
@@ -34,21 +37,26 @@ export const fetchPublicSettings = async (params = {}) => {
 export const fetchSocialMediaLinks = async () => {
   try {
     const response = await fetchPublicSettings({ category: "social" });
-    
+
     if (response?.settings?.social) {
       const socialSettings = response.settings.social;
-      
+
       const links = {
-        facebook: socialSettings.find((s) => s.key === "social.facebook")?.value || "",
-        twitter: socialSettings.find((s) => s.key === "social.twitter")?.value || "",
-        linkedin: socialSettings.find((s) => s.key === "social.linkedin")?.value || "",
-        instagram: socialSettings.find((s) => s.key === "social.instagram")?.value || "",
-        youtube: socialSettings.find((s) => s.key === "social.youtube")?.value || "",
+        facebook:
+          socialSettings.find((s) => s.key === "social.facebook")?.value || "",
+        twitter:
+          socialSettings.find((s) => s.key === "social.twitter")?.value || "",
+        linkedin:
+          socialSettings.find((s) => s.key === "social.linkedin")?.value || "",
+        instagram:
+          socialSettings.find((s) => s.key === "social.instagram")?.value || "",
+        youtube:
+          socialSettings.find((s) => s.key === "social.youtube")?.value || "",
       };
-      
+
       return links;
     }
-    
+
     return {
       facebook: "",
       twitter: "",
@@ -68,4 +76,3 @@ export const fetchSocialMediaLinks = async () => {
     };
   }
 };
-

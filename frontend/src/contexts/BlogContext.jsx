@@ -165,6 +165,8 @@ const formatBlog = (blog) => ({
 const DEFAULT_THUMBNAIL =
   "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80";
 
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
 const mapApiBlog = (blog) => {
   const authorId = blog.author?.id ?? blog.author?._id ?? "";
   const recruiterProfile = blog.recruiterProfile ?? {};
@@ -236,10 +238,15 @@ export const BlogProvider = ({ children }) => {
   const { profile } = useUser();
   const { user: authUser } = useAuth();
 
-  const [blogs, setBlogs] = useState(() => seededBlogs.map((blog) => ({
-    ...formatBlog(blog),
-    source: "seed",
-  })));
+  // Initialize with empty array in production, seeded blogs only in development
+  const [blogs, setBlogs] = useState(() => 
+    isDevelopment 
+      ? seededBlogs.map((blog) => ({
+          ...formatBlog(blog),
+          source: "seed",
+        }))
+      : []
+  );
   const [drafts, setDrafts] = useState([]);
   const [pendingBlogs, setPendingBlogs] = useState([]);
   const [followingAuthors, setFollowingAuthors] = useState(() => new Set());
@@ -300,11 +307,17 @@ export const BlogProvider = ({ children }) => {
             return sortedBlogs;
           }
           
-          // If no remote blogs, keep existing structure
-          return prev.length ? prev : seededBlogs.map((blog) => ({
-            ...formatBlog(blog),
-            source: "seed",
-          }));
+          // If no remote blogs, keep existing structure (only seeded blogs in development)
+          if (prev.length > 0) {
+            return prev;
+          }
+          // Only return seeded blogs in development mode
+          return isDevelopment 
+            ? seededBlogs.map((blog) => ({
+                ...formatBlog(blog),
+                source: "seed",
+              }))
+            : [];
         });
         setLoadError(null);
       } catch (error) {
@@ -325,8 +338,9 @@ export const BlogProvider = ({ children }) => {
         setTags(data.tags || []);
       }
     } catch (error) {
-      // Silently fail - categories will be extracted from blogs
-      if (!isNetworkError(error)) {
+      if (isNetworkError(error) && !isDevelopment) {
+        console.error("[BlogContext] Failed to load categories:", error.message);
+      } else if (!isNetworkError(error)) {
         console.warn("Failed to load categories:", error);
       }
     }
@@ -494,8 +508,9 @@ export const BlogProvider = ({ children }) => {
             throw new Error("Invalid blog response from server");
           }
         } catch (error) {
-          // Only log non-network errors to reduce console noise when server is down
-          if (!isNetworkError(error)) {
+          if (isNetworkError(error) && !isDevelopment) {
+            console.error("[BlogContext] Failed to save blog:", error.message);
+          } else if (!isNetworkError(error)) {
             // eslint-disable-next-line no-console
             console.warn("Failed to save blog to backend:", error);
           }
@@ -945,7 +960,9 @@ export const BlogProvider = ({ children }) => {
       const formattedPending = pending.map(mapApiBlog);
       setPendingBlogs(formattedPending);
     } catch (error) {
-      if (!isNetworkError(error)) {
+      if (isNetworkError(error) && !isDevelopment) {
+        console.error("[BlogContext] Failed to fetch pending blogs:", error.message);
+      } else if (!isNetworkError(error)) {
         // eslint-disable-next-line no-console
         console.warn("Failed to fetch pending blogs:", error);
       }

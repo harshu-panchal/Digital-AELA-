@@ -88,9 +88,22 @@ const Navbar = () => {
       label: t("nav.courses", { defaultValue: "Courses" }),
       path: "/courses",
       dropdown: [
-        { label: t("nav.englishLanguage", { defaultValue: "English Language" }), path: "/courses/english-language" },
-        { label: t("nav.digitalMarketing", { defaultValue: "Digital Marketing" }), path: "/courses/digital-marketing" },
-        { label: t("nav.corporateTraining", { defaultValue: "Corporate Training" }), path: "/courses/corporate-training" },
+        {
+          label: t("nav.englishLanguage", { defaultValue: "English Language" }),
+          path: "/courses/english-language",
+        },
+        {
+          label: t("nav.digitalMarketing", {
+            defaultValue: "Digital Marketing",
+          }),
+          path: "/courses/digital-marketing",
+        },
+        {
+          label: t("nav.corporateTraining", {
+            defaultValue: "Corporate Training",
+          }),
+          path: "/courses/corporate-training",
+        },
       ],
     },
     {
@@ -101,47 +114,92 @@ const Navbar = () => {
       label: t("nav.resources", { defaultValue: "Resources" }),
       path: "/resources",
       dropdown: [
-        { label: t("nav.aelaBlogs", { defaultValue: "AELA Blogs" }), path: "/blogs" },
-        ...(socialLinks.youtube ? [{
-          label: "YouTube",
-          external: true,
-          href: socialLinks.youtube,
-        }] : []),
-        { label: t("nav.freeLibrary", { defaultValue: "Free Library" }), path: "/free-library" },
+        {
+          label: t("nav.aelaBlogs", { defaultValue: "AELA Blogs" }),
+          path: "/blogs",
+        },
+        ...(socialLinks.youtube
+          ? [
+              {
+                label: "YouTube",
+                external: true,
+                href: socialLinks.youtube,
+              },
+            ]
+          : []),
+        {
+          label: t("nav.freeLibrary", { defaultValue: "Free Library" }),
+          path: "/free-library",
+        },
         { label: t("nav.books", { defaultValue: "Books" }), path: "/books" },
-        { label: t("nav.exploreJobs", { defaultValue: "Explore Jobs" }), path: "/explore-jobs" },
+        {
+          label: t("nav.exploreJobs", { defaultValue: "Explore Jobs" }),
+          path: "/explore-jobs",
+        },
       ],
     },
     {
       label: t("nav.joinUs", { defaultValue: "Join Us" }),
       path: "/join-us",
       dropdown: [
-        { label: t("nav.asTeacher", { defaultValue: "As Teacher" }), path: "/join-us/teacher" },
-        { label: t("nav.influencerFreelancer", { defaultValue: "Influencer / Freelancer" }), path: "/join-us/influencer" },
-        { label: t("nav.buildYourAfterlife", { defaultValue: "Build Your Afterlife" }), path: "/join-us/afterlife" },
+        {
+          label: t("nav.asTeacher", { defaultValue: "As Teacher" }),
+          path: "/join-us/teacher",
+        },
+        {
+          label: t("nav.influencerFreelancer", {
+            defaultValue: "Influencer / Freelancer",
+          }),
+          path: "/join-us/influencer",
+        },
+        {
+          label: t("nav.buildYourAfterlife", {
+            defaultValue: "Build Your Afterlife",
+          }),
+          path: "/join-us/afterlife",
+        },
       ],
     },
     {
       label: t("nav.about", { defaultValue: "About" }),
       path: "/about",
       dropdown: [
-        { label: t("nav.ourStory", { defaultValue: "Our Story" }), path: "/about/our-story" },
-        { label: t("nav.missionVision", { defaultValue: "Mission & Vision" }), path: "/about/mission-vision" },
-        { label: t("nav.meetTheFounder", { defaultValue: "Meet the Founder" }), path: "/about/founder" },
-        { label: t("nav.successStories", { defaultValue: "Our Achievement" }), path: "/about/success-stories" },
+        {
+          label: t("nav.ourStory", { defaultValue: "Our Story" }),
+          path: "/about/our-story",
+        },
+        {
+          label: t("nav.missionVision", { defaultValue: "Mission & Vision" }),
+          path: "/about/mission-vision",
+        },
+        {
+          label: t("nav.meetTheFounder", { defaultValue: "Meet the Founder" }),
+          path: "/about/founder",
+        },
+        {
+          label: t("nav.successStories", { defaultValue: "Our Achievement" }),
+          path: "/about/success-stories",
+        },
       ],
     },
     {
       label: t("nav.contact", { defaultValue: "Contact" }),
       path: "/contact",
       dropdown: [
-        { label: t("nav.bookDemo", { defaultValue: "Book a Demo Class" }), path: "/contact/book-demo" },
         {
-          label: t("nav.businessCollaboration", { defaultValue: "Request Business Collaboration" }),
+          label: t("nav.bookDemo", { defaultValue: "Book a Demo Class" }),
+          path: "/contact/book-demo",
+        },
+        {
+          label: t("nav.businessCollaboration", {
+            defaultValue: "Request Business Collaboration",
+          }),
           path: "/contact/business-collaboration",
         },
         {
-          label: t("nav.franchisePartnership", { defaultValue: "Franchise Partnership Inquiry" }),
+          label: t("nav.franchisePartnership", {
+            defaultValue: "Franchise Partnership Inquiry",
+          }),
           path: "/contact/franchise-partnership",
         },
       ],
@@ -290,7 +348,10 @@ const Navbar = () => {
                 <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
                   <div className="flex items-center gap-2 text-[#F5D26A]">
                     <a
-                      href={socialLinks.facebook || "https://www.facebook.com/share/18nAj4v2LM/"}
+                      href={
+                        socialLinks.facebook ||
+                        "https://www.facebook.com/share/18nAj4v2LM/"
+                      }
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-blue-500/70 hover:bg-blue-500/20 hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)]">
@@ -304,7 +365,10 @@ const Navbar = () => {
                       <FaWhatsapp className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href={socialLinks.instagram || "https://www.instagram.com/digitalaela?igsh=d3ZmdmgwYzNsejh2"}
+                      href={
+                        socialLinks.instagram ||
+                        "https://www.instagram.com/digitalaela?igsh=d3ZmdmgwYzNsejh2"
+                      }
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-pink-500/70 hover:bg-pink-500/20 hover:text-pink-300 hover:shadow-[0_0_15px_rgba(236,72,153,0.6)]">
@@ -318,7 +382,10 @@ const Navbar = () => {
                       <FaLinkedinIn className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href={socialLinks.youtube || "https://youtube.com/@digitalaela?si=rMIZ-tX2BqiYkJQN"}
+                      href={
+                        socialLinks.youtube ||
+                        "https://youtube.com/@digitalaela?si=rMIZ-tX2BqiYkJQN"
+                      }
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]">
@@ -497,157 +564,160 @@ const Navbar = () => {
                       className="relative"
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}>
-                  {item.dropdown ? (
-                    <span className="relative group cursor-pointer">
-                      <motion.span
-                        whileHover={{ y: -2, scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                        {item.label}
-                        <motion.div
-                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
-                          whileHover={{ width: "100%" }}
-                          transition={{ duration: 0.3, ease: "easeOut" }}
-                        />
-                      </motion.span>
-                    </span>
-                  ) : item.external ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative group">
-                      <motion.span
-                        whileHover={{ y: -2, scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                        {item.label}
-                        <motion.div
-                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
-                          whileHover={{ width: "100%" }}
-                          transition={{ duration: 0.3, ease: "easeOut" }}
-                        />
-                      </motion.span>
-                    </a>
-                  ) : (
-                    <Link to={item.path} className="relative group">
-                      <motion.span
-                        whileHover={{ y: -2, scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                        {item.label}
-                        <motion.div
-                          className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
-                          whileHover={{ width: "100%" }}
-                          transition={{ duration: 0.3, ease: "easeOut" }}
-                        />
-                      </motion.span>
-                    </Link>
-                  )}
-
-                  {/* Dropdown Menu */}
-                  {item.dropdown && (
-                    <AnimatePresence>
-                      {activeDropdown === index && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
-                          {item.dropdown.map((dropdownItem, dropIndex) => {
-                            if (dropdownItem.disabled) {
-                              return (
-                                <div
-                                  key={dropdownItem.label}
-                                  className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFE28A]/70 last:border-b-0">
-                                  {dropdownItem.label}
-                                </div>
-                              );
-                            }
-
-                            if (dropdownItem.onClick) {
-                              return (
-                                <button
-                                  key={dropdownItem.label}
-                                  type="button"
-                                  onClick={() => {
-                                    dropdownItem.onClick();
-                                  }}
-                                  className="block w-full text-left">
-                                  <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{
-                                      duration: 0.2,
-                                      delay: dropIndex * 0.03,
-                                    }}
-                                    whileHover={{
-                                      backgroundColor: "rgba(212,175,55,0.08)",
-                                      x: 5,
-                                    }}
-                                    className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                    {dropdownItem.label}
-                                  </motion.div>
-                                </button>
-                              );
-                            }
-
-                            if (dropdownItem.external) {
-                              return (
-                                <a
-                                  key={dropdownItem.label}
-                                  href={dropdownItem.href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block">
-                                  <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{
-                                      duration: 0.2,
-                                      delay: dropIndex * 0.03,
-                                    }}
-                                    whileHover={{
-                                      backgroundColor: "rgba(212,175,55,0.08)",
-                                      x: 5,
-                                    }}
-                                    className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                    {dropdownItem.label}
-                                  </motion.div>
-                                </a>
-                              );
-                            }
-
-                            return (
-                              <Link
-                                key={dropdownItem.label}
-                                to={dropdownItem.path}
-                                className="block">
-                                <motion.div
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{
-                                    duration: 0.2,
-                                    delay: dropIndex * 0.03,
-                                  }}
-                                  whileHover={{
-                                    backgroundColor: "rgba(212,175,55,0.08)",
-                                    x: 5,
-                                  }}
-                                  className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                  {dropdownItem.label}
-                                </motion.div>
-                              </Link>
-                            );
-                          })}
-                        </motion.div>
+                      {item.dropdown ? (
+                        <span className="relative group cursor-pointer">
+                          <motion.span
+                            whileHover={{ y: -2, scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
+                            {item.label}
+                            <motion.div
+                              className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                              whileHover={{ width: "100%" }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                            />
+                          </motion.span>
+                        </span>
+                      ) : item.external ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative group">
+                          <motion.span
+                            whileHover={{ y: -2, scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
+                            {item.label}
+                            <motion.div
+                              className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                              whileHover={{ width: "100%" }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                            />
+                          </motion.span>
+                        </a>
+                      ) : (
+                        <Link to={item.path} className="relative group">
+                          <motion.span
+                            whileHover={{ y: -2, scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
+                            {item.label}
+                            <motion.div
+                              className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
+                              whileHover={{ width: "100%" }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                            />
+                          </motion.span>
+                        </Link>
                       )}
-                    </AnimatePresence>
-                  )}
+
+                      {/* Dropdown Menu */}
+                      {item.dropdown && (
+                        <AnimatePresence>
+                          {activeDropdown === index && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
+                              {item.dropdown.map((dropdownItem, dropIndex) => {
+                                if (dropdownItem.disabled) {
+                                  return (
+                                    <div
+                                      key={dropdownItem.label}
+                                      className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFE28A]/70 last:border-b-0">
+                                      {dropdownItem.label}
+                                    </div>
+                                  );
+                                }
+
+                                if (dropdownItem.onClick) {
+                                  return (
+                                    <button
+                                      key={dropdownItem.label}
+                                      type="button"
+                                      onClick={() => {
+                                        dropdownItem.onClick();
+                                      }}
+                                      className="block w-full text-left">
+                                      <motion.div
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                          duration: 0.2,
+                                          delay: dropIndex * 0.03,
+                                        }}
+                                        whileHover={{
+                                          backgroundColor:
+                                            "rgba(212,175,55,0.08)",
+                                          x: 5,
+                                        }}
+                                        className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                        {dropdownItem.label}
+                                      </motion.div>
+                                    </button>
+                                  );
+                                }
+
+                                if (dropdownItem.external) {
+                                  return (
+                                    <a
+                                      key={dropdownItem.label}
+                                      href={dropdownItem.href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block">
+                                      <motion.div
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                          duration: 0.2,
+                                          delay: dropIndex * 0.03,
+                                        }}
+                                        whileHover={{
+                                          backgroundColor:
+                                            "rgba(212,175,55,0.08)",
+                                          x: 5,
+                                        }}
+                                        className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                        {dropdownItem.label}
+                                      </motion.div>
+                                    </a>
+                                  );
+                                }
+
+                                return (
+                                  <Link
+                                    key={dropdownItem.label}
+                                    to={dropdownItem.path}
+                                    className="block">
+                                    <motion.div
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{
+                                        duration: 0.2,
+                                        delay: dropIndex * 0.03,
+                                      }}
+                                      whileHover={{
+                                        backgroundColor:
+                                          "rgba(212,175,55,0.08)",
+                                        x: 5,
+                                      }}
+                                      className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
+                                      {dropdownItem.label}
+                                    </motion.div>
+                                  </Link>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      )}
                     </div>
                     {/* Speaking Club Live Indicator - After Login Button */}
                     {isLastItem && (
@@ -663,7 +733,9 @@ const Navbar = () => {
                         <FaMicrophone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
                         {/* Label */}
                         <span className="text-xs font-semibold text-green-300 group-hover:text-green-200 whitespace-nowrap">
-                          {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
+                          {t("nav.speakingClub", {
+                            defaultValue: "Speaking Club",
+                          })}
                         </span>
                       </Link>
                     )}
