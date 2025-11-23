@@ -269,11 +269,6 @@ const SuperAdminDashboard = () => {
                 description: "Loading...",
                 href: "/super-admin/franchise",
               },
-              {
-                label: "System health dashboard",
-                description: "Loading...",
-                href: "/super-admin/system-health",
-              },
             ]
           : [
               {
@@ -290,11 +285,6 @@ const SuperAdminDashboard = () => {
                 label: "Review franchise leads",
                 description: "No franchise leads",
                 href: "/super-admin/franchise",
-              },
-              {
-                label: "System health dashboard",
-                description: "Uptime 0% · Service status unknown",
-                href: "/super-admin/system-health",
               },
             ];
 
@@ -824,34 +814,31 @@ const SuperAdminDashboard = () => {
             animate="show"
             variants={cardVariants}
             className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
-            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">
-                  Quick actions
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineServer className="h-5 w-5" />
+                  System Health
                 </h2>
                 <p className="text-xs text-slate-300/70">
-                  Jump into the most visited admin workspaces
+                  Monitor system performance and service status
                 </p>
               </div>
+              <Link
+                to="/super-admin/system-health"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View Dashboard →
+              </Link>
             </header>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {quickActions.map((action) => (
-                <div
-                  key={action.label}
-                  className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                  <p className="text-base font-semibold text-white">
-                    {action.label}
-                  </p>
-                  <p className="text-xs text-slate-400/80">
-                    {action.description}
-                  </p>
-                  <Link
-                    to={action.href}
-                    className="mt-2 w-fit rounded-full border border-[#F5D26A]/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:border-[#F5D26A]/70 hover:text-[#FFE28A] transition-colors">
-                    Open workspace →
-                  </Link>
-                </div>
-              ))}
+            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center">
+              <p className="text-sm text-slate-300 mb-4">
+                Monitor system uptime, service status, and performance metrics
+              </p>
+              <Link
+                to="/super-admin/system-health"
+                className="inline-block rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-6 py-3 text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+                Open System Health Dashboard →
+              </Link>
             </div>
           </motion.section>
         </section>
