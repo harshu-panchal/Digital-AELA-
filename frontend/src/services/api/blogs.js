@@ -35,7 +35,11 @@ export const searchBlogs = (params = {}) => {
   const searchParams = new URLSearchParams();
   if (params.q) searchParams.set("q", params.q);
   if (params.category) searchParams.set("category", params.category);
-  if (params.tags) searchParams.set("tags", Array.isArray(params.tags) ? params.tags.join(",") : params.tags);
+  if (params.tags)
+    searchParams.set(
+      "tags",
+      Array.isArray(params.tags) ? params.tags.join(",") : params.tags
+    );
   if (params.author) searchParams.set("author", params.author);
   if (params.page) searchParams.set("page", params.page);
   if (params.pageSize) searchParams.set("pageSize", params.pageSize);
@@ -50,8 +54,7 @@ export const searchBlogs = (params = {}) => {
  * Get blog categories and tags
  * GET /api/v1/blogs/categories
  */
-export const fetchBlogCategories = () =>
-  apiRequest("/blogs/categories");
+export const fetchBlogCategories = () => apiRequest("/blogs/categories");
 
 /**
  * Add reaction to blog
@@ -104,4 +107,3 @@ export const fetchUserPendingBlogs = (params = {}) => {
   const query = searchParams.toString();
   return apiRequest(`/recruiter/blogs?${query}`);
 };
-

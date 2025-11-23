@@ -47,7 +47,7 @@ export const createBlog = async (req, res, next) => {
   try {
     const { userId, userRole } = req.auth;
     const { status, ...blogData } = req.body;
-    
+
     // Super admins can publish directly, regular users go to pending
     let finalStatus = status || "draft";
     if (status === "published") {
@@ -59,29 +59,31 @@ export const createBlog = async (req, res, next) => {
         finalStatus = "pending";
       }
     }
-    
+
     const blogPayload = {
       ...blogData,
       author: userId,
       status: finalStatus,
     };
-    
+
     // Set publishedAt only if actually published (not pending)
     if (finalStatus === "published") {
       blogPayload.publishedAt = new Date();
     }
-    
+
     const blog = await RecruiterBlog.create(blogPayload);
-    
+
     // Populate author for response
     const populatedBlog = await RecruiterBlog.findById(blog._id)
       .populate("author", "fullName email role metadata")
       .lean();
-    
+
     // Format response to match frontend expectations
-    const authorId = populatedBlog.author?._id ? populatedBlog.author._id.toString() : populatedBlog.author?.id;
+    const authorId = populatedBlog.author?._id
+      ? populatedBlog.author._id.toString()
+      : populatedBlog.author?.id;
     const userAvatarUrl = populatedBlog.author?.metadata?.avatarUrl || null;
-    
+
     const response = {
       _id: populatedBlog._id.toString(),
       id: populatedBlog._id.toString(),
@@ -159,7 +161,7 @@ export const publishBlog = async (req, res, next) => {
     // Super admins can publish directly, regular users go to pending
     let newStatus = "pending";
     let updateData = { status: newStatus };
-    
+
     if (userRole === "super-admin") {
       newStatus = "published";
       updateData = {
@@ -187,9 +189,9 @@ export const listPublishedBlogs = async (req, res, next) => {
 
     const [items, total] = await Promise.all([
       RecruiterBlog.find({ status: "published" })
-        .sort({ 
-          publishedAt: -1, 
-          createdAt: -1 
+        .sort({
+          publishedAt: -1,
+          createdAt: -1,
         })
         .skip(skip)
         .limit(Number(pageSize))
@@ -239,15 +241,20 @@ export const listPublishedBlogs = async (req, res, next) => {
     }, {});
 
     const data = items.map((blog) => {
-      const authorId = blog.author?._id ? blog.author._id.toString() : blog.author?.id;
-      const recruiterProfile = authorId && profileMap[authorId] ? profileMap[authorId] : null;
+      const authorId = blog.author?._id
+        ? blog.author._id.toString()
+        : blog.author?.id;
+      const recruiterProfile =
+        authorId && profileMap[authorId] ? profileMap[authorId] : null;
       // Get avatarUrl from user metadata if available (for all user types)
       const userAvatarUrl = blog.author?.metadata?.avatarUrl || null;
-      
+
       // Format comments with author info
       const formattedComments = (blog.comments || []).map((comment) => {
         const commentAuthorId = comment.author?.toString();
-        const commentAuthor = commentAuthorId ? commentAuthorMap[commentAuthorId] : null;
+        const commentAuthor = commentAuthorId
+          ? commentAuthorMap[commentAuthorId]
+          : null;
         return {
           id: comment._id ? comment._id.toString() : crypto.randomUUID(),
           message: comment.message,
@@ -256,7 +263,9 @@ export const listPublishedBlogs = async (req, res, next) => {
             ? {
                 id: commentAuthorId,
                 name: commentAuthor.fullName || "User",
-                avatar: commentAuthor.metadata?.avatarUrl || "https://i.pravatar.cc/150?img=11",
+                avatar:
+                  commentAuthor.metadata?.avatarUrl ||
+                  "https://i.pravatar.cc/150?img=11",
               }
             : {
                 id: commentAuthorId || "unknown",
@@ -446,7 +455,9 @@ export const addComment = async (req, res, next) => {
     });
 
     const commentAuthor = savedComment.author;
-    const authorId = commentAuthor?._id ? commentAuthor._id.toString() : commentAuthor?.id;
+    const authorId = commentAuthor?._id
+      ? commentAuthor._id.toString()
+      : commentAuthor?.id;
 
     const formattedComment = {
       id: savedComment._id.toString(),
@@ -455,7 +466,9 @@ export const addComment = async (req, res, next) => {
       author: {
         id: authorId,
         name: commentAuthor?.fullName || "User",
-        avatar: commentAuthor?.metadata?.avatarUrl || "https://i.pravatar.cc/150?img=11",
+        avatar:
+          commentAuthor?.metadata?.avatarUrl ||
+          "https://i.pravatar.cc/150?img=11",
       },
     };
 
@@ -467,4 +480,3 @@ export const addComment = async (req, res, next) => {
     return next(error);
   }
 };
-

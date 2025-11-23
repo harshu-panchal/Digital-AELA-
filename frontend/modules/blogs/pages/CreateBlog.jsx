@@ -53,23 +53,23 @@ const CreateBlog = () => {
 
     try {
       const blog = await publishBlog({
-      title,
-      thumbnail,
-      tags,
-      category,
-      content,
-    });
+        title,
+        thumbnail,
+        tags,
+        category,
+        content,
+      });
 
-    const { default: confetti } = await import("canvas-confetti");
+      const { default: confetti } = await import("canvas-confetti");
 
-    confetti({
-      particleCount: 160,
-      spread: 65,
-      origin: { y: 0.6 },
-    });
+      confetti({
+        particleCount: 160,
+        spread: 65,
+        origin: { y: 0.6 },
+      });
 
-    resetForm();
-    navigate(`/blogs/${blog.id}`);
+      resetForm();
+      navigate(`/blogs/${blog.id}`);
     } catch (error) {
       // Error handling is done in publishBlog
       console.error("Failed to publish blog:", error);

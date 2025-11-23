@@ -78,4 +78,3 @@ const recruiterBlogSchema = new mongoose.Schema(
 const RecruiterBlog = mongoose.model("RecruiterBlog", recruiterBlogSchema);
 
 export default RecruiterBlog;
-
