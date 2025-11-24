@@ -70,11 +70,36 @@ const EnglishLanguageCourses = () => {
 
   const handleBuyCourse = (course) => {
     const payload = augmentCourse(course);
-    navigate(buildCoursePaymentLink(payload), {
-      state: {
-        course: payload,
-      },
-    });
+    
+    // Check if course is free
+    const priceValue = typeof course.price === 'number' ? course.price : 
+                      (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
+                      (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
+                      parseFloat(course.price) || 0;
+    const isFreeCourse = priceValue === 0 || course.price === 0 || course.price === "Free";
+    
+    if (isFreeCourse) {
+      // Free course - navigate to course detail page for enrollment
+      if (course._id) {
+        navigate(`/courses/id/${course._id}`, {
+          state: { course: payload },
+        });
+      } else if (course.slug) {
+        navigate(`/courses/${course.slug}`, {
+          state: { course: payload },
+        });
+      } else {
+        toast.info("Please view the course details to enroll in this free course.");
+        handleViewCourse(course);
+      }
+    } else {
+      // Paid course - go to payment flow
+      navigate(buildCoursePaymentLink(payload), {
+        state: {
+          course: payload,
+        },
+      });
+    }
   };
 
   const handleViewCourse = (course) => {

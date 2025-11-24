@@ -75,6 +75,23 @@ const BlogList = ({
 
   return (
     <section className="space-y-4">
+      {layout === "slider" && (
+        <style>{`
+          .blog-slider-scroll::-webkit-scrollbar {
+            height: 8px;
+          }
+          .blog-slider-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .blog-slider-scroll::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+          }
+          .blog-slider-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.5);
+          }
+        `}</style>
+      )}
       {(title || description) && (
         <header className="space-y-2">
           {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
@@ -91,8 +108,17 @@ const BlogList = ({
         key={`blog-list-${visibleBlogs.length}-${visibleBlogs[0]?.id || ''}`}
         className={
           layout === "slider"
-            ? "flex gap-4 overflow-x-auto pb-4"
+            ? "blog-slider-scroll flex gap-4 overflow-x-auto pb-4 scroll-smooth -mx-4 px-4"
             : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        }
+        style={
+          layout === "slider"
+            ? {
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(212, 175, 55, 0.3) transparent",
+                WebkitOverflowScrolling: "touch",
+              }
+            : {}
         }>
         {visibleBlogs.map((blog, index) => (
           <Motion.article
@@ -102,7 +128,11 @@ const BlogList = ({
             animate="show"
             whileHover={{ y: -6, scale: 1.01 }}
             style={{ opacity: 1 }}
-            className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50">
+            className={`group flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#111111] via-[#0c0c0c] to-black shadow-[0_20px_45px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-[#D4AF37]/50 ${
+              layout === "slider" 
+                ? "w-[320px] sm:w-[360px] h-[480px] flex-shrink-0" 
+                : "h-full"
+            }`}>
             <Link
               to={`/blogs/${blog.id}`}
               onClick={() => registerView(blog.id)}

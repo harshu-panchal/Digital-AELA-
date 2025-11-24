@@ -397,6 +397,11 @@ const CourseDetail = () => {
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
               {title}
             </h1>
+            {course._id && (
+              <p className="text-xs text-gray-500 font-mono mt-1">
+                Course ID: {course._id}
+              </p>
+            )}
             {subtitle && (
               <p className="max-w-2xl text-lg text-[#D4AF37] font-semibold mt-2">
                 {subtitle}

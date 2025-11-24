@@ -263,8 +263,9 @@ export const getDashboardData = async (req, res, next) => {
                 .filter((txn) => txn.type === "earned" || txn.type === "bonus")
                 .reduce((sum, txn) => sum + (txn.amount || 0), 0);
             }
-            // Fallback to totalCoins if no transactions or totalEarned is 0
-            const displayCoins = totalEarned > 0 ? totalEarned : (points.totalCoins || 0);
+            // Use totalCoins for leaderboard display (includes earned + received coins)
+            // This ensures shared/received coins are reflected in the leaderboard
+            const displayCoins = points.totalCoins || 0;
 
             return {
               id: userId,
@@ -841,15 +842,16 @@ export const getEnhancedLeaderboard = async (req, res, next) => {
           const userId = user._id.toString();
           const profile = profilesMap.get(userId);
 
-          // Calculate totalEarned from transactions
+          // Calculate totalEarned from transactions (for reference)
           let totalEarned = 0;
           if (points.transactions && Array.isArray(points.transactions)) {
             totalEarned = points.transactions
               .filter((txn) => txn.type === "earned" || txn.type === "bonus")
               .reduce((sum, txn) => sum + (txn.amount || 0), 0);
           }
-          // Use totalEarned if available, otherwise fallback to totalCoins
-          const displayCoins = totalEarned > 0 ? totalEarned : (points.totalCoins || 0);
+          // Use totalCoins for leaderboard display (includes earned + received coins)
+          // This ensures shared/received coins are reflected in the leaderboard
+          const displayCoins = points.totalCoins || 0;
 
           return {
             rank: index + 1,

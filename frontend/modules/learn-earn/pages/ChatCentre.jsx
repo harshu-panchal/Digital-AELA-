@@ -22,10 +22,10 @@ import {
   sendMessageAPI,
   markMessagesAsRead,
 } from "../../../src/services/api/messages";
+import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
 
 const ChatCentre = () => {
   const { searchQuery = "" } = useOutletContext() || {};
-  const { shareCoins } = useUser();
   const { user: authUser } = useAuth();
   const { socket, isConnected } = useSocket();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -527,19 +527,39 @@ const ChatCentre = () => {
     }
   };
 
-  const handleShareCoins = () => {
-    if (!activeChat) return;
-    const result = shareCoins(
-      activeChat.name,
-      coinAmount,
-      "Thanks for the collaboration!"
-    );
-    if (result.success) {
-      toast.success(`Sent ${coinAmount} AELA coins to ${activeChat.name}`, {
-        icon: "💎",
-      });
-    } else {
-      toast.error(result.reason, { icon: "⚠️" });
+  const handleShareCoins = async () => {
+    if (!activeChat || !activeChat.userId) {
+      toast.error("Unable to identify recipient", { icon: "⚠️" });
+      return;
+    }
+    
+    if (coinAmount <= 0) {
+      toast.error("Amount must be greater than zero", { icon: "⚠️" });
+      return;
+    }
+
+    try {
+      const result = await shareCoinsAPI(
+        activeChat.userId,
+        coinAmount,
+        "Thanks for the collaboration!"
+      );
+      if (result?.success) {
+        toast.success(
+          result.message || `Sent ${coinAmount} AELA coins to ${activeChat.name}`,
+          { icon: "💎" }
+        );
+      } else {
+        toast.error(
+          result?.error?.message || result?.message || "Failed to send coins",
+          { icon: "⚠️" }
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error?.error?.message || error?.message || "Failed to send coins",
+        { icon: "⚠️" }
+      );
     }
   };
 

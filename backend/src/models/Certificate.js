@@ -38,6 +38,11 @@ const certificateSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    customImageUrl: {
+      type: String,
+      trim: true,
+      required: false, // Custom certificate image uploaded by admin/teacher
+    },
     status: {
       type: String,
       enum: ["pending", "generated", "issued", "revoked"],

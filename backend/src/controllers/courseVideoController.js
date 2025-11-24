@@ -176,12 +176,32 @@ export const getCourseVideos = async (req, res, next) => {
     } else if (userRole === "super-admin") {
       hasAccess = true;
     } else if (userId) {
-      // Check if student is enrolled
-      const enrollment = await Enrollment.findOne({
-        student: userId,
-        course: courseId,
-        status: "active",
-      });
+      // Check if student is enrolled (allow active, completed, and paused statuses)
+      // Try multiple query formats to handle different ID types
+      // Allow any enrollment status except "dropped" (which means unenrolled)
+      const enrollmentQueries = [
+        // Try with original IDs (Mongoose handles conversion automatically)
+        { student: userId, course: courseId, status: { $ne: "dropped" } },
+        // Try with string IDs
+        { student: String(userId), course: String(courseId), status: { $ne: "dropped" } },
+      ];
+      
+      // If IDs are valid ObjectIds, also try with ObjectId instances
+      if (mongoose.Types.ObjectId.isValid(courseId) && mongoose.Types.ObjectId.isValid(userId)) {
+        enrollmentQueries.push({
+          student: new mongoose.Types.ObjectId(userId),
+          course: new mongoose.Types.ObjectId(courseId),
+          status: { $ne: "dropped" },
+        });
+      }
+      
+      // Try each query format until one works
+      let enrollment = null;
+      for (const query of enrollmentQueries) {
+        enrollment = await Enrollment.findOne(query);
+        if (enrollment) break;
+      }
+      
       hasAccess = !!enrollment;
     }
 
@@ -260,12 +280,35 @@ export const getVideo = async (req, res, next) => {
     } else if (userRole === "super-admin") {
       hasAccess = true;
     } else if (userId) {
-      // Check if student is enrolled
-      const enrollment = await Enrollment.findOne({
-        student: userId,
-        course: video.course._id,
-        status: "active",
-      });
+      // Check if student is enrolled (allow active, completed, and paused statuses)
+      // Handle both ObjectId and string comparisons
+      const courseIdValue = video.course._id || video.course;
+      
+      // Try multiple query formats to handle different ID types
+      // Allow any enrollment status except "dropped" (which means unenrolled)
+      const enrollmentQueries = [
+        // Try with original IDs (Mongoose handles conversion automatically)
+        { student: userId, course: courseIdValue, status: { $ne: "dropped" } },
+        // Try with string IDs
+        { student: String(userId), course: String(courseIdValue), status: { $ne: "dropped" } },
+      ];
+      
+      // If IDs are valid ObjectIds, also try with ObjectId instances
+      if (mongoose.Types.ObjectId.isValid(courseIdValue) && mongoose.Types.ObjectId.isValid(userId)) {
+        enrollmentQueries.push({
+          student: new mongoose.Types.ObjectId(userId),
+          course: new mongoose.Types.ObjectId(courseIdValue),
+          status: { $ne: "dropped" },
+        });
+      }
+      
+      // Try each query format until one works
+      let enrollment = null;
+      for (const query of enrollmentQueries) {
+        enrollment = await Enrollment.findOne(query);
+        if (enrollment) break;
+      }
+      
       hasAccess = !!enrollment;
     }
 
@@ -442,12 +485,33 @@ export const updateVideoProgress = async (req, res, next) => {
       });
     }
 
-    // Check if student is enrolled
-    const enrollment = await Enrollment.findOne({
-      student: userId,
-      course: video.course._id,
-      status: "active",
-    });
+    // Check if student is enrolled (allow active, completed, and paused statuses)
+    const courseIdValue = video.course._id || video.course;
+    
+    // Try multiple query formats to handle different ID types
+    // Allow any enrollment status except "dropped" (which means unenrolled)
+    const enrollmentQueries = [
+      // Try with original IDs (Mongoose handles conversion automatically)
+      { student: userId, course: courseIdValue, status: { $ne: "dropped" } },
+      // Try with string IDs
+      { student: String(userId), course: String(courseIdValue), status: { $ne: "dropped" } },
+    ];
+    
+    // If IDs are valid ObjectIds, also try with ObjectId instances
+    if (mongoose.Types.ObjectId.isValid(courseIdValue) && mongoose.Types.ObjectId.isValid(userId)) {
+      enrollmentQueries.push({
+        student: new mongoose.Types.ObjectId(userId),
+        course: new mongoose.Types.ObjectId(courseIdValue),
+        status: { $ne: "dropped" },
+      });
+    }
+    
+    // Try each query format until one works
+    let enrollment = null;
+    for (const query of enrollmentQueries) {
+      enrollment = await Enrollment.findOne(query);
+      if (enrollment) break;
+    }
 
     if (!enrollment && !video.isPreview) {
       return res.status(403).json({
@@ -616,12 +680,31 @@ export const getCourseProgress = async (req, res, next) => {
       });
     }
 
-    // Check enrollment
-    const enrollment = await Enrollment.findOne({
-      student: userId,
-      course: courseId,
-      status: "active",
-    });
+    // Check enrollment (allow active, completed, and paused statuses)
+    // Try multiple query formats to handle different ID types
+    // Allow any enrollment status except "dropped" (which means unenrolled)
+    const enrollmentQueries = [
+      // Try with original IDs (Mongoose handles conversion automatically)
+      { student: userId, course: courseId, status: { $ne: "dropped" } },
+      // Try with string IDs
+      { student: String(userId), course: String(courseId), status: { $ne: "dropped" } },
+    ];
+    
+    // If IDs are valid ObjectIds, also try with ObjectId instances
+    if (mongoose.Types.ObjectId.isValid(courseId) && mongoose.Types.ObjectId.isValid(userId)) {
+      enrollmentQueries.push({
+        student: new mongoose.Types.ObjectId(userId),
+        course: new mongoose.Types.ObjectId(courseId),
+        status: { $ne: "dropped" },
+      });
+    }
+    
+    // Try each query format until one works
+    let enrollment = null;
+    for (const query of enrollmentQueries) {
+      enrollment = await Enrollment.findOne(query);
+      if (enrollment) break;
+    }
 
     if (!enrollment) {
       return res.status(403).json({

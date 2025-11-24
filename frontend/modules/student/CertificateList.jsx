@@ -55,12 +55,43 @@ const CertificateList = () => {
 
   const handleDownload = async (certificateId) => {
     try {
+      const certificate = certificates.find((c) => c._id === certificateId);
+      if (!certificate) {
+        toast.error("Certificate not found");
+        return;
+      }
+
+      // If certificate has a custom image, download it directly
+      if (certificate.customImageUrl) {
+        try {
+          // Fetch the image
+          const response = await fetch(certificate.customImageUrl);
+          if (!response.ok) {
+            throw new Error("Failed to fetch certificate image");
+          }
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `certificate-${certificate.certificateNumber || certificate._id}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast.success("Certificate image downloaded successfully");
+          return;
+        } catch (imageError) {
+          console.error("Error downloading certificate image:", imageError);
+          toast.error("Failed to download certificate image");
+          return;
+        }
+      }
+
+      // Fallback to PDF download for certificates without custom images
       const response = await downloadCertificatePDF(certificateId);
       // In production, this would download the actual PDF
       // For now, we'll create a simple PDF-like download
-      const certificate = certificates.find((c) => c._id === certificateId);
-      if (certificate) {
-        const certificateText = `
+      const certificateText = `
 CERTIFICATE OF COMPLETION
 
 This is to certify that
@@ -74,17 +105,16 @@ Certificate Number: ${certificate.certificateNumber || "N/A"}
 Verification Code: ${certificate.verificationCode}
 
 This certificate can be verified using the verification code above.
-        `;
+      `;
 
-        const blob = new Blob([certificateText], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `certificate-${certificate.certificateNumber || certificate._id}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("Certificate downloaded");
-      }
+      const blob = new Blob([certificateText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `certificate-${certificate.certificateNumber || certificate._id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Certificate downloaded");
     } catch (error) {
       toast.error(error.message || "Failed to download certificate");
     }
@@ -236,8 +266,18 @@ This certificate can be verified using the verification code above.
                           onClick={() => handleDownload(certificate._id)}
                           className="px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition flex items-center gap-2">
                           <HiOutlineDownload className="h-4 w-4" />
-                          Download PDF
+                          {certificate.customImageUrl ? "Download Image" : "Download PDF"}
                         </button>
+                        {certificate.customImageUrl && (
+                          <div className="mt-2">
+                            <img
+                              src={certificate.customImageUrl}
+                              alt="Certificate preview"
+                              className="w-full max-w-xs rounded-lg border border-white/10 cursor-pointer hover:opacity-90 transition"
+                              onClick={() => window.open(certificate.customImageUrl, '_blank')}
+                            />
+                          </div>
+                        )}
                         <button
                           onClick={() => handleShare(certificate)}
                           className="px-4 py-2 rounded-lg border border-white/10 bg-[#111] text-white text-sm font-semibold hover:bg-white/5 transition flex items-center gap-2">

@@ -72,11 +72,36 @@ const CorporateTrainingCourses = () => {
 
   const handleBuyCourse = (program) => {
     const payload = augmentCourse(program);
-    navigate(buildCoursePaymentLink(payload), {
-      state: {
-        course: payload,
-      },
-    });
+    
+    // Check if course is free
+    const priceValue = typeof program.price === 'number' ? program.price : 
+                      (typeof program.price === 'string' && program.price.toLowerCase() === 'free') ? 0 :
+                      (typeof program.price === 'string' && program.price.includes('Free')) ? 0 :
+                      parseFloat(program.price) || 0;
+    const isFreeCourse = priceValue === 0 || program.price === 0 || program.price === "Free";
+    
+    if (isFreeCourse) {
+      // Free course - navigate to course detail page for enrollment
+      if (program._id) {
+        navigate(`/courses/id/${program._id}`, {
+          state: { course: payload },
+        });
+      } else if (program.slug) {
+        navigate(`/courses/${program.slug}`, {
+          state: { course: payload },
+        });
+      } else {
+        toast.info("Please view the course details to enroll in this free course.");
+        handleViewCourse(program);
+      }
+    } else {
+      // Paid course - go to payment flow
+      navigate(buildCoursePaymentLink(payload), {
+        state: {
+          course: payload,
+        },
+      });
+    }
   };
 
   const handleViewCourse = (program) => {

@@ -347,7 +347,10 @@ const ProfilePage = () => {
   const getFieldValue = useCallback(
     (fieldName) => {
       if (!studentProfile) {
-        // Fallback to context profile
+        // Fallback to context profile (with null check)
+        if (!profile) {
+          return "";
+        }
         switch (fieldName) {
           case "englishLevel":
             return profile.englishLevel || "";
@@ -396,7 +399,7 @@ const ProfilePage = () => {
     if (studentProfile?.interests && studentProfile.interests.length > 0) {
       return studentProfile.interests;
     }
-    return profile.interests || [];
+    return profile?.interests || [];
   }, [studentProfile, profile]);
 
   const infoGrid = useMemo(
@@ -604,8 +607,8 @@ const ProfilePage = () => {
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-5">
               <div className="relative rounded-full border-4 border-black/80 p-1 group">
                 <img
-                  src={avatarPreview || profile.avatar}
-                  alt={profile.name}
+                  src={avatarPreview || profile?.avatar}
+                  alt={profile?.name || "User"}
                   className="h-28 w-28 rounded-full border-4 border-[#D4AF37]/50 object-cover"
                 />
                 <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100">
@@ -626,17 +629,17 @@ const ProfilePage = () => {
               <div className="text-center sm:text-left">
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:flex-wrap">
                   <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-                    {profile.name}
+                    {profile?.name || "User"}
                   </h1>
                   <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
-                    {profile.id}
+                    {profile?.id || ""}
                   </span>
                 </div>
                 <p className="mt-2 max-w-3xl text-sm text-gray-300 sm:text-left">
-                  {profile.title}
+                  {profile?.title || ""}
                 </p>
                 <p className="mt-3 text-sm text-gray-400 sm:text-left">
-                  {profile.bio}
+                  {profile?.bio || ""}
                 </p>
               </div>
             </div>
@@ -695,7 +698,7 @@ const ProfilePage = () => {
                 Community rating
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                ⭐ {profile.rating.toFixed(1)}
+                ⭐ {profile?.rating ? profile.rating.toFixed(1) : "0.0"}
               </p>
               <p className="mt-3 text-xs text-gray-400">
                 Top 5% of mentors on Learn & Earn

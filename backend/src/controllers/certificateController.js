@@ -14,7 +14,7 @@ import CourseVideo from "../models/CourseVideo.js";
 export const generateCertificate = async (req, res, next) => {
   try {
     const { userId, userRole } = req.auth || {};
-    const { studentId, courseId, enrollmentId, templateId, issuedType = "automatic" } = req.body;
+    const { studentId, courseId, enrollmentId, templateId, issuedType = "automatic", customImageUrl } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -123,7 +123,9 @@ export const generateCertificate = async (req, res, next) => {
       }
 
       // Verify course ownership for manual issuance
-      if (issuedType === "manual") {
+      // Super-admins can issue certificates for any course
+      // Teachers can only issue for courses they created
+      if (issuedType === "manual" && userRole === "teacher") {
         const courseInstructorId = course.instructor?.toString();
         const currentUserId = userObjectId?.toString();
         
@@ -162,7 +164,8 @@ export const generateCertificate = async (req, res, next) => {
       }
 
       // For manual issuance, validate completion requirements
-      if (issuedType === "manual" && enrollment && courseObjectId) {
+      // Super-admins can bypass these requirements, but teachers cannot
+      if (issuedType === "manual" && enrollment && courseObjectId && userRole !== "super-admin") {
         // Check 1: Enrollment status must be "completed"
         if (enrollment.status !== "completed") {
           return res.status(400).json({
@@ -200,6 +203,8 @@ export const generateCertificate = async (req, res, next) => {
           }
         }
       }
+      // For super-admins, we allow manual issuance even if requirements aren't met
+      // This gives admins flexibility to issue certificates in special cases
     }
 
     // Get template
@@ -260,6 +265,7 @@ export const generateCertificate = async (req, res, next) => {
       status: "pending",
       issuedType,
       issuedBy: issuedType === "manual" ? userObjectId : null,
+      customImageUrl: customImageUrl || null,
       metadata: {
         templateUsed: template?.name || "default",
       },
@@ -535,10 +541,14 @@ export const downloadCertificatePDF = async (req, res, next) => {
         completionDate: certificate.completionDate,
         issuedAt: certificate.issuedAt,
         template: certificate.template,
+        customImageUrl: certificate.customImageUrl || null,
       },
       pdfUrl: certificate.pdfUrl,
+      customImageUrl: certificate.customImageUrl || null,
       message:
-        "PDF generation endpoint. In production, this would return the actual PDF file. For now, use the certificate data to generate PDF on frontend.",
+        certificate.customImageUrl
+          ? "Certificate image available for download"
+          : "PDF generation endpoint. In production, this would return the actual PDF file. For now, use the certificate data to generate PDF on frontend.",
     });
   } catch (error) {
     return next(error);

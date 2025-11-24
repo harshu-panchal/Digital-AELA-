@@ -159,6 +159,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           path: "/super-admin/approvals/join-us-applications",
           icon: FaUserPlus,
         },
+        {
+          label: "Review Approval",
+          path: "/super-admin/reviews/moderate",
+          icon: FaStar,
+        },
       ],
     },
     {

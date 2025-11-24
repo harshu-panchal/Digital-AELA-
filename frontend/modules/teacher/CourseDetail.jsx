@@ -624,6 +624,11 @@ const CourseDetail = () => {
                 <HiOutlineArrowUturnLeft /> Back
               </button>
               <h1 className="text-3xl font-semibold md:text-4xl">{formData.title}</h1>
+              {courseId && (
+                <p className="mt-1 text-xs text-slate-500 font-mono">
+                  Course ID: {courseId}
+                </p>
+              )}
               <p className="mt-2 text-sm text-slate-300/80">
                 Manage course settings, curriculum, and enrolled learners.
               </p>

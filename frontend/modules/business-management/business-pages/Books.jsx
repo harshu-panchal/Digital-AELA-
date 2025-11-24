@@ -423,10 +423,24 @@ const Books = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={(e) => {
                             e.preventDefault();
-                            navigate(`/books/${book.id}/payment`);
+                            e.stopPropagation();
+                            const isFreeBook = book.price === 0 || book.price === "Free" || book.price === null;
+                            const isEbook = book.format === "ebook" || book.badge === "E-Book";
+                            
+                            if (isFreeBook && isEbook) {
+                              // Free ebook - redirect to free library reader
+                              navigate(`/free-library/ebook/${book.id}/read`);
+                            } else if (isFreeBook) {
+                              // Free physical book - show message
+                              toast.info("Free physical books require contact for delivery. Please visit the book detail page.");
+                              navigate(`/books/${book.id}`);
+                            } else {
+                              // Paid book - go to payment page
+                              navigate(`/books/${book.id}/payment`);
+                            }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          Buy Now
+                          {book.price > 0 ? "Buy Now" : "Get Free"}
                         </motion.button>
                         <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"

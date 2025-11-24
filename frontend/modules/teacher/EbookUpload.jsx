@@ -29,6 +29,7 @@ const initialFormState = {
   tags: "",
   pages: "",
   file: null,
+  bookType: "ebook",
 };
 
 const categories = [
@@ -114,6 +115,15 @@ const EbookUpload = () => {
       }));
       return;
     }
+    
+    // Clear file when switching from ebook to physical book
+    if (name === "bookType" && value === "physical") {
+      setFormData((prev) => ({
+        ...prev,
+        file: null,
+      }));
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -135,21 +145,24 @@ const EbookUpload = () => {
       return;
     }
 
-    if (!formData.file) {
-      toast.error("Please attach your PDF file.");
-      return;
-    }
+    // PDF validation only required for e-books
+    if (formData.bookType === "ebook") {
+      if (!formData.file) {
+        toast.error("Please attach your PDF file.");
+        return;
+      }
 
-    const file = formData.file;
-    if (file.type !== "application/pdf") {
-      toast.error("Only PDF uploads are supported.");
-      return;
-    }
+      const file = formData.file;
+      if (file.type !== "application/pdf") {
+        toast.error("Only PDF uploads are supported.");
+        return;
+      }
 
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("PDF file size must be less than 10MB");
-      return;
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("PDF file size must be less than 10MB");
+        return;
+      }
     }
 
     if (!formData.pages || formData.pages <= 0) {
@@ -170,12 +183,14 @@ const EbookUpload = () => {
         .map((tag) => tag.trim())
         .filter(Boolean),
       pages: formData.pages ? Number(formData.pages) : undefined,
+      bookType: formData.bookType,
     };
 
     setIsSubmitting(true);
     try {
-      // Upload PDF file along with metadata
-      const created = await createTeacherEbook(payload, file);
+      // Upload PDF file along with metadata only for e-books
+      const pdfFile = formData.bookType === "ebook" ? formData.file : null;
+      const created = await createTeacherEbook(payload, pdfFile);
       toast.success("E-book submitted for approval. It will be reviewed by admin before being published.");
       setFormData(initialFormState);
       navigate("/teacher/dashboard", { replace: true, state: { highlightEbooks: true, ebookId: created.id } });
@@ -245,6 +260,39 @@ const EbookUpload = () => {
                   placeholder="Exercises and rituals to own every stage"
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Book Type*
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <label className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 cursor-pointer hover:border-[#F5D26A]/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="bookType"
+                      value="ebook"
+                      checked={formData.bookType === "ebook"}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-[#F5D26A] focus:ring-[#F5D26A]/30"
+                    />
+                    <span className="text-sm text-white">E-book</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 cursor-pointer hover:border-[#F5D26A]/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="bookType"
+                      value="physical"
+                      checked={formData.bookType === "physical"}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-[#F5D26A] focus:ring-[#F5D26A]/30"
+                    />
+                    <span className="text-sm text-white">Physical Book</span>
+                  </label>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Select whether this is an e-book (requires PDF upload) or a physical book (no PDF needed).
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -403,39 +451,50 @@ const EbookUpload = () => {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <header>
-                <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
-                <p className="text-xs text-slate-400">
-                  Upload the final PDF file. It will be automatically uploaded to Cloudinary when you submit the form.
-                </p>
-              </header>
+            {formData.bookType === "ebook" && (
+              <section className="space-y-4">
+                <header>
+                  <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
+                  <p className="text-xs text-slate-400">
+                    Upload the final PDF file. It will be automatically uploaded to Cloudinary when you submit the form.
+                  </p>
+                </header>
 
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Drop PDF here or click to browse
-                </span>
-                <input
-                  type="file"
-                  name="file"
-                  accept=".pdf"
-                  onChange={handleInputChange}
-                  className="hidden"
-                />
-                {formData.file ? (
-                  <div className="text-xs text-slate-300">
-                    Selected: <span className="font-semibold text-white">{formData.file.name}</span>{" "}
-                    ({Math.round(formData.file.size / 1024)} KB)
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400">Upload a PDF up to 25 MB.</p>
-                )}
-              </label>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
+                  <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Drop PDF here or click to browse
+                  </span>
+                  <input
+                    type="file"
+                    name="file"
+                    accept=".pdf"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+                  {formData.file ? (
+                    <div className="text-xs text-slate-300">
+                      Selected: <span className="font-semibold text-white">{formData.file.name}</span>{" "}
+                      ({Math.round(formData.file.size / 1024)} KB)
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">Upload a PDF up to 25 MB.</p>
+                  )}
+                </label>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                The PDF will be uploaded to Cloudinary when you submit the form. Maximum file size: 10MB.
-              </div>
-            </section>
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+                  The PDF will be uploaded to Cloudinary when you submit the form. Maximum file size: 10MB.
+                </div>
+              </section>
+            )}
+
+            {formData.bookType === "physical" && (
+              <section className="space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+                  <p className="font-semibold text-[#F5D26A] mb-1">Physical Book Selected</p>
+                  <p>No PDF upload is required for physical books. The book will be available for physical purchase or distribution.</p>
+                </div>
+              </section>
+            )}
 
             <footer className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-400">

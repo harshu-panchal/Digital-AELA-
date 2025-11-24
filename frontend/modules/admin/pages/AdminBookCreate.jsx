@@ -35,6 +35,7 @@ const initialFormState = {
   downloadUrl: "",
   file: null,
   isFeatured: false,
+  bookType: "ebook",
 };
 
 const categories = [
@@ -139,6 +140,15 @@ const AdminBookCreate = () => {
         }));
         return;
       }
+      
+      // Clear file when switching from ebook to physical book
+      if (name === "bookType" && value === "physical") {
+        setFormData((prev) => ({
+          ...prev,
+          file: null,
+          downloadUrl: "",
+        }));
+      }
       if (type === "checkbox" && name === "isFeatured" && checked) {
         // Check featured book limit before allowing checkbox to be checked
         if (featuredCount >= maxFeatured) {
@@ -176,24 +186,34 @@ const AdminBookCreate = () => {
       return;
     }
 
-    // For admin, downloadUrl is required (can be provided directly or from previewUrl/coverImage)
-    const downloadUrl =
-      sanitizeUrl(formData.downloadUrl) ||
-      sanitizeUrl(formData.previewUrl) ||
-      sanitizeUrl(formData.coverImage) ||
-      "";
+    // For e-books, downloadUrl is required (can be provided directly or from previewUrl/coverImage)
+    if (formData.bookType === "ebook") {
+      const downloadUrl =
+        sanitizeUrl(formData.downloadUrl) ||
+        sanitizeUrl(formData.previewUrl) ||
+        sanitizeUrl(formData.coverImage) ||
+        "";
 
-    if (!downloadUrl) {
-      toast.error(
-        "Please provide a download URL, preview URL, or cover image URL for the ebook file."
-      );
-      return;
+      if (!downloadUrl) {
+        toast.error(
+          "Please provide a download URL, preview URL, or cover image URL for the ebook file."
+        );
+        return;
+      }
     }
 
     if (!formData.pages || Number(formData.pages) <= 0) {
       toast.error("Please enter a valid number of pages (greater than 0).");
       return;
     }
+
+    const downloadUrl =
+      formData.bookType === "ebook"
+        ? sanitizeUrl(formData.downloadUrl) ||
+          sanitizeUrl(formData.previewUrl) ||
+          sanitizeUrl(formData.coverImage) ||
+          ""
+        : "";
 
     const payload = {
       title: cleanedTitle,
@@ -210,6 +230,7 @@ const AdminBookCreate = () => {
       pages: Number(formData.pages),
       downloadUrl: downloadUrl,
       isFeatured: formData.isFeatured || false,
+      bookType: formData.bookType,
     };
 
     setIsSubmitting(true);
@@ -294,6 +315,40 @@ const AdminBookCreate = () => {
                   placeholder="Exercises and rituals to own every stage"
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Book Type*
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <label className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 cursor-pointer hover:border-[#F5D26A]/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="bookType"
+                      value="ebook"
+                      checked={formData.bookType === "ebook"}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-[#F5D26A] focus:ring-[#F5D26A]/30"
+                    />
+                    <span className="text-sm text-white">E-book</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 cursor-pointer hover:border-[#F5D26A]/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="bookType"
+                      value="physical"
+                      checked={formData.bookType === "physical"}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-[#F5D26A] focus:ring-[#F5D26A]/30"
+                    />
+                    <span className="text-sm text-white">Physical Book</span>
+                  </label>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Select whether this is an e-book (requires PDF upload) or a physical book (no PDF needed).
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -454,26 +509,28 @@ const AdminBookCreate = () => {
                 </p>
               </div>
 
-              <div className="space-y-1.5 md:col-span-2">
-                <label
-                  htmlFor="downloadUrl"
-                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Download URL*
-                </label>
-                <input
-                  id="downloadUrl"
-                  name="downloadUrl"
-                  type="url"
-                  value={formData.downloadUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                />
-                <p className="text-[11px] text-slate-400">
-                  Required: Direct URL to the PDF file. Can also use preview URL
-                  or cover image URL if they point to the PDF.
-                </p>
-              </div>
+              {formData.bookType === "ebook" && (
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor="downloadUrl"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Download URL*
+                  </label>
+                  <input
+                    id="downloadUrl"
+                    name="downloadUrl"
+                    type="url"
+                    value={formData.downloadUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Required: Direct URL to the PDF file. Can also use preview URL
+                    or cover image URL if they point to the PDF.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-1.5 md:col-span-2">
                 <label
@@ -497,46 +554,57 @@ const AdminBookCreate = () => {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <header>
-                <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
-                <p className="text-xs text-slate-400">
-                  Upload the final PDF. Actual storage will connect to backend
-                  later; we keep metadata for now.
-                </p>
-              </header>
-
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Drop PDF here or click to browse
-                </span>
-                <input
-                  type="file"
-                  name="file"
-                  accept=".pdf"
-                  onChange={handleInputChange}
-                  className="hidden"
-                />
-                {formData.file ? (
-                  <div className="text-xs text-slate-300">
-                    Selected:{" "}
-                    <span className="font-semibold text-white">
-                      {formData.file.name}
-                    </span>{" "}
-                    ({Math.round(formData.file.size / 1024)} KB)
-                  </div>
-                ) : (
+            {formData.bookType === "ebook" && (
+              <section className="space-y-4">
+                <header>
+                  <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
                   <p className="text-xs text-slate-400">
-                    Upload a PDF up to 25 MB.
+                    Upload the final PDF. Actual storage will connect to backend
+                    later; we keep metadata for now.
                   </p>
-                )}
-              </label>
+                </header>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                Note: The PDF is not permanently uploaded yet. We store its name
-                and size so the backend can request the actual file later.
-              </div>
-            </section>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
+                  <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Drop PDF here or click to browse
+                  </span>
+                  <input
+                    type="file"
+                    name="file"
+                    accept=".pdf"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+                  {formData.file ? (
+                    <div className="text-xs text-slate-300">
+                      Selected:{" "}
+                      <span className="font-semibold text-white">
+                        {formData.file.name}
+                      </span>{" "}
+                      ({Math.round(formData.file.size / 1024)} KB)
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">
+                      Upload a PDF up to 25 MB.
+                    </p>
+                  )}
+                </label>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+                  Note: The PDF is not permanently uploaded yet. We store its name
+                  and size so the backend can request the actual file later.
+                </div>
+              </section>
+            )}
+
+            {formData.bookType === "physical" && (
+              <section className="space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+                  <p className="font-semibold text-[#F5D26A] mb-1">Physical Book Selected</p>
+                  <p>No PDF upload is required for physical books. The book will be available for physical purchase or distribution.</p>
+                </div>
+              </section>
+            )}
 
             <section className="space-y-4">
               <label

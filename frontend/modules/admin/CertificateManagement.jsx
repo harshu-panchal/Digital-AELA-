@@ -23,6 +23,7 @@ import {
   downloadCertificatePDF,
 } from "../../src/services/api/certificates";
 import { getTeacherCourses } from "../../src/services/teacherCourses";
+import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
 
 const CertificateManagement = () => {
   const { user } = useAuth();
@@ -34,7 +35,10 @@ const CertificateManagement = () => {
     courseId: "",
     studentName: "",
     courseTitle: "",
+    certificateImage: null,
+    certificateImagePreview: null,
   });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
     studentId: "",
@@ -70,17 +74,45 @@ const CertificateManagement = () => {
   };
 
   const handleManualIssue = async () => {
-    if (!manualIssueData.studentId || !manualIssueData.studentName) {
-      toast.error("Please fill in all required fields");
+    if (!manualIssueData.studentId || !manualIssueData.studentName || !manualIssueData.courseId) {
+      toast.error("Please fill in all required fields (Student ID, Student Name, and Course ID)");
+      return;
+    }
+
+    // Validate that courseId is a valid MongoDB ObjectId format
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdRegex.test(manualIssueData.courseId.trim())) {
+      toast.error("Please enter a valid Course ID (24-character MongoDB ObjectId)");
       return;
     }
 
     try {
+      let customImageUrl = null;
+      
+      // Upload certificate image if provided
+      if (manualIssueData.certificateImage) {
+        setIsUploadingImage(true);
+        try {
+          customImageUrl = await uploadImageToCloudinary(
+            manualIssueData.certificateImage,
+            "digital-aela/certificates"
+          );
+          toast.success("Certificate image uploaded successfully");
+        } catch (imageError) {
+          toast.error(imageError.message || "Failed to upload certificate image");
+          setIsUploadingImage(false);
+          return;
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
       await generateCertificate({
-        studentId: manualIssueData.studentId,
-        courseId: manualIssueData.courseId || undefined,
-        studentName: manualIssueData.studentName,
-        courseTitle: manualIssueData.courseTitle || undefined,
+        studentId: manualIssueData.studentId.trim(),
+        courseId: manualIssueData.courseId.trim(),
+        studentName: manualIssueData.studentName.trim(),
+        courseTitle: manualIssueData.courseTitle?.trim() || undefined,
+        customImageUrl: customImageUrl || undefined,
         issuedType: "manual",
       });
       toast.success("Certificate issued successfully");
@@ -90,10 +122,39 @@ const CertificateManagement = () => {
         courseId: "",
         studentName: "",
         courseTitle: "",
+        certificateImage: null,
+        certificateImagePreview: null,
       });
       loadCertificates();
     } catch (error) {
       toast.error(error.message || "Failed to issue certificate");
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image file size must be less than 5MB");
+        return;
+      }
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setManualIssueData((prev) => ({
+          ...prev,
+          certificateImage: file,
+          certificateImagePreview: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -353,7 +414,9 @@ const CertificateManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Course ID</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Course ID *
+                  </label>
                   <input
                     type="text"
                     value={manualIssueData.courseId}
@@ -361,7 +424,8 @@ const CertificateManagement = () => {
                       setManualIssueData({ ...manualIssueData, courseId: e.target.value })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none"
-                    placeholder="Optional: Enter course ID"
+                    placeholder="Enter course ID (required)"
+                    required
                   />
                 </div>
                 <div>
@@ -376,6 +440,41 @@ const CertificateManagement = () => {
                     placeholder="Optional: Enter course title"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Certificate Image (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#D4AF37]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#D4AF37] hover:file:bg-[#D4AF37]/30 focus:border-[#D4AF37]/50 focus:outline-none"
+                  />
+                  {manualIssueData.certificateImagePreview && (
+                    <div className="mt-3">
+                      <img
+                        src={manualIssueData.certificateImagePreview}
+                        alt="Certificate preview"
+                        className="max-w-full h-auto rounded-lg border border-white/10 max-h-64 object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualIssueData((prev) => ({
+                            ...prev,
+                            certificateImage: null,
+                            certificateImagePreview: null,
+                          }));
+                        }}
+                        className="mt-2 text-xs text-red-400 hover:text-red-300">
+                        Remove image
+                      </button>
+                    </div>
+                  )}
+                  <p className="mt-1 text-xs text-slate-500">
+                    Upload a custom certificate image (JPG, PNG, max 5MB). Students will be able to download this image.
+                  </p>
+                </div>
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={() => {
@@ -385,6 +484,8 @@ const CertificateManagement = () => {
                         courseId: "",
                         studentName: "",
                         courseTitle: "",
+                        certificateImage: null,
+                        certificateImagePreview: null,
                       });
                     }}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-[#111] text-white font-semibold hover:bg-white/5 transition">
@@ -392,8 +493,9 @@ const CertificateManagement = () => {
                   </button>
                   <button
                     onClick={handleManualIssue}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black font-semibold transition hover:brightness-110">
-                    Issue Certificate
+                    disabled={isUploadingImage}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black font-semibold transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isUploadingImage ? "Uploading..." : "Issue Certificate"}
                   </button>
                 </div>
               </div>
