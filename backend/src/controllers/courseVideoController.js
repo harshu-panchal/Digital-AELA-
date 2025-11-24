@@ -92,6 +92,42 @@ export const uploadCourseVideo = async (req, res, next) => {
       .populate("course", "title instructor")
       .lean();
 
+    // Create notifications for enrolled students
+    try {
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all enrolled students for this course
+      const enrollments = await Enrollment.find({
+        course: courseId,
+        status: "active",
+      })
+        .select("student")
+        .lean();
+      
+      if (enrollments.length > 0) {
+        const studentIds = enrollments.map((e) => e.student);
+        const courseTitle = populatedVideo.course?.title || "course";
+        const videoTitle = populatedVideo.title;
+        
+        await createBulkNotifications(
+          studentIds,
+          "New Video Added",
+          `A new video "${videoTitle}" has been added to "${courseTitle}".`,
+          "video",
+          {
+            videoId: video._id.toString(),
+            courseId: courseId,
+            courseTitle: courseTitle,
+          },
+          `/courses/${courseId}/videos/${video._id}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[CourseVideo] Error creating notifications:", notifError);
+      // Don't fail video upload if notification fails
+    }
+
     return res.status(201).json({
       message: "Video uploaded successfully",
       video: populatedVideo,

@@ -90,6 +90,80 @@ export const createJob = async (req, res, next) => {
       expirationDate,
     });
 
+    // Create notification for super admin when job needs approval (draft status)
+    if (status === "draft") {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all super-admin users
+        const superAdmins = await User.find({ role: "super-admin", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (superAdmins.length > 0) {
+          const adminIds = superAdmins.map((admin) => admin._id);
+          const owner = await User.findById(userId).select("fullName").lean();
+          const ownerName = owner?.fullName || "A recruiter";
+          
+          await createBulkNotifications(
+            adminIds,
+            "New Job Post Pending Approval",
+            `A new job post "${job.title}" has been created by ${ownerName} and requires approval.`,
+            "approval",
+            {
+              jobId: job._id.toString(),
+              jobTitle: job.title,
+              ownerId: userId,
+              ownerName: ownerName,
+              contentType: "job",
+            },
+            `/super-admin/content-management?type=job&id=${job._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JobPost] Error creating approval notification:", notifError);
+        // Don't fail job creation if notification fails
+      }
+    }
+
+    // Create notifications for all students when job is published
+    if (status === "published") {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all active students
+        const students = await User.find({ role: "student", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (students.length > 0) {
+          const studentIds = students.map((s) => s._id);
+          const jobTitle = job.title;
+          const companyName = job.company || "A company";
+          
+          await createBulkNotifications(
+            studentIds,
+            "New Job Post Available",
+            `A new job "${jobTitle}" has been posted by ${companyName}.`,
+            "job_post",
+            {
+              jobId: job._id.toString(),
+              jobTitle: jobTitle,
+              companyName: companyName,
+            },
+            `/jobs/${job._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JobPost] Error creating notifications:", notifError);
+        // Don't fail job creation if notification fails
+      }
+    }
+
     return res.status(201).json(job);
   } catch (error) {
     return next(error);

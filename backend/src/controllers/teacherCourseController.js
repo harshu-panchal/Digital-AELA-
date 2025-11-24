@@ -119,6 +119,43 @@ export const createTeacherCourse = async (req, res, next) => {
       .populate("instructor", "fullName email")
       .lean();
 
+    // Create notification for super admin when course needs approval
+    if (course.status === "draft") {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all super-admin users
+        const superAdmins = await User.find({ role: "super-admin", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (superAdmins.length > 0) {
+          const adminIds = superAdmins.map((admin) => admin._id);
+          const instructorName = populatedCourse.instructor?.fullName || "A teacher";
+          
+          await createBulkNotifications(
+            adminIds,
+            "New Course Pending Approval",
+            `A new course "${course.title}" has been created by ${instructorName} and requires approval.`,
+            "approval",
+            {
+              courseId: course._id.toString(),
+              courseTitle: course.title,
+              instructorId: userId,
+              instructorName: instructorName,
+              contentType: "course",
+            },
+            `/super-admin/content-management?type=course&id=${course._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[CourseCreation] Error creating approval notification:", notifError);
+        // Don't fail course creation if notification fails
+      }
+    }
+
     return res.status(201).json({ course: populatedCourse });
   } catch (error) {
     return next(error);

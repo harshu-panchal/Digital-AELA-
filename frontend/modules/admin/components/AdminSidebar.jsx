@@ -159,16 +159,6 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           path: "/super-admin/approvals/join-us-applications",
           icon: FaUserPlus,
         },
-        {
-          label: "Course Reviews",
-          path: "/super-admin/reviews/moderate",
-          icon: FaStar,
-        },
-        {
-          label: "Live Rooms",
-          path: "/super-admin/live-rooms/moderate",
-          icon: FaVideo,
-        },
       ],
     },
     {

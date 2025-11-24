@@ -1473,7 +1473,7 @@ const Home = () => {
                   recognized certificate hasil karein.
                 </p>
                 <Link
-                  to="/"
+                  to="/gallery"
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                   Get Certified →
                 </Link>
@@ -1495,12 +1495,12 @@ const Home = () => {
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  Advanced batches, communication training aur interview support -
-                  Gulf countries aur global opportunities ke liye tayyar ho
+                  Advanced batches, communication training aur interview support
+                  - Gulf countries aur global opportunities ke liye tayyar ho
                   jayein.
                 </p>
                 <Link
-                  to="/contact"
+                  to="/explore-jobs"
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                   Explore Opportunities →
                 </Link>
@@ -1680,7 +1680,9 @@ const Home = () => {
                                       key={idx}
                                       className="flex items-center gap-2">
                                       <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 shrink-0"></span>
-                                      <span className="line-clamp-1">{feature}</span>
+                                      <span className="line-clamp-1">
+                                        {feature}
+                                      </span>
                                     </li>
                                   ))}
                               </ul>
@@ -1951,16 +1953,14 @@ const Home = () => {
               </p>
 
               {/* Button */}
-              <motion.a
+              <MotionLink
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                to="/contact/book-demo"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
                 Book Your Class
-              </motion.a>
+              </MotionLink>
             </motion.div>
 
             {/* Free English Guide Card */}
@@ -2005,16 +2005,14 @@ const Home = () => {
               </p>
 
               {/* Button */}
-              <motion.a
+              <MotionLink
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                to="/free-library"
                 className="block w-full bg-[#1a1a1a] text-[#D4AF37] py-3 rounded-lg font-bold text-center border-2 border-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
                 Download Now
-              </motion.a>
+              </MotionLink>
             </motion.div>
 
             {/* Gift a Future Card */}
@@ -2149,7 +2147,9 @@ const Home = () => {
                     }}
                     whileHover={{ y: -8, scale: 1.02 }}
                     className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
-                    <Link to={`/books/${book.id}`} className="flex flex-col h-full">
+                    <Link
+                      to={`/books/${book.id}`}
+                      className="flex flex-col h-full">
                       {/* Book Image */}
                       <div className="relative h-48 w-full overflow-hidden">
                         <img
@@ -2242,9 +2242,12 @@ const Home = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              const isFreeBook = book.price === 0 || book.price === "Free";
-                              const isEbook = book.badge === "E-Book" || book.format === "ebook";
-                              
+                              const isFreeBook =
+                                book.price === 0 || book.price === "Free";
+                              const isEbook =
+                                book.badge === "E-Book" ||
+                                book.format === "ebook";
+
                               if (isFreeBook && isEbook) {
                                 // Free ebook - redirect to free library reader
                                 navigate(`/free-library/ebook/${book.id}/read`);
@@ -2710,7 +2713,9 @@ const Home = () => {
                         <p className="text-sm font-semibold text-white truncate">
                           {item.name}
                         </p>
-                        <p className="text-xs text-gray-400 truncate">{item.role}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {item.role}
+                        </p>
                       </div>
                     </div>
                     <span className="flex-shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">

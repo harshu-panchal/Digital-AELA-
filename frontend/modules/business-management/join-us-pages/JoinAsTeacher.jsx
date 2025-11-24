@@ -3,11 +3,19 @@ import { motion } from "framer-motion";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const JoinAsTeacher = () => {
+  const { user } = useAuth();
+  
   const handleSubmit = useCallback(
-    (payload) => submitJoinUsLead("teacher", payload),
-    []
+    (payload) => {
+      if (!user?.id) {
+        throw new Error("Please log in to submit this application");
+      }
+      return submitJoinUsLead("teacher", payload, user.id);
+    },
+    [user]
   );
 
   const fields = [

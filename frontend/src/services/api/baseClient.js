@@ -219,8 +219,25 @@ export const apiRequest = async (
   error.code = payload?.error?.code;
   error.details = payload;
   
+  // Mark validation errors as suppressible (non-critical) if they're 400 errors
+  const isValidationError = response.status === 400 && (
+    error.code === "VALIDATION_ERROR" || 
+    message.includes("Invalid user ID") ||
+    message.includes("Invalid")
+  );
+  
+  // Mark duplicate submission errors (409) as suppressible - they're expected
+  const isDuplicateError = response.status === 409 && (
+    error.code === "DUPLICATE_SUBMISSION" ||
+    message.includes("already submitted") ||
+    message.includes("already submitted this form")
+  );
+  
+  error.suppressConsoleError = isValidationError || isDuplicateError;
+  
   // Log non-401 errors in production (401s are expected for auth failures)
-  if (!isDevelopment && response.status !== 401) {
+  // Completely suppress validation errors and duplicate submission errors in development
+  if (!isDevelopment && response.status !== 401 && !isValidationError && !isDuplicateError) {
     console.error("[API] Request failed:", {
       endpoint,
       method,
@@ -230,6 +247,7 @@ export const apiRequest = async (
       apiUrl: API_BASE_URL
     });
   }
+  // Validation errors and duplicate submission errors are completely suppressed - no console output
   
   throw error;
 };

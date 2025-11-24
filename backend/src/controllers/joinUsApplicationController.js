@@ -77,6 +77,36 @@ export const submitApplication = async (req, res, next) => {
       }
     });
 
+    // Get userId from auth (required for application submission)
+    const userId = req.auth?.userId || null;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required to submit this application",
+        },
+      });
+    }
+
+    // Check for duplicate submission by userId only
+    const existingApplication = await JoinUsApplication.findOne({
+      applicationType: applicationType,
+      submittedBy: userId,
+    }).select("status submittedAt").lean();
+
+    if (existingApplication) {
+      return res.status(409).json({
+        error: {
+          code: "DUPLICATE_SUBMISSION",
+          message: "You have already submitted this application. Our team will review it and get in touch soon.",
+          submitted: true,
+          status: existingApplication.status,
+          submittedAt: existingApplication.submittedAt,
+        },
+      });
+    }
+
     // Handle file uploads
     const attachments = [];
     const uploadPromises = [];
@@ -114,6 +144,9 @@ export const submitApplication = async (req, res, next) => {
     // Wait for all file uploads to complete
     await Promise.all(uploadPromises);
 
+    // Get userId from auth if available (for authenticated users), otherwise null for public submissions
+    // Note: userId is already extracted above in duplicate check
+
     // Create application
     const application = await JoinUsApplication.create({
       applicationType,
@@ -121,7 +154,54 @@ export const submitApplication = async (req, res, next) => {
       formData,
       attachments,
       submittedAt: new Date(),
+      submittedBy: userId || undefined,
     });
+
+    // Create notification for super admin when application is submitted
+    try {
+      const User = (await import("../models/User.js")).default;
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all super-admin users
+      const superAdmins = await User.find({ role: "super-admin", isActive: true })
+        .select("_id")
+        .lean();
+      
+      if (superAdmins.length > 0) {
+        const adminIds = superAdmins.map((admin) => admin._id);
+        
+        // Get applicant name from form data (for public submissions) or user record (for authenticated users)
+        let applicantName = "A user";
+        if (userId) {
+          const applicant = await User.findById(userId).select("fullName email").lean();
+          applicantName = applicant?.fullName || applicant?.email || "A user";
+        } else {
+          // For public submissions, use form data
+          applicantName = formData.fullName || formData.email || "A user";
+        }
+        
+        const applicationTypeLabel = applicationType === "teacher" ? "Teacher" : "Influencer";
+        
+        await createBulkNotifications(
+          adminIds,
+          "New Application Pending Approval",
+          `A new ${applicationTypeLabel} application has been submitted by ${applicantName} and requires approval.`,
+          "approval",
+          {
+            applicationId: application._id.toString(),
+            applicationType: applicationType,
+            applicantId: userId || null,
+            applicantName: applicantName,
+            contentType: "application",
+          },
+          `/super-admin/approvals?type=${applicationType}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[JoinUsApplication] Error creating approval notification:", notifError);
+      // Don't fail application submission if notification fails
+    }
 
     return res.status(201).json({
       message: "Application submitted successfully",
@@ -288,6 +368,28 @@ export const approveJoinUsApplication = async (req, res, next) => {
 
     await application.save();
 
+    // Create notification for applicant
+    if (application.submittedBy) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        await createNotification(
+          application.submittedBy,
+          "Application Approved",
+          `Your ${application.applicationType} application has been approved.`,
+          "approval",
+          {
+            applicationId: application._id.toString(),
+            applicationType: application.applicationType,
+            action: "approve",
+          },
+          null
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JoinUsApplication] Error creating notification:", notifError);
+      }
+    }
+
     return res.json({
       message: "Application approved successfully",
       application: await JoinUsApplication.findById(applicationId).lean(),
@@ -354,6 +456,29 @@ export const rejectJoinUsApplication = async (req, res, next) => {
     }
 
     await application.save();
+
+    // Create notification for applicant
+    if (application.submittedBy) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        await createNotification(
+          application.submittedBy,
+          "Application Rejected",
+          `Your ${application.applicationType} application has been rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,
+          "approval",
+          {
+            applicationId: application._id.toString(),
+            applicationType: application.applicationType,
+            action: "reject",
+            rejectionReason: rejectionReason || null,
+          },
+          null
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JoinUsApplication] Error creating notification:", notifError);
+      }
+    }
 
     return res.json({
       message: "Application rejected successfully",

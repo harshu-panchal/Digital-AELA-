@@ -274,7 +274,7 @@ export const getStudentDashboard = async (req, res, next) => {
           progress: Math.round(progress),
           nextSession,
           access: enrollment.status === "active" ? "Active enrollment" : enrollment.status,
-          route: `/learn-earn/courses/${course._id}`,
+          route: `/student/courses/${course._id}`,
         };
       })
     );

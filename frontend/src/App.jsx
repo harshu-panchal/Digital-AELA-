@@ -7,9 +7,11 @@ import Footer from "../modules/business-management/business-components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import FloatingDebateButton from "./components/FloatingDebateButton";
 import ProtectedRoute from "./components/ProtectedRoute";
+import FinancialProtectedRoute from "./components/FinancialProtectedRoute";
 import Home from "../modules/business-management/business-pages/Home";
 import LearnEarnLayout from "../modules/learn-earn/layout/LearnEarnLayout";
 import DashboardOverview from "../modules/learn-earn/pages/DashboardOverview";
+import NotificationCenter from "../modules/learn-earn/pages/NotificationCenter";
 import ProfilePage from "../modules/learn-earn/pages/ProfilePage";
 import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
 import FindLearners from "../modules/learn-earn/pages/FindLearners";
@@ -202,12 +204,33 @@ export const App = () => {
           <Route path="create/book" element={<AdminBookCreate />} />
           <Route path="create/blog" element={<AdminBlogCreate />} />
           <Route path="content-management" element={<ContentManagement />} />
-          <Route path="payments" element={<PaymentManagement />} />
+          <Route
+            path="payments"
+            element={
+              <FinancialProtectedRoute>
+                <PaymentManagement />
+              </FinancialProtectedRoute>
+            }
+          />
           <Route path="certificates" element={<CertificateManagement />} />
           <Route path="crm/leads" element={<LeadManagement />} />
           <Route path="crm/leads/:leadId" element={<LeadDetail />} />
-          <Route path="expenses" element={<ExpenseManagement />} />
-          <Route path="financial-dashboard" element={<FinancialDashboard />} />
+          <Route
+            path="expenses"
+            element={
+              <FinancialProtectedRoute>
+                <ExpenseManagement />
+              </FinancialProtectedRoute>
+            }
+          />
+          <Route
+            path="financial-dashboard"
+            element={
+              <FinancialProtectedRoute>
+                <FinancialDashboard />
+              </FinancialProtectedRoute>
+            }
+          />
           <Route path="announcements" element={<AnnouncementManagement />} />
           <Route
             path="announcements/create"
@@ -373,6 +396,22 @@ export const App = () => {
                   "super-admin",
                 ]}>
                 <DashboardOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <ProtectedRoute
+                showLoginPrompt={true}
+                roles={[
+                  "student",
+                  "teacher",
+                  "influencer",
+                  "freelancer",
+                  "super-admin",
+                ]}>
+                <NotificationCenter />
               </ProtectedRoute>
             }
           />

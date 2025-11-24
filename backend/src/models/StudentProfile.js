@@ -88,6 +88,9 @@ const studentProfileSchema = new mongoose.Schema(
   }
 );
 
+// Index for quick user profile lookup (already unique, but explicit index helps)
+studentProfileSchema.index({ user: 1 });
+
 const StudentProfile = mongoose.model("StudentProfile", studentProfileSchema);
 
 export default StudentProfile;

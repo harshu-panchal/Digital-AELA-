@@ -538,9 +538,21 @@ export const publishAnnouncement = async (req, res, next) => {
         actionUrl: `/announcements/${announcement._id}`,
       }));
 
-      await Notification.insertMany(notifications);
+      // Use notification helper to create notifications with socket emission
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      await createBulkNotifications(
+        targetUserIds,
+        "New Announcement",
+        announcement.title,
+        "announcement",
+        {
+          announcementId: announcement._id.toString(),
+          priority: announcement.priority,
+        },
+        `/announcements/${announcement._id}`
+      );
 
-      // Emit socket events
+      // Also emit socket events for announcement (for real-time updates)
       const io = getSocketIO();
       if (io) {
         targetUserIds.forEach((userId) => {

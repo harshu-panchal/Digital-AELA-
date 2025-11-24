@@ -148,7 +148,47 @@ export const createTeacherEbook = async (req, res, next) => {
       },
     });
 
-    return res.status(201).json({ ebook });
+    const populatedEbook = await EbookResource.findById(ebook._id)
+      .populate("metadata.uploadedBy", "fullName email")
+      .lean();
+
+    // Create notification for super admin when ebook needs approval
+    if (!ebook.isPublic) {
+      try {
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all super-admin users
+        const superAdmins = await User.find({ role: "super-admin", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (superAdmins.length > 0) {
+          const adminIds = superAdmins.map((admin) => admin._id);
+          const authorName = userFullName || "A teacher";
+          
+          await createBulkNotifications(
+            adminIds,
+            "New Ebook Pending Approval",
+            `A new ebook "${ebook.title}" has been created by ${authorName} and requires approval.`,
+            "approval",
+            {
+              ebookId: ebook._id.toString(),
+              ebookTitle: ebook.title,
+              authorId: userId,
+              authorName: authorName,
+              contentType: "ebook",
+            },
+            `/super-admin/content-management?type=ebook&id=${ebook._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[EbookCreation] Error creating approval notification:", notifError);
+        // Don't fail ebook creation if notification fails
+      }
+    }
+
+    return res.status(201).json({ ebook: populatedEbook || ebook });
   } catch (error) {
     return next(error);
   }

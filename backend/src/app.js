@@ -41,6 +41,8 @@ import redemptionRequestRoutes from "./routes/redemptionRequestRoutes.js";
 import translationRoutes from "./routes/translationRoutes.js";
 import publicSettingsRoutes from "./routes/publicSettingsRoutes.js";
 import joinUsApplicationRoutes from "./routes/joinUsApplicationRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import userRatingRoutes from "./routes/userRatingRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
@@ -134,6 +136,19 @@ app.use("/api/v1", checkMaintenanceMode);
 app.use("/api/v1", optionalAuth);
 // Track sessions for authenticated users
 app.use("/api/v1", trackSession);
+
+// Error tracking middleware for system health monitoring (must be after trackSession)
+app.use("/api/v1", async (req, res, next) => {
+  // Track successful requests (async import to avoid circular dependencies)
+  try {
+    const { recordRequest } = await import("./utils/systemHealthMonitor.js");
+    recordRequest();
+  } catch (error) {
+    // Ignore if health monitor not available
+  }
+  next();
+});
+
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/recruiter/jobs", jobRoutes);
 app.use("/api/v1/recruiter/blogs", blogRoutes);
@@ -144,9 +159,11 @@ app.use("/api/v1/students", studentRoutes);
 app.use("/api/v1/quizzes", quizRoutes);
 app.use("/api/v1/question-bank", questionBankRoutes);
 app.use("/api/v1/social", socialRoutes);
+app.use("/api/v1/users", userRatingRoutes);
 app.use("/api/v1/learn-earn", learnEarnRoutes);
 app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/live-rooms", liveRoomRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/admin", superAdminRoutes);
 app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/admin", adminContentRoutes);
@@ -174,7 +191,15 @@ app.use("/api/v1/translate", translationRoutes);
 app.use("/api/v1/join-us", joinUsApplicationRoutes);
 
 // eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
+  // Track errors (async import to avoid circular dependencies)
+  try {
+    const { recordError } = await import("./utils/systemHealthMonitor.js");
+    recordError();
+  } catch (error) {
+    // Ignore if health monitor not available
+  }
+
   // eslint-disable-next-line no-console
   console.error("[Error]", err);
   const status = err.status || 500;

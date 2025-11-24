@@ -73,9 +73,17 @@ export const submitContactLead = async (formId, payload) => {
     
     return { ...entry, leadId: response.lead?._id };
   } catch (error) {
-    // If API call fails, still return the entry (stored in localStorage)
-    // The error will be handled by the form component
-    console.error("Failed to submit lead to backend:", error);
+    // Don't log duplicate submission errors (409) - they're expected and handled gracefully
+    const isDuplicateError = 
+      error?.status === 409 || 
+      error?.code === "DUPLICATE_SUBMISSION" ||
+      error?.message?.includes("already submitted");
+    
+    if (!isDuplicateError) {
+      // Only log unexpected errors
+      console.error("Failed to submit lead to backend:", error);
+    }
+    
     throw error;
   }
 };

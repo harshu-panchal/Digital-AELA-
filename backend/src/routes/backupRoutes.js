@@ -22,12 +22,14 @@ router.post("/cleanup", authenticate, cleanupBackups);
 // CRUD operations
 router.post("/", authenticate, createBackup);
 router.get("/", authenticate, getAllBackups);
-router.get("/:backupId", authenticate, getBackupDetails);
-router.delete("/:backupId", authenticate, deleteBackup);
 
-// Download and restore
+// Download and restore - MUST come before /:backupId to avoid route conflicts
 router.get("/:backupId/download", authenticate, downloadBackup);
 router.post("/:backupId/restore", authenticate, restoreBackup);
+
+// Get details and delete - MUST come after specific routes
+router.get("/:backupId", authenticate, getBackupDetails);
+router.delete("/:backupId", authenticate, deleteBackup);
 
 export default router;
 

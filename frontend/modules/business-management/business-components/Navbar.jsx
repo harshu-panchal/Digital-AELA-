@@ -13,12 +13,16 @@ import {
   FaBars,
   FaTimes,
   FaMicrophone,
+  FaBell,
 } from "react-icons/fa";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSidebarSafe } from "../../../src/contexts/SidebarContext";
 import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import { toast } from "react-toastify";
+import { useSocket } from "../../../src/hooks/useSocket";
+import { fetchUnreadCount } from "../../../src/services/api/notifications";
+import NotificationDropdown from "./NotificationDropdown";
 import logo from "../../../src/assets/MainLogo.png";
 
 const Navbar = () => {
@@ -30,9 +34,13 @@ const Navbar = () => {
   const [navbarOffset, setNavbarOffset] = useState(0);
   const [logoOffset, setLogoOffset] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const { language, languages, changeLanguage, t } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
   const { socialLinks } = useSocialMedia();
+  const { user, logout, getRoleLabel, getRoleHome } = useAuth();
+  const { socket, isConnected } = useSocket();
 
   // Check if we're on a dashboard route
   const isDashboardRoute =
@@ -42,6 +50,52 @@ const Navbar = () => {
 
   // Use sidebar context (safe - returns null if not available)
   const sidebarContext = useSidebarSafe();
+
+  // Load unread notification count
+  useEffect(() => {
+    if (user?.id) {
+      const loadCount = async () => {
+        try {
+          const response = await fetchUnreadCount();
+          setUnreadNotificationCount(response.unreadCount || 0);
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to load unread count:", error);
+        }
+      };
+      loadCount();
+      // Refresh every 30 seconds
+      const interval = setInterval(loadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
+
+  // Listen for notification updates via socket
+  useEffect(() => {
+    if (!socket || !isConnected || !user?.id) return;
+
+    const handleNewNotification = () => {
+      setUnreadNotificationCount((prev) => prev + 1);
+    };
+
+    const handleNotificationRead = () => {
+      setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+    };
+
+    const handleAllNotificationsRead = () => {
+      setUnreadNotificationCount(0);
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    socket.on("notification_read", handleNotificationRead);
+    socket.on("all_notifications_read", handleAllNotificationsRead);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+      socket.off("notification_read", handleNotificationRead);
+      socket.off("all_notifications_read", handleAllNotificationsRead);
+    };
+  }, [socket, isConnected, user?.id]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,8 +130,6 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-
-  const { user, logout, getRoleLabel, getRoleHome } = useAuth();
 
   const baseNavItems = [
     {
@@ -721,23 +773,44 @@ const Navbar = () => {
                     </div>
                     {/* Speaking Club Live Indicator - After Login Button */}
                     {isLastItem && (
-                      <Link
-                        to="/learn-earn/live-debate-room"
-                        className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group">
-                        {/* Blinking dot */}
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-                        </span>
-                        {/* Microphone icon */}
-                        <FaMicrophone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
-                        {/* Label */}
-                        <span className="text-xs font-semibold text-green-300 group-hover:text-green-200 whitespace-nowrap">
-                          {t("nav.speakingClub", {
-                            defaultValue: "Speaking Club",
-                          })}
-                        </span>
-                      </Link>
+                      <>
+                        <Link
+                          to="/learn-earn/live-debate-room"
+                          className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group">
+                          {/* Blinking dot */}
+                          <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                          </span>
+                          {/* Microphone icon */}
+                          <FaMicrophone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
+                          {/* Label */}
+                          <span className="text-xs font-semibold text-green-300 group-hover:text-green-200 whitespace-nowrap">
+                            {t("nav.speakingClub", {
+                              defaultValue: "Speaking Club",
+                            })}
+                          </span>
+                        </Link>
+                        {/* Notification icon - separate from Speaking Club button */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                            className="relative flex items-center justify-center p-2 rounded-full text-[#F5D26A] hover:text-[#FFE28A] hover:bg-white/10 transition-all duration-300 group"
+                            aria-label="Notifications">
+                            <FaBell className="h-4 w-4 transition-colors" />
+                            {unreadNotificationCount > 0 && (
+                              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white">
+                                {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                              </span>
+                            )}
+                          </button>
+                          <NotificationDropdown
+                            isOpen={notificationDropdownOpen}
+                            onClose={() => setNotificationDropdownOpen(false)}
+                          />
+                        </div>
+                      </>
                     )}
                   </React.Fragment>
                 );
@@ -799,22 +872,32 @@ const Navbar = () => {
               className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(212,175,55,0.2)]">
               <div className="flex max-h-[calc(100vh-160px)] flex-col gap-2 overflow-y-auto px-2 pr-1 sm:px-4 sm:pr-2">
                 {/* Speaking Club Live Indicator for Mobile */}
-                <Link
-                  to="/learn-earn/live-debate-room"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group">
-                  {/* Blinking dot */}
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-                  </span>
-                  {/* Microphone icon */}
-                  <FaMicrophone className="h-4 w-4 text-green-400 group-hover:text-green-300 transition-colors" />
-                  {/* Label */}
-                  <span className="text-sm font-semibold text-green-300 group-hover:text-green-200">
-                    {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
-                  </span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/learn-earn/live-debate-room"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 hover:border-green-400/60 transition-all duration-300 group flex-1">
+                    {/* Blinking dot */}
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                    </span>
+                    {/* Microphone icon */}
+                    <FaMicrophone className="h-4 w-4 text-green-400 group-hover:text-green-300 transition-colors" />
+                    {/* Label */}
+                    <span className="text-sm font-semibold text-green-300 group-hover:text-green-200">
+                      {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
+                    </span>
+                  </Link>
+                  {/* Notification icon - separate from Speaking Club button */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="relative flex items-center justify-center p-2 rounded-lg text-[#F5D26A] hover:text-[#FFE28A] hover:bg-white/10 transition-all duration-300"
+                    aria-label="Notifications">
+                    <FaBell className="h-5 w-5 transition-colors" />
+                  </button>
+                </div>
                 {navItems.map((item) => (
                   <div key={item.label}>
                     {item.dropdown ? (

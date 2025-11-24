@@ -407,7 +407,7 @@ export const BlogProvider = ({ children }) => {
       // Ensure we use the latest profile avatar (Cloudinary URL from metadata.avatarUrl)
       const authorAvatar = 
         authUser?.metadata?.avatarUrl || 
-        profile.avatar || 
+        profile?.avatar || 
         "https://i.pravatar.cc/150?img=11";
       
       // Check if user is super-admin (can publish directly)
@@ -538,13 +538,13 @@ export const BlogProvider = ({ children }) => {
         views: blog.views ?? 0,
         publishedAt: new Date().toISOString(),
         author: blog.author ?? {
-          id: profile.id || authUser?.id || "user",
-          name: profile.name || authUser?.fullName || "User",
+          id: profile?.id || authUser?.id || "user",
+          name: profile?.name || authUser?.fullName || "User",
           avatar: authorAvatar,
-          bio: profile.bio || authUser?.metadata?.bio || "",
-          role: profile.title || (authUser?.role ? `${authUser.role} · Digital AELA` : "Member"),
-          social: profile.socialLinks?.[0],
-          followers: profile.followers || 0,
+          bio: profile?.bio || authUser?.metadata?.bio || "",
+          role: profile?.title || (authUser?.role ? `${authUser.role} · Digital AELA` : "Member"),
+          social: profile?.socialLinks?.[0],
+          followers: profile?.followers || 0,
         },
         comments: blog.comments ?? [],
         source: blog.source ?? "local",
@@ -584,10 +584,10 @@ export const BlogProvider = ({ children }) => {
   }, []);
 
   const toggleLike = useCallback(
-    async (blogId, actorName = profile.name) => {
+    async (blogId, actorName = profile?.name || authUser?.fullName || "User") => {
       // Optimistically update UI
       const currentBlog = blogs.find((b) => b.id === blogId);
-      const profileIdStr = String(profile.id || "");
+      const profileIdStr = String(profile?.id || authUser?.id || "");
       const alreadyLiked = currentBlog?.likedBy?.some((id) => String(id) === profileIdStr);
       
       // Check if this is a seeded/local blog (not in database)
@@ -667,7 +667,7 @@ export const BlogProvider = ({ children }) => {
         });
       }
     },
-    [profile.id, profile.name, authUser, blogs]
+    [profile?.id, profile?.name, authUser, blogs]
   );
 
   const addComment = useCallback(
@@ -683,9 +683,9 @@ export const BlogProvider = ({ children }) => {
         message,
         createdAt: new Date().toISOString(),
         author: {
-          id: profile.id,
-          name: profile.name,
-          avatar: profile.avatar,
+          id: profile?.id || authUser?.id || "user",
+          name: profile?.name || authUser?.fullName || "User",
+          avatar: profile?.avatar || null,
         },
       };
 
@@ -761,7 +761,7 @@ export const BlogProvider = ({ children }) => {
         });
       }
     },
-    [profile.avatar, profile.id, profile.name, authUser]
+    [profile?.avatar, profile?.id, profile?.name, authUser]
   );
 
   const followAuthor = useCallback((authorId) => {
@@ -841,7 +841,16 @@ export const BlogProvider = ({ children }) => {
   );
 
   const analytics = useMemo(() => {
-    const authoredBlogs = blogs.filter((blog) => blog.author.id === profile.id);
+    if (!profile?.id && !authUser?.id) {
+      return {
+        totalBlogs: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        totalComments: 0,
+      };
+    }
+    const userId = profile?.id || authUser?.id;
+    const authoredBlogs = blogs.filter((blog) => blog.author.id === userId);
     const totalLikes = authoredBlogs.reduce((acc, blog) => acc + blog.likeCount, 0);
     const totalViews = authoredBlogs.reduce((acc, blog) => acc + blog.views, 0);
     const totalComments = authoredBlogs.reduce((acc, blog) => acc + blog.commentCount, 0);
@@ -852,7 +861,7 @@ export const BlogProvider = ({ children }) => {
       totalLikes,
       totalComments,
     };
-  }, [blogs, profile.id]);
+  }, [blogs, profile?.id, authUser?.id]);
 
   const formatTimestamp = useCallback((isoDate) => {
     try {

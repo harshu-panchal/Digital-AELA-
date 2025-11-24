@@ -198,50 +198,93 @@ export const getDashboardData = async (req, res, next) => {
       streak = 0;
     }
 
-    // Get leaderboard (top users by coins shared/earned)
-    let topUsers = [];
+    // Get leaderboard (top users by coins shared/earned) - OPTIMIZED
+    let leaderboard = [];
     try {
-      topUsers = await StudentPoints.find()
+      // Get top 10 users by totalCoins in one query, including transactions
+      const topUsersPoints = await StudentPoints.find()
         .sort({ totalCoins: -1 })
         .limit(10)
-        .populate("student", "fullName email");
+        .populate("student", "fullName email")
+        .select("student totalCoins transactions") // Explicitly select transactions
+        .lean();
+
+      if (topUsersPoints.length > 0) {
+        // Extract user IDs for batch queries
+        const userIds = topUsersPoints
+          .map((points) => points.student?._id)
+          .filter(Boolean);
+
+        // Batch fetch all profiles in one query
+        const profiles = await StudentProfile.find({ user: { $in: userIds } })
+          .select("user avatarUrl")
+          .lean();
+        const profilesMap = new Map(profiles.map((p) => [p.user.toString(), p]));
+
+        // Batch calculate ratings using aggregation (much faster than individual queries)
+        const ratingsData = await QuizAttempt.aggregate([
+          { $match: { student: { $in: userIds } } },
+          {
+            $group: {
+              _id: "$student",
+              avgScore: {
+                $avg: {
+                  $cond: [
+                    { $and: [{ $gte: ["$score", 0] }, { $ne: ["$score", null] }] },
+                    "$score",
+                    null,
+                  ],
+                },
+              },
+            },
+          },
+        ]);
+        const ratingsMap = new Map(
+          ratingsData.map((r) => [
+            r._id.toString(),
+            r.avgScore ? Math.round((r.avgScore / 20) * 10) / 10 : 0,
+          ])
+        );
+
+        // Build leaderboard response
+        leaderboard = topUsersPoints
+          .map((points) => {
+            const user = points.student;
+            if (!user) return null;
+
+            const userId = user._id.toString();
+            const profile = profilesMap.get(userId);
+            const rating = ratingsMap.get(userId) || 0;
+
+            // Calculate totalEarned from transactions (matching frontend expectation)
+            let totalEarned = 0;
+            if (points.transactions && Array.isArray(points.transactions)) {
+              totalEarned = points.transactions
+                .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+                .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+            }
+            // Fallback to totalCoins if no transactions or totalEarned is 0
+            const displayCoins = totalEarned > 0 ? totalEarned : (points.totalCoins || 0);
+
+            return {
+              id: userId,
+              name: user.fullName || "User",
+              avatar:
+                profile?.avatarUrl ||
+                `https://i.pravatar.cc/150?img=${userId.slice(-2)}`,
+              coinsShared: 0, // TODO: Implement when coin sharing is tracked
+              rating,
+              totalCoins: displayCoins, // Use calculated totalEarned or totalCoins
+              totalEarned: displayCoins, // Add totalEarned for frontend compatibility
+            };
+          })
+          .filter(Boolean);
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error fetching leaderboard:", error);
-      topUsers = [];
+      leaderboard = [];
     }
-
-    const leaderboard = await Promise.all(
-      topUsers.map(async (points) => {
-        const user = points.student;
-        if (!user) return null;
-
-        const profile = await StudentProfile.findOne({ user: user._id });
-        // Get rating based on quiz performance
-        const userQuizAttempts = await QuizAttempt.find({ student: user._id });
-        let rating = 0;
-        if (userQuizAttempts.length > 0) {
-          const validAttempts = userQuizAttempts.filter(attempt => attempt.score != null && attempt.score >= 0);
-          if (validAttempts.length > 0) {
-            const totalScore = validAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
-            const averageQuizScore = totalScore / validAttempts.length;
-            // Convert 0-100 score to 0-5.0 rating (divide by 20)
-            rating = averageQuizScore / 20;
-          }
-        }
-
-        // Get coins shared (would come from coin sharing transactions)
-        const coinsShared = 0; // TODO: Implement when coin sharing is tracked
-
-        return {
-          id: user._id.toString(),
-          name: user.fullName || "User",
-          avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
-          coinsShared,
-          rating: Math.round(rating * 10) / 10,
-        };
-      })
-    );
 
     return res.json({
       messages: messagesWithUsers,
@@ -758,31 +801,71 @@ export const getEnhancedLeaderboard = async (req, res, next) => {
         .sort({ totalCoins: -1 })
         .limit(parseInt(limit))
         .populate("student", "fullName email")
+        .select("student totalCoins streak transactions") // Include transactions
         .lean();
 
-      leaderboard = await Promise.all(
-        pointsData.map(async (points, index) => {
+      if (pointsData.length > 0) {
+        // Extract user IDs for batch queries
+        const userIds = pointsData
+          .map((points) => points.student?._id)
+          .filter(Boolean);
+
+        // Batch fetch all profiles in one query
+        const profiles = await StudentProfile.find({ user: { $in: userIds } })
+          .select("user avatarUrl")
+          .lean();
+        const profilesMap = new Map(profiles.map((p) => [p.user.toString(), p]));
+
+        // Batch calculate ratings using aggregation (much faster)
+        const ratingsData = await UserRating.aggregate([
+          { $match: { ratedUser: { $in: userIds } } },
+          {
+            $group: {
+              _id: "$ratedUser",
+              avgRating: { $avg: "$rating" },
+            },
+          },
+        ]);
+        const ratingsMap = new Map(
+          ratingsData.map((r) => [
+            r._id.toString(),
+            Math.round(r.avgRating * 10) / 10,
+          ])
+        );
+
+        // Build leaderboard response
+        leaderboard = pointsData.map((points, index) => {
           const user = points.student;
           if (!user) return null;
 
-          const profile = await StudentProfile.findOne({ user: user._id }).lean();
-          const ratings = await UserRating.aggregate([
-            { $match: { ratedUser: user._id } },
-            { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-          ]);
+          const userId = user._id.toString();
+          const profile = profilesMap.get(userId);
+
+          // Calculate totalEarned from transactions
+          let totalEarned = 0;
+          if (points.transactions && Array.isArray(points.transactions)) {
+            totalEarned = points.transactions
+              .filter((txn) => txn.type === "earned" || txn.type === "bonus")
+              .reduce((sum, txn) => sum + (txn.amount || 0), 0);
+          }
+          // Use totalEarned if available, otherwise fallback to totalCoins
+          const displayCoins = totalEarned > 0 ? totalEarned : (points.totalCoins || 0);
 
           return {
             rank: index + 1,
-            userId: user._id.toString(),
+            userId,
             name: user.fullName || "User",
-            avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
-            totalCoins: points.totalCoins || 0,
+            avatar:
+              profile?.avatarUrl ||
+              `https://i.pravatar.cc/150?img=${userId.slice(-2)}`,
+            totalCoins: displayCoins,
+            totalEarned: displayCoins, // Add for frontend compatibility
             streak: points.streak || 0,
-            rating: ratings.length > 0 ? Math.round(ratings[0].avgRating * 10) / 10 : 0,
+            rating: ratingsMap.get(userId) || 0,
             change: 0, // Would need historical data
           };
-        })
-      );
+        });
+      }
     } else if (type === "rating") {
       const ratingsData = await UserRating.aggregate([
         {
@@ -796,26 +879,53 @@ export const getEnhancedLeaderboard = async (req, res, next) => {
         { $limit: parseInt(limit) },
       ]);
 
-      leaderboard = await Promise.all(
-        ratingsData.map(async (item, index) => {
-          const user = await User.findById(item._id).select("fullName email").lean();
+      if (ratingsData.length > 0) {
+        // Extract user IDs for batch queries
+        const userIds = ratingsData.map((item) => item._id).filter(Boolean);
+
+        // Batch fetch all users, profiles, and points in parallel
+        const [users, profiles, pointsData] = await Promise.all([
+          User.find({ _id: { $in: userIds } })
+            .select("fullName email _id")
+            .lean(),
+          StudentProfile.find({ user: { $in: userIds } })
+            .select("user avatarUrl")
+            .lean(),
+          StudentPoints.find({ student: { $in: userIds } })
+            .select("student totalCoins")
+            .lean(),
+        ]);
+
+        // Create maps for quick lookup
+        const usersMap = new Map(users.map((u) => [u._id.toString(), u]));
+        const profilesMap = new Map(profiles.map((p) => [p.user.toString(), p]));
+        const pointsMap = new Map(
+          pointsData.map((p) => [p.student.toString(), p])
+        );
+
+        // Build leaderboard response
+        leaderboard = ratingsData.map((item, index) => {
+          const userId = item._id.toString();
+          const user = usersMap.get(userId);
           if (!user) return null;
 
-          const profile = await StudentProfile.findOne({ user: item._id }).lean();
-          const points = await StudentPoints.findOne({ student: item._id }).lean();
+          const profile = profilesMap.get(userId);
+          const points = pointsMap.get(userId);
 
           return {
             rank: index + 1,
-            userId: user._id.toString(),
+            userId,
             name: user.fullName || "User",
-            avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
+            avatar:
+              profile?.avatarUrl ||
+              `https://i.pravatar.cc/150?img=${userId.slice(-2)}`,
             rating: Math.round(item.avgRating * 10) / 10,
             ratingCount: item.count,
             totalCoins: points?.totalCoins || 0,
             change: 0,
           };
-        })
-      );
+        });
+      }
     } else if (type === "streak") {
       const pointsData = await StudentPoints.find({})
         .sort({ streak: -1 })
@@ -823,24 +933,39 @@ export const getEnhancedLeaderboard = async (req, res, next) => {
         .populate("student", "fullName email")
         .lean();
 
-      leaderboard = await Promise.all(
-        pointsData.map(async (points, index) => {
+      if (pointsData.length > 0) {
+        // Extract user IDs for batch query
+        const userIds = pointsData
+          .map((points) => points.student?._id)
+          .filter(Boolean);
+
+        // Batch fetch all profiles in one query
+        const profiles = await StudentProfile.find({ user: { $in: userIds } })
+          .select("user avatarUrl")
+          .lean();
+        const profilesMap = new Map(profiles.map((p) => [p.user.toString(), p]));
+
+        // Build leaderboard response
+        leaderboard = pointsData.map((points, index) => {
           const user = points.student;
           if (!user) return null;
 
-          const profile = await StudentProfile.findOne({ user: user._id }).lean();
+          const userId = user._id.toString();
+          const profile = profilesMap.get(userId);
 
           return {
             rank: index + 1,
-            userId: user._id.toString(),
+            userId,
             name: user.fullName || "User",
-            avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
+            avatar:
+              profile?.avatarUrl ||
+              `https://i.pravatar.cc/150?img=${userId.slice(-2)}`,
             streak: points.streak || 0,
             totalCoins: points.totalCoins || 0,
             change: 0,
           };
-        })
-      );
+        });
+      }
     } else if (type === "activity") {
       const activityData = await QuizAttempt.aggregate([
         ...(startDate ? [{ $match: { completedAt: { $gte: startDate } } }] : []),
@@ -858,26 +983,47 @@ export const getEnhancedLeaderboard = async (req, res, next) => {
         { $limit: parseInt(limit) },
       ]);
 
-      leaderboard = await Promise.all(
-        activityData.map(async (item, index) => {
-          const user = await User.findById(item._id).select("fullName email").lean();
+      if (activityData.length > 0) {
+        // Extract user IDs for batch queries
+        const userIds = activityData.map((item) => item._id).filter(Boolean);
+
+        // Batch fetch all users and profiles in parallel
+        const [users, profiles] = await Promise.all([
+          User.find({ _id: { $in: userIds } })
+            .select("fullName email _id")
+            .lean(),
+          StudentProfile.find({ user: { $in: userIds } })
+            .select("user avatarUrl")
+            .lean(),
+        ]);
+
+        // Create maps for quick lookup
+        const usersMap = new Map(users.map((u) => [u._id.toString(), u]));
+        const profilesMap = new Map(profiles.map((p) => [p.user.toString(), p]));
+
+        // Build leaderboard response
+        leaderboard = activityData.map((item, index) => {
+          const userId = item._id.toString();
+          const user = usersMap.get(userId);
           if (!user) return null;
 
-          const profile = await StudentProfile.findOne({ user: item._id }).lean();
+          const profile = profilesMap.get(userId);
 
           return {
             rank: index + 1,
-            userId: user._id.toString(),
+            userId,
             name: user.fullName || "User",
-            avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?img=${user._id.toString().slice(-2)}`,
+            avatar:
+              profile?.avatarUrl ||
+              `https://i.pravatar.cc/150?img=${userId.slice(-2)}`,
             attempts: item.attempts,
             totalCoins: item.totalCoins || 0,
             avgScore: Math.round(item.avgScore * 10) / 10,
             lastActivity: item.lastActivity,
             change: 0,
           };
-        })
-      );
+        });
+      }
     }
 
     return res.json({

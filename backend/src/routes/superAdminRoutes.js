@@ -21,6 +21,8 @@ import {
   deleteSetting,
   getSettingsByCategory,
   initializeDefaultSettings,
+  verifyFinancialPassword,
+  setFinancialPassword,
 } from "../controllers/settingsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -55,6 +57,8 @@ router.put("/settings", updateSettings);
 router.patch("/settings/:key", updateSetting);
 router.delete("/settings/:key", deleteSetting);
 router.post("/settings/initialize", initializeDefaultSettings);
+router.post("/settings/financial-password/verify", verifyFinancialPassword);
+router.post("/settings/financial-password/set", setFinancialPassword);
 
 export default router;
 

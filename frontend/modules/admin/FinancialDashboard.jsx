@@ -225,19 +225,12 @@ const FinancialDashboard = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
                     <p className="text-sm text-slate-400 mb-1">Refunds</p>
                     <p className="text-2xl font-semibold text-red-400">
                       {dashboardData.summary?.currency || "AED"}{" "}
                       {dashboardData.summary?.totalRefunds?.toFixed(2) || "0.00"}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
-                    <p className="text-sm text-slate-400 mb-1">Teacher Payouts</p>
-                    <p className="text-2xl font-semibold text-blue-400">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.totalPayouts?.toFixed(2) || "0.00"}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">

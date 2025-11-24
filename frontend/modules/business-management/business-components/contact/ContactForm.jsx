@@ -2,37 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { validateContactForm, sanitizeUrl, safeString } from "../../../../src/utils/registrationHelpers";
 import { toast } from "react-toastify";
+import { checkFormSubmission } from "../../../../src/services/api/crm";
+import { useAuth } from "../../../../src/contexts/AuthContext";
 
-const STORAGE_KEY = "aela.form.submissions";
-
-const getStoredSubmissions = () => {
-  if (typeof window === "undefined") return {};
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
-};
-
-const storeSubmission = (formId, email) => {
-  if (typeof window === "undefined") return;
-  try {
-    const submissions = getStoredSubmissions();
-    submissions[`${formId}:${email.toLowerCase().trim()}`] = {
-      submittedAt: new Date().toISOString(),
-    };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
-  } catch {
-    // Ignore storage errors
-  }
-};
-
-const checkSubmission = (formId, email) => {
-  if (!formId || !email) return false;
-  const submissions = getStoredSubmissions();
-  return !!submissions[`${formId}:${email.toLowerCase().trim()}`];
-};
+// Email-based localStorage checks removed - now using userId only
 
 const ContactForm = ({
   fields,
@@ -55,18 +28,49 @@ const ContactForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState(null);
   const [isAlreadySubmitted, setIsAlreadySubmitted] = useState(false);
+  const [isCheckingSubmission, setIsCheckingSubmission] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     setFormData(initialValues);
   }, [initialValues]);
 
-  // Check if form has been submitted when email changes
+  // Check if form has been submitted (by user account only)
   useEffect(() => {
-    if (formId && formData.email) {
-      const submitted = checkSubmission(formId, formData.email);
-      setIsAlreadySubmitted(submitted);
-    }
-  }, [formId, formData.email]);
+    const checkIfSubmitted = async () => {
+      setIsCheckingSubmission(true);
+      
+      if (!formId) {
+        setIsCheckingSubmission(false);
+        return;
+      }
+
+      // Only check if user is logged in (userId required)
+      if (!user?.id) {
+        setIsAlreadySubmitted(false);
+        setIsCheckingSubmission(false);
+        return;
+      }
+
+      // Check backend API by userId only
+      try {
+        const result = await checkFormSubmission(formId, user.id);
+        
+        if (result?.submitted) {
+          setIsAlreadySubmitted(true);
+        } else {
+          setIsAlreadySubmitted(false);
+        }
+      } catch (error) {
+        // If API check fails, assume not submitted
+        setIsAlreadySubmitted(false);
+      } finally {
+        setIsCheckingSubmission(false);
+      }
+    };
+
+    checkIfSubmitted();
+  }, [formId, user]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -110,7 +114,23 @@ const ContactForm = ({
       return acc;
     }, {});
 
-    setIsSubmitting(true);
+    // Check backend API before submission to prevent duplicates (by userId only)
+    if (formId && user?.id) {
+      try {
+        const checkResult = await checkFormSubmission(formId, user.id);
+        
+        if (checkResult?.submitted) {
+          setIsAlreadySubmitted(true);
+          // Form will be hidden, so no need for toast
+          return;
+        }
+      } catch (error) {
+        // If check fails, continue with submission (backend will catch duplicates)
+        console.warn("Failed to check submission status:", error);
+      }
+    }
+
+      setIsSubmitting(true);
     try {
       if (onSubmit) {
         await Promise.resolve(onSubmit(normalizedData));
@@ -118,15 +138,18 @@ const ContactForm = ({
         await new Promise((resolve) => setTimeout(resolve, 800));
       }
 
-      // Store submission in localStorage
-      if (formId && normalizedData.email) {
-        storeSubmission(formId, normalizedData.email);
-        setIsAlreadySubmitted(true);
-      }
-
+      // Mark as submitted (backend already tracks submissions by userId)
+      setIsAlreadySubmitted(true);
       setStatus("success");
       setFormData(initialValues);
     } catch (error) {
+      // Handle duplicate submission error from backend
+      if (error?.code === "DUPLICATE_SUBMISSION" || error?.status === 409) {
+        setIsAlreadySubmitted(true);
+        // Form will be hidden, so no need for toast
+        return;
+      }
+
       const message =
         (error && typeof error === "object" && "message" in error && error.message) ||
         errorMessage;
@@ -136,6 +159,15 @@ const ContactForm = ({
     }
   };
 
+  // Show loading state while checking submission
+  if (isCheckingSubmission) {
+    return (
+      <div className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-8 md:p-10 shadow-[0_0_24px_rgba(212,175,55,0.06)] text-center">
+        <div className="animate-pulse text-gray-400">Checking...</div>
+      </div>
+    );
+  }
+
   // Show thank you message if already submitted
   if (isAlreadySubmitted) {
     return (
@@ -143,10 +175,13 @@ const ContactForm = ({
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-8 md:p-10 shadow-[0_0_24px_rgba(212,175,55,0.06)] text-center space-y-4">
-        <div className="text-5xl mb-4">✓</div>
-        <h3 className="text-2xl font-semibold text-white mb-2">Thank You!</h3>
-        <p className="text-[#D4AF37] text-lg mb-4">{successMessage}</p>
-        <p className="text-gray-400 text-sm">{pendingMessage}</p>
+        <div className="text-4xl mb-4">✅</div>
+        <h3 className="text-xl md:text-2xl font-semibold text-white font-display">
+          Thank You!
+        </h3>
+        <p className="text-sm md:text-base text-gray-300 leading-relaxed max-w-md mx-auto">
+          {pendingMessage || "You have already submitted this form. Our team will review it and get back to you soon."}
+        </p>
       </motion.div>
     );
   }

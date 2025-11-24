@@ -7,8 +7,49 @@ import mongoose from "mongoose";
  */
 export const getStudentPoints = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
-    const studentObjectId = new mongoose.Types.ObjectId(userId);
+    const { userId } = req.auth || {};
+    
+    // Check if userId exists and is a non-empty string
+    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
+      // eslint-disable-next-line no-console
+      console.error("[getStudentPoints] Missing or invalid userId. req.auth:", req.auth, "userId:", userId, "type:", typeof userId);
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Trim whitespace from userId
+    const trimmedUserId = userId.trim();
+
+    // Validate and create ObjectId
+    let studentObjectId;
+    try {
+      if (!mongoose.isValidObjectId(trimmedUserId)) {
+        // eslint-disable-next-line no-console
+        console.error("[getStudentPoints] Invalid ObjectId format. userId:", trimmedUserId, "type:", typeof trimmedUserId);
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid user ID",
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${trimmedUserId} (${typeof trimmedUserId})`,
+          },
+        });
+      }
+      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[getStudentPoints] Error creating ObjectId:", error.message, "userId:", trimmedUserId, "type:", typeof trimmedUserId);
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+          details: error.message,
+        },
+      });
+    }
 
     let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
 
@@ -279,8 +320,12 @@ export const getPointsHistory = async (req, res, next) => {
  */
 export const getPointsStats = async (req, res, next) => {
   try {
-    // requireAuth middleware ensures req.auth exists and userId is valid
-    if (!req.auth || !req.auth.userId) {
+    const { userId } = req.auth || {};
+    
+    // Check if userId exists and is a non-empty string
+    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsStats] Missing or invalid userId. req.auth:", req.auth, "userId:", userId, "type:", typeof userId);
       return res.status(401).json({
         error: {
           code: "UNAUTHORIZED",
@@ -289,8 +334,35 @@ export const getPointsStats = async (req, res, next) => {
       });
     }
 
-    const { userId } = req.auth;
-    const studentObjectId = new mongoose.Types.ObjectId(userId);
+    // Trim whitespace from userId
+    const trimmedUserId = userId.trim();
+
+    // Validate and create ObjectId
+    let studentObjectId;
+    try {
+      if (!mongoose.isValidObjectId(trimmedUserId)) {
+        // eslint-disable-next-line no-console
+        console.error("[getPointsStats] Invalid ObjectId format. userId:", trimmedUserId, "type:", typeof trimmedUserId);
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid user ID",
+            details: `User ID must be a valid MongoDB ObjectId. Received: ${trimmedUserId} (${typeof trimmedUserId})`,
+          },
+        });
+      }
+      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[getPointsStats] Error creating ObjectId:", error.message, "userId:", trimmedUserId, "type:", typeof trimmedUserId);
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+          details: error.message,
+        },
+      });
+    }
 
     let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
 

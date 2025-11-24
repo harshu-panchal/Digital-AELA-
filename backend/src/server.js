@@ -7,6 +7,7 @@ import { setupSocketIO } from "./config/socket.js";
 import { setSocketIO } from "./utils/socketEmitter.js";
 import { setupJobExpirationCron } from "./utils/jobExpirationCron.js";
 import { initializeWorkers } from "./services/mediasoupService.js";
+import { initializeHealthMonitoring } from "./utils/systemHealthMonitor.js";
 
 dotenv.config();
 
@@ -72,6 +73,9 @@ const start = async () => {
 
   // Setup cron jobs
   setupJobExpirationCron();
+
+  // Initialize system health monitoring
+  initializeHealthMonitoring();
 
   httpServer.listen(PORT, () => {
     // eslint-disable-next-line no-console

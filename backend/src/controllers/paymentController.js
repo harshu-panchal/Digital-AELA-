@@ -192,6 +192,38 @@ export const updatePayment = async (req, res, next) => {
       .populate("course", "title thumbnailUrl price")
       .lean();
 
+    // Create notification when payment is completed
+    if (status === "completed" && updatedPayment.user && !payment.metadata?.notificationSent) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        const courseTitle = updatedPayment.course?.title || "course";
+        await createNotification(
+          updatedPayment.user._id || updatedPayment.user,
+          "Payment Successful",
+          `Your payment of ${updatedPayment.amount} ${updatedPayment.currency} for "${courseTitle}" has been completed successfully.`,
+          "payment",
+          {
+            paymentId: updatedPayment._id.toString(),
+            amount: updatedPayment.amount,
+            currency: updatedPayment.currency,
+            courseId: updatedPayment.course?._id?.toString() || null,
+          },
+          updatedPayment.course ? `/courses/${updatedPayment.course._id}` : "/student/payments"
+        );
+        
+        // Mark notification as sent in metadata
+        if (!updateData.metadata) {
+          updateData.metadata = { ...payment.metadata };
+        }
+        updateData.metadata.notificationSent = true;
+        await Payment.findByIdAndUpdate(paymentId, { metadata: updateData.metadata });
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[Payment] Error creating notification:", notifError);
+        // Don't fail payment update if notification fails
+      }
+    }
+
     return res.json({
       payment: updatedPayment,
       message: "Payment updated successfully",

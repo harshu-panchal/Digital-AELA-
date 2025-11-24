@@ -69,6 +69,39 @@ export const createLead = async (req, res, next) => {
       .populate("createdBy", "fullName")
       .lean();
 
+    // Create notification for super-admin when new lead is created
+    try {
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all super-admin users
+      const superAdmins = await User.find({ role: "super-admin", isActive: true })
+        .select("_id")
+        .lean();
+      
+      if (superAdmins.length > 0) {
+        const adminIds = superAdmins.map((admin) => admin._id);
+        const leadName = `${leadData.firstName} ${leadData.lastName || ""}`.trim();
+        
+        await createBulkNotifications(
+          adminIds,
+          "New Lead Generated",
+          `A new lead has been generated: ${leadName} (${leadData.email})`,
+          "system",
+          {
+            leadId: lead._id.toString(),
+            leadName: leadName,
+            leadEmail: leadData.email,
+            source: leadData.source || "website",
+          },
+          `/super-admin/crm/leads/${lead._id}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[CRM] Error creating lead notification:", notifError);
+      // Don't fail lead creation if notification fails
+    }
+
     return res.status(201).json({
       lead: populatedLead,
       message: "Lead created successfully",
@@ -1018,8 +1051,39 @@ export const createFormLead = async (req, res, next) => {
       });
     }
 
-    // Note: We allow duplicate emails as per requirement (create separate leads)
-    // No duplicate check needed
+    // Get userId from auth (optional - form can be submitted by authenticated or unauthenticated users)
+    // optionalAuth middleware sets req.auth to null if no token, or to user object if token is valid
+    const userId = req.auth?.userId || null;
+
+    // Check for duplicate submission
+    // If authenticated, check by userId + formId
+    // If not authenticated, check by email + formId
+    let existingLead = null;
+    if (userId) {
+      // Check for duplicate by userId (authenticated users)
+      existingLead = await Lead.findOne({
+      createdBy: userId,
+      formSource: formId,
+    }).lean();
+    } else {
+      // Check for duplicate by email (unauthenticated users)
+      existingLead = await Lead.findOne({
+        email: email.toLowerCase().trim(),
+        formSource: formId,
+      }).lean();
+    }
+
+    if (existingLead) {
+      return res.status(409).json({
+        error: {
+          code: "DUPLICATE_SUBMISSION",
+          message: "You have already submitted this form. Our team will contact you soon.",
+          submitted: true,
+          status: existingLead.status,
+          submittedAt: existingLead.createdAt,
+        },
+      });
+    }
 
     const lead = await Lead.create({
       firstName: firstName.trim(),
@@ -1033,6 +1097,7 @@ export const createFormLead = async (req, res, next) => {
       priority: "medium",
       customFields: customFields,
       description: description || undefined,
+      createdBy: userId || undefined, // Store userId if authenticated
     });
 
     const populatedLead = await Lead.findById(lead._id)
@@ -1051,19 +1116,27 @@ export const createFormLead = async (req, res, next) => {
 };
 
 /**
- * Check if form has been submitted by email
- * GET /api/v1/crm/leads/check-submission?email=xxx&formId=xxx
+ * Check if form has been submitted by userId (user account only)
+ * GET /api/v1/crm/leads/check-submission?formId=xxx&userId=xxx
  */
 export const checkFormSubmission = async (req, res, next) => {
   try {
-    const { email, formId } = req.query;
+    const { formId, userId } = req.query;
+    const authUserId = req.auth?.userId || userId;
 
-    if (!email || !formId) {
+    if (!formId) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Email and formId are required",
+          message: "formId is required",
         },
+      });
+    }
+
+    if (!authUserId) {
+      // If no userId, return not submitted (forms require authentication to check)
+      return res.json({
+        submitted: false,
       });
     }
 
@@ -1071,7 +1144,7 @@ export const checkFormSubmission = async (req, res, next) => {
     if (formId === "teacher" || formId === "influencer") {
       const application = await JoinUsApplication.findOne({
         applicationType: formId,
-        "formData.email": email.toLowerCase().trim(),
+        submittedBy: authUserId,
       })
         .select("status submittedAt")
         .lean();
@@ -1084,9 +1157,9 @@ export const checkFormSubmission = async (req, res, next) => {
         });
       }
     } else {
-      // Check contact forms in Lead model
+      // Check contact forms in Lead model by userId
       const lead = await Lead.findOne({
-        email: email.toLowerCase().trim(),
+        createdBy: authUserId,
         formSource: formId,
       })
         .select("status createdAt")

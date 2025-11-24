@@ -152,13 +152,20 @@ export const createFormLead = async (payload) => {
 };
 
 /**
- * Check if form has been submitted by email
- * GET /api/v1/crm/leads/check-submission?email=xxx&formId=xxx
+ * Check if form has been submitted by userId (user account only)
+ * GET /api/v1/crm/leads/check-submission?formId=xxx&userId=xxx
  */
-export const checkFormSubmission = async (email, formId) => {
-  return apiRequest(`/crm/leads/check-submission?email=${encodeURIComponent(email)}&formId=${encodeURIComponent(formId)}`, {
+export const checkFormSubmission = async (formId, userId) => {
+  if (!userId) {
+    return { submitted: false };
+  }
+  
+  const params = new URLSearchParams({ formId, userId });
+  
+  // Use authentication if available (userId from token), otherwise pass userId in query
+  return apiRequest(`/crm/leads/check-submission?${params.toString()}`, {
     method: "GET",
-    skipAuth: true,
+    skipAuth: false, // Use authentication to get userId from token
   });
 };
 

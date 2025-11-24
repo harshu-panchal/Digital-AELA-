@@ -73,6 +73,43 @@ export const createBlog = async (req, res, next) => {
 
     const blog = await RecruiterBlog.create(blogPayload);
 
+    // Create notification for super admin when blog needs approval (pending status)
+    if (finalStatus === "pending") {
+      try {
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all super-admin users
+        const superAdmins = await User.find({ role: "super-admin", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (superAdmins.length > 0) {
+          const adminIds = superAdmins.map((admin) => admin._id);
+          const author = await User.findById(userId).select("fullName").lean();
+          const authorName = author?.fullName || "A recruiter";
+          
+          await createBulkNotifications(
+            adminIds,
+            "New Blog Pending Approval",
+            `A new blog "${blog.title}" has been created by ${authorName} and requires approval.`,
+            "approval",
+            {
+              blogId: blog._id.toString(),
+              blogTitle: blog.title,
+              authorId: userId,
+              authorName: authorName,
+              contentType: "blog",
+            },
+            `/super-admin/content-management?type=blog&id=${blog._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[BlogCreation] Error creating approval notification:", notifError);
+        // Don't fail blog creation if notification fails
+      }
+    }
+
     // Populate author for response
     const populatedBlog = await RecruiterBlog.findById(blog._id)
       .populate("author", "fullName email role metadata")

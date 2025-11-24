@@ -116,6 +116,29 @@ export const fetchAllSettings = (params = {}) => {
 export const fetchSetting = (key) => apiRequest(`/admin/settings/${key}`);
 
 /**
+ * Verify Financial Password
+ * POST /api/v1/admin/settings/financial-password/verify
+ */
+export const verifyFinancialPassword = async (password) => {
+  const response = await apiRequest("/admin/settings/financial-password/verify", {
+    method: "POST",
+    body: { password },
+  });
+  return response.valid === true;
+};
+
+/**
+ * Set Financial Password
+ * POST /api/v1/admin/settings/financial-password/set
+ */
+export const setFinancialPassword = async (password) => {
+  return apiRequest("/admin/settings/financial-password/set", {
+    method: "POST",
+    body: { password },
+  });
+};
+
+/**
  * Get settings by category
  * GET /api/v1/admin/settings/category/:category
  */

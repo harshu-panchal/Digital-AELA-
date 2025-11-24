@@ -74,10 +74,17 @@ const LearnEarnLayout = () => {
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Provide safe defaults to prevent errors during initial load
+  const safeProfile = profile || { id: "", name: "", avatar: "" };
+  const safeTotals = totals || { current: 0, earned: 0, redeemed: 0 };
+  const safeNotifications = notifications || [];
+  const safeLiveDebates = liveDebates || [];
+  const safeOpenRooms = openRooms || [];
+
   const handleCopyUserId = async () => {
-    if (!profile.id) return;
+    if (!safeProfile.id) return;
     try {
-      await navigator.clipboard.writeText(profile.id);
+      await navigator.clipboard.writeText(safeProfile.id);
       setCopied(true);
       toast.success("User ID copied to clipboard!", {
         icon: "📋",
@@ -97,16 +104,16 @@ const LearnEarnLayout = () => {
   
   // Calculate live rooms count (rooms with status "live")
   const liveRoomsCount = useMemo(() => {
-    const liveDebatesCount = liveDebates.filter(room => room.status === "live").length;
-    const liveOpenRoomsCount = openRooms.filter(room => room.status === "live").length;
+    const liveDebatesCount = safeLiveDebates.filter(room => room?.status === "live").length;
+    const liveOpenRoomsCount = safeOpenRooms.filter(room => room?.status === "live").length;
     return liveDebatesCount + liveOpenRoomsCount;
-  }, [liveDebates, openRooms]);
+  }, [safeLiveDebates, safeOpenRooms]);
 
   const unreadCount = useMemo(
     () =>
-      notifications.filter((notification) => notification.type !== "archived")
+      safeNotifications.filter((notification) => notification?.type !== "archived")
         .length,
-    [notifications]
+    [safeNotifications]
   );
 
   useEffect(() => {
@@ -176,17 +183,17 @@ const LearnEarnLayout = () => {
             <div className="rounded-2xl border border-white/5 bg-[#0f0f0f]/90 p-4 shadow-inner">
               <div className="flex items-center gap-3">
                 <img
-                  src={profile.avatar}
-                  alt={profile.name}
+                  src={safeProfile.avatar || "/default-avatar.png"}
+                  alt={safeProfile.name || "User"}
                   className="h-12 w-12 flex-shrink-0 rounded-full border border-[#D4AF37]/50 object-cover"
                 />
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <p className="text-sm font-semibold text-white truncate">
-                    {profile.name}
+                    {safeProfile.name || "Loading..."}
                   </p>
                   <div className="flex items-center gap-1.5">
                     <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                    {profile.id}
+                    {safeProfile.id || "Loading..."}
                   </p>
                     <button
                       type="button"
@@ -208,7 +215,7 @@ const LearnEarnLayout = () => {
                   Current Balance
                 </p>
                 <p className="mt-1 text-2xl font-bold text-white">
-                  {totals.current.toLocaleString()}{" "}
+                  {safeTotals.current.toLocaleString()}{" "}
                   <span className="text-sm text-[#D4AF37]">AELA</span>
                 </p>
               </div>
@@ -361,17 +368,17 @@ const LearnEarnLayout = () => {
                 {authUser ? (
                 <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0f0f0f] p-3">
                   <img
-                    src={profile.avatar}
-                    alt={profile.name}
+                    src={safeProfile.avatar || "/default-avatar.png"}
+                    alt={safeProfile.name || "User"}
                     className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/40 object-cover"
                   />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <p className="text-sm font-semibold text-white truncate">
-                      {profile.name}
+                      {safeProfile.name || "Loading..."}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <p className="text-[11px] uppercase tracking-wide text-gray-400 truncate break-all">
-                      {profile.id}
+                      {safeProfile.id || "Loading..."}
                     </p>
                       <button
                         type="button"

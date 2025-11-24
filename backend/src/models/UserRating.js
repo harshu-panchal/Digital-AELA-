@@ -39,6 +39,24 @@ const userRatingSchema = new mongoose.Schema(
   }
 );
 
+// Prevent self-rating
+userRatingSchema.pre("save", function (next) {
+  if (this.ratedBy.toString() === this.ratedUser.toString()) {
+    const error = new Error("Cannot rate yourself");
+    error.status = 400;
+    return next(error);
+  }
+  next();
+});
+
+// Ensure context defaults to "general"
+userRatingSchema.pre("save", function (next) {
+  if (!this.context) {
+    this.context = "general";
+  }
+  next();
+});
+
 // Index for quick lookups
 userRatingSchema.index({ ratedUser: 1, createdAt: -1 });
 userRatingSchema.index({ ratedBy: 1, ratedUser: 1 }, { unique: true }); // One rating per user pair

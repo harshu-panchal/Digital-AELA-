@@ -4,6 +4,8 @@ import CertificateTemplate from "../models/CertificateTemplate.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import User from "../models/User.js";
+import VideoProgress from "../models/VideoProgress.js";
+import CourseVideo from "../models/CourseVideo.js";
 
 /**
  * Generate Certificate (Automatic or Manual)
@@ -23,14 +25,28 @@ export const generateCertificate = async (req, res, next) => {
       });
     }
 
-    // Only admins can manually issue certificates
-    if (issuedType === "manual" && userRole !== "super-admin") {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "Only admins can manually issue certificates",
-        },
-      });
+    // For manual issuance, only teachers and super-admins can issue certificates
+    // Teachers can only issue for courses they created
+    // Super-admins can only issue for courses they created
+    if (issuedType === "manual") {
+      if (userRole !== "teacher" && userRole !== "super-admin") {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "Only teachers and admins can manually issue certificates",
+          },
+        });
+      }
+      
+      // For manual issuance, courseId is required
+      if (!courseId) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Course ID is required for manual certificate issuance",
+          },
+        });
+      }
     }
 
     const userObjectId = mongoose.isValidObjectId(userId)
@@ -106,10 +122,26 @@ export const generateCertificate = async (req, res, next) => {
         });
       }
 
+      // Verify course ownership for manual issuance
+      if (issuedType === "manual") {
+        const courseInstructorId = course.instructor?.toString();
+        const currentUserId = userObjectId?.toString();
+        
+        if (courseInstructorId !== currentUserId) {
+          return res.status(403).json({
+            error: {
+              code: "FORBIDDEN",
+              message: "You can only issue certificates for courses you created",
+            },
+          });
+        }
+      }
+
       // Check enrollment
+      let enrollment = null;
       if (enrollmentId) {
         enrollmentObjectId = new mongoose.Types.ObjectId(enrollmentId);
-        const enrollment = await Enrollment.findById(enrollmentObjectId).lean();
+        enrollment = await Enrollment.findById(enrollmentObjectId).lean();
         if (!enrollment || enrollment.student.toString() !== studentObjectId.toString()) {
           return res.status(404).json({
             error: {
@@ -120,12 +152,52 @@ export const generateCertificate = async (req, res, next) => {
         }
       } else {
         // Find enrollment
-        const enrollment = await Enrollment.findOne({
+        enrollment = await Enrollment.findOne({
           student: studentObjectId,
           course: courseObjectId,
         }).lean();
         if (enrollment) {
           enrollmentObjectId = enrollment._id;
+        }
+      }
+
+      // For manual issuance, validate completion requirements
+      if (issuedType === "manual" && enrollment && courseObjectId) {
+        // Check 1: Enrollment status must be "completed"
+        if (enrollment.status !== "completed") {
+          return res.status(400).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Student must have completed the course (enrollment status must be 'completed')",
+            },
+          });
+        }
+
+        // Check 2: Course progress must be 100% (all videos completed)
+        const courseVideos = await CourseVideo.find({ course: courseObjectId }).lean();
+        const totalVideos = courseVideos.length;
+        const videoIds = courseVideos.map((v) => v._id);
+
+        if (totalVideos > 0) {
+          const completedVideoProgress = await VideoProgress.find({
+            student: studentObjectId,
+            course: courseObjectId,
+            video: { $in: videoIds },
+            isCompleted: true,
+          }).lean();
+
+          const completedVideos = completedVideoProgress.length;
+          const courseProgressPercentage =
+            totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+
+          if (courseProgressPercentage !== 100) {
+            return res.status(400).json({
+              error: {
+                code: "VALIDATION_ERROR",
+                message: `Student must have completed all course videos (current progress: ${courseProgressPercentage}%)`,
+              },
+            });
+          }
         }
       }
     }
@@ -197,9 +269,10 @@ export const generateCertificate = async (req, res, next) => {
     // For now, we'll mark it as generated
     const pdfUrl = `/api/v1/certificates/${certificate._id}/pdf`;
 
+    // Update status to "issued" which will trigger certificateNumber generation via pre-save hook
     await Certificate.findByIdAndUpdate(certificate._id, {
       pdfUrl,
-      status: "generated",
+      status: "issued",
     });
 
     const populatedCertificate = await Certificate.findById(certificate._id)
@@ -208,6 +281,28 @@ export const generateCertificate = async (req, res, next) => {
       .populate("template", "name")
       .populate("issuedBy", "fullName")
       .lean();
+
+    // Create notification for student when certificate is issued
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      const courseTitle = populatedCertificate.course?.title || "course";
+      await createNotification(
+        certificate.student,
+        "Certificate Issued",
+        `Congratulations! Your certificate for "${courseTitle}" has been issued.`,
+        "certificate",
+        {
+          certificateId: certificate._id.toString(),
+          certificateNumber: populatedCertificate.certificateNumber,
+          courseId: populatedCertificate.course?._id?.toString() || null,
+        },
+        `/certificates/${certificate._id}`
+      );
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[Certificate] Error creating notification:", notifError);
+      // Don't fail certificate generation if notification fails
+    }
 
     return res.status(201).json({
       certificate: populatedCertificate,

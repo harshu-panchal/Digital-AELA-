@@ -147,6 +147,27 @@ export const setupSocketIO = (io) => {
         };
         io.to(`user:${recipientId}`).emit("new_message", recipientFormattedMessage);
         
+        // Create notification for recipient
+        try {
+          const { createNotification } = await import("../utils/notificationHelper.js");
+          await createNotification(
+            recipientObjectId,
+            `New message from ${populatedMessage.sender?.fullName || socket.userFullName || "User"}`,
+            content.length > 100 ? content.substring(0, 100) + "..." : content,
+            "message",
+            {
+              messageId: message._id.toString(),
+              senderId: socket.userId,
+              senderName: populatedMessage.sender?.fullName || socket.userFullName,
+            },
+            `/learn-earn/chat?userId=${socket.userId}`
+          );
+        } catch (notifError) {
+          // eslint-disable-next-line no-console
+          console.error("[Socket.IO] Error creating message notification:", notifError);
+          // Don't fail message sending if notification fails
+        }
+        
         // Notify both users that conversations list should be updated
         io.to(`user:${socket.userId}`).emit("conversation_updated");
         io.to(`user:${recipientId}`).emit("conversation_updated");

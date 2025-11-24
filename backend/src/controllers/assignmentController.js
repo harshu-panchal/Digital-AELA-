@@ -116,6 +116,44 @@ export const createAssignment = async (req, res, next) => {
       .populate("instructor", "fullName")
       .lean();
 
+    // Create notifications for enrolled students
+    try {
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all enrolled students for this course
+      const enrollments = await Enrollment.find({
+        course: courseObjectId,
+        status: "active",
+      })
+        .select("student")
+        .lean();
+      
+      if (enrollments.length > 0) {
+        const studentIds = enrollments.map((e) => e.student);
+        const courseTitle = populatedAssignment.course?.title || "course";
+        const assignmentTitle = populatedAssignment.title;
+        const dueDateStr = new Date(dueDate).toLocaleDateString();
+        
+        await createBulkNotifications(
+          studentIds,
+          "New Assignment Added",
+          `A new assignment "${assignmentTitle}" has been added to "${courseTitle}". Due date: ${dueDateStr}`,
+          "assignment",
+          {
+            assignmentId: assignment._id.toString(),
+            courseId: courseId,
+            courseTitle: courseTitle,
+            dueDate: dueDate,
+          },
+          `/student/assignments/${assignment._id}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[Assignment] Error creating notifications:", notifError);
+      // Don't fail assignment creation if notification fails
+    }
+
     return res.status(201).json({
       assignment: populatedAssignment,
       message: "Assignment created successfully",

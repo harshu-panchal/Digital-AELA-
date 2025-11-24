@@ -2,11 +2,19 @@ import { useCallback } from "react";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
+import { useAuth } from "../../../src/contexts/AuthContext";
 
 const JoinInfluencer = () => {
+  const { user } = useAuth();
+  
   const handleSubmit = useCallback(
-    (payload) => submitJoinUsLead("influencer", payload),
-    []
+    (payload) => {
+      if (!user?.id) {
+        throw new Error("Please log in to submit this application");
+      }
+      return submitJoinUsLead("influencer", payload, user.id);
+    },
+    [user]
   );
 
   const fields = [

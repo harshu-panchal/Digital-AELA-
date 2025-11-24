@@ -550,6 +550,42 @@ export const createQuiz = async (req, res, next) => {
         createdBy: userId, // Store as string for consistent querying
       },
     });
+
+    // Create notifications for all students when quiz is published
+    if (status === "published") {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all active students
+        const students = await User.find({ role: "student", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (students.length > 0) {
+          const studentIds = students.map((s) => s._id);
+          const quizTitle = title;
+          const rewardText = rewardCoins > 0 ? ` Earn up to ${rewardCoins} coins!` : "";
+          
+          await createBulkNotifications(
+            studentIds,
+            "New Quiz Available",
+            `A new quiz "${quizTitle}" is now available.${rewardText}`,
+            "quiz",
+            {
+              quizId: quiz._id.toString(),
+              quizTitle: quizTitle,
+              rewardCoins: rewardCoins,
+            },
+            `/learn-earn/activities`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[Quiz] Error creating notifications:", notifError);
+        // Don't fail quiz creation if notification fails
+      }
+    }
     
     // Debug: Log quiz creation for verification
     // eslint-disable-next-line no-console

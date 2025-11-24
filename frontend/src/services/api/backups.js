@@ -1,4 +1,6 @@
 import { apiRequest } from "./baseClient";
+import { API_BASE_URL } from "../../config/api.js";
+import { getStoredTokens } from "./baseClient";
 
 /**
  * Create Backup
@@ -46,23 +48,50 @@ export const getBackupDetails = async (backupId) => {
  * GET /api/v1/backups/:backupId/download
  */
 export const downloadBackup = async (backupId) => {
-  const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/v1/backups/${backupId}/download`, {
+  // Get access token
+  const tokens = getStoredTokens();
+  const accessToken = tokens?.accessToken;
+
+  if (!accessToken) {
+    throw new Error("Authentication required. Please log in first.");
+  }
+
+  // Use fetch directly for file download (can't use apiRequest as it expects JSON)
+  const response = await fetch(`${API_BASE_URL}/backups/${backupId}/download`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || "Failed to download backup");
+    let errorMessage = "Failed to download backup";
+    try {
+      const error = await response.json();
+      errorMessage = error.error?.message || errorMessage;
+    } catch {
+      // If response is not JSON, use status text
+      errorMessage = response.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
   }
 
+  // Get filename from Content-Disposition header or use default
+  const contentDisposition = response.headers.get("Content-Disposition");
+  let filename = `backup-${backupId}.tar.gz`;
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+    if (filenameMatch && filenameMatch[1]) {
+      filename = filenameMatch[1];
+    }
+  }
+
+  // Create blob and download
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `backup-${backupId}.tar.gz`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);

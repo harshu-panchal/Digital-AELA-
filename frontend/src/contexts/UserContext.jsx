@@ -20,6 +20,7 @@ import { useSocket } from "../hooks/useSocket";
 import { fetchConversations } from "../services/api/messages";
 import { isNetworkError } from "../services/api/baseClient";
 import { useSmartPolling } from "../hooks/useSmartPolling";
+import { fetchNotifications } from "../services/api/notifications";
 
 const UserContext = createContext(null);
 
@@ -347,45 +348,26 @@ export const UserProvider = ({ children }) => {
   } = useAuth();
   const { socket, isConnected } = useSocket();
 
-  // Initialize with empty data in production, dummy data only in development
-  const [profile, setProfile] = useState(() =>
-    isDevelopment
-      ? defaultProfile
-      : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
-  );
-  const [followers, setFollowers] = useState(() =>
-    isDevelopment ? defaultFollowers : []
-  );
-  const [following, setFollowing] = useState(() =>
-    isDevelopment ? defaultFollowers.slice(0, 3) : []
-  );
-  const [messages, setMessages] = useState(() =>
-    isDevelopment ? defaultMessages : []
-  );
-  const [notifications, setNotifications] = useState(() =>
-    isDevelopment ? defaultNotifications : []
-  );
-  const [transactions, setTransactions] = useState(() =>
-    isDevelopment ? defaultTransactions : []
-  );
-  const [groups, setGroups] = useState(() =>
-    isDevelopment ? defaultGroups : []
-  );
-  const [liveDebates, setLiveDebates] = useState(() =>
-    isDevelopment ? defaultLiveDebates : []
-  );
-  const [openRooms, setOpenRooms] = useState(() =>
-    isDevelopment ? defaultOpenRooms : []
-  );
-  const [ratings, setRatings] = useState(() =>
-    isDevelopment ? defaultRatings : { average: 0, votes: 0, tags: [] }
-  );
+  // Initialize with empty/null states - no dummy data
+  const [profile, setProfile] = useState(null);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [liveDebates, setLiveDebates] = useState([]);
+  const [openRooms, setOpenRooms] = useState([]);
+  const [ratings, setRatings] = useState({ average: 0, votes: 0, tags: [] });
   const [socialStatsLoaded, setSocialStatsLoaded] = useState(false);
+  const [isLoadingSocialData, setIsLoadingSocialData] = useState(false);
   const [streak, setStreak] = useState(0);
   const [apiError, setApiError] = useState(null);
 
   useEffect(() => {
-    setProfile((prev) => ({ ...prev, coins: aelaPoints }));
+    if (profile && profile.coins !== aelaPoints) {
+      setProfile((prev) => ({ ...prev, coins: aelaPoints }));
+    }
   }, [aelaPoints]);
 
   // Track if stats are currently loading to prevent duplicate calls
@@ -403,6 +385,7 @@ export const UserProvider = ({ children }) => {
     }
 
     isLoadingSocialStatsRef.current = true;
+    setIsLoadingSocialData(true);
 
     // Small delay to ensure profile is initialized first
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -413,8 +396,9 @@ export const UserProvider = ({ children }) => {
 
       if (stats) {
         setProfile((prev) => {
-          // Only update if we got valid data from backend and values have changed
-          const updated = { ...prev };
+          // Initialize with defaultProfile if prev is null
+          const baseProfile = prev || defaultProfile;
+          const updated = { ...baseProfile };
           let hasChanges = false;
 
           // Use backend values even if 0 (means no data yet), only fallback if undefined/null
@@ -516,6 +500,7 @@ export const UserProvider = ({ children }) => {
       // Keep existing values, don't reset to defaults
     } finally {
       isLoadingSocialStatsRef.current = false;
+      setIsLoadingSocialData(false);
     }
   }, [authUser?.id]);
 
@@ -738,10 +723,7 @@ export const UserProvider = ({ children }) => {
       setMessages(dashboardData.messages || []);
     }
 
-    // Always update notifications (even if empty array)
-    if (dashboardData.notifications !== undefined) {
-      setNotifications(dashboardData.notifications || []);
-    }
+    // Notifications are now loaded separately via loadNotifications function
 
     // Always update live debates (even if empty array)
     if (dashboardData.liveDebates !== undefined) {
@@ -753,27 +735,21 @@ export const UserProvider = ({ children }) => {
       setOpenRooms(dashboardData.openRooms || []);
     }
 
-    // Update leaderboard (top followers)
+    // Update leaderboard data for existing followers only (don't add new users)
     if (dashboardData.leaderboard && dashboardData.leaderboard.length > 0) {
-      // Merge leaderboard data with existing followers
+      // Only update existing followers with leaderboard data (coins, rating, etc.)
+      // Do NOT add new users from leaderboard to followers list
       setFollowers((prev) => {
         const leaderboardMap = new Map(
           dashboardData.leaderboard.map((item) => [item.id, item])
         );
-        // Update existing followers with leaderboard data
-        const updated = prev.map((follower) => {
+        // Only update existing followers with leaderboard data
+        return prev.map((follower) => {
           const leaderboardItem = leaderboardMap.get(follower.id);
           return leaderboardItem
             ? { ...follower, ...leaderboardItem }
             : follower;
         });
-        // Add new leaderboard items not in followers
-        dashboardData.leaderboard.forEach((item) => {
-          if (!prev.find((f) => f.id === item.id)) {
-            updated.push(item);
-          }
-        });
-        return updated;
       });
     }
 
@@ -861,19 +837,7 @@ export const UserProvider = ({ children }) => {
         }
       });
 
-      // Add notification for new message if it's not from the current user
-      if (messageData.senderId !== authUser.id) {
-        setNotifications((prev) => [
-          {
-            id: crypto.randomUUID(),
-            time: "Just now",
-            type: "message",
-            title: `New message from ${messageData.senderName || "User"}`,
-            description: messageData.content || "",
-          },
-          ...prev,
-        ]);
-      }
+      // Notification for new message is now created on backend via socket handler
     };
 
     const handleConversationUpdate = async () => {
@@ -921,25 +885,184 @@ export const UserProvider = ({ children }) => {
     };
   }, [socket, isConnected, authUser]);
 
+  // Load notifications from API
+  const loadNotifications = useCallback(async () => {
+    if (!authUser?.id || !tokens?.accessToken) {
+      return;
+    }
+
+    try {
+      const response = await fetchNotifications({
+        page: 1,
+        pageSize: 20,
+        unreadOnly: false,
+      });
+      if (response?.notifications !== undefined) {
+        // Format notifications to match expected structure
+        const formatted = (response.notifications || []).map((n) => ({
+          id: n._id || n.id,
+          title: n.title,
+          description: n.description,
+          type: n.type,
+          isRead: n.isRead,
+          time: n.createdAt
+            ? new Date(n.createdAt).toLocaleDateString([], {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Just now",
+          actionUrl: n.actionUrl,
+          metadata: n.metadata,
+          createdAt: n.createdAt,
+        }));
+        setNotifications(formatted);
+      }
+    } catch (error) {
+      if (isNetworkError(error) && !isDevelopment) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "[UserContext] Failed to load notifications:",
+          error.message
+        );
+      } else if (!isNetworkError(error)) {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load notifications from backend:", error);
+      }
+      // Keep existing notifications on error
+    }
+  }, [authUser?.id, tokens?.accessToken]);
+
+  // Load notifications on mount and when auth changes
+  useEffect(() => {
+    if (authUser?.id && tokens?.accessToken) {
+      loadNotifications();
+    } else {
+      // Reset to empty when logged out
+      setNotifications(isDevelopment ? defaultNotifications : []);
+    }
+  }, [authUser?.id, tokens?.accessToken, loadNotifications]);
+
+  // Listen for real-time notification updates via Socket.io
+  useEffect(() => {
+    if (!socket || !isConnected || !authUser?.id) {
+      return;
+    }
+
+    const handleNewNotification = (notificationData) => {
+      // Add new notification to the top of the list
+      const formatted = {
+        id: notificationData.id,
+        title: notificationData.title,
+        description: notificationData.description,
+        type: notificationData.type,
+        isRead: notificationData.isRead || false,
+        time: notificationData.createdAt
+          ? new Date(notificationData.createdAt).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "Just now",
+        actionUrl: notificationData.actionUrl,
+        metadata: notificationData.metadata,
+        createdAt: notificationData.createdAt,
+      };
+      setNotifications((prev) => [formatted, ...prev]);
+    };
+
+    const handleNotificationRead = (data) => {
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === data.notificationId
+            ? { ...n, isRead: true, time: "Just now" }
+            : n
+        )
+      );
+    };
+
+    const handleAllNotificationsRead = () => {
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    };
+
+    const handleNotificationDeleted = (data) => {
+      setNotifications((prev) =>
+        prev.filter((n) => n.id !== data.notificationId)
+      );
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    socket.on("notification_read", handleNotificationRead);
+    socket.on("all_notifications_read", handleAllNotificationsRead);
+    socket.on("notification_deleted", handleNotificationDeleted);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+      socket.off("notification_read", handleNotificationRead);
+      socket.off("all_notifications_read", handleAllNotificationsRead);
+      socket.off("notification_deleted", handleNotificationDeleted);
+    };
+  }, [socket, isConnected, authUser]);
+
   useEffect(() => {
     if (!authUser) {
-      // Reset to default profile when logged out (use development defaults only in dev)
-      setProfile(
-        isDevelopment
-          ? defaultProfile
-          : { ...defaultProfile, followers: 0, following: 0, coins: 0 }
-      );
+      // Reset to null when logged out - no dummy data
+      setProfile(null);
+      setFollowers([]);
+      setFollowing([]);
+      setMessages([]);
+      setNotifications([]);
+      setTransactions([]);
+      setGroups([]);
+      setLiveDebates([]);
+      setOpenRooms([]);
+      setRatings({ average: 0, votes: 0, tags: [] });
+      setSocialStatsLoaded(false);
       setApiError(null);
       return;
     }
 
-    // Immediately update name from authUser if available (before async operations)
+    // Initialize profile with basic authUser data (no dummy data)
     if (authUser.fullName) {
-      setProfile((prev) => ({
-        ...prev,
-        name: authUser.fullName,
-        id: authUser.id || prev.id,
-      }));
+      setProfile((prev) => {
+        if (!prev) {
+          // Initialize with minimal data from authUser
+          return {
+            id: authUser.id,
+            name: authUser.fullName,
+            title: authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : "User",
+            coins: aelaPoints,
+            followers: 0,
+            following: 0,
+            rating: 0,
+            badges: [],
+            avatar: null,
+            bio: "",
+            country: "",
+            city: "",
+            profession: "",
+            englishLevel: "",
+            experience: "",
+            maritalStatus: "",
+            interests: [],
+            bannerGradient: defaultProfile.bannerGradient,
+            contact: {
+              email: authUser.email,
+              phone: "",
+              whatsapp: "",
+            },
+            metadata: {},
+            role: authUser.role,
+          };
+        }
+        return {
+          ...prev,
+          name: authUser.fullName,
+          id: authUser.id || prev.id,
+        };
+      });
     }
 
     const metadata = authUser.metadata ?? {};
@@ -1000,75 +1123,92 @@ export const UserProvider = ({ children }) => {
             experienceText = `${metadata.experienceYears} years of experience`;
           }
 
-          setProfile((prev) => ({
-            ...defaultProfile,
-            ...prev,
-            id: authUser.id ?? defaultProfile.id,
-            name: authUser.fullName || authUser.email?.split("@")[0] || "User",
-            title:
-              metadata.title ??
-              (authUser.role
-                ? `${getRoleLabel(authUser.role)} · Digital AELA`
-                : defaultProfile.title),
-            bio:
-              profileData?.bio ||
-              profileData?.headline ||
-              metadata.bio ||
-              metadata.goals ||
-              defaultProfile.bio,
-            country:
-              profileData?.location?.country ||
-              metadata.country ||
-              metadata.region ||
-              defaultProfile.country,
-            city:
-              profileData?.location?.city ||
-              metadata.city ||
-              defaultProfile.city,
-            profession:
-              profileData?.profession ||
-              metadata.profession ||
-              metadata.currentStatus ||
-              defaultProfile.profession,
-            englishLevel:
-              profileData?.englishLevel ||
-              metadata.englishLevel ||
-              defaultProfile.englishLevel,
-            experience: experienceText,
-            maritalStatus:
-              profileData?.maritalStatus ||
-              metadata.maritalStatus ||
-              defaultProfile.maritalStatus,
-            interests:
-              profileData?.interests ||
-              metadata.interests ||
-              metadata.contentThemes ||
-              defaultProfile.interests,
-            avatar: avatarUrl, // Use StudentProfile avatar or metadata avatar from registration
-            bannerGradient:
-              metadata.bannerGradient ?? defaultProfile.bannerGradient,
-            coins: aelaPoints,
-            badges:
-              badgesData.length > 0
-                ? badgesData
-                : prev.badges || defaultProfile.badges,
-            metadata,
-            role: authUser.role,
-            contact: {
-              email: authUser.email,
-              phone: profileData?.phone || metadata.phone,
-              whatsapp: metadata.whatsapp,
-            },
-            followers: socialStatsLoaded
-              ? prev.followers
-              : prev.followers ?? defaultProfile.followers,
-            following: socialStatsLoaded
-              ? prev.following
-              : prev.following ?? defaultProfile.following,
-            rating: socialStatsLoaded
-              ? prev.rating
-              : prev.rating ?? defaultProfile.rating,
-          }));
+          setProfile((prev) => {
+            const baseProfile = prev || {
+              id: authUser.id,
+              name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+              coins: aelaPoints,
+              followers: 0,
+              following: 0,
+              rating: 0,
+              badges: [],
+            };
+            return {
+              ...baseProfile,
+              id: authUser.id ?? baseProfile.id,
+              name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+              title:
+                metadata.title ??
+                (authUser.role
+                  ? `${getRoleLabel(authUser.role)} · Digital AELA`
+                  : baseProfile.title || "User"),
+              bio:
+                profileData?.bio ||
+                profileData?.headline ||
+                metadata.bio ||
+                metadata.goals ||
+                baseProfile.bio ||
+                "",
+              country:
+                profileData?.location?.country ||
+                metadata.country ||
+                metadata.region ||
+                baseProfile.country ||
+                "",
+              city:
+                profileData?.location?.city ||
+                metadata.city ||
+                baseProfile.city ||
+                "",
+              profession:
+                profileData?.profession ||
+                metadata.profession ||
+                metadata.currentStatus ||
+                baseProfile.profession ||
+                "",
+              englishLevel:
+                profileData?.englishLevel ||
+                metadata.englishLevel ||
+                baseProfile.englishLevel ||
+                "",
+              experience: experienceText || baseProfile.experience || "",
+              maritalStatus:
+                profileData?.maritalStatus ||
+                metadata.maritalStatus ||
+                baseProfile.maritalStatus ||
+                "",
+              interests:
+                profileData?.interests ||
+                metadata.interests ||
+                metadata.contentThemes ||
+                baseProfile.interests ||
+                [],
+              avatar: avatarUrl || baseProfile.avatar || null,
+              bannerGradient:
+                metadata.bannerGradient ?? baseProfile.bannerGradient ?? defaultProfile.bannerGradient,
+              coins: aelaPoints,
+              badges:
+                badgesData.length > 0
+                  ? badgesData
+                  : baseProfile.badges || [],
+              metadata,
+              role: authUser.role,
+              contact: {
+                email: authUser.email,
+                phone: profileData?.phone || metadata.phone || "",
+                whatsapp: metadata.whatsapp || "",
+              },
+              followers: socialStatsLoaded
+                ? baseProfile.followers
+                : baseProfile.followers ?? 0,
+              following: socialStatsLoaded
+                ? baseProfile.following
+                : baseProfile.following ?? 0,
+              rating: socialStatsLoaded
+                ? baseProfile.rating
+                : baseProfile.rating ?? 0,
+            };
+          });
           return;
         } catch (error) {
           // Profile might not exist yet, continue with metadata fallback
@@ -1086,57 +1226,69 @@ export const UserProvider = ({ children }) => {
 
       // For non-students or if StudentProfile fetch failed, use metadata
       const avatarUrl =
-        metadata.avatarUrl || metadata.avatar || defaultProfile.avatar;
+        metadata.avatarUrl || metadata.avatar || null;
 
-      setProfile((prev) => ({
-        ...defaultProfile,
-        ...prev, // Preserve existing values (including backend-loaded social stats)
-        id: authUser.id ?? defaultProfile.id,
-        name: authUser.fullName || authUser.email?.split("@")[0] || "User",
-        title:
-          metadata.title ??
-          (authUser.role
-            ? `${getRoleLabel(authUser.role)} · Digital AELA`
-            : defaultProfile.title),
-        bio: metadata.bio ?? metadata.goals ?? defaultProfile.bio,
-        country: metadata.country ?? metadata.region ?? defaultProfile.country,
-        city: metadata.city ?? defaultProfile.city,
-        profession:
-          metadata.profession ??
-          metadata.currentStatus ??
-          defaultProfile.profession,
-        experience:
-          metadata.experience ??
-          (metadata.experienceYears
-            ? `${metadata.experienceYears} years of experience`
-            : defaultProfile.experience),
-        maritalStatus: metadata.maritalStatus ?? defaultProfile.maritalStatus,
-        interests:
-          metadata.interests ??
-          metadata.contentThemes ??
-          defaultProfile.interests,
-        avatar: avatarUrl, // Use Cloudinary URL from registration metadata
-        bannerGradient:
-          metadata.bannerGradient ?? defaultProfile.bannerGradient,
-        coins: aelaPoints,
-        metadata,
-        role: authUser.role,
-        contact: {
-          email: authUser.email,
-          phone: metadata.phone,
-          whatsapp: metadata.whatsapp,
-        },
-        // Preserve social stats from backend (don't overwrite if already loaded from backend)
-        followers: socialStatsLoaded
-          ? prev.followers
-          : prev.followers ?? defaultProfile.followers,
-        following: socialStatsLoaded
-          ? prev.following
-          : prev.following ?? defaultProfile.following,
-        rating: socialStatsLoaded
-          ? prev.rating
-          : prev.rating ?? defaultProfile.rating,
-      }));
+      setProfile((prev) => {
+        const baseProfile = prev || {
+          id: authUser.id,
+          name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+          coins: aelaPoints,
+          followers: 0,
+          following: 0,
+          rating: 0,
+          badges: [],
+        };
+        return {
+          ...baseProfile,
+          id: authUser.id ?? baseProfile.id,
+          name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+          title:
+            metadata.title ??
+            (authUser.role
+              ? `${getRoleLabel(authUser.role)} · Digital AELA`
+              : baseProfile.title || "User"),
+          bio: metadata.bio ?? metadata.goals ?? baseProfile.bio ?? "",
+          country: metadata.country ?? metadata.region ?? baseProfile.country ?? "",
+          city: metadata.city ?? baseProfile.city ?? "",
+          profession:
+            metadata.profession ??
+            metadata.currentStatus ??
+            baseProfile.profession ??
+            "",
+          experience:
+            metadata.experience ??
+            (metadata.experienceYears
+              ? `${metadata.experienceYears} years of experience`
+              : baseProfile.experience ?? ""),
+          maritalStatus: metadata.maritalStatus ?? baseProfile.maritalStatus ?? "",
+          interests:
+            metadata.interests ??
+            metadata.contentThemes ??
+            baseProfile.interests ??
+            [],
+          avatar: avatarUrl || baseProfile.avatar || null,
+          bannerGradient:
+            metadata.bannerGradient ?? baseProfile.bannerGradient ?? defaultProfile.bannerGradient,
+          coins: aelaPoints,
+          metadata,
+          role: authUser.role,
+          contact: {
+            email: authUser.email,
+            phone: metadata.phone || "",
+            whatsapp: metadata.whatsapp || "",
+          },
+          // Preserve social stats from backend (don't overwrite if already loaded from backend)
+          followers: socialStatsLoaded
+            ? baseProfile.followers
+            : baseProfile.followers ?? 0,
+          following: socialStatsLoaded
+            ? baseProfile.following
+            : baseProfile.following ?? 0,
+          rating: socialStatsLoaded
+            ? baseProfile.rating
+            : baseProfile.rating ?? 0,
+        };
+      });
     };
 
     loadAvatar();
@@ -1155,7 +1307,22 @@ export const UserProvider = ({ children }) => {
 
   const updateProfile = useCallback(
     (updates) => {
-      setProfile((prev) => ({ ...prev, ...updates }));
+      setProfile((prev) => {
+        if (!prev) {
+          // If profile is null, initialize with minimal data
+          return {
+            id: authUser?.id,
+            name: authUser?.fullName || "",
+            coins: aelaPoints,
+            followers: 0,
+            following: 0,
+            rating: 0,
+            badges: [],
+            ...updates,
+          };
+        }
+        return { ...prev, ...updates };
+      });
 
       if (!authUser) {
         return;
@@ -1341,6 +1508,7 @@ export const UserProvider = ({ children }) => {
       sendMessage,
       notifications,
       addNotification,
+      refreshNotifications: loadNotifications,
       transactions,
       recordTransaction,
       shareCoins,
@@ -1362,6 +1530,8 @@ export const UserProvider = ({ children }) => {
       },
       streak,
       apiError,
+      isLoadingSocialData,
+      socialStatsLoaded,
     }),
     [
       profile,
@@ -1373,6 +1543,7 @@ export const UserProvider = ({ children }) => {
       sendMessage,
       notifications,
       addNotification,
+      loadNotifications,
       transactions,
       recordTransaction,
       shareCoins,
@@ -1390,6 +1561,8 @@ export const UserProvider = ({ children }) => {
       totalRedeemed,
       streak,
       apiError,
+      isLoadingSocialData,
+      socialStatsLoaded,
     ]
   );
 

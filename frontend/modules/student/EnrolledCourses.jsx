@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import {
   HiOutlineArrowRight,
+  HiOutlineArrowLeft,
   HiOutlineCalendarDays,
   HiOutlineClock,
   HiOutlineXCircle,
@@ -15,14 +16,19 @@ import {
   fetchEnrolledCourses,
   unenrollFromCourse,
   updateEnrollmentStatus,
+  fetchCourseById,
 } from "../../src/services/api/courses";
+import CourseVideosList from "./CourseVideosList";
 
 const EnrolledCourses = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { courseId } = useParams();
   const [enrollments, setEnrollments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, active, completed, paused
+  const [course, setCourse] = useState(null);
+  const [isLoadingCourse, setIsLoadingCourse] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "student") {
@@ -31,8 +37,27 @@ const EnrolledCourses = () => {
       return;
     }
 
-    loadEnrollments();
-  }, [isAuthenticated, user, navigate, filter]);
+    // If courseId is provided, load course details
+    if (courseId) {
+      loadCourseDetails();
+    } else {
+      // Otherwise, load enrolled courses list
+      loadEnrollments();
+    }
+  }, [isAuthenticated, user, navigate, filter, courseId]);
+
+  const loadCourseDetails = async () => {
+    setIsLoadingCourse(true);
+    try {
+      const courseData = await fetchCourseById(courseId);
+      setCourse(courseData);
+    } catch (error) {
+      toast.error(error.message || "Failed to load course details");
+      navigate("/student/courses");
+    } finally {
+      setIsLoadingCourse(false);
+    }
+  };
 
   const loadEnrollments = async () => {
     setIsLoading(true);
@@ -111,6 +136,61 @@ const EnrolledCourses = () => {
     return null;
   }
 
+  // If courseId is provided, show course videos
+  if (courseId) {
+    return (
+      <div className="min-h-screen bg-[#03040B] text-white">
+        <SEO
+          title={course ? `${course.title} - Course Videos | Digital AELA` : "Course Videos | Digital AELA"}
+          description={course?.description || "Access your course videos and continue learning"}
+          keywords="course videos, learning, enrolled course"
+          url={`https://digitalaela.com/student/courses/${courseId}`}
+        />
+
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(55,124,255,0.18),transparent_70%)]" />
+
+        <main className="relative z-10 pt-24 pb-20" style={{ paddingTop: "calc(6rem + 5vh)" }}>
+          <section className="layout-container space-y-6">
+            <motion.header
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+              className="space-y-4">
+              <Link
+                to="/student/courses"
+                className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-sky-200 transition mb-4">
+                <HiOutlineArrowLeft className="h-4 w-4" />
+                Back to My Courses
+              </Link>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
+                  My Learning
+                </p>
+                <h1 className="text-3xl font-semibold md:text-4xl">
+                  {course?.title || "Course Videos"}
+                </h1>
+                {course?.description && (
+                  <p className="mt-2 text-sm text-slate-300/80 line-clamp-2">
+                    {course.description}
+                  </p>
+                )}
+              </div>
+            </motion.header>
+
+            {isLoadingCourse ? (
+              <div className="flex min-h-[400px] items-center justify-center">
+                <p className="text-sm text-slate-300/80">Loading course videos...</p>
+              </div>
+            ) : (
+              <CourseVideosList courseId={courseId} />
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  // Otherwise, show enrolled courses list
   return (
     <div className="min-h-screen bg-[#03040B] text-white">
       <SEO
@@ -206,7 +286,7 @@ const EnrolledCourses = () => {
                     key={enrollment._id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="group rounded-3xl border border-white/10 bg-[#060A17]/90 p-6 shadow-[0_24px_80px_rgba(20,30,60,0.4)] transition hover:border-sky-400/30">
+                    className="group rounded-3xl border border-white/10 bg-[#060A17]/90 p-4 shadow-[0_24px_80px_rgba(20,30,60,0.4)] transition hover:border-sky-400/30 sm:p-6">
                     {/* Course Header */}
                     <div className="mb-4">
                       <div className="mb-3 flex items-start justify-between gap-3">
@@ -255,28 +335,28 @@ const EnrolledCourses = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 overflow-hidden">
                       {course._id && (
                         <Link
                           to={`/courses/id/${course._id}`}
-                          className="flex items-center justify-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-4 py-2 text-sm font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/20">
-                          View Details
-                          <HiOutlineArrowRight className="h-4 w-4" />
+                          className="flex min-w-0 flex-shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-3 py-2 text-xs font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/20 sm:gap-2 sm:px-4 sm:text-sm">
+                          <span className="truncate">View Details</span>
+                          <HiOutlineArrowRight className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
                         </Link>
                       )}
                       {enrollment.status === "active" && course._id && (
                         <Link
                           to={`/student/courses/${course._id}`}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300/70 hover:bg-sky-500/20">
-                          Continue Learning
-                          <HiOutlineArrowRight className="h-4 w-4" />
+                          className="flex min-w-0 flex-shrink-0 items-center justify-center gap-1.5 rounded-full border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:border-sky-300/70 hover:bg-sky-500/20 sm:gap-2 sm:px-4 sm:text-sm">
+                          <span className="truncate">Continue</span>
+                          <HiOutlineArrowRight className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
                         </Link>
                       )}
 
                       {enrollment.status === "active" && (
                         <button
                           onClick={() => handleStatusUpdate(course._id, "paused")}
-                          className="rounded-full border border-yellow-400/40 bg-yellow-500/10 px-4 py-2 text-xs font-semibold text-yellow-200 transition hover:border-yellow-300/70 hover:bg-yellow-500/20">
+                          className="flex-shrink-0 rounded-full border border-yellow-400/40 bg-yellow-500/10 px-3 py-2 text-xs font-semibold text-yellow-200 transition hover:border-yellow-300/70 hover:bg-yellow-500/20 sm:px-4">
                           Pause
                         </button>
                       )}
@@ -284,15 +364,15 @@ const EnrolledCourses = () => {
                       {enrollment.status === "paused" && (
                         <button
                           onClick={() => handleStatusUpdate(course._id, "active")}
-                          className="rounded-full border border-green-400/40 bg-green-500/10 px-4 py-2 text-xs font-semibold text-green-200 transition hover:border-green-300/70 hover:bg-green-500/20">
+                          className="flex-shrink-0 rounded-full border border-green-400/40 bg-green-500/10 px-3 py-2 text-xs font-semibold text-green-200 transition hover:border-green-300/70 hover:bg-green-500/20 sm:px-4">
                           Resume
                         </button>
                       )}
 
                       <button
                         onClick={() => handleUnenroll(course._id, course.title)}
-                        className="rounded-full border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300/70 hover:bg-red-500/20">
-                        <HiOutlineXCircle className="h-4 w-4" />
+                        className="flex-shrink-0 rounded-full border border-red-400/40 bg-red-500/10 p-2 text-xs font-semibold text-red-200 transition hover:border-red-300/70 hover:bg-red-500/20 sm:px-4">
+                        <HiOutlineXCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                   </motion.div>

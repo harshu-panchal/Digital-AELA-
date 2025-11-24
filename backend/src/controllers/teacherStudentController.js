@@ -5,6 +5,9 @@ import User from "../models/User.js";
 import LessonCompletion from "../models/LessonCompletion.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import Quiz from "../models/Quiz.js";
+import VideoProgress from "../models/VideoProgress.js";
+import CourseVideo from "../models/CourseVideo.js";
+import Certificate from "../models/Certificate.js";
 
 /**
  * Get all students enrolled in teacher's courses
@@ -222,6 +225,17 @@ export const getCourseStudents = async (req, res, next) => {
       );
     }
 
+    // Get all videos for the course to calculate progress
+    const courseVideos = await CourseVideo.find({ course: courseId }).lean();
+    const totalVideos = courseVideos.length;
+    const videoIds = courseVideos.map((v) => v._id);
+
+    // Get all video progress records for this course
+    const allVideoProgress = await VideoProgress.find({
+      course: courseId,
+      video: { $in: videoIds },
+    }).lean();
+
     // Get lesson completions for progress
     const lessonCompletions = await LessonCompletion.find({
       course: courseId,
@@ -240,10 +254,34 @@ export const getCourseStudents = async (req, res, next) => {
           }).lean()
         : [];
 
+    // Get all certificates for this course to check if students already have certificates
+    const certificates = await Certificate.find({
+      course: courseId,
+    }).lean();
+
+    // Create a map of student certificates
+    const certificateMap = new Map();
+    certificates.forEach((cert) => {
+      const studentId = cert.student.toString();
+      certificateMap.set(studentId, true);
+    });
+
     // Format students with progress
     const students = await Promise.all(
       filteredEnrollments.map(async (enrollment) => {
         const studentId = enrollment.student._id.toString();
+        const studentObjectId = enrollment.student._id;
+
+        // Calculate course progress percentage based on completed videos
+        const studentVideoProgress = allVideoProgress.filter(
+          (vp) => vp.student.toString() === studentId && vp.isCompleted === true
+        );
+        const completedVideos = studentVideoProgress.length;
+        const courseProgressPercentage =
+          totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+
+        // Check if certificate already exists
+        const hasCertificate = certificateMap.has(studentId) || false;
 
         // Calculate progress from lesson completions
         const studentCompletions = lessonCompletions.filter(
@@ -269,6 +307,8 @@ export const getCourseStudents = async (req, res, next) => {
           enrolledAt: enrollment.enrolledAt,
           lastAccessedAt: enrollment.lastAccessedAt,
           completedAt: enrollment.completedAt,
+          courseProgressPercentage, // NEW: Course progress percentage (0-100)
+          hasCertificate, // NEW: Whether student already has a certificate
           progress: {
             lessonCompletions: studentCompletions,
             avgQuizScore: avgQuizScore ? Math.round(avgQuizScore * 100) / 100 : null,

@@ -1,5 +1,6 @@
 import Settings from "../models/Settings.js";
 import { clearSettingsCache } from "../utils/settingsHelper.js";
+import bcrypt from "bcryptjs";
 
 /**
  * Get public settings (no authentication required)
@@ -513,4 +514,133 @@ function inferType(value) {
   if (typeof value === "object" && value !== null) return "object";
   return "string";
 }
+
+/**
+ * Verify Financial Password
+ * POST /api/v1/admin/settings/financial-password/verify
+ */
+export const verifyFinancialPassword = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+    const { password } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can verify financial password",
+        },
+      });
+    }
+
+    if (!password) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Password is required",
+        },
+      });
+    }
+
+    // Get financial password from settings
+    const financialPasswordSetting = await Settings.findOne({
+      key: "financial.password",
+    }).lean();
+
+    if (!financialPasswordSetting) {
+      // If no password is set, return false (need to set password first)
+      return res.json({
+        valid: false,
+        message: "Financial password not configured",
+      });
+    }
+
+    // Compare password with stored hash
+    const isValid = await bcrypt.compare(password, financialPasswordSetting.value);
+
+    return res.json({
+      valid: isValid,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Set Financial Password
+ * POST /api/v1/admin/settings/financial-password/set
+ */
+export const setFinancialPassword = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+    const { password } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can set financial password",
+        },
+      });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Password must be at least 6 characters long",
+        },
+      });
+    }
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Update or create financial password setting
+    await Settings.findOneAndUpdate(
+      { key: "financial.password" },
+      {
+        value: passwordHash,
+        category: "general",
+        type: "string",
+        label: "Financial Password",
+        description: "Password required to access financial pages (payments, expenses, financial dashboard)",
+        isEncrypted: true,
+        updatedBy: userId,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    // Clear settings cache
+    clearSettingsCache();
+
+    return res.json({
+      success: true,
+      message: "Financial password has been set successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 

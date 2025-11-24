@@ -65,11 +65,11 @@ export const createDoubtTicket = async (req, res, next) => {
           });
         }
 
-        // Auto-assign to course teacher if not assigned
+        // Auto-assign to course instructor if not assigned
         if (!ticketData.assignedTeacher) {
-          const course = await Course.findById(courseId).populate("teacher").lean();
-          if (course && course.teacher) {
-            ticketData.assignedTeacher = course.teacher._id || course.teacher;
+          const course = await Course.findById(courseId).populate("instructor").lean();
+          if (course && course.instructor) {
+            ticketData.assignedTeacher = course.instructor._id || course.instructor;
           }
         }
       }
@@ -88,6 +88,35 @@ export const createDoubtTicket = async (req, res, next) => {
       .populate("lesson", "title")
       .populate("replies.user", "fullName email profilePicture")
       .lean();
+
+    // Create notification for assigned teacher (or all teachers if not assigned)
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      
+      if (populatedTicket.assignedTeacher && populatedTicket.assignedTeacher._id) {
+        // Notify assigned teacher
+        await createNotification(
+          populatedTicket.assignedTeacher._id,
+          "New Doubt Ticket",
+          `${populatedTicket.student?.fullName || "A student"} has raised a doubt ticket: "${populatedTicket.title}"`,
+          "system",
+          {
+            ticketId: ticket._id.toString(),
+            studentId: userObjectId.toString(),
+            courseId: populatedTicket.course?._id?.toString() || null,
+          },
+          `/teacher/doubt-tickets/${ticket._id}`
+        );
+      } else {
+        // If no teacher assigned, notify all teachers (or could be handled differently)
+        // For now, we'll skip notification if no teacher is assigned
+        // This could be enhanced to notify course instructor if ticket is course-specific
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[DoubtTicket] Error creating notification:", notifError);
+      // Don't fail ticket creation if notification fails
+    }
 
     return res.status(201).json({
       ticket: populatedTicket,
@@ -576,6 +605,32 @@ export const assignDoubtTicket = async (req, res, next) => {
     }
 
     await ticket.save();
+
+    // Create notification for assigned teacher
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      const populatedTicketForNotif = await DoubtTicket.findById(ticketId)
+        .populate("student", "fullName")
+        .populate("course", "title")
+        .lean();
+      
+      await createNotification(
+        teacherId,
+        "Doubt Ticket Assigned",
+        `A doubt ticket "${populatedTicketForNotif.title}" from ${populatedTicketForNotif.student?.fullName || "a student"} has been assigned to you.`,
+        "system",
+        {
+          ticketId: ticket._id.toString(),
+          studentId: populatedTicketForNotif.student?._id?.toString() || null,
+          courseId: populatedTicketForNotif.course?._id?.toString() || null,
+        },
+        `/teacher/doubt-tickets/${ticket._id}`
+      );
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[DoubtTicket] Error creating assignment notification:", notifError);
+      // Don't fail assignment if notification fails
+    }
 
     const populatedTicket = await DoubtTicket.findById(ticketId)
       .populate("student", "fullName email profilePicture")

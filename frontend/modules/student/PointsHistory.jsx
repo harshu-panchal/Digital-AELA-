@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineArrowDown,
@@ -12,6 +12,7 @@ import {
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { getStoredTokens } from "../../src/services/api/baseClient";
 import { fetchPointsHistory, fetchPointsStats } from "../../src/services/api/points";
 
 const transactionTypeConfig = {
@@ -74,8 +75,14 @@ const PointsHistory = () => {
     type: "",
     source: "",
   });
+  const loadingRef = useRef(false);
 
   const loadData = useCallback(async () => {
+    // Prevent duplicate calls
+    if (loadingRef.current) {
+      return;
+    }
+    loadingRef.current = true;
     setIsLoading(true);
     try {
       const [historyResult, statsResult] = await Promise.allSettled([
@@ -102,9 +109,22 @@ const PointsHistory = () => {
       if (statsResult.status === "fulfilled") {
         setStats(statsResult.value.stats || null);
       } else {
+        // Only log non-critical errors (suppress "Invalid user ID" if data is loading from history)
+        const errorMessage = statsResult.reason?.message || "";
+        const isNonCriticalError = 
+          errorMessage.includes("Invalid user ID") || 
+          errorMessage.includes("VALIDATION_ERROR") ||
+          statsResult.reason?.code === "VALIDATION_ERROR";
+        
+        // Only log if it's a critical error or if both requests failed
+        if (!isNonCriticalError || historyResult.status !== "fulfilled") {
+          // eslint-disable-next-line no-console
         console.error("Failed to load points stats:", statsResult.reason);
+        }
+        
         // Only show error toast if history also failed, to avoid duplicate toasts
-        if (historyResult.status === "fulfilled") {
+        // And don't show toast for non-critical validation errors
+        if (historyResult.status === "fulfilled" && !isNonCriticalError) {
           toast.error(statsResult.reason?.message || "Failed to load points statistics");
         }
         // Don't clear existing stats on error - keep them visible
@@ -115,6 +135,7 @@ const PointsHistory = () => {
       setTransactions([]);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, [pagination.page, pagination.pageSize, filters.type, filters.source]);
 
@@ -124,7 +145,15 @@ const PointsHistory = () => {
       return;
     }
 
+    // Only load data if user has an ID and tokens are available (fully authenticated)
+    const tokens = getStoredTokens();
+    if (user?.id && tokens?.accessToken) {
+      // Small delay to ensure auth is fully processed
+      const timer = setTimeout(() => {
     loadData();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
   }, [isAuthenticated, user, loadData]);
 
   const handleFilterChange = (filterType, value) => {

@@ -121,8 +121,13 @@ const ProfilePage = () => {
         const enhanced = await fetchEnhancedProfile(authUser.id);
         setEnhancedProfile(enhanced.profile);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load enhanced profile:", error);
+        // 404 is expected if profile doesn't exist yet - don't log it
+        // Only log unexpected errors (non-404)
+        if (error.status !== 404) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load enhanced profile:", error);
+        }
+        // Silently handle 404 - profile will be created when user updates their profile
       } finally {
         setLoadingEnhanced(false);
       }
@@ -142,20 +147,22 @@ const ProfilePage = () => {
         const response = await fetchSocialLinks();
         // Always update socialLinks from backend, even if empty array (removes defaults)
         if (response?.socialLinks !== undefined) {
-          // Only show verified links that user has manually added
-          const verifiedLinks = (response.socialLinks || []).filter(
-            (link) => link.verified === true
-          );
-          setSocialLinks(verifiedLinks);
-          // Update profile with backend social links (all links, not just verified)
+          // Show all links (both verified and unverified) so users can verify them
+          setSocialLinks(response.socialLinks || []);
+          // Update profile with backend social links
           updateProfile({ socialLinks: response.socialLinks });
         } else {
           // If backend doesn't return socialLinks, set to empty array
           setSocialLinks([]);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to load social links from backend:", error);
+        // 403 is expected if user doesn't have student role or insufficient permissions
+        // 404 is expected if profile doesn't exist yet
+        // Only log unexpected errors (non-403, non-404)
+        if (error.status !== 403 && error.status !== 404) {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load social links from backend:", error);
+        }
         // Set to empty array on error to avoid showing default links
         setSocialLinks([]);
       }
@@ -195,11 +202,8 @@ const ProfilePage = () => {
         // Reload social links
         const response = await fetchSocialLinks();
         if (response?.socialLinks !== undefined) {
-          // Only show verified links that user has manually added
-          const verifiedLinks = (response.socialLinks || []).filter(
-            (link) => link.verified === true
-          );
-          setSocialLinks(verifiedLinks);
+          // Show all links (both verified and unverified) so users can verify them
+          setSocialLinks(response.socialLinks || []);
           updateProfile({ socialLinks: response.socialLinks });
         }
 
@@ -240,11 +244,8 @@ const ProfilePage = () => {
           // Reload social links
           const response = await fetchSocialLinks();
           if (response?.socialLinks !== undefined) {
-            // Only show verified links that user has manually added
-            const verifiedLinks = (response.socialLinks || []).filter(
-              (link) => link.verified === true
-            );
-            setSocialLinks(verifiedLinks);
+            // Show all links (both verified and unverified)
+            setSocialLinks(response.socialLinks || []);
             updateProfile({ socialLinks: response.socialLinks });
           }
 
@@ -308,11 +309,8 @@ const ProfilePage = () => {
           // Reload social links from backend to get the verified link
           const response = await fetchSocialLinks();
           if (response?.socialLinks !== undefined) {
-            // Only show verified links that user has manually added
-            const verifiedLinks = (response.socialLinks || []).filter(
-              (link) => link.verified === true
-            );
-            setSocialLinks(verifiedLinks);
+            // Show all links (both verified and unverified)
+            setSocialLinks(response.socialLinks || []);
             updateProfile({ socialLinks: response.socialLinks });
           }
 

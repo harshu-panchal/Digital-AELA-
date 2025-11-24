@@ -8,7 +8,10 @@ const externalGiftUrl = "https://digitalaela.com/gift";
 
 const GiftPayment = () => {
   const location = useLocation();
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const query = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
 
   const type = query.get("type") || "anyone";
   const nearOneDetails = {
@@ -34,7 +37,8 @@ const GiftPayment = () => {
   });
 
   const giftAmount = formData.amount > 0 ? formData.amount : initialAmount;
-  const quantity = formData.quantity && formData.quantity > 0 ? formData.quantity : 1;
+  const quantity =
+    formData.quantity && formData.quantity > 0 ? formData.quantity : 1;
   const totalAmount = giftAmount * quantity;
 
   const handleInputChange = (event) => {
@@ -96,7 +100,9 @@ const GiftPayment = () => {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="lg:col-span-1">
               <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20 sticky top-24">
-                <h2 className="text-xl font-bold text-white mb-6 font-display">Gift Summary</h2>
+                <h2 className="text-xl font-bold text-white mb-6 font-display">
+                  Gift Summary
+                </h2>
                 <div className="space-y-4 mb-6">
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Gift Type</p>
@@ -108,19 +114,27 @@ const GiftPayment = () => {
                     <>
                       <div>
                         <p className="text-gray-400 text-sm mb-1">Recipient</p>
-                        <p className="text-white font-semibold">{nearOneDetails.fullName || "-"}</p>
-                        <p className="text-gray-400 text-sm">ID: {nearOneDetails.userId || "-"}</p>
+                        <p className="text-white font-semibold">
+                          {nearOneDetails.fullName || "-"}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          ID: {nearOneDetails.userId || "-"}
+                        </p>
                       </div>
                       {nearOneDetails.relation && (
                         <div>
                           <p className="text-gray-400 text-sm mb-1">Relation</p>
-                          <p className="text-white font-semibold">{nearOneDetails.relation}</p>
+                          <p className="text-white font-semibold">
+                            {nearOneDetails.relation}
+                          </p>
                         </div>
                       )}
                       {nearOneDetails.location && (
                         <div>
                           <p className="text-gray-400 text-sm mb-1">Location</p>
-                          <p className="text-white font-semibold">{nearOneDetails.location}</p>
+                          <p className="text-white font-semibold">
+                            {nearOneDetails.location}
+                          </p>
                         </div>
                       )}
                     </>
@@ -128,18 +142,24 @@ const GiftPayment = () => {
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Impact</p>
                     <p className="text-gray-300 text-sm leading-relaxed">
-                      Your gift powers scholarships, lab upgrades, and mentorship pods for learners building Digital AELA centres worldwide.
+                      Your gift powers scholarships, lab upgrades, and
+                      mentorship pods for learners building Digital AELA centres
+                      worldwide.
                     </p>
                   </div>
                 </div>
                 <div className="border-t border-gray-700 pt-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Quantity</span>
-                    <span className="text-white font-semibold">× {quantity}</span>
+                    <span className="text-white font-semibold">
+                      × {quantity}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Gift Amount</span>
-                    <span className="text-white font-semibold">₹{giftAmount}</span>
+                    <span className="text-white font-semibold">
+                      ₹{giftAmount}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Processing Fee</span>
@@ -147,7 +167,9 @@ const GiftPayment = () => {
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
-                    <span className="text-2xl font-bold text-[#D4AF37] font-display">₹{totalAmount}</span>
+                    <span className="text-2xl font-bold text-[#D4AF37] font-display">
+                      ₹{totalAmount}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -162,15 +184,21 @@ const GiftPayment = () => {
               <div className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20">
                 <div className="flex items-center gap-3 mb-6">
                   <FaLock className="w-5 h-5 text-[#D4AF37]" />
-                  <h2 className="text-2xl font-bold text-white font-display">Secure Checkout</h2>
+                  <h2 className="text-2xl font-bold text-white font-display">
+                    Secure Checkout
+                  </h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-4 font-display">Gifter Information</h3>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">
+                      Gifter Information
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Full Name *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Full Name *
+                        </label>
                         <input
                           type="text"
                           name="fullName"
@@ -181,7 +209,9 @@ const GiftPayment = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Email *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Email *
+                        </label>
                         <input
                           type="email"
                           name="email"
@@ -192,7 +222,9 @@ const GiftPayment = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Phone *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Phone *
+                        </label>
                         <input
                           type="tel"
                           name="phone"
@@ -203,7 +235,9 @@ const GiftPayment = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Gift Amount (₹) *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Gift Amount (₹) *
+                        </label>
                         <input
                           type="number"
                           name="amount"
@@ -215,7 +249,9 @@ const GiftPayment = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Quantity *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Quantity *
+                        </label>
                         <input
                           type="number"
                           name="quantity"
@@ -230,7 +266,9 @@ const GiftPayment = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-4 font-display">Additional Message (optional)</h3>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">
+                      Additional Message (optional)
+                    </h3>
                     <textarea
                       name="message"
                       rows={4}
@@ -242,7 +280,9 @@ const GiftPayment = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-4 font-display">Payment Method</h3>
+                    <h3 className="text-lg font-bold text-white mb-4 font-display">
+                      Payment Method
+                    </h3>
                     <div className="space-y-3">
                       <label className="flex items-center gap-3 p-4 bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg cursor-pointer hover:border-[#D4AF37] transition-colors">
                         <input
@@ -254,7 +294,9 @@ const GiftPayment = () => {
                           className="w-4 h-4 text-[#D4AF37]"
                         />
                         <FaCreditCard className="w-5 h-5 text-[#D4AF37]" />
-                        <span className="text-white font-semibold">Credit/Debit Card</span>
+                        <span className="text-white font-semibold">
+                          Credit/Debit Card
+                        </span>
                       </label>
                       <label className="flex items-center gap-3 p-4 bg-[#0a0a0a] border border-[#D4AF37]/30 rounded-lg cursor-pointer hover:border-[#D4AF37] transition-colors">
                         <input
@@ -276,7 +318,9 @@ const GiftPayment = () => {
                           onChange={handleInputChange}
                           className="w-4 h-4 text-[#D4AF37]"
                         />
-                        <span className="text-white font-semibold">Net Banking</span>
+                        <span className="text-white font-semibold">
+                          Net Banking
+                        </span>
                       </label>
                     </div>
                   </div>
@@ -303,4 +347,3 @@ const GiftPayment = () => {
 };
 
 export default GiftPayment;
-

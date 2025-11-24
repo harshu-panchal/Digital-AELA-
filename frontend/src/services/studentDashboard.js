@@ -35,7 +35,7 @@ const defaultDashboard = {
       progress: 68,
       nextSession: "Tomorrow · 19:00 GST",
       access: "Continuing cohort",
-      route: "/learn-earn/courses/public-speaking-accelerator",
+      route: "/student/courses/course-public-speaking",
     },
     {
       id: "course-ielts",
@@ -44,7 +44,7 @@ const defaultDashboard = {
       progress: 42,
       nextSession: "Friday · 17:30 GST",
       access: "Live session",
-      route: "/learn-earn/courses/ielts-band-8",
+      route: "/student/courses/course-ielts",
     },
     {
       id: "course-storytelling",
@@ -53,7 +53,7 @@ const defaultDashboard = {
       progress: 15,
       nextSession: "Saturday · 12:00 GST",
       access: "Self-paced module unlocked",
-      route: "/learn-earn/courses/corporate-storytelling",
+      route: "/student/courses/course-storytelling",
     },
   ],
   learnEarnProgress: {

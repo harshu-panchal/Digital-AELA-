@@ -267,6 +267,40 @@ export const createLiveRoom = async (req, res, next) => {
       createdAt: populatedRoom.createdAt,
     };
 
+    // Create notifications for all students when a new live room is created
+    try {
+      const User = (await import("../models/User.js")).default;
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all active students
+      const students = await User.find({ role: "student", isActive: true })
+        .select("_id")
+        .lean();
+      
+      if (students.length > 0) {
+        const studentIds = students.map((s) => s._id);
+        const roomTitle = populatedRoom.title || populatedRoom.topic;
+        const roomType = type === "debate" ? "debate" : "live room";
+        
+        await createBulkNotifications(
+          studentIds,
+          `New ${roomType.charAt(0).toUpperCase() + roomType.slice(1)} Created`,
+          `${populatedRoom.host?.fullName || "A user"} has created a new ${roomType}: "${roomTitle}"`,
+          "live_room",
+          {
+            roomId: room._id.toString(),
+            roomType: type,
+            hostId: userId,
+          },
+          `/learn-earn/live-debate-room?roomId=${room._id}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[LiveRoom] Error creating notifications:", notifError);
+      // Don't fail room creation if notification fails
+    }
+
     return res.status(201).json({ room: formattedRoom });
   } catch (error) {
     return next(error);

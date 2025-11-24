@@ -1,104 +1,65 @@
-import { useMemo, useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
-import { FaTrophy } from "react-icons/fa";
+import { FaTrophy, FaSpinner } from "react-icons/fa";
 import { HiOutlineArrowLeft, HiOutlineMagnifyingGlass } from "react-icons/hi2";
-import { useUser } from "../../../src/contexts/UserContext";
 import { useNavigate } from "react-router-dom";
+import { fetchEnhancedLeaderboard } from "../../../src/services/api/learnEarn";
+import { toast } from "react-toastify";
 
 const FullLeaderboard = () => {
-  const {
-    followers,
-    following,
-    refreshSocialStats,
-  } = useUser();
-
   const navigate = useNavigate();
-  const hasRefreshedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("coins"); // "coins" or "rating"
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Refresh social stats once when component mounts
+  // Load leaderboard data from backend
   useEffect(() => {
-    if (refreshSocialStats && !hasRefreshedRef.current) {
-      hasRefreshedRef.current = true;
-      refreshSocialStats();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Listen for coin earning events to refresh leaderboard
-  useEffect(() => {
-    const handleCoinEarned = () => {
-      if (refreshSocialStats) {
-        refreshSocialStats();
-      }
-    };
-
-    window.addEventListener("quizCompleted", handleCoinEarned);
-    window.addEventListener("coinsEarned", handleCoinEarned);
-    window.addEventListener("transactionCompleted", handleCoinEarned);
-
-    return () => {
-      window.removeEventListener("quizCompleted", handleCoinEarned);
-      window.removeEventListener("coinsEarned", handleCoinEarned);
-      window.removeEventListener("transactionCompleted", handleCoinEarned);
-    };
-  }, [refreshSocialStats]);
-
-  // Combine followers and following lists, removing duplicates and preserving totalEarned
-  const combinedFollowersFollowing = useMemo(() => {
-    const followersMap = new Map();
-    
-    // Add followers first, preserving totalEarned
-    followers.forEach((follower) => {
-      const id = follower.id || follower.userId;
-      if (id) {
-        followersMap.set(id, { 
-          ...follower, 
-          relationshipType: "follower",
-          totalEarned: follower.totalEarned || 0
+    const loadLeaderboard = async () => {
+      setLoading(true);
+      try {
+        const type = sortBy === "coins" ? "coins" : sortBy === "rating" ? "rating" : "coins";
+        const response = await fetchEnhancedLeaderboard({
+          type,
+          period: "all",
+          limit: 1000, // Get a large number to show all users
         });
-      }
-    });
-    
-    // Add following, preserving followers if they already exist (mutual)
-    following.forEach((followedUser) => {
-      const id = followedUser.id || followedUser.userId;
-      if (id) {
-        const existing = followersMap.get(id);
-        if (existing) {
-          // This is a mutual connection - preserve the higher totalEarned
-          const maxEarned = Math.max(
-            existing.totalEarned || 0,
-            followedUser.totalEarned || 0
-          );
-          followersMap.set(id, { 
-            ...existing, 
-            ...followedUser,
-            relationshipType: "mutual",
-            totalEarned: maxEarned
-          });
+
+        if (response?.leaderboard) {
+          // Map backend data to frontend format
+          const mappedData = response.leaderboard.map((user) => ({
+            id: user.userId || user.id,
+            userId: user.userId || user.id,
+            name: user.name || "Unknown User",
+            avatar: user.avatar || `https://i.pravatar.cc/150?img=${(user.userId || user.id)?.slice(-2) || "0"}`,
+            totalEarned: user.totalEarned || user.totalCoins || 0,
+            rating: user.rating || user.avgScore || 0,
+            rank: user.rank || 0,
+            streak: user.streak || 0,
+            attempts: user.attempts || 0,
+            ratingCount: user.ratingCount || 0,
+          }));
+
+          setLeaderboardData(mappedData);
         } else {
-          followersMap.set(id, { 
-            ...followedUser, 
-            relationshipType: "following",
-            totalEarned: followedUser.totalEarned || 0
-          });
+          setLeaderboardData([]);
         }
+      } catch (error) {
+        console.error("Failed to load leaderboard:", error);
+        toast.error("Failed to load leaderboard. Please try again.");
+        setLeaderboardData([]);
+      } finally {
+        setLoading(false);
       }
-    });
-    
-    return Array.from(followersMap.values());
-  }, [followers, following]);
+    };
+
+    loadLeaderboard();
+  }, [sortBy]); // Reload when sort changes
 
   // Filter and sort leaderboard
   const sortedLeaderboard = useMemo(() => {
-    let filtered = [...combinedFollowersFollowing].filter((user) => {
-      if (user.totalEarned === undefined || user.totalEarned === null) {
-        return false;
-      }
-
+    let filtered = [...leaderboardData].filter((user) => {
       // Filter by search query
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -112,7 +73,7 @@ const FullLeaderboard = () => {
       return true;
     });
 
-    // Sort by selected criteria
+    // Sort by selected criteria (backend already sorts, but we re-sort for client-side filtering)
     filtered.sort((a, b) => {
       if (sortBy === "coins") {
         const aEarned = a.totalEarned || 0;
@@ -127,7 +88,7 @@ const FullLeaderboard = () => {
     });
 
     return filtered;
-  }, [combinedFollowersFollowing, searchQuery, sortBy]);
+  }, [leaderboardData, searchQuery, sortBy]);
 
   const getRankIcon = (index) => {
     if (index === 0) return "🥇";
@@ -197,13 +158,17 @@ const FullLeaderboard = () => {
       {/* Leaderboard List */}
       <div className="rounded-3xl border border-white/5 bg-gradient-to-br from-[#111] via-[#090909] to-black p-4 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-            {sortedLeaderboard.length} {sortedLeaderboard.length === 1 ? "Member" : "Members"}
-          </p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
+              {loading ? "Loading..." : `${sortedLeaderboard.length} ${sortedLeaderboard.length === 1 ? "Member" : "Members"}`}
+            </p>
           <FaTrophy className="h-5 w-5 text-[#D4AF37]" />
         </div>
 
-        {sortedLeaderboard.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <FaSpinner className="h-8 w-8 animate-spin text-[#D4AF37]" />
+          </div>
+        ) : sortedLeaderboard.length === 0 ? (
           <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-6 py-12 text-center">
             <FaTrophy className="mx-auto mb-4 h-12 w-12 text-gray-600" />
             <p className="text-sm font-medium text-gray-300">
@@ -214,7 +179,7 @@ const FullLeaderboard = () => {
             <p className="mt-2 text-xs text-gray-500">
               {searchQuery.trim()
                 ? "Try adjusting your search criteria"
-                : "Follow users to see their earnings!"}
+                : "No users found on the platform yet."}
             </p>
           </div>
         ) : (
@@ -249,16 +214,9 @@ const FullLeaderboard = () => {
 
                     {/* User Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-white truncate sm:text-base">
-                          {user.name || "Unknown User"}
-                        </p>
-                        {user.relationshipType === "mutual" && (
-                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                            Mutual
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm font-semibold text-white truncate sm:text-base">
+                        {user.name || "Unknown User"}
+                      </p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
                         <span className="truncate">{userId}</span>
                         <span className="text-gray-600">•</span>

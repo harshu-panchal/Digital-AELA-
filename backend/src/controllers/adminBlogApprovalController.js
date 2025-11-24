@@ -160,26 +160,33 @@ export const approveBlog = async (req, res, next) => {
 
     // Create notification for the blog author
     if (blog.author && blog.author._id) {
-      const notificationTitle = action === "approve" 
-        ? "Blog Approved" 
-        : "Blog Rejected";
-      
-      const notificationDescription = action === "approve"
-        ? `Your blog "${blog.title}" has been approved and is now live.`
-        : `Your blog "${blog.title}" has been rejected.${blog.rejectionReason ? ` Reason: ${blog.rejectionReason}` : ""}`;
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        const notificationTitle = action === "approve" 
+          ? "Blog Approved" 
+          : "Blog Rejected";
+        
+        const notificationDescription = action === "approve"
+          ? `Your blog "${blog.title}" has been approved and is now live.`
+          : `Your blog "${blog.title}" has been rejected.${blog.rejectionReason ? ` Reason: ${blog.rejectionReason}` : ""}`;
 
-      await Notification.create({
-        user: blog.author._id,
-        title: notificationTitle,
-        description: notificationDescription,
-        type: "system",
-        actionUrl: `/blogs/${blog._id}`,
-        metadata: {
-          blogId: blog._id.toString(),
-          action: action,
-          rejectionReason: blog.rejectionReason || null,
-        },
-      });
+        await createNotification(
+          blog.author._id,
+          notificationTitle,
+          notificationDescription,
+          "approval",
+          {
+            blogId: blog._id.toString(),
+            action: action,
+            rejectionReason: blog.rejectionReason || null,
+          },
+          `/blogs/${blog._id}`
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[BlogApproval] Error creating notification:", notifError);
+        // Don't fail approval if notification fails
+      }
     }
 
     return res.json({

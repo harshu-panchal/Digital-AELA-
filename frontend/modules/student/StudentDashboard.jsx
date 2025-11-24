@@ -45,8 +45,8 @@ const StudentDashboard = () => {
   const { user: authUser, tokens } = useAuth();
   const { aelaPoints, refreshPoints } = usePoints(); // Get live coin balance
 
-  const [dashboardData, setDashboardData] = useState(() => getStudentDashboard());
-  const [isLoading, setIsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [widgetsData, setWidgetsData] = useState({
     recentActivity: [],
@@ -65,8 +65,8 @@ const StudentDashboard = () => {
   const loadDashboard = useCallback(async () => {
     // Only fetch from backend if user is authenticated with backend tokens
     if (!authUser || authUser.role !== "student" || !tokens?.accessToken) {
-      // Fall back to mock data
-      setDashboardData(getStudentDashboard());
+      setIsLoading(false);
+      setDashboardData(null);
       return;
     }
 
@@ -74,13 +74,11 @@ const StudentDashboard = () => {
     setLoadError(null);
     try {
       const backendData = await fetchStudentDashboard();
-      // Use backend data for all sections, fall back to mock data only if backend data is missing
-      const mockData = getStudentDashboard();
+      // Use backend data directly - no merging with mock data
       setDashboardData({
-        ...mockData,
-        journeyStats: backendData.journeyStats || mockData.journeyStats,
-        ongoingCourses: backendData.ongoingCourses || mockData.ongoingCourses,
-        learnEarnProgress: backendData.learnEarnProgress || mockData.learnEarnProgress,
+        journeyStats: backendData.journeyStats || [],
+        ongoingCourses: backendData.ongoingCourses || [],
+        learnEarnProgress: backendData.learnEarnProgress || {},
       });
       // Clear any previous errors on successful load
       setLoadError(null);
@@ -96,13 +94,12 @@ const StudentDashboard = () => {
       
       setLoadError(`${errorCode}: ${errorMessage}`);
       
-      // Fall back to mock data but show clear warning
-      const mockData = getStudentDashboard();
-      setDashboardData(mockData);
+      // Don't set mock data - keep it null and show error state
+      setDashboardData(null);
       
       // Show detailed error toast
       toast.error(
-        `Dashboard data unavailable: ${errorMessage}. Showing placeholder data.`,
+        `Dashboard data unavailable: ${errorMessage}`,
         {
           icon: "⚠️",
           autoClose: 5000,
@@ -243,10 +240,13 @@ const StudentDashboard = () => {
     []
   );
 
-  if (!dashboardData) {
+  if (isLoading || !dashboardData) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-white">
-        <p className="text-sm text-slate-300/80">Loading your dashboard...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#020409] text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto mb-4"></div>
+          <p className="text-sm text-slate-300/80">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }

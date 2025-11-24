@@ -147,6 +147,42 @@ export const createRedemptionRequest = async (req, res, next) => {
     // Populate reward details
     await redemptionRequest.populate("reward", "name description category cost icon");
 
+    // Create notification for super-admin when redemption request is created
+    try {
+      const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+      
+      // Get all super-admin users
+      const superAdmins = await User.find({ role: "super-admin", isActive: true })
+        .select("_id")
+        .lean();
+      
+      if (superAdmins.length > 0) {
+        const adminIds = superAdmins.map((admin) => admin._id);
+        const rewardName = reward.name || "reward";
+        const user = await User.findById(userId).select("fullName email").lean();
+        const userName = user?.fullName || "A user";
+        
+        await createBulkNotifications(
+          adminIds,
+          "New Redemption Request",
+          `${userName} has requested to redeem "${rewardName}" for ${reward.cost} coins.`,
+          "redemption",
+          {
+            redemptionRequestId: redemptionRequest._id.toString(),
+            userId: userId,
+            rewardId: rewardId,
+            rewardName: rewardName,
+            coinsRequested: reward.cost,
+          },
+          `/super-admin/redemption-requests/${redemptionRequest._id}`
+        );
+      }
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[RedemptionRequest] Error creating notification:", notifError);
+      // Don't fail redemption request creation if notification fails
+    }
+
     return res.status(201).json({
       message: "Redemption request created successfully",
       redemptionRequest,

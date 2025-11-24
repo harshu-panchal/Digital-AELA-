@@ -15,6 +15,10 @@ import {
 } from "react-icons/hi2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { useSocket } from "../../../src/hooks/useSocket";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { fetchEnhancedLeaderboard } from "../../../src/services/api/learnEarn";
+import { getUserRatingStats } from "../../../src/services/api/userRating";
+import { FaSpinner } from "react-icons/fa";
 
 const DashboardOverview = () => {
   const {
@@ -32,8 +36,27 @@ const DashboardOverview = () => {
   } = useUser();
 
   const { socket, isConnected } = useSocket();
+  const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState("messages");
   const hasRefreshedRef = useRef(false);
+  const [leaderboardSnapshot, setLeaderboardSnapshot] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const [ratingStats, setRatingStats] = useState(null);
+
+  // Provide safe defaults to prevent errors during initial load
+  const safeProfile = profile || {
+    id: "",
+    name: "Loading...",
+    avatar: "",
+    rating: 0,
+  };
+  const safeTotals = totals || { current: 0, earned: 0, redeemed: 0 };
+  const safeFollowers = followers || [];
+  const safeFollowing = following || [];
+  const safeMessages = messages || [];
+  const safeNotifications = notifications || [];
+  const safeLiveDebates = liveDebates || [];
+  const safeOpenRooms = openRooms || [];
 
   // Refresh social stats once when component mounts (only once, not on every render)
   useEffect(() => {
@@ -44,6 +67,72 @@ const DashboardOverview = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
 
+  // Load rating stats for current user
+  useEffect(() => {
+    const loadRatingStats = async () => {
+      if (!authUser?.id) return;
+
+      try {
+        const statsData = await getUserRatingStats(authUser.id);
+        // Set ratingStats even if averageRating is 0 (means no ratings yet)
+        // The API returns { averageRating, totalRatings, tagStats, ratingDistribution }
+        if (statsData) {
+          setRatingStats(statsData);
+        } else {
+          setRatingStats(null);
+        }
+      } catch (error) {
+        console.warn("Failed to load rating stats:", error);
+        // Set to null to indicate loading failed
+        setRatingStats(null);
+      }
+    };
+
+    loadRatingStats();
+  }, [authUser]);
+
+  // Load leaderboard snapshot from backend
+  useEffect(() => {
+    const loadLeaderboardSnapshot = async () => {
+      setLoadingLeaderboard(true);
+      try {
+        const response = await fetchEnhancedLeaderboard({
+          type: "coins",
+          period: "all",
+          limit: 3, // Only top 3 for snapshot
+        });
+
+        if (response?.leaderboard) {
+          // Map backend data to frontend format
+          const mappedData = response.leaderboard.map((user) => ({
+            id: user.userId || user.id,
+            userId: user.userId || user.id,
+            name: user.name || "Unknown User",
+            avatar:
+              user.avatar ||
+              `https://i.pravatar.cc/150?img=${
+                (user.userId || user.id)?.slice(-2) || "0"
+              }`,
+            totalEarned: user.totalEarned || user.totalCoins || 0,
+            rating: user.rating || user.avgScore || 0,
+            rank: user.rank || 0,
+          }));
+
+          setLeaderboardSnapshot(mappedData);
+        } else {
+          setLeaderboardSnapshot([]);
+        }
+      } catch (error) {
+        console.error("Failed to load leaderboard snapshot:", error);
+        setLeaderboardSnapshot([]);
+      } finally {
+        setLoadingLeaderboard(false);
+      }
+    };
+
+    loadLeaderboardSnapshot();
+  }, []);
+
   // Listen for coin earning events to refresh leaderboard
   useEffect(() => {
     const handleCoinEarned = () => {
@@ -51,6 +140,37 @@ const DashboardOverview = () => {
       if (refreshSocialStats) {
         refreshSocialStats();
       }
+      // Reload leaderboard snapshot
+      const loadLeaderboardSnapshot = async () => {
+        try {
+          const response = await fetchEnhancedLeaderboard({
+            type: "coins",
+            period: "all",
+            limit: 3,
+          });
+
+          if (response?.leaderboard) {
+            const mappedData = response.leaderboard.map((user) => ({
+              id: user.userId || user.id,
+              userId: user.userId || user.id,
+              name: user.name || "Unknown User",
+              avatar:
+                user.avatar ||
+                `https://i.pravatar.cc/150?img=${
+                  (user.userId || user.id)?.slice(-2) || "0"
+                }`,
+              totalEarned: user.totalEarned || user.totalCoins || 0,
+              rating: user.rating || user.avgScore || 0,
+              rank: user.rank || 0,
+            }));
+
+            setLeaderboardSnapshot(mappedData);
+          }
+        } catch (error) {
+          console.error("Failed to refresh leaderboard snapshot:", error);
+        }
+      };
+      loadLeaderboardSnapshot();
     };
 
     // Listen for quiz completion (coins earned)
@@ -106,7 +226,7 @@ const DashboardOverview = () => {
 
   const debatesWithRealTime = useMemo(() => {
     const now = currentTime;
-    return liveDebates.map((room) => {
+    return safeLiveDebates.map((room) => {
       // If scheduledStart is available, calculate from it in real-time
       if (room.scheduledStart) {
         const scheduledStart = new Date(room.scheduledStart);
@@ -117,12 +237,12 @@ const DashboardOverview = () => {
       // Otherwise use the startInMinutes from backend (will be updated on next refresh)
       return room;
     });
-  }, [liveDebates, currentTime]);
+  }, [safeLiveDebates, currentTime]);
 
   // Calculate dynamic counts from backend data
   const unreadMessages = useMemo(
-    () => messages.reduce((sum, chat) => sum + (chat.unread || 0), 0),
-    [messages]
+    () => safeMessages.reduce((sum, chat) => sum + (chat?.unread || 0), 0),
+    [safeMessages]
   );
 
   // Combine followers and following lists, removing duplicates and preserving totalEarned
@@ -130,7 +250,7 @@ const DashboardOverview = () => {
     const followersMap = new Map();
 
     // Add followers first, preserving totalEarned
-    followers.forEach((follower) => {
+    safeFollowers.forEach((follower) => {
       const id = follower.id || follower.userId;
       if (id) {
         followersMap.set(id, {
@@ -143,7 +263,7 @@ const DashboardOverview = () => {
 
     // Add following, preserving followers if they already exist (mutual)
     // If both exist, preserve the higher totalEarned value
-    following.forEach((followedUser) => {
+    safeFollowing.forEach((followedUser) => {
       const id = followedUser.id || followedUser.userId;
       if (id) {
         const existing = followersMap.get(id);
@@ -171,24 +291,32 @@ const DashboardOverview = () => {
     });
 
     return Array.from(followersMap.values());
-  }, [followers, following]);
+  }, [safeFollowers, safeFollowing]);
 
   const followerCount = useMemo(
     () => combinedFollowersFollowing.length,
     [combinedFollowersFollowing]
   );
   // Get actual follower and following counts from arrays
-  const actualFollowersCount = useMemo(() => followers.length, [followers]);
-  const actualFollowingCount = useMemo(() => following.length, [following]);
+  const actualFollowersCount = useMemo(
+    () => safeFollowers.length,
+    [safeFollowers]
+  );
+  const actualFollowingCount = useMemo(
+    () => safeFollowing.length,
+    [safeFollowing]
+  );
   const notificationCount = useMemo(
-    () => notifications.filter((n) => n.type !== "archived").length,
-    [notifications]
+    () =>
+      safeNotifications.filter((n) => !n?.isRead && n?.type !== "archived")
+        .length,
+    [safeNotifications]
   );
   const liveRoomCount = useMemo(
-    () => liveDebates.length + openRooms.length,
-    [liveDebates, openRooms]
+    () => safeLiveDebates.length + safeOpenRooms.length,
+    [safeLiveDebates, safeOpenRooms]
   );
-  const totalCoins = totals.current;
+  const totalCoins = safeTotals.current;
 
   const tabConfig = useMemo(
     () => [
@@ -235,7 +363,7 @@ const DashboardOverview = () => {
   const tabRenderer = {
     messages: (
       <div className="auto-grid-sm">
-        {messages.map((chat) => (
+        {safeMessages.map((chat) => (
           <Motion.div
             key={chat.id}
             initial={{ opacity: 0, y: 12 }}
@@ -355,22 +483,40 @@ const DashboardOverview = () => {
     ),
     notifications: (
       <div className="space-y-3">
-        {notifications.map((notification) => (
+        {safeNotifications.map((notification) => (
           <Motion.div
             key={notification.id}
             initial={{ opacity: 0, x: -18 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2 }}
             className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-4">
-            <p className="text-sm font-semibold text-white">
-              {notification.title}
-            </p>
-            <p className="mt-1 text-xs text-gray-400">
-              {notification.description}
-            </p>
-            <p className="mt-2 text-[11px] uppercase tracking-wide text-[#D4AF37]/80">
-              {notification.time}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-white">
+                  {notification.title}
+                </p>
+                {notification.description && (
+                  <p className="mt-1 text-xs text-gray-400">
+                    {notification.description}
+                  </p>
+                )}
+                <p className="mt-2 text-[11px] uppercase tracking-wide text-[#D4AF37]/80">
+                  {notification.time || notification.createdAt
+                    ? new Date(
+                        notification.createdAt || notification.time
+                      ).toLocaleDateString([], {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Just now"}
+                </p>
+              </div>
+              {!notification.isRead && (
+                <span className="h-2 w-2 rounded-full bg-[#D4AF37] flex-shrink-0 mt-1" />
+              )}
+            </div>
           </Motion.div>
         ))}
       </div>
@@ -386,20 +532,20 @@ const DashboardOverview = () => {
             Balance
           </p>
           <p className="mt-3 text-3xl font-bold text-white">
-            {totals.current.toLocaleString()}{" "}
+            {safeTotals.current.toLocaleString()}{" "}
             <span className="text-sm text-[#D4AF37]">AELA</span>
           </p>
           <div className="mt-6 space-y-3 text-sm text-gray-300">
             <div className="flex justify-between">
               <span>Total earned</span>
               <span className="text-emerald-300">
-                +{totals.earned.toLocaleString()}
+                +{safeTotals.earned.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Total redeemed</span>
               <span className="text-rose-300">
-                -{totals.redeemed.toLocaleString()}
+                -{safeTotals.redeemed.toLocaleString()}
               </span>
             </div>
           </div>
@@ -460,17 +606,9 @@ const DashboardOverview = () => {
                 : "Starting soon"}{" "}
               · Hosts {room.speakers?.join(" & ") || "TBD"}
             </p>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm font-semibold">
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-emerald-200">
-                For · {room.forVotes || 0}
-              </div>
-              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-200">
-                Against · {room.againstVotes || 0}
-              </div>
-            </div>
           </Motion.div>
         ))}
-        {openRooms.map((room) => (
+        {safeOpenRooms.map((room) => (
           <Motion.div
             key={room.id}
             initial={{ opacity: 0, y: 16 }}
@@ -513,7 +651,7 @@ const DashboardOverview = () => {
                 Good to see you
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
-                {profile.name}
+                {safeProfile.name}
               </h1>
               <p className="mt-2 max-w-md text-sm text-gray-300">
                 Keep the momentum going — your learners are engaging 14% more
@@ -553,7 +691,11 @@ const DashboardOverview = () => {
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
               <p className="text-[#D4AF37]">Rating</p>
               <p className="mt-1 text-lg font-semibold text-white">
-                ⭐ {profile.rating.toFixed(1)}
+                ⭐{" "}
+                {ratingStats !== null &&
+                ratingStats?.averageRating !== undefined
+                  ? ratingStats.averageRating.toFixed(1)
+                  : (safeProfile.rating || 0).toFixed(1)}
               </p>
             </div>
           </div>
@@ -568,53 +710,39 @@ const DashboardOverview = () => {
             Leaderboard snapshot
           </p>
           <div className="mt-4 space-y-3">
-            {(() => {
-              // Filter out users with no totalEarned data (or 0) for better sorting
-              // Sort combinedFollowersFollowing by totalEarned (descending)
-              const sortedLeaderboard = [...combinedFollowersFollowing]
-                .filter(
-                  (user) =>
-                    user.totalEarned !== undefined && user.totalEarned !== null
-                )
-                .sort((a, b) => {
-                  const aEarned = a.totalEarned || 0;
-                  const bEarned = b.totalEarned || 0;
-                  return bEarned - aEarned; // Descending order
-                })
-                .slice(0, 3); // Top 3
-
-              return sortedLeaderboard.length === 0 ? (
-                <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3 text-center text-sm text-gray-400">
-                  {combinedFollowersFollowing.length === 0
-                    ? "No leaderboard data available yet. Follow users to see their earnings!"
-                    : "Loading earnings data..."}
-                </div>
-              ) : (
-                sortedLeaderboard.map((user, index) => {
-                  const totalEarned = user.totalEarned || 0;
-                  return (
-                    <div
-                      key={user.id || user.userId}
-                      className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3">
-                      <div className="text-xl text-[#D4AF37]">
-                        {["🥇", "🥈", "🥉"][index]}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-white">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Earned {totalEarned.toLocaleString()} coins
-                        </p>
-                      </div>
-                      <p className="text-xs text-[#D4AF37]">
-                        ⭐ {(user.rating || 0).toFixed(1)}
+            {loadingLeaderboard ? (
+              <div className="flex items-center justify-center py-6">
+                <FaSpinner className="h-5 w-5 animate-spin text-[#D4AF37]" />
+              </div>
+            ) : leaderboardSnapshot.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3 text-center text-sm text-gray-400">
+                No leaderboard data available yet.
+              </div>
+            ) : (
+              leaderboardSnapshot.map((user, index) => {
+                const totalEarned = user.totalEarned || 0;
+                return (
+                  <div
+                    key={user.id || user.userId}
+                    className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3">
+                    <div className="text-xl text-[#D4AF37]">
+                      {["🥇", "🥈", "🥉"][index]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Earned {totalEarned.toLocaleString()} coins
                       </p>
                     </div>
-                  );
-                })
-              );
-            })()}
+                    <p className="text-xs text-[#D4AF37]">
+                      ⭐ {(user.rating || 0).toFixed(1)}
+                    </p>
+                  </div>
+                );
+              })
+            )}
           </div>
           <Link
             to="/learn-earn/leaderboard"

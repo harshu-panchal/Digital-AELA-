@@ -1,30 +1,39 @@
 import { API_BASE_URL } from "../config/api.js";
+import { checkFormSubmission } from "./api/crm";
+import { getStoredTokens } from "./api/baseClient";
 
-const STORAGE_KEY = "aela.form.submissions";
-
-const storeSubmission = (formId, email) => {
-  if (typeof window === "undefined") return;
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const submissions = stored ? JSON.parse(stored) : {};
-    submissions[`${formId}:${email.toLowerCase().trim()}`] = {
-      submittedAt: new Date().toISOString(),
-    };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
-  } catch {
-    // Ignore storage errors
-  }
-};
+// Email-based localStorage checks removed - now using userId only
 
 /**
  * Submit Join Us application with file uploads
  * @param {string} program - Application type: "teacher" or "influencer"
  * @param {Object} payload - Form data including file objects
+ * @param {string} userId - Required user ID (must be authenticated)
  * @returns {Promise<Object>} - Submission response
  */
-export const submitJoinUsLead = async (program, payload) => {
+export const submitJoinUsLead = async (program, payload, userId = null) => {
+  if (!userId) {
+    throw new Error("Authentication required to submit this application");
+  }
   if (!["teacher", "influencer"].includes(program)) {
     throw new Error("Invalid program type. Must be 'teacher' or 'influencer'");
+  }
+
+  // Check for duplicate submission before proceeding (by userId only)
+  if (userId) {
+    try {
+      const checkResult = await checkFormSubmission(program, userId);
+      if (checkResult?.submitted) {
+        throw new Error("You have already submitted this application. Our team will review it and get in touch soon.");
+      }
+    } catch (error) {
+      // If it's our duplicate error, rethrow it
+      if (error.message.includes("already submitted")) {
+        throw error;
+      }
+      // Otherwise, continue with submission (backend will catch duplicates)
+      console.warn("Failed to check submission status:", error);
+    }
   }
 
   // Create FormData for multipart/form-data submission
@@ -57,9 +66,16 @@ export const submitJoinUsLead = async (program, payload) => {
     }
   }
 
-  // Submit to backend API
+  // Submit to backend API (include auth token if available)
+  const tokens = getStoredTokens();
+  const headers = {};
+  if (tokens?.accessToken) {
+    headers.Authorization = `Bearer ${tokens.accessToken}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}/join-us/submit`, {
     method: "POST",
+    headers,
     body: formData,
     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
@@ -67,13 +83,12 @@ export const submitJoinUsLead = async (program, payload) => {
   const result = await response.json();
 
   if (!response.ok) {
+      // Handle duplicate submission error
+      if (response.status === 409 || result?.error?.code === "DUPLICATE_SUBMISSION") {
+        throw new Error(result?.error?.message || "You have already submitted this application. Our team will review it and get in touch soon.");
+      }
     const errorMessage = result?.error?.message || "Failed to submit application";
     throw new Error(errorMessage);
-  }
-
-  // Store submission in localStorage
-  if (payload.email) {
-    storeSubmission(program, payload.email);
   }
 
   return result;

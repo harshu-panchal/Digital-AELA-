@@ -53,8 +53,20 @@ const UserProfileView = () => {
         
         // Load profile and stats in parallel
         const [profileData, statsData] = await Promise.all([
-          fetchStudentProfile(userId).catch(() => null),
-          fetchPublicUserStats(userId).catch(() => null),
+          fetchStudentProfile(userId).catch((error) => {
+            // Only log non-404 errors (404 is expected if profile doesn't exist)
+            if (error?.status !== 404) {
+              console.warn("Failed to load profile:", error);
+            }
+            return null;
+          }),
+          fetchPublicUserStats(userId).catch((error) => {
+            // Only log non-404 errors (404 is expected if stats don't exist)
+            if (error?.status !== 404) {
+              console.warn("Failed to load user stats:", error);
+            }
+            return null;
+          }),
         ]);
 
         setProfile(profileData);
@@ -63,12 +75,19 @@ const UserProfileView = () => {
         // Load following status if user is authenticated
         if (authUser?.id && authUser.id !== userId) {
           try {
-            const followingData = await fetchFollowing();
+            const followingData = await fetchFollowing(authUser.id);
+            // The API returns { data: [...], meta: {...} }
+            const followingList = followingData?.data || [];
             const followingSet = new Set(
-              (followingData?.following || []).map((user) => user._id || user.id || user)
+              followingList.map((user) => {
+                // User objects have id, userId, or _id fields
+                return user.id || user.userId || user._id || user;
+              })
             );
-            setIsFollowing(followingSet.has(userId));
-            setFollowingStatus(new Map([[userId, followingSet.has(userId)]]));
+            // Check if the viewed user is in the following list
+            const isUserFollowed = followingSet.has(userId);
+            setIsFollowing(isUserFollowed);
+            setFollowingStatus(new Map([[userId, isUserFollowed]]));
           } catch (error) {
             // eslint-disable-next-line no-console
             console.warn("Failed to load following status:", error);

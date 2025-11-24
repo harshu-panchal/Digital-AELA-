@@ -447,6 +447,29 @@ export const approveCourse = async (req, res, next) => {
 
     await course.save();
 
+    // Create notification for course instructor (if exists)
+    if (course.instructor) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        await createNotification(
+          course.instructor,
+          action === "approve" ? "Course Approved" : "Course Rejected",
+          action === "approve"
+            ? `Your course "${course.title}" has been approved and is now published.`
+            : `Your course "${course.title}" has been rejected.`,
+          "approval",
+          {
+            courseId: course._id.toString(),
+            action: action,
+          },
+          `/teacher/courses/${course._id}`
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[CourseApproval] Error creating notification:", notifError);
+      }
+    }
+
     return res.json({
       course,
       message: `Course ${action === "approve" ? "approved" : "rejected"} successfully`,
@@ -512,6 +535,29 @@ export const approveEbook = async (req, res, next) => {
 
     await ebook.save();
 
+    // Create notification for ebook author (if exists)
+    if (ebook.createdBy) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        await createNotification(
+          ebook.createdBy,
+          action === "approve" ? "Ebook Approved" : "Ebook Rejected",
+          action === "approve"
+            ? `Your ebook "${ebook.title}" has been approved and is now public.`
+            : `Your ebook "${ebook.title}" has been rejected.`,
+          "approval",
+          {
+            ebookId: ebook._id.toString(),
+            action: action,
+          },
+          `/teacher/ebooks/${ebook._id}`
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[EbookApproval] Error creating notification:", notifError);
+      }
+    }
+
     return res.json({
       ebook,
       message: `Ebook ${action === "approve" ? "approved" : "rejected"} successfully`,
@@ -576,6 +622,29 @@ export const approveJob = async (req, res, next) => {
     }
 
     await job.save();
+
+    // Create notification for job poster (if exists)
+    if (job.postedBy) {
+      try {
+        const { createNotification } = await import("../utils/notificationHelper.js");
+        await createNotification(
+          job.postedBy,
+          action === "approve" ? "Job Post Approved" : "Job Post Rejected",
+          action === "approve"
+            ? `Your job post "${job.title}" has been approved and is now live.`
+            : `Your job post "${job.title}" has been rejected.`,
+          "approval",
+          {
+            jobId: job._id.toString(),
+            action: action,
+          },
+          `/jobs/${job._id}`
+        );
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JobApproval] Error creating notification:", notifError);
+      }
+    }
 
     return res.json({
       job,
@@ -650,6 +719,27 @@ export const approveTeacher = async (req, res, next) => {
 
     await user.save();
 
+    // Create notification for teacher
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      await createNotification(
+        userId,
+        action === "approve" ? "Teacher Application Approved" : "Teacher Application Rejected",
+        action === "approve"
+          ? "Your teacher application has been approved. You can now access the teacher dashboard."
+          : "Your teacher application has been rejected.",
+        "approval",
+        {
+          userId: userId,
+          action: action,
+        },
+        action === "approve" ? "/teacher/dashboard" : null
+      );
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[TeacherApproval] Error creating notification:", notifError);
+    }
+
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
       message: `Teacher ${action === "approve" ? "approved" : "rejected"} successfully`,
@@ -722,6 +812,27 @@ export const approveStudent = async (req, res, next) => {
     }
 
     await user.save();
+
+    // Create notification for student
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      await createNotification(
+        userId,
+        action === "approve" ? "Student Application Approved" : "Student Application Rejected",
+        action === "approve"
+          ? "Your student application has been approved. You can now access all student features."
+          : "Your student application has been rejected.",
+        "approval",
+        {
+          userId: userId,
+          action: action,
+        },
+        action === "approve" ? "/student/dashboard" : null
+      );
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[StudentApproval] Error creating notification:", notifError);
+    }
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),

@@ -133,24 +133,7 @@ const Books = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [books, setBooks] = useState(() => {
-    // In production, start with empty array; only use static books in development
-    if (!isDevelopment) {
-      // Try to load from sessionStorage first
-      try {
-        const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch (e) {
-        // Ignore storage errors
-      }
-      return [];
-    }
-    
-    // In development, use static books as fallback
+    // Try to load from sessionStorage first (cached data from previous visit)
     try {
       const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
       if (cached) {
@@ -162,9 +145,10 @@ const Books = () => {
     } catch (e) {
       // Ignore storage errors
     }
-    return staticBooks;
+    // Start with empty array - no dummy data
+    return [];
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Always fetch fresh data on mount to show newly approved books
@@ -195,11 +179,8 @@ const Books = () => {
             isbn: ebook._id,
           };
         });
-        // In production, only use API data; in development, fallback to static books
-        const finalBooks = ebooksFromApi.length > 0 
-          ? ebooksFromApi 
-          : (isDevelopment ? staticBooks : []);
-        setBooks(finalBooks);
+        // Use API data only - no fallback to static books
+        setBooks(ebooksFromApi);
         // Cache in sessionStorage for faster initial render on next visit
         try {
           sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(finalBooks));
@@ -231,20 +212,9 @@ const Books = () => {
           // Ignore storage errors
         }
         
-        // Final fallback: only use static books in development
-        if (isDevelopment) {
-          setBooks(staticBooks);
-          try {
-            sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(staticBooks));
-          } catch (e) {
-            // Ignore storage errors
-          }
-          toast.error("Failed to load books. Showing demo data.");
-        } else {
-          // In production, show empty state
-          setBooks([]);
-          toast.error("Failed to load books. Please check your connection and try again.");
-        }
+        // Show empty state on error - no dummy data
+        setBooks([]);
+        toast.error("Failed to load books. Please check your connection and try again.");
       } finally {
         setLoading(false);
       }

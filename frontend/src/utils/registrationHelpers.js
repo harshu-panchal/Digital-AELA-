@@ -16,7 +16,25 @@ export const isValidEmail = (email) =>
 export const isValidPhone = (phone) => {
   const value = safeString(phone);
   if (!value) return false;
-  return /^[+()\d\s-]{6,20}$/.test(value);
+  
+  // Remove all non-digit characters to check if we have enough digits
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  // Must have at least 6 digits and at most 15 digits (E.164 standard allows up to 15)
+  if (digitsOnly.length < 6 || digitsOnly.length > 15) {
+    return false;
+  }
+  
+  // Check that the value only contains valid phone characters
+  // Allowed: digits (0-9), spaces, plus sign (+), dashes (-), parentheses (), dots (.), slashes (/)
+  // Using explicit character class with - at the end to avoid range interpretation
+  // The + character in a character class is literal and doesn't need escaping
+  const validPhonePattern = /^[0-9\s+()./\-]+$/;
+  if (!validPhonePattern.test(value)) {
+    return false;
+  }
+  
+  return true;
 };
 
 export const validatePasswordPair = (
