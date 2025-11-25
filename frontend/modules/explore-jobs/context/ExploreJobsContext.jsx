@@ -45,6 +45,13 @@ export const ExploreJobsProvider = ({ children }) => {
     () => (job) => {
       const owner = job.owner || {};
       const stats = job.stats || {};
+      // Get avatar from owner metadata, recruiter profile, or fallback
+      const ownerAvatar = 
+        owner.metadata?.avatarUrl || 
+        owner.avatarUrl || 
+        (authUser?.id === owner._id || authUser?.id === owner.id ? authUser?.metadata?.avatarUrl : null) ||
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80";
+      
       return {
         id: job.id || job._id,
         backendId: job.id || job._id,
@@ -52,8 +59,7 @@ export const ExploreJobsProvider = ({ children }) => {
         authorType: "recruiter",
         authorUsername: CURRENT_RECRUITER_USERNAME,
         authorName: owner.fullName || "Recruiter",
-        authorAvatar:
-          "https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=900&q=80",
+        authorAvatar: ownerAvatar,
         title: job.title,
         company: job.company,
         location: job.location,
@@ -76,7 +82,7 @@ export const ExploreJobsProvider = ({ children }) => {
         },
       };
     },
-    []
+    [authUser]
   );
 
   // Fetch published jobs from backend

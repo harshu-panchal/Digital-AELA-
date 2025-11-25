@@ -22,7 +22,10 @@ export const listPublishedJobs = async (req, res, next) => {
 
     const [jobs, total] = await Promise.all([
       JobPost.find(query)
-        .populate("owner", "fullName email")
+        .populate({
+          path: "owner",
+          select: "fullName email metadata",
+        })
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(Number(pageSize)),
@@ -827,7 +830,10 @@ export const searchJobs = async (req, res, next) => {
 
     // Execute query
     const findQuery = JobPost.find(query)
-      .populate("owner", "fullName email")
+      .populate({
+        path: "owner",
+        select: "fullName email metadata",
+      })
       .sort(sort)
       .skip(skip)
       .limit(Number(pageSize));
