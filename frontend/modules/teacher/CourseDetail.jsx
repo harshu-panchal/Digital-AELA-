@@ -17,7 +17,7 @@ import {
   removeLessonFromModule,
   moveLessonWithinModule,
 } from "../../src/services/teacherCourses";
-import { getTeacherQuizzes } from "../../src/services/teacherQuizzes";
+import { getTeacherQuizzes, createTeacherQuiz } from "../../src/services/teacherQuizzes";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import VideoUpload from "./VideoUpload";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../src/services/courseVideos";
@@ -71,10 +71,20 @@ const CourseDetail = () => {
   const [isLessonSaving, setIsLessonSaving] = useState(false);
   const [quizForm, setQuizForm] = useState({
     title: "",
+    description: "",
     rewardCoins: "",
     questionsCount: "",
     availableUntil: "",
+    timeLimitMinutes: "",
   });
+  const [quizQuestions, setQuizQuestions] = useState([
+    {
+      prompt: "",
+      type: "single-choice",
+      options: ["", "", "", ""],
+      correctIndex: 0,
+    },
+  ]);
   const [isQuizSaving, setIsQuizSaving] = useState(false);
   const [quizLinkMode, setQuizLinkMode] = useState("new");
   const [selectedQuizId, setSelectedQuizId] = useState("");
@@ -340,6 +350,46 @@ const CourseDetail = () => {
     }));
   };
 
+  const handleQuestionChange = (index, field, value) => {
+    setQuizQuestions((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        [field]: value,
+      };
+      return next;
+    });
+  };
+
+  const handleOptionChange = (questionIndex, optionIndex, value) => {
+    setQuizQuestions((prev) => {
+      const next = [...prev];
+      const updatedOptions = [...next[questionIndex].options];
+      updatedOptions[optionIndex] = value;
+      next[questionIndex] = {
+        ...next[questionIndex],
+        options: updatedOptions,
+      };
+      return next;
+    });
+  };
+
+  const addQuizQuestion = () => {
+    setQuizQuestions((prev) => [
+      ...prev,
+      {
+        prompt: "",
+        type: "single-choice",
+        options: ["", "", "", ""],
+        correctIndex: 0,
+      },
+    ]);
+  };
+
+  const removeQuizQuestion = (index) => {
+    setQuizQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleModuleSubmit = async (event) => {
     event.preventDefault();
     if (!course) return;
@@ -522,24 +572,109 @@ const CourseDetail = () => {
       return;
     }
 
+    // Validate questions if creating a new quiz
+    if (quizLinkMode === "new") {
+      const validQuestions = quizQuestions.filter(
+        (q) => q.prompt.trim() && q.options.filter((opt) => opt.trim()).length >= 2
+      );
+      if (validQuestions.length === 0) {
+        toast.error("Please add at least one question with at least 2 options.");
+        return;
+      }
+      // Check that all questions have a valid correct answer
+      for (let i = 0; i < validQuestions.length; i++) {
+        const q = validQuestions[i];
+        const filledOptions = q.options.filter((opt) => opt.trim());
+        if (q.correctIndex >= filledOptions.length) {
+          toast.error(`Question ${i + 1} has an invalid correct answer selected.`);
+          return;
+        }
+      }
+    }
+
     setIsQuizSaving(true);
     try {
-      const updated = await linkCourseQuiz(course.id, {
-        title,
-        rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
-        questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
-        availableUntil:
-          quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
-        status: "draft",
-      });
-      setCourse(updated);
-      setQuizForm({
-        title: "",
-        rewardCoins: "",
-        questionsCount: "",
-        availableUntil: "",
-      });
-      toast.success("Quiz linked to course.");
+      if (quizLinkMode === "new") {
+        // Create a full quiz with questions
+        const preparedQuestions = quizQuestions
+          .filter((q) => q.prompt.trim() && q.options.filter((opt) => opt.trim()).length >= 2)
+          .map((q) => {
+            const filledOptions = q.options.filter((opt) => opt.trim());
+            return {
+              prompt: q.prompt.trim(),
+              options: filledOptions,
+              correctIndex: q.correctIndex < filledOptions.length ? q.correctIndex : 0,
+            };
+          });
+
+        const quizPayload = {
+          title: title.trim(),
+          description: safeString(quizForm.description) || "",
+          rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
+          questionsCount: preparedQuestions.length,
+          courseIds: [course.id],
+          availableUntil: quizForm.availableUntil
+            ? new Date(quizForm.availableUntil).toISOString()
+            : null,
+          timeLimitMinutes: quizForm.timeLimitMinutes ? Number(quizForm.timeLimitMinutes) : null,
+          questions: preparedQuestions,
+          category: "quiz",
+          difficulty: "intermediate",
+          status: "published",
+        };
+
+        const createdQuiz = await createTeacherQuiz(quizPayload);
+
+        // Link the created quiz to the course
+        const updated = await linkCourseQuiz(course.id, {
+          id: createdQuiz.id || createdQuiz._id,
+          title: createdQuiz.title,
+          rewardCoins: createdQuiz.rewardCoins ?? 0,
+          questionsCount: createdQuiz.questionsCount ?? preparedQuestions.length,
+          availableUntil: createdQuiz.availableUntil ?? null,
+          status: createdQuiz.status ?? "published",
+        });
+        setCourse(updated);
+
+        // Reset form
+        setQuizForm({
+          title: "",
+          description: "",
+          rewardCoins: "",
+          questionsCount: "",
+          availableUntil: "",
+          timeLimitMinutes: "",
+        });
+        setQuizQuestions([
+          {
+            prompt: "",
+            type: "single-choice",
+            options: ["", "", "", ""],
+            correctIndex: 0,
+          },
+        ]);
+        toast.success("Quiz created and linked to course!");
+      } else {
+        // Link existing quiz (existing code path)
+        const updated = await linkCourseQuiz(course.id, {
+          title,
+          rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
+          questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
+          availableUntil:
+            quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
+          status: "draft",
+        });
+        setCourse(updated);
+        setQuizForm({
+          title: "",
+          description: "",
+          rewardCoins: "",
+          questionsCount: "",
+          availableUntil: "",
+          timeLimitMinutes: "",
+        });
+        toast.success("Quiz linked to course.");
+      }
     } catch (error) {
       toast.error(error?.message ?? "Unable to link quiz right now.");
     } finally {
@@ -867,109 +1002,7 @@ const CourseDetail = () => {
 
               <div className="mt-6 grid gap-6 lg:grid-cols-[1.45fr_1fr]">
                 <div className="space-y-4">
-                  <form
-                    onSubmit={handleModuleSubmit}
-                    className="space-y-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                    <div className="flex items-center justify-between">
-                      <p className="text-base font-semibold text-white">Add module</p>
-                      <span className="text-[11px] uppercase tracking-[0.25em] text-[#F5D26A]">Curriculum</span>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <label htmlFor="moduleTitle" className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                          Module title*
-                        </label>
-                        <input
-                          id="moduleTitle"
-                          name="title"
-                          type="text"
-                          value={moduleForm.title}
-                          onChange={handleModuleFormChange}
-                          placeholder="Week 1 · Confidence foundations"
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label htmlFor="moduleLessonTitle" className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                          First lesson (optional)
-                        </label>
-                        <input
-                          id="moduleLessonTitle"
-                          name="lessonTitle"
-                          type="text"
-                          value={moduleForm.lessonTitle}
-                          onChange={handleModuleFormChange}
-                          placeholder="Kickoff & speaker baseline"
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                          Lesson type
-                        </label>
-                        <select
-                          name="lessonType"
-                          value={moduleForm.lessonType}
-                          onChange={handleModuleFormChange}
-                          className="w-full rounded-xl border border-white/15 bg-black px-3 py-2.5 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                          style={{ backgroundColor: "#000000" }}>
-                          <option value="video" style={{ backgroundColor: "#000000" }}>Video</option>
-                          <option value="pdf" style={{ backgroundColor: "#000000" }}>PDF</option>
-                          <option value="audio" style={{ backgroundColor: "#000000" }}>Audio</option>
-                          <option value="assignment" style={{ backgroundColor: "#000000" }}>Assignment</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                          Lesson URL
-                        </label>
-                        <input
-                          name="lessonUrl"
-                          type="url"
-                          value={moduleForm.lessonUrl}
-                          onChange={handleModuleFormChange}
-                          placeholder="https://cdn.digitalaela.com/lesson.mp4"
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                          Duration (min)
-                        </label>
-                        <input
-                          name="lessonDuration"
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={moduleForm.lessonDuration}
-                          onChange={handleModuleFormChange}
-                          placeholder="45"
-                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-[11px] text-slate-400">Add more lessons later from each module card.</p>
-                      <motion.button
-                        whileHover={{ scale: isModuleSaving ? 1 : 1.02 }}
-                        whileTap={{ scale: isModuleSaving ? 1 : 0.98 }}
-                        type="submit"
-                        disabled={isModuleSaving}
-                        className="inline-flex items-center gap-2 rounded-full bg-[#F5D26A] px-5 py-2 text-sm font-semibold text-black shadow-[0_12px_40px_rgba(245,210,106,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
-                        {isModuleSaving ? "Saving..." : "Add module"}
-                      </motion.button>
-                    </div>
-                  </form>
-
                   <div className="space-y-3">
-                    {(course?.modules ?? []).length === 0 && (
-                      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-300">
-                        No modules yet. Start with the form above to build your first week.
-                      </div>
-                    )}
                     {(course?.modules ?? []).map((module, moduleIndex) => (
                       <div key={module.id} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -1159,7 +1192,26 @@ const CourseDetail = () => {
                         name="quizLinkMode"
                         value="new"
                         checked={quizLinkMode === "new"}
-                        onChange={() => setQuizLinkMode("new")}
+                        onChange={() => {
+                          setQuizLinkMode("new");
+                          // Reset form when switching to new quiz mode
+                          setQuizForm({
+                            title: "",
+                            description: "",
+                            rewardCoins: "",
+                            questionsCount: "",
+                            availableUntil: "",
+                            timeLimitMinutes: "",
+                          });
+                          setQuizQuestions([
+                            {
+                              prompt: "",
+                              type: "single-choice",
+                              options: ["", "", "", ""],
+                              correctIndex: 0,
+                            },
+                          ]);
+                        }}
                         className="h-4 w-4 text-sky-400 focus:ring-sky-400 border-gray-300"
                       />
                       <label htmlFor="newQuiz" className="text-[11px] text-slate-300/80">
@@ -1171,7 +1223,26 @@ const CourseDetail = () => {
                         name="quizLinkMode"
                         value="existing"
                         checked={quizLinkMode === "existing"}
-                        onChange={() => setQuizLinkMode("existing")}
+                        onChange={() => {
+                          setQuizLinkMode("existing");
+                          // Reset form when switching to existing quiz mode
+                          setQuizForm({
+                            title: "",
+                            description: "",
+                            rewardCoins: "",
+                            questionsCount: "",
+                            availableUntil: "",
+                            timeLimitMinutes: "",
+                          });
+                          setQuizQuestions([
+                            {
+                              prompt: "",
+                              type: "single-choice",
+                              options: ["", "", "", ""],
+                              correctIndex: 0,
+                            },
+                          ]);
+                        }}
                         className="h-4 w-4 text-sky-400 focus:ring-sky-400 border-gray-300"
                       />
                       <label htmlFor="existingQuiz" className="text-[11px] text-slate-300/80">
@@ -1186,6 +1257,14 @@ const CourseDetail = () => {
                           value={quizForm.title}
                           onChange={handleQuizFormChange}
                           placeholder="Confidence lightning round"
+                          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                        />
+                        <textarea
+                          name="description"
+                          rows={3}
+                          value={quizForm.description}
+                          onChange={handleQuizFormChange}
+                          placeholder="Quiz description (optional)"
                           className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
                         />
                         <div className="grid grid-cols-2 gap-3">
@@ -1206,16 +1285,16 @@ const CourseDetail = () => {
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                              Questions
+                              Time limit (min)
                             </label>
                             <input
-                              name="questionsCount"
+                              name="timeLimitMinutes"
                               type="number"
                               min="0"
                               step="1"
-                              value={quizForm.questionsCount}
+                              value={quizForm.timeLimitMinutes}
                               onChange={handleQuizFormChange}
-                              placeholder="10"
+                              placeholder="15"
                               className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
                             />
                           </div>
@@ -1227,6 +1306,91 @@ const CourseDetail = () => {
                           onChange={handleQuizFormChange}
                           className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
                         />
+
+                        {/* Questions Section */}
+                        <div className="space-y-3 pt-2 border-t border-white/10">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
+                              Questions ({quizQuestions.length})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={addQuizQuestion}
+                              className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-300 hover:text-sky-200">
+                              + Add Question
+                            </button>
+                          </div>
+
+                          <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {quizQuestions.map((question, qIndex) => (
+                              <div
+                                key={`q-${qIndex}`}
+                                className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-white">
+                                    Question {qIndex + 1}
+                                  </span>
+                                  {quizQuestions.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeQuizQuestion(qIndex)}
+                                      className="text-[10px] text-red-400 hover:text-red-300">
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                                <textarea
+                                  value={question.prompt}
+                                  onChange={(e) =>
+                                    handleQuestionChange(qIndex, "prompt", e.target.value)
+                                  }
+                                  rows={2}
+                                  placeholder="Enter your question..."
+                                  className="w-full rounded-lg border border-white/15 bg-black/30 px-2.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none focus:ring-1 focus:ring-sky-400/30"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  {question.options.map((option, optIndex) => (
+                                    <div key={`opt-${optIndex}`} className="space-y-1">
+                                      <label className="text-[10px] text-slate-400">
+                                        Option {optIndex + 1}
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={option}
+                                        onChange={(e) =>
+                                          handleOptionChange(qIndex, optIndex, e.target.value)
+                                        }
+                                        placeholder={`Option ${optIndex + 1}`}
+                                        className="w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-slate-400">
+                                    Correct Answer
+                                  </label>
+                                  <select
+                                    value={question.correctIndex}
+                                    onChange={(e) =>
+                                      handleQuestionChange(
+                                        qIndex,
+                                        "correctIndex",
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    className="w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 text-xs text-white focus:border-emerald-400/70 focus:outline-none">
+                                    {question.options.map((_, optIndex) => (
+                                      <option key={`correct-${optIndex}`} value={optIndex}>
+                                        Option {optIndex + 1}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </>
                     ) : (
                       <>
@@ -1262,7 +1426,13 @@ const CourseDetail = () => {
                         isQuizSaving || (quizLinkMode === "existing" && linkableQuizzes.length === 0)
                       }
                       className="inline-flex items-center gap-2 rounded-full bg-sky-400 px-5 py-2 text-sm font-semibold text-black shadow-[0_12px_40px_rgba(56,189,248,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">
-                      {isQuizSaving ? "Linking..." : "Link quiz"}
+                      {isQuizSaving
+                        ? quizLinkMode === "new"
+                          ? "Creating..."
+                          : "Linking..."
+                        : quizLinkMode === "new"
+                        ? "Create & Link Quiz"
+                        : "Link quiz"}
                     </motion.button>
                   </form>
 
