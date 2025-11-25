@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { HiOutlinePlus, HiOutlineEye, HiOutlinePencil } from "react-icons/hi2";
+import { FaTrash } from "react-icons/fa";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { getTeacherEbooks } from "../../src/services/teacherEbooks";
+import { getTeacherEbooks, deleteTeacherEbook } from "../../src/services/teacherEbooks";
 
 const EbookList = () => {
   const { user } = useAuth();
@@ -166,6 +167,27 @@ const EbookList = () => {
                       <HiOutlinePencil className="h-4 w-4" />
                       Edit
                     </Link>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.confirm(`Are you sure you want to delete "${ebook.title}"? This action cannot be undone.`)) {
+                          try {
+                            await deleteTeacherEbook(ebook._id || ebook.id);
+                            toast.success("Book deleted successfully");
+                            // Refresh ebooks list
+                            loadEbooks();
+                          } catch (error) {
+                            console.error("Failed to delete book:", error);
+                            toast.error(error.message || "Failed to delete book. Please try again.");
+                          }
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition text-sm"
+                      title="Delete book">
+                      <FaTrash className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </motion.div>
