@@ -166,6 +166,7 @@ const CommunityHub = () => {
                     <div>
                       <p className="font-semibold text-white">{student.name}</p>
                       <p className="text-xs text-slate-400/80">{student.focus}</p>
+                      <p className="text-xs text-gray-500 mt-1">ID: {student.id || "N/A"}</p>
                     </div>
                     <HiOutlineUsers className="h-5 w-5 text-sky-200" />
                   </Link>
@@ -219,6 +220,7 @@ const CommunityHub = () => {
                       <div>
                         <p className="font-semibold text-white">{teacher.name}</p>
                         <p className="text-xs text-slate-400/80">{teacher.expertise}</p>
+                        <p className="text-xs text-gray-500 mt-1">ID: {teacher.id || "N/A"}</p>
                       </div>
                       <HiOutlineAcademicCap className="h-5 w-5 text-sky-200" />
                     </Link>
@@ -259,6 +261,7 @@ const CommunityHub = () => {
                       <div>
                         <p className="font-semibold text-white">{recruiter.name}</p>
                         <p className="text-xs text-slate-400/80">{recruiter.roles}</p>
+                        <p className="text-xs text-gray-500 mt-1">ID: {recruiter.id || "N/A"}</p>
                       </div>
                       <HiOutlineBriefcase className="h-5 w-5 text-sky-200" />
                     </Link>

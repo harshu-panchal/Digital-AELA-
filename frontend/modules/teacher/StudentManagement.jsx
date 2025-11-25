@@ -322,9 +322,14 @@ const StudentManagement = () => {
                 onClick={(e) => e.stopPropagation()}
                 className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#060A17] p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-white">
-                    {selectedStudent.student.name}
-                  </h2>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-white">
+                      {selectedStudent.student.name}
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-1">
+                      User ID: {selectedStudent.studentId || selectedStudent.student._id || selectedStudent.student.id || "N/A"}
+                    </p>
+                  </div>
                   <button
                     onClick={() => setSelectedStudent(null)}
                     className="rounded-full border border-white/10 bg-white/5 p-2 text-white transition hover:border-red-400/50 hover:bg-red-500/10">

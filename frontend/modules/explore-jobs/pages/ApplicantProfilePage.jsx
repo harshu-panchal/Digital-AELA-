@@ -247,6 +247,9 @@ const ApplicantProfilePage = () => {
                   </div>
                 </div>
                 <div className="flex-1 space-y-3">
+                  {application.candidateId && (
+                    <p className="text-xs text-gray-400">User ID: {application.candidateId}</p>
+                  )}
                   <div>
                     <h1 className="text-2xl font-semibold text-white sm:text-3xl">
                       {application.candidateName || "Applicant"}

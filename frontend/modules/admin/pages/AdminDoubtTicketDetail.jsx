@@ -191,6 +191,9 @@ const AdminDoubtTicketDetail = () => {
               {ticket.assignedTeacher && (
                 <div className="flex items-center gap-2">
                   <span>Assigned to: {ticket.assignedTeacher.fullName}</span>
+                  <span className="text-xs text-gray-400">
+                    (ID: {ticket.assignedTeacher._id || ticket.assignedTeacher.id || "N/A"})
+                  </span>
                 </div>
               )}
               <div className="flex items-center gap-2">
@@ -229,7 +232,7 @@ const AdminDoubtTicketDetail = () => {
               ) : (
                 teachers.map((teacher) => (
                   <option key={teacher._id || teacher.id} value={teacher._id || teacher.id}>
-                    {teacher.fullName || teacher.name || "Teacher"}
+                    {teacher.fullName || teacher.name || "Teacher"} (ID: {teacher._id || teacher.id || "N/A"})
                   </option>
                 ))
               )}

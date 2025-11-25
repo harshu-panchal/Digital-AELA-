@@ -287,7 +287,12 @@ const DoubtTicketList = () => {
                         )}
                         {ticket.assignedTeacher && (
                           <div className="flex items-center gap-2">
-                            <span>Teacher: {ticket.assignedTeacher.fullName}</span>
+                            <span>
+                              Teacher: {ticket.assignedTeacher.fullName}
+                              <span className="text-xs text-gray-400 ml-2">
+                                (ID: {ticket.assignedTeacher._id || ticket.assignedTeacher.id || "N/A"})
+                              </span>
+                            </span>
                           </div>
                         )}
                         {ticket.replies && ticket.replies.length > 0 && (

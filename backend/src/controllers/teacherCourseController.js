@@ -178,11 +178,11 @@ export const getTeacherCourses = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can access this endpoint",
+          message: "Only teachers and super admins can access this endpoint",
         },
       });
     }
@@ -200,7 +200,12 @@ export const getTeacherCourses = async (req, res, next) => {
       });
     }
 
-    const courses = await Course.find({ instructor: instructorObjectId })
+    // Super-admin can see all courses, teachers only see their own
+    const courseQuery = userRole === "super-admin" 
+      ? {} 
+      : { instructor: instructorObjectId };
+
+    const courses = await Course.find(courseQuery)
       .populate("instructor", "fullName email")
       .sort({ createdAt: -1 })
       .lean();
@@ -227,11 +232,11 @@ export const getTeacherCourseById = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can access this endpoint",
+          message: "Only teachers and super admins can access this endpoint",
         },
       });
     }
@@ -251,10 +256,12 @@ export const getTeacherCourseById = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    const course = await Course.findOne({
-      _id: courseId,
-      instructor: instructorObjectId,
-    })
+    // Super-admin can view any course, teachers only their own
+    const courseQuery = userRole === "super-admin"
+      ? { _id: courseId }
+      : { _id: courseId, instructor: instructorObjectId };
+
+    const course = await Course.findOne(courseQuery)
       .populate("instructor", "fullName email")
       .lean();
 

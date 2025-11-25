@@ -14,8 +14,8 @@ const router = express.Router();
 // Apply feature flag check for ebooks
 router.use(requireFeature("ebooks"));
 
-// All routes require teacher authentication
-router.use(requireAuth(["teacher"]));
+// All routes require teacher or super-admin authentication
+router.use(requireAuth(["teacher", "super-admin"]));
 
 // Create a new ebook (isPublic: false - requires approval)
 // Accepts PDF file upload via multipart/form-data

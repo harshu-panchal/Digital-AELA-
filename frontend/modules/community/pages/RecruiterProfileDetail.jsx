@@ -111,6 +111,7 @@ const RecruiterProfileDetail = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{user.fullName || "Recruiter"}</h1>
+              <p className="text-xs text-gray-400 mb-2">User ID: {user._id || user.id || userId || "N/A"}</p>
               <div className="flex items-center gap-2 mb-3">
                 <span className="px-4 py-1 rounded-full bg-[#D4AF37]/20 text-[#F5D26A] text-sm border border-[#D4AF37]/30">
                   Recruiter

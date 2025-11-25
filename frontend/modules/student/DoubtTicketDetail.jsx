@@ -144,7 +144,12 @@ const DoubtTicketDetail = () => {
                 </div>
               )}
               {ticket.assignedTeacher && (
-                <span>Assigned to: {ticket.assignedTeacher.fullName}</span>
+                <span>
+                  Assigned to: {ticket.assignedTeacher.fullName}
+                  <span className="text-xs text-gray-400 ml-2">
+                    (ID: {ticket.assignedTeacher._id || ticket.assignedTeacher.id || "N/A"})
+                  </span>
+                </span>
               )}
             </div>
           </div>

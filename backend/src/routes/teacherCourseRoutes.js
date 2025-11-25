@@ -28,8 +28,8 @@ import {
 
 const router = express.Router();
 
-// All routes require teacher authentication
-router.use(requireAuth(["teacher"]));
+// All routes require teacher or super-admin authentication
+router.use(requireAuth(["teacher", "super-admin"]));
 
 // Get teacher dashboard data
 router.get("/dashboard", getTeacherDashboard);

@@ -221,6 +221,7 @@ const UserProfileView = () => {
                   <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                     {user.fullName || profile?.fullName || "User"}
                   </h1>
+                  <p className="text-xs text-gray-400 mb-2">User ID: {user._id || user.id || userId || "N/A"}</p>
                   {profile?.headline && (
                     <p className="text-lg text-[#F5D26A] mb-3">{profile.headline}</p>
                   )}

@@ -273,11 +273,23 @@ const AdminDoubtTicketManagement = () => {
                       </p>
                       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
                         <div className="flex items-center gap-2">
-                          <span>Student: {ticket.student?.fullName || "Unknown"}</span>
+                          <span>
+                            Student: {ticket.student?.fullName || "Unknown"}
+                            {ticket.student && (
+                              <span className="text-xs text-gray-400 ml-2">
+                                (ID: {ticket.student._id || ticket.student.id || "N/A"})
+                              </span>
+                            )}
+                          </span>
                         </div>
                         {ticket.assignedTeacher && (
                           <div className="flex items-center gap-2">
-                            <span>Assigned to: {ticket.assignedTeacher.fullName}</span>
+                            <span>
+                              Assigned to: {ticket.assignedTeacher.fullName}
+                              <span className="text-xs text-gray-400 ml-2">
+                                (ID: {ticket.assignedTeacher._id || ticket.assignedTeacher.id || "N/A"})
+                              </span>
+                            </span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">

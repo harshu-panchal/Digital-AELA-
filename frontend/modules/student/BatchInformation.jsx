@@ -306,6 +306,7 @@ const BatchInformation = () => {
                     <div>
                       <p className="text-sm font-medium text-white">{student.fullName}</p>
                       <p className="text-xs text-slate-400">{student.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">ID: {student._id || student.id || "N/A"}</p>
                     </div>
                   </div>
                 ))}

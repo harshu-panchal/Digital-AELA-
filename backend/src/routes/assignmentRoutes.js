@@ -8,24 +8,26 @@ import {
   submitAssignment,
   getStudentAssignmentDetails,
 } from "../controllers/assignmentController.js";
-import { authenticate } from "../middleware/authMiddleware.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Teacher routes
-router.post("/teacher/assignments", authenticate, createAssignment);
-router.get("/teacher/assignments", authenticate, getTeacherAssignments);
-router.get("/teacher/assignments/:assignmentId", authenticate, getAssignmentDetails);
+// Teacher routes (also accessible to super-admin)
+const teacherOrAdmin = requireAuth(["teacher", "super-admin"]);
+router.post("/teacher/assignments", teacherOrAdmin, createAssignment);
+router.get("/teacher/assignments", teacherOrAdmin, getTeacherAssignments);
+router.get("/teacher/assignments/:assignmentId", teacherOrAdmin, getAssignmentDetails);
 router.put(
   "/teacher/assignments/:assignmentId/submissions/:submissionId/grade",
-  authenticate,
+  teacherOrAdmin,
   gradeSubmission
 );
 
-// Student routes
-router.get("/student/assignments", authenticate, getStudentAssignments);
-router.get("/student/assignments/:assignmentId", authenticate, getStudentAssignmentDetails);
-router.post("/student/assignments/:assignmentId/submit", authenticate, submitAssignment);
+// Student routes (allow all authenticated users)
+const studentAuth = requireAuth([]);
+router.get("/student/assignments", studentAuth, getStudentAssignments);
+router.get("/student/assignments/:assignmentId", studentAuth, getStudentAssignmentDetails);
+router.post("/student/assignments/:assignmentId/submit", studentAuth, submitAssignment);
 
 export default router;
 
