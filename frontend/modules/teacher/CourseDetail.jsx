@@ -1177,7 +1177,7 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 lg:col-span-2">
                   <form
                     onSubmit={handleLinkQuiz}
                     className="space-y-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
