@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useFinancialAuth } from "../contexts/FinancialAuthContext";
 import FinancialPasswordModal from "./FinancialPasswordModal";
 
@@ -14,6 +15,23 @@ const FinancialProtectedRoute = ({ children }) => {
       setShowModal(true);
     }
   }, [isAuthenticated, isChecking]);
+
+  // Listen for auto-lock events
+  useEffect(() => {
+    const handleSessionLocked = () => {
+      toast.warning("Financial session has been automatically locked after 2 hours for security.", {
+        autoClose: 5000,
+        toastId: "financial-session-locked",
+      });
+      setShowModal(true);
+    };
+
+    window.addEventListener("financial-session-locked", handleSessionLocked);
+
+    return () => {
+      window.removeEventListener("financial-session-locked", handleSessionLocked);
+    };
+  }, []);
 
   const handleAuthenticate = async (password) => {
     const success = await authenticate(password);

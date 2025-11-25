@@ -107,7 +107,7 @@ const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
           </form>
 
           <p className="mt-4 text-xs text-slate-500 text-center">
-            Your session will remain active for 4 hours
+            Your session will remain active for 2 hours
           </p>
         </motion.div>
       </div>
