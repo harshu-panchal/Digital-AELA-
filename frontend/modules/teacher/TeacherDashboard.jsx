@@ -652,7 +652,7 @@ const TeacherDashboard = () => {
                   </div>
                 ))}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 <header className="flex items-center justify-between">
                   <h3 className="text-base font-semibold text-white">Latest purchases</h3>
                   <button
@@ -701,7 +701,7 @@ const TeacherDashboard = () => {
                   Quiz manager →
                 </button>
               </header>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {quizPanel.active.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-sm text-slate-400">No active quizzes yet. Create one to get started!</p>
@@ -761,7 +761,7 @@ const TeacherDashboard = () => {
                 <p className="text-xs text-slate-400 mt-1">Pending admin approval</p>
               </div>
             </header>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-96 overflow-y-auto">
               {quizPanel.drafts.length === 0 ? (
                 <div className="py-8 text-center">
                   <p className="text-xs text-slate-400">No pending items</p>

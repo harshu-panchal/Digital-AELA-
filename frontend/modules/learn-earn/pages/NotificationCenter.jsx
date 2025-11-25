@@ -286,7 +286,7 @@ const NotificationCenter = () => {
             <p className="text-gray-400">No notifications found</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
             {notifications.map((notification) => {
               const notificationId = notification._id || notification.id;
               const isUnread = !notification.isRead;

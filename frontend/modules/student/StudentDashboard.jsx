@@ -468,7 +468,7 @@ const StudentDashboard = () => {
                 <p className="mt-2 text-xs text-slate-500">Stay tuned for updates!</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {announcements.map((announcement) => {
                   const isRead = announcement.isRead || false;
                   const publishedDate = announcement.publishedAt || announcement.createdAt;
@@ -544,7 +544,7 @@ const StudentDashboard = () => {
             ) : assignments.length === 0 ? (
               <div className="py-8 text-center text-sm text-slate-400">No pending assignments</div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-80 overflow-y-auto">
                 {assignments.slice(0, 3).map((assignment) => {
                   const isOverdue = new Date(assignment.dueDate) < new Date();
                   return (
@@ -697,7 +697,7 @@ const StudentDashboard = () => {
                   View all
                 </Link>
               </header>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {loadingWidgets ? (
                   <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
                 ) : widgetsData.recommendations.length === 0 ? (

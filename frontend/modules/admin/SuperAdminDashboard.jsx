@@ -551,7 +551,7 @@ const SuperAdminDashboard = () => {
                 </h2>
                 <span className="text-xs text-slate-400">Live feed</span>
               </header>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {loading && dashboardData.activities.length === 0 ? (
                   <div className="flex items-center justify-center py-12">
                     <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
