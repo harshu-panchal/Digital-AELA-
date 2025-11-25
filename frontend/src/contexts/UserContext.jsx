@@ -604,18 +604,50 @@ export const UserProvider = ({ children }) => {
     }
   }, [authUser?.id, arraysEqual]);
 
+  // Debounce timer for refreshSocialStats
+  const refreshSocialStatsTimerRef = useRef(null);
+  const isRefreshingSocialStatsRef = useRef(false);
+
   // Refresh social stats function (can be called manually)
   // Use useCallback with stable dependencies to prevent recreation
+  // Added debouncing to prevent rapid successive calls
   const refreshSocialStats = useCallback(async () => {
     if (!authUser?.id) {
       return;
     }
-    // Refresh counts and lists in parallel
-    await Promise.all([
-      loadSocialStats(),
-      reloadFollowers(),
-      reloadFollowing(),
-    ]);
+
+    // Clear any pending debounce timer
+    if (refreshSocialStatsTimerRef.current) {
+      clearTimeout(refreshSocialStatsTimerRef.current);
+      refreshSocialStatsTimerRef.current = null;
+    }
+
+    // If already refreshing, skip
+    if (isRefreshingSocialStatsRef.current) {
+      return;
+    }
+
+    // Debounce: wait 500ms before executing, cancel if called again
+    return new Promise((resolve, reject) => {
+      refreshSocialStatsTimerRef.current = setTimeout(async () => {
+        isRefreshingSocialStatsRef.current = true;
+        try {
+          // Refresh counts and lists sequentially to avoid rate limiting
+          // Small delay between each to spread out requests
+          await loadSocialStats();
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await reloadFollowers();
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await reloadFollowing();
+          resolve();
+        } catch (error) {
+          reject(error);
+        } finally {
+          isRefreshingSocialStatsRef.current = false;
+          refreshSocialStatsTimerRef.current = null;
+        }
+      }, 500);
+    });
   }, [loadSocialStats, reloadFollowers, reloadFollowing, authUser?.id]);
 
   // Store refreshSocialStats in a ref for socket listeners to avoid dependency issues
@@ -666,8 +698,8 @@ export const UserProvider = ({ children }) => {
     };
   }, [socket, isConnected, authUser?.id]);
 
-  // Load followers list from backend with smart polling
-  useSmartPolling(reloadFollowers, 60000, {
+  // Load followers list from backend with smart polling (increased interval to reduce rate limiting)
+  useSmartPolling(reloadFollowers, 90000, {
     enabled: !!authUser?.id,
     maxConsecutiveFailures: 3,
     onError: (error) => {
@@ -675,8 +707,8 @@ export const UserProvider = ({ children }) => {
     },
   });
 
-  // Load following list from backend with smart polling
-  useSmartPolling(reloadFollowing, 60000, {
+  // Load following list from backend with smart polling (increased interval to reduce rate limiting)
+  useSmartPolling(reloadFollowing, 90000, {
     enabled: !!authUser?.id,
     maxConsecutiveFailures: 3,
     onError: (error) => {
@@ -764,7 +796,7 @@ export const UserProvider = ({ children }) => {
     }
   }, [authUser?.id, tokens?.accessToken]);
 
-  useSmartPolling(loadDashboardData, 30000, {
+  useSmartPolling(loadDashboardData, 60000, {
     enabled: !!authUser?.id && !!tokens?.accessToken,
     maxConsecutiveFailures: 3,
     onError: (error) => {
@@ -1293,8 +1325,8 @@ export const UserProvider = ({ children }) => {
 
     loadAvatar();
 
-    // Refresh profile data every 30 seconds to keep it live
-    const interval = setInterval(loadAvatar, 30000);
+    // Refresh profile data every 60 seconds to keep it live (reduced frequency to avoid rate limiting)
+    const interval = setInterval(loadAvatar, 60000);
 
     return () => clearInterval(interval);
   }, [

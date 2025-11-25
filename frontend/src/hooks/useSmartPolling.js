@@ -60,9 +60,32 @@ export const useSmartPolling = (
       consecutiveFailuresRef.current = 0;
     } catch (error) {
       const isNetworkErr = isNetworkError(error);
+      const isRateLimitError = error.status === 429;
       
-      // Only count network errors as failures (not auth errors)
-      if (isNetworkErr && error.status !== 401) {
+      // For rate limit errors, increase polling interval temporarily
+      if (isRateLimitError) {
+        // Stop current interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        // Wait longer before retrying (exponential backoff)
+        const backoffDelay = Math.min(
+          intervalMs * Math.pow(2, consecutiveFailuresRef.current),
+          intervalMs * 8 // Max 8x the normal interval
+        );
+        
+        setTimeout(() => {
+          if (shouldContinueRef.current && enabled) {
+            executePoll();
+            intervalRef.current = setInterval(executePoll, intervalMs);
+          }
+        }, backoffDelay);
+        
+        consecutiveFailuresRef.current += 1;
+      } else if (isNetworkErr && error.status !== 401) {
+        // Only count network errors as failures (not auth errors)
         consecutiveFailuresRef.current += 1;
       } else if (!isNetworkErr && error.status !== 401) {
         // For non-network errors (except auth), also count as failure

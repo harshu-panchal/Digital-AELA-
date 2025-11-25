@@ -130,7 +130,7 @@ export const PointsProvider = ({ children }) => {
     await loadPointsFromBackend();
   }, [loadPointsFromBackend, authUser, tokens?.accessToken]);
 
-  useSmartPolling(pollPoints, 30000, {
+  useSmartPolling(pollPoints, 60000, {
     enabled: !!authUser && authUser.role === "student" && !!tokens?.accessToken,
     maxConsecutiveFailures: 3,
   });

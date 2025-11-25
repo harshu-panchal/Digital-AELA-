@@ -133,9 +133,34 @@ const refreshTokensIfNeeded = async (currentTokens) => {
   return refreshPromise;
 };
 
-export const apiRequest = async (
+// Request queue to prevent too many simultaneous requests
+const requestQueue = [];
+let activeRequests = 0;
+const MAX_CONCURRENT_REQUESTS = 10;
+
+const processQueue = async () => {
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) {
+    return;
+  }
+
+  const { resolve, reject, endpoint, options } = requestQueue.shift();
+  activeRequests++;
+
+  try {
+    const result = await executeRequest(endpoint, options);
+    resolve(result);
+  } catch (error) {
+    reject(error);
+  } finally {
+    activeRequests--;
+    // Process next request in queue
+    setTimeout(processQueue, 0);
+  }
+};
+
+const executeRequest = async (
   endpoint,
-  { method = "GET", body, headers = {}, skipAuth = false, _retry = false } = {}
+  { method = "GET", body, headers = {}, skipAuth = false, _retry = false, _retryCount = 0 } = {}
 ) => {
   const tokens = loadTokens();
   
@@ -318,6 +343,34 @@ export const apiRequest = async (
     throw error;
   }
 
+  // Handle 429 Too Many Requests with exponential backoff
+  if (response.status === 429) {
+    const retryAfter = payload?.error?.retryAfter || payload?.retryAfter || 60; // Default 60 seconds
+    const maxRetries = 3;
+    
+    if (_retryCount < maxRetries) {
+      // Exponential backoff: wait longer for each retry
+      const backoffDelay = Math.min(
+        retryAfter * 1000 * Math.pow(2, _retryCount),
+        300000 // Max 5 minutes
+      );
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      
+      // Retry the request
+      return executeRequest(endpoint, {
+        method,
+        body,
+        headers,
+        skipAuth,
+        _retry: true,
+        _retryCount: _retryCount + 1,
+      });
+    }
+    // If max retries reached, fall through to error handling below
+  }
+
   const message =
     payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`;
   const error = new Error(message);
@@ -339,11 +392,14 @@ export const apiRequest = async (
     message.includes("already submitted this form")
   );
   
-  error.suppressConsoleError = isValidationError || isDuplicateError;
+  // Mark 429 rate limit errors as suppressible - they're expected when rate limited
+  const isRateLimitError = response.status === 429;
   
-  // Log non-401 errors in production (401s are expected for auth failures)
-  // Completely suppress validation errors and duplicate submission errors in development
-  if (!isDevelopment && response.status !== 401 && !isValidationError && !isDuplicateError) {
+  error.suppressConsoleError = isValidationError || isDuplicateError || isRateLimitError;
+  
+  // Log non-401, non-429 errors in production (401s and 429s are expected)
+  // Completely suppress validation errors, duplicate submission errors, and rate limit errors
+  if (!isDevelopment && response.status !== 401 && response.status !== 429 && !isValidationError && !isDuplicateError) {
     console.error("[API] Request failed:", {
       endpoint,
       method,
@@ -353,9 +409,33 @@ export const apiRequest = async (
       apiUrl: API_BASE_URL
     });
   }
-  // Validation errors and duplicate submission errors are completely suppressed - no console output
+  // Validation errors, duplicate submission errors, and rate limit errors are completely suppressed - no console output
   
   throw error;
+};
+
+export const apiRequest = async (
+  endpoint,
+  options = {}
+) => {
+  // Queue request if we're at max concurrent requests
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+    return new Promise((resolve, reject) => {
+      requestQueue.push({ resolve, reject, endpoint, options });
+      processQueue();
+    });
+  }
+  
+  // Execute immediately if under limit
+  activeRequests++;
+  try {
+    const result = await executeRequest(endpoint, options);
+    return result;
+  } finally {
+    activeRequests--;
+    // Process next request in queue
+    setTimeout(processQueue, 0);
+  }
 };
 
 /**

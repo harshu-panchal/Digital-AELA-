@@ -656,24 +656,24 @@ const CourseDetail = () => {
         toast.success("Quiz created and linked to course!");
       } else {
         // Link existing quiz (existing code path)
-        const updated = await linkCourseQuiz(course.id, {
-          title,
-          rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
-          questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
-          availableUntil:
-            quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
-          status: "draft",
-        });
-        setCourse(updated);
-        setQuizForm({
-          title: "",
+      const updated = await linkCourseQuiz(course.id, {
+        title,
+        rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
+        questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
+        availableUntil:
+          quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
+        status: "draft",
+      });
+      setCourse(updated);
+      setQuizForm({
+        title: "",
           description: "",
-          rewardCoins: "",
-          questionsCount: "",
-          availableUntil: "",
+        rewardCoins: "",
+        questionsCount: "",
+        availableUntil: "",
           timeLimitMinutes: "",
-        });
-        toast.success("Quiz linked to course.");
+      });
+      toast.success("Quiz linked to course.");
       }
     } catch (error) {
       toast.error(error?.message ?? "Unable to link quiz right now.");

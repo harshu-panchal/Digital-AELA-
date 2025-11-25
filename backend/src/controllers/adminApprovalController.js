@@ -4,6 +4,7 @@ import EbookResource from "../models/EbookResource.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import CourseVideo from "../models/CourseVideo.js";
+import StudentProfile from "../models/StudentProfile.js";
 
 /**
  * Get pending courses
@@ -217,8 +218,19 @@ export const getPendingStudents = async (req, res, next) => {
       User.countDocuments({ role: "student", isActive: false }),
     ]);
 
+    // Fetch StudentProfile for each student and merge the data
+    const studentsWithProfiles = await Promise.all(
+      students.map(async (student) => {
+        const profile = await StudentProfile.findOne({ user: student._id }).lean();
+        return {
+          ...student,
+          profile: profile || null,
+        };
+      })
+    );
+
     return res.json({
-      students,
+      students: studentsWithProfiles,
       pagination: {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
