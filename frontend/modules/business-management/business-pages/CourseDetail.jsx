@@ -384,11 +384,6 @@ const CourseDetail = () => {
         <div className="absolute inset-0 bg-black" />
         <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-4 md:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-6">
-            <Link
-              to={categoryPath}
-              className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 text-sm font-semibold uppercase tracking-[0.3em]">
-              ← Back to {category ?? "courses"}
-            </Link>
             {category && (
               <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-[#F5D26A]">
                 {category}

@@ -72,7 +72,42 @@ export const listMyJobs = async (req, res, next) => {
 export const createJob = async (req, res, next) => {
   try {
     const { userId } = req.auth;
-    const status = req.body.status || "published";
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: { code: "UNAUTHORIZED", message: "Authentication required" },
+      });
+    }
+
+    // Validate required fields
+    const { title, company, description } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(422).json({
+        error: { code: "VALIDATION_ERROR", message: "Title is required" },
+      });
+    }
+    if (!company || !company.trim()) {
+      return res.status(422).json({
+        error: { code: "VALIDATION_ERROR", message: "Company is required" },
+      });
+    }
+    if (!description || !description.trim()) {
+      return res.status(422).json({
+        error: { code: "VALIDATION_ERROR", message: "Description is required" },
+      });
+    }
+
+    // Validate and set status
+    const validStatuses = ["draft", "published", "archived"];
+    let status = req.body.status || "published";
+    if (!validStatuses.includes(status)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+        },
+      });
+    }
     
     // Calculate expiration date if not provided
     let expirationDate = req.body.expirationDate;
@@ -82,13 +117,62 @@ export const createJob = async (req, res, next) => {
       expirationDate.setDate(expirationDate.getDate() + expiresInDays);
     }
 
-    const job = await JobPost.create({
-      ...req.body,
+    // Prepare job data
+    const jobData = {
+      title: title.trim(),
+      company: company.trim(),
+      description: description.trim(),
       owner: userId,
       status,
       publishedAt: status === "published" ? new Date() : undefined,
       expirationDate,
-    });
+    };
+
+    // Add optional fields if provided
+    if (req.body.employmentType) {
+      const validEmploymentTypes = ["full-time", "part-time", "contract", "internship"];
+      if (validEmploymentTypes.includes(req.body.employmentType)) {
+        jobData.employmentType = req.body.employmentType;
+      } else {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `Invalid employment type. Must be one of: ${validEmploymentTypes.join(", ")}`,
+          },
+        });
+      }
+    }
+    if (req.body.location) {
+      jobData.location = req.body.location.trim();
+    }
+    if (req.body.isRemote !== undefined) {
+      jobData.isRemote = req.body.isRemote;
+    }
+    if (req.body.salary) {
+      // Validate salary structure
+      if (typeof req.body.salary === "object" && req.body.salary !== null) {
+        if (req.body.salary.currency && req.body.salary.range) {
+          jobData.salary = {
+            currency: req.body.salary.currency,
+            range: req.body.salary.range,
+          };
+        }
+      }
+    }
+    if (req.body.experience) {
+      jobData.experience = req.body.experience.trim();
+    }
+    if (req.body.tags && Array.isArray(req.body.tags)) {
+      jobData.tags = req.body.tags;
+    }
+    if (req.body.cultureHighlights && Array.isArray(req.body.cultureHighlights)) {
+      jobData.cultureHighlights = req.body.cultureHighlights;
+    }
+    if (req.body.applyCTA) {
+      jobData.applyCTA = req.body.applyCTA.trim();
+    }
+
+    const job = await JobPost.create(jobData);
 
     // Create notification for super admin when job needs approval (draft status)
     if (status === "draft") {
@@ -166,6 +250,33 @@ export const createJob = async (req, res, next) => {
 
     return res.status(201).json(job);
   } catch (error) {
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const validationErrors = Object.values(error.errors).map((err) => err.message);
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: validationErrors.join(", "),
+        },
+      });
+    }
+    
+    // Handle duplicate key errors
+    if (error.name === "MongoServerError" && error.code === 11000) {
+      return res.status(409).json({
+        error: {
+          code: "DUPLICATE_ERROR",
+          message: "A job with this information already exists",
+        },
+      });
+    }
+
+    // Log the error for debugging
+    console.error("[createJob] Error:", error.message);
+    if (error.stack) {
+      console.error("[createJob] Stack:", error.stack);
+    }
+    
     return next(error);
   }
 };

@@ -613,13 +613,13 @@ const ProfilePage = () => {
         <div className="flex flex-col gap-6 px-6 pb-8 pt-6 sm:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-5">
-              <div className="relative rounded-full border-4 border-black/80 p-1 group">
+              <div className="relative rounded-full border-4 border-black/80 p-1 group overflow-hidden">
                 <img
                   src={avatarPreview || profile?.avatar}
                   alt={profile?.name || "User"}
                   className="h-28 w-28 rounded-full border-4 border-[#D4AF37]/50 object-cover"
                 />
-                <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100">
+                <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity cursor-pointer group-hover:opacity-100 overflow-hidden">
                   {uploadingAvatar ? (
                     <FaSpinner className="h-6 w-6 text-[#D4AF37] animate-spin" />
                   ) : (
