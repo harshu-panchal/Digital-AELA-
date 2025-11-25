@@ -3,7 +3,7 @@ import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Confetti from "react-confetti";
 import { toast } from "react-toastify";
-import { HiOutlineArrowPath, HiOutlineArrowUpOnSquare } from "react-icons/hi2";
+import { HiOutlineArrowPath } from "react-icons/hi2";
 import { FaCoins } from "react-icons/fa";
 import {
   Chart as ChartJS,
@@ -18,7 +18,6 @@ import {
 import { Line } from "react-chartjs-2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
-import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
 import { getRewards } from "../../../src/services/api/rewards";
 import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
 
@@ -29,8 +28,6 @@ const WalletDashboard = () => {
   const { redeemPoints, addPoints, refreshPoints } = usePoints();
   const [showConfetti, setShowConfetti] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
-  const [sendAmount, setSendAmount] = useState(60);
-  const [recipientUserId, setRecipientUserId] = useState("");
   const [rewards, setRewards] = useState([]);
   const [loadingRewards, setLoadingRewards] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -131,53 +128,6 @@ const WalletDashboard = () => {
     }
   };
 
-  const handleWithdraw = () => {
-    const success = redeemPoints(500);
-    if (!success) {
-      toast.error("500 coins required to withdraw", { icon: "⚠️" });
-      return;
-    }
-    recordTransaction({ type: "redeemed", label: "Withdrawal request", amount: 500, time: "Processing" });
-    toast.info("Withdrawal submitted · expect funds in 24h", { icon: "🏦" });
-  };
-
-  const handleSendCoins = async () => {
-    if (!recipientUserId.trim()) {
-      toast.error("Please enter a recipient user ID", { icon: "⚠️" });
-      return;
-    }
-    
-    if (sendAmount <= 0) {
-      toast.error("Amount must be greater than zero", { icon: "⚠️" });
-      return;
-    }
-
-    try {
-      const result = await shareCoinsAPI(recipientUserId.trim(), sendAmount, "Keep shining!");
-      if (result?.success) {
-        toast.success(result.message || `Sent ${sendAmount} coins successfully`, { icon: "🤝" });
-        setRecipientUserId(""); // Clear input after successful send
-        setSendAmount(60); // Reset to default amount
-        // Update local transaction record
-        recordTransaction({
-          type: "sent",
-          label: `Gifted to user ${recipientUserId.trim()}`,
-          amount: sendAmount,
-          time: "Just now",
-        });
-        // Refresh wallet data from backend
-        window.dispatchEvent(new CustomEvent("transactionCompleted"));
-        // Refresh points context to get updated wallet balance
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("refreshWallet"));
-        }, 500);
-    } else {
-        toast.error(result?.error?.message || result?.message || "Failed to send coins", { icon: "⚠️" });
-      }
-    } catch (error) {
-      toast.error(error?.error?.message || error?.message || "Failed to send coins", { icon: "⚠️" });
-    }
-  };
 
   const handleBonusCollect = () => {
     const amount = 40;
@@ -192,12 +142,12 @@ const WalletDashboard = () => {
         <Confetti width={viewport.width} height={viewport.height} recycle={false} numberOfPieces={260} gravity={0.35} />
       )}
 
-      <section className="grid gap-6 lg:grid-cols-3">
+      <section className="grid gap-6">
         <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1f1f1f] via-[#0d0d0d] to-black p-6 lg:col-span-2">
+          className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1f1f1f] via-[#0d0d0d] to-black p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Wallet overview</p>
@@ -218,45 +168,6 @@ const WalletDashboard = () => {
           </div>
         </Motion.div>
 
-        <Motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Quick actions</p>
-          <button
-            type="button"
-            onClick={handleWithdraw}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#151515] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
-            <HiOutlineArrowUpOnSquare className="h-5 w-5" /> Withdraw coins
-          </button>
-          <div className="rounded-2xl border border-white/10 bg-[#151515] p-4 text-xs text-gray-300">
-            <p>Send coins to a learner</p>
-            <div className="mt-3 space-y-2">
-              <input
-                value={recipientUserId}
-                onChange={(event) => setRecipientUserId(event.target.value)}
-                placeholder="Enter user ID"
-                className="w-full rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-gray-100 focus:border-[#D4AF37]/40 focus:outline-none"
-              />
-              <input
-                type="number"
-                min={10}
-                step={10}
-                value={sendAmount}
-                onChange={(event) => setSendAmount(Number(event.target.value))}
-                placeholder="Amount"
-                className="w-full rounded-xl border border-white/10 bg-[#101010] px-3 py-2 text-xs text-gray-100 focus:border-[#D4AF37]/40 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleSendCoins}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/20 hover:brightness-110">
-                <FaCoins className="h-4 w-4" /> Send coins
-              </button>
-            </div>
-          </div>
-        </Motion.div>
       </section>
 
       <section className="grid gap-6">

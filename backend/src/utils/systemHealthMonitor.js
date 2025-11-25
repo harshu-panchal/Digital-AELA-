@@ -1,6 +1,5 @@
 import os from "os";
 import mongoose from "mongoose";
-import User from "../models/User.js";
 
 // Health thresholds
 const HEALTH_THRESHOLDS = {
@@ -14,15 +13,6 @@ const HEALTH_THRESHOLDS = {
 let errorCount = 0;
 let requestCount = 0;
 let lastHealthCheck = null;
-let lastNotificationTime = {
-  memory: null,
-  cpu: null,
-  database: null,
-  errors: null,
-};
-
-// Minimum time between notifications for same issue (5 minutes)
-const NOTIFICATION_COOLDOWN = 5 * 60 * 1000;
 
 /**
  * Get current memory usage percentage
@@ -102,52 +92,6 @@ export const resetErrorTracking = () => {
 };
 
 /**
- * Check if we should send notification (cooldown check)
- */
-const shouldNotify = (issueType) => {
-  const lastNotification = lastNotificationTime[issueType];
-  if (!lastNotification) return true;
-  return Date.now() - lastNotification > NOTIFICATION_COOLDOWN;
-};
-
-/**
- * Send system health notification to super admins
- */
-const sendHealthNotification = async (title, description, issueType) => {
-  if (!shouldNotify(issueType)) {
-    return; // Skip if notification was sent recently
-  }
-
-  try {
-    const { createBulkNotifications } = await import("./notificationHelper.js");
-    const superAdmins = await User.find({ role: "super-admin", isActive: true })
-      .select("_id")
-      .lean();
-
-    if (superAdmins.length > 0) {
-      const adminIds = superAdmins.map((admin) => admin._id);
-
-      await createBulkNotifications(
-        adminIds,
-        title,
-        description,
-        "system_health",
-        {
-          issueType: issueType,
-          timestamp: new Date().toISOString(),
-        },
-        "/super-admin/system-health"
-      );
-
-      lastNotificationTime[issueType] = Date.now();
-    }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("[SystemHealth] Error sending notification:", error);
-  }
-};
-
-/**
  * Perform comprehensive system health check
  */
 export const performHealthCheck = async () => {
@@ -192,24 +136,18 @@ export const performHealthCheck = async () => {
 
     // Check error rate
     const errorRate = getErrorRate();
-    if (errorRate > HEALTH_THRESHOLDS.ERROR_RATE_PERCENT && requestCount > 100) {
+    if (
+      errorRate > HEALTH_THRESHOLDS.ERROR_RATE_PERCENT &&
+      requestCount > 100
+    ) {
       // Only check if we have enough requests for meaningful rate
       issues.push({
         type: "errors",
         severity: "high",
-        message: `High error rate: ${errorRate.toFixed(1)}% (${errorCount} errors out of ${requestCount} requests)`,
+        message: `High error rate: ${errorRate.toFixed(
+          1
+        )}% (${errorCount} errors out of ${requestCount} requests)`,
       });
-    }
-
-    // Send notifications for critical and high severity issues
-    for (const issue of issues) {
-      if (issue.severity === "critical" || issue.severity === "high") {
-        await sendHealthNotification(
-          `System Health Alert: ${issue.type.toUpperCase()}`,
-          issue.message,
-          issue.type
-        );
-      }
     }
 
     lastHealthCheck = {
@@ -259,4 +197,3 @@ export const initializeHealthMonitoring = () => {
   // eslint-disable-next-line no-console
   console.log("[SystemHealth] Health monitoring initialized");
 };
-
