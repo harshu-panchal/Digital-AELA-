@@ -294,6 +294,23 @@ const Home = () => {
     };
   }, [isCourseRibbonPaused]);
 
+  // Helper function to check if course is free
+  const isFreeCourse = (course) => {
+    if (!course) return false;
+    const price = course.price;
+    
+    // Check various formats
+    if (price === 0 || price === "Free" || price === "free") return true;
+    if (typeof price === 'string') {
+      if (price.toLowerCase().includes('free')) return true;
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+      if (isNaN(numericPrice) || numericPrice === 0) return true;
+    }
+    if (typeof price === 'number' && price === 0) return true;
+    
+    return false;
+  };
+
   const redirectToCoursePayment = (course, extra = {}) => {
     const payload = {
       ...course,
@@ -1699,14 +1716,22 @@ const Home = () => {
                                 whileTap={{ scale: 0.97 }}
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  redirectToCoursePayment(course, {
-                                    origin: "home-featured",
-                                    category:
-                                      course.category ?? "Featured Programs",
-                                  });
+                                  
+                                  // Check if course is free
+                                  if (isFreeCourse(course)) {
+                                    // Free course - navigate to course detail page for enrollment
+                                    handleViewCourseDetail(course, "home-featured");
+                                  } else {
+                                    // Paid course - go to payment flow
+                                    redirectToCoursePayment(course, {
+                                      origin: "home-featured",
+                                      category:
+                                        course.category ?? "Featured Programs",
+                                    });
+                                  }
                                 }}
                                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                                Buy Now
+                                {isFreeCourse(course) ? "Enroll Free" : "Buy Now"}
                               </motion.button>
                               <div
                                 onClick={(event) => event.stopPropagation()}
@@ -2228,7 +2253,7 @@ const Home = () => {
                               e.preventDefault();
                               e.stopPropagation();
                               const isFreeBook =
-                                book.price === 0 || book.price === "Free";
+                                book.price === 0 || book.price === "Free" || book.price === null;
                               const isEbook =
                                 book.badge === "E-Book" ||
                                 book.format === "ebook";
@@ -2236,8 +2261,11 @@ const Home = () => {
                               if (isFreeBook && isEbook) {
                                 // Free ebook - redirect to free library reader
                                 navigate(`/free-library/ebook/${book.id}/read`);
+                              } else if (isFreeBook) {
+                                // Free physical book - redirect to book detail page
+                                navigate(`/books/${book.id}`);
                               } else {
-                                // Paid book or physical book - go to payment page
+                                // Paid book - go to payment page
                                 window.location.href = `/books/${book.id}/payment`;
                               }
                             }}

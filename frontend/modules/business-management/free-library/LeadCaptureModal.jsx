@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { createPublicLead } from "../../../src/services/api/crm";
-import { isValidEmail, isValidPhone, safeString } from "../../../src/utils/registrationHelpers";
 
 const BOOK_PREFERENCES = [
   "Public Speaking",
@@ -53,29 +52,38 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
     };
   }, [isOpen]);
 
+  // Simple validation - no phone format checking
   const validateForm = () => {
     const newErrors = {};
 
-    if (!safeString(formData.firstName)) {
+    // First name validation
+    const firstName = (formData.firstName || "").trim();
+    if (!firstName) {
       newErrors.firstName = "First name is required";
     }
 
-    if (!safeString(formData.lastName)) {
+    // Last name validation
+    const lastName = (formData.lastName || "").trim();
+    if (!lastName) {
       newErrors.lastName = "Last name is required";
     }
 
-    if (!safeString(formData.email)) {
+    // Email validation - simple check
+    const email = (formData.email || "").trim().toLowerCase();
+    if (!email) {
       newErrors.email = "Email is required";
-    } else if (!isValidEmail(formData.email)) {
+    } else if (!email.includes("@") || !email.includes(".")) {
       newErrors.email = "Please enter a valid email address";
     }
 
-    if (!safeString(formData.phone)) {
+    // Phone validation - ONLY check if empty, NO format validation
+    const phone = (formData.phone || "").trim();
+    if (!phone) {
       newErrors.phone = "Phone number is required";
-    } else if (!isValidPhone(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number";
     }
+    // NO format validation - accept any input
 
+    // Book preferences validation
     if (!formData.bookPreferences || formData.bookPreferences.length === 0) {
       newErrors.bookPreferences = "Please select at least one book preference";
     }
@@ -122,6 +130,8 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (isSubmitting) return;
 
     if (!validateForm()) {
@@ -131,26 +141,37 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
 
     setIsSubmitting(true);
     try {
-      await createPublicLead({
-        firstName: safeString(formData.firstName),
-        lastName: safeString(formData.lastName),
-        email: safeString(formData.email),
-        phone: safeString(formData.phone),
-        bookPreferences: formData.bookPreferences,
-      });
+      // Prepare data - trim all string values
+      const payload = {
+        firstName: (formData.firstName || "").trim(),
+        lastName: (formData.lastName || "").trim(),
+        email: (formData.email || "").trim().toLowerCase(),
+        phone: (formData.phone || "").trim(), // Accept any phone format
+        bookPreferences: formData.bookPreferences || [],
+      };
+
+      console.log("[LeadCaptureModal] Submitting payload:", payload);
+
+      await createPublicLead(payload);
 
       toast.success("Thank you! Your information has been submitted successfully.");
-      
+
       // Store submission status in localStorage
       localStorage.setItem("freeLibraryLeadSubmitted", "true");
-      
+
       // Call success callback to close modal
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error submitting lead:", error);
-      
+      console.error("[LeadCaptureModal] Submission error:", error);
+      console.error("[LeadCaptureModal] Error details:", {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        details: error.details,
+      });
+
       // Handle duplicate email error
       if (error.code === "ALREADY_EXISTS" || error.status === 409) {
         toast.error("This email is already registered. Please use a different email address.");
@@ -161,7 +182,14 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
       } else if (error.isNetworkError) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
-        toast.error(error.message || "Failed to submit. Please try again.");
+        // Show error message from backend or generic message
+        const errorMessage = error.message || "Failed to submit. Please try again.";
+        toast.error(errorMessage);
+        
+        // If error mentions phone/contact, log it for debugging
+        if (errorMessage.toLowerCase().includes("phone") || errorMessage.toLowerCase().includes("contact")) {
+          console.warn("[LeadCaptureModal] Phone-related error detected:", errorMessage);
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -199,7 +227,11 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
             </div>
 
             {/* Form Content */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form 
+              onSubmit={handleSubmit} 
+              className="p-6 space-y-5"
+              noValidate
+            >
               {/* First Name */}
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-slate-200 mb-2">
@@ -218,6 +250,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
                   } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/50 focus:border-[#F5D26A]/50 transition-colors`}
                   placeholder="Enter your first name"
                   disabled={isSubmitting}
+                  autoComplete="given-name"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
@@ -242,6 +275,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
                   } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/50 focus:border-[#F5D26A]/50 transition-colors`}
                   placeholder="Enter your last name"
                   disabled={isSubmitting}
+                  autoComplete="family-name"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
@@ -266,19 +300,20 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
                   } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/50 focus:border-[#F5D26A]/50 transition-colors`}
                   placeholder="Enter your email address"
                   disabled={isSubmitting}
+                  autoComplete="email"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                 )}
               </div>
 
-              {/* Phone */}
+              {/* Phone - NO validation, accept any input */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-slate-200 mb-2">
                   Phone Number <span className="text-red-400">*</span>
                 </label>
                 <input
-                  type="tel"
+                  type="text"
                   id="phone"
                   name="phone"
                   value={formData.phone}
@@ -288,8 +323,9 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
                       ? "border-red-500 bg-red-500/10"
                       : "border-white/20 bg-white/5"
                   } text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/50 focus:border-[#F5D26A]/50 transition-colors`}
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number (any format)"
                   disabled={isSubmitting}
+                  autoComplete="tel"
                 />
                 {errors.phone && (
                   <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
@@ -364,4 +400,3 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
 };
 
 export default LeadCaptureModal;
-

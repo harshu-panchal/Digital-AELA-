@@ -32,6 +32,12 @@ const JoinBuildAfterLife = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all"); // all, course, book
 
+  // Utility function to clean text and remove extra spaces
+  const cleanText = (text) => {
+    if (!text) return "";
+    return String(text).trim().replace(/\s+/g, " ");
+  };
+
   useEffect(() => {
     const loadCourses = async () => {
       try {
@@ -53,8 +59,8 @@ const JoinBuildAfterLife = () => {
             // Then override with formatted display values
             id: course._id,
             slug: course._id,
-            title: course.title || "Untitled Course",
-            description: course.description || course.metadata?.subtitle || course.subtitle || "",
+            title: cleanText(course.title || "Untitled Course"),
+            description: cleanText(course.description || course.metadata?.subtitle || course.subtitle || ""),
             longDescription: course.longDescription || course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || "",
             coverImage: course.coverImage || course.thumbnailUrl || course.thumbnail || course.image || "",
@@ -169,17 +175,62 @@ const JoinBuildAfterLife = () => {
     return matchesSearch && matchesType;
   });
 
+  // Helper function to check if course is free
+  const isFreeCourse = (course) => {
+    if (!course) return false;
+    const price = course.price;
+    
+    // Check various formats
+    // 1. Direct numeric check
+    if (price === 0 || (typeof price === 'number' && price === 0)) return true;
+    
+    // 2. String checks (after transformation, price becomes "Free" or "AED ${price}")
+    if (typeof price === 'string') {
+      const lowerPrice = price.toLowerCase();
+      if (lowerPrice === 'free' || lowerPrice.includes('free')) return true;
+      
+      // Extract numeric value from strings like "AED 100" or "On Request"
+      if (lowerPrice === 'on request') return false; // "On Request" means price not set, not free
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+      if (isNaN(numericPrice) || numericPrice === 0) return true;
+    }
+    
+    return false;
+  };
+
+  // Helper function to check if book is free
+  const isFreeBook = (book) => {
+    if (!book) return false;
+    const price = book.price;
+    
+    // Check various formats
+    if (price === 0 || price === null || price === undefined) return true;
+    if (price === "Free" || price === "free") return true;
+    if (typeof price === 'number' && price === 0) return true;
+    if (typeof price === 'string' && price.toLowerCase().includes('free')) return true;
+    
+    return false;
+  };
+
   const handleBuyCourse = (course) => {
     const payload = {
       ...course,
       category: "Build Your Afterlife",
       origin: "join-build-afterlife",
     };
-    navigate(buildCoursePaymentLink(payload), {
-      state: {
-        course: payload,
-      },
-    });
+    
+    // Check if course is free
+    if (isFreeCourse(course)) {
+      // Free course - navigate to course detail page for enrollment
+      handleViewCourse(course);
+    } else {
+      // Paid course - go to payment flow
+      navigate(buildCoursePaymentLink(payload), {
+        state: {
+          course: payload,
+        },
+      });
+    }
   };
 
   const handleViewCourse = (course) => {
@@ -335,10 +386,10 @@ const JoinBuildAfterLife = () => {
                       ease: [0.25, 0.1, 0.25, 1],
                     }}
                       whileHover={{ y: -8, scale: 1.02 }}
-                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
+                      className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col">
                       <div
                         onClick={() => handleViewCourse(item)}
-                        className="relative h-48 w-full overflow-hidden">
+                        className="relative h-48 w-full overflow-hidden flex-shrink-0">
                       <img
                           src={item.image || "https://via.placeholder.com/300x200?text=Course"}
                           alt={item.title}
@@ -354,31 +405,33 @@ const JoinBuildAfterLife = () => {
                         </div>
                       </div>
 
-                      <div className="p-4">
-                        <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2">
+                      <div className="p-4 flex flex-col flex-1 min-h-0">
+                        <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-gray-400 mb-2 line-clamp-2">
-                          {item.description}
+                        <p className="text-xs text-gray-400 mb-2 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
+                          {item.description || "No description available"}
                         </p>
 
-                        {highlights.length > 0 && (
-                          <div className="mb-3">
+                        {highlights.length > 0 ? (
+                          <div className="mb-3 flex-shrink-0">
                             <p className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide mb-1">
-                          Key Highlights
-                        </p>
+                              Key Highlights
+                            </p>
                             <ul className="space-y-1">
                               {highlights.slice(0, 2).map((feature, idx) => (
                                 <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-300">
-                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40"></span>
-                                  <span className="line-clamp-1">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                                  <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
+                                  <span className="line-clamp-1">{cleanText(feature)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="mb-3 flex-shrink-0" style={{ minHeight: '0px' }}></div>
                         )}
 
-                        <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700">
+                        <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700 mt-auto flex-shrink-0">
                           <span className="text-lg font-bold text-[#D4AF37] font-display">
                             {item.price || "On Request"}
                           </span>
@@ -403,7 +456,7 @@ const JoinBuildAfterLife = () => {
                               handleBuyCourse(item);
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                            Buy Now
+                            {isFreeCourse(item) ? "Enroll Free" : "Buy Now"}
                           </motion.button>
                           <div
                             onClick={(e) => e.stopPropagation()}
@@ -512,10 +565,26 @@ const JoinBuildAfterLife = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={(e) => {
                             e.preventDefault();
-                                navigate(`/books/${item.id}/payment`);
+                            e.stopPropagation();
+                            
+                            // Check if book is free
+                            if (isFreeBook(item)) {
+                              const isEbook = item.badge === "E-Book" || item.format === "ebook";
+                              
+                              if (isEbook) {
+                                // Free ebook - redirect to free library reader
+                                navigate(`/free-library/ebook/${item.id}/read`);
+                              } else {
+                                // Free physical book - redirect to book detail page
+                                navigate(`/books/${item.id}`);
+                              }
+                            } else {
+                              // Paid book - go to payment page
+                              navigate(`/books/${item.id}/payment`);
+                            }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          Buy Now
+                          {isFreeBook(item) ? "Get Free" : "Buy Now"}
                         </motion.button>
                         <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"

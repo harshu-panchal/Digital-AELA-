@@ -27,9 +27,12 @@ export const isValidPhone = (phone) => {
   
   // Check that the value only contains valid phone characters
   // Allowed: digits (0-9), spaces, plus sign (+), dashes (-), parentheses (), dots (.), slashes (/)
-  // Using explicit character class with - at the end to avoid range interpretation
-  // The + character in a character class is literal and doesn't need escaping
-  const validPhonePattern = /^[0-9\s+()./\-]+$/;
+  // Pattern explanation: 
+  // - \d or 0-9 for digits
+  // - \s for whitespace
+  // - +()/. are literal characters (no escaping needed in character class)
+  // - - (dash) placed at the end to avoid being interpreted as a range
+  const validPhonePattern = /^[\d\s+()./-]+$/;
   if (!validPhonePattern.test(value)) {
     return false;
   }

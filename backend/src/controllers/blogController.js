@@ -120,7 +120,24 @@ export const createBlog = async (req, res, next) => {
     const authorId = populatedBlog.author?._id
       ? populatedBlog.author._id.toString()
       : populatedBlog.author?.id;
+    
+    // Fetch profile for author to get avatarUrl (prioritize profile over metadata)
+    let authorProfile = null;
+    if (authorId) {
+      // Try StudentProfile first, then RecruiterProfile
+      authorProfile = await StudentProfile.findOne({ user: authorId })
+        .select("avatarUrl")
+        .lean();
+      if (!authorProfile) {
+        authorProfile = await RecruiterProfile.findOne({ user: authorId })
+          .select("avatarUrl")
+          .lean();
+      }
+    }
+    
     const userAvatarUrl = populatedBlog.author?.metadata?.avatarUrl || null;
+    const profileAvatarUrl = authorProfile?.avatarUrl || null;
+    const finalAvatarUrl = profileAvatarUrl || userAvatarUrl;
 
     const response = {
       _id: populatedBlog._id.toString(),
@@ -143,7 +160,7 @@ export const createBlog = async (req, res, next) => {
             fullName: populatedBlog.author.fullName,
             role: populatedBlog.author.role,
             email: populatedBlog.author.email,
-            avatarUrl: userAvatarUrl,
+            avatarUrl: finalAvatarUrl,
           }
         : null,
     };
@@ -279,16 +296,40 @@ export const listPublishedBlogs = async (req, res, next) => {
       }
     });
 
-    const commentAuthors = commentAuthorIds.size
-      ? await User.find({ _id: { $in: Array.from(commentAuthorIds) } })
-          .select(["fullName", "email", "metadata"])
-          .lean()
-      : [];
+    // Fetch comment authors with their profiles (similar to blog authors)
+    const [commentAuthors, commentRecruiterProfiles, commentStudentProfiles] = await Promise.all([
+      commentAuthorIds.size
+        ? User.find({ _id: { $in: Array.from(commentAuthorIds) } })
+            .select(["fullName", "email", "metadata"])
+            .lean()
+        : [],
+      commentAuthorIds.size
+        ? RecruiterProfile.find({ user: { $in: Array.from(commentAuthorIds) } })
+            .select(["avatarUrl", "user"])
+            .lean()
+        : [],
+      commentAuthorIds.size
+        ? StudentProfile.find({ user: { $in: Array.from(commentAuthorIds) } })
+            .select(["avatarUrl", "user"])
+            .lean()
+        : [],
+    ]);
 
     const commentAuthorMap = commentAuthors.reduce((acc, user) => {
       acc[user._id.toString()] = user;
       return acc;
     }, {});
+
+    // Create profile map for comment authors (prioritize profile avatarUrl)
+    const commentAuthorProfileMap = {};
+    [...commentRecruiterProfiles, ...commentStudentProfiles].forEach((profile) => {
+      if (profile.user) {
+        const userId = profile.user.toString();
+        if (!commentAuthorProfileMap[userId] || profile.avatarUrl) {
+          commentAuthorProfileMap[userId] = profile;
+        }
+      }
+    });
 
     const data = items.map((blog) => {
       const authorId = blog.author?._id
@@ -320,6 +361,15 @@ export const listPublishedBlogs = async (req, res, next) => {
         const commentAuthor = commentAuthorId
           ? commentAuthorMap[commentAuthorId]
           : null;
+        const commentAuthorProfile = commentAuthorId
+          ? commentAuthorProfileMap[commentAuthorId]
+          : null;
+        
+        // Get avatarUrl with priority: profile avatarUrl > user metadata avatarUrl > default
+        const commentUserAvatarUrl = commentAuthor?.metadata?.avatarUrl || null;
+        const commentProfileAvatarUrl = commentAuthorProfile?.avatarUrl || null;
+        const commentFinalAvatarUrl = commentProfileAvatarUrl || commentUserAvatarUrl || "https://i.pravatar.cc/150?img=11";
+        
         return {
           id: comment._id ? comment._id.toString() : crypto.randomUUID(),
           message: comment.message,
@@ -328,9 +378,7 @@ export const listPublishedBlogs = async (req, res, next) => {
             ? {
                 id: commentAuthorId,
                 name: commentAuthor.fullName || "User",
-                avatar:
-                  commentAuthor.metadata?.avatarUrl ||
-                  "https://i.pravatar.cc/150?img=11",
+                avatar: commentFinalAvatarUrl,
               }
             : {
                 id: commentAuthorId || "unknown",
@@ -524,6 +572,25 @@ export const addComment = async (req, res, next) => {
       ? commentAuthor._id.toString()
       : commentAuthor?.id;
 
+    // Fetch profile for comment author to get avatarUrl
+    let commentAuthorProfile = null;
+    if (authorId) {
+      // Try StudentProfile first, then RecruiterProfile
+      commentAuthorProfile = await StudentProfile.findOne({ user: authorId })
+        .select("avatarUrl")
+        .lean();
+      if (!commentAuthorProfile) {
+        commentAuthorProfile = await RecruiterProfile.findOne({ user: authorId })
+          .select("avatarUrl")
+          .lean();
+      }
+    }
+
+    // Get avatarUrl with priority: profile avatarUrl > user metadata avatarUrl > default
+    const commentUserAvatarUrl = commentAuthor?.metadata?.avatarUrl || null;
+    const commentProfileAvatarUrl = commentAuthorProfile?.avatarUrl || null;
+    const commentFinalAvatarUrl = commentProfileAvatarUrl || commentUserAvatarUrl || "https://i.pravatar.cc/150?img=11";
+
     const formattedComment = {
       id: savedComment._id.toString(),
       message: savedComment.message,
@@ -531,9 +598,7 @@ export const addComment = async (req, res, next) => {
       author: {
         id: authorId,
         name: commentAuthor?.fullName || "User",
-        avatar:
-          commentAuthor?.metadata?.avatarUrl ||
-          "https://i.pravatar.cc/150?img=11",
+        avatar: commentFinalAvatarUrl,
       },
     };
 
