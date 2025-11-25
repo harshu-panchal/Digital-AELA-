@@ -89,6 +89,20 @@ export const fetchStudentDetails = async (studentId) => {
 };
 
 /**
+ * Update student enrollment status for a course (Teacher only)
+ * PATCH /api/v1/teacher/courses/:courseId/students/:studentId/enrollment
+ * @param {string} courseId
+ * @param {string} studentId
+ * @param {string} status - "active" | "completed" | "dropped" | "paused"
+ */
+export const updateStudentEnrollmentStatus = async (courseId, studentId, status) => {
+  return apiRequest(`/teacher/courses/${courseId}/students/${studentId}/enrollment`, {
+    method: "PATCH",
+    body: { status },
+  });
+};
+
+/**
  * Get enhanced analytics report
  * GET /api/v1/teacher/analytics/report
  * @param {Object} params - { startDate, endDate, format }

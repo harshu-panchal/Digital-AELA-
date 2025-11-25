@@ -22,7 +22,7 @@ import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import VideoUpload from "./VideoUpload";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../src/services/courseVideos";
 import { FaVideo, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
-import { fetchCourseStudents } from "../../src/services/api/teacher";
+import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../src/services/api/teacher";
 import { generateCertificate } from "../../src/services/api/certificates";
 
 const sectionVariants = {
@@ -91,6 +91,7 @@ const CourseDetail = () => {
   const [enrolledStudents, setEnrolledStudents] = useState([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [issuingCertificateFor, setIssuingCertificateFor] = useState(null);
+  const [markingCompleteFor, setMarkingCompleteFor] = useState(null);
 
   const fetchVideos = async () => {
     if (!courseId) return;
@@ -236,6 +237,31 @@ const CourseDetail = () => {
       setEnrolledStudents([]);
     } finally {
       setIsLoadingStudents(false);
+    }
+  };
+
+  const handleMarkAsCompleted = async (student) => {
+    if (!courseId || !student.studentId) {
+      toast.error("Missing required information");
+      return;
+    }
+
+    if (student.status === "completed") {
+      toast.info("Student is already marked as completed");
+      return;
+    }
+
+    setMarkingCompleteFor(student.studentId);
+    try {
+      await updateStudentEnrollmentStatus(courseId, student.studentId, "completed");
+      toast.success(`${student.studentName} marked as completed`);
+      // Refresh students list to update status
+      await fetchEnrolledStudents();
+    } catch (error) {
+      console.error("Failed to mark student as completed:", error);
+      toast.error(error?.message || "Failed to mark student as completed");
+    } finally {
+      setMarkingCompleteFor(null);
     }
   };
 
@@ -1520,16 +1546,38 @@ const CourseDetail = () => {
                           <td className="px-3 py-3 font-semibold text-white">{student.studentName}</td>
                           <td className="px-3 py-3 text-xs text-slate-300/90">{student.studentEmail}</td>
                           <td className="px-3 py-3 text-xs">
-                            <span
-                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${
-                                student.status === "completed"
-                                  ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                                  : student.status === "active"
-                                  ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
-                                  : "border-sky-400/40 bg-sky-500/10 text-sky-200"
-                              }`}>
-                              {student.status}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${
+                                  student.status === "completed"
+                                    ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                                    : student.status === "active"
+                                    ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                                    : "border-sky-400/40 bg-sky-500/10 text-sky-200"
+                                }`}>
+                                {student.status}
+                              </span>
+                              {student.status !== "completed" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarkAsCompleted(student)}
+                                  disabled={markingCompleteFor === student.studentId}
+                                  className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                  title="Mark as completed">
+                                  {markingCompleteFor === student.studentId ? (
+                                    <>
+                                      <FaSpinner className="h-2.5 w-2.5 animate-spin" />
+                                      Marking...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <HiOutlineSparkles className="h-2.5 w-2.5" />
+                                      Mark Complete
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-xs text-slate-200">
                             <div className="w-40">

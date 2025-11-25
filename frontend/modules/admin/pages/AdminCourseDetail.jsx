@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlineArrowUturnLeft } from "react-icons/hi2";
+import { HiOutlineArrowUturnLeft, HiOutlineDocumentText, HiOutlineSparkles } from "react-icons/hi2";
 import { FaVideo, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import { getAdminCourseById, updateAdminCourse } from "../../../src/services/api/adminContent";
@@ -14,6 +14,8 @@ import {
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
 import VideoUpload from "../../teacher/VideoUpload";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../../src/services/courseVideos";
+import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../../src/services/api/teacher";
+import { generateCertificate } from "../../../src/services/api/certificates";
 
 const categories = [
   "English Language",
@@ -40,6 +42,10 @@ const AdminCourseDetail = () => {
     order: 0,
     isPreview: false,
   });
+  const [enrolledStudents, setEnrolledStudents] = useState([]);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [markingCompleteFor, setMarkingCompleteFor] = useState(null);
+  const [issuingCertificateFor, setIssuingCertificateFor] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
@@ -147,6 +153,21 @@ const AdminCourseDetail = () => {
     });
   }, []);
 
+  const fetchEnrolledStudents = useCallback(async () => {
+    if (!courseId) return;
+    setIsLoadingStudents(true);
+    try {
+      const response = await fetchCourseStudents(courseId);
+      setEnrolledStudents(response.students || []);
+    } catch (error) {
+      console.error("Failed to fetch enrolled students:", error);
+      toast.error("Failed to load enrolled students");
+      setEnrolledStudents([]);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  }, [courseId]);
+
   // Load course data
   useEffect(() => {
     const loadCourse = async () => {
@@ -189,6 +210,7 @@ const AdminCourseDetail = () => {
           isPremium: existing.metadata?.isPremium || false,
         });
         fetchVideos();
+        fetchEnrolledStudents();
       } catch (error) {
         console.error("Failed to load course:", error);
         toast.error("Failed to load course details.");
@@ -199,7 +221,69 @@ const AdminCourseDetail = () => {
     };
 
     loadCourse();
-  }, [courseId, navigate, fetchVideos]);
+  }, [courseId, navigate, fetchVideos, fetchEnrolledStudents]);
+
+  const handleMarkAsCompleted = async (student) => {
+    if (!courseId || !student.studentId) {
+      toast.error("Missing required information");
+      return;
+    }
+
+    if (student.status === "completed") {
+      toast.info("Student is already marked as completed");
+      return;
+    }
+
+    setMarkingCompleteFor(student.studentId);
+    try {
+      await updateStudentEnrollmentStatus(courseId, student.studentId, "completed");
+      toast.success(`${student.studentName} marked as completed`);
+      // Refresh students list to update status
+      await fetchEnrolledStudents();
+    } catch (error) {
+      console.error("Failed to mark student as completed:", error);
+      toast.error(error?.message || "Failed to mark student as completed");
+    } finally {
+      setMarkingCompleteFor(null);
+    }
+  };
+
+  const handleIssueCertificate = async (student) => {
+    if (!courseId || !student.studentId) {
+      toast.error("Missing required information to issue certificate");
+      return;
+    }
+
+    // Check eligibility: status must be "completed" AND progress must be 100%
+    if (student.status !== "completed" || student.courseProgressPercentage !== 100) {
+      toast.error("Student must have completed the course (100% progress) to receive a certificate");
+      return;
+    }
+
+    // Check if certificate already exists
+    if (student.hasCertificate) {
+      toast.info("Certificate already issued for this student");
+      return;
+    }
+
+    setIssuingCertificateFor(student.studentId);
+    try {
+      await generateCertificate({
+        studentId: student.studentId,
+        courseId: courseId,
+        enrollmentId: student.enrollmentId,
+        issuedType: "manual",
+      });
+      toast.success(`Certificate issued successfully for ${student.studentName}`);
+      // Refresh students list to update hasCertificate status
+      await fetchEnrolledStudents();
+    } catch (error) {
+      console.error("Failed to issue certificate:", error);
+      toast.error(error?.message || "Failed to issue certificate");
+    } finally {
+      setIssuingCertificateFor(null);
+    }
+  };
 
   const priceHelper = useMemo(
     () => ({
@@ -992,6 +1076,148 @@ const AdminCourseDetail = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </motion.section>
+
+          {/* Enrolled Students Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut", delay: 0.2 }}
+            className="mt-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
+            <header className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Enrolled Students</h2>
+                <p className="text-xs text-slate-400">
+                  Monitor learner progress, contact details, and activity.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white hover:text-[#F5D26A]">
+                Export roster
+              </button>
+            </header>
+
+            <div className="mt-4 overflow-x-auto">
+              {isLoadingStudents ? (
+                <div className="flex items-center justify-center py-8">
+                  <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
+                </div>
+              ) : enrolledStudents.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-300">
+                  No students enrolled yet.
+                </div>
+              ) : (
+                <table className="min-w-full text-left text-sm text-slate-200">
+                  <thead className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                    <tr className="border-b border-white/10">
+                      <th className="px-3 py-3 font-semibold">Learner</th>
+                      <th className="px-3 py-3 font-semibold">Email</th>
+                      <th className="px-3 py-3 font-semibold">Status</th>
+                      <th className="px-3 py-3 font-semibold">Progress</th>
+                      <th className="px-3 py-3 font-semibold">Last active</th>
+                      <th className="px-3 py-3 font-semibold">Certificate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {enrolledStudents.map((student) => {
+                      const isEligibleForCertificate =
+                        student.status === "completed" &&
+                        student.courseProgressPercentage === 100 &&
+                        !student.hasCertificate;
+                      const lastActive = student.lastAccessedAt
+                        ? new Date(student.lastAccessedAt).toLocaleDateString()
+                        : "Never";
+
+                      return (
+                        <tr
+                          key={student.studentId}
+                          className="border-b border-white/5 last:border-b-0">
+                          <td className="px-3 py-3 font-semibold text-white">{student.studentName}</td>
+                          <td className="px-3 py-3 text-xs text-slate-300/90">{student.studentEmail}</td>
+                          <td className="px-3 py-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${
+                                  student.status === "completed"
+                                    ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                                    : student.status === "active"
+                                    ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                                    : "border-sky-400/40 bg-sky-500/10 text-sky-200"
+                                }`}>
+                                {student.status}
+                              </span>
+                              {student.status !== "completed" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarkAsCompleted(student)}
+                                  disabled={markingCompleteFor === student.studentId}
+                                  className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                  title="Mark as completed">
+                                  {markingCompleteFor === student.studentId ? (
+                                    <>
+                                      <FaSpinner className="h-2.5 w-2.5 animate-spin" />
+                                      Marking...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <HiOutlineSparkles className="h-2.5 w-2.5" />
+                                      Mark Complete
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs text-slate-200">
+                            <div className="w-40">
+                              <div className="h-2 rounded-full bg-white/10">
+                                <div
+                                  className="h-2 rounded-full bg-gradient-to-r from-[#F5D26A] to-[#facc15]"
+                                  style={{ width: `${Math.min(student.courseProgressPercentage || 0, 100)}%` }}
+                                />
+                              </div>
+                              <span className="mt-1 block text-[11px] text-slate-400">
+                                {student.courseProgressPercentage || 0}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs text-slate-300/80">{lastActive}</td>
+                          <td className="px-3 py-3 text-xs">
+                            {student.hasCertificate ? (
+                              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-emerald-200">
+                                <HiOutlineDocumentText className="h-3 w-3" />
+                                Issued
+                              </span>
+                            ) : isEligibleForCertificate ? (
+                              <button
+                                type="button"
+                                onClick={() => handleIssueCertificate(student)}
+                                disabled={issuingCertificateFor === student.studentId}
+                                className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-3 py-1 text-[11px] font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/70 hover:bg-[#F5D26A]/20 disabled:cursor-not-allowed disabled:opacity-50">
+                                {issuingCertificateFor === student.studentId ? (
+                                  <>
+                                    <FaSpinner className="h-3 w-3 animate-spin" />
+                                    Issuing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <HiOutlineSparkles className="h-3 w-3" />
+                                    Issue Certificate
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-500">Not eligible</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </motion.section>
         </section>

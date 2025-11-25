@@ -24,6 +24,7 @@ import {
   getTeacherStudents,
   getCourseStudents,
   getStudentDetails,
+  updateStudentEnrollmentStatus,
 } from "../controllers/teacherStudentController.js";
 
 const router = express.Router();
@@ -71,6 +72,7 @@ router.get("/courses/:courseId/analytics", getCourseAnalytics);
 router.get("/students", getTeacherStudents);
 router.get("/courses/:courseId/students", getCourseStudents);
 router.get("/students/:studentId", getStudentDetails);
+router.patch("/courses/:courseId/students/:studentId/enrollment", updateStudentEnrollmentStatus);
 
 export default router;
 

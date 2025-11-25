@@ -16,7 +16,7 @@ import Certificate from "../models/Certificate.js";
 export const getTeacherStudents = async (req, res, next) => {
   try {
     const { userId, userRole } = req.auth || {};
-    const { page = 1, pageSize = 20, courseId, search } = req.query;
+    const { page = 1, pageSize = 20, courseId, status, search } = req.query;
 
     if (!userId) {
       return res.status(401).json({
@@ -31,18 +31,9 @@ export const getTeacherStudents = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    if (!teacherObjectId) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid user ID",
-        },
-      });
-    }
-
     // Build enrollment query
     let enrollmentQuery = {};
-    
+
     // Super-admin can see all students, teachers only see students in their courses
     if (userRole === "super-admin") {
       // Super-admin sees all enrollments
@@ -60,7 +51,7 @@ export const getTeacherStudents = async (req, res, next) => {
       const courseIds = teacherCourses.map((c) => c._id);
 
       if (courseIds.length === 0) {
-        return res.json({
+        return res.status(200).json({
           students: [],
           pagination: {
             page: parseInt(page),
@@ -73,92 +64,79 @@ export const getTeacherStudents = async (req, res, next) => {
 
       enrollmentQuery.course = { $in: courseIds };
     }
-    if (search) {
-      // We'll filter after populating student
+
+    if (status) {
+      enrollmentQuery.status = status;
     }
 
-    // Get enrollments
+    // Get enrollments with pagination
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
     const enrollments = await Enrollment.find(enrollmentQuery)
       .populate("student", "fullName email")
-      .populate("course", "title")
+      .populate("course", "title category")
       .sort({ enrolledAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
-    // Group by student and aggregate data
+    const total = await Enrollment.countDocuments(enrollmentQuery);
+
+    // Aggregate student data
     const studentMap = new Map();
+    const studentData = {
+      totalStudents: 0,
+      activeEnrollments: 0,
+      completedEnrollments: 0,
+    };
 
     enrollments.forEach((enrollment) => {
       const studentId = enrollment.student._id.toString();
-      const studentName = enrollment.student.fullName || "Unknown";
-      const studentEmail = enrollment.student.email || "";
-
-      // Filter by search if provided
-      if (search) {
-        const searchLower = search.toLowerCase();
-        if (
-          !studentName.toLowerCase().includes(searchLower) &&
-          !studentEmail.toLowerCase().includes(searchLower)
-        ) {
-          return;
-        }
-      }
-
       if (!studentMap.has(studentId)) {
         studentMap.set(studentId, {
           studentId,
-          studentName,
-          studentEmail,
-          courses: [],
-          totalEnrollments: 0,
-          activeEnrollments: 0,
-          completedEnrollments: 0,
-          lastActivity: null,
+          studentName: enrollment.student.fullName,
+          studentEmail: enrollment.student.email,
+          enrollments: [],
         });
+        studentData.totalStudents += 1;
       }
 
-      const studentData = studentMap.get(studentId);
-      studentData.courses.push({
-        courseId: enrollment.course._id.toString(),
+      const student = studentMap.get(studentId);
+      student.enrollments.push({
+        courseId: enrollment.course._id,
         courseTitle: enrollment.course.title,
-        status: enrollment.status,
+        courseCategory: enrollment.course.category,
         enrolledAt: enrollment.enrolledAt,
-        lastAccessedAt: enrollment.lastAccessedAt,
+        status: enrollment.status,
       });
 
-      studentData.totalEnrollments += 1;
       if (enrollment.status === "active") studentData.activeEnrollments += 1;
-      if (enrollment.status === "completed") studentData.completedEnrollments += 1;
-
-      if (
-        !studentData.lastActivity ||
-        (enrollment.lastAccessedAt &&
-          new Date(enrollment.lastAccessedAt) > new Date(studentData.lastActivity))
-      ) {
-        studentData.lastActivity = enrollment.lastAccessedAt;
-      }
+      if (enrollment.status === "completed")
+        studentData.completedEnrollments += 1;
     });
 
-    // Convert to array and sort
-    let students = Array.from(studentMap.values()).sort((a, b) => {
-      if (b.lastActivity && a.lastActivity) {
-        return new Date(b.lastActivity) - new Date(a.lastActivity);
-      }
-      return b.totalEnrollments - a.totalEnrollments;
-    });
+    // Filter by search if provided
+    let students = Array.from(studentMap.values());
+    if (search) {
+      const searchLower = search.toLowerCase();
+      students = students.filter(
+        (s) =>
+          s.studentName.toLowerCase().includes(searchLower) ||
+          s.studentEmail.toLowerCase().includes(searchLower)
+      );
+    }
 
-    // Pagination
-    const total = students.length;
-    const skip = (parseInt(page) - 1) * parseInt(pageSize);
-    const paginatedStudents = students.slice(skip, skip + parseInt(pageSize));
-
-    return res.json({
-      students: paginatedStudents,
+    return res.status(200).json({
+      students,
       pagination: {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         total,
         totalPages: Math.ceil(total / parseInt(pageSize)),
       },
+      stats: studentData,
     });
   } catch (error) {
     return next(error);
@@ -235,46 +213,59 @@ export const getCourseStudents = async (req, res, next) => {
       const searchLower = search.toLowerCase();
       filteredEnrollments = enrollments.filter(
         (e) =>
-          e.student.fullName?.toLowerCase().includes(searchLower) ||
-          e.student.email?.toLowerCase().includes(searchLower)
+          e.student.fullName.toLowerCase().includes(searchLower) ||
+          e.student.email.toLowerCase().includes(searchLower)
       );
     }
 
     // Get all videos for the course to calculate progress
-    const courseVideos = await CourseVideo.find({ course: courseId }).lean();
-    const totalVideos = courseVideos.length;
-    const videoIds = courseVideos.map((v) => v._id);
+    const allVideos = await CourseVideo.find({ course: courseId }).lean();
+    const totalVideos = allVideos.length;
+    const videoIds = allVideos.map((v) => v._id);
 
-    // Get all video progress records for this course
-    const allVideoProgress = await VideoProgress.find({
-      course: courseId,
-      video: { $in: videoIds },
-    }).lean();
-
-    // Get lesson completions for progress
-    const lessonCompletions = await LessonCompletion.find({
-      course: courseId,
-    }).lean();
-
-    // Get quiz attempts for this course (if course has quizzes)
-    const courseQuizzes = await Quiz.find({
-      "metadata.courseId": courseId,
-    }).lean();
-
-    const quizIds = courseQuizzes.map((q) => q._id);
-    const quizAttempts =
-      quizIds.length > 0
-        ? await QuizAttempt.find({
-            quiz: { $in: quizIds },
+    // Get all video progress for these students
+    const studentIds = filteredEnrollments.map((e) => e.student._id);
+    const allVideoProgress =
+      totalVideos > 0 && studentIds.length > 0
+        ? await VideoProgress.find({
+            course: courseId,
+            student: { $in: studentIds },
+            video: { $in: videoIds },
           }).lean()
         : [];
 
-    // Get all certificates for this course to check if students already have certificates
-    const certificates = await Certificate.find({
+    // Get lesson completions
+    const lessonCompletions = await LessonCompletion.find({
       course: courseId,
+      student: { $in: studentIds },
     }).lean();
 
-    // Create a map of student certificates
+    // Get quiz attempts
+    const teacherQuizzes = await Quiz.find({
+      $or: [
+        { "metadata.createdBy": userId },
+        { "metadata.createdBy": teacherObjectId.toString() },
+        { "metadata.createdBy": teacherObjectId },
+      ],
+    }).lean();
+
+    const quizIds = teacherQuizzes.map((q) => q._id);
+    const quizAttempts =
+      quizIds.length > 0 && studentIds.length > 0
+        ? await QuizAttempt.find({
+            student: { $in: studentIds },
+            quiz: { $in: quizIds },
+          })
+            .populate("quiz", "title")
+            .lean()
+        : [];
+
+    // Get certificates for this course
+    const certificates = await Certificate.find({
+      course: courseId,
+      student: { $in: studentIds },
+    }).lean();
+
     const certificateMap = new Map();
     certificates.forEach((cert) => {
       const studentId = cert.student.toString();
@@ -293,7 +284,9 @@ export const getCourseStudents = async (req, res, next) => {
         );
         const completedVideos = studentVideoProgress.length;
         const courseProgressPercentage =
-          totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+          totalVideos > 0
+            ? Math.round((completedVideos / totalVideos) * 100)
+            : 0;
 
         // Check if certificate already exists
         const hasCertificate = certificateMap.has(studentId) || false;
@@ -315,34 +308,31 @@ export const getCourseStudents = async (req, res, next) => {
 
         return {
           studentId,
-          studentName: enrollment.student.fullName || "Unknown",
-          studentEmail: enrollment.student.email || "",
-          enrollmentId: enrollment._id.toString(),
+          studentName: enrollment.student.fullName,
+          studentEmail: enrollment.student.email,
           status: enrollment.status,
           enrolledAt: enrollment.enrolledAt,
-          lastAccessedAt: enrollment.lastAccessedAt,
           completedAt: enrollment.completedAt,
+          lastAccessedAt: enrollment.lastAccessedAt,
           courseProgressPercentage, // NEW: Course progress percentage (0-100)
-          hasCertificate, // NEW: Whether student already has a certificate
-          progress: {
-            lessonCompletions: studentCompletions,
-            avgQuizScore: avgQuizScore ? Math.round(avgQuizScore * 100) / 100 : null,
-            quizAttempts: studentQuizAttempts.length,
-          },
+          completedVideos,
+          totalVideos,
+          lessonCompletions: studentCompletions,
+          avgQuizScore: avgQuizScore
+            ? Math.round(avgQuizScore * 100) / 100
+            : null,
+          hasCertificate,
         };
       })
     );
 
     // Pagination
-    const total = students.length;
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
-    const paginatedStudents = students.slice(skip, skip + parseInt(pageSize));
+    const limit = parseInt(pageSize);
+    const paginatedStudents = students.slice(skip, skip + limit);
+    const total = students.length;
 
-    return res.json({
-      course: {
-        id: course._id.toString(),
-        title: course.title,
-      },
+    return res.status(200).json({
       students: paginatedStudents,
       pagination: {
         page: parseInt(page),
@@ -387,41 +377,40 @@ export const getStudentDetails = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    let courseIds = [];
+    const studentObjectId = new mongoose.Types.ObjectId(studentId);
+
+    // Get enrollments and related data
     let enrollments = [];
     let lessonCompletions = [];
     let quizAttempts = [];
-    
-    // Super-admin can view any student, teachers only students in their courses
+
     if (userRole === "super-admin") {
-      // Super-admin sees all enrollments and data for the student
-      enrollments = await Enrollment.find({ student: studentId })
+      // Super-admin can see all enrollments for the student
+      enrollments = await Enrollment.find({ student: studentObjectId })
         .populate("course", "title category")
         .sort({ enrolledAt: -1 })
         .lean();
-      
-      courseIds = enrollments.map((e) => e.course._id);
-      
+
+      // Get lesson completions
       lessonCompletions = await LessonCompletion.find({
-        student: studentId,
+        student: studentObjectId,
       })
         .populate("course", "title")
         .lean();
 
-      const allQuizzes = await Quiz.find().select("_id").lean();
-      const quizIds = allQuizzes.map((q) => q._id);
-      
+      // Get quiz attempts
       quizAttempts = await QuizAttempt.find({
-        student: studentId,
-        quiz: { $in: quizIds },
+        student: studentObjectId,
       })
         .populate("quiz", "title")
-        .sort({ attemptedAt: -1 })
+        .sort({ completedAt: -1 })
         .lean();
     } else {
       // Teacher sees only data for their courses
-      const teacherCourses = await Course.find({ instructor: teacherObjectId }).lean();
-      courseIds = teacherCourses.map((c) => c._id);
+      const teacherCourses = await Course.find({
+        instructor: teacherObjectId,
+      }).lean();
+      const courseIds = teacherCourses.map((c) => c._id);
 
       // Verify student is enrolled in at least one of teacher's courses
       const enrollment = await Enrollment.findOne({
@@ -480,7 +469,9 @@ export const getStudentDetails = async (req, res, next) => {
     }
 
     // Get student info
-    const student = await User.findById(studentId).select("fullName email").lean();
+    const student = await User.findById(studentId)
+      .select("fullName email")
+      .lean();
     if (!student) {
       return res.status(404).json({
         error: {
@@ -490,36 +481,31 @@ export const getStudentDetails = async (req, res, next) => {
       });
     }
 
-    // Calculate overall performance
+    // Calculate performance metrics
     const totalCourses = enrollments.length;
-    const completedCourses = enrollments.filter((e) => e.status === "completed").length;
+    const completedCourses = enrollments.filter(
+      (e) => e.status === "completed"
+    ).length;
     const totalLessonsCompleted = lessonCompletions.length;
     const totalQuizAttempts = quizAttempts.length;
     const avgQuizScore =
-      quizAttempts.length > 0
-        ? quizAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / quizAttempts.length
+      totalQuizAttempts > 0
+        ? quizAttempts.reduce((sum, a) => sum + (a.score || 0), 0) /
+          totalQuizAttempts
         : 0;
 
-    return res.json({
-      student: {
-        id: student._id.toString(),
-        name: student.fullName,
-        email: student.email,
-      },
-      enrollments: enrollments.map((e) => ({
-        courseId: e.course._id.toString(),
-        courseTitle: e.course.title,
-        category: e.course.category,
-        status: e.status,
-        enrolledAt: e.enrolledAt,
-        lastAccessedAt: e.lastAccessedAt,
-        completedAt: e.completedAt,
-      })),
+    return res.status(200).json({
+      student,
+      enrollments,
+      lessonCompletions,
+      quizAttempts,
       performance: {
-        totalCourses,
+        totalCourses: enrollments.length,
         completedCourses,
         completionRate:
-          totalCourses > 0 ? Math.round((completedCourses / totalCourses) * 100 * 100) / 100 : 0,
+          totalCourses > 0
+            ? Math.round((completedCourses / totalCourses) * 100 * 100) / 100
+            : 0,
         totalLessonsCompleted,
         totalQuizAttempts,
         avgQuizScore: Math.round(avgQuizScore * 100) / 100,
@@ -544,3 +530,112 @@ export const getStudentDetails = async (req, res, next) => {
   }
 };
 
+/**
+ * Teacher: Update student enrollment status for a course
+ * PATCH /api/v1/teacher/courses/:courseId/students/:studentId/enrollment
+ */
+export const updateStudentEnrollmentStatus = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+    const { courseId, studentId } = req.params;
+    const { status } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher" && userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message:
+            "Only teachers and super admins can update student enrollment status",
+        },
+      });
+    }
+
+    if (
+      !mongoose.isValidObjectId(courseId) ||
+      !mongoose.isValidObjectId(studentId)
+    ) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID or student ID",
+        },
+      });
+    }
+
+    const validStatuses = ["active", "completed", "dropped", "paused"];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: `Status must be one of: ${validStatuses.join(", ")}`,
+        },
+      });
+    }
+
+    const teacherObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    // Verify course ownership (unless super-admin)
+    let course;
+    if (userRole === "super-admin") {
+      course = await Course.findById(courseId).lean();
+    } else {
+      course = await Course.findOne({
+        _id: courseId,
+        instructor: teacherObjectId,
+      }).lean();
+    }
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Course not found or you don't have permission",
+        },
+      });
+    }
+
+    // Update enrollment status
+    const enrollment = await Enrollment.findOneAndUpdate(
+      {
+        student: studentId,
+        course: courseId,
+      },
+      {
+        status,
+        ...(status === "completed" && { completedAt: new Date() }),
+        lastAccessedAt: new Date(),
+      },
+      { new: true }
+    )
+      .populate("student", "fullName email")
+      .populate("course", "title")
+      .lean();
+
+    if (!enrollment) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_ENROLLED",
+          message: "Student is not enrolled in this course",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "Student enrollment status updated successfully",
+      enrollment,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

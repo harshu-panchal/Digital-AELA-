@@ -369,6 +369,18 @@ const EnrolledCourses = () => {
                         </button>
                       )}
 
+                      {(enrollment.status === "active" || enrollment.status === "paused") && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Mark "${course.title}" as completed?`)) {
+                              handleStatusUpdate(course._id, "completed");
+                            }
+                          }}
+                          className="flex-shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/70 hover:bg-emerald-500/20 sm:px-4">
+                          Mark Complete
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleUnenroll(course._id, course.title)}
                         className="flex-shrink-0 rounded-full border border-red-400/40 bg-red-500/10 p-2 text-xs font-semibold text-red-200 transition hover:border-red-300/70 hover:bg-red-500/20 sm:px-4">
