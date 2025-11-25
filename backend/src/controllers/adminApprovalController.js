@@ -69,13 +69,20 @@ export const getPendingEbooks = async (req, res, next) => {
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
     const limit = parseInt(pageSize);
 
+    // Get pending ebooks (isPublic: false AND not rejected)
+    // Exclude any ebooks where metadata.rejected is true
+    const query = {
+      isPublic: false,
+      $nor: [{ "metadata.rejected": true }],
+    };
+
     const [ebooks, total] = await Promise.all([
-      EbookResource.find({ isPublic: false })
+      EbookResource.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      EbookResource.countDocuments({ isPublic: false }),
+      EbookResource.countDocuments(query),
     ]);
 
     return res.json({

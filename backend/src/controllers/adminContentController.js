@@ -529,8 +529,26 @@ export const approveEbook = async (req, res, next) => {
     if (action === "approve") {
       ebook.isPublic = true;
       ebook.publishedAt = new Date();
+      // Clear rejection status if it exists
+      if (ebook.metadata) {
+        ebook.metadata.rejected = false;
+        ebook.metadata.rejectionReason = null;
+        ebook.metadata.rejectedAt = null;
+        // Mark metadata as modified for Mongoose to save nested changes
+        ebook.markModified("metadata");
+      }
     } else {
+      // Mark as rejected
       ebook.isPublic = false;
+      if (!ebook.metadata) ebook.metadata = {};
+      ebook.metadata.rejected = true;
+      ebook.metadata.rejectedAt = new Date();
+      // Store rejection reason if provided
+      if (req.body.rejectionReason) {
+        ebook.metadata.rejectionReason = req.body.rejectionReason;
+      }
+      // Mark metadata as modified for Mongoose to save nested changes
+      ebook.markModified("metadata");
     }
 
     await ebook.save();
