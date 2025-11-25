@@ -478,7 +478,14 @@ const CourseDetail = () => {
         toast.error(error?.message ?? "Unable to link quiz right now.");
       } finally {
         setIsQuizSaving(false);
-        setAvailableQuizzes(getTeacherQuizzes());
+        // Refresh available quizzes list
+        getTeacherQuizzes()
+          .then((quizzes) => {
+            setAvailableQuizzes(Array.isArray(quizzes) ? quizzes : []);
+          })
+          .catch((error) => {
+            console.error("Failed to refresh quizzes:", error);
+          });
       }
       return;
     }

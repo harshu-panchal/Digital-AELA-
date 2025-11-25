@@ -11,14 +11,13 @@ import {
   HiOutlinePencil,
   HiOutlineXMark,
   HiOutlineLockClosed,
-  HiOutlineBell,
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { apiRequest } from "../../src/services/api/baseClient";
 
 const TeacherProfile = () => {
-  const { user: authUser, tokens, updateUserMetadata } = useAuth();
+  const { user: authUser, tokens } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,23 +29,12 @@ const TeacherProfile = () => {
     experience: "",
   });
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [notificationSettings, setNotificationSettings] = useState({
-    email: true,
-    push: true,
-    sms: false,
-    courseUpdates: true,
-    jobAlerts: true,
-    messages: true,
-    announcements: true,
-  });
   const [savingPassword, setSavingPassword] = useState(false);
-  const [savingNotifications, setSavingNotifications] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -140,51 +128,6 @@ const TeacherProfile = () => {
     }
   };
 
-  const handleSaveNotifications = async () => {
-    if (!authUser?.id || !tokens?.accessToken) {
-      toast.error("Authentication required");
-      return;
-    }
-
-    setSavingNotifications(true);
-    try {
-      // Save notification preferences to backend
-      const response = await apiRequest("/auth/profile", {
-        method: "PATCH",
-        body: {
-          metadata: {
-            ...(authUser?.metadata || {}),
-            notificationPreferences: notificationSettings,
-          },
-        },
-      });
-
-      // Update local user state using AuthContext
-      if (response?.user) {
-        await updateUserMetadata({
-          metadata: response.user.metadata,
-        });
-      }
-
-      toast.success("Notification preferences saved");
-      setShowNotificationModal(false);
-    } catch (error) {
-      console.error("Failed to save notification preferences:", error);
-      toast.error(error.message || "Failed to save notification preferences");
-    } finally {
-      setSavingNotifications(false);
-    }
-  };
-
-  // Load notification settings from user metadata
-  useEffect(() => {
-    if (authUser?.metadata?.notificationPreferences) {
-      setNotificationSettings((prev) => ({
-        ...prev,
-        ...authUser.metadata.notificationPreferences,
-      }));
-    }
-  }, [authUser?.metadata?.notificationPreferences]);
 
   return (
     <div className="min-h-screen bg-[#020409] text-white">
@@ -399,17 +342,6 @@ const TeacherProfile = () => {
                   <HiOutlineLockClosed className="h-5 w-5 text-gray-400" />
                 </div>
               </button>
-              <button
-                onClick={() => setShowNotificationModal(true)}
-                className="w-full text-left px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white font-medium">Notification Preferences</p>
-                    <p className="text-sm text-gray-400">Manage your notification settings</p>
-                  </div>
-                  <HiOutlineBell className="h-5 w-5 text-gray-400" />
-                </div>
-              </button>
             </div>
           </div>
 
@@ -491,183 +423,6 @@ const TeacherProfile = () => {
                         disabled={savingPassword}
                         className="flex-1 px-4 py-2 rounded-lg bg-[#F5D26A]/20 text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
                         {savingPassword ? "Saving..." : "Change Password"}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
-
-          {/* Notification Preferences Modal */}
-          <AnimatePresence>
-            {showNotificationModal && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-[#060A17] rounded-2xl border border-white/10 p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Notification Preferences</h3>
-                    <button
-                      onClick={() => setShowNotificationModal(false)}
-                      className="text-gray-400 hover:text-white transition">
-                      <HiOutlineXMark className="h-6 w-6" />
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">Email Notifications</p>
-                        <p className="text-sm text-gray-400">Receive notifications via email</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.email}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              email: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">Push Notifications</p>
-                        <p className="text-sm text-gray-400">Receive push notifications</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.push}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              push: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">SMS Notifications</p>
-                        <p className="text-sm text-gray-400">Receive notifications via SMS</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.sms}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              sms: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">Course Updates</p>
-                        <p className="text-sm text-gray-400">Get notified about course updates</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.courseUpdates}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              courseUpdates: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">Job Alerts</p>
-                        <p className="text-sm text-gray-400">Get notified about new job opportunities</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.jobAlerts}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              jobAlerts: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div>
-                        <p className="text-white font-medium">Messages</p>
-                        <p className="text-sm text-gray-400">Get notified about new messages</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.messages}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              messages: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <div>
-                        <p className="text-white font-medium">Announcements</p>
-                        <p className="text-sm text-gray-400">Get notified about platform announcements</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationSettings.announcements}
-                          onChange={(e) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              announcements: e.target.checked,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-400/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
-                      </label>
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                      <button
-                        onClick={() => setShowNotificationModal(false)}
-                        className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveNotifications}
-                        disabled={savingNotifications}
-                        className="flex-1 px-4 py-2 rounded-lg bg-[#F5D26A]/20 text-[#F5D26A] hover:bg-[#F5D26A]/30 transition disabled:opacity-50">
-                        {savingNotifications ? "Saving..." : "Save Changes"}
                       </button>
                     </div>
                   </div>

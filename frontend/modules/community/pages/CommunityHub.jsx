@@ -8,7 +8,7 @@ import {
   HiOutlineMagnifyingGlass,
 } from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
-import { fetchStudentDashboard } from "../../../src/services/api/student";
+import { fetchCommunityData } from "../../../src/services/api/community";
 import { useAuth } from "../../../src/contexts/AuthContext";
 
 const CommunityHub = () => {
@@ -30,12 +30,21 @@ const CommunityHub = () => {
 
       setIsLoading(true);
       try {
-        const dashboardData = await fetchStudentDashboard();
-        setStudentProfiles(dashboardData.studentProfiles || []);
-        setTeacherSpotlight(dashboardData.teacherSpotlight || []);
-        setRecruiterSpotlight(dashboardData.recruiterSpotlight || []);
+        // Fetch community data from dedicated community endpoint
+        // This endpoint is accessible to all authenticated users
+        const communityData = await fetchCommunityData();
+        
+        // Extract community data from response
+        setStudentProfiles(communityData.studentProfiles || []);
+        setTeacherSpotlight(communityData.teacherSpotlight || []);
+        setRecruiterSpotlight(communityData.recruiterSpotlight || []);
       } catch (error) {
         console.error("Failed to load community data:", error);
+        
+        // Set empty arrays on error to prevent UI errors
+        setStudentProfiles([]);
+        setTeacherSpotlight([]);
+        setRecruiterSpotlight([]);
       } finally {
         setIsLoading(false);
       }

@@ -7,6 +7,21 @@ import QuizAttempt from "../models/QuizAttempt.js";
 import User from "../models/User.js";
 import LessonCompletion from "../models/LessonCompletion.js";
 
+// Helper function to format time ago
+function formatTimeAgo(date) {
+  if (!date) return "Recently";
+  const now = new Date();
+  const past = new Date(date);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+}
+
 /**
  * Get teacher dashboard data
  */
@@ -356,6 +371,7 @@ export const getTeacherDashboard = async (req, res, next) => {
           status: "published",
         });
         return {
+          id: teacher._id.toString(),
           name: teacher.fullName,
           expertise: teacher.metadata?.expertise || "English Language",
           courses: teacherCoursesCount,
@@ -476,20 +492,6 @@ export const getTeacherDashboard = async (req, res, next) => {
     );
 
     // Format ebook library entries
-    const formatTimeAgo = (date) => {
-      if (!date) return "Just now";
-      const now = new Date();
-      const past = new Date(date);
-      const diffInSeconds = Math.floor((now - past) / 1000);
-
-      if (diffInSeconds < 60) return "Just now";
-      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-      if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
-      return `${Math.floor(diffInSeconds / 2592000)} months ago`;
-    };
-
     const ebookLibrary = teacherEbooks.map((ebook) => {
       const format = ebook.pages ? `PDF · ${ebook.pages} pages` : "PDF";
       // Downloads can be stored in metadata.downloads or we can track via enrollments/purchases
@@ -542,17 +544,4 @@ export const getTeacherDashboard = async (req, res, next) => {
   }
 };
 
-// Helper function to format time ago
-function formatTimeAgo(date) {
-  if (!date) return "Recently";
-  const now = new Date();
-  const past = new Date(date);
-  const diffInSeconds = Math.floor((now - past) / 1000);
-
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  return "Recently";
-}
 

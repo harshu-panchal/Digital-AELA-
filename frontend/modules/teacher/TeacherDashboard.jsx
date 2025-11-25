@@ -1004,84 +1004,38 @@ const TeacherDashboard = () => {
             <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
               <header className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Mentor network</h2>
-                <button
-                  type="button"
-                  className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
+                <Link
+                  to="/community"
+                  className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100 transition">
                   See all mentors →
-                </button>
+                </Link>
               </header>
               <div className="space-y-3">
                 {mentorNetwork.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-sm text-slate-400">No other mentors found</p>
                     <p className="mt-1 text-xs text-slate-500">Connect with other teachers</p>
+                    <Link
+                      to="/community"
+                      className="mt-3 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:brightness-110 transition">
+                      Explore Community
+                    </Link>
                   </div>
                 ) : (
                   mentorNetwork.map((mentor) => (
-                  <div key={mentor.name} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
+                  <Link
+                    key={mentor.id || mentor.name}
+                    to={mentor.id ? `/community/teachers/${mentor.id}` : "/community"}
+                    className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 hover:border-sky-400/50 hover:bg-white/10 transition">
                     <p className="text-sm font-semibold text-white">{mentor.name}</p>
                     <p className="text-slate-300/80">{mentor.expertise}</p>
                     <p className="mt-1 text-slate-300/70">
                       Courses {mentor.courses} · Rating {mentor.rating}
                     </p>
-                  </div>
+                  </Link>
                   ))
                 )}
               </div>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineMegaphone className="h-5 w-5" />
-                Announcements
-              </h2>
-              <Link
-                to="/teacher/announcements"
-                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
-                View all →
-              </Link>
-            </header>
-            <div className="text-center py-8 text-sm text-slate-400">
-              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>Create and send announcements to your students</p>
-              <Link
-                to="/teacher/announcements/create"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
-                Create Announcement
-              </Link>
-            </div>
-          </motion.section>
-
-          <motion.section
-            variants={cardVariants}
-            initial="hidden"
-            animate="show"
-            className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineMegaphone className="h-5 w-5" />
-                Announcements
-              </h2>
-              <Link
-                to="/teacher/announcements"
-                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
-                View all →
-              </Link>
-            </header>
-            <div className="text-center py-8 text-sm text-slate-400">
-              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-              <p>Create and send announcements to your students</p>
-              <Link
-                to="/teacher/announcements/create"
-                className="mt-4 inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black text-sm font-semibold hover:brightness-110 transition">
-                Create Announcement
-              </Link>
             </div>
           </motion.section>
       </div>
