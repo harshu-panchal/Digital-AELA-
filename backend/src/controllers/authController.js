@@ -341,6 +341,20 @@ export const refreshToken = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
+    const { userId, token: accessToken } = req.auth || {};
+
+    // Clear CSRF tokens for this user/session
+    if (accessToken) {
+      try {
+        const CsrfToken = (await import("../models/CsrfToken.js")).default;
+        await CsrfToken.deleteMany({ accessToken });
+      } catch (csrfError) {
+        // Don't fail logout if CSRF cleanup fails
+        // eslint-disable-next-line no-console
+        console.error("[Logout] Error clearing CSRF tokens:", csrfError);
+      }
+    }
+
     // End session if token is provided
     const authHeader = req.headers.authorization || "";
     const token = authHeader.replace("Bearer ", "");
@@ -353,6 +367,7 @@ export const logout = async (req, res, next) => {
           await session.endSession();
         }
       } catch (sessionError) {
+        // eslint-disable-next-line no-console
         console.error("Failed to end session:", sessionError);
       }
     }

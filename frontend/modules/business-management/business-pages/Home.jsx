@@ -20,17 +20,12 @@ import slideFreeLibrary from "../../../src/assets/images/slide-images/free libra
 import slideDonateEducation from "../../../src/assets/images/slide-images/donate education.png";
 import slideCollaboration from "../../../src/assets/images/slide-images/collaboration.jpg";
 import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and earn.png";
-import img1 from "../../../src/assets/images/gallery/IMG_20230825_155431.jpg";
-import img2 from "../../../src/assets/images/gallery/IMG_20230825_155501.jpg";
-import img3 from "../../../src/assets/images/gallery/IMG_20230825_155510.jpg";
-import img4 from "../../../src/assets/images/gallery/IMG_20230825_155534.jpg";
-import img5 from "../../../src/assets/images/gallery/IMG_20230825_155542 (1).jpg";
-import img6 from "../../../src/assets/images/gallery/IMG_20230825_155624 (1).jpg";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
+import { getGalleryImages } from "../../../src/services/api/gallery";
 
 const MotionLink = motion.create(Link);
 
@@ -48,6 +43,8 @@ const Home = () => {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [featuredBooks, setFeaturedBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loadingGallery, setLoadingGallery] = useState(true);
 
   // Get neon light color based on active slide
   const getNeonTextShadow = (slideId) => {
@@ -217,6 +214,37 @@ const Home = () => {
     };
 
     loadFeaturedBooks();
+  }, []);
+
+  // Fetch gallery images from backend
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        setLoadingGallery(true);
+        const response = await getGalleryImages();
+
+        if (!response || !response.data) {
+          console.warn("No gallery images data received from API");
+          setGalleryItems([]);
+          return;
+        }
+
+        // Transform backend images to match expected format
+        const transformedImages = (response.data || []).map((img) => ({
+          id: img.id,
+          image: img.image,
+        }));
+
+        setGalleryItems(transformedImages);
+      } catch (error) {
+        console.error("Failed to load gallery images:", error);
+        setGalleryItems([]);
+      } finally {
+        setLoadingGallery(false);
+      }
+    };
+
+    loadGalleryImages();
   }, []);
 
   // Define home courses - use premium courses from backend
@@ -960,14 +988,6 @@ const Home = () => {
     },
   ];
 
-  const galleryItems = [
-    { id: "gallery-1", image: img1 },
-    { id: "gallery-2", image: img2 },
-    { id: "gallery-3", image: img3 },
-    { id: "gallery-4", image: img4 },
-    { id: "gallery-5", image: img5 },
-    { id: "gallery-6", image: img6 },
-  ];
 
   return (
     <div className="min-h-screen bg-black">
@@ -2587,7 +2607,7 @@ const Home = () => {
             </motion.div>
 
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {galleryItems.map((item, index) => (
+              {galleryItems.slice(0, 6).map((item, index) => (
                 <motion.figure
                   key={item.id}
                   initial={{ y: 40, opacity: 0 }}

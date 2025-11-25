@@ -1,0 +1,204 @@
+import rateLimit from "express-rate-limit";
+
+/**
+ * Rate limiter for login attempts
+ * Limits: 5 attempts per 15 minutes per IP
+ */
+export const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many login attempts. Please try again after 15 minutes.",
+    },
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Use IP address as key
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress || "unknown";
+  },
+  // Custom handler for rate limit exceeded
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many login attempts. Please try again after 15 minutes.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000), // seconds until reset
+      },
+    });
+  },
+});
+
+/**
+ * Rate limiter for payment attempts
+ * Limits: 10 attempts per hour per IP/user
+ */
+export const paymentRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP/user to 10 payment attempts per hour
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many payment attempts. Please try again after 1 hour.",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use IP address or user ID as key (prefer user ID if authenticated)
+  keyGenerator: (req) => {
+    const { userId } = req.auth || {};
+    if (userId) {
+      return `payment:${userId}`; // Per-user limit
+    }
+    return req.ip || req.connection.remoteAddress || "unknown"; // Per-IP fallback
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many payment attempts. Please try again after 1 hour.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+      },
+    });
+  },
+});
+
+/**
+ * General API rate limiter
+ * Limits: 100 requests per minute per IP/user
+ */
+export const apiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // Limit each IP/user to 100 requests per minute
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many requests. Please slow down.",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use IP address or user ID as key (prefer user ID if authenticated)
+  keyGenerator: (req) => {
+    const { userId } = req.auth || {};
+    if (userId) {
+      return `api:${userId}`; // Per-user limit
+    }
+    return req.ip || req.connection.remoteAddress || "unknown"; // Per-IP fallback
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many requests. Please slow down.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+      },
+    });
+  },
+  // Skip rate limiting for successful requests (optional optimization)
+  skip: (req) => {
+    // Don't count successful GET requests in rate limit (optional)
+    // You can customize this based on your needs
+    return false;
+  },
+});
+
+/**
+ * Strict rate limiter for sensitive operations
+ * Limits: 3 attempts per 15 minutes per IP/user
+ * Use for: Password reset, email verification, etc.
+ */
+export const strictRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // Limit each IP/user to 3 attempts per 15 minutes
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many attempts. Please try again after 15 minutes.",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const { userId } = req.auth || {};
+    if (userId) {
+      return `strict:${userId}`;
+    }
+    return req.ip || req.connection.remoteAddress || "unknown";
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many attempts. Please try again after 15 minutes.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+      },
+    });
+  },
+});
+
+/**
+ * Rate limiter for password reset requests
+ * Limits: 3 attempts per hour per email
+ */
+export const passwordResetRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Limit each email to 3 password reset requests per hour
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many password reset requests. Please try again after 1 hour.",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use email from request body as key
+  keyGenerator: (req) => {
+    const email = req.body?.email || req.query?.email;
+    if (email) {
+      return `password-reset:${email.toLowerCase().trim()}`;
+    }
+    return req.ip || req.connection.remoteAddress || "unknown";
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many password reset requests. Please try again after 1 hour.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+      },
+    });
+  },
+});
+
+/**
+ * Rate limiter for registration attempts
+ * Limits: 5 registrations per hour per IP
+ */
+export const registrationRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit each IP to 5 registrations per hour
+  message: {
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many registration attempts. Please try again after 1 hour.",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress || "unknown";
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many registration attempts. Please try again after 1 hour.",
+        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+      },
+    });
+  },
+});
+

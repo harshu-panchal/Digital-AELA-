@@ -44,9 +44,13 @@ import joinUsApplicationRoutes from "./routes/joinUsApplicationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import userRatingRoutes from "./routes/userRatingRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
+import csrfRoutes from "./routes/csrfRoutes.js";
+import { publicRouter as galleryPublicRouter, adminRouter as galleryAdminRouter } from "./routes/galleryRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
+import { generateCsrfToken } from "./middleware/csrfMiddleware.js";
+import { apiRateLimiter } from "./middleware/rateLimiter.js";
 
 const app = express();
 
@@ -78,8 +82,8 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-Token", "CSRF-Token"],
+  exposedHeaders: ["Content-Range", "X-Content-Range", "X-CSRF-Token"],
 };
 
 app.use(cors(corsOptions));
@@ -125,11 +129,28 @@ app.get("/api/v1", (_req, res) => {
 // Auth routes (no authentication required)
 app.use("/api/v1/auth", authRoutes);
 
+// CSRF token endpoint (requires authentication)
+app.use("/api/v1", csrfRoutes);
+
 // Public settings routes (no authentication required)
 app.use("/api/v1/public", publicSettingsRoutes);
 
+// Public gallery routes (no authentication required)
+app.use("/api/v1/gallery", galleryPublicRouter);
+
 // Check maintenance mode for all API routes (except auth and public)
 app.use("/api/v1", checkMaintenanceMode);
+
+// Apply general API rate limiting (100 requests per minute)
+// This applies to all API routes except auth routes (which have their own limiters)
+app.use("/api/v1", (req, res, next) => {
+  // Skip rate limiting for auth routes (they have their own limiters)
+  if (req.path.startsWith("/auth")) {
+    return next();
+  }
+  // Apply general API rate limiter
+  return apiRateLimiter(req, res, next);
+});
 
 // Apply optional authentication middleware to all other API routes
 // This allows public endpoints to work without auth, but sets req.auth when token is provided
@@ -137,6 +158,8 @@ app.use("/api/v1", checkMaintenanceMode);
 app.use("/api/v1", optionalAuth);
 // Track sessions for authenticated users
 app.use("/api/v1", trackSession);
+// Generate CSRF tokens for authenticated users (adds X-CSRF-Token header)
+app.use("/api/v1", generateCsrfToken);
 
 // Error tracking middleware for system health monitoring (must be after trackSession)
 app.use("/api/v1", async (req, res, next) => {
@@ -169,6 +192,7 @@ app.use("/api/v1/community", communityRoutes);
 app.use("/api/v1/admin", superAdminRoutes);
 app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/admin", adminContentRoutes);
+app.use("/api/v1/admin/gallery", galleryAdminRouter);
 app.use("/api/v1/teacher", teacherCourseRoutes);
 app.use("/api/v1/teacher", teacherEbookRoutes);
 app.use("/api/v1/teachers", teacherRoutes);

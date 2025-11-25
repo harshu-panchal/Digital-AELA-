@@ -10,11 +10,13 @@ import {
   getTeacherEarnings,
 } from "../controllers/paymentController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { validateCsrfToken } from "../middleware/csrfMiddleware.js";
+import { paymentRateLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-// Create payment
-router.post("/", authenticate, createPayment);
+// Create payment (state-changing - requires CSRF and rate limiting)
+router.post("/", authenticate, paymentRateLimiter, validateCsrfToken, createPayment);
 
 // Get payment history
 router.get("/history", authenticate, getPaymentHistory);
@@ -28,11 +30,11 @@ router.get("/earnings", authenticate, getTeacherEarnings);
 // Get payment details
 router.get("/:paymentId", authenticate, getPaymentDetails);
 
-// Update payment
-router.put("/:paymentId", authenticate, updatePayment);
+// Update payment (state-changing - requires CSRF)
+router.put("/:paymentId", authenticate, validateCsrfToken, updatePayment);
 
-// Process refund (admin only)
-router.post("/:paymentId/refund", authenticate, processRefund);
+// Process refund (admin only, state-changing - requires CSRF)
+router.post("/:paymentId/refund", authenticate, validateCsrfToken, processRefund);
 
 // Get invoice
 router.get("/:paymentId/invoice", authenticate, getInvoice);

@@ -3,6 +3,8 @@ import Payment from "../models/Payment.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import User from "../models/User.js";
+import { generateInvoicePDF } from "../utils/pdfGenerator.js";
+import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 
 /**
  * Create Payment Record
@@ -191,6 +193,55 @@ export const updatePayment = async (req, res, next) => {
       .populate("user", "fullName email")
       .populate("course", "title thumbnailUrl price")
       .lean();
+
+    // Generate invoice PDF when payment is completed (if not already generated)
+    if (status === "completed" && !payment.invoiceUrl && !updateData.invoiceUrl) {
+      try {
+        const invoiceData = {
+          invoiceNumber: updatedPayment.invoiceNumber || `INV-${updatedPayment._id.toString().slice(-8)}`,
+          date: updatedPayment.createdAt,
+          amount: updatedPayment.amount,
+          currency: updatedPayment.currency,
+          payment: {
+            id: updatedPayment._id.toString(),
+            amount: updatedPayment.amount,
+            currency: updatedPayment.currency,
+            status: updatedPayment.status,
+            paymentMethod: updatedPayment.paymentMethod,
+            gateway: updatedPayment.gateway,
+            gatewayTransactionId: updatedPayment.gatewayTransactionId,
+          },
+          user: {
+            name: updatedPayment.user.fullName,
+            email: updatedPayment.user.email,
+          },
+          course: updatedPayment.course
+            ? {
+                title: updatedPayment.course.title,
+                description: updatedPayment.course.description,
+                price: updatedPayment.course.price,
+              }
+            : null,
+          description: updatedPayment.description,
+        };
+
+        const pdfBuffer = await generateInvoicePDF(invoiceData);
+        const uploadResult = await uploadPdfToCloudinary(
+          pdfBuffer,
+          `digital-aela/invoices/${paymentId}`
+        );
+
+        // Update payment with invoice URL
+        await Payment.findByIdAndUpdate(paymentId, {
+          invoiceUrl: uploadResult.url,
+        });
+        updatedPayment.invoiceUrl = uploadResult.url;
+      } catch (invoiceError) {
+        // eslint-disable-next-line no-console
+        console.error("[Payment] Error generating invoice PDF:", invoiceError);
+        // Don't fail payment update if invoice generation fails
+      }
+    }
 
     // Create notification when payment is completed
     if (status === "completed" && updatedPayment.user && !payment.metadata?.notificationSent) {
@@ -545,10 +596,12 @@ export const getInvoice = async (req, res, next) => {
       });
     }
 
-    // Generate invoice data (in production, you'd generate a PDF here)
+    // Generate invoice data
     const invoiceData = {
       invoiceNumber: payment.invoiceNumber || `INV-${payment._id.toString().slice(-8)}`,
       date: payment.createdAt,
+      amount: payment.amount,
+      currency: payment.currency,
       payment: {
         id: payment._id.toString(),
         amount: payment.amount,
@@ -572,13 +625,92 @@ export const getInvoice = async (req, res, next) => {
       description: payment.description,
     };
 
-    // In production, generate PDF and return URL
-    // For now, return invoice data
-    return res.json({
-      invoice: invoiceData,
-      invoiceUrl: payment.invoiceUrl || null,
-      message: "Invoice data retrieved. PDF generation can be implemented separately.",
-    });
+    // Check if invoice PDF already exists
+    if (payment.invoiceUrl) {
+      // Return existing invoice URL or generate on-demand
+      const format = req.query.format || "json"; // 'json' or 'pdf'
+      
+      if (format === "pdf") {
+        // Generate PDF on-demand
+        try {
+          const pdfBuffer = await generateInvoicePDF(invoiceData);
+
+          // Set response headers for PDF download
+          res.setHeader("Content-Type", "application/pdf");
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="invoice-${invoiceData.invoiceNumber}.pdf"`
+          );
+          res.setHeader("Content-Length", pdfBuffer.length);
+
+          return res.send(pdfBuffer);
+        } catch (pdfError) {
+          // eslint-disable-next-line no-console
+          console.error("[Payment] Error generating invoice PDF:", pdfError);
+          return res.status(500).json({
+            error: {
+              code: "PDF_GENERATION_ERROR",
+              message: "Failed to generate invoice PDF. Please try again later.",
+            },
+          });
+        }
+      }
+      
+      // Return JSON with invoice URL
+      return res.json({
+        invoice: invoiceData,
+        invoiceUrl: payment.invoiceUrl,
+        message: "Invoice retrieved successfully.",
+      });
+    }
+
+    // Generate and upload invoice PDF if it doesn't exist
+    let invoiceUrl = null;
+    try {
+      const pdfBuffer = await generateInvoicePDF(invoiceData);
+
+      // Upload to Cloudinary
+      const uploadResult = await uploadPdfToCloudinary(
+        pdfBuffer,
+        `digital-aela/invoices/${payment._id}`
+      );
+      invoiceUrl = uploadResult.url;
+
+      // Update payment with invoice URL
+      await Payment.findByIdAndUpdate(paymentId, {
+        invoiceUrl,
+      });
+
+      // Check if user wants PDF directly
+      const format = req.query.format || "json";
+      if (format === "pdf") {
+        // Set response headers for PDF download
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="invoice-${invoiceData.invoiceNumber}.pdf"`
+        );
+        res.setHeader("Content-Length", pdfBuffer.length);
+
+        return res.send(pdfBuffer);
+      }
+
+      // Return JSON with invoice URL
+      return res.json({
+        invoice: invoiceData,
+        invoiceUrl,
+        message: "Invoice generated and uploaded successfully.",
+      });
+    } catch (pdfError) {
+      // eslint-disable-next-line no-console
+      console.error("[Payment] Error generating invoice PDF:", pdfError);
+      return res.status(500).json({
+        error: {
+          code: "PDF_GENERATION_ERROR",
+          message: "Failed to generate invoice PDF. Please try again later.",
+        },
+      });
+    }
   } catch (error) {
     return next(error);
   }

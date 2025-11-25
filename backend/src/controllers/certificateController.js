@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Certificate from "../models/Certificate.js";
 import CertificateTemplate from "../models/CertificateTemplate.js";
+import { generateCertificatePDF } from "../utils/pdfGenerator.js";
+import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import User from "../models/User.js";
@@ -271,15 +273,49 @@ export const generateCertificate = async (req, res, next) => {
       },
     });
 
-    // Generate PDF (in production, this would generate actual PDF)
-    // For now, we'll mark it as generated
-    const pdfUrl = `/api/v1/certificates/${certificate._id}/pdf`;
-
     // Update status to "issued" which will trigger certificateNumber generation via pre-save hook
     await Certificate.findByIdAndUpdate(certificate._id, {
-      pdfUrl,
       status: "issued",
     });
+
+    // Fetch the updated certificate with certificate number
+    const updatedCertificate = await Certificate.findById(certificate._id)
+      .populate("template", "name design")
+      .lean();
+
+    // Generate PDF and upload to Cloudinary (after certificate number is generated)
+    let pdfUrl = null;
+    try {
+      const certificateData = {
+        studentName: updatedCertificate.studentName,
+        courseTitle: updatedCertificate.courseTitle,
+        completionDate: updatedCertificate.completionDate,
+        certificateNumber: updatedCertificate.certificateNumber,
+        verificationCode: updatedCertificate.verificationCode,
+        grade: updatedCertificate.grade,
+        template: updatedCertificate.template || template,
+      };
+
+      // Generate PDF buffer
+      const pdfBuffer = await generateCertificatePDF(certificateData);
+
+      // Upload to Cloudinary
+      const uploadResult = await uploadPdfToCloudinary(
+        pdfBuffer,
+        `digital-aela/certificates/${certificate._id}`
+      );
+      pdfUrl = uploadResult.url;
+
+      // Update certificate with PDF URL
+      await Certificate.findByIdAndUpdate(certificate._id, {
+        pdfUrl,
+      });
+    } catch (pdfError) {
+      // eslint-disable-next-line no-console
+      console.error("[Certificate] Error generating PDF:", pdfError);
+      // Continue without PDF - certificate can still be issued
+      pdfUrl = `/api/v1/certificates/${certificate._id}/pdf`; // Fallback to on-demand generation
+    }
 
     const populatedCertificate = await Certificate.findById(certificate._id)
       .populate("student", "fullName email")
@@ -527,10 +563,8 @@ export const downloadCertificatePDF = async (req, res, next) => {
       });
     }
 
-    // In production, generate actual PDF here using pdfkit, puppeteer, or similar
-    // For now, return certificate data that can be used to generate PDF on frontend
-    // or return a placeholder URL
-
+    // If custom image exists, return it
+    if (certificate.customImageUrl) {
     return res.json({
       certificate: {
         id: certificate._id,
@@ -541,15 +575,49 @@ export const downloadCertificatePDF = async (req, res, next) => {
         completionDate: certificate.completionDate,
         issuedAt: certificate.issuedAt,
         template: certificate.template,
-        customImageUrl: certificate.customImageUrl || null,
+          customImageUrl: certificate.customImageUrl,
       },
       pdfUrl: certificate.pdfUrl,
-      customImageUrl: certificate.customImageUrl || null,
-      message:
-        certificate.customImageUrl
-          ? "Certificate image available for download"
-          : "PDF generation endpoint. In production, this would return the actual PDF file. For now, use the certificate data to generate PDF on frontend.",
-    });
+        customImageUrl: certificate.customImageUrl,
+        message: "Certificate image available for download",
+      });
+    }
+
+    // Generate PDF on-demand
+    try {
+      const certificateData = {
+        studentName: certificate.studentName,
+        courseTitle: certificate.courseTitle,
+        completionDate: certificate.completionDate,
+        certificateNumber: certificate.certificateNumber,
+        verificationCode: certificate.verificationCode,
+        grade: certificate.grade,
+        template: certificate.template,
+      };
+
+      // Generate PDF
+      const pdfBuffer = await generateCertificatePDF(certificateData);
+
+      // Set response headers for PDF download
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="certificate-${certificate.certificateNumber || certificate._id}.pdf"`
+      );
+      res.setHeader("Content-Length", pdfBuffer.length);
+
+      // Send PDF buffer
+      return res.send(pdfBuffer);
+    } catch (pdfError) {
+      // eslint-disable-next-line no-console
+      console.error("[Certificate] Error generating PDF:", pdfError);
+      return res.status(500).json({
+        error: {
+          code: "PDF_GENERATION_ERROR",
+          message: "Failed to generate certificate PDF. Please try again later.",
+        },
+      });
+    }
   } catch (error) {
     return next(error);
   }

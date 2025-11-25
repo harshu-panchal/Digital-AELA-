@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../../config/api.js";
 
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
+const CSRF_TOKEN_STORAGE_KEY = "aela.csrf.token";
 
 const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
@@ -29,6 +30,69 @@ export const persistTokens = (tokens) => {
 export const clearStoredTokens = () => {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(CSRF_TOKEN_STORAGE_KEY);
+};
+
+// CSRF Token Management
+const loadCsrfToken = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(CSRF_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const storeCsrfToken = (token) => {
+  if (typeof window === "undefined") return;
+  if (!token) {
+    window.localStorage.removeItem(CSRF_TOKEN_STORAGE_KEY);
+    return;
+  }
+  window.localStorage.setItem(CSRF_TOKEN_STORAGE_KEY, token);
+};
+
+const clearCsrfToken = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CSRF_TOKEN_STORAGE_KEY);
+};
+
+// Fetch CSRF token from server
+const fetchCsrfToken = async () => {
+  try {
+    const tokens = loadTokens();
+    if (!tokens?.accessToken) {
+      return null;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/csrf-token`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.csrfToken) {
+        storeCsrfToken(data.csrfToken);
+        return data.csrfToken;
+      }
+    }
+
+    // Also check if token is in response header
+    const headerToken = response.headers.get("X-CSRF-Token");
+    if (headerToken) {
+      storeCsrfToken(headerToken);
+      return headerToken;
+    }
+
+    return null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("[CSRF] Error fetching token:", error);
+    return null;
+  }
 };
 
 let authUpdateHandler = null;
@@ -86,6 +150,21 @@ export const apiRequest = async (
 
   if (!skipAuth && tokens?.accessToken) {
     finalHeaders.Authorization = `Bearer ${tokens.accessToken}`;
+    
+    // Add CSRF token for state-changing operations
+    const stateChangingMethods = ["POST", "PUT", "PATCH", "DELETE"];
+    if (stateChangingMethods.includes(method.toUpperCase())) {
+      let csrfToken = loadCsrfToken();
+      
+      // If no CSRF token, try to fetch it
+      if (!csrfToken) {
+        csrfToken = await fetchCsrfToken();
+      }
+      
+      if (csrfToken) {
+        finalHeaders["X-CSRF-Token"] = csrfToken;
+      }
+    }
   }
 
   // Prepare body - use FormData as-is, or stringify JSON
@@ -162,12 +241,38 @@ export const apiRequest = async (
   }
 
   if (response.ok) {
+    // Check for CSRF token in response header and store it
+    const csrfToken = response.headers.get("X-CSRF-Token");
+    if (csrfToken) {
+      storeCsrfToken(csrfToken);
+    }
+    
     return payload;
+  }
+
+  // Handle CSRF token errors
+  if (response.status === 403 && (payload?.error?.code === "CSRF_TOKEN_MISSING" || payload?.error?.code === "CSRF_TOKEN_INVALID")) {
+    // Try to fetch new CSRF token and retry once
+    if (!_retry) {
+      clearCsrfToken();
+      const newCsrfToken = await fetchCsrfToken();
+      if (newCsrfToken) {
+        return apiRequest(endpoint, {
+          method,
+          body,
+          headers,
+          skipAuth,
+          _retry: true,
+        });
+      }
+    }
   }
 
   if (!skipAuth && response.status === 401 && tokens?.refreshToken && !_retry) {
     try {
       await refreshTokensIfNeeded(tokens);
+      // Clear CSRF token on token refresh to get a new one
+      clearCsrfToken();
       return apiRequest(endpoint, {
         method,
         body,
@@ -178,6 +283,7 @@ export const apiRequest = async (
     } catch (error) {
       // If token refresh fails, clear tokens and notify auth handler
       clearStoredTokens();
+      clearCsrfToken();
       notifyAuthUpdate(null);
       
       const message =

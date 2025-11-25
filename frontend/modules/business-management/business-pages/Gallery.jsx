@@ -1,22 +1,41 @@
+import { useState, useEffect } from "react";
 import { motion as Motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
-import img1 from "../../../src/assets/images/gallery/IMG_20230825_155431.jpg";
-import img2 from "../../../src/assets/images/gallery/IMG_20230825_155501.jpg";
-import img3 from "../../../src/assets/images/gallery/IMG_20230825_155510.jpg";
-import img4 from "../../../src/assets/images/gallery/IMG_20230825_155534.jpg";
-import img5 from "../../../src/assets/images/gallery/IMG_20230825_155542 (1).jpg";
-import img6 from "../../../src/assets/images/gallery/IMG_20230825_155624 (1).jpg";
-
-const galleryItems = [
-  { id: "gallery-1", image: img1 },
-  { id: "gallery-2", image: img2 },
-  { id: "gallery-3", image: img3 },
-  { id: "gallery-4", image: img4 },
-  { id: "gallery-5", image: img5 },
-  { id: "gallery-6", image: img6 },
-];
+import { getGalleryImages } from "../../../src/services/api/gallery";
 
 const Gallery = () => {
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        setLoading(true);
+        const response = await getGalleryImages();
+
+        if (!response || !response.data) {
+          console.warn("No gallery images data received from API");
+          setGalleryItems([]);
+          return;
+        }
+
+        // Transform backend images to match expected format
+        const transformedImages = (response.data || []).map((img) => ({
+          id: img.id,
+          image: img.image,
+        }));
+
+        setGalleryItems(transformedImages);
+      } catch (error) {
+        console.error("Failed to load gallery images:", error);
+        setGalleryItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGalleryImages();
+  }, []);
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
       <SEO
@@ -45,12 +64,21 @@ const Gallery = () => {
           </p>
         </Motion.div>
 
-        <Motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-          {galleryItems.map((item, index) => (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#D4AF37]/30 border-t-[#D4AF37]" />
+          </div>
+        ) : galleryItems.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-400 text-lg">No gallery images available</p>
+          </div>
+        ) : (
+          <Motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            {galleryItems.map((item, index) => (
             <Motion.figure
               key={item.id}
               initial={{ opacity: 0, y: 30 }}
@@ -72,8 +100,9 @@ const Gallery = () => {
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
               </div>
             </Motion.figure>
-          ))}
-        </Motion.div>
+            ))}
+          </Motion.div>
+        )}
       </section>
     </div>
   );

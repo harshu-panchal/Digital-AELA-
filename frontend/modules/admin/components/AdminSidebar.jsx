@@ -21,6 +21,7 @@ import {
   FaCheckCircle,
   FaBlog,
   FaUserPlus,
+  FaImages,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -84,6 +85,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Content Management",
       path: "/super-admin/content-management",
       icon: FaTasks,
+    },
+    {
+      label: "Gallery Management",
+      path: "/super-admin/gallery-management",
+      icon: FaImages,
     },
     {
       label: "Reward Management",
