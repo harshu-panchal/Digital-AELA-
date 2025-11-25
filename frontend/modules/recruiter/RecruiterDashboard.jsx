@@ -59,32 +59,6 @@ const RecruiterDashboard = () => {
   const location = useLocation();
   const { user: authUser } = useAuth();
   const { refreshBlogs } = useBlogs();
-  const defaultTalentSpotlight = useMemo(
-    () => [
-      {
-        id: "talent-1",
-        name: "Fatima Hassan",
-        headline: "Marketing Storyteller · Dubai",
-        profileUrl: "/profiles/students/fatima-hassan",
-        skills: ["Content", "Community", "CRM"],
-      },
-      {
-        id: "talent-2",
-        name: "Omar Al Farsi",
-        headline: "Public Speaking Coach · Remote",
-        profileUrl: "/profiles/students/omar-alfarsi",
-        skills: ["Training", "EdTech", "Operations"],
-      },
-      {
-        id: "talent-3",
-        name: "Sara Malik",
-        headline: "IELTS Mentor · Hybrid",
-        profileUrl: "/profiles/students/sara-malik",
-        skills: ["IELTS", "Curriculum", "Coaching"],
-      },
-    ],
-    []
-  );
 
   const {
     recruiterPosts,
@@ -100,11 +74,11 @@ const RecruiterDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     actionShortcuts: [],
     applicantPipeline: [],
-    talentSpotlight: defaultTalentSpotlight,
+    talentSpotlight: [],
     ebookShelf: [],
     blogDrafts: [],
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [blogComposerOpen, setBlogComposerOpen] = useState(false);
   const [blogDraft, setBlogDraft] = useState({
@@ -372,9 +346,7 @@ const RecruiterDashboard = () => {
           applicantPipeline: mappedPipeline,
           ebookShelf: ebooks,
           blogDrafts,
-          talentSpotlight: prev.talentSpotlight?.length
-            ? prev.talentSpotlight
-            : defaultTalentSpotlight,
+          talentSpotlight: [], // Will be populated when talent spotlight API is available
         }));
 
         if (showToast) {
@@ -391,7 +363,7 @@ const RecruiterDashboard = () => {
         setIsLoading(false);
       }
     },
-    [authUser, defaultTalentSpotlight, mapJobToPostCard, setPosts]
+    [authUser, mapJobToPostCard, setPosts]
   );
 
   useEffect(() => {
@@ -665,6 +637,19 @@ const RecruiterDashboard = () => {
     }
   };
 
+  // Show loading screen until data is fetched
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center pt-32 pb-24">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-white"></div>
+          <p className="text-lg font-semibold text-white">Loading recruiter dashboard...</p>
+          <p className="mt-2 text-sm text-slate-400">Fetching your jobs, applicants, and analytics</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 pt-32 pb-24 pl-10 pr-10">
       <ProfileHeader
@@ -700,12 +685,6 @@ const RecruiterDashboard = () => {
         }
         metrics={stats}
       />
-
-      {isLoading && (
-        <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 backdrop-blur">
-          Syncing recruiter data…
-        </div>
-      )}
 
       {loadError && (
         <div className="rounded-3xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
@@ -942,27 +921,33 @@ const RecruiterDashboard = () => {
             </div>
           </header>
           <div className="space-y-3">
-            {talentSpotlight.map((talent) => (
-              <Link
-                key={talent.id}
-                to={talent.profileUrl}
-                className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                <div>
-                  <p className="font-semibold text-white">{talent.name}</p>
-                  <p className="text-xs text-slate-400/80">{talent.headline}</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">
-                    {talent.skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full border border-white/10 px-2 py-1">
-                        {skill}
-                      </span>
-                    ))}
+            {talentSpotlight.length > 0 ? (
+              talentSpotlight.map((talent) => (
+                <Link
+                  key={talent.id}
+                  to={talent.profileUrl}
+                  className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                  <div>
+                    <p className="font-semibold text-white">{talent.name}</p>
+                    <p className="text-xs text-slate-400/80">{talent.headline}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">
+                      {talent.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border border-white/10 px-2 py-1">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
-              </Link>
-            ))}
+                  <HiOutlineUserGroup className="h-5 w-5 text-sky-200" />
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-3xl border border-white/10 bg-black/70 px-4 py-6 text-center">
+                <p className="text-sm text-slate-400">No talent recommendations available yet</p>
+              </div>
+            )}
           </div>
         </div>
         <div className="space-y-6">
