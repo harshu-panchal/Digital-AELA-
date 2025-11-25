@@ -15,8 +15,21 @@ export const uploadImage = async (req, res, next) => {
       });
     }
 
+    // Validate file buffer
+    if (!req.file.buffer || req.file.buffer.length === 0) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_FILE",
+          message: "File buffer is empty or invalid",
+        },
+      });
+    }
+
+    // Get folder from body (FormData sends it as string)
+    const folder = req.body?.folder || "digital-aela";
+    
     // Upload to Cloudinary
-    const result = await uploadToCloudinary(req.file.buffer, req.body.folder || "digital-aela");
+    const result = await uploadToCloudinary(req.file.buffer, folder);
 
     return res.status(200).json({
       success: true,
@@ -30,7 +43,14 @@ export const uploadImage = async (req, res, next) => {
       },
     });
   } catch (error) {
-    return next(error);
+    // eslint-disable-next-line no-console
+    console.error("Upload error:", error);
+    return res.status(500).json({
+      error: {
+        code: "UPLOAD_FAILED",
+        message: error.message || "Failed to upload image to Cloudinary",
+      },
+    });
   }
 };
 

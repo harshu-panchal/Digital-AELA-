@@ -43,31 +43,58 @@ export const upload = multer({
 // Helper function to upload file to Cloudinary
 export const uploadToCloudinary = (buffer, folder = "digital-aela") => {
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
-        resource_type: "auto",
-        public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve({
-          public_id: result.public_id,
-          url: result.secure_url,
-          format: result.format,
-          width: result.width,
-          height: result.height,
-          bytes: result.bytes,
-        });
-      }
-    );
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      return reject(new Error("Invalid buffer provided"));
+    }
 
-    // Convert buffer to stream and upload
-    const readableStream = Readable.from(buffer);
-    readableStream.pipe(uploadStream);
+    if (buffer.length === 0) {
+      return reject(new Error("Buffer is empty"));
+    }
+
+    try {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folder,
+          allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
+          resource_type: "auto",
+          public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        },
+        (error, result) => {
+          if (error) {
+            // eslint-disable-next-line no-console
+            console.error("Cloudinary upload error:", error);
+            return reject(error);
+          }
+          if (!result) {
+            return reject(new Error("No result from Cloudinary"));
+          }
+          resolve({
+            public_id: result.public_id,
+            url: result.secure_url || result.url,
+            format: result.format,
+            width: result.width,
+            height: result.height,
+            bytes: result.bytes,
+          });
+        }
+      );
+
+      // Convert buffer to stream and upload
+      const readableStream = Readable.from(buffer);
+      readableStream.pipe(uploadStream);
+      
+      // Handle stream errors
+      readableStream.on('error', (error) => {
+        // eslint-disable-next-line no-console
+        console.error("Stream error:", error);
+        reject(error);
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Upload setup error:", error);
+      reject(error);
+    }
   });
 };
 

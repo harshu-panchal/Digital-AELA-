@@ -24,6 +24,25 @@ import {
 } from "../../../src/services/api/messages";
 import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
 
+// Helper function to get default avatar (user initials)
+const getDefaultAvatar = (name, userId) => {
+  if (name && name.trim()) {
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+        <rect width="150" height="150" fill="#D4AF37"/>
+        <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="black" text-anchor="middle" dominant-baseline="central">${initials}</text>
+      </svg>
+    `)}`;
+  }
+  return null;
+};
+
 const ChatCentre = () => {
   const { searchQuery = "" } = useOutletContext() || {};
   const { user: authUser } = useAuth();
@@ -67,7 +86,7 @@ const ChatCentre = () => {
             id: conv.userId,
             userId: conv.userId,
             name: conv.name || "Unknown User",
-            avatar: conv.avatar || `https://i.pravatar.cc/150?img=${conv.userId.slice(-2)}`,
+            avatar: conv.avatar || getDefaultAvatar(conv.name, conv.userId) || null,
             preview: conv.preview || "No messages yet",
             timestamp: conv.timestamp
               ? new Date(conv.timestamp).toLocaleDateString([], {
@@ -232,7 +251,7 @@ const ChatCentre = () => {
         id: activeChatId,
         userId: activeChatId,
         name: "User",
-        avatar: `https://i.pravatar.cc/150?img=${activeChatId.slice(-2)}`,
+        avatar: getDefaultAvatar("User", activeChatId) || null,
         preview: "No messages yet",
         timestamp: "",
         unread: 0,
@@ -731,11 +750,26 @@ const ChatCentre = () => {
                   className="md:hidden inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#101010] p-2 text-gray-300 transition hover:bg-[#1a1a1a] flex-shrink-0">
                   <HiOutlineArrowLeft className="h-5 w-5" />
                 </button>
-                <img
-                  src={activeChat.avatar}
-                  alt={activeChat.name}
-                  className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/30 object-cover"
-                />
+                {activeChat.avatar ? (
+                  <img
+                    src={activeChat.avatar}
+                    alt={activeChat.name}
+                    className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/30 object-cover"
+                    onError={(e) => {
+                      // Fallback to initials if image fails to load
+                      const defaultAvatar = getDefaultAvatar(activeChat.name, activeChat.userId);
+                      if (defaultAvatar) {
+                        e.target.src = defaultAvatar;
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37] flex items-center justify-center text-black font-bold text-xs">
+                    {activeChat.name ? activeChat.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">
                     {activeChat.name}

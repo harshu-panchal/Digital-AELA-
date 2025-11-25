@@ -98,7 +98,15 @@ export const getConversations = async (req, res, next) => {
           from: "studentprofiles",
           localField: "_id",
           foreignField: "user",
-          as: "profile",
+          as: "studentProfile",
+        },
+      },
+      {
+        $lookup: {
+          from: "recruiterprofiles",
+          localField: "_id",
+          foreignField: "user",
+          as: "recruiterProfile",
         },
       },
       {
@@ -108,21 +116,10 @@ export const getConversations = async (req, res, next) => {
           name: "$user.fullName",
           avatar: {
             $ifNull: [
-              { $arrayElemAt: ["$profile.avatarUrl", 0] },
+              { $arrayElemAt: ["$studentProfile.avatarUrl", 0] },
+              { $arrayElemAt: ["$recruiterProfile.avatarUrl", 0] },
               "$user.metadata.avatarUrl",
-              "$user.avatarUrl",
-              {
-                $concat: [
-                  "https://i.pravatar.cc/150?img=",
-                  {
-                    $substr: [
-                      { $toString: "$_id" },
-                      { $subtract: [{ $strLenCP: { $toString: "$_id" } }, 2] },
-                      2,
-                    ],
-                  },
-                ],
-              },
+              null, // Return null instead of random avatar - frontend will handle fallback
             ],
           },
           preview: "$lastMessage.content",

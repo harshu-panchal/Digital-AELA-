@@ -155,8 +155,10 @@ const ProfilePage = () => {
         if (response?.socialLinks !== undefined) {
           // Show all links (both verified and unverified) so users can verify them
           setSocialLinks(response.socialLinks || []);
-          // Update profile with backend social links
-          updateProfile({ socialLinks: response.socialLinks });
+          // Update profile with backend social links - use setTimeout to avoid hydration issues
+          setTimeout(() => {
+            updateProfile({ socialLinks: response.socialLinks });
+          }, 0);
         } else {
           // If backend doesn't return socialLinks, set to empty array
           setSocialLinks([]);
@@ -175,7 +177,7 @@ const ProfilePage = () => {
     };
 
     loadSocialLinks();
-  }, [authUser, tokens, updateProfile]);
+  }, [authUser, tokens]); // Removed updateProfile from dependencies to avoid hydration issues
 
   // Don't sync with profile.socialLinks to avoid showing default links
   // Only show verified links from backend
