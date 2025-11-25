@@ -22,11 +22,11 @@ export const createAssignment = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can create assignments",
+          message: "Only teachers and super admins can create assignments",
         },
       });
     }
@@ -88,7 +88,8 @@ export const createAssignment = async (req, res, next) => {
       });
     }
 
-    if (course.instructor.toString() !== instructorObjectId.toString()) {
+    // Super-admin can create assignments for any course, teachers only for their own
+    if (userRole !== "super-admin" && course.instructor.toString() !== instructorObjectId.toString()) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -181,11 +182,11 @@ export const getTeacherAssignments = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can access this endpoint",
+          message: "Only teachers and super admins can access this endpoint",
         },
       });
     }
@@ -194,29 +195,40 @@ export const getTeacherAssignments = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    // Get teacher's courses
-    const courseQuery = { instructor: teacherObjectId };
-    if (courseId && mongoose.isValidObjectId(courseId)) {
-      courseQuery._id = new mongoose.Types.ObjectId(courseId);
-    }
-
-    const teacherCourses = await Course.find(courseQuery).select("_id").lean();
-    const courseIds = teacherCourses.map((c) => c._id);
-
-    if (courseIds.length === 0) {
-      return res.json({
-        assignments: [],
-        pagination: {
-          page: Number(page),
-          pageSize: Number(pageSize),
-          total: 0,
-          totalPages: 0,
-        },
-      });
-    }
-
     // Build assignment query
-    const assignmentQuery = { course: { $in: courseIds } };
+    let assignmentQuery = {};
+    
+    // Super-admin can see all assignments, teachers only see their own courses
+    if (userRole === "super-admin") {
+      // Super-admin sees all assignments
+      if (courseId && mongoose.isValidObjectId(courseId)) {
+        assignmentQuery.course = new mongoose.Types.ObjectId(courseId);
+      }
+    } else {
+      // Teacher sees only assignments for their courses
+      const courseQuery = { instructor: teacherObjectId };
+      if (courseId && mongoose.isValidObjectId(courseId)) {
+        courseQuery._id = new mongoose.Types.ObjectId(courseId);
+      }
+
+      const teacherCourses = await Course.find(courseQuery).select("_id").lean();
+      const courseIds = teacherCourses.map((c) => c._id);
+
+      if (courseIds.length === 0) {
+        return res.json({
+          assignments: [],
+          pagination: {
+            page: Number(page),
+            pageSize: Number(pageSize),
+            total: 0,
+            totalPages: 0,
+          },
+        });
+      }
+
+      assignmentQuery.course = { $in: courseIds };
+    }
+    
     if (status) {
       assignmentQuery.status = status;
     }
@@ -306,11 +318,11 @@ export const getAssignmentDetails = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can access this endpoint",
+          message: "Only teachers and super admins can access this endpoint",
         },
       });
     }
@@ -342,8 +354,8 @@ export const getAssignmentDetails = async (req, res, next) => {
       });
     }
 
-    // Verify teacher owns this assignment
-    if (assignment.instructor._id.toString() !== teacherObjectId.toString()) {
+    // Super-admin can view any assignment, teachers only their own
+    if (userRole !== "super-admin" && assignment.instructor._id.toString() !== teacherObjectId.toString()) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -391,11 +403,11 @@ export const gradeSubmission = async (req, res, next) => {
       });
     }
 
-    if (userRole !== "teacher") {
+    if (userRole !== "teacher" && userRole !== "super-admin") {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers can grade submissions",
+          message: "Only teachers and super admins can grade submissions",
         },
       });
     }
@@ -433,7 +445,8 @@ export const gradeSubmission = async (req, res, next) => {
       });
     }
 
-    if (assignment.instructor.toString() !== teacherObjectId.toString()) {
+    // Super-admin can grade any submission, teachers only their own assignments
+    if (userRole !== "super-admin" && assignment.instructor.toString() !== teacherObjectId.toString()) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",

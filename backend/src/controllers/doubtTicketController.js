@@ -296,22 +296,25 @@ export const getDoubtTicketDetails = async (req, res, next) => {
     }
 
     // Check access permissions
-    if (userRole === "student" && ticket.student._id.toString() !== userId) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only view your own tickets",
-        },
-      });
-    }
+    // Super-admin can view any ticket
+    if (userRole !== "super-admin" && userRole !== "admin") {
+      if (userRole === "student" && ticket.student._id.toString() !== userId) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only view your own tickets",
+          },
+        });
+      }
 
-    if (userRole === "teacher" && ticket.assignedTeacher?._id?.toString() !== userId) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only view tickets assigned to you",
-        },
-      });
+      if (userRole === "teacher" && ticket.assignedTeacher?._id?.toString() !== userId) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only view tickets assigned to you",
+          },
+        });
+      }
     }
 
     return res.json({
@@ -375,25 +378,33 @@ export const replyToDoubtTicket = async (req, res, next) => {
     }
 
     // Check access permissions
-    if (userRole === "student" && ticket.student.toString() !== userId) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only reply to your own tickets",
-        },
-      });
-    }
-
-    if (userRole === "teacher") {
-      if (ticket.assignedTeacher?.toString() !== userId) {
+    // Super-admin can reply to any ticket
+    if (userRole !== "super-admin" && userRole !== "admin") {
+      if (userRole === "student" && ticket.student.toString() !== userId) {
         return res.status(403).json({
           error: {
             code: "FORBIDDEN",
-            message: "You can only reply to tickets assigned to you",
+            message: "You can only reply to your own tickets",
           },
         });
       }
-      // Auto-update status to in_progress when teacher replies
+
+      if (userRole === "teacher") {
+        if (ticket.assignedTeacher?.toString() !== userId) {
+          return res.status(403).json({
+            error: {
+              code: "FORBIDDEN",
+              message: "You can only reply to tickets assigned to you",
+            },
+          });
+        }
+        // Auto-update status to in_progress when teacher replies
+        if (ticket.status === "open") {
+          ticket.status = "in_progress";
+        }
+      }
+    } else {
+      // Super-admin: Auto-update status to in_progress when replying to open tickets
       if (ticket.status === "open") {
         ticket.status = "in_progress";
       }
@@ -479,22 +490,25 @@ export const updateDoubtTicketStatus = async (req, res, next) => {
     }
 
     // Check permissions
-    if (userRole === "student" && ticket.student.toString() !== userId) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only update your own tickets",
-        },
-      });
-    }
+    // Super-admin can update any ticket
+    if (userRole !== "super-admin" && userRole !== "admin") {
+      if (userRole === "student" && ticket.student.toString() !== userId) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only update your own tickets",
+          },
+        });
+      }
 
-    if (userRole === "teacher" && ticket.assignedTeacher?.toString() !== userId) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only update tickets assigned to you",
-        },
-      });
+      if (userRole === "teacher" && ticket.assignedTeacher?.toString() !== userId) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only update tickets assigned to you",
+          },
+        });
+      }
     }
 
     // Update status

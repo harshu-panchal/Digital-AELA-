@@ -94,6 +94,12 @@ import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import ContentManagement from "../modules/admin/pages/ContentManagement";
 import UserDetail from "../modules/admin/pages/UserDetail";
 import SystemHealth from "../modules/admin/pages/SystemHealth";
+import AdminAssignmentList from "../modules/admin/pages/AdminAssignmentList";
+import AdminAssignmentDetail from "../modules/admin/pages/AdminAssignmentDetail";
+import AdminAssignmentCreate from "../modules/admin/pages/AdminAssignmentCreate";
+import AdminStudentManagement from "../modules/admin/pages/AdminStudentManagement";
+import AdminDoubtTicketManagement from "../modules/admin/pages/AdminDoubtTicketManagement";
+import AdminDoubtTicketDetail from "../modules/admin/pages/AdminDoubtTicketDetail";
 // Use lazy loading to prevent circular dependency issues
 const TeacherDashboard = lazy(() =>
   import("../modules/teacher/TeacherDashboard")
@@ -243,7 +249,28 @@ export const App = () => {
           <Route path="active-sessions" element={<ActiveSessions />} />
           <Route path="backups" element={<BackupManagement />} />
           <Route path="rewards" element={<RewardManagement />} />
-          <Route path="redemption-requests" element={<RedemptionRequestsManagement />} />
+          <Route
+            path="redemption-requests"
+            element={<RedemptionRequestsManagement />}
+          />
+          <Route path="assignments" element={<AdminAssignmentList />} />
+          <Route
+            path="assignments/create"
+            element={<AdminAssignmentCreate />}
+          />
+          <Route
+            path="assignments/:assignmentId"
+            element={<AdminAssignmentDetail />}
+          />
+          <Route path="students" element={<AdminStudentManagement />} />
+          <Route
+            path="doubt-tickets"
+            element={<AdminDoubtTicketManagement />}
+          />
+          <Route
+            path="doubt-tickets/:ticketId"
+            element={<AdminDoubtTicketDetail />}
+          />
         </Route>
         <Route
           path="/teacher/*"
@@ -363,9 +390,12 @@ export const App = () => {
           key="learn-earn">
           {/* Public routes - accessible without login */}
           <Route path="live-debate-room" element={<LiveDebates />} />
-          <Route path="live-debate-room/voice-room/:roomId" element={<VoiceRoom />} />
+          <Route
+            path="live-debate-room/voice-room/:roomId"
+            element={<VoiceRoom />}
+          />
           <Route path="activities" element={<ActivitiesHub />} />
-          
+
           {/* Protected routes - require login (show login prompt instead of redirecting) */}
           <Route
             index
@@ -449,10 +479,7 @@ export const App = () => {
           />
           <Route path="find-learners" element={<FindLearners />} />
           <Route path="user/:userId" element={<UserProfileView />} />
-          <Route
-            path="quiz/:quizId"
-            element={<QuizPlay />}
-          />
+          <Route path="quiz/:quizId" element={<QuizPlay />} />
           <Route
             path="quiz/:quizId/leaderboard"
             element={<QuizLeaderboard />}
@@ -581,7 +608,10 @@ export const App = () => {
         />
         <Route path="/free-library" element={<FreeLibrary />} />
         <Route path="/free-library/:bookId" element={<FreeLibraryReader />} />
-        <Route path="/free-library/ebook/:ebookId/read" element={<PDFEbookReader />} />
+        <Route
+          path="/free-library/ebook/:ebookId/read"
+          element={<PDFEbookReader />}
+        />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/about/our-story" element={<OurStory />} />
         <Route path="/about/mission-vision" element={<MissionVision />} />
@@ -760,7 +790,10 @@ export const App = () => {
         />
       </Routes>
       {!isAdminLogin && !isDashboard && <Footer />}
-      {!isAdminLogin && (location.pathname === "/" || location.pathname === "/home") && <FloatingDebateButton />}
+      {!isAdminLogin &&
+        (location.pathname === "/" || location.pathname === "/home") && (
+          <FloatingDebateButton />
+        )}
     </>
   );
 };

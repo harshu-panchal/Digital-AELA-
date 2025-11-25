@@ -182,6 +182,21 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
         { label: "Post Blog", path: "/blogs/create", icon: FaEdit },
       ],
     },
+    {
+      label: "Assignments",
+      path: "/super-admin/assignments",
+      icon: FaFileAlt,
+    },
+    {
+      label: "Student Management",
+      path: "/super-admin/students",
+      icon: FaUsers,
+    },
+    {
+      label: "Doubt Tickets",
+      path: "/super-admin/doubt-tickets",
+      icon: FaFileAlt,
+    },
   ];
 
   return (

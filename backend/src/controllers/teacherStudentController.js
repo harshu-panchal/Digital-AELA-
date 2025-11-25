@@ -15,7 +15,7 @@ import Certificate from "../models/Certificate.js";
  */
 export const getTeacherStudents = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId, userRole } = req.auth || {};
     const { page = 1, pageSize = 20, courseId, search } = req.query;
 
     if (!userId) {
@@ -40,29 +40,39 @@ export const getTeacherStudents = async (req, res, next) => {
       });
     }
 
-    // Get teacher's courses
-    const courseQuery = { instructor: teacherObjectId };
-    if (courseId && mongoose.isValidObjectId(courseId)) {
-      courseQuery._id = new mongoose.Types.ObjectId(courseId);
-    }
-
-    const teacherCourses = await Course.find(courseQuery).lean();
-    const courseIds = teacherCourses.map((c) => c._id);
-
-    if (courseIds.length === 0) {
-      return res.json({
-        students: [],
-        pagination: {
-          page: parseInt(page),
-          pageSize: parseInt(pageSize),
-          total: 0,
-          totalPages: 0,
-        },
-      });
-    }
-
     // Build enrollment query
-    const enrollmentQuery = { course: { $in: courseIds } };
+    let enrollmentQuery = {};
+    
+    // Super-admin can see all students, teachers only see students in their courses
+    if (userRole === "super-admin") {
+      // Super-admin sees all enrollments
+      if (courseId && mongoose.isValidObjectId(courseId)) {
+        enrollmentQuery.course = new mongoose.Types.ObjectId(courseId);
+      }
+    } else {
+      // Teacher sees only students in their courses
+      const courseQuery = { instructor: teacherObjectId };
+      if (courseId && mongoose.isValidObjectId(courseId)) {
+        courseQuery._id = new mongoose.Types.ObjectId(courseId);
+      }
+
+      const teacherCourses = await Course.find(courseQuery).lean();
+      const courseIds = teacherCourses.map((c) => c._id);
+
+      if (courseIds.length === 0) {
+        return res.json({
+          students: [],
+          pagination: {
+            page: parseInt(page),
+            pageSize: parseInt(pageSize),
+            total: 0,
+            totalPages: 0,
+          },
+        });
+      }
+
+      enrollmentQuery.course = { $in: courseIds };
+    }
     if (search) {
       // We'll filter after populating student
     }
@@ -161,7 +171,7 @@ export const getTeacherStudents = async (req, res, next) => {
  */
 export const getCourseStudents = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId, userRole } = req.auth || {};
     const { courseId } = req.params;
     const { page = 1, pageSize = 20, status, search } = req.query;
 
@@ -187,11 +197,16 @@ export const getCourseStudents = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    // Verify course ownership
-    const course = await Course.findOne({
-      _id: courseId,
-      instructor: teacherObjectId,
-    });
+    // Super-admin can view students for any course, teachers only their own
+    let course;
+    if (userRole === "super-admin") {
+      course = await Course.findById(courseId).lean();
+    } else {
+      course = await Course.findOne({
+        _id: courseId,
+        instructor: teacherObjectId,
+      }).lean();
+    }
 
     if (!course) {
       return res.status(404).json({
@@ -347,7 +362,7 @@ export const getCourseStudents = async (req, res, next) => {
  */
 export const getStudentDetails = async (req, res, next) => {
   try {
-    const { userId } = req.auth;
+    const { userId, userRole } = req.auth || {};
     const { studentId } = req.params;
 
     if (!userId) {
@@ -372,64 +387,108 @@ export const getStudentDetails = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    // Get teacher's courses
-    const teacherCourses = await Course.find({ instructor: teacherObjectId }).lean();
-    const courseIds = teacherCourses.map((c) => c._id);
+    let courseIds = [];
+    let enrollments = [];
+    let lessonCompletions = [];
+    let quizAttempts = [];
+    
+    // Super-admin can view any student, teachers only students in their courses
+    if (userRole === "super-admin") {
+      // Super-admin sees all enrollments and data for the student
+      enrollments = await Enrollment.find({ student: studentId })
+        .populate("course", "title category")
+        .sort({ enrolledAt: -1 })
+        .lean();
+      
+      courseIds = enrollments.map((e) => e.course._id);
+      
+      lessonCompletions = await LessonCompletion.find({
+        student: studentId,
+      })
+        .populate("course", "title")
+        .lean();
 
-    // Verify student is enrolled in at least one of teacher's courses
-    const enrollment = await Enrollment.findOne({
-      student: studentId,
-      course: { $in: courseIds },
-    })
-      .populate("student", "fullName email")
-      .lean();
+      const allQuizzes = await Quiz.find().select("_id").lean();
+      const quizIds = allQuizzes.map((q) => q._id);
+      
+      quizAttempts = await QuizAttempt.find({
+        student: studentId,
+        quiz: { $in: quizIds },
+      })
+        .populate("quiz", "title")
+        .sort({ attemptedAt: -1 })
+        .lean();
+    } else {
+      // Teacher sees only data for their courses
+      const teacherCourses = await Course.find({ instructor: teacherObjectId }).lean();
+      courseIds = teacherCourses.map((c) => c._id);
 
-    if (!enrollment) {
+      // Verify student is enrolled in at least one of teacher's courses
+      const enrollment = await Enrollment.findOne({
+        student: studentId,
+        course: { $in: courseIds },
+      })
+        .populate("student", "fullName email")
+        .lean();
+
+      if (!enrollment) {
+        return res.status(404).json({
+          error: {
+            code: "RESOURCE_NOT_FOUND",
+            message: "Student not found in your courses",
+          },
+        });
+      }
+
+      // Get all enrollments for this student in teacher's courses
+      enrollments = await Enrollment.find({
+        student: studentId,
+        course: { $in: courseIds },
+      })
+        .populate("course", "title category")
+        .sort({ enrolledAt: -1 })
+        .lean();
+
+      // Get lesson completions
+      lessonCompletions = await LessonCompletion.find({
+        student: studentId,
+        course: { $in: courseIds },
+      })
+        .populate("course", "title")
+        .lean();
+
+      // Get quiz attempts
+      const teacherQuizzes = await Quiz.find({
+        $or: [
+          { "metadata.createdBy": userId },
+          { "metadata.createdBy": teacherObjectId.toString() },
+          { "metadata.createdBy": teacherObjectId },
+        ],
+      }).lean();
+
+      const quizIds = teacherQuizzes.map((q) => q._id);
+      quizAttempts =
+        quizIds.length > 0
+          ? await QuizAttempt.find({
+              student: studentId,
+              quiz: { $in: quizIds },
+            })
+              .populate("quiz", "title")
+              .sort({ completedAt: -1 })
+              .lean()
+          : [];
+    }
+
+    // Get student info
+    const student = await User.findById(studentId).select("fullName email").lean();
+    if (!student) {
       return res.status(404).json({
         error: {
           code: "RESOURCE_NOT_FOUND",
-          message: "Student not found in your courses",
+          message: "Student not found",
         },
       });
     }
-
-    // Get all enrollments for this student in teacher's courses
-    const enrollments = await Enrollment.find({
-      student: studentId,
-      course: { $in: courseIds },
-    })
-      .populate("course", "title category")
-      .sort({ enrolledAt: -1 })
-      .lean();
-
-    // Get lesson completions
-    const lessonCompletions = await LessonCompletion.find({
-      student: studentId,
-      course: { $in: courseIds },
-    })
-      .populate("course", "title")
-      .lean();
-
-    // Get quiz attempts
-    const teacherQuizzes = await Quiz.find({
-      $or: [
-        { "metadata.createdBy": userId },
-        { "metadata.createdBy": teacherObjectId.toString() },
-        { "metadata.createdBy": teacherObjectId },
-      ],
-    }).lean();
-
-    const quizIds = teacherQuizzes.map((q) => q._id);
-    const quizAttempts =
-      quizIds.length > 0
-        ? await QuizAttempt.find({
-            student: studentId,
-            quiz: { $in: quizIds },
-          })
-            .populate("quiz", "title")
-            .sort({ completedAt: -1 })
-            .lean()
-        : [];
 
     // Calculate overall performance
     const totalCourses = enrollments.length;
@@ -443,9 +502,9 @@ export const getStudentDetails = async (req, res, next) => {
 
     return res.json({
       student: {
-        id: enrollment.student._id.toString(),
-        name: enrollment.student.fullName,
-        email: enrollment.student.email,
+        id: student._id.toString(),
+        name: student.fullName,
+        email: student.email,
       },
       enrollments: enrollments.map((e) => ({
         courseId: e.course._id.toString(),

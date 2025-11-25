@@ -11,7 +11,10 @@ import { getFinancialDashboard } from "../../src/services/api/expenses";
 import { getAnnouncementStats } from "../../src/services/api/announcements";
 import { getSessionStats } from "../../src/services/api/sessions";
 import { getBackupStats } from "../../src/services/api/backups";
-import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle, HiOutlineCurrencyDollar, HiOutlineChartBar, HiOutlineMegaphone, HiOutlineComputerDesktop, HiOutlineServer } from "react-icons/hi2";
+import { getTeacherAssignments } from "../../src/services/api/assignments";
+import { fetchTeacherStudents } from "../../src/services/api/teacher";
+import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
+import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle, HiOutlineCurrencyDollar, HiOutlineChartBar, HiOutlineMegaphone, HiOutlineComputerDesktop, HiOutlineServer, HiOutlineDocumentText, HiOutlineAcademicCap, HiOutlineQuestionMarkCircle } from "react-icons/hi2";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -54,6 +57,14 @@ const SuperAdminDashboard = () => {
   const [announcementStats, setAnnouncementStats] = useState(null);
   const [sessionStats, setSessionStats] = useState(null);
   const [backupStats, setBackupStats] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [assignmentStats, setAssignmentStats] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentStats, setStudentStats] = useState(null);
+  const [doubtTicketStats, setDoubtTicketStats] = useState(null);
+  const [loadingDoubtTickets, setLoadingDoubtTickets] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -143,6 +154,80 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  // Load Assignments
+  const loadAssignments = async () => {
+    setLoadingAssignments(true);
+    try {
+      const response = await getTeacherAssignments({ page: 1, pageSize: 5 });
+      setAssignments(response.assignments || []);
+      
+      // Calculate stats
+      const total = response.pagination?.total || 0;
+      const pendingCount = response.assignments?.reduce((sum, a) => {
+        return sum + (a.submissionStats?.pending || 0);
+      }, 0) || 0;
+      const gradedCount = response.assignments?.reduce((sum, a) => {
+        return sum + (a.submissionStats?.graded || 0);
+      }, 0) || 0;
+      
+      setAssignmentStats({
+        total,
+        pendingToGrade: pendingCount,
+        graded: gradedCount,
+      });
+    } catch (error) {
+      console.error("Failed to load assignments:", error);
+      setAssignments([]);
+      setAssignmentStats(null);
+    } finally {
+      setLoadingAssignments(false);
+    }
+  };
+
+  // Load Students
+  const loadStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const response = await fetchTeacherStudents({ page: 1, pageSize: 5 });
+      setStudents(response.students || []);
+      
+      // Calculate stats
+      const total = response.pagination?.total || 0;
+      const activeCount = response.students?.reduce((sum, s) => {
+        return sum + (s.activeEnrollments || 0);
+      }, 0) || 0;
+      const completedCount = response.students?.reduce((sum, s) => {
+        return sum + (s.completedEnrollments || 0);
+      }, 0) || 0;
+      
+      setStudentStats({
+        total,
+        active: activeCount,
+        completed: completedCount,
+      });
+    } catch (error) {
+      console.error("Failed to load students:", error);
+      setStudents([]);
+      setStudentStats(null);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  // Load Doubt Ticket Stats
+  const loadDoubtTicketStats = async () => {
+    setLoadingDoubtTickets(true);
+    try {
+      const response = await getDoubtTicketStats();
+      setDoubtTicketStats(response.stats || null);
+    } catch (error) {
+      console.error("Failed to load doubt ticket stats:", error);
+      setDoubtTicketStats(null);
+    } finally {
+      setLoadingDoubtTickets(false);
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     loadDashboardData();
@@ -151,6 +236,9 @@ const SuperAdminDashboard = () => {
     loadAnnouncementStats();
     loadSessionStats();
     loadBackupStats();
+    loadAssignments();
+    loadStudents();
+    loadDoubtTicketStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(() => {
       loadSessionStats();
@@ -807,6 +895,173 @@ const SuperAdminDashboard = () => {
                 Create Backup
               </Link>
             </div>
+          </motion.section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineDocumentText className="h-5 w-5" />
+                  Assignments
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Manage and grade assignments across all courses
+                </p>
+              </div>
+              <Link
+                to="/super-admin/assignments"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {loadingAssignments ? (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading assignment stats...
+              </div>
+            ) : assignmentStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total</p>
+                  <p className="text-xl font-semibold text-white">{assignmentStats.total || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Pending to Grade</p>
+                  <p className="text-xl font-semibold text-yellow-400">{assignmentStats.pendingToGrade || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Graded</p>
+                  <p className="text-xl font-semibold text-emerald-400">{assignmentStats.graded || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                No assignment data available
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                to="/super-admin/assignments"
+                className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10 transition">
+                View All
+              </Link>
+              <Link
+                to="/super-admin/assignments/create"
+                className="block rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+                Create New
+              </Link>
+            </div>
+          </motion.section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineAcademicCap className="h-5 w-5" />
+                  Student Management
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  View and manage all students across the platform
+                </p>
+              </div>
+              <Link
+                to="/super-admin/students"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {loadingStudents ? (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading student stats...
+              </div>
+            ) : studentStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total Students</p>
+                  <p className="text-xl font-semibold text-white">{studentStats.total || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Active Enrollments</p>
+                  <p className="text-xl font-semibold text-blue-400">{studentStats.active || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Completed</p>
+                  <p className="text-xl font-semibold text-emerald-400">{studentStats.completed || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                No student data available
+              </div>
+            )}
+            <Link
+              to="/super-admin/students"
+              className="block w-full rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+              Manage Students
+            </Link>
+          </motion.section>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineQuestionMarkCircle className="h-5 w-5" />
+                  Doubt Tickets
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Manage and respond to student doubt tickets
+                </p>
+              </div>
+              <Link
+                to="/super-admin/doubt-tickets"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {loadingDoubtTickets ? (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading doubt ticket stats...
+              </div>
+            ) : doubtTicketStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Open</p>
+                  <p className="text-xl font-semibold text-blue-400">{doubtTicketStats.open || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">In Progress</p>
+                  <p className="text-xl font-semibold text-yellow-400">{doubtTicketStats.inProgress || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Resolved</p>
+                  <p className="text-xl font-semibold text-emerald-400">{doubtTicketStats.resolved || 0}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total</p>
+                  <p className="text-xl font-semibold text-white">{doubtTicketStats.total || 0}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                No doubt tickets found
+              </div>
+            )}
+            <Link
+              to="/super-admin/doubt-tickets"
+              className="block w-full rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+              Manage Doubt Tickets
+            </Link>
           </motion.section>
 
           <motion.section
