@@ -39,6 +39,7 @@ export const createTeacherEbook = async (req, res, next) => {
       tags,
       downloadUrl,
       pages,
+      bookType,
     } = req.body;
 
     if (!title) {
@@ -68,9 +69,20 @@ export const createTeacherEbook = async (req, res, next) => {
       });
     }
 
-    // Handle PDF file upload if provided
+    // Determine book type (default to "ebook" for backward compatibility)
+    const isPhysicalBook = bookType === "physical";
+
+    // Handle PDF file upload if provided (only for e-books)
     let finalDownloadUrl = downloadUrl;
     if (req.file) {
+      if (isPhysicalBook) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "PDF file upload is not allowed for physical books",
+          },
+        });
+      }
       console.log("📄 PDF file received:", {
         filename: req.file.originalname,
         mimetype: req.file.mimetype,
@@ -102,13 +114,20 @@ export const createTeacherEbook = async (req, res, next) => {
       console.log("⚠️ No PDF file received in request");
     }
 
-    if (!finalDownloadUrl) {
+    // Only require PDF/downloadUrl for e-books, not physical books
+    if (!isPhysicalBook && !finalDownloadUrl) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "PDF file or download URL is required",
+          message: "PDF file or download URL is required for e-books",
         },
       });
+    }
+
+    // For physical books, use a placeholder or empty string for downloadUrl
+    // (since the model requires it, we'll use a placeholder that indicates it's a physical book)
+    if (isPhysicalBook && !finalDownloadUrl) {
+      finalDownloadUrl = "physical-book"; // Placeholder to satisfy model requirement
     }
 
     const priceValue = price ? Number(price) : 0;
@@ -131,6 +150,7 @@ export const createTeacherEbook = async (req, res, next) => {
         previewUrl: previewUrl || "",
         author: userFullName || "Digital AELA", // Store teacher's name as author
         uploadedBy: userId, // Store teacher's ID for dashboard queries
+        bookType: bookType || "ebook", // Store book type (ebook or physical)
         tags: tags
           ? Array.isArray(tags)
             ? tags
