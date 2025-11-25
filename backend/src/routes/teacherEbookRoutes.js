@@ -5,6 +5,7 @@ import {
   getTeacherEbooks,
   getTeacherEbookById,
   updateTeacherEbook,
+  deleteTeacherEbook,
 } from "../controllers/teacherEbookController.js";
 import { uploadSinglePdf, handleUploadError } from "../middleware/uploadMiddleware.js";
 import { requireFeature } from "../middleware/featureFlagMiddleware.js";
@@ -34,6 +35,9 @@ router.get("/ebooks/:ebookId", getTeacherEbookById);
 
 // Update an ebook (only if not yet approved)
 router.put("/ebooks/:ebookId", updateTeacherEbook);
+
+// Delete an ebook
+router.delete("/ebooks/:ebookId", deleteTeacherEbook);
 
 export default router;
 

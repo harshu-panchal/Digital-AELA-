@@ -19,7 +19,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { getTeacherEbooks } from "../../src/services/teacherEbooks";
+import { getTeacherEbooks, deleteTeacherEbook } from "../../src/services/teacherEbooks";
 import { getTeacherQuizzes, deleteTeacherQuiz } from "../../src/services/teacherQuizzes";
 import { getTeacherCourses } from "../../src/services/teacherCourses";
 import { fetchTeacherDashboard } from "../../src/services/api/teacher";
@@ -949,35 +949,61 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 ebookLibrary.map((book) => (
-                <Link
+                <div
                   key={book.id ?? book.title}
+                  className="group relative rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/40">
+                  <Link
                     to={`/teacher/ebooks/${book.id}`}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 transition hover:border-sky-400/40">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <FaFilePdf className="text-[#f87171]" />
-                    <span>{book.format}</span>
-                  </div>
-                  <p className="mt-2 text-base font-semibold text-white">{book.title}</p>
-                  <p className="mt-1 text-xs text-slate-400/80">Downloads · {book.downloads}</p>
-                  <p className="text-xs text-slate-400/80">Updated · {book.lastUpdated}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span
-                      className={`text-[11px] uppercase tracking-[0.25em] ${
-                        book.status === "rejected"
-                          ? "text-red-400"
-                          : book.status === "published"
-                          ? "text-green-400"
-                          : "text-slate-400"
-                      }`}>
-                      {book.status}
-                    </span>
-                    {book.status === "rejected" && book.rejectionReason && (
-                      <span className="text-[10px] text-red-300/70" title={book.rejectionReason}>
-                        (Reason provided)
+                    className="block">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <FaFilePdf className="text-[#f87171]" />
+                      <span>{book.format}</span>
+                    </div>
+                    <p className="mt-2 text-base font-semibold text-white">{book.title}</p>
+                    <p className="mt-1 text-xs text-slate-400/80">Downloads · {book.downloads}</p>
+                    <p className="text-xs text-slate-400/80">Updated · {book.lastUpdated}</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className={`text-[11px] uppercase tracking-[0.25em] ${
+                          book.status === "rejected"
+                            ? "text-red-400"
+                            : book.status === "published"
+                            ? "text-green-400"
+                            : "text-slate-400"
+                        }`}>
+                        {book.status}
                       </span>
-                    )}
-                  </div>
-                </Link>
+                      {book.status === "rejected" && book.rejectionReason && (
+                        <span className="text-[10px] text-red-300/70" title={book.rejectionReason}>
+                          (Reason provided)
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (window.confirm(`Are you sure you want to delete "${book.title}"? This action cannot be undone.`)) {
+                        try {
+                          await deleteTeacherEbook(book.id);
+                          toast.success("Book deleted successfully");
+                          // Refresh ebooks and dashboard
+                          const ebooksData = await getTeacherEbooks();
+                          setEbooks(Array.isArray(ebooksData) ? ebooksData : []);
+                          loadDashboard();
+                        } catch (error) {
+                          console.error("Failed to delete book:", error);
+                          toast.error(error.message || "Failed to delete book. Please try again.");
+                        }
+                      }
+                    }}
+                    className="absolute top-3 right-3 flex-shrink-0 rounded-lg p-2 text-red-400 opacity-0 transition hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100"
+                    title="Delete book">
+                    <FaTrash className="h-4 w-4" />
+                  </button>
+                </div>
                 ))
               )}
             </div>

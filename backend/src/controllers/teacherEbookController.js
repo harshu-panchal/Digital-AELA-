@@ -409,3 +409,75 @@ export const updateTeacherEbook = async (req, res, next) => {
     return next(error);
   }
 };
+
+/**
+ * Teacher: Delete Ebook
+ * DELETE /api/v1/teacher/ebooks/:ebookId
+ */
+export const deleteTeacherEbook = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only teachers can delete ebooks",
+        },
+      });
+    }
+
+    const { ebookId } = req.params;
+
+    if (!mongoose.isValidObjectId(ebookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid ebook ID",
+        },
+      });
+    }
+
+    const teacherObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    // Find ebook and verify ownership
+    const ebook = await EbookResource.findOne({
+      _id: ebookId,
+      $or: [
+        { "metadata.uploadedBy": userId },
+        { "metadata.uploadedBy": teacherObjectId?.toString() },
+        ...(teacherObjectId ? [{ "metadata.uploadedBy": teacherObjectId }] : []),
+      ],
+    });
+
+    if (!ebook) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Ebook not found or you don't have permission to delete it",
+        },
+      });
+    }
+
+    // Teachers can delete their ebooks regardless of status
+    await EbookResource.findByIdAndDelete(ebookId);
+
+    return res.status(200).json({
+      message: "Ebook deleted successfully",
+      ebookId: ebookId,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

@@ -114,3 +114,13 @@ export const updateTeacherEbook = async (ebookId, updates) => {
   };
 };
 
+/**
+ * Delete an ebook
+ */
+export const deleteTeacherEbook = async (ebookId) => {
+  const response = await apiRequest(`/teacher/ebooks/${ebookId}`, {
+    method: "DELETE",
+  });
+  return response;
+};
+
