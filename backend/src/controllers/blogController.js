@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import RecruiterBlog from "../models/RecruiterBlog.js";
 import RecruiterProfile from "../models/RecruiterProfile.js";
+import StudentProfile from "../models/StudentProfile.js";
 import User from "../models/User.js";
 
 export const listBlogs = async (req, res, next) => {
@@ -232,7 +233,7 @@ export const listPublishedBlogs = async (req, res, next) => {
         })
         .skip(skip)
         .limit(Number(pageSize))
-        .populate("author", ["fullName", "role", "email", "metadata"])
+        .populate("author", "fullName role email metadata")
         .lean(),
       RecruiterBlog.countDocuments({ status: "published" }),
     ]);
@@ -241,18 +242,30 @@ export const listPublishedBlogs = async (req, res, next) => {
       .map((blog) => blog.author?._id?.toString())
       .filter(Boolean);
 
-    const profiles = authorIds.length
-      ? await RecruiterProfile.find({ user: { $in: authorIds } })
-          .select(["company", "headline", "avatarUrl", "stats", "socials"])
-          .lean()
-      : [];
+    // Fetch both RecruiterProfile and StudentProfile for blog authors
+    const [recruiterProfiles, studentProfiles] = await Promise.all([
+      authorIds.length
+        ? RecruiterProfile.find({ user: { $in: authorIds } })
+            .select(["company", "headline", "avatarUrl", "stats", "socials", "user"])
+            .lean()
+        : [],
+      authorIds.length
+        ? StudentProfile.find({ user: { $in: authorIds } })
+            .select(["headline", "avatarUrl", "user"])
+            .lean()
+        : [],
+    ]);
 
-    const profileMap = profiles.reduce((acc, profile) => {
+    // Combine profiles into a single map, prioritizing profile avatarUrl
+    const profileMap = {};
+    [...recruiterProfiles, ...studentProfiles].forEach((profile) => {
       if (profile.user) {
-        acc[profile.user.toString()] = profile;
+        const userId = profile.user.toString();
+        if (!profileMap[userId] || profile.avatarUrl) {
+          profileMap[userId] = profile;
+        }
       }
-      return acc;
-    }, {});
+    });
 
     // Populate comment authors
     const commentAuthorIds = new Set();
@@ -281,10 +294,25 @@ export const listPublishedBlogs = async (req, res, next) => {
       const authorId = blog.author?._id
         ? blog.author._id.toString()
         : blog.author?.id;
-      const recruiterProfile =
+      const authorProfile =
         authorId && profileMap[authorId] ? profileMap[authorId] : null;
       // Get avatarUrl from user metadata if available (for all user types)
       const userAvatarUrl = blog.author?.metadata?.avatarUrl || null;
+      // Prioritize profile avatarUrl over user metadata avatarUrl
+      const profileAvatarUrl = authorProfile?.avatarUrl || null;
+      const finalAvatarUrl = profileAvatarUrl || userAvatarUrl;
+      
+      // Debug logging to trace avatarUrl issues (can be removed in production)
+      if (!finalAvatarUrl && authorId) {
+        // eslint-disable-next-line no-console
+        console.log(`[BlogController] No avatarUrl found for author ${authorId}:`, {
+          hasProfile: !!authorProfile,
+          profileAvatarUrl,
+          userAvatarUrl,
+          authorHasMetadata: !!blog.author?.metadata,
+          metadataKeys: blog.author?.metadata ? Object.keys(blog.author.metadata) : [],
+        });
+      }
 
       // Format comments with author info
       const formattedComments = (blog.comments || []).map((comment) => {
@@ -332,16 +360,16 @@ export const listPublishedBlogs = async (req, res, next) => {
               fullName: blog.author.fullName,
               role: blog.author.role,
               email: blog.author.email,
-              avatarUrl: userAvatarUrl, // Include avatarUrl from user metadata
+              avatarUrl: finalAvatarUrl, // Prioritize profile avatarUrl, then user metadata avatarUrl
             }
           : null,
-        recruiterProfile: recruiterProfile
+        recruiterProfile: authorProfile && authorProfile.company
           ? {
-              company: recruiterProfile.company,
-              headline: recruiterProfile.headline,
-              avatarUrl: recruiterProfile.avatarUrl || userAvatarUrl, // Prefer recruiter profile, fallback to user metadata
-              socials: recruiterProfile.socials,
-              stats: recruiterProfile.stats,
+              company: authorProfile.company,
+              headline: authorProfile.headline,
+              avatarUrl: finalAvatarUrl,
+              socials: authorProfile.socials,
+              stats: authorProfile.stats,
             }
           : null,
       };

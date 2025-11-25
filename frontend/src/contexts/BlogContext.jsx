@@ -192,9 +192,9 @@ const mapApiBlog = (blog) => {
           id: authorId,
           name: blog.author.fullName ?? blog.author.name ?? "Recruiter",
           avatar:
-            recruiterProfile?.avatarUrl ??
-            blog.author.avatarUrl ??
-            blog.recruiterProfile?.avatarUrl ??
+            blog.author?.avatarUrl ||
+            recruiterProfile?.avatarUrl ||
+            blog.recruiterProfile?.avatarUrl ||
             "https://i.pravatar.cc/150?img=11",
           bio:
             recruiterProfile?.headline ??
