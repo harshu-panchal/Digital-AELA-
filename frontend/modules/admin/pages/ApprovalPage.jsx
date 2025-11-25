@@ -30,6 +30,8 @@ import CoursePreview from "../components/previews/CoursePreview";
 import BookPreview from "../components/previews/BookPreview";
 import JobPreview from "../components/previews/JobPreview";
 import JoinUsApplicationPreview from "../components/previews/JoinUsApplicationPreview";
+import TeacherPreview from "../components/previews/TeacherPreview";
+import StudentPreview from "../components/previews/StudentPreview";
 
 const ApprovalPage = () => {
   const { type } = useParams();
@@ -215,11 +217,19 @@ const ApprovalPage = () => {
 
   const handlePreview = async (item) => {
     const itemId = item._id || item.id;
-    setPreviewLoading(true);
     setPreviewError(null);
     setPreviewData(null);
     setShowPreviewModal(true);
 
+    // For teachers and students, use the item data directly (no API call needed)
+    if (type === "teachers" || type === "students") {
+      setPreviewData(item);
+      setPreviewLoading(false);
+      return;
+    }
+
+    // For other types, fetch preview data from API
+    setPreviewLoading(true);
     try {
       let data;
       switch (type) {
@@ -268,6 +278,10 @@ const ApprovalPage = () => {
         return <JobPreview job={previewData} />;
       case "join-us-applications":
         return <JoinUsApplicationPreview application={previewData} />;
+      case "teachers":
+        return <TeacherPreview teacher={previewData} />;
+      case "students":
+        return <StudentPreview student={previewData} />;
       default:
         return null;
     }
