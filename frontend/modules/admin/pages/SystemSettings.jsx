@@ -281,7 +281,7 @@ const SystemSettings = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-[#040404] to-black">
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-black via-[#040404] to-black">
         <div className="text-center">
           <FaSpinner className="mx-auto h-8 w-8 animate-spin text-[#D4AF37]" />
           <p className="mt-4 text-gray-400">Loading settings...</p>
@@ -291,7 +291,7 @@ const SystemSettings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black p-6">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#040404] to-black p-6">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">

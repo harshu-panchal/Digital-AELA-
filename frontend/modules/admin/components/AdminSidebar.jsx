@@ -22,6 +22,7 @@ import {
   FaBlog,
   FaUserPlus,
   FaImages,
+  FaComments,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -90,6 +91,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Gallery Management",
       path: "/super-admin/gallery-management",
       icon: FaImages,
+    },
+    {
+      label: "Testimonials",
+      path: "/super-admin/testimonials",
+      icon: FaComments,
     },
     {
       label: "Reward Management",

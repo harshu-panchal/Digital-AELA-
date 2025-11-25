@@ -493,7 +493,7 @@ const SuperAdminDashboard = () => {
                   <h2 className="text-xl font-semibold text-white">
                     Approval queue
                   </h2>
-                  <p className="text-xs uppercase tracking-[0.28em] text-[#F5D26A]/70">
+                  <p className="text-xs uppercase tracking-wide text-[#F5D26A]/70">
                     Latest submissions
                   </p>
                 </div>

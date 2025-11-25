@@ -26,6 +26,7 @@ import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getGalleryImages } from "../../../src/services/api/gallery";
+import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
 
 const MotionLink = motion.create(Link);
 
@@ -45,6 +46,8 @@ const Home = () => {
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [galleryItems, setGalleryItems] = useState([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(true);
 
   // Get neon light color based on active slide
   const getNeonTextShadow = (slideId) => {
@@ -714,66 +717,34 @@ const Home = () => {
     }
   };
 
-  // Testimonials data
-  const testimonials = useMemo(
-    () => [
-      {
-        id: 1,
-        name: "Sarah Anderson",
-        role: "Business Professional",
-        avatar:
-          "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=300&q=80",
-        text: "The coaching transformed my English skills. Within 3 months, I was confidently presenting to international teams!",
-        rating: 5,
-      },
-      {
-        id: 2,
-        name: "Mohammed Ali",
-        role: "IELTS Student",
-        avatar:
-          "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80",
-        text: "Thanks to Digital AELA's IELTS preparation, I achieved a band 7.5! The personalized feedback made all the difference.",
-        rating: 5,
-      },
-      {
-        id: 3,
-        name: "Fatima Hassan",
-        role: "General English Learner",
-        avatar:
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
-        text: "Learning English has never been this engaging. The instructors are patient, and the materials are practical and relevant.",
-        rating: 5,
-      },
-      {
-        id: 4,
-        name: "Rajesh Kumar",
-        role: "Corporate Executive",
-        avatar:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
-        text: "Digital AELA's corporate training program helped me improve my presentation skills significantly. Highly recommended for professionals!",
-        rating: 5,
-      },
-      {
-        id: 5,
-        name: "Priya Sharma",
-        role: "Digital Marketing Student",
-        avatar:
-          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=300&q=80",
-        text: "The digital marketing course is comprehensive and practical. I've already started applying the strategies in my business!",
-        rating: 5,
-      },
-      {
-        id: 6,
-        name: "Ahmed Malik",
-        role: "Advanced English Student",
-        avatar:
-          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
-        text: "The advanced English course exceeded my expectations. My fluency and confidence have improved dramatically in just 3 months.",
-        rating: 5,
-      },
-    ],
-    []
-  );
+  // Fetch testimonials from API
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        setLoadingTestimonials(true);
+        const response = await getTestimonialsBySection("home");
+        if (response && response.testimonials) {
+          // Map API response to match existing structure
+          const mappedTestimonials = response.testimonials.map((testimonial, index) => ({
+            id: testimonial._id || index + 1,
+            name: testimonial.name,
+            role: testimonial.role,
+            avatar: testimonial.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80",
+            text: testimonial.text,
+            rating: testimonial.rating || 5,
+          }));
+          setTestimonials(mappedTestimonials);
+        }
+      } catch (error) {
+        console.error("Failed to load testimonials:", error);
+        // Fallback to empty array on error
+        setTestimonials([]);
+      } finally {
+        setLoadingTestimonials(false);
+      }
+    };
+    loadTestimonials();
+  }, []);
 
   const visibleTestimonials = useMemo(() => {
     const count = 3;
@@ -1116,7 +1087,7 @@ const Home = () => {
           className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]"
         />
 
-        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-16 xl:pl-[12%]">
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={heroSlides[activeHeroSlide].id}
@@ -1124,7 +1095,7 @@ const Home = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -120 }}
               transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
-              className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:-translate-x-[80px]">
+              className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
               <div className="order-2 text-left lg:order-1">
                 <motion.span
                   initial={{ opacity: 0, y: -10 }}
@@ -1398,7 +1369,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
+              <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
                   <FaCalendarCheck className="w-8 h-8 text-white" />
                 </div>
@@ -1407,8 +1378,7 @@ const Home = () => {
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                Apni level ko check karein, trainer se interact karein aur
-                course ka real demo experience lein.
+                Assess your current proficiency level, interact with our expert trainers, and experience a comprehensive course demonstration to understand our teaching methodology.
               </p>
               <Link
                 to="/contact/book-demo"
@@ -1424,7 +1394,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.2 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
+              <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
                   <FaCheckCircle className="w-8 h-8 text-white" />
                 </div>
@@ -1433,8 +1403,7 @@ const Home = () => {
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                Beginner, Intermediate ya Spoken English - apne goal ke hisaab
-                se course select karke enroll karein.
+                Choose from our Beginner, Intermediate, or Spoken English programs - select the course that best aligns with your learning objectives and career goals.
               </p>
               <Link
                 to="/courses/english-language"
@@ -1450,7 +1419,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
-              <div className="flex-shrink-0 flex items-center gap-4 mb-4">
+              <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
                   <FaPlayCircle className="w-8 h-8 text-white" />
                 </div>
@@ -1459,8 +1428,7 @@ const Home = () => {
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                40+ video lessons, 3 printed books, live Q&A sessions, aur
-                practice groups se daily learning ko strong banayein.
+                Access 40+ comprehensive video lessons, receive 3 professionally printed books, participate in interactive live Q&A sessions, and join practice groups to enhance your daily learning experience.
               </p>
               <Link
                 to="/books"
@@ -1480,7 +1448,7 @@ const Home = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: 0.4 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
-                <div className="flex-shrink-0 flex items-center gap-4 mb-4">
+                <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
                     <FaCertificate className="w-8 h-8 text-black" />
                   </div>
@@ -1489,8 +1457,7 @@ const Home = () => {
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  Complete your course, pass the assessment, aur internationally
-                  recognized certificate hasil karein.
+                  Complete your comprehensive course curriculum, successfully pass the final assessment, and earn an internationally recognized certificate that validates your English language proficiency.
                 </p>
                 <Link
                   to="/gallery"
@@ -1506,7 +1473,7 @@ const Home = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: 0.5 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
-                <div className="flex-shrink-0 flex items-center gap-4 mb-4">
+                <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
                     <FaGlobe className="w-8 h-8 text-white" />
                   </div>
@@ -1515,9 +1482,7 @@ const Home = () => {
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  Advanced batches, communication training aur interview support
-                  - Gulf countries aur global opportunities ke liye tayyar ho
-                  jayein.
+                  Join advanced training batches, receive specialized communication training and comprehensive interview preparation support - prepare yourself for rewarding opportunities in Gulf countries and global markets.
                 </p>
                 <Link
                   to="/explore-jobs"
@@ -1633,7 +1598,7 @@ const Home = () => {
                             handleViewCourseDetail(course, "home-featured");
                           }
                         }}>
-                        <div className="flex-shrink-0 h-40 w-full overflow-hidden">
+                        <div className="shrink-0 h-40 w-full overflow-hidden">
                           <img
                             src={
                               course.image ||
@@ -1645,7 +1610,7 @@ const Home = () => {
                           />
                         </div>
                         <div className="flex flex-1 flex-col p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] min-h-0">
-                          <div className="flex-shrink-0 mb-4">
+                          <div className="shrink-0 mb-4">
                             <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
                               {course.title}
                             </h3>
@@ -1654,7 +1619,7 @@ const Home = () => {
                             </p>
                           </div>
 
-                          <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                          <div className="shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
                             <span className="flex items-center gap-2">
                               <svg
                                 className="w-4 h-4 text-[#D4AF37] shrink-0"
@@ -1688,7 +1653,7 @@ const Home = () => {
                           </div>
 
                           {course.features && course.features.length > 0 ? (
-                            <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
+                            <div className="shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                               <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
                                 Key Highlights
                               </p>
@@ -1708,10 +1673,10 @@ const Home = () => {
                               </ul>
                             </div>
                           ) : (
-                            <div className="flex-shrink-0 mb-4 min-h-[60px]"></div>
+                            <div className="shrink-0 mb-4 min-h-[60px]"></div>
                           )}
 
-                          <div className="flex-shrink-0 flex flex-col gap-3 mt-auto pt-2">
+                          <div className="shrink-0 flex flex-col gap-3 mt-auto pt-2">
                             <div className="flex items-center justify-between text-sm text-gray-300">
                               <span>Course Fee</span>
                               <span className="text-lg font-semibold text-[#F5D26A]">
@@ -1950,7 +1915,7 @@ const Home = () => {
               whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Play Icon */}
-              <div className="flex-shrink-0 flex justify-center mb-6">
+              <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -1962,7 +1927,7 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Free Demo Class
               </h3>
 
@@ -1996,7 +1961,7 @@ const Home = () => {
               whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Download Icon */}
-              <div className="flex-shrink-0 flex justify-center mb-6">
+              <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -2014,7 +1979,7 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Free English Guide
               </h3>
 
@@ -2048,7 +2013,7 @@ const Home = () => {
               whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Gift Icon */}
-              <div className="flex-shrink-0 flex justify-center mb-6">
+              <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-white"
@@ -2066,7 +2031,7 @@ const Home = () => {
               </div>
 
               {/* Title */}
-              <h3 className="flex-shrink-0 text-2xl font-bold text-white mb-4 font-display">
+              <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
                 Gift a Future
               </h3>
 
@@ -2204,22 +2169,22 @@ const Home = () => {
                       {/* Book Content */}
                       <div className="flex flex-1 flex-col p-4">
                         {/* Category */}
-                        <span className="flex-shrink-0 text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                        <span className="shrink-0 text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
                           {book.category}
                         </span>
 
                         {/* Title */}
-                        <h3 className="flex-shrink-0 text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                        <h3 className="shrink-0 text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
                           {book.title}
                         </h3>
 
                         {/* Author */}
-                        <p className="flex-shrink-0 text-xs text-gray-400 mb-2">
+                        <p className="shrink-0 text-xs text-gray-400 mb-2">
                           by {book.author}
                         </p>
 
                         {/* Rating */}
-                        <div className="flex-shrink-0 flex items-center gap-1.5 mb-3">
+                        <div className="shrink-0 flex items-center gap-1.5 mb-3">
                           <div className="flex items-center gap-0.5">
                             {[...Array(5)].map((_, i) => (
                               <FaStar
@@ -2243,7 +2208,7 @@ const Home = () => {
                         </div>
 
                         {/* Price */}
-                        <div className="flex-shrink-0 flex items-center gap-2 mb-3">
+                        <div className="shrink-0 flex items-center gap-2 mb-3">
                           <span className="text-lg font-bold text-[#D4AF37] font-display">
                             {displayPrice}
                           </span>
@@ -2255,7 +2220,7 @@ const Home = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex-shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -2375,12 +2340,12 @@ const Home = () => {
                 whileHover={{ y: -8, scale: 1.03 }}
                 className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
                 {/* Icon */}
-                <div className="flex-shrink-0 flex justify-center mb-4">
+                <div className="shrink-0 flex justify-center mb-4">
                   {renderIcon(benefit.icon)}
                 </div>
 
                 {/* Title */}
-                <h3 className="flex-shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
+                <h3 className="shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
                   {benefit.title}
                 </h3>
 
@@ -2513,7 +2478,7 @@ const Home = () => {
                   <Link
                     to={`/blogs/${blog.id}`}
                     className="flex h-full flex-col">
-                    <div className="relative h-56 w-full overflow-hidden flex-shrink-0">
+                    <div className="relative h-56 w-full overflow-hidden shrink-0">
                       <img
                         src={blog.thumbnail}
                         alt={blog.title}
@@ -2529,31 +2494,31 @@ const Home = () => {
                       </span>
                     </div>
                     <div className="flex flex-1 flex-col p-6">
-                      <div className="flex-shrink-0 mb-4 flex items-center gap-3 text-xs text-gray-400">
+                      <div className="shrink-0 mb-4 flex items-center gap-3 text-xs text-gray-400">
                         <span className="inline-flex items-center gap-2 min-w-0">
                           <img
                             src={blog.author.avatar}
                             alt={blog.author.name}
-                            className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                            className="h-8 w-8 rounded-full object-cover shrink-0"
                           />
                           <span className="font-semibold text-white/90 truncate">
                             {blog.author.name}
                           </span>
                         </span>
-                        <span className="h-1 w-1 rounded-full bg-gray-600 flex-shrink-0" />
-                        <span className="flex-shrink-0">
+                        <span className="h-1 w-1 rounded-full bg-gray-600 shrink-0" />
+                        <span className="shrink-0">
                           {new Date(blog.publishedAt).toLocaleDateString(
                             "en-GB"
                           )}
                         </span>
                       </div>
-                      <h3 className="flex-shrink-0 mb-3 text-xl font-semibold text-white font-display leading-tight group-hover:text-[#F5D26A] line-clamp-2">
+                      <h3 className="shrink-0 mb-3 text-xl font-semibold text-white font-display leading-tight group-hover:text-[#F5D26A] line-clamp-2">
                         {blog.title}
                       </h3>
                       <p className="flex-1 text-sm text-gray-300 leading-relaxed line-clamp-3 min-h-0">
                         {blog.excerpt?.replace(/<[^>]+>/g, "") || ""}
                       </p>
-                      <span className="flex-shrink-0 mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
+                      <span className="shrink-0 mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
                         Read Story
                         <FaArrowRight className="h-4 w-4" />
                       </span>
@@ -2714,14 +2679,23 @@ const Home = () => {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="grid gap-6 md:grid-cols-3">
-              {visibleTestimonials.map((item) => (
+              {loadingTestimonials ? (
+                <div className="col-span-3 text-center py-12 text-gray-400">
+                  Loading testimonials...
+                </div>
+              ) : visibleTestimonials.length === 0 ? (
+                <div className="col-span-3 text-center py-12 text-gray-400">
+                  No testimonials available
+                </div>
+              ) : (
+                visibleTestimonials.map((item) => (
                 <motion.article
                   key={item.id}
                   whileHover={{ y: -6, scale: 1.01 }}
                   className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
-                  <div className="flex-shrink-0 flex items-start justify-between gap-3">
+                  <div className="shrink-0 flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
                         <img
                           src={item.avatar}
                           alt={item.name}
@@ -2738,12 +2712,12 @@ const Home = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="flex-shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
+                    <span className="shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
                       Verified
                     </span>
                   </div>
 
-                  <div className="flex-shrink-0 mt-3 flex items-center gap-1">
+                  <div className="shrink-0 mt-3 flex items-center gap-1">
                     {[...Array(item.rating)].map((_, i) => (
                       <svg
                         key={i}
@@ -2759,7 +2733,8 @@ const Home = () => {
                     "{item.text}"
                   </p>
                 </motion.article>
-              ))}
+                ))
+              )}
             </motion.div>
 
             {/* Mobile arrows below */}

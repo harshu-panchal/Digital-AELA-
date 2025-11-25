@@ -175,11 +175,12 @@ export const updateSettings = async (req, res, next) => {
           continue;
         }
 
-        // Automatically set isPublic to true for social media settings
+        // Automatically set isPublic to true for social media settings and contact info
         const finalCategory = category || "general";
+        const isContactInfo = key === "site.contact.email" || key === "site.contact.phone";
         const shouldBePublic = isPublic !== undefined 
           ? isPublic 
-          : (finalCategory === "social" || key.startsWith("social."));
+          : (finalCategory === "social" || key.startsWith("social.") || isContactInfo);
 
         // Update or create setting
         const updatedSetting = await Settings.findOneAndUpdate(
@@ -265,10 +266,11 @@ export const updateSetting = async (req, res, next) => {
     if (label !== undefined) setting.label = label;
     if (description !== undefined) setting.description = description;
     
-    // Automatically set isPublic to true for social media settings
+    // Automatically set isPublic to true for social media settings and contact info
+    const isContactInfo = setting.key === "site.contact.email" || setting.key === "site.contact.phone";
     if (isPublic !== undefined) {
       setting.isPublic = isPublic;
-    } else if (setting.category === "social" || setting.key.startsWith("social.")) {
+    } else if (setting.category === "social" || setting.key.startsWith("social.") || isContactInfo) {
       setting.isPublic = true;
     }
     
@@ -379,8 +381,8 @@ export const initializeDefaultSettings = async (req, res, next) => {
       { key: "site.name", value: "Digital AELA", category: "general", type: "string", label: "Site Name", description: "The name of the platform" },
       { key: "site.description", value: "Learn, Earn, and Grow", category: "general", type: "string", label: "Site Description", description: "Platform description" },
       { key: "site.logo", value: "", category: "general", type: "string", label: "Site Logo URL", description: "URL to the site logo" },
-      { key: "site.contact.email", value: "contact@digitalaela.com", category: "general", type: "string", label: "Contact Email", description: "Main contact email address" },
-      { key: "site.contact.phone", value: "", category: "general", type: "string", label: "Contact Phone", description: "Main contact phone number" },
+      { key: "site.contact.email", value: "info@digitalaela.com", category: "general", type: "string", label: "Contact Email", description: "Main contact email address", isPublic: true },
+      { key: "site.contact.phone", value: "+971 502270625", category: "general", type: "string", label: "Contact Phone", description: "Main contact phone number", isPublic: true },
       { key: "site.address", value: "", category: "general", type: "string", label: "Site Address", description: "Physical address of the organization" },
 
       // Email Settings

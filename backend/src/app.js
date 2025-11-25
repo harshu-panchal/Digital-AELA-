@@ -46,6 +46,7 @@ import userRatingRoutes from "./routes/userRatingRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import csrfRoutes from "./routes/csrfRoutes.js";
 import { publicRouter as galleryPublicRouter, adminRouter as galleryAdminRouter } from "./routes/galleryRoutes.js";
+import { publicRouter as testimonialPublicRouter, adminRouter as testimonialAdminRouter } from "./routes/testimonialRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
@@ -138,6 +139,9 @@ app.use("/api/v1/public", publicSettingsRoutes);
 // Public gallery routes (no authentication required)
 app.use("/api/v1/gallery", galleryPublicRouter);
 
+// Public testimonial routes (no authentication required)
+app.use("/api/v1/testimonials", testimonialPublicRouter);
+
 // Check maintenance mode for all API routes (except auth and public)
 app.use("/api/v1", checkMaintenanceMode);
 
@@ -193,6 +197,7 @@ app.use("/api/v1/admin", superAdminRoutes);
 app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/admin", adminContentRoutes);
 app.use("/api/v1/admin/gallery", galleryAdminRouter);
+app.use("/api/v1/admin/testimonials", testimonialAdminRouter);
 app.use("/api/v1/teacher", teacherCourseRoutes);
 app.use("/api/v1/teacher", teacherEbookRoutes);
 app.use("/api/v1/teachers", teacherRoutes);

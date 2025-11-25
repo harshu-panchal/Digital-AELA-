@@ -36,7 +36,7 @@ const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -100,7 +100,7 @@ const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
               <button
                 type="submit"
                 disabled={isSubmitting || !password}
-                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-black font-semibold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                className="flex-1 px-4 py-3 rounded-xl bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black font-semibold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed">
                 {isSubmitting ? "Verifying..." : "Access Financial Data"}
               </button>
             </div>

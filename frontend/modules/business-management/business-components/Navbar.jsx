@@ -22,6 +22,7 @@ import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import { toast } from "react-toastify";
 import { useSocket } from "../../../src/hooks/useSocket";
 import { fetchUnreadCount } from "../../../src/services/api/notifications";
+import { fetchPublicSettings } from "../../../src/services/api/publicSettings";
 import NotificationDropdown from "./NotificationDropdown";
 import logo from "../../../src/assets/MainLogo.png";
 
@@ -36,6 +37,8 @@ const Navbar = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [contactEmail, setContactEmail] = useState("info@digitalaela.com");
+  const [contactPhone, setContactPhone] = useState("+971 502270625");
   const { language, languages, changeLanguage, t } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
   const { socialLinks } = useSocialMedia();
@@ -50,6 +53,32 @@ const Navbar = () => {
 
   // Use sidebar context (safe - returns null if not available)
   const sidebarContext = useSidebarSafe();
+
+  // Load contact information from public settings
+  useEffect(() => {
+    const loadContactInfo = async () => {
+      try {
+        const response = await fetchPublicSettings({ category: "general" });
+        if (response?.settings?.general) {
+          const generalSettings = response.settings.general;
+          const emailSetting = generalSettings.find((s) => s.key === "site.contact.email");
+          const phoneSetting = generalSettings.find((s) => s.key === "site.contact.phone");
+          
+          if (emailSetting?.value) {
+            setContactEmail(emailSetting.value);
+          }
+          if (phoneSetting?.value) {
+            setContactPhone(phoneSetting.value);
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load contact info:", error);
+        // Keep default values on error
+      }
+    };
+    loadContactInfo();
+  }, []);
 
   // Load unread notification count
   useEffect(() => {
@@ -383,17 +412,17 @@ const Navbar = () => {
               <div className="layout-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 text-xs text-[#F5D26A]/90 sm:flex-row sm:items-center sm:text-sm">
                   <a
-                    href="mailto:info@digitalaela.com"
+                    href={`mailto:${contactEmail}`}
                     className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaEnvelope className="h-3.5 w-3.5" />
-                    info@digitalaela.com
+                    {contactEmail}
                   </a>
                   <span className="hidden h-4 w-px bg-white/15 sm:block" />
                   <a
-                    href="tel:+971502270625"
+                    href={`tel:${contactPhone.replace(/\s/g, "")}`}
                     className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2.5 py-1 font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:bg-[#D4AF37]/20 hover:text-[#FFE28A]">
                     <FaPhone className="h-3.5 w-3.5" />
-                    +971 502270625
+                    {contactPhone}
                   </a>
                 </div>
 
@@ -410,7 +439,7 @@ const Navbar = () => {
                       <FaFacebookF className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href="https://wa.me/971502270625"
+                      href={`https://wa.me/${contactPhone.replace(/[\s+]/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-green-500/70 hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.6)]">
@@ -682,7 +711,7 @@ const Navbar = () => {
                                   return (
                                     <div
                                       key={dropdownItem.label}
-                                      className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFE28A]/70 last:border-b-0">
+                                      className="border-b border-white/10 px-4 py-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-[#FFE28A]/70 last:border-b-0">
                                       {dropdownItem.label}
                                     </div>
                                   );
@@ -960,7 +989,7 @@ const Navbar = () => {
                             return (
                               <span
                                 key={dropdownItem.label}
-                                className="block text-[#FFE28A]/70 text-[11px] uppercase tracking-[0.28em] py-1">
+                                className="block text-[#FFE28A]/70 text-[11px] sm:text-xs uppercase tracking-wide py-1">
                                 {dropdownItem.label}
                               </span>
                             );

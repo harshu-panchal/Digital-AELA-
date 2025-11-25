@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-unused-vars
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
+import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
 
 const StudentSuccessStories = () => {
   // WhatsApp integration
@@ -22,46 +23,36 @@ const StudentSuccessStories = () => {
   });
 
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [successStories, setSuccessStories] = useState([]);
+  const [loadingStories, setLoadingStories] = useState(true);
 
-  // Success Stories
-  const successStories = [
-    {
-      id: 1,
-      name: "Aditi Sharma",
-      position: "HR Executive, TCS",
-      story:
-        "From hesitation to fluent communication, Aditi's transformation shows that with AELA, growth is inevitable.",
-      avatar:
-        "https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 2,
-      name: "Rahul Kumar",
-      position: "Software Developer, Dubai",
-      story:
-        "Started with zero confidence in English. Now leading client calls and working internationally with confidence.",
-      avatar:
-        "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 3,
-      name: "Priya Patel",
-      position: "Marketing Manager, MNC",
-      story:
-        "Overcame her fear of public speaking. Now presenting to global teams and leading marketing campaigns.",
-      avatar:
-        "https://images.unsplash.com/photo-1524253482453-3fed8d2fe12b?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: 4,
-      name: "Amit Singh",
-      position: "Business Analyst, Fortune 500",
-      story:
-        "From struggling with interviews to securing a dream job. AELA's training made all the difference.",
-      avatar:
-        "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80",
-    },
-  ];
+  // Fetch success stories from API
+  useEffect(() => {
+    const loadSuccessStories = async () => {
+      try {
+        setLoadingStories(true);
+        const response = await getTestimonialsBySection("success-stories");
+        if (response && response.testimonials) {
+          // Map API response to match existing structure
+          const mappedStories = response.testimonials.map((testimonial, index) => ({
+            id: testimonial._id || index + 1,
+            name: testimonial.name,
+            position: testimonial.role,
+            story: testimonial.text,
+            avatar: testimonial.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+          }));
+          setSuccessStories(mappedStories);
+        }
+      } catch (error) {
+        console.error("Failed to load success stories:", error);
+        // Fallback to empty array on error
+        setSuccessStories([]);
+      } finally {
+        setLoadingStories(false);
+      }
+    };
+    loadSuccessStories();
+  }, []);
 
   // Testimonials
   const testimonials = [
@@ -200,38 +191,48 @@ const StudentSuccessStories = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-            {successStories.map((story, index) => (
-              <motion.div
-                key={story.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.1,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
-                <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 shadow-[0_12px_35px_rgba(12,12,12,0.55)]">
-                  <img
-                    src={story.avatar}
-                    alt={story.name}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 font-display text-center">
-                  {story.name}
-                </h3>
-                <p className="text-sm md:text-base text-[#D4AF37] mb-3 text-center font-semibold">
-                  {story.position}
-                </p>
-                <p className="text-sm md:text-base text-gray-300 leading-relaxed text-center">
-                  {story.story}
-                </p>
-              </motion.div>
-            ))}
+            {loadingStories ? (
+              <div className="col-span-4 text-center py-12 text-gray-400">
+                Loading success stories...
+              </div>
+            ) : successStories.length === 0 ? (
+              <div className="col-span-4 text-center py-12 text-gray-400">
+                No success stories available
+              </div>
+            ) : (
+              successStories.map((story, index) => (
+                <motion.div
+                  key={story.id}
+                  initial={{ y: 50, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
+                  <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 shadow-[0_12px_35px_rgba(12,12,12,0.55)]">
+                    <img
+                      src={story.avatar}
+                      alt={story.name}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-2 font-display text-center">
+                    {story.name}
+                  </h3>
+                  <p className="text-sm md:text-base text-[#D4AF37] mb-3 text-center font-semibold">
+                    {story.position}
+                  </p>
+                  <p className="text-sm md:text-base text-gray-300 leading-relaxed text-center">
+                    {story.story}
+                  </p>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -93,6 +93,7 @@ import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
 import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
 import ContentManagement from "../modules/admin/pages/ContentManagement";
 import GalleryManagement from "../modules/admin/pages/GalleryManagement";
+import TestimonialManagement from "../modules/admin/pages/TestimonialManagement";
 import UserDetail from "../modules/admin/pages/UserDetail";
 import SystemHealth from "../modules/admin/pages/SystemHealth";
 import AdminAssignmentList from "../modules/admin/pages/AdminAssignmentList";
@@ -212,6 +213,7 @@ export const App = () => {
           <Route path="create/blog" element={<AdminBlogCreate />} />
           <Route path="content-management" element={<ContentManagement />} />
           <Route path="gallery-management" element={<GalleryManagement />} />
+          <Route path="testimonials" element={<TestimonialManagement />} />
           <Route
             path="payments"
             element={
