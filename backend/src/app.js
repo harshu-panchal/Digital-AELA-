@@ -76,9 +76,9 @@ const corsOptions = {
     if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
       callback(null, true);
     } else {
-      // In production, log but still allow (you can change this to reject)
-      console.warn(`[CORS] Request from unlisted origin: ${origin}`);
-      callback(null, true); // Allow all origins for now, change to callback(new Error(...)) to reject
+      // In production, reject unlisted origins for security
+      console.warn(`[CORS] Blocked request from unlisted origin: ${origin}`);
+      callback(new Error(`CORS: Origin ${origin} is not allowed`));
     }
   },
   credentials: true,
@@ -231,8 +231,20 @@ app.use(async (err, req, res, next) => {
     // Ignore if health monitor not available
   }
 
+  // Log error with context (but don't expose sensitive data)
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const errorDetails = {
+    message: err.message,
+    code: err.code,
+    status: err.status || 500,
+    path: req.path,
+    method: req.method,
+    ...(isDevelopment && { stack: err.stack }), // Only include stack in development
+  };
+
   // eslint-disable-next-line no-console
-  console.error("[Error]", err);
+  console.error("[Error]", JSON.stringify(errorDetails, null, 2));
+
   const status = err.status || 500;
   
   // Ensure CORS headers are set even on error responses
@@ -242,10 +254,16 @@ app.use(async (err, req, res, next) => {
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
   
+  // Don't expose internal error details in production
+  const errorMessage = isDevelopment 
+    ? (err.message || "Something went wrong")
+    : (status === 500 ? "Internal server error" : (err.message || "Something went wrong"));
+  
   res.status(status).json({
     error: {
       code: err.code || "SERVER_ERROR",
-      message: err.message || "Something went wrong",
+      message: errorMessage,
+      ...(isDevelopment && err.stack && { details: err.stack }), // Only in development
     },
   });
 });

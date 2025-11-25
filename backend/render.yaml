@@ -10,6 +10,7 @@ services:
         value: production
       - key: PORT
         value: 10000
+      # Required - Set these in Render dashboard
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -18,8 +19,40 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      # Required - Cloudinary (for file uploads)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Required - Email configuration
+      - key: EMAIL_SERVICE
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      # Optional - JWT expiration (defaults provided)
       - key: JWT_EXPIRES_IN
         value: 15m
       - key: JWT_REFRESH_EXPIRES_IN
         value: 7d
+      # Optional - Google Cloud Translation
+      - key: GOOGLE_CLOUD_TRANSLATE_API_KEY
+        sync: false
+      # Optional - WebRTC TURN Server
+      - key: TURN_SERVER_URL
+        sync: false
+      - key: TURN_SERVER_USERNAME
+        sync: false
+      - key: TURN_SERVER_CREDENTIAL
+        sync: false
+      # Optional - MediaSoup configuration
+      - key: MEDIASOUP_NUM_WORKERS
+        sync: false
+      - key: MEDIASOUP_LOG_LEVEL
+        value: warn
 

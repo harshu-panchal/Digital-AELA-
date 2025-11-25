@@ -49,8 +49,9 @@ const start = async () => {
         if (allowedOrigins.some(allowed => origin.includes(allowed.replace(/^https?:\/\//, ''))) || process.env.NODE_ENV !== "production") {
           callback(null, true);
         } else {
-          // In production, be more permissive for Socket.IO
-          callback(null, true);
+          // In production, reject unlisted origins for security
+          console.warn(`[Socket.IO CORS] Blocked connection from unlisted origin: ${origin}`);
+          callback(new Error(`CORS: Origin ${origin} is not allowed`));
         }
       },
       methods: ["GET", "POST"],
@@ -84,6 +85,22 @@ const start = async () => {
     console.log(`[Socket.IO] Server initialized`);
   });
 };
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  // eslint-disable-next-line no-console
+  console.error("[Unhandled Rejection]", reason);
+  // In production, you might want to log to an error tracking service
+  // For now, we'll just log and continue (server might still be running)
+});
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  // eslint-disable-next-line no-console
+  console.error("[Uncaught Exception]", error);
+  // Exit the process for uncaught exceptions (server is in unknown state)
+  process.exit(1);
+});
 
 start().catch((error) => {
   // eslint-disable-next-line no-console
