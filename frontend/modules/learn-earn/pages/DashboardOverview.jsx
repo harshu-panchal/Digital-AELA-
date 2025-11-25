@@ -328,7 +328,7 @@ const DashboardOverview = () => {
       },
       {
         id: "followers",
-        label: "Followers",
+        label: "Friends",
         count: followerCount,
         icon: FaUsers,
       },
@@ -677,7 +677,7 @@ const DashboardOverview = () => {
           </div>
           <div className="relative z-10 mt-6 grid grid-cols-3 gap-3 text-center text-xs text-gray-300 sm:text-sm">
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
-              <p className="text-[#D4AF37]">Followers</p>
+              <p className="text-[#D4AF37]">Friends</p>
               <p className="mt-1 text-lg font-semibold text-white">
                 {actualFollowersCount.toLocaleString()}
               </p>

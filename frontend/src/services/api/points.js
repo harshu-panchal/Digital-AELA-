@@ -50,3 +50,13 @@ export const fetchPointsStats = async () => {
   });
 };
 
+/**
+ * Claim daily bonus
+ * POST /api/v1/students/points/daily-bonus
+ */
+export const claimDailyBonus = async () => {
+  return apiRequest("/students/points/daily-bonus", {
+    method: "POST",
+  });
+};
+

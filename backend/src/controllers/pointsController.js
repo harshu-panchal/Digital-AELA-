@@ -90,6 +90,7 @@ export const getStudentPoints = async (req, res, next) => {
         leaderboardPosition: studentPoints.leaderboardPosition || 0,
         badges: studentPoints.badges || [],
         lastActivityDate: studentPoints.lastActivityDate,
+        lastDailyBonusClaimed: studentPoints.lastDailyBonusClaimed,
       },
     });
   } catch (error) {
@@ -428,6 +429,123 @@ export const getPointsStats = async (req, res, next) => {
         transactionsBySource,
         recentActivity,
         totalTransactions: transactions.length,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Claim daily bonus
+ * POST /api/v1/students/points/daily-bonus
+ */
+export const claimDailyBonus = async (req, res, next) => {
+  try {
+    const { userId } = req.auth || {};
+    
+    if (!userId || typeof userId !== "string" || userId.trim() === "" || userId === "undefined" || userId === "null") {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    const trimmedUserId = userId.trim();
+    let studentObjectId;
+    try {
+      if (!mongoose.isValidObjectId(trimmedUserId)) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid user ID",
+          },
+        });
+      }
+      studentObjectId = new mongoose.Types.ObjectId(trimmedUserId);
+    } catch (error) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+          details: error.message,
+        },
+      });
+    }
+
+    let studentPoints = await StudentPoints.findOne({ student: studentObjectId });
+
+    if (!studentPoints) {
+      studentPoints = await StudentPoints.create({
+        student: studentObjectId,
+        totalCoins: 0,
+        redeemedCoins: 0,
+        pendingCoins: 0,
+        streak: 0,
+        transactions: [],
+      });
+    }
+
+    // Check if already claimed today
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (studentPoints.lastDailyBonusClaimed) {
+      const lastClaimDate = new Date(studentPoints.lastDailyBonusClaimed);
+      const lastClaimStart = new Date(lastClaimDate.getFullYear(), lastClaimDate.getMonth(), lastClaimDate.getDate());
+      
+      if (lastClaimStart.getTime() === todayStart.getTime()) {
+        return res.status(400).json({
+          error: {
+            code: "ALREADY_CLAIMED",
+            message: "Daily bonus already claimed today",
+            lastClaimed: studentPoints.lastDailyBonusClaimed,
+          },
+        });
+      }
+    }
+
+    // Award daily bonus (40 coins)
+    const bonusAmount = 40;
+    
+    // Add transaction
+    const transaction = {
+      type: "bonus",
+      amount: bonusAmount,
+      reason: "Daily wallet login bonus",
+      source: "daily_bonus",
+      createdAt: new Date(),
+    };
+
+    studentPoints.transactions = studentPoints.transactions || [];
+    studentPoints.transactions.push(transaction);
+
+    // Update total coins
+    studentPoints.totalCoins = (studentPoints.totalCoins || 0) + bonusAmount;
+    
+    // Update last daily bonus claimed date
+    studentPoints.lastDailyBonusClaimed = now;
+
+    // Keep only last 500 transactions
+    if (studentPoints.transactions.length > 500) {
+      studentPoints.transactions = studentPoints.transactions.slice(-500);
+    }
+
+    await studentPoints.save();
+
+    // Calculate updated values
+    const availableCoins = (studentPoints.totalCoins || 0) - (studentPoints.redeemedCoins || 0) - (studentPoints.pendingCoins || 0);
+
+    return res.status(200).json({
+      message: "Daily bonus claimed successfully",
+      points: {
+        totalCoins: studentPoints.totalCoins,
+        redeemedCoins: studentPoints.redeemedCoins,
+        availableCoins,
+        transaction,
+        lastDailyBonusClaimed: studentPoints.lastDailyBonusClaimed,
       },
     });
   } catch (error) {

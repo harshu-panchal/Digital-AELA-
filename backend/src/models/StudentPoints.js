@@ -29,6 +29,7 @@ const studentPointsSchema = new mongoose.Schema(
       min: 0,
     },
     lastActivityDate: Date,
+    lastDailyBonusClaimed: Date,
     leaderboardPosition: {
       type: Number,
       default: 0,

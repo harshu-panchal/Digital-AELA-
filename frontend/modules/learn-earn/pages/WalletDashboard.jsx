@@ -20,6 +20,7 @@ import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import { getRewards } from "../../../src/services/api/rewards";
 import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
+import { claimDailyBonus, fetchStudentPoints } from "../../../src/services/api/points";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -31,6 +32,9 @@ const WalletDashboard = () => {
   const [rewards, setRewards] = useState([]);
   const [loadingRewards, setLoadingRewards] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [isBonusClaimed, setIsBonusClaimed] = useState(false);
+  const [isClaimingBonus, setIsClaimingBonus] = useState(false);
+  const [lastClaimedDate, setLastClaimedDate] = useState(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -42,7 +46,28 @@ const WalletDashboard = () => {
 
   useEffect(() => {
     loadRewards();
+    checkDailyBonusStatus();
   }, []);
+
+  const checkDailyBonusStatus = async () => {
+    try {
+      const pointsData = await fetchStudentPoints();
+      if (pointsData?.points?.lastDailyBonusClaimed) {
+        const lastClaimed = new Date(pointsData.points.lastDailyBonusClaimed);
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const lastClaimStart = new Date(lastClaimed.getFullYear(), lastClaimed.getMonth(), lastClaimed.getDate());
+        
+        if (lastClaimStart.getTime() === todayStart.getTime()) {
+          setIsBonusClaimed(true);
+          setLastClaimedDate(lastClaimed);
+        }
+      }
+    } catch (error) {
+      // Silently fail - user can still try to claim
+      console.warn("Failed to check daily bonus status:", error);
+    }
+  };
 
   const loadRewards = async () => {
     try {
@@ -129,11 +154,42 @@ const WalletDashboard = () => {
   };
 
 
-  const handleBonusCollect = () => {
-    const amount = 40;
-    addPoints(amount, "Daily wallet login");
-    recordTransaction({ type: "earned", label: "Daily bonus", amount, time: "Just now" });
-    toast.success(`Daily bonus +${amount} coins`, { icon: "💎" });
+  const handleBonusCollect = async () => {
+    if (isBonusClaimed || isClaimingBonus) {
+      return;
+    }
+
+    try {
+      setIsClaimingBonus(true);
+      const response = await claimDailyBonus();
+      
+      if (response?.points) {
+        const amount = response.points.transaction?.amount || 40;
+        addPoints(amount, "Daily wallet login");
+        recordTransaction({ type: "earned", label: "Daily bonus", amount, time: "Just now" });
+        triggerConfetti();
+        toast.success(`Daily bonus +${amount} coins`, { icon: "💎" });
+        
+        // Update claim status
+        setIsBonusClaimed(true);
+        setLastClaimedDate(new Date(response.points.lastDailyBonusClaimed));
+        
+        // Refresh points
+        refreshPoints();
+      }
+    } catch (error) {
+      if (error?.error?.code === "ALREADY_CLAIMED") {
+        setIsBonusClaimed(true);
+        if (error.error.lastClaimed) {
+          setLastClaimedDate(new Date(error.error.lastClaimed));
+        }
+        toast.error("Daily bonus already claimed today", { icon: "⚠️" });
+      } else {
+        toast.error(error?.message || "Failed to claim daily bonus", { icon: "⚠️" });
+      }
+    } finally {
+      setIsClaimingBonus(false);
+    }
   };
 
   return (
@@ -159,8 +215,14 @@ const WalletDashboard = () => {
             <button
               type="button"
               onClick={handleBonusCollect}
-              className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#151515] px-5 py-2 text-xs font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
-              <HiOutlineArrowPath className="h-4 w-4" /> Claim daily bonus
+              disabled={isBonusClaimed || isClaimingBonus}
+              className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold transition ${
+                isBonusClaimed || isClaimingBonus
+                  ? "border-gray-600/40 bg-gray-800/50 text-gray-500 cursor-not-allowed"
+                  : "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+              }`}>
+              <HiOutlineArrowPath className={`h-4 w-4 ${isClaimingBonus ? "animate-spin" : ""}`} /> 
+              {isClaimingBonus ? "Claiming..." : isBonusClaimed ? "Already claimed today" : "Claim daily bonus"}
             </button>
           </div>
           <div className="mt-6">

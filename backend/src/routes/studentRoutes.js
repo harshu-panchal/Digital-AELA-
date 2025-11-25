@@ -11,6 +11,7 @@ import {
   updateStudentPoints,
   getPointsHistory,
   getPointsStats,
+  claimDailyBonus,
 } from "../controllers/pointsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -48,6 +49,7 @@ router.get("/points", requireAuth(["student"]), getStudentPoints); // Get studen
 router.patch("/points", requireAuth(["student"]), updateStudentPoints); // Update student points
 router.get("/points/history", requireAuth(["student"]), getPointsHistory); // Get points transaction history
 router.get("/points/stats", requireAuth(["student"]), getPointsStats); // Get points statistics
+router.post("/points/daily-bonus", requireAuth(["student"]), claimDailyBonus); // Claim daily bonus
 
 export default router;
 
