@@ -77,6 +77,12 @@ const RecruiterDashboard = () => {
     talentSpotlight: [],
     ebookShelf: [],
     blogDrafts: [],
+    stats: {
+      activeRoles: 0,
+      totalViews: 0,
+      totalApplications: 0,
+      avgAppliesPerPost: 0,
+    },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -307,6 +313,22 @@ const RecruiterDashboard = () => {
           url: `/blogs/editor/${blog.id}`,
         }));
 
+        // Calculate stats from the fetched jobs (only this recruiter's jobs)
+        const activeRoles = jobs.filter(
+          (job) => job.status === "published" && (!job.expirationDate || new Date(job.expirationDate) > new Date())
+        ).length;
+        const totalViews = jobs.reduce(
+          (acc, job) => acc + (job.stats?.views ?? 0),
+          0
+        );
+        const totalApplications = jobs.reduce(
+          (acc, job) => acc + (job.stats?.applications ?? 0),
+          0
+        );
+        const avgAppliesPerPost = jobs.length > 0
+          ? Math.round(totalApplications / jobs.length)
+          : 0;
+
         setDashboardData((prev) => ({
           ...prev,
           actionShortcuts: [
@@ -347,6 +369,12 @@ const RecruiterDashboard = () => {
           ebookShelf: ebooks,
           blogDrafts,
           talentSpotlight: [], // Will be populated when talent spotlight API is available
+          stats: {
+            activeRoles,
+            totalViews,
+            totalApplications,
+            avgAppliesPerPost,
+          },
         }));
 
         if (showToast) {
@@ -413,26 +441,22 @@ const RecruiterDashboard = () => {
     []
   );
 
+  // Use stats from dashboardData which are calculated from the fetched jobs
   const stats = useMemo(() => {
-    const totalViews = recruiterPosts.reduce(
-      (acc, post) => acc + (post.stats?.views ?? 0),
-      0
-    );
-    const totalApplications = recruiterPosts.reduce(
-      (acc, post) => acc + (post.stats?.applications ?? 0),
-      0
-    );
-    const avgApplyRate = recruiterPosts.length
-      ? Math.round(totalApplications / recruiterPosts.length)
-      : 0;
+    const dashboardStats = dashboardData?.stats ?? {
+      activeRoles: 0,
+      totalViews: 0,
+      totalApplications: 0,
+      avgAppliesPerPost: 0,
+    };
 
     return [
-      { label: "Active Roles", value: recruiterPosts.length },
-      { label: "Total Views", value: totalViews },
-      { label: "Applications", value: totalApplications },
-      { label: "Avg. Applies / Post", value: `${avgApplyRate}` },
+      { label: "Active Roles", value: dashboardStats.activeRoles },
+      { label: "Total Views", value: dashboardStats.totalViews },
+      { label: "Applications", value: dashboardStats.totalApplications },
+      { label: "Avg. Applies / Post", value: `${dashboardStats.avgAppliesPerPost}` },
     ];
-  }, [recruiterPosts]);
+  }, [dashboardData?.stats]);
 
   const handleOpenPost = (post) => {
     navigate(`/explore-jobs/post/${post.id}`, {
