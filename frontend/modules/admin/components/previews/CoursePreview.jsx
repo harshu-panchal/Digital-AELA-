@@ -1,4 +1,9 @@
+import { useState } from "react";
+import { FaPlay, FaTimes } from "react-icons/fa";
+
 const CoursePreview = ({ course }) => {
+  const [previewingVideo, setPreviewingVideo] = useState(null);
+
   if (!course) return null;
 
   const metadata = course.metadata || {};
@@ -141,9 +146,53 @@ const CoursePreview = ({ course }) => {
                       </span>
                     )}
                   </div>
+                  {video.videoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewingVideo(video)}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1.5 text-xs font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/20">
+                      <FaPlay className="h-3 w-3" />
+                      Preview Video
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Video Preview Modal */}
+      {previewingVideo && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setPreviewingVideo(null)}>
+          <div
+            className="relative w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreviewingVideo(null)}
+              className="absolute -top-10 right-0 rounded-lg bg-black/50 p-2 text-white transition hover:bg-black/70">
+              <FaTimes className="h-5 w-5" />
+            </button>
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+              <video
+                src={previewingVideo.videoUrl}
+                controls
+                autoPlay
+                className="h-full w-full"
+                poster={previewingVideo.thumbnailUrl}
+                preload="metadata">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div className="mt-4 rounded-lg border border-white/10 bg-[#0a0a0a]/80 p-4">
+              <h4 className="text-lg font-semibold text-white">{previewingVideo.title}</h4>
+              {previewingVideo.description && (
+                <p className="mt-2 text-sm text-gray-300">{previewingVideo.description}</p>
+              )}
+            </div>
           </div>
         </div>
       )}

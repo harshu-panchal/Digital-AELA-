@@ -264,9 +264,9 @@ export const getCoursePreview = async (req, res, next) => {
       });
     }
 
-    // Get course videos (metadata only, no videoUrl)
+    // Get course videos (include videoUrl for admin preview)
     const videos = await CourseVideo.find({ course: courseId })
-      .select("title description duration order isPreview thumbnailUrl")
+      .select("title description duration order isPreview thumbnailUrl videoUrl")
       .sort({ order: 1, createdAt: 1 })
       .lean();
 
@@ -281,6 +281,7 @@ export const getCoursePreview = async (req, res, next) => {
           order: video.order,
           isPreview: video.isPreview,
           thumbnailUrl: video.thumbnailUrl,
+          videoUrl: video.videoUrl, // Include videoUrl for admin preview
         })),
       },
     });
