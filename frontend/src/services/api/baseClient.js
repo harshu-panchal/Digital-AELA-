@@ -136,7 +136,16 @@ const refreshTokensIfNeeded = async (currentTokens) => {
 // Request queue to prevent too many simultaneous requests
 const requestQueue = [];
 let activeRequests = 0;
-const MAX_CONCURRENT_REQUESTS = 10;
+const MAX_CONCURRENT_REQUESTS = 5; // Reduced from 10 to prevent rate limiting
+
+// Request deduplication cache - prevents duplicate requests within a short time window
+const requestCache = new Map();
+const CACHE_TTL = 5000; // 5 seconds - same request within 5 seconds returns cached promise
+
+const getRequestKey = (endpoint, method, body) => {
+  const bodyStr = body instanceof FormData ? 'FormData' : (body ? JSON.stringify(body) : '');
+  return `${method}:${endpoint}:${bodyStr}`;
+};
 
 const processQueue = async () => {
   if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) {
@@ -418,24 +427,63 @@ export const apiRequest = async (
   endpoint,
   options = {}
 ) => {
-  // Queue request if we're at max concurrent requests
-  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-    return new Promise((resolve, reject) => {
-      requestQueue.push({ resolve, reject, endpoint, options });
-      processQueue();
-    });
+  const { method = "GET", body } = options;
+  
+  // Check for duplicate request (deduplication)
+  // Only deduplicate GET requests to avoid issues with POST/PUT/DELETE
+  if (method === "GET") {
+    const requestKey = getRequestKey(endpoint, method, body);
+    const cached = requestCache.get(requestKey);
+    
+    if (cached) {
+      const { promise, timestamp } = cached;
+      // If cache is still valid (within TTL), return the same promise
+      if (Date.now() - timestamp < CACHE_TTL) {
+        return promise;
+      } else {
+        // Cache expired, remove it
+        requestCache.delete(requestKey);
+      }
+    }
   }
   
-  // Execute immediately if under limit
-  activeRequests++;
-  try {
-    const result = await executeRequest(endpoint, options);
-    return result;
-  } finally {
-    activeRequests--;
-    // Process next request in queue
-    setTimeout(processQueue, 0);
+  // Create the request promise
+  const requestPromise = (async () => {
+    // Queue request if we're at max concurrent requests
+    if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+      return new Promise((resolve, reject) => {
+        requestQueue.push({ resolve, reject, endpoint, options });
+        processQueue();
+      });
+    }
+    
+    // Execute immediately if under limit
+    activeRequests++;
+    try {
+      const result = await executeRequest(endpoint, options);
+      return result;
+    } finally {
+      activeRequests--;
+      // Process next request in queue
+      setTimeout(processQueue, 0);
+    }
+  })();
+  
+  // Cache GET requests for deduplication
+  if (method === "GET") {
+    const requestKey = getRequestKey(endpoint, method, body);
+    requestCache.set(requestKey, {
+      promise: requestPromise,
+      timestamp: Date.now(),
+    });
+    
+    // Clean up cache after TTL
+    setTimeout(() => {
+      requestCache.delete(requestKey);
+    }, CACHE_TTL);
   }
+  
+  return requestPromise;
 };
 
 /**

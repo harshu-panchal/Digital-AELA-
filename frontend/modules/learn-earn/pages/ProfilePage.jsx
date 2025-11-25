@@ -82,6 +82,9 @@ const ProfilePage = () => {
         return;
       }
 
+      // Small delay to allow UserContext to load first and benefit from request deduplication
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       setLoadingProfile(true);
       try {
         const profileData = await fetchStudentProfile(authUser.id);
@@ -115,6 +118,9 @@ const ProfilePage = () => {
       if (!authUser?.id) {
         return;
       }
+
+      // Small delay to allow other profile requests to complete first and benefit from request deduplication
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       setLoadingEnhanced(true);
       try {

@@ -164,10 +164,20 @@ const StudentDashboard = () => {
 
 
   useEffect(() => {
-    loadDashboard();
-    loadWidgets();
-    loadAssignments();
-    loadAnnouncements();
+    // Stagger the API calls to prevent rate limiting
+    const loadData = async () => {
+      // Load dashboard first (most important)
+      await loadDashboard();
+      // Small delay between calls
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await loadWidgets();
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await loadAssignments();
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await loadAnnouncements();
+    };
+    
+    loadData();
 
     // Keep storage listener for backward compatibility
     const handleStorage = (event) => {

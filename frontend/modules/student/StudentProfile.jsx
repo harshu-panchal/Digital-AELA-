@@ -52,6 +52,9 @@ const StudentProfile = () => {
         return;
       }
 
+      // Small delay to allow UserContext to load first and benefit from request deduplication
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       try {
         setLoading(true);
         const profileData = await fetchStudentProfile(authUser.id);

@@ -1103,6 +1103,9 @@ export const UserProvider = ({ children }) => {
     const loadAvatar = async () => {
       if (authUser.role === "student" && authUser.id && tokens?.accessToken) {
         try {
+          // Small initial delay to stagger requests and prevent rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           const { fetchStudentProfile } = await import(
             "../services/api/student"
           );
@@ -1112,6 +1115,9 @@ export const UserProvider = ({ children }) => {
 
           // Load StudentProfile for detailed info
           const profileData = await fetchStudentProfile(authUser.id);
+
+          // Small delay between requests
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           // Load dashboard data for badges
           let badgesData = [];
