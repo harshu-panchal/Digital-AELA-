@@ -498,7 +498,12 @@ export const getTeacherDashboard = async (req, res, next) => {
       // For now, use metadata.downloads or default to 0
       const downloads = ebook.metadata?.downloads || 0;
       const lastUpdated = formatTimeAgo(ebook.updatedAt || ebook.createdAt);
-      const status = ebook.isPublic ? "published" : "draft";
+      // Check if rejected first, then check if published
+      const status = ebook.metadata?.rejected === true 
+        ? "rejected" 
+        : ebook.isPublic 
+        ? "published" 
+        : "draft";
 
       return {
         id: ebook._id.toString(),
@@ -507,13 +512,17 @@ export const getTeacherDashboard = async (req, res, next) => {
         downloads: downloads,
         lastUpdated: lastUpdated,
         status: status,
+        rejectionReason: ebook.metadata?.rejectionReason || null,
         createdAt: ebook.createdAt,
         updatedAt: ebook.updatedAt,
       };
     }).sort((a, b) => {
-      // Sort by status (published first) then by updated date (newest first)
-      if (a.status !== b.status) {
-        return a.status === "published" ? -1 : 1;
+      // Sort by status (published first, then draft, then rejected) then by updated date (newest first)
+      const statusOrder = { published: 0, draft: 1, rejected: 2 };
+      const orderA = statusOrder[a.status] ?? 3;
+      const orderB = statusOrder[b.status] ?? 3;
+      if (orderA !== orderB) {
+        return orderA - orderB;
       }
       const dateA = new Date(a.updatedAt || a.createdAt);
       const dateB = new Date(b.updatedAt || b.createdAt);

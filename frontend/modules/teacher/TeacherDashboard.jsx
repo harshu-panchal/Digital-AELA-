@@ -493,7 +493,12 @@ const TeacherDashboard = () => {
                   return `${Math.floor(diffInSeconds / 2592000)} months ago`;
                 })()
               : "Just now";
-            const status = ebook.isPublic ? "published" : "draft";
+            // Check if rejected first, then check if published
+            const status = ebook.metadata?.rejected === true 
+              ? "rejected" 
+              : ebook.isPublic 
+              ? "published" 
+              : "draft";
 
             return {
           id: ebook.id || ebook._id,
@@ -502,6 +507,7 @@ const TeacherDashboard = () => {
               downloads: downloads,
               lastUpdated: lastUpdated,
               status: status,
+              rejectionReason: ebook.metadata?.rejectionReason || null,
             };
           })
         : []);
@@ -954,7 +960,23 @@ const TeacherDashboard = () => {
                   <p className="mt-2 text-base font-semibold text-white">{book.title}</p>
                   <p className="mt-1 text-xs text-slate-400/80">Downloads · {book.downloads}</p>
                   <p className="text-xs text-slate-400/80">Updated · {book.lastUpdated}</p>
-                  <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">{book.status}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span
+                      className={`text-[11px] uppercase tracking-[0.25em] ${
+                        book.status === "rejected"
+                          ? "text-red-400"
+                          : book.status === "published"
+                          ? "text-green-400"
+                          : "text-slate-400"
+                      }`}>
+                      {book.status}
+                    </span>
+                    {book.status === "rejected" && book.rejectionReason && (
+                      <span className="text-[10px] text-red-300/70" title={book.rejectionReason}>
+                        (Reason provided)
+                      </span>
+                    )}
+                  </div>
                 </Link>
                 ))
               )}

@@ -11,7 +11,7 @@ const EbookList = () => {
   const { user } = useAuth();
   const [ebooks, setEbooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, published, draft
+  const [filter, setFilter] = useState("all"); // all, published, draft, rejected
 
   useEffect(() => {
     loadEbooks();
@@ -24,9 +24,11 @@ const EbookList = () => {
       let filtered = Array.isArray(ebooksData) ? ebooksData : [];
       
       if (filter === "published") {
-        filtered = filtered.filter((e) => e.isPublic === true);
+        filtered = filtered.filter((e) => e.isPublic === true && e.metadata?.rejected !== true);
       } else if (filter === "draft") {
-        filtered = filtered.filter((e) => e.isPublic === false);
+        filtered = filtered.filter((e) => e.isPublic === false && e.metadata?.rejected !== true);
+      } else if (filter === "rejected") {
+        filtered = filtered.filter((e) => e.metadata?.rejected === true);
       }
       
       setEbooks(filtered);
@@ -91,6 +93,15 @@ const EbookList = () => {
             }`}>
             Draft
           </button>
+          <button
+            onClick={() => setFilter("rejected")}
+            className={`px-4 py-2 rounded-lg text-sm transition ${
+              filter === "rejected"
+                ? "bg-red-500/20 text-red-400"
+                : "bg-white/5 text-gray-300 hover:bg-white/10"
+            }`}>
+            Rejected
+          </button>
         </div>
 
         {/* Ebooks List */}
@@ -122,14 +133,26 @@ const EbookList = () => {
                   <div className="flex items-center justify-between text-xs">
                     <span
                       className={`px-2 py-1 rounded ${
-                        ebook.isPublic
+                        ebook.metadata?.rejected === true
+                          ? "bg-red-500/20 text-red-400"
+                          : ebook.isPublic
                           ? "bg-green-500/20 text-green-400"
                           : "bg-yellow-500/20 text-yellow-400"
                       }`}>
-                      {ebook.isPublic ? "Published" : "Draft"}
+                      {ebook.metadata?.rejected === true
+                        ? "Rejected"
+                        : ebook.isPublic
+                        ? "Published"
+                        : "Draft"}
                     </span>
                     <span className="text-gray-400">{ebook.pages || 0} pages</span>
                   </div>
+                  {ebook.metadata?.rejected === true && ebook.metadata?.rejectionReason && (
+                    <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300">
+                      <p className="font-semibold mb-1">Rejection Reason:</p>
+                      <p className="text-red-200/80">{ebook.metadata.rejectionReason}</p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 pt-2 border-t border-white/10">
                     <Link
                       to={`/teacher/ebooks/${ebook._id || ebook.id}`}
