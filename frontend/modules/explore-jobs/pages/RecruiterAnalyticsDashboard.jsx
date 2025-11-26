@@ -393,31 +393,6 @@ const RecruiterAnalyticsDashboard = () => {
           </div>
         </motion.div>
 
-        {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <HiOutlineEye className="w-5 h-5 text-blue-400" />
-              <span className="text-gray-400">Total Views</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{overview.totalViews || 0}</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <HiOutlineBookmark className="w-5 h-5 text-emerald-400" />
-              <span className="text-gray-400">Total Saves</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{overview.totalSaves || 0}</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <HiOutlineArrowTrendingUp className="w-5 h-5 text-purple-400" />
-              <span className="text-gray-400">Interview to Offer</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{overview.interviewToOfferRate || 0}%</div>
-          </div>
-        </div>
-
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link

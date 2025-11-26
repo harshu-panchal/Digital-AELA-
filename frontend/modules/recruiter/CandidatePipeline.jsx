@@ -159,7 +159,7 @@ const CandidatePipeline = () => {
                     stageData.applications.map((app) => (
                       <Link
                         key={app.applicationId}
-                        to={`/recruiter/jobs/${app.job?.id || app.job?._id}/applicants/${app.applicationId}`}
+                        to={app.candidateId ? `/community/students/${app.candidateId}` : `/recruiter/jobs/${app.job?.id || app.job?._id}/applicants/${app.applicationId}`}
                         className="block p-3 rounded-xl border border-white/5 bg-black/40 hover:border-white/10 transition"
                       >
                         <div className="text-white font-medium text-sm">{app.candidateName}</div>

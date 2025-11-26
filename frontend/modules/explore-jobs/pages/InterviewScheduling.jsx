@@ -47,8 +47,20 @@ const InterviewScheduling = () => {
       if (dateRange.endDate) params.endDate = dateRange.endDate;
       const result = await fetchInterviewSchedule(params);
       console.log("Interviews data received:", result);
-      const interviewsData = result?.data || result;
-      setInterviews(interviewsData?.interviews || []);
+      
+      // Handle different response structures
+      let interviewsList = [];
+      if (result?.data?.interviews) {
+        interviewsList = result.data.interviews;
+      } else if (result?.interviews) {
+        interviewsList = result.interviews;
+      } else if (Array.isArray(result?.data)) {
+        interviewsList = result.data;
+      } else if (Array.isArray(result)) {
+        interviewsList = result;
+      }
+      
+      setInterviews(interviewsList);
     } catch (err) {
       console.error("Error loading interviews:", err);
       toast.error(err.message || "Failed to load interviews");
@@ -106,10 +118,12 @@ const InterviewScheduling = () => {
         notes: "",
         interviewer: "",
       });
-      loadInterviews();
+      // Wait a bit for the backend to process, then reload
+      setTimeout(() => {
+        loadInterviews();
+      }, 500);
     } catch (err) {
       toast.error(err.message || "Failed to schedule interview");
-    } finally {
       setLoading(false);
     }
   };

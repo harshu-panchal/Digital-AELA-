@@ -45,12 +45,41 @@ const InterviewScheduling = () => {
       if (statusFilter) params.status = statusFilter;
       if (dateRange.startDate) params.startDate = dateRange.startDate;
       if (dateRange.endDate) params.endDate = dateRange.endDate;
+      
+      console.log("[InterviewScheduling] Fetching interviews with params:", params);
       const result = await fetchInterviewSchedule(params);
-      console.log("Interviews data received:", result);
-      const interviewsData = result?.data || result;
-      setInterviews(interviewsData?.interviews || []);
+      console.log("[InterviewScheduling] Full API response:", result);
+      console.log("[InterviewScheduling] Response type:", typeof result);
+      console.log("[InterviewScheduling] Is array?", Array.isArray(result));
+      
+      // Handle different response structures
+      let interviewsList = [];
+      if (result?.data?.interviews) {
+        console.log("[InterviewScheduling] Found interviews in result.data.interviews");
+        interviewsList = result.data.interviews;
+      } else if (result?.interviews) {
+        console.log("[InterviewScheduling] Found interviews in result.interviews, count:", result.interviews.length);
+        interviewsList = result.interviews;
+      } else if (Array.isArray(result?.data)) {
+        console.log("[InterviewScheduling] Found interviews in result.data (array)");
+        interviewsList = result.data;
+      } else if (Array.isArray(result)) {
+        console.log("[InterviewScheduling] Result is direct array");
+        interviewsList = result;
+      } else {
+        console.warn("[InterviewScheduling] Unexpected response structure:", result);
+      }
+      
+      console.log("[InterviewScheduling] Final interviews list:", interviewsList);
+      setInterviews(interviewsList);
     } catch (err) {
-      console.error("Error loading interviews:", err);
+      console.error("[InterviewScheduling] Error loading interviews:", err);
+      console.error("[InterviewScheduling] Error details:", {
+        message: err.message,
+        status: err.status,
+        code: err.code,
+        stack: err.stack,
+      });
       toast.error(err.message || "Failed to load interviews");
       setInterviews([]);
     } finally {
@@ -106,10 +135,12 @@ const InterviewScheduling = () => {
         notes: "",
         interviewer: "",
       });
-      loadInterviews();
+      // Wait a bit for the backend to process, then reload
+      setTimeout(() => {
+        loadInterviews();
+      }, 500);
     } catch (err) {
       toast.error(err.message || "Failed to schedule interview");
-    } finally {
       setLoading(false);
     }
   };

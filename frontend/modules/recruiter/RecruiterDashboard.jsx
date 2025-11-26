@@ -273,6 +273,7 @@ const RecruiterDashboard = () => {
             stages: (group.applicants ?? []).map((applicant) => ({
               id: applicant.id || applicant._id,
               applicationId: applicant.id || applicant._id,
+              candidateId: applicant.candidateId,
               name: applicant.candidateName || applicant.fullName || "Applicant",
               profileUrl: applicant.profileUrl || "#",
               status: applicant.currentStage || "screening",
@@ -879,7 +880,7 @@ const RecruiterDashboard = () => {
                       </td>
                       <td className="px-3 py-3 text-xs text-slate-200">
                         <Link
-                          to={`/recruiter/jobs/${stage.jobId}/applicants/${
+                          to={applicant.candidateId ? `/community/students/${applicant.candidateId}` : `/recruiter/jobs/${stage.jobId}/applicants/${
                             applicant.id || applicant.applicationId
                           }`}
                           className="font-semibold text-white hover:text-sky-200 transition hover:underline">

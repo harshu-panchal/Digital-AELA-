@@ -11,6 +11,10 @@ import {
   HiOutlineDocumentText,
   HiOutlineFunnel,
   HiOutlineArrowRight,
+  HiOutlineCalendar,
+  HiOutlineVideoCamera,
+  HiOutlinePhone,
+  HiOutlineUserGroup,
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
@@ -299,6 +303,93 @@ const ApplicationHistory = () => {
                               </div>
                               {application.candidateHeadline && (
                                 <p className="mt-2 text-sm text-slate-400">{application.candidateHeadline}</p>
+                              )}
+                              {/* Interview Details */}
+                              {application.currentStage === "interview" && application.metadata?.interview && (
+                                <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <HiOutlineCalendar className="h-5 w-5 text-yellow-400" />
+                                    <h4 className="text-sm font-semibold text-yellow-200">Scheduled Interview</h4>
+                                  </div>
+                                  <div className="space-y-2.5 text-sm">
+                                    {application.metadata.interview.scheduledDate && (
+                                      <>
+                                        <div className="flex items-center gap-2 text-slate-200">
+                                          <HiOutlineCalendar className="h-4 w-4 text-slate-400" />
+                                          <span className="text-slate-400">Date: </span>
+                                          <span>
+                                            {new Date(application.metadata.interview.scheduledDate).toLocaleDateString("en-US", {
+                                              weekday: "long",
+                                              year: "numeric",
+                                              month: "long",
+                                              day: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-slate-200">
+                                          <HiOutlineClock className="h-4 w-4 text-slate-400" />
+                                          <span className="text-slate-400">Time: </span>
+                                          <span>
+                                            {new Date(application.metadata.interview.scheduledDate).toLocaleTimeString("en-US", {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                              hour12: true,
+                                            })}
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
+                                    {application.metadata.interview.interviewer && (
+                                      <div className="flex items-center gap-2 text-slate-200">
+                                        <HiOutlineUserGroup className="h-4 w-4 text-slate-400" />
+                                        <span className="text-slate-400">Interviewer: </span>
+                                        <span>{application.metadata.interview.interviewer}</span>
+                                      </div>
+                                    )}
+                                    {application.metadata.interview.location && (
+                                      <div className="flex items-center gap-2 text-slate-200">
+                                        <HiOutlineMapPin className="h-4 w-4 text-slate-400" />
+                                        <span className="text-slate-400">Location: </span>
+                                        <span>{application.metadata.interview.location}</span>
+                                      </div>
+                                    )}
+                                    {application.metadata.interview.interviewType && (
+                                      <div className="flex items-center gap-2 text-slate-200">
+                                        {application.metadata.interview.interviewType === "video" ? (
+                                          <HiOutlineVideoCamera className="h-4 w-4 text-slate-400" />
+                                        ) : application.metadata.interview.interviewType === "phone" ? (
+                                          <HiOutlinePhone className="h-4 w-4 text-slate-400" />
+                                        ) : (
+                                          <HiOutlineMapPin className="h-4 w-4 text-slate-400" />
+                                        )}
+                                        <span className="text-slate-400">Type: </span>
+                                        <span className="capitalize">{application.metadata.interview.interviewType}</span>
+                                        {application.metadata.interview.duration && (
+                                          <span className="text-slate-400"> • {application.metadata.interview.duration} minutes</span>
+                                        )}
+                                      </div>
+                                    )}
+                                    {application.metadata.interview.notes && (
+                                      <div className="mt-2 p-2 rounded-lg bg-black/30 text-slate-300 text-xs">
+                                        <span className="text-slate-400">Notes: </span>
+                                        {application.metadata.interview.notes}
+                                      </div>
+                                    )}
+                                    {application.metadata.interview.status && (
+                                      <div className="mt-2">
+                                        <span className={`px-2 py-1 rounded-lg text-xs font-semibold capitalize ${
+                                          application.metadata.interview.status === "scheduled" 
+                                            ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                            : application.metadata.interview.status === "completed"
+                                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                            : "bg-red-500/20 text-red-400 border border-red-500/30"
+                                        }`}>
+                                          {application.metadata.interview.status}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>

@@ -36,6 +36,10 @@ const jobApplicationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   {
     timestamps: true,

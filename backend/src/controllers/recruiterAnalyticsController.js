@@ -1184,19 +1184,40 @@ export const scheduleInterview = async (req, res, next) => {
 
     // Create notification for candidate
     try {
-      await Notification.create({
-        user: application.candidateId,
-        title: "Interview Scheduled",
-        description: `An interview has been scheduled for ${interviewDateTime.toLocaleString()}`,
-        type: "event",
-        actionUrl: `/student/applications`,
-        metadata: {
-          jobId: application.job.toString(),
-          applicationId: application._id.toString(),
-          interviewDate: interviewDateTime,
-          interviewType: interviewType || "video",
-        },
-      });
+      // Convert candidateId to ObjectId if it's a valid ObjectId string
+      let candidateObjectId = null;
+      if (application.candidateId) {
+        if (mongoose.isValidObjectId(application.candidateId)) {
+          candidateObjectId = new mongoose.Types.ObjectId(application.candidateId);
+        } else {
+          // If candidateId is not a valid ObjectId, try to find user by candidateId as string
+          const candidateUser = await User.findOne({ 
+            $or: [
+              { _id: application.candidateId },
+              { email: application.candidateId }
+            ]
+          }).select("_id").lean();
+          if (candidateUser) {
+            candidateObjectId = candidateUser._id;
+          }
+        }
+      }
+
+      if (candidateObjectId) {
+        await Notification.create({
+          user: candidateObjectId,
+          title: "Interview Scheduled",
+          description: `An interview has been scheduled for ${interviewDateTime.toLocaleString()}`,
+          type: "event",
+          actionUrl: `/student/applications`,
+          metadata: {
+            jobId: application.job.toString(),
+            applicationId: application._id.toString(),
+            interviewDate: interviewDateTime,
+            interviewType: interviewType || "video",
+          },
+        });
+      }
     } catch (error) {
       // Continue even if notification fails
       // eslint-disable-next-line no-console

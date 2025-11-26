@@ -7,7 +7,6 @@ import {
   HiOutlineCalendar,
   HiOutlineDocumentText,
   HiOutlineArrowTrendingUp,
-  HiOutlineClock,
 } from "react-icons/hi2";
 import RecruiterAnalyticsDashboard from "./RecruiterAnalyticsDashboard";
 import CandidatePipeline from "./CandidatePipeline";
@@ -15,7 +14,6 @@ import AdvancedCandidateFilter from "./AdvancedCandidateFilter";
 import InterviewScheduling from "./InterviewScheduling";
 import BulkApplicantActions from "./BulkApplicantActions";
 import HiringStatistics from "./HiringStatistics";
-import PerformanceReports from "./PerformanceReports";
 
 const RecruiterAnalyticsHub = () => {
   const location = useLocation();
@@ -34,8 +32,6 @@ const RecruiterAnalyticsHub = () => {
       setActiveTab("bulk-actions");
     } else if (path.includes("/hiring-stats")) {
       setActiveTab("hiring-stats");
-    } else if (path.includes("/performance-reports")) {
-      setActiveTab("performance");
     } else {
       setActiveTab("dashboard");
     }
@@ -77,12 +73,6 @@ const RecruiterAnalyticsHub = () => {
       label: "Hiring Statistics",
       icon: HiOutlineArrowTrendingUp,
       component: HiringStatistics,
-    },
-    {
-      id: "performance",
-      label: "Performance Reports",
-      icon: HiOutlineClock,
-      component: PerformanceReports,
     },
   ];
 
