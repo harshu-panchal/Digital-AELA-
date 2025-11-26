@@ -206,7 +206,7 @@ const ApplicantProfilePage = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-[180px] px-10 pb-5">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -483,21 +483,7 @@ const ApplicantProfilePage = () => {
                       <span className="text-xs text-sky-300">Open →</span>
                     </a>
                   )}
-                  {application.profileUrl && (
-                    <Link
-                      to={application.profileUrl}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/50 p-4 transition hover:border-sky-400/50 hover:bg-black/70">
-                      <div className="flex items-center gap-3">
-                        <HiOutlineUser className="h-5 w-5 text-sky-300" />
-                        <div>
-                          <p className="text-sm font-semibold text-white">Profile</p>
-                          <p className="text-xs text-slate-400">View full profile</p>
-                        </div>
-                      </div>
-                      <span className="text-xs text-sky-300">Open →</span>
-                    </Link>
-                  )}
-                  {studentProfile?.linkedinUrl && !application.profileUrl && (
+                  {studentProfile?.linkedinUrl && (
                     <a
                       href={studentProfile.linkedinUrl}
                       target="_blank"
