@@ -194,15 +194,34 @@ export const AuthProvider = ({ children }) => {
 
       // Try backend auth first for all roles
       try {
-        const authResult = await loginUserAccount({ email: normalizedEmail, password, role });
+        // Add timeout wrapper for login request (15 seconds)
+        const loginPromise = loginUserAccount({ email: normalizedEmail, password, role });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Login request timed out. Please check your connection and try again.")), 15000)
+        );
+        
+        const authResult = await Promise.race([loginPromise, timeoutPromise]);
         return handleBackendAuthSuccess(authResult);
       } catch (backendError) {
-        // If backend auth fails, fall back to mock auth for backward compatibility
-        // eslint-disable-next-line no-console
-        console.warn("Backend auth failed, falling back to mock auth:", backendError);
+        // Check if it's a timeout or network error
+        if (backendError.message?.includes("timed out") || 
+            backendError.code === "REQUEST_TIMEOUT" || 
+            backendError.isNetworkError) {
+          // For network/timeout errors, try fallback immediately
+          // eslint-disable-next-line no-console
+          console.warn("Backend auth timed out or failed, falling back to mock auth:", backendError.message);
+        } else {
+          // For other errors, log and try fallback
+          // eslint-disable-next-line no-console
+          console.warn("Backend auth failed, falling back to mock auth:", backendError);
+        }
         
         const existing = users.find((item) => item.email === normalizedEmail);
         if (!existing) {
+          // Provide better error message based on error type
+          if (backendError.code === "REQUEST_TIMEOUT" || backendError.isNetworkError) {
+            throw new Error("Unable to connect to server. Please check your internet connection and try again.");
+          }
           throw new Error("Account not found. Please register first.");
         }
 
@@ -296,16 +315,35 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(
     async (options = {}) => {
-      // If user has backend tokens, call logout endpoint
-      if (tokens?.accessToken) {
-        await logoutRecruiterAccount().catch(() => {
-          // swallow logout errors
-        });
-      }
-      setUser(null);
-      setTokens(null);
-      if (!options.preserveSession) {
-        clearStoredTokens();
+      try {
+        // If user has backend tokens, call logout endpoint
+        if (tokens?.accessToken) {
+          // Set a timeout for logout request (5 seconds)
+          const logoutPromise = logoutRecruiterAccount();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Logout timeout")), 5000)
+          );
+          await Promise.race([logoutPromise, timeoutPromise]).catch(() => {
+            // swallow logout errors and timeout
+          });
+        }
+      } catch (error) {
+        // Ignore logout errors
+      } finally {
+        // Always clear local state regardless of backend response
+        setUser(null);
+        setTokens(null);
+        if (!options.preserveSession) {
+          clearStoredTokens();
+          // Also clear session from localStorage
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem(STORAGE_KEYS.SESSION);
+          }
+        }
+        // Clear financial auth session on logout
+        if (typeof window !== "undefined") {
+          window.sessionStorage.removeItem("aela.financial.auth");
+        }
       }
     },
     [tokens]

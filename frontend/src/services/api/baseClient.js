@@ -204,14 +204,33 @@ const executeRequest = async (
   // Prepare body - use FormData as-is, or stringify JSON
   const requestBody = isFormData ? body : (body ? JSON.stringify(body) : undefined);
 
+  // Create timeout controller for fetch request (30 seconds timeout)
+  const timeoutMs = 30000; // 30 seconds
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   let response;
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers: finalHeaders,
       body: requestBody,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
   } catch (networkError) {
+    clearTimeout(timeoutId);
+    
+    // Check if it's an abort error (timeout)
+    if (networkError.name === 'AbortError' || controller.signal.aborted) {
+      const timeoutError = new Error(
+        `Request timeout: The server took too long to respond (${timeoutMs / 1000} seconds). Please check your connection and try again.`
+      );
+      timeoutError.status = 0;
+      timeoutError.code = "REQUEST_TIMEOUT";
+      timeoutError.isNetworkError = true;
+      throw timeoutError;
+    }
     // Handle network errors (connection refused, network unavailable, CORS, etc.)
     const isConnectionError =
       networkError.message?.includes("Failed to fetch") ||

@@ -294,11 +294,25 @@ const Navbar = () => {
     });
   }
 
-  const handleLogout = useCallback(() => {
-    logout();
-    setActiveDropdown(null);
-    setMobileMenuOpen(false);
-    toast.info("You’ve been signed out.", { toastId: "navbar-logout" });
+  const handleLogout = useCallback(async () => {
+    try {
+      await logout();
+      setActiveDropdown(null);
+      setMobileMenuOpen(false);
+      // Navigate to home page after logout
+      if (window.location.pathname.startsWith("/super-admin") || 
+          window.location.pathname.startsWith("/teacher") ||
+          window.location.pathname.startsWith("/student") ||
+          window.location.pathname.startsWith("/recruiter")) {
+        window.location.href = "/";
+      }
+      toast.info("You've been signed out.", { toastId: "navbar-logout" });
+    } catch (error) {
+      // Even if logout fails, clear local state and show message
+      setActiveDropdown(null);
+      setMobileMenuOpen(false);
+      toast.info("You've been signed out.", { toastId: "navbar-logout" });
+    }
   }, [logout]);
 
   const authNavItem = useMemo(() => {
