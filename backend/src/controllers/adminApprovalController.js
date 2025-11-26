@@ -244,6 +244,50 @@ export const getPendingStudents = async (req, res, next) => {
 };
 
 /**
+ * Get pending recruiter applications
+ */
+export const getPendingRecruiters = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { page = 1, pageSize = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    const [recruiters, total] = await Promise.all([
+      User.find({ role: "recruiter", isActive: false })
+        .select("-passwordHash")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments({ role: "recruiter", isActive: false }),
+    ]);
+
+    return res.json({
+      recruiters,
+      pagination: {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        total,
+        totalPages: Math.ceil(total / parseInt(pageSize)),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
  * Get course preview (full content for super admin)
  */
 export const getCoursePreview = async (req, res, next) => {

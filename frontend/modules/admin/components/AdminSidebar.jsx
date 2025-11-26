@@ -162,6 +162,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           icon: FaUsers,
         },
         {
+          label: "Recruiter Applications",
+          path: "/super-admin/approvals/recruiters",
+          icon: FaBriefcase,
+        },
+        {
           label: "Blogs",
           path: "/super-admin/approvals/blogs",
           icon: FaBlog,

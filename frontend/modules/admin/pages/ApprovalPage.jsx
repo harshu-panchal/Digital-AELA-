@@ -9,6 +9,7 @@ import {
   fetchPendingJobs,
   fetchPendingTeachers,
   fetchPendingStudents,
+  fetchPendingRecruiters,
   fetchPendingBlogs,
   fetchPendingJoinUsApplications,
   approveCourse,
@@ -16,6 +17,7 @@ import {
   approveJob,
   approveTeacher,
   approveStudent,
+  approveRecruiter,
   approveBlog,
   approveJoinUsApplication,
   fetchBlogPreview,
@@ -32,6 +34,7 @@ import JobPreview from "../components/previews/JobPreview";
 import JoinUsApplicationPreview from "../components/previews/JoinUsApplicationPreview";
 import TeacherPreview from "../components/previews/TeacherPreview";
 import StudentPreview from "../components/previews/StudentPreview";
+import RecruiterPreview from "../components/previews/RecruiterPreview";
 
 const ApprovalPage = () => {
   const { type } = useParams();
@@ -109,6 +112,22 @@ const ApprovalPage = () => {
         return details;
       },
     },
+    recruiters: {
+      label: "Recruiter Applications",
+      icon: FaBriefcase,
+      fetchFn: fetchPendingRecruiters,
+      approveFn: approveRecruiter,
+      getTitle: (item) => item.fullName,
+      getOwner: (item) => item.email,
+      getDetails: (item) => {
+        const meta = item.metadata || {};
+        const details = [];
+        if (meta.company) details.push(`Company: ${meta.company}`);
+        if (meta.phone) details.push(`Phone: ${meta.phone}`);
+        if (meta.headline) details.push(`Headline: ${meta.headline}`);
+        return details;
+      },
+    },
     blogs: {
       label: "Blogs",
       icon: FaEdit,
@@ -155,7 +174,7 @@ const ApprovalPage = () => {
       const response = await config.fetchFn();
       if (response) {
         const responseKey = type === "books" ? "ebooks" : type === "join-us-applications" ? "applications" : type;
-        setItems(response[responseKey] || response.blogs || response.students || []);
+        setItems(response[responseKey] || response.blogs || response.students || response.recruiters || []);
       }
     } catch (error) {
       toast.error(`Failed to load ${config.label}: ${error.message}`);
@@ -221,8 +240,8 @@ const ApprovalPage = () => {
     setPreviewData(null);
     setShowPreviewModal(true);
 
-    // For teachers and students, use the item data directly (no API call needed)
-    if (type === "teachers" || type === "students") {
+    // For teachers, students, and recruiters, use the item data directly (no API call needed)
+    if (type === "teachers" || type === "students" || type === "recruiters") {
       setPreviewData(item);
       setPreviewLoading(false);
       return;
@@ -282,6 +301,8 @@ const ApprovalPage = () => {
         return <TeacherPreview teacher={previewData} />;
       case "students":
         return <StudentPreview student={previewData} />;
+      case "recruiters":
+        return <RecruiterPreview recruiter={previewData} />;
       default:
         return null;
     }

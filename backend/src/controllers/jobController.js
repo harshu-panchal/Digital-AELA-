@@ -102,7 +102,8 @@ export const createJob = async (req, res, next) => {
 
     // Validate and set status
     const validStatuses = ["draft", "published", "archived"];
-    let status = req.body.status || "published";
+    // Default to draft - requires admin approval before publishing
+    let status = req.body.status || "draft";
     if (!validStatuses.includes(status)) {
       return res.status(422).json({
         error: {
@@ -215,41 +216,7 @@ export const createJob = async (req, res, next) => {
       }
     }
 
-    // Create notifications for all students when job is published
-    if (status === "published") {
-      try {
-        const User = (await import("../models/User.js")).default;
-        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
-        
-        // Get all active students
-        const students = await User.find({ role: "student", isActive: true })
-          .select("_id")
-          .lean();
-        
-        if (students.length > 0) {
-          const studentIds = students.map((s) => s._id);
-          const jobTitle = job.title;
-          const companyName = job.company || "A company";
-          
-          await createBulkNotifications(
-            studentIds,
-            "New Job Post Available",
-            `A new job "${jobTitle}" has been posted by ${companyName}.`,
-            "job_post",
-            {
-              jobId: job._id.toString(),
-              jobTitle: jobTitle,
-              companyName: companyName,
-            },
-            `/jobs/${job._id}`
-          );
-        }
-      } catch (notifError) {
-        // eslint-disable-next-line no-console
-        console.error("[JobPost] Error creating notifications:", notifError);
-        // Don't fail job creation if notification fails
-      }
-    }
+    // Note: Student notifications are sent only when job is approved by admin (in approveJob function)
 
     return res.status(201).json(job);
   } catch (error) {

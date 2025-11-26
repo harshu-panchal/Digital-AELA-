@@ -132,9 +132,10 @@ const RecruiterRegister = () => {
         },
         profileImage: formData.profileImage,
       });
-      toast.success("Recruiter account created successfully.");
+      toast.success("Your recruiter account has been created successfully. Your account is pending approval from the administrator. You will receive an email notification once your account is approved and you can login.");
       setFormData(createInitialFormState());
-      navigate(getRoleHome(newUser.role), { replace: true });
+      // Redirect to login page instead of dashboard since account needs approval
+      navigate("/login/recruiter", { replace: true });
     } catch (error) {
       toast.error(error.message || "We couldn't create the account. Please try again.");
     } finally {

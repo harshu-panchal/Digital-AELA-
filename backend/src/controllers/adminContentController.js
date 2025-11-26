@@ -635,18 +635,25 @@ export const approveJob = async (req, res, next) => {
     if (action === "approve") {
       job.status = "published";
       job.publishedAt = new Date();
+      
+      // Calculate expiration date if not set
+      if (!job.expirationDate) {
+        const expiresInDays = 30;
+        job.expirationDate = new Date();
+        job.expirationDate.setDate(job.expirationDate.getDate() + expiresInDays);
+      }
     } else {
       job.status = "archived";
     }
 
     await job.save();
 
-    // Create notification for job poster (if exists)
-    if (job.postedBy) {
+    // Create notification for job owner
+    if (job.owner) {
       try {
         const { createNotification } = await import("../utils/notificationHelper.js");
         await createNotification(
-          job.postedBy,
+          job.owner,
           action === "approve" ? "Job Post Approved" : "Job Post Rejected",
           action === "approve"
             ? `Your job post "${job.title}" has been approved and is now live.`
@@ -661,6 +668,42 @@ export const approveJob = async (req, res, next) => {
       } catch (notifError) {
         // eslint-disable-next-line no-console
         console.error("[JobApproval] Error creating notification:", notifError);
+      }
+    }
+
+    // Create notifications for all students when job is approved
+    if (action === "approve") {
+      try {
+        const User = (await import("../models/User.js")).default;
+        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
+        
+        // Get all active students
+        const students = await User.find({ role: "student", isActive: true })
+          .select("_id")
+          .lean();
+        
+        if (students.length > 0) {
+          const studentIds = students.map((s) => s._id);
+          const jobTitle = job.title;
+          const companyName = job.company || "A company";
+          
+          await createBulkNotifications(
+            studentIds,
+            "New Job Post Available",
+            `A new job "${jobTitle}" has been posted by ${companyName}.`,
+            "job_post",
+            {
+              jobId: job._id.toString(),
+              jobTitle: jobTitle,
+              companyName: companyName,
+            },
+            `/jobs/${job._id}`
+          );
+        }
+      } catch (notifError) {
+        // eslint-disable-next-line no-console
+        console.error("[JobApproval] Error creating student notifications:", notifError);
+        // Don't fail approval if notification fails
       }
     }
 
@@ -855,6 +898,100 @@ export const approveStudent = async (req, res, next) => {
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
       message: `Student ${action === "approve" ? "approved" : "rejected"} successfully`,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Approve/Reject Recruiter Application
+ */
+export const approveRecruiter = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { userId } = req.params;
+    const { action } = req.body; // "approve" or "reject"
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Action must be 'approve' or 'reject'",
+        },
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    if (user.role !== "recruiter") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User is not a recruiter",
+        },
+      });
+    }
+
+    if (action === "approve") {
+      user.isActive = true;
+    } else {
+      user.isActive = false;
+    }
+
+    await user.save();
+
+    // Create notification for recruiter
+    try {
+      const { createNotification } = await import("../utils/notificationHelper.js");
+      await createNotification(
+        userId,
+        action === "approve" ? "Recruiter Application Approved" : "Recruiter Application Rejected",
+        action === "approve"
+          ? "Your recruiter application has been approved. You can now access the recruiter dashboard."
+          : "Your recruiter application has been rejected.",
+        "approval",
+        {
+          userId: userId,
+          action: action,
+        },
+        action === "approve" ? "/recruiter/dashboard" : null
+      );
+    } catch (notifError) {
+      // eslint-disable-next-line no-console
+      console.error("[RecruiterApproval] Error creating notification:", notifError);
+    }
+
+    return res.json({
+      user: await User.findById(userId).select("-passwordHash").lean(),
+      message: `Recruiter ${action === "approve" ? "approved" : "rejected"} successfully`,
     });
   } catch (error) {
     return next(error);

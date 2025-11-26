@@ -794,30 +794,6 @@ const RecruiterDashboard = () => {
         />
       </section>
 
-      <section className="grid gap-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:grid-cols-2 sm:p-8">
-        <div className="space-y-3 rounded-3xl border border-white/10 bg-black/70 p-5">
-          <div className="flex items-center gap-3 text-sm text-gray-200">
-            <HiOutlineFolderOpen className="h-5 w-5 text-white/80" />
-            Draft roles & talent pools (Coming Soon)
-          </div>
-          <p className="text-sm text-gray-400">
-            Build evergreen pools for product, engineering, and marketing hires.
-            Auto-sync with your ATS when backend is live.
-          </p>
-        </div>
-
-        <div className="space-y-3 rounded-3xl border border-white/10 bg-black/70 p-5">
-          <div className="flex items-center gap-3 text-sm text-gray-200">
-            <HiOutlineTrash className="h-5 w-5 text-white/80" />
-            Archive & analytics
-          </div>
-          <p className="text-sm text-gray-400">
-            Track performance by role, measure drop-off, and see cross-platform
-            engagement.
-          </p>
-        </div>
-      </section>
-
       <section id="pipeline" className="space-y-6 rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-8">
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>

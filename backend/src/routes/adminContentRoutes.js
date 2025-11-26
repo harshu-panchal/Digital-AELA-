@@ -5,6 +5,7 @@ import {
   approveJob,
   approveTeacher,
   approveStudent,
+  approveRecruiter,
   createCourse,
   createEbook,
   createBlog,
@@ -25,6 +26,7 @@ import {
   getPendingJobs,
   getPendingTeachers,
   getPendingStudents,
+  getPendingRecruiters,
   getCoursePreview,
   getEbookPreview,
   getJobPreview,
@@ -59,6 +61,7 @@ router.get("/pending/ebooks", getPendingEbooks);
 router.get("/pending/jobs", getPendingJobs);
 router.get("/pending/teachers", getPendingTeachers);
 router.get("/pending/students", getPendingStudents);
+router.get("/pending/recruiters", getPendingRecruiters);
 router.get("/pending/blogs", getPendingBlogs);
 router.get("/pending/join-us-applications", getPendingJoinUsApplications);
 
@@ -75,6 +78,7 @@ router.patch("/ebooks/:ebookId/approve", approveEbook);
 router.patch("/jobs/:jobId/approve", approveJob);
 router.patch("/teachers/:userId/approve", approveTeacher);
 router.patch("/students/:userId/approve", approveStudent);
+router.patch("/recruiters/:userId/approve", approveRecruiter);
 router.patch("/blogs/:blogId/approve", approveBlog);
 router.patch("/join-us-applications/:applicationId/approve", approveJoinUsApplication);
 router.patch("/join-us-applications/:applicationId/reject", rejectJoinUsApplication);
