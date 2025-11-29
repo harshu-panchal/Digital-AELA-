@@ -1,8 +1,6 @@
-import { StrictMode, Suspense } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { I18nextProvider } from "react-i18next";
-import i18n from "./config/i18n"; // Initialize i18next
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { PointsProvider } from "./contexts/PointsContext";
 import { UserProvider } from "./contexts/UserContext";
@@ -72,34 +70,22 @@ if (typeof window !== "undefined") {
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <I18nextProvider i18n={i18n}>
-      <BrowserRouter>
-        <Suspense
-          fallback={
-            <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
-                <p className="mt-4 text-gray-400">Loading...</p>
-              </div>
-            </div>
-          }>
-          <LanguageProvider>
-            <AuthProvider>
-              <FinancialAuthProvider>
-                <SidebarProvider>
-                  <PointsProvider>
-                    <UserProvider>
-                      <BlogProvider>
-                        <App />
-                      </BlogProvider>
-                    </UserProvider>
-                  </PointsProvider>
-                </SidebarProvider>
-              </FinancialAuthProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </Suspense>
-      </BrowserRouter>
-    </I18nextProvider>
+    <BrowserRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <FinancialAuthProvider>
+            <SidebarProvider>
+              <PointsProvider>
+                <UserProvider>
+                  <BlogProvider>
+                    <App />
+                  </BlogProvider>
+                </UserProvider>
+              </PointsProvider>
+            </SidebarProvider>
+          </FinancialAuthProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </BrowserRouter>
   </StrictMode>
 );

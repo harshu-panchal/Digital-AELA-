@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
+import { normalizeLanguageCode } from "../utils/languageUtils";
 
 const SEO = ({
   title,
@@ -12,9 +14,34 @@ const SEO = ({
   siteName = "Digital AELA",
 }) => {
   const location = useLocation();
+  const { language } = useLanguage();
   const baseUrl = "https://digitalaela.com"; // Update with your actual domain
   const fullUrl = url || `${baseUrl}${location.pathname}`;
   const defaultImage = `${baseUrl}/og-image.jpg`; // Update with your actual OG image
+
+  const normalizedLang = normalizeLanguageCode(language);
+  const ogLocaleMap = {
+    en: "en_US",
+    hi: "hi_IN",
+    ur: "ur_PK",
+    bn: "bn_BD",
+    ne: "ne_NP",
+    si: "si_LK",
+    ps: "ps_AF",
+    ar: "ar_SA",
+  };
+  const ogLocale = ogLocaleMap[normalizedLang] || "en_US";
+  const languageLabelMap = {
+    en: "English",
+    hi: "Hindi",
+    ur: "Urdu",
+    bn: "Bangla",
+    ne: "Nepali",
+    si: "Sinhala",
+    ps: "Pashto",
+    ar: "Arabic",
+  };
+  const languageLabel = languageLabelMap[normalizedLang] || "English";
 
   useEffect(() => {
     // Update title
@@ -69,9 +96,23 @@ const SEO = ({
     canonicalLink.setAttribute("href", fullUrl);
 
     // Language tag
-    updateMetaTag("og:locale", "en_US", true);
-    updateMetaTag("language", "English");
-  }, [title, description, keywords, image, url, type, author, siteName, fullUrl, defaultImage, location.pathname]);
+    updateMetaTag("og:locale", ogLocale, true);
+    updateMetaTag("language", languageLabel);
+  }, [
+    title,
+    description,
+    keywords,
+    image,
+    url,
+    type,
+    author,
+    siteName,
+    fullUrl,
+    defaultImage,
+    location.pathname,
+    ogLocale,
+    languageLabel,
+  ]);
 
   return null;
 };

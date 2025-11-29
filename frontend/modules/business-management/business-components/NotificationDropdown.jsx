@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaBell, FaTimes, FaCheck, FaTrash } from "react-icons/fa";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -219,7 +220,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "Just now";
+    if (diffMins < 1) return "Just now"; // Time strings can stay as-is for now
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
@@ -268,13 +269,13 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
           style={{ maxHeight: "80vh" }}>
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 p-4">
-            <h3 className="text-lg font-semibold text-white">Notifications</h3>
+            <h3 className="text-lg font-semibold text-white"><TranslatedText>Notifications</TranslatedText></h3>
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
                   className="text-xs text-[#D4AF37] hover:text-[#E5C158] transition">
-                  Mark all read
+                  <TranslatedText>Mark all read</TranslatedText>
                 </button>
               )}
               <button
@@ -288,11 +289,11 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
           {/* Notifications List */}
           <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 140px)" }}>
             {isLoading ? (
-              <div className="p-8 text-center text-gray-400">Loading...</div>
+              <div className="p-8 text-center text-gray-400"><TranslatedText>Loading...</TranslatedText></div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-400">
                 <FaBell className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>No notifications yet</p>
+                <p><TranslatedText>No notifications yet</TranslatedText></p>
               </div>
             ) : (
               <div className="divide-y divide-white/5">
@@ -366,7 +367,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
               <button
                 onClick={handleClearAllRead}
                 className="text-xs text-gray-400 hover:text-[#D4AF37] transition">
-                Clear all read
+                <TranslatedText>Clear all read</TranslatedText>
               </button>
             </div>
           )}

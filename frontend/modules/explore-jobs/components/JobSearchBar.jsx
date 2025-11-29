@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { HiOutlineMagnifyingGlass, HiOutlineXMark } from "react-icons/hi2";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const JobSearchBar = ({ onSearch, initialQuery = "" }) => {
   const [query, setQuery] = useState(initialQuery);
@@ -21,7 +22,7 @@ const JobSearchBar = ({ onSearch, initialQuery = "" }) => {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search jobs by title, company, location, or skills..."
+        placeholder="Search jobs by title, company, location, or skills..." // Placeholder
         className="w-full rounded-2xl border border-white/10 bg-black/60 py-3 pl-12 pr-12 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10"
       />
       {query && (

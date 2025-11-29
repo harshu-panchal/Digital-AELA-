@@ -44,6 +44,7 @@ import RefundCancellationPolicy from "../modules/business-management/business-pa
 import TermsConditions from "../modules/business-management/business-pages/TermsConditions";
 import CoursePayment from "../modules/business-management/business-pages/CoursePayment";
 import CourseDetail from "../modules/business-management/business-pages/CourseDetail";
+import PaymentCallback from "../modules/payment/PaymentCallback";
 import BookDemo from "../modules/business-management/contact-pages/BookDemo";
 import BusinessCollaboration from "../modules/business-management/contact-pages/BusinessCollaboration";
 import FranchiseInquiry from "../modules/business-management/contact-pages/FranchiseInquiry";
@@ -594,6 +595,7 @@ export const App = () => {
         <Route path="/courses/:slug" element={<CourseDetail />} />
         <Route path="/courses/id/:courseId" element={<CourseDetail />} />
         <Route path="/courses/payment" element={<CoursePayment />} />
+        <Route path="/payment/callback" element={<PaymentCallback />} />
         <Route
           path="/gift/payment"
           element={

@@ -4,6 +4,7 @@ import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitContactLead } from "../../../src/services/contactSubmission";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const BusinessCollaboration = () => {
   const fields = [
@@ -115,19 +116,19 @@ const BusinessCollaboration = () => {
       />
 
       <ContactPageLayout
-        badge="Strategic Partnerships"
-        title="Request a Business Collaboration"
-        subtitle="Empower your teams with customised training, placements, and digital solutions"
-        description="Collaborate with Digital AELA for executive coaching, workforce development, or co-branded learning programmes. We co-create solutions that meet measurable business outcomes.">
+        badge={<TranslatedText>Strategic Partnerships</TranslatedText>}
+        title={<TranslatedText>Request a Business Collaboration</TranslatedText>}
+        subtitle={<TranslatedText>Empower your teams with customised training, placements, and digital solutions</TranslatedText>}
+        description={<TranslatedText>Collaborate with Digital AELA for executive coaching, workforce development, or co-branded learning programmes. We co-create solutions that meet measurable business outcomes.</TranslatedText>}>
         <div className="max-w-4xl mx-auto">
           <ContactForm
             fields={fields}
-            submitLabel="Submit Collaboration Request"
-            successMessage="Thank you! Our partnerships team will reach out with the next steps within one business day."
-            disclaimer="We sign NDAs upon request. Your project details are kept confidential and viewed only by senior partnership managers."
+            submitLabel={<TranslatedText>Submit Collaboration Request</TranslatedText>}
+            successMessage={<TranslatedText>Thank you! Our partnerships team will reach out with the next steps within one business day.</TranslatedText>}
+            disclaimer={<TranslatedText>We sign NDAs upon request. Your project details are kept confidential and viewed only by senior partnership managers.</TranslatedText>}
             onSubmit={handleSubmit}
             formId="business-collaboration"
-            pendingMessage="Your collaboration request is pending approval. Our partnerships team will review it and get back to you within one business day."
+            pendingMessage={<TranslatedText>Your collaboration request is pending approval. Our partnerships team will review it and get back to you within one business day.</TranslatedText>}
           />
         </div>
 
@@ -140,25 +141,22 @@ const BusinessCollaboration = () => {
           {[
             {
               icon: "🤝",
-              title: "End-to-End Delivery",
-              description:
-                "From needs analysis to facilitation, assessments, and reporting — our team manages every stage of the engagement.",
+              title: <TranslatedText>End-to-End Delivery</TranslatedText>,
+              description: <TranslatedText>From needs analysis to facilitation, assessments, and reporting — our team manages every stage of the engagement.</TranslatedText>,
             },
             {
               icon: "🌍",
-              title: "Regional Expertise",
-              description:
-                "Experience delivering projects across UAE, India, Saudi Arabia, Qatar, Bahrain, and remote-first organisations.",
+              title: <TranslatedText>Regional Expertise</TranslatedText>,
+              description: <TranslatedText>Experience delivering projects across UAE, India, Saudi Arabia, Qatar, Bahrain, and remote-first organisations.</TranslatedText>,
             },
             {
               icon: "📈",
-              title: "Measurable Outcomes",
-              description:
-                "Define KPIs across language proficiency, sales enablement, customer experience, and placement success. We report on each milestone.",
+              title: <TranslatedText>Measurable Outcomes</TranslatedText>,
+              description: <TranslatedText>Define KPIs across language proficiency, sales enablement, customer experience, and placement success. We report on each milestone.</TranslatedText>,
             },
-          ].map((card) => (
+          ].map((card, index) => (
             <div
-              key={card.title}
+              key={index}
               className="bg-[#0b0b0b] border border-[#D4AF37]/15 rounded-2xl px-5 py-6 space-y-3">
               <div className="text-3xl">{card.icon}</div>
               <h4 className="text-lg font-semibold text-white font-display">

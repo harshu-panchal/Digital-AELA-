@@ -6,6 +6,7 @@ import { HiOutlineArrowLeft, HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import { useNavigate } from "react-router-dom";
 import { fetchEnhancedLeaderboard } from "../../../src/services/api/learnEarn";
 import { toast } from "react-toastify";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const FullLeaderboard = () => {
   const navigate = useNavigate();
@@ -117,10 +118,10 @@ const FullLeaderboard = () => {
           </button>
           <div>
             <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-              Leaderboard
+              <TranslatedText>Leaderboard</TranslatedText>
             </h1>
             <p className="mt-1 text-sm text-gray-400">
-              Top earners in the Learn & Earn community
+              <TranslatedText>Top earners in the Learn & Earn community</TranslatedText>
             </p>
           </div>
         </div>
@@ -136,14 +137,14 @@ const FullLeaderboard = () => {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or user ID..."
+              placeholder="Search by name or user ID..." // Placeholder
               className="w-full rounded-2xl border border-white/10 bg-[#101010] py-3 pl-12 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
             />
           </div>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400">Sort by:</label>
+            <label className="text-xs text-gray-400"><TranslatedText>Sort by:</TranslatedText></label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}

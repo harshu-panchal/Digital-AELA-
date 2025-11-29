@@ -13,6 +13,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { useUser } from "../../../src/contexts/UserContext";
 import { followUser, unfollowUser, fetchFollowing } from "../../../src/services/api/social";
 import { searchLearners as searchLearnersAPI } from "../../../src/services/api/learnEarn";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const FindLearners = () => {
   const { user: authUser } = useAuth();
@@ -187,10 +188,10 @@ const FindLearners = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-            Find Learners
+            <TranslatedText>Find Learners</TranslatedText>
           </h1>
           <p className="mt-2 text-sm text-gray-400">
-            Search for learners in the Learn & Earn community and connect with them
+            <TranslatedText>Search for learners in the Learn & Earn community and connect with them</TranslatedText>
           </p>
         </div>
       </div>
@@ -203,7 +204,7 @@ const FindLearners = () => {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, user ID, or interests..."
+            placeholder="Search by name, user ID, or interests..." // Placeholder
             className="w-full rounded-2xl border border-white/10 bg-[#101010] py-3 pl-12 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
           />
           {loading && (
@@ -219,10 +220,10 @@ const FindLearners = () => {
         <div className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-12 text-center">
           <HiOutlineMagnifyingGlass className="mx-auto h-12 w-12 text-gray-500" />
           <p className="mt-4 text-sm text-gray-400">
-            No learners found matching "{searchQuery}"
+            <TranslatedText>No learners found matching</TranslatedText> "{searchQuery}"
           </p>
           <p className="mt-2 text-xs text-gray-500">
-            Try searching with a different name or user ID
+            <TranslatedText>Try searching with a different name or user ID</TranslatedText>
           </p>
         </div>
       )}
@@ -231,10 +232,10 @@ const FindLearners = () => {
         <div className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-12 text-center">
           <HiOutlineUserPlus className="mx-auto h-12 w-12 text-gray-500" />
           <p className="mt-4 text-sm text-gray-400">
-            Start searching to find learners in the community
+            <TranslatedText>Start searching to find learners in the community</TranslatedText>
           </p>
           <p className="mt-2 text-xs text-gray-500">
-            Enter a name, user ID, or interest to begin
+            <TranslatedText>Enter a name, user ID, or interest to begin</TranslatedText>
           </p>
         </div>
       )}
@@ -300,12 +301,12 @@ const FindLearners = () => {
                           ) : isFollowingUser ? (
                             <>
                               <HiCheckCircle className="h-4 w-4" />
-                              Following
+                              <TranslatedText>Following</TranslatedText>
                             </>
                           ) : (
                             <>
                               <HiOutlineUserPlus className="h-4 w-4" />
-                              Follow
+                              <TranslatedText>Follow</TranslatedText>
                             </>
                           )}
                         </button>
@@ -314,13 +315,13 @@ const FindLearners = () => {
                           onClick={() => handleChat(learnerId)}
                           className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#151515] px-4 py-2 text-xs font-semibold text-gray-300 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
                           <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
-                          Message
+                          <TranslatedText>Message</TranslatedText>
                         </button>
                       </>
                     )}
                     {isCurrentUser && (
                       <span className="rounded-xl border border-white/10 bg-[#151515] px-4 py-2 text-xs font-semibold text-gray-500">
-                        This is you
+                        <TranslatedText>This is you</TranslatedText>
                       </span>
                     )}
                   </div>

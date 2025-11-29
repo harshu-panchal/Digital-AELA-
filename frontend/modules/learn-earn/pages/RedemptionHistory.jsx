@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock } from "react-icons/hi2";
 import { getMyRedemptionRequests } from "../../../src/services/api/redemptionRequests";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const RedemptionHistory = () => {
   const [requests, setRequests] = useState([]);

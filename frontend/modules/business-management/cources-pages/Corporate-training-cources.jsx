@@ -6,7 +6,10 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const CorporateTrainingCourses = () => {
   // WhatsApp integration
@@ -16,6 +19,7 @@ const CorporateTrainingCourses = () => {
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [corporateTrainingCourses, setCorporateTrainingCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +74,14 @@ const CorporateTrainingCourses = () => {
     origin: "corporate-training-courses",
   });
 
-  const handleBuyCourse = (program) => {
+  const handleBuyCourse = async (program) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.info("Please log in to enroll in this course");
+      navigate("/login/student");
+      return;
+    }
+
     const payload = augmentCourse(program);
     
     // Check if course is free
@@ -95,11 +106,16 @@ const CorporateTrainingCourses = () => {
         handleViewCourse(program);
       }
     } else {
-      // Paid course - go to payment flow
-      navigate(buildCoursePaymentLink(payload), {
-        state: {
-          course: payload,
-        },
+      // Paid course - redirect directly to Razorpay
+      await redirectToRazorpay({
+        courseId: program._id || program.id || null,
+        amount: priceValue,
+        currency: "AED",
+        description: `Payment for ${program.title || "course"}`,
+        userName: user?.fullName || "",
+        userEmail: user?.email || "",
+        userPhone: user?.phone || "",
+        quantity: 1,
       });
     }
   };
@@ -124,7 +140,7 @@ const CorporateTrainingCourses = () => {
     }
   };
 
-  // Benefits
+  // Benefits - titles and descriptions will be translated in JSX
   const benefits = [
     {
       id: 1,
@@ -247,31 +263,28 @@ const CorporateTrainingCourses = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
-              Corporate Training Excellence
+              <TranslatedText>Corporate Training Excellence</TranslatedText>
             </motion.span>
             <motion.h1
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-              Empower Your Team with
+              <TranslatedText>Empower Your Team with</TranslatedText>
             </motion.h1>
             <motion.h2
               initial={{ y: 22, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
               className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
-              Professional English
+              <TranslatedText>Professional English</TranslatedText>
             </motion.h2>
             <motion.p
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
-              Transform your workforce with professional English training
-              programs including Public Speaking, Communication & Accent
-              Training, Leadership Skills, and Host/Anchor Training. Available
-              across South Asia and Gulf regions.
+              <TranslatedText>Transform your workforce with professional English training programs including Public Speaking, Communication & Accent Training, Leadership Skills, and Host/Anchor Training. Available across South Asia and Gulf regions.</TranslatedText>
             </motion.p>
             <motion.div
               initial={{ y: 16, opacity: 0 }}
@@ -286,7 +299,7 @@ const CorporateTrainingCourses = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
-                Request a Demo
+                <TranslatedText>Request a Demo</TranslatedText>
               </motion.a>
               <motion.a
                 whileHover={{ scale: 1.05, y: -2 }}
@@ -294,7 +307,7 @@ const CorporateTrainingCourses = () => {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 href="#programs"
                 className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
-                View Corporate Programs
+                <TranslatedText>View Corporate Programs</TranslatedText>
               </motion.a>
             </motion.div>
           </div>
@@ -330,7 +343,7 @@ const CorporateTrainingCourses = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Our Training <span className="text-[#D4AF37]">Programs</span>
+              <TranslatedText>Our Training</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Programs</TranslatedText></span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
               Professional training programs in Public Speaking, Communication &
@@ -342,7 +355,7 @@ const CorporateTrainingCourses = () => {
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="text-[#D4AF37] text-lg">Loading courses...</div>
+              <div className="text-[#D4AF37] text-lg"><TranslatedText>Loading courses...</TranslatedText></div>
             </div>
           )}
 
@@ -384,10 +397,10 @@ const CorporateTrainingCourses = () => {
                   <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
                     <div className="flex-shrink-0 mb-4">
                       <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
-                        {program.title}
+                        <TranslatedText>{program.title}</TranslatedText>
                       </h3>
                       <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
-                        {program.description}
+                        <TranslatedText>{program.description}</TranslatedText>
                       </p>
                     </div>
 
@@ -427,13 +440,13 @@ const CorporateTrainingCourses = () => {
                     {program.features && program.features.length > 0 && (
                       <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                         <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
-                          Key Highlights
+                          <TranslatedText>Key Highlights</TranslatedText>
                         </p>
                         <ul className="space-y-2 text-xs md:text-sm text-gray-300">
                           {program.features.slice(0, 3).map((feature, idx) => (
                             <li key={idx} className="flex items-center gap-2">
                               <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                              <span className="line-clamp-1">{feature}</span>
+                              <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
                             </li>
                           ))}
                         </ul>
@@ -442,9 +455,9 @@ const CorporateTrainingCourses = () => {
 
                     <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
-                        <span>Program Fee</span>
+                        <span><TranslatedText>Program Fee</TranslatedText></span>
                         <span className="text-lg font-semibold text-[#F5D26A]">
-                          {program.price || "On Request"}
+                          {program.price || <TranslatedText>On Request</TranslatedText>}
                         </span>
                       </div>
                       <motion.button
@@ -455,7 +468,7 @@ const CorporateTrainingCourses = () => {
                           handleViewCourse(program);
                         }}
                         className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
-                        See Full Course
+                        <TranslatedText>See Full Course</TranslatedText>
                       </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <motion.button
@@ -466,7 +479,7 @@ const CorporateTrainingCourses = () => {
                             handleBuyCourse(program);
                           }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                          Buy Now
+                          <TranslatedText>Buy Now</TranslatedText>
                         </motion.button>
                         <div
                           onClick={(event) => event.stopPropagation()}
@@ -488,7 +501,7 @@ const CorporateTrainingCourses = () => {
           {/* No Courses Message */}
           {!loading && corporateTrainingCourses.filter((p) => !p.isCustom).length === 0 && (
             <div className="text-center py-20">
-              <p className="text-gray-300 text-lg">No Corporate Training courses available yet.</p>
+              <p className="text-gray-300 text-lg"><TranslatedText>No Corporate Training courses available yet.</TranslatedText></p>
             </div>
           )}
         </div>
@@ -509,11 +522,10 @@ const CorporateTrainingCourses = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Why Choose <span className="text-[#D4AF37]">Digital AELA</span>?
+              <TranslatedText>Why Choose</TranslatedText> <span className="text-[#D4AF37]">Digital AELA</span>?
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Your partner in building a strong future with knowledge that
-              creates income, and income that creates freedom
+              <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
             </p>
           </motion.div>
 
@@ -539,12 +551,12 @@ const CorporateTrainingCourses = () => {
 
                 {/* Title */}
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
-                  {benefit.title}
+                  <TranslatedText>{benefit.title}</TranslatedText>
                 </h3>
 
                 {/* Description */}
                 <p className="text-gray-300 leading-relaxed">
-                  {benefit.description}
+                  <TranslatedText>{benefit.description}</TranslatedText>
                 </p>
               </motion.div>
             ))}
@@ -570,20 +582,18 @@ const CorporateTrainingCourses = () => {
               {/* Badge */}
               <div className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-white px-4 py-2 rounded-lg text-sm font-semibold font-display">
-                  Our Methodology
+                  <TranslatedText>Our Methodology</TranslatedText>
                 </span>
               </div>
 
               {/* Main Heading */}
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-display tracking-tight leading-none">
-                Proven Training <span className="text-[#D4AF37]">Approach</span>
+                <TranslatedText>Proven Training</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Approach</TranslatedText></span>
               </h2>
 
               {/* Description */}
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                Our comprehensive training methodology combines interactive
-                learning, real-world scenarios, and continuous assessment to
-                ensure maximum impact and measurable results for your team.
+                <TranslatedText>Our comprehensive training methodology combines interactive learning, real-world scenarios, and continuous assessment to ensure maximum impact and measurable results for your team.</TranslatedText>
               </p>
 
               {/* Methodology Points */}
@@ -636,10 +646,10 @@ const CorporateTrainingCourses = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1 font-display">
-                        {item.title}
+                        <TranslatedText>{item.title}</TranslatedText>
                       </h3>
                       <p className="text-gray-300 text-sm leading-relaxed">
-                        {item.description}
+                        <TranslatedText>{item.description}</TranslatedText>
                       </p>
                     </div>
                   </motion.div>
@@ -723,10 +733,10 @@ const CorporateTrainingCourses = () => {
                 <div className="p-8 md:p-10 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-6">
                   <div className="max-w-4xl mx-auto text-center space-y-4">
                     <h3 className="text-2xl md:text-3xl font-semibold text-[#D4AF37] font-display group-hover:text-[#E5C158] transition-colors duration-300">
-                      {program.title}
+                      <TranslatedText>{program.title}</TranslatedText>
                     </h3>
                     <p className="text-gray-300 leading-relaxed text-sm md:text-base">
-                      {program.description}
+                      <TranslatedText>{program.description}</TranslatedText>
                     </p>
                   </div>
 
@@ -747,7 +757,7 @@ const CorporateTrainingCourses = () => {
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        <span>{feature}</span>
+                        <span><TranslatedText>{feature}</TranslatedText></span>
                       </div>
                     ))}
                   </div>

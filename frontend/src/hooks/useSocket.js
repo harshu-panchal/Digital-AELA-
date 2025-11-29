@@ -155,10 +155,8 @@ export const useSocket = () => {
         globalSocketToken = tokenValue;
         globalSocketListeners.add(listenerIdRef.current);
         
-        // Only log the first connection, not subsequent ones from the same socket
+        // Track connection state
         if (!hasLoggedConnection) {
-          // eslint-disable-next-line no-console
-          console.log("[Socket.IO] Connected");
           hasLoggedConnection = true;
         }
       });

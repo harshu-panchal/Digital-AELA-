@@ -4,6 +4,7 @@ import ContactPageLayout from "../business-components/contact/ContactPageLayout"
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const JoinAsTeacher = () => {
   const { user } = useAuth();
@@ -140,19 +141,19 @@ const JoinAsTeacher = () => {
 
   return (
     <ContactPageLayout
-      badge="Join Digital AELA"
-      title="Teach with Digital AELA"
-      subtitle="Mentor learners across the globe, host immersive sessions, and co-create transformative learning journeys with our community."
-      description="Share your expertise and join a global community of educators making a real impact.">
+      badge={<TranslatedText>Join Digital AELA</TranslatedText>}
+      title={<TranslatedText>Teach with Digital AELA</TranslatedText>}
+      subtitle={<TranslatedText>Mentor learners across the globe, host immersive sessions, and co-create transformative learning journeys with our community.</TranslatedText>}
+      description={<TranslatedText>Share your expertise and join a global community of educators making a real impact.</TranslatedText>}>
       <div className="max-w-4xl mx-auto">
         <ContactForm
           fields={fields}
-          submitLabel="Apply"
-          successMessage="Application received! Our academic partnerships team will get in touch soon."
-          disclaimer="We respect your privacy. Your application details are only used by the Digital AELA academic team."
+          submitLabel={<TranslatedText>Apply</TranslatedText>}
+          successMessage={<TranslatedText>Application received! Our academic partnerships team will get in touch soon.</TranslatedText>}
+          disclaimer={<TranslatedText>We respect your privacy. Your application details are only used by the Digital AELA academic team.</TranslatedText>}
           onSubmit={handleSubmit}
           formId="teacher"
-          pendingMessage="Your application is pending approval. Our academic partnerships team will review it and get in touch soon."
+          pendingMessage={<TranslatedText>Your application is pending approval. Our academic partnerships team will review it and get in touch soon.</TranslatedText>}
         />
       </div>
     </ContactPageLayout>

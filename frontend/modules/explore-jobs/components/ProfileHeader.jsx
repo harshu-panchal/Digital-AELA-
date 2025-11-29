@@ -6,10 +6,11 @@ import {
   HiOutlineUserGroup,
   HiOutlineArrowTopRightOnSquare,
 } from "react-icons/hi2";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const StatItem = ({ label, value }) => (
   <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-4 text-center">
-    <p className="text-xs uppercase tracking-[0.3em] text-gray-400">{label}</p>
+    <p className="text-xs uppercase tracking-[0.3em] text-gray-400">{typeof label === "string" ? label : label}</p>
     <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
   </div>
 );
@@ -29,7 +30,7 @@ const ProfileHeader = ({ profile, roleBadge, actionSlot, metrics = [] }) => {
             />
             <span className="absolute -bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-black">
               <HiOutlineSparkles className="h-4 w-4" />
-              Spotlight
+              <TranslatedText>Spotlight</TranslatedText>
             </span>
           </div>
 
@@ -37,18 +38,18 @@ const ProfileHeader = ({ profile, roleBadge, actionSlot, metrics = [] }) => {
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold text-white">
-                  {profile.name}
+                  <TranslatedText>{profile.name}</TranslatedText>
                 </h1>
                 {roleBadge}
               </div>
-              <p className="mt-2 text-sm text-gray-400">{profile.headline}</p>
+              <p className="mt-2 text-sm text-gray-400"><TranslatedText>{profile.headline}</TranslatedText></p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-gray-400">
               {profile.location && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2">
                   <HiOutlineMapPin className="h-4 w-4" />
-                  {profile.location}
+                  <TranslatedText>{profile.location}</TranslatedText>
                 </span>
               )}
               {profile.website && (
@@ -58,19 +59,19 @@ const ProfileHeader = ({ profile, roleBadge, actionSlot, metrics = [] }) => {
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-white transition hover:border-white/30">
                   <HiOutlineGlobeAlt className="h-4 w-4" />
-                  Website
+                  <TranslatedText>Website</TranslatedText>
                 </a>
               )}
               {profile.availability && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-emerald-200">
                   <HiOutlineUserGroup className="h-4 w-4" />
-                  Availability · {profile.availability}
+                  <TranslatedText>Availability</TranslatedText> · <TranslatedText>{profile.availability}</TranslatedText>
                 </span>
               )}
             </div>
 
             <p className="max-w-2xl text-sm leading-relaxed text-gray-300">
-              {profile.bio}
+              <TranslatedText>{profile.bio}</TranslatedText>
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -78,7 +79,7 @@ const ProfileHeader = ({ profile, roleBadge, actionSlot, metrics = [] }) => {
                 <span
                   key={badge}
                   className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-                  {badge}
+                  <TranslatedText>{badge}</TranslatedText>
                 </span>
               ))}
             </div>
@@ -89,8 +90,8 @@ const ProfileHeader = ({ profile, roleBadge, actionSlot, metrics = [] }) => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((item) => (
-          <StatItem key={item.label} label={item.label} value={item.value} />
+        {metrics.map((item, index) => (
+          <StatItem key={item.id || item.key || `metric-${index}`} label={item.label} value={item.value} />
         ))}
       </div>
 

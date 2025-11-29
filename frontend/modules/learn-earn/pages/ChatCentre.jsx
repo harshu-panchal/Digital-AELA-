@@ -23,6 +23,7 @@ import {
   markMessagesAsRead,
 } from "../../../src/services/api/messages";
 import { shareCoins as shareCoinsAPI } from "../../../src/services/api/social";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 // Helper function to get default avatar (user initials)
 const getDefaultAvatar = (name, userId) => {
@@ -655,12 +656,12 @@ const ChatCentre = () => {
         {/* Friends List Header */}
         <div className="flex flex-col border-b border-white/5 bg-[#151515] p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Chats</h2>
+            <h2 className="text-lg font-semibold text-white"><TranslatedText>Chats</TranslatedText></h2>
             <button
               type="button"
               className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
               <HiOutlinePlusCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">New</span>
+              <span className="hidden sm:inline"><TranslatedText>New</TranslatedText></span>
             </button>
           </div>
           {/* Search Bar */}
@@ -670,7 +671,7 @@ const ChatCentre = () => {
               type="search"
               value={friendListSearch}
               onChange={(e) => setFriendListSearch(e.target.value)}
-              placeholder="Search or start new chat"
+              placeholder="Search or start new chat" // Placeholder
               className="w-full rounded-lg border border-white/10 bg-[#101010] py-2 pl-10 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
             />
           </div>
@@ -685,10 +686,10 @@ const ChatCentre = () => {
           ) : filteredConversations.length === 0 ? (
             <div className="py-8 text-center text-sm text-gray-400 px-4">
               {conversations.length === 0
-                ? "No conversations yet. Start chatting with other users!"
+                ? <TranslatedText>No conversations yet. Start chatting with other users!</TranslatedText>
                 : (searchQuery.trim() || friendListSearch.trim())
-                ? `No conversations found`
-                : "No conversations yet. Start chatting with other users!"}
+                ? <TranslatedText>No conversations found</TranslatedText>
+                : <TranslatedText>No conversations yet. Start chatting with other users!</TranslatedText>}
             </div>
           ) : (
             <div className="divide-y divide-white/5">
@@ -784,14 +785,14 @@ const ChatCentre = () => {
                   onClick={handleReport}
                   className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
                   <HiOutlineFlag className="h-4 w-4" />
-                  <span className="hidden md:inline">Report</span>
+                  <span className="hidden md:inline"><TranslatedText>Report</TranslatedText></span>
                 </button>
                 <button
                   type="button"
                   onClick={handleBlock}
                   className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-300 transition hover:border-rose-400/60 hover:text-rose-200">
                   <HiOutlineUserMinus className="h-4 w-4" />
-                  <span className="hidden md:inline">Block</span>
+                  <span className="hidden md:inline"><TranslatedText>Block</TranslatedText></span>
                 </button>
               </div>
             </header>

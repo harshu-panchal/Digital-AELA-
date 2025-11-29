@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FaStar, FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { submitReview, updateReview } from "../../../src/services/api/reviews";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
   const [rating, setRating] = useState(existingReview?.rating || 0);
@@ -43,7 +44,7 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-white mb-2">
-          Rating *
+          <TranslatedText>Rating</TranslatedText> *
         </label>
         <div className="flex items-center gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
@@ -66,7 +67,7 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
           ))}
           {rating > 0 && (
             <span className="text-sm text-gray-300 ml-2">
-              {rating} {rating === 1 ? "star" : "stars"}
+              {rating} {rating === 1 ? <TranslatedText>star</TranslatedText> : <TranslatedText>stars</TranslatedText>}
             </span>
           )}
         </div>
@@ -74,7 +75,7 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
 
       <div>
         <label className="block text-sm font-semibold text-white mb-2">
-          Review (optional but recommended)
+          <TranslatedText>Review (optional but recommended)</TranslatedText>
         </label>
         <textarea
           value={review}
@@ -85,7 +86,7 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
           className="w-full rounded-lg border border-white/10 bg-[#090D19]/95 px-4 py-3 text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
         />
         <div className="text-xs text-gray-400 mt-1">
-          {review.length}/2000 characters
+          {review.length}/2000 <TranslatedText>characters</TranslatedText>
         </div>
       </div>
 
@@ -98,12 +99,12 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
           {isSubmitting ? (
             <>
               <FaSpinner className="animate-spin" />
-              Submitting...
+              <TranslatedText>Submitting...</TranslatedText>
             </>
           ) : existingReview ? (
-            "Update Review"
+            <TranslatedText>Update Review</TranslatedText>
           ) : (
-            "Submit Review"
+            <TranslatedText>Submit Review</TranslatedText>
           )}
         </button>
         {onCancel && (
@@ -112,7 +113,7 @@ const ReviewForm = ({ courseId, existingReview, onSuccess, onCancel }) => {
             onClick={onCancel}
             className="px-4 py-2 rounded-lg border border-white/10 bg-transparent text-white hover:bg-white/5 transition-colors"
           >
-            Cancel
+            <TranslatedText>Cancel</TranslatedText>
           </button>
         )}
       </div>

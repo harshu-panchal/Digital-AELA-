@@ -3,6 +3,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import { HiOutlinePaperAirplane } from "react-icons/hi2";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import { useUser } from "../../../src/contexts/UserContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const CommentBox = ({ blogId, comments = [] }) => {
   const [message, setMessage] = useState("");
@@ -19,13 +20,13 @@ const CommentBox = ({ blogId, comments = [] }) => {
     <section className="rounded-3xl border border-white/10 bg-black/60 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl">
       <header className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Community Comments</h3>
+          <h3 className="text-lg font-semibold text-white"><TranslatedText>Community Comments</TranslatedText></h3>
           <p className="text-sm text-gray-400">
-            Share your insight. Respectful, quality feedback helps build the community.
+            <TranslatedText>Share your insight. Respectful, quality feedback helps build the community.</TranslatedText>
           </p>
         </div>
         <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
-          {comments.length} Comments
+          <TranslatedText>{comments.length} Comments</TranslatedText>
         </span>
       </header>
 
@@ -33,15 +34,15 @@ const CommentBox = ({ blogId, comments = [] }) => {
         onSubmit={handleSubmit}
         className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#080808]/80 p-4 sm:flex-row sm:items-center">
         <img
-          src={profile.avatar}
-          alt={profile.name}
+          src={profile?.avatar || "/default-avatar.png"}
+          alt={profile?.name || "User"}
           className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover"
         />
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={2}
-          placeholder="Add your voice to the conversation..."
+          placeholder="Add your voice to the conversation..." // Placeholder
           className="min-h-[64px] flex-1 resize-none rounded-xl border border-transparent bg-[#111]/60 px-4 py-3 text-sm text-white placeholder:text-gray-400 focus:border-[#D4AF37]/50 focus:outline-none"
         />
         <Motion.button
@@ -55,7 +56,7 @@ const CommentBox = ({ blogId, comments = [] }) => {
               : "cursor-not-allowed border border-white/10 bg-[#121212] text-gray-400"
           }`}>
           <HiOutlinePaperAirplane className="h-4 w-4" />
-          Post
+          <TranslatedText>Post</TranslatedText>
         </Motion.button>
       </form>
 
@@ -69,25 +70,25 @@ const CommentBox = ({ blogId, comments = [] }) => {
               exit={{ opacity: 0, y: -8 }}
               className="flex gap-3 rounded-2xl border border-white/5 bg-[#0a0a0a]/80 p-4">
               <img
-                src={comment.author.avatar}
-                alt={comment.author.name}
+                src={comment.author?.avatar || "/default-avatar.png"}
+                alt={comment.author?.name || "Anonymous"}
                 className="h-10 w-10 flex-shrink-0 rounded-full border border-[#D4AF37]/30 object-cover"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-semibold text-white">{comment.author.name}</span>
+                  <span className="font-semibold text-white"><TranslatedText>{comment.author?.name || "Anonymous"}</TranslatedText></span>
                   <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
                     {formatTimestamp(comment.createdAt)}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-gray-200">{comment.message}</p>
+                <p className="mt-2 text-sm text-gray-200"><TranslatedText>{comment.message}</TranslatedText></p>
               </div>
             </Motion.article>
           ))}
         </AnimatePresence>
         {comments.length === 0 && (
           <p className="rounded-2xl border border-dashed border-white/10 bg-[#080808]/60 p-6 text-center text-sm text-gray-400">
-            No comments yet. Start the discussion and share your thoughts.
+            <TranslatedText>No comments yet. Start the discussion and share your thoughts.</TranslatedText>
           </p>
         )}
       </div>

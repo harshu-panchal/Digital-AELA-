@@ -4,6 +4,7 @@ import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitContactLead } from "../../../src/services/contactSubmission";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const FranchiseInquiry = () => {
   const fields = [
@@ -108,19 +109,19 @@ const FranchiseInquiry = () => {
       />
 
       <ContactPageLayout
-        badge="Partner with Digital AELA"
-        title="Franchise Partnership Inquiry"
-        subtitle="Launch a Digital AELA learning centre in your city"
-        description="Build a profitable education business with our proven curriculum, placement network, and marketing engine. Tell us about your market and we will share the franchise roadmap.">
+        badge={<TranslatedText>Partner with Digital AELA</TranslatedText>}
+        title={<TranslatedText>Franchise Partnership Inquiry</TranslatedText>}
+        subtitle={<TranslatedText>Launch a Digital AELA learning centre in your city</TranslatedText>}
+        description={<TranslatedText>Build a profitable education business with our proven curriculum, placement network, and marketing engine. Tell us about your market and we will share the franchise roadmap.</TranslatedText>}>
         <div className="max-w-4xl mx-auto">
           <ContactForm
             fields={fields}
-            submitLabel="Submit Franchise Inquiry"
-            successMessage="Thank you for your interest! Our expansion team will reach out with the franchise information deck."
-            disclaimer="Submitting this form does not create a legal obligation. We will schedule a discovery call before sharing agreements."
+            submitLabel={<TranslatedText>Submit Franchise Inquiry</TranslatedText>}
+            successMessage={<TranslatedText>Thank you for your interest! Our expansion team will reach out with the franchise information deck.</TranslatedText>}
+            disclaimer={<TranslatedText>Submitting this form does not create a legal obligation. We will schedule a discovery call before sharing agreements.</TranslatedText>}
             onSubmit={handleSubmit}
             formId="franchise-inquiry"
-            pendingMessage="Your franchise inquiry is pending approval. Our expansion team will review it and contact you soon."
+            pendingMessage={<TranslatedText>Your franchise inquiry is pending approval. Our expansion team will review it and contact you soon.</TranslatedText>}
           />
         </div>
 
@@ -131,22 +132,22 @@ const FranchiseInquiry = () => {
           transition={{ duration: 0.45, delay: 0.15, ease: "easeOut" }}
           className="mt-10 bg-[#0b0b0b] border border-[#D4AF37]/15 rounded-2xl p-5 md:p-6">
           <h3 className="text-lg md:text-xl font-bold text-white font-display mb-4">
-            Franchise benefits at a glance
+            <TranslatedText>Franchise benefits at a glance</TranslatedText>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300 leading-relaxed">
             <div className="space-y-2">
               <p>
-                • Exclusive territory rights with multi-city upgrade options
+                • <TranslatedText>Exclusive territory rights with multi-city upgrade options</TranslatedText>
               </p>
-              <p>• 360° trainer certification and placement support</p>
+              <p>• <TranslatedText>360° trainer certification and placement support</TranslatedText></p>
               <p>
-                • Launch marketing kit, social media campaigns, and lead funnels
+                • <TranslatedText>Launch marketing kit, social media campaigns, and lead funnels</TranslatedText>
               </p>
             </div>
             <div className="space-y-2">
-              <p>• Central LMS, assessments, and analytics dashboard</p>
-              <p>• Continuous curriculum updates mapped to employer needs</p>
-              <p>• Quarterly business reviews to scale revenue and retention</p>
+              <p>• <TranslatedText>Central LMS, assessments, and analytics dashboard</TranslatedText></p>
+              <p>• <TranslatedText>Continuous curriculum updates mapped to employer needs</TranslatedText></p>
+              <p>• <TranslatedText>Quarterly business reviews to scale revenue and retention</TranslatedText></p>
             </div>
           </div>
         </motion.div>

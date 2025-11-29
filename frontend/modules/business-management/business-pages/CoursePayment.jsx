@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
-import { FaArrowLeft, FaLock, FaCreditCard } from "react-icons/fa";
+import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
 import { extractNumericPrice } from "../utils/paymentLinks";
+import { createPayment, createRazorpayPaymentLink } from "../../../src/services/api/payments";
 
 const externalCourseGatewayUrl = "https://digitalaela.com/course-payment";
 
@@ -61,6 +63,9 @@ const CoursePayment = () => {
     message: "",
   });
 
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+
   const quantity = Math.max(1, formData.quantity || 1);
   const totalAmount = basePrice * quantity;
 
@@ -75,13 +80,47 @@ const CoursePayment = () => {
     }));
   };
 
-  const proceedToGateway = () => {
-    window.open(externalCourseGatewayUrl, "_blank", "noopener,noreferrer");
-  };
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    proceedToGateway();
+    
+    if (isProcessing || totalAmount <= 0) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Step 1: Create payment record
+      const paymentResponse = await createPayment({
+        courseId: courseId || null,
+        amount: totalAmount,
+        currency: "INR", // Razorpay primarily uses INR
+        description: `Payment for ${title} - Quantity: ${quantity}`,
+        paymentMethod: formData.paymentMethod,
+        gateway: "razorpay",
+      });
+
+      if (!paymentResponse?.payment?._id) {
+        throw new Error("Failed to create payment record");
+      }
+
+      const paymentId = paymentResponse.payment._id;
+
+      // Step 2: Create Razorpay Payment Link (Redirect-based)
+      const linkResponse = await createRazorpayPaymentLink(paymentId);
+
+      if (!linkResponse?.paymentLink?.url) {
+        throw new Error("Failed to create Razorpay payment link");
+      }
+
+      // Step 3: Redirect to Razorpay's payment page
+      toast.info("Redirecting to payment page...");
+      window.location.href = linkResponse.paymentLink.url;
+    } catch (error) {
+      console.error("[Payment] Error processing payment:", error);
+      toast.error(error.message || "Failed to process payment. Please try again.");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -347,10 +386,17 @@ const CoursePayment = () => {
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200"
-                    disabled={totalAmount <= 0}
+                    className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={totalAmount <= 0 || isProcessing}
                   >
-                    Pay {formatCurrency(totalAmount)}
+                    {isProcessing ? (
+                      <>
+                        <FaSpinner className="animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay ${formatCurrency(totalAmount)}`
+                    )}
                   </motion.button>
 
                   <p className="text-xs text-gray-500 text-center">

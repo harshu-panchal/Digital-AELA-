@@ -28,6 +28,7 @@ import { fetchPublicUserStats } from "../../../src/services/api/learnEarn";
 import { followUser, unfollowUser, fetchFollowing } from "../../../src/services/api/social";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useUser } from "../../../src/contexts/UserContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const UserProfileView = () => {
   const { userId } = useParams();

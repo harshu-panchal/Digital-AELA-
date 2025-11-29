@@ -1,5 +1,6 @@
 import { motion as Motion } from "framer-motion";
 import { HiOutlineUsers, HiOutlineClipboardDocumentList, HiOutlineChartBar, HiOutlineShieldCheck } from "react-icons/hi2";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const adminCards = [
   {

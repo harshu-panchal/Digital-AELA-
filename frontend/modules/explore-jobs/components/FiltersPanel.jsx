@@ -6,19 +6,20 @@ import {
   HiOutlineSparkles,
 } from "react-icons/hi2";
 import { highlightTags } from "../data/posts";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const filterCategories = [
   {
-    title: "Role Type",
-    options: ["Product", "Engineering", "Marketing", "Design Ops"],
+    title: <TranslatedText>Role Type</TranslatedText>,
+    options: [<TranslatedText>Product</TranslatedText>, <TranslatedText>Engineering</TranslatedText>, <TranslatedText>Marketing</TranslatedText>, <TranslatedText>Design Ops</TranslatedText>],
   },
   {
-    title: "Experience Level",
-    options: ["Entry", "Mid-level", "Senior", "Leadership"],
+    title: <TranslatedText>Experience Level</TranslatedText>,
+    options: [<TranslatedText>Entry</TranslatedText>, <TranslatedText>Mid-level</TranslatedText>, <TranslatedText>Senior</TranslatedText>, <TranslatedText>Leadership</TranslatedText>],
   },
   {
-    title: "Mode",
-    options: ["Remote", "Hybrid", "On-site"],
+    title: <TranslatedText>Mode</TranslatedText>,
+    options: [<TranslatedText>Remote</TranslatedText>, <TranslatedText>Hybrid</TranslatedText>, <TranslatedText>On-site</TranslatedText>],
   },
 ];
 
@@ -40,10 +41,10 @@ const FiltersPanel = ({ isOpen, onClose }) => {
             <header className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                  Smart Filters
+                  <TranslatedText>Smart Filters</TranslatedText>
                 </p>
                 <h3 className="text-xl font-semibold text-white">
-                  Find your next drop
+                  <TranslatedText>Find your next drop</TranslatedText>
                 </h3>
               </div>
               <button
@@ -55,15 +56,15 @@ const FiltersPanel = ({ isOpen, onClose }) => {
             </header>
 
             <div className="space-y-6">
-              {filterCategories.map((category) => (
-                <div key={category.title} className="space-y-3">
+              {filterCategories.map((category, idx) => (
+                <div key={idx} className="space-y-3">
                   <p className="text-sm font-semibold text-gray-300">
                     {category.title}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {category.options.map((option) => (
+                    {category.options.map((option, optIdx) => (
                       <button
-                        key={option}
+                        key={optIdx}
                         type="button"
                         className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-200 transition hover:border-white/30 hover:text-white">
                         {option}
@@ -76,14 +77,14 @@ const FiltersPanel = ({ isOpen, onClose }) => {
 
             <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                Spotlights
+                <TranslatedText>Spotlights</TranslatedText>
               </p>
               <div className="flex flex-wrap gap-2">
                 {highlightTags.map((tag) => (
                   <span
                     key={tag}
                     className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-                    {tag}
+                    <TranslatedText>{tag}</TranslatedText>
                   </span>
                 ))}
               </div>
@@ -91,17 +92,17 @@ const FiltersPanel = ({ isOpen, onClose }) => {
 
             <div className="mt-auto space-y-3 rounded-3xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                Coming Soon
+                <TranslatedText>Coming Soon</TranslatedText>
               </p>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-gray-300">
                 <HiOutlineAdjustmentsHorizontal className="h-5 w-5 text-white/70" />
-                Activate AI-matched roles when backend is live.
+                <TranslatedText>Activate AI-matched roles when backend is live.</TranslatedText>
               </div>
               <button
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
                 <HiOutlineSparkles className="h-5 w-5" />
-                Save Filter
+                <TranslatedText>Save Filter</TranslatedText>
               </button>
             </div>
           </motion.div>

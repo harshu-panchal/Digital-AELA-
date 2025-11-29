@@ -4,8 +4,44 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
+import TranslatedText from "../../../src/components/TranslatedText";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 
 const StudentSuccessStories = () => {
+  // Translation hook for option text (can't use TranslatedText component in <option>)
+  const { translate } = useDynamicTranslation({ sourceLang: "en" });
+  const [translatedOptions, setTranslatedOptions] = useState({
+    "Course Name": "Course Name",
+    "Corporate Training": "Corporate Training",
+    "Digital Marketing": "Digital Marketing",
+    "English Language": "English Language",
+    "Career Counselling & Skill Development": "Career Counselling & Skill Development",
+  });
+
+  // Translate option text when language changes
+  useEffect(() => {
+    const translateOptions = async () => {
+      const options = {
+        "Course Name": "Course Name",
+        "Corporate Training": "Corporate Training",
+        "Digital Marketing": "Digital Marketing",
+        "English Language": "English Language",
+        "Career Counselling & Skill Development": "Career Counselling & Skill Development",
+      };
+      
+      const translated = {};
+      for (const [key, value] of Object.entries(options)) {
+        try {
+          translated[key] = await translate(value);
+        } catch (error) {
+          translated[key] = value; // Fallback to original
+        }
+      }
+      setTranslatedOptions(translated);
+    };
+    translateOptions();
+  }, [translate]);
+
   // WhatsApp integration
   const whatsappNumber = "+971502270625";
   const whatsappMessage = encodeURIComponent(
@@ -84,22 +120,22 @@ const StudentSuccessStories = () => {
     {
       id: 1,
       value: "100%",
-      label: "Enrolled Students",
+      label: <TranslatedText>Enrolled Students</TranslatedText>,
     },
     {
       id: 2,
       value: "92%",
-      label: "Completed Program",
+      label: <TranslatedText>Completed Program</TranslatedText>,
     },
     {
       id: 3,
       value: "87%",
-      label: "Achieved Fluency",
+      label: <TranslatedText>Achieved Fluency</TranslatedText>,
     },
     {
       id: 4,
       value: "74%",
-      label: "Got Placed/Promoted",
+      label: <TranslatedText>Got Placed/Promoted</TranslatedText>,
     },
   ];
 
@@ -149,7 +185,7 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="mb-4">
             <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
-              They Believed. They Achieved.
+              <TranslatedText>They Believed. They Achieved.</TranslatedText>
             </span>
           </motion.div>
 
@@ -158,8 +194,8 @@ const StudentSuccessStories = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-            Celebrating Our{" "}
-            <span className="text-[#D4AF37]">Students' Journey</span>
+            <TranslatedText>Celebrating Our</TranslatedText>{" "}
+            <span className="text-[#D4AF37]"><TranslatedText>Students' Journey</TranslatedText></span>
           </motion.h1>
 
           <motion.p
@@ -167,11 +203,7 @@ const StudentSuccessStories = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
             className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto mb-6 leading-relaxed">
-            At Digital AELA, success is not measured in numbers alone, but in
-            the courage of every student who chose to believe in themselves.
-            From beginners who couldn't speak a word of English to professionals
-            now leading teams abroad — every story here is living proof that
-            your future is secure when you learn with AELA.
+            <TranslatedText>At Digital AELA, success is not measured in numbers alone, but in the courage of every student who chose to believe in themselves. From beginners who couldn't speak a word of English to professionals now leading teams abroad — every story here is living proof that your future is secure when you learn with AELA.</TranslatedText>
           </motion.p>
         </div>
       </motion.section>
@@ -186,18 +218,18 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Real Stories, <span className="text-[#D4AF37]">Real Success</span>
+              <TranslatedText>Real Stories,</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Real Success</TranslatedText></span>
             </h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
             {loadingStories ? (
               <div className="col-span-4 text-center py-12 text-gray-400">
-                Loading success stories...
+                <TranslatedText>Loading success stories...</TranslatedText>
               </div>
             ) : successStories.length === 0 ? (
               <div className="col-span-4 text-center py-12 text-gray-400">
-                No success stories available
+                <TranslatedText>No success stories available</TranslatedText>
               </div>
             ) : (
               successStories.map((story, index) => (
@@ -222,13 +254,13 @@ const StudentSuccessStories = () => {
                     />
                   </div>
                   <h3 className="text-lg md:text-xl font-bold text-white mb-2 font-display text-center">
-                    {story.name}
+                    <TranslatedText>{story.name}</TranslatedText>
                   </h3>
                   <p className="text-sm md:text-base text-[#D4AF37] mb-3 text-center font-semibold">
-                    {story.position}
+                    <TranslatedText>{story.position}</TranslatedText>
                   </p>
                   <p className="text-sm md:text-base text-gray-300 leading-relaxed text-center">
-                    {story.story}
+                    <TranslatedText>{story.story}</TranslatedText>
                   </p>
                 </motion.div>
               ))
@@ -247,8 +279,8 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              What Our <span className="text-[#D4AF37]">Students Say</span>{" "}
-              About Us
+              <TranslatedText>What Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Students Say</TranslatedText></span>{" "}
+              <TranslatedText>About Us</TranslatedText>
             </h2>
           </motion.div>
 
@@ -274,10 +306,10 @@ const StudentSuccessStories = () => {
                   ))}
                 </div>
                 <p className="text-sm md:text-base text-gray-300 leading-relaxed mb-4">
-                  {testimonial.testimonial}
+                  <TranslatedText>{testimonial.testimonial}</TranslatedText>
                 </p>
                 <p className="text-base md:text-lg font-bold text-white font-display">
-                  — {testimonial.name}
+                  — <TranslatedText>{testimonial.name}</TranslatedText>
                 </p>
               </motion.div>
             ))}
@@ -295,8 +327,7 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Our Results <span className="text-[#D4AF37]">Speak</span> For
-              Themselves
+              <TranslatedText>Our Results</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Speak</TranslatedText></span> <TranslatedText>For Themselves</TranslatedText>
             </h2>
           </motion.div>
 
@@ -336,8 +367,7 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg text-center">
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed italic">
-              Education is not about passing exams; it's about passing limits. At
-              Digital AELA, we don't create learners — we create achievers.
+              <TranslatedText>Education is not about passing exams; it's about passing limits. At Digital AELA, we don't create learners — we create achievers.</TranslatedText>
             </p>
           </motion.div>
         </div>
@@ -353,8 +383,8 @@ const StudentSuccessStories = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Start Your <span className="text-[#D4AF37]">Success Story</span>{" "}
-              Today
+              <TranslatedText>Start Your</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Success Story</TranslatedText></span>{" "}
+              <TranslatedText>Today</TranslatedText>
             </h2>
           </motion.div>
 
@@ -368,11 +398,10 @@ const StudentSuccessStories = () => {
               <div className="text-center py-6">
                 <div className="text-5xl mb-4">✅</div>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
-                  Thank You!
+                  <TranslatedText>Thank You!</TranslatedText>
                 </h3>
                 <p className="text-base md:text-lg text-gray-300">
-                  Your enrollment request has been received. We'll contact you
-                  shortly.
+                  <TranslatedText>Your enrollment request has been received. We'll contact you shortly.</TranslatedText>
                 </p>
               </div>
             ) : (
@@ -382,7 +411,7 @@ const StudentSuccessStories = () => {
                     <label
                       htmlFor="firstName"
                       className="block text-gray-300 text-sm font-medium mb-2">
-                      First Name
+                      <TranslatedText>First Name</TranslatedText>
                     </label>
                     <input
                       type="text"
@@ -399,7 +428,7 @@ const StudentSuccessStories = () => {
                     <label
                       htmlFor="lastName"
                       className="block text-gray-300 text-sm font-medium mb-2">
-                      Last Name
+                      <TranslatedText>Last Name</TranslatedText>
                     </label>
                     <input
                       type="text"
@@ -417,7 +446,7 @@ const StudentSuccessStories = () => {
                   <label
                     htmlFor="email"
                     className="block text-gray-300 text-sm font-medium mb-2">
-                    Email Address
+                    <TranslatedText>Email Address</TranslatedText>
                   </label>
                   <input
                     type="email"
@@ -434,7 +463,7 @@ const StudentSuccessStories = () => {
                   <label
                     htmlFor="mobile"
                     className="block text-gray-300 text-sm font-medium mb-2">
-                    Mobile Number
+                    <TranslatedText>Mobile Number</TranslatedText>
                   </label>
                   <input
                     type="tel"
@@ -451,7 +480,7 @@ const StudentSuccessStories = () => {
                   <label
                     htmlFor="course"
                     className="block text-gray-300 text-sm font-medium mb-2">
-                    Course
+                    <TranslatedText>Course</TranslatedText>
                   </label>
                   <select
                     id="course"
@@ -460,13 +489,11 @@ const StudentSuccessStories = () => {
                     onChange={handleChange}
                     required
                     className="w-full p-3 rounded-lg bg-[#0a0a0a] border border-[#333333] text-white focus:outline-none focus:border-[#D4AF37]">
-                    <option value="">Course Name</option>
-                    <option value="corporate-training">Corporate Training</option>
-                    <option value="digital-marketing">Digital Marketing</option>
-                    <option value="english-language">English Language</option>
-                    <option value="career-counselling">
-                      Career Counselling & Skill Development
-                    </option>
+                    <option value="">{translatedOptions["Course Name"]}</option>
+                    <option value="corporate-training">{translatedOptions["Corporate Training"]}</option>
+                    <option value="digital-marketing">{translatedOptions["Digital Marketing"]}</option>
+                    <option value="english-language">{translatedOptions["English Language"]}</option>
+                    <option value="career-counselling">{translatedOptions["Career Counselling & Skill Development"]}</option>
                   </select>
                 </div>
                 <motion.button
@@ -475,7 +502,7 @@ const StudentSuccessStories = () => {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   type="submit"
                   className="w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                  Enroll Now – Begin Your Journey
+                  <TranslatedText>Enroll Now – Begin Your Journey</TranslatedText>
                 </motion.button>
               </form>
             )}

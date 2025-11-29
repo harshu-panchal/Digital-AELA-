@@ -28,12 +28,16 @@ import {
   updateStudentProfile,
   uploadProfileImage,
 } from "../../../src/services/api/student";
+import TranslatedText from "../../../src/components/TranslatedText";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 
 const ProfilePage = () => {
   const { profile, updateProfile, refreshSocialStats, followers, following } =
     useUser();
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
   const { refreshPoints } = usePoints();
+  const { translate } = useDynamicTranslation({ sourceLang: "en" });
+  const [translatedSelectPlatform, setTranslatedSelectPlatform] = useState("Select platform");
   const [verifying, setVerifying] = useState(new Set());
   const [socialLinks, setSocialLinks] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -50,6 +54,19 @@ const ProfilePage = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [enhancedProfile, setEnhancedProfile] = useState(null);
   const [loadingEnhanced, setLoadingEnhanced] = useState(false);
+
+  // Translate "Select platform" text for option element
+  useEffect(() => {
+    const translateText = async () => {
+      try {
+        const translated = await translate("Select platform");
+        setTranslatedSelectPlatform(translated);
+      } catch (error) {
+        setTranslatedSelectPlatform("Select platform");
+      }
+    };
+    translateText();
+  }, [translate]);
 
   const availablePlatforms = [
     "LinkedIn",
@@ -413,24 +430,24 @@ const ProfilePage = () => {
   const infoGrid = useMemo(
     () => [
       {
-        label: "English Level",
+        label: <TranslatedText>English Level</TranslatedText>,
         value: getFieldValue("englishLevel"),
         field: "englishLevel",
       },
       {
-        label: "Profession",
+        label: <TranslatedText>Profession</TranslatedText>,
         value: getFieldValue("profession"),
         field: "profession",
       },
       {
-        label: "Experience",
+        label: <TranslatedText>Experience</TranslatedText>,
         value: getFieldValue("experience"),
         field: "experience",
       },
-      { label: "Country", value: getFieldValue("country"), field: "country" },
-      { label: "City", value: getFieldValue("city"), field: "city" },
+      { label: <TranslatedText>Country</TranslatedText>, value: getFieldValue("country"), field: "country" },
+      { label: <TranslatedText>City</TranslatedText>, value: getFieldValue("city"), field: "city" },
       {
-        label: "Marital Status",
+        label: <TranslatedText>Marital Status</TranslatedText>,
         value: getFieldValue("maritalStatus"),
         field: "maritalStatus",
       },
@@ -655,7 +672,7 @@ const ProfilePage = () => {
               <Link
                 to="/learn-earn/chat"
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
-                Message
+                <TranslatedText>Message</TranslatedText>
               </Link>
               <button
                 type="button"
@@ -671,7 +688,7 @@ const ProfilePage = () => {
                 }}
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 hover:brightness-110">
                 <FaEdit className="h-3.5 w-3.5" />
-                {editingField === "all" ? "Cancel Edit" : "Edit profile"}
+                {editingField === "all" ? <TranslatedText>Cancel Edit</TranslatedText> : <TranslatedText>Edit profile</TranslatedText>}
               </button>
             </div>
           </div>
@@ -679,7 +696,7 @@ const ProfilePage = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                Followers
+                <TranslatedText>Followers</TranslatedText>
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
                 {followers.length.toLocaleString()}
@@ -687,29 +704,29 @@ const ProfilePage = () => {
               <Link
                 to="/learn-earn"
                 className="mt-3 inline-flex text-xs font-semibold text-[#D4AF37]">
-                View growth analytics →
+                <TranslatedText>View growth analytics</TranslatedText> →
               </Link>
             </div>
             <div className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                Following
+                <TranslatedText>Following</TranslatedText>
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
                 {following.length.toLocaleString()}
               </p>
               <p className="mt-3 text-xs text-gray-400">
-                Curating meaningful learning circles
+                <TranslatedText>Curating meaningful learning circles</TranslatedText>
               </p>
             </div>
             <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#151515] p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                Community rating
+                <TranslatedText>Community rating</TranslatedText>
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
                 ⭐ {profile?.rating ? profile.rating.toFixed(1) : "0.0"}
               </p>
               <p className="mt-3 text-xs text-gray-400">
-                Top 5% of mentors on Learn & Earn
+                <TranslatedText>Top 5% of mentors on Learn & Earn</TranslatedText>
               </p>
             </div>
           </div>
@@ -722,7 +739,7 @@ const ProfilePage = () => {
                 <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                      Profile Completion
+                      <TranslatedText>Profile Completion</TranslatedText>
                     </p>
                     <span className="text-sm font-semibold text-white">
                       {enhancedProfile.completionPercentage}%
@@ -737,7 +754,7 @@ const ProfilePage = () => {
                     />
                   </div>
                   <p className="mt-2 text-xs text-gray-400">
-                    Complete your profile to unlock more features
+                    <TranslatedText>Complete your profile to unlock more features</TranslatedText>
                   </p>
                 </div>
               )}
@@ -746,7 +763,7 @@ const ProfilePage = () => {
               {enhancedProfile.skills && enhancedProfile.skills.length > 0 && (
                 <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
                   <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                    Skills
+                    <TranslatedText>Skills</TranslatedText>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {enhancedProfile.skills.map((skill, index) => (
@@ -768,7 +785,7 @@ const ProfilePage = () => {
               {enhancedProfile.achievements && enhancedProfile.achievements.length > 0 && (
                 <div className="mt-6 rounded-2xl border border-white/5 bg-[#0f0f0f] p-5">
                   <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                    Achievements
+                    <TranslatedText>Achievements</TranslatedText>
                   </p>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                     {enhancedProfile.achievements.map((achievement) => (
@@ -798,7 +815,7 @@ const ProfilePage = () => {
             transition={{ duration: 0.3 }}
             className="space-y-6">
             <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-              Learning Timeline
+              <TranslatedText>Learning Timeline</TranslatedText>
             </p>
             <div className="space-y-4">
               {enhancedProfile.timeline.slice(0, 10).map((item, index) => (
@@ -837,7 +854,7 @@ const ProfilePage = () => {
           <div>
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                About
+                <TranslatedText>About</TranslatedText>
               </p>
               {authUser && tokens?.accessToken && (
                 <button
@@ -853,14 +870,14 @@ const ProfilePage = () => {
                     }
                   }}
                   className="text-xs font-semibold text-[#D4AF37] hover:text-[#E5C158] transition">
-                  {editingField === "all" ? "Cancel" : "Edit All"}
+                  {editingField === "all" ? <TranslatedText>Cancel</TranslatedText> : <TranslatedText>Edit All</TranslatedText>}
                 </button>
               )}
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {infoGrid.map((item) => (
                 <div
-                  key={item.label}
+                  key={item.field}
                   className="rounded-2xl border border-white/5 bg-[#111] p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
@@ -906,10 +923,10 @@ const ProfilePage = () => {
                           {savingField === item.field ? (
                             <>
                               <FaSpinner className="mr-1 inline h-2 w-2 animate-spin" />
-                              Saving...
+                              <TranslatedText>Saving...</TranslatedText>
                             </>
                           ) : (
-                            "Save"
+                            <TranslatedText>Save</TranslatedText>
                           )}
                         </button>
                         <button
@@ -919,14 +936,14 @@ const ProfilePage = () => {
                             setEditValue("");
                           }}
                           className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-400 transition hover:bg-white/10">
-                          Cancel
+                          <TranslatedText>Cancel</TranslatedText>
                         </button>
                       </div>
                     </div>
                   ) : (
                     <p className="mt-2 text-sm font-semibold text-white">
                       {item.value || (
-                        <span className="text-gray-500 italic">Not set</span>
+                        <span className="text-gray-500 italic"><TranslatedText>Not set</TranslatedText></span>
                       )}
                     </p>
                   )}
@@ -938,7 +955,7 @@ const ProfilePage = () => {
           <div>
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                Interests
+                <TranslatedText>Interests</TranslatedText>
               </p>
               {authUser && tokens?.accessToken && editingField === "all" && (
                 <button
@@ -958,7 +975,7 @@ const ProfilePage = () => {
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  placeholder="Enter interests separated by commas (e.g., Public Speaking, Leadership, Storytelling)"
+                  placeholder="Enter interests separated by commas (e.g., Public Speaking, Leadership, Storytelling)" // Placeholder
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSaveInterests(editValue);
@@ -979,10 +996,10 @@ const ProfilePage = () => {
                     {savingField === "interests" ? (
                       <>
                         <FaSpinner className="mr-1 inline h-2 w-2 animate-spin" />
-                        Saving...
+                        <TranslatedText>Saving...</TranslatedText>
                       </>
                     ) : (
-                      "Save"
+                      <TranslatedText>Save</TranslatedText>
                     )}
                   </button>
                   <button
@@ -992,7 +1009,7 @@ const ProfilePage = () => {
                       setEditValue("");
                     }}
                     className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-400 transition hover:bg-white/10">
-                    Cancel
+                    <TranslatedText>Cancel</TranslatedText>
                   </button>
                 </div>
               </div>
@@ -1008,7 +1025,7 @@ const ProfilePage = () => {
                   ))
                 ) : (
                   <span className="text-sm text-gray-500 italic">
-                    No interests added yet
+                    <TranslatedText>No interests added yet</TranslatedText>
                   </span>
                 )}
               </div>
@@ -1027,10 +1044,10 @@ const ProfilePage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-                Social verification
+                <TranslatedText>Social verification</TranslatedText>
               </p>
               <p className="mt-1 text-xs text-gray-300">
-                Add your social links, verify them, and earn bonus coins
+                <TranslatedText>Add your social links, verify them, and earn bonus coins</TranslatedText>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -1040,7 +1057,7 @@ const ProfilePage = () => {
                 onClick={openAddModal}
                 className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-3 py-1.5 text-[10px] font-semibold text-black shadow-lg shadow-[#D4AF37]/30 hover:brightness-110">
                 <FaPlus className="h-2.5 w-2.5" />
-                Add Link
+                <TranslatedText>Add Link</TranslatedText>
               </button>
             </div>
           </div>
@@ -1070,7 +1087,7 @@ const ProfilePage = () => {
                         {link.verified ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-200">
                             <FaCheckCircle className="h-3 w-3" />
-                            Verified
+                            <TranslatedText>Verified</TranslatedText>
                           </span>
                         ) : (
                           <button
@@ -1081,18 +1098,18 @@ const ProfilePage = () => {
                             {verifying.has(link.platform) ? (
                               <>
                                 <FaSpinner className="h-3 w-3 animate-spin" />
-                                Verifying...
+                                <TranslatedText>Verifying...</TranslatedText>
                               </>
                             ) : (
                               <>
                                 <FaLock className="h-3 w-3" />
-                                Verify & claim
+                                <TranslatedText>Verify & claim</TranslatedText>
                               </>
                             )}
                           </button>
                         )}
                         <span className="text-xs text-gray-400">
-                          +{link.bonus || 0} coins
+                          +{link.bonus || 0} <TranslatedText>coins</TranslatedText>
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
@@ -1101,7 +1118,7 @@ const ProfilePage = () => {
                           onClick={() => openEditModal(link)}
                           className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-300 transition hover:bg-white/10">
                           <FaEdit className="h-2.5 w-2.5" />
-                          Edit
+                          <TranslatedText>Edit</TranslatedText>
                         </button>
                         <button
                           type="button"
@@ -1130,7 +1147,7 @@ const ProfilePage = () => {
                 className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white">
-                    {editingLink ? "Edit Social Link" : "Add Social Link"}
+                    {editingLink ? <TranslatedText>Edit Social Link</TranslatedText> : <TranslatedText>Add Social Link</TranslatedText>}
                   </h3>
                   <button
                     type="button"
@@ -1147,7 +1164,7 @@ const ProfilePage = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-xs font-semibold text-gray-300">
-                      Platform
+                      <TranslatedText>Platform</TranslatedText>
                     </label>
                     <select
                       value={formData.platform}
@@ -1156,7 +1173,7 @@ const ProfilePage = () => {
                       }
                       disabled={!!editingLink}
                       className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                      <option value="">Select platform</option>
+                      <option value="">{translatedSelectPlatform}</option>
                       {availablePlatforms.map((platform) => (
                         <option key={platform} value={platform}>
                           {platform}
@@ -1167,7 +1184,7 @@ const ProfilePage = () => {
 
                   <div>
                     <label className="mb-2 block text-xs font-semibold text-gray-300">
-                      URL
+                      <TranslatedText>URL</TranslatedText>
                     </label>
                     <input
                       type="url"
@@ -1175,12 +1192,11 @@ const ProfilePage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, url: e.target.value })
                       }
-                      placeholder="https://linkedin.com/in/yourprofile"
+                      placeholder="https://linkedin.com/in/yourprofile" // Placeholder
                       className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
                     />
                     <p className="mt-1 text-xs text-gray-400">
-                      Enter the full URL of your profile (e.g.,
-                      https://linkedin.com/in/yourname)
+                      <TranslatedText>Enter the full URL of your profile (e.g., https://linkedin.com/in/yourname)</TranslatedText>
                     </p>
                   </div>
 
@@ -1193,7 +1209,7 @@ const ProfilePage = () => {
                         setFormData({ platform: "", url: "" });
                       }}
                       className="flex-1 rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-sm font-semibold text-gray-300 transition hover:bg-white/5">
-                      Cancel
+                      <TranslatedText>Cancel</TranslatedText>
                     </button>
                     <button
                       type="button"
@@ -1203,12 +1219,12 @@ const ProfilePage = () => {
                       {saving ? (
                         <>
                           <FaSpinner className="mr-2 inline h-3 w-3 animate-spin" />
-                          Saving...
+                          <TranslatedText>Saving...</TranslatedText>
                         </>
                       ) : editingLink ? (
-                        "Update Link"
+                        <TranslatedText>Update Link</TranslatedText>
                       ) : (
-                        "Add Link"
+                        <TranslatedText>Add Link</TranslatedText>
                       )}
                     </button>
                   </div>

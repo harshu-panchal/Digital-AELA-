@@ -5,7 +5,10 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const DigitalMarketingCourses = () => {
   // WhatsApp integration
@@ -15,6 +18,7 @@ const DigitalMarketingCourses = () => {
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [digitalMarketingCourses, setDigitalMarketingCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +72,13 @@ const DigitalMarketingCourses = () => {
     origin: "digital-marketing-courses",
   });
 
-  const handleBuyCourse = (course) => {
+  const handleBuyCourse = async (course) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.info("Please log in to enroll in this course");
+      navigate("/login/student");
+      return;
+    }
     const payload = augmentCourse(course);
     
     // Check if course is free
@@ -93,11 +103,16 @@ const DigitalMarketingCourses = () => {
         handleViewCourse(course);
       }
     } else {
-      // Paid course - go to payment flow
-      navigate(buildCoursePaymentLink(payload), {
-        state: {
-          course: payload,
-        },
+      // Paid course - redirect directly to Razorpay
+      await redirectToRazorpay({
+        courseId: course._id || course.id || null,
+        amount: priceValue,
+        currency: "AED",
+        description: `Payment for ${course.title || "course"}`,
+        userName: user?.fullName || "",
+        userEmail: user?.email || "",
+        userPhone: user?.phone || "",
+        quantity: 1,
       });
     }
   };
@@ -147,28 +162,28 @@ const DigitalMarketingCourses = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
-              Digital Marketing Mastery
+              <TranslatedText>Digital Marketing Mastery</TranslatedText>
             </motion.span>
           <motion.h1
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-              Master Digital Marketing
+              <TranslatedText>Master Digital Marketing</TranslatedText>
             </motion.h1>
             <motion.h2
               initial={{ y: 22, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
               className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
-              From Zero to Hero
+              <TranslatedText>From Zero to Hero</TranslatedText>
             </motion.h2>
           <motion.p
               initial={{ y: 18, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
-              Comprehensive digital marketing courses covering SEO, SMM, PPC, Content Marketing, and more. Learn from industry experts and build a successful online presence.
+              <TranslatedText>Comprehensive digital marketing courses covering SEO, SMM, PPC, Content Marketing, and more. Learn from industry experts and build a successful online presence.</TranslatedText>
           </motion.p>
           <motion.div
               initial={{ y: 16, opacity: 0 }}
@@ -183,7 +198,7 @@ const DigitalMarketingCourses = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-bold text-black shadow-[0_12px_30px_rgba(212,175,55,0.35)] hover:brightness-110 sm:text-base">
-                Talk to a Mentor
+                <TranslatedText>Talk to a Mentor</TranslatedText>
             </motion.a>
             <motion.a
               whileHover={{ scale: 1.05, y: -2 }}
@@ -191,7 +206,7 @@ const DigitalMarketingCourses = () => {
               transition={{ duration: 0.2, ease: "easeOut" }}
               href="#courses"
               className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
-                Explore Modules
+                <TranslatedText>Explore Modules</TranslatedText>
             </motion.a>
             </motion.div>
           </div>
@@ -223,19 +238,18 @@ const DigitalMarketingCourses = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Our Digital Marketing{" "}
-              <span className="text-[#D4AF37]">Courses</span>
+              <TranslatedText>Our Digital Marketing</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Courses</TranslatedText></span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Comprehensive training programs covering all aspects of digital
-              marketing from SEO to E-commerce
+              <TranslatedText>Comprehensive training programs covering all aspects of digital marketing from SEO to E-commerce</TranslatedText>
             </p>
           </motion.div>
 
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="text-[#D4AF37] text-lg">Loading courses...</div>
+              <div className="text-[#D4AF37] text-lg"><TranslatedText>Loading courses...</TranslatedText></div>
             </div>
           )}
 
@@ -275,10 +289,10 @@ const DigitalMarketingCourses = () => {
                 <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
                   <div className="flex-shrink-0 mb-4">
                     <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
-                      {course.title}
+                      <TranslatedText>{course.title}</TranslatedText>
                     </h3>
                     <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
-                      {course.description}
+                      <TranslatedText>{course.description}</TranslatedText>
                     </p>
                   </div>
 
@@ -318,13 +332,13 @@ const DigitalMarketingCourses = () => {
                   {course.features && course.features.length > 0 && (
                     <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                       <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                        Key Highlights
+                        <TranslatedText>Key Highlights</TranslatedText>
                       </p>
                       <ul className="space-y-2 text-xs md:text-sm text-gray-300">
                         {course.features.slice(0, 3).map((feature, idx) => (
                           <li key={idx} className="flex items-center gap-2">
                             <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                            <span className="line-clamp-1">{feature}</span>
+                            <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
                           </li>
                         ))}
                       </ul>
@@ -333,9 +347,9 @@ const DigitalMarketingCourses = () => {
 
                     <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
-                        <span>Course Fee</span>
+                        <span><TranslatedText>Course Fee</TranslatedText></span>
                         <span className="text-lg font-semibold text-[#F5D26A]">
-                          {course.price || "On Request"}
+                          {course.price || <TranslatedText>On Request</TranslatedText>}
                         </span>
                       </div>
                       <motion.button
@@ -346,7 +360,7 @@ const DigitalMarketingCourses = () => {
                           handleViewCourse(course);
                         }}
                         className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
-                        See Full Course
+                        <TranslatedText>See Full Course</TranslatedText>
                       </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <motion.button
@@ -357,7 +371,7 @@ const DigitalMarketingCourses = () => {
                             handleBuyCourse(course);
                           }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                          Buy Now
+                          <TranslatedText>Buy Now</TranslatedText>
                         </motion.button>
                         <div
                           onClick={(event) => event.stopPropagation()}
@@ -379,7 +393,7 @@ const DigitalMarketingCourses = () => {
           {/* No Courses Message */}
           {!loading && digitalMarketingCourses.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-gray-300 text-lg">No Digital Marketing courses available yet.</p>
+              <p className="text-gray-300 text-lg"><TranslatedText>No Digital Marketing courses available yet.</TranslatedText></p>
             </div>
           )}
 
@@ -398,7 +412,7 @@ const DigitalMarketingCourses = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-              Get Started Today
+              <TranslatedText>Get Started Today</TranslatedText>
             </motion.a>
           </motion.div>
         </div>

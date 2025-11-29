@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import founderImage from "../../../src/assets/meetTheLeader.jpg";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const MeetTheFounder = () => {
   // WhatsApp integration
@@ -42,7 +43,7 @@ const MeetTheFounder = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none text-center">
-            Meet the Founder – <span className="text-[#D4AF37]">Imran Khan</span>
+            <TranslatedText>Meet the Founder –</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Imran Khan</TranslatedText></span>
           </motion.h1>
         </div>
       </motion.section>
@@ -62,7 +63,7 @@ const MeetTheFounder = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
                 className="text-2xl md:text-4xl font-bold text-white mb-4 font-display">
-                <span className="text-[#D4AF37]">Imran Khan</span>
+                <span className="text-[#D4AF37]"><TranslatedText>Imran Khan</TranslatedText></span>
               </motion.h2>
 
               <motion.p
@@ -70,7 +71,7 @@ const MeetTheFounder = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="text-xl md:text-2xl font-semibold text-[#D4AF37] mb-2">
-                Founder & CEO, Digital AELA
+                <TranslatedText>Founder & CEO, Digital AELA</TranslatedText>
               </motion.p>
 
               <motion.p
@@ -78,7 +79,7 @@ const MeetTheFounder = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.35 }}
                 className="text-lg text-gray-300 mb-6">
-                Author of 3 Best-Selling English Learning Books
+                <TranslatedText>Author of 3 Best-Selling English Learning Books</TranslatedText>
               </motion.p>
 
               <motion.blockquote
@@ -86,7 +87,7 @@ const MeetTheFounder = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.4 }}
                 className="border-l-4 border-[#D4AF37] pl-4 mb-8 italic text-lg text-gray-200">
-                "Education changed my life, so I dedicated my life to changing others." — Imran Khan
+                <TranslatedText>"Education changed my life, so I dedicated my life to changing others." — Imran Khan</TranslatedText>
               </motion.blockquote>
             </motion.div>
             {/* Right Side - Founder Image */}
@@ -124,7 +125,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="text-base md:text-lg text-gray-300 leading-relaxed">
-              My teaching journey began in 2015, not with an institute or business plan — but with a simple intention to help students who had dreams bigger than their circumstances.
+              <TranslatedText>
+                My teaching journey began in 2015, not with an institute or business plan — but with a simple intention to help students who had dreams bigger than their circumstances.
+              </TranslatedText>
             </motion.p>
 
             <motion.p
@@ -132,7 +135,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
               className="text-base md:text-lg text-gray-300 leading-relaxed">
-              I started my work by teaching completely free, guiding learners in communication and helping them secure jobs in corporate companies. Seeing my students grow gave me a purpose far greater than anything a corporate salary could offer.
+              <TranslatedText>
+                I started my work by teaching completely free, guiding learners in communication and helping them secure jobs in corporate companies. Seeing my students grow gave me a purpose far greater than anything a corporate salary could offer.
+              </TranslatedText>
             </motion.p>
 
             <motion.p
@@ -140,7 +145,7 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.5 }}
               className="text-base md:text-lg text-[#D4AF37] font-semibold leading-relaxed">
-              The love, trust, and success stories of my students changed my life.
+              <TranslatedText>The love, trust, and success stories of my students changed my life.</TranslatedText>
             </motion.p>
 
             <motion.p
@@ -148,7 +153,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.6 }}
               className="text-base md:text-lg text-gray-300 leading-relaxed">
-              Their confidence inspired me to leave my corporate career behind and, in 2019, I launched my first English academy — a space created to uplift learners from every background and prepare them for real success.
+              <TranslatedText>
+                Their confidence inspired me to leave my corporate career behind and, in 2019, I launched my first English academy — a space created to uplift learners from every background and prepare them for real success.
+              </TranslatedText>
             </motion.p>
           </motion.div>
         </div>
@@ -166,14 +173,14 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="text-2xl md:text-3xl font-bold text-white mb-6 font-display">
-              As my teaching expanded, I wanted to create resources that could reach people beyond my classroom.
+              <TranslatedText>As my teaching expanded, I wanted to create resources that could reach people beyond my classroom.</TranslatedText>
             </motion.h3>
             <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
               className="text-lg md:text-xl text-[#D4AF37] mb-8 font-semibold">
-              This led to the publication of three books:
+              <TranslatedText>This led to the publication of three books:</TranslatedText>
             </motion.p>
 
             <div className="space-y-6">
@@ -186,10 +193,10 @@ const MeetTheFounder = () => {
                   <span className="text-3xl">📘</span>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
-                      2021 — Master English Grammar (From School to Competitive)
+                      <TranslatedText>2021 — Master English Grammar (From School to Competitive)</TranslatedText>
                     </h4>
                     <p className="text-gray-300">
-                      A bestseller that strengthened grammar foundations for thousands.
+                      <TranslatedText>A bestseller that strengthened grammar foundations for thousands.</TranslatedText>
                     </p>
                   </div>
                 </div>
@@ -204,10 +211,10 @@ const MeetTheFounder = () => {
                   <span className="text-3xl">📘</span>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
-                      2022 — 5000 Advanced English Structures
+                      <TranslatedText>2022 — 5000 Advanced English Structures</TranslatedText>
                     </h4>
                     <p className="text-gray-300">
-                      A breakthrough book that helped learners move from basic to advanced English fluently.
+                      <TranslatedText>A breakthrough book that helped learners move from basic to advanced English fluently.</TranslatedText>
                     </p>
                   </div>
                 </div>
@@ -222,10 +229,10 @@ const MeetTheFounder = () => {
                   <span className="text-3xl">📘</span>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
-                      2023 — 5000 Hindi to English Dictionary
+                      <TranslatedText>2023 — 5000 Hindi to English Dictionary</TranslatedText>
                     </h4>
                     <p className="text-gray-300">
-                      A complete vocabulary guide designed to remove the fear of English words forever.
+                      <TranslatedText>A complete vocabulary guide designed to remove the fear of English words forever.</TranslatedText>
                     </p>
                   </div>
                 </div>
@@ -248,7 +255,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="text-base md:text-lg text-gray-300 leading-relaxed">
-              But my vision was bigger — I wanted to take my communication skills, teaching expertise, and student impact to a global level.
+              <TranslatedText>
+                But my vision was bigger — I wanted to take my communication skills, teaching expertise, and student impact to a global level.
+              </TranslatedText>
             </motion.p>
 
             <motion.p
@@ -256,7 +265,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
               className="text-base md:text-lg text-gray-300 leading-relaxed">
-              In 2025, I moved to Dubai, expanding Digital AELA across 6 countries, empowering students through books, live classes, and digital learning.
+              <TranslatedText>
+                In 2025, I moved to Dubai, expanding Digital AELA across 6 countries, empowering students through books, live classes, and digital learning.
+              </TranslatedText>
             </motion.p>
 
             <motion.p
@@ -264,7 +275,9 @@ const MeetTheFounder = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.5 }}
               className="text-base md:text-lg text-[#D4AF37] font-semibold leading-relaxed">
-              Today, Alhamdulillah, thousands of learners are improving their English, upgrading their careers, and changing their future — all through the ecosystem of Digital AELA.
+              <TranslatedText>
+                Today, Alhamdulillah, thousands of learners are improving their English, upgrading their careers, and changing their future — all through the ecosystem of Digital AELA.
+              </TranslatedText>
             </motion.p>
           </motion.div>
         </div>
@@ -284,13 +297,15 @@ const MeetTheFounder = () => {
               transition={{ duration: 0.4, delay: 0.3 }}
               className="text-center">
               <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-4 italic">
-                "My mission is simple:
+                <TranslatedText>"My mission is simple:</TranslatedText>
               </p>
               <p className="text-xl md:text-2xl text-[#D4AF37] leading-relaxed mb-6 font-semibold">
-                To make world-class English education accessible, affordable, and life-changing for every learner — from a small town student to a global professional."
+                <TranslatedText>
+                  To make world-class English education accessible, affordable, and life-changing for every learner — from a small town student to a global professional."
+                </TranslatedText>
               </p>
               <footer className="text-base md:text-lg text-gray-400 font-semibold font-display">
-                — Imran Khan, Founder
+                — <TranslatedText>Imran Khan, Founder</TranslatedText>
               </footer>
             </motion.blockquote>
           </motion.div>
@@ -305,7 +320,7 @@ const MeetTheFounder = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
             className="text-xl md:text-2xl text-[#D4AF37] font-semibold font-display">
-            The journey continues… and this is just the beginning.
+            <TranslatedText>The journey continues… and this is just the beginning.</TranslatedText>
           </motion.p>
         </div>
       </section>
@@ -319,11 +334,13 @@ const MeetTheFounder = () => {
             transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg">
             <h2 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
-              Want to Know More?
+              <TranslatedText>Want to Know More?</TranslatedText>
             </h2>
             <p className="text-sm md:text-base text-gray-300 mb-5 max-w-2xl mx-auto">
-              Connect with us to learn more about Digital AELA's mission, courses,
-              and how we can help you achieve your learning and career goals.
+              <TranslatedText>
+                Connect with us to learn more about Digital AELA's mission, courses,
+                and how we can help you achieve your learning and career goals.
+              </TranslatedText>
             </p>
             <motion.a
               whileHover={{ scale: 1.05 }}
@@ -333,7 +350,7 @@ const MeetTheFounder = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-[#D4AF37] text-black px-6 py-2.5 rounded-lg font-bold text-sm md:text-base hover:bg-[#E5C158] transition-colors duration-200">
-              Know More
+              <TranslatedText>Know More</TranslatedText>
             </motion.a>
           </motion.div>
         </div>

@@ -8,6 +8,7 @@ import {
 import PostGrid from "../components/PostGrid";
 import ProfileHeader from "../components/ProfileHeader";
 import { useExploreJobs } from "../context/ExploreJobsContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const SeekerDashboard = () => {
   const navigate = useNavigate();
@@ -31,10 +32,10 @@ const SeekerDashboard = () => {
 
   const stats = useMemo(() => {
     return [
-      { label: "Applied", value: appliedPostIds.size },
-      { label: "Saved", value: savedPostIds.size },
-      { label: "Available", value: availableJobs.length },
-      { label: "Total Jobs", value: recruiterJobPosts.length },
+      { label: <TranslatedText>Applied</TranslatedText>, value: appliedPostIds.size },
+      { label: <TranslatedText>Saved</TranslatedText>, value: savedPostIds.size },
+      { label: <TranslatedText>Available</TranslatedText>, value: availableJobs.length },
+      { label: <TranslatedText>Total Jobs</TranslatedText>, value: recruiterJobPosts.length },
     ];
   }, [appliedPostIds, savedPostIds, availableJobs.length, recruiterJobPosts.length]);
 
@@ -51,7 +52,7 @@ const SeekerDashboard = () => {
         roleBadge={
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white">
             <HiOutlineSparkles className="h-4 w-4" />
-            Job Seeker
+            <TranslatedText>Job Seeker</TranslatedText>
           </span>
         }
         metrics={stats}
@@ -62,15 +63,15 @@ const SeekerDashboard = () => {
           <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                Applied Jobs
+                <TranslatedText>Applied Jobs</TranslatedText>
               </p>
               <h2 className="text-xl font-semibold text-white">
-                Jobs you've applied to
+                <TranslatedText>Jobs you've applied to</TranslatedText>
               </h2>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <HiOutlineCheckCircle className="h-4 w-4" />
-              {appliedJobs.length} application{appliedJobs.length !== 1 ? "s" : ""}
+              <TranslatedText>{appliedJobs.length} application{appliedJobs.length !== 1 ? "s" : ""}</TranslatedText>
             </div>
           </header>
 
@@ -84,10 +85,10 @@ const SeekerDashboard = () => {
             emptyState={
               <>
                 <h3 className="text-lg font-semibold text-white">
-                  No applications yet
+                  <TranslatedText>No applications yet</TranslatedText>
                 </h3>
                 <p className="mt-2 max-w-md text-sm text-gray-400">
-                  Start exploring available jobs and apply to positions that match your skills.
+                  <TranslatedText>Start exploring available jobs and apply to positions that match your skills.</TranslatedText>
                 </p>
               </>
             }
@@ -99,15 +100,15 @@ const SeekerDashboard = () => {
         <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Available Jobs
+              <TranslatedText>Available Jobs</TranslatedText>
             </p>
             <h2 className="text-xl font-semibold text-white">
-              Explore and apply to new opportunities
+              <TranslatedText>Explore and apply to new opportunities</TranslatedText>
             </h2>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <HiOutlineClipboardDocumentList className="h-4 w-4" />
-            {availableJobs.length} job{availableJobs.length !== 1 ? "s" : ""} available
+            <TranslatedText>{availableJobs.length} job{availableJobs.length !== 1 ? "s" : ""} available</TranslatedText>
           </div>
         </header>
 
@@ -121,10 +122,10 @@ const SeekerDashboard = () => {
           emptyState={
             <>
               <h3 className="text-lg font-semibold text-white">
-                No jobs available at the moment
+                <TranslatedText>No jobs available at the moment</TranslatedText>
               </h3>
               <p className="mt-2 max-w-md text-sm text-gray-400">
-                Check back later for new job opportunities from recruiters.
+                <TranslatedText>Check back later for new job opportunities from recruiters.</TranslatedText>
               </p>
             </>
           }

@@ -22,46 +22,47 @@ import { FaCoins } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const sideNavLinks = [
   {
     to: "/learn-earn",
-    label: "Overview",
+    label: <TranslatedText>Overview</TranslatedText>,
     icon: HiOutlineSquares2X2,
   },
   {
     to: "/learn-earn/profile",
-    label: "Profile",
+    label: <TranslatedText>Profile</TranslatedText>,
     icon: HiOutlineUserCircle,
   },
   {
     to: "/learn-earn/chat",
-    label: "Messages",
+    label: <TranslatedText>Messages</TranslatedText>,
     icon: HiOutlineChatBubbleOvalLeft,
   },
   {
     to: "/learn-earn/find-learners",
-    label: "Find Learners",
+    label: <TranslatedText>Find Learners</TranslatedText>,
     icon: HiOutlineUserPlus,
   },
   {
     to: "/learn-earn/live-debate-room",
-    label: "Live Debate Room",
+    label: <TranslatedText>Live Debate Room</TranslatedText>,
     icon: HiOutlineMicrophone,
   },
   {
     to: "/learn-earn/activities",
-    label: "Quizzes & Games",
+    label: <TranslatedText>Quizzes & Games</TranslatedText>,
     icon: HiOutlineBookOpen,
   },
   {
     to: "/learn-earn/wallet",
-    label: "Wallet",
+    label: <TranslatedText>Wallet</TranslatedText>,
     icon: HiOutlineCurrencyDollar,
   },
   {
     to: "/learn-earn/ratings",
-    label: "Ratings",
+    label: <TranslatedText>Ratings</TranslatedText>,
     icon: HiOutlineStar,
   },
 ];
@@ -86,7 +87,7 @@ const LearnEarnLayout = () => {
     try {
       await navigator.clipboard.writeText(safeProfile.id);
       setCopied(true);
-      toast.success("User ID copied to clipboard!", {
+      toast.success("User ID copied to clipboard!", { // Toast message
         icon: "📋",
         position: "top-right",
         autoClose: 2000,
@@ -94,7 +95,7 @@ const LearnEarnLayout = () => {
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
-      toast.error("Failed to copy User ID", {
+      toast.error("Failed to copy User ID", { // Toast message
         icon: "⚠️",
         position: "top-right",
         autoClose: 2000,
@@ -173,10 +174,10 @@ const LearnEarnLayout = () => {
           <div className="flex h-full flex-col gap-6 overflow-y-auto overflow-x-hidden px-6 pb-8 pt-12 custom-scrollbar">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-[#D4AF37]/70">
-                Learn & Earn
+                <TranslatedText>Learn & Earn</TranslatedText>
               </p>
               <h2 className="mt-2 text-xl font-semibold text-white">
-                AELA House
+                <TranslatedText>AELA House</TranslatedText>
               </h2>
             </div>
             {authUser ? (
@@ -212,7 +213,7 @@ const LearnEarnLayout = () => {
               <div className="mt-4 rounded-xl bg-[#141414] p-3 text-xs text-gray-300">
                 <p className="flex items-center gap-2 text-[#D4AF37]">
                   <FaCoins className="h-4 w-4" />
-                  Current Balance
+                  <TranslatedText>Current Balance</TranslatedText>
                 </p>
                 <p className="mt-1 text-2xl font-bold text-white">
                   {safeTotals.current.toLocaleString()}{" "}
@@ -223,15 +224,15 @@ const LearnEarnLayout = () => {
             ) : (
               <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4 shadow-inner">
                 <p className="text-sm font-semibold text-white mb-2">
-                  Welcome to Learn & Earn
+                  <TranslatedText>Welcome to Learn & Earn</TranslatedText>
                 </p>
                 <p className="text-xs text-gray-300 mb-4">
-                  Sign in to track your progress, earn coins, and access exclusive features.
+                  <TranslatedText>Sign in to track your progress, earn coins, and access exclusive features.</TranslatedText>
                 </p>
                 <Link
                   to="/login/student"
                   className="inline-flex items-center justify-center w-full rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
-                  Sign In
+                  <TranslatedText>Sign In</TranslatedText>
                 </Link>
               </div>
             )}
@@ -239,18 +240,18 @@ const LearnEarnLayout = () => {
 
             <div className="mt-auto rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
               <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">
-                Live
+                <TranslatedText>Live</TranslatedText>
               </p>
               <p className="mt-1 text-sm font-medium text-white">
                 {liveRoomsCount > 0 
-                  ? `${liveRoomsCount} ${liveRoomsCount === 1 ? 'room' : 'rooms'} open now`
-                  : 'No rooms live'}
+                  ? `${liveRoomsCount} ${liveRoomsCount === 1 ? <TranslatedText>room</TranslatedText> : <TranslatedText>rooms</TranslatedText>} <TranslatedText>open now</TranslatedText>`
+                  : <TranslatedText>No rooms live</TranslatedText>}
               </p>
               {liveRoomsCount > 0 && (
               <Link
                 to="/learn-earn/live-debate-room"
                 className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/30">
-                Jump in
+                <TranslatedText>Jump in</TranslatedText>
               </Link>
               )}
             </div>
@@ -271,7 +272,7 @@ const LearnEarnLayout = () => {
                     <HiOutlineBars3 className="h-6 w-6" />
                   </button>
                   <div className="rounded-2xl border border-white/10 bg-[#111] px-3 py-2 text-xs text-gray-400">
-                    Digital AELA · Learning & Earning House
+                    <TranslatedText>Digital AELA · Learning & Earning House</TranslatedText>
                   </div>
                 </div>
 
@@ -279,13 +280,13 @@ const LearnEarnLayout = () => {
                   <Link
                     to="/learn-earn"
                     className="hidden rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-gray-300 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37] sm:inline-flex">
-                    Back to Overview
+                    <TranslatedText>Back to Overview</TranslatedText>
                   </Link>
                   <Link
                     to="/learn-earn/wallet"
                     className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
                     <FaCoins className="h-4 w-4" />
-                    Redeem Coins
+                    <TranslatedText>Redeem Coins</TranslatedText>
                   </Link>
                 </div>
               </div>
@@ -300,8 +301,8 @@ const LearnEarnLayout = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={
                         location.pathname === "/learn-earn/chat"
-                          ? "Search conversations by name or user ID"
-                          : "Search learners by name or AELA ID"
+                          ? "Search conversations by name or user ID" // Placeholder - would need custom input for translation
+                          : "Search learners by name or AELA ID" // Placeholder
                       }
                       className="w-full rounded-2xl border border-white/10 bg-[#101010] py-3 pl-12 pr-4 text-sm text-gray-100 outline-none transition focus:border-[#D4AF37]/50 focus:ring-2 focus:ring-[#D4AF37]/20"
                     />
@@ -313,19 +314,19 @@ const LearnEarnLayout = () => {
                     to="/learn-earn/chat"
                     className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
                     <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
-                    Messages
+                    <TranslatedText>Messages</TranslatedText>
                   </Link>
                   <Link
                     to="/learn-earn"
                     className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
                     <HiOutlineUserGroup className="h-4 w-4" />
-                    Followers
+                    <TranslatedText>Followers</TranslatedText>
                   </Link>
                   <Link
                     to="/learn-earn"
                     className="relative inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]">
                     <HiOutlineBell className="h-4 w-4" />
-                    Alerts
+                    <TranslatedText>Alerts</TranslatedText>
                     {unreadCount > 0 && (
                       <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4AF37] text-[10px] font-bold text-black">
                         {Math.min(unreadCount, 9)}
@@ -397,16 +398,16 @@ const LearnEarnLayout = () => {
                 ) : (
                   <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4">
                     <p className="text-sm font-semibold text-white mb-2">
-                      Welcome to Learn & Earn
+                      <TranslatedText>Welcome to Learn & Earn</TranslatedText>
                     </p>
                     <p className="text-xs text-gray-300 mb-4">
-                      Sign in to track your progress and earn coins.
+                      <TranslatedText>Sign in to track your progress and earn coins.</TranslatedText>
                     </p>
                     <Link
                       to="/login/student"
                       onClick={() => setIsSidebarOpen(false)}
                       className="inline-flex items-center justify-center w-full rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
-                      Sign In
+                      <TranslatedText>Sign In</TranslatedText>
                     </Link>
                   </div>
                 )}

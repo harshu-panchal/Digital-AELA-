@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import logo from "../../../src/assets/MainLogo.png";
 import googlePlay from "../../../src/assets/googlePlay.png";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,72 +12,82 @@ export const Footer = () => {
 
   const footerColumns = [
     {
-      title: "Explore",
-      links: [{ label: "Learn & Earn", to: "/learn-earn" }],
+      id: "explore",
+      title: <TranslatedText>Explore</TranslatedText>,
+      links: [{ id: "learn-earn", label: <TranslatedText>Learn & Earn</TranslatedText>, to: "/learn-earn" }],
     },
     {
-      title: "Courses",
+      id: "courses",
+      title: <TranslatedText>Courses</TranslatedText>,
       links: [
-        { label: "Corporate Training", to: "/courses/corporate-training" },
-        { label: "Digital Marketing", to: "/courses/digital-marketing" },
-        { label: "English Language", to: "/courses/english-language" },
+        { id: "corporate-training", label: <TranslatedText>Corporate Training</TranslatedText>, to: "/courses/corporate-training" },
+        { id: "digital-marketing", label: <TranslatedText>Digital Marketing</TranslatedText>, to: "/courses/digital-marketing" },
+        { id: "english-language", label: <TranslatedText>English Language</TranslatedText>, to: "/courses/english-language" },
       ],
     },
     {
-      title: "Resources",
+      id: "resources",
+      title: <TranslatedText>Resources</TranslatedText>,
       links: [
-        { label: "AELA Blogs", to: "/blogs" },
-        { label: "YouTube", to: "/resources/youtube" },
-        { label: "Free Downloads", to: "/resources/downloads" },
-        { label: "Books", to: "/books" },
+        { id: "aela-blogs", label: <TranslatedText>AELA Blogs</TranslatedText>, to: "/blogs" },
+        { id: "youtube", label: <TranslatedText>YouTube</TranslatedText>, to: "/resources/youtube" },
+        { id: "free-downloads", label: <TranslatedText>Free Downloads</TranslatedText>, to: "/resources/downloads" },
+        { id: "books", label: <TranslatedText>Books</TranslatedText>, to: "/books" },
       ],
     },
     {
-      title: "About Digital AELA",
+      id: "about",
+      title: <TranslatedText>About Digital AELA</TranslatedText>,
       links: [
-        { label: "Our Story", to: "/about/our-story" },
-        { label: "Mission & Vision", to: "/about/mission-vision" },
-        { label: "Meet the Founder", to: "/about/founder" },
+        { id: "our-story", label: <TranslatedText>Our Story</TranslatedText>, to: "/about/our-story" },
+        { id: "mission-vision", label: <TranslatedText>Mission & Vision</TranslatedText>, to: "/about/mission-vision" },
+        { id: "founder", label: <TranslatedText>Meet the Founder</TranslatedText>, to: "/about/founder" },
         {
-          label: "Student Success Stories",
+          id: "success-stories",
+          label: <TranslatedText>Student Success Stories</TranslatedText>,
           to: "/about/success-stories",
         },
       ],
     },
     {
-      title: "Contact",
+      id: "contact",
+      title: <TranslatedText>Contact</TranslatedText>,
       links: [
-        { label: "Book a Demo Class", to: "/contact/book-demo" },
+        { id: "book-demo", label: <TranslatedText>Book a Demo Class</TranslatedText>, to: "/contact/book-demo" },
         {
-          label: "Request Collaboration",
+          id: "business-collaboration",
+          label: <TranslatedText>Request Collaboration</TranslatedText>,
           to: "/contact/business-collaboration",
         },
         {
-          label: "Franchise Inquiry",
+          id: "franchise",
+          label: <TranslatedText>Franchise Inquiry</TranslatedText>,
           to: "/contact/franchise-partnership",
         },
       ],
     },
     {
-      title: "Legal",
+      id: "legal",
+      title: <TranslatedText>Legal</TranslatedText>,
       links: [
-        { label: "Disclaimer", to: "/disclaimer" },
-        { label: "Privacy Policy", to: "/privacy-policy" },
+        { id: "disclaimer", label: <TranslatedText>Disclaimer</TranslatedText>, to: "/disclaimer" },
+        { id: "privacy-policy", label: <TranslatedText>Privacy Policy</TranslatedText>, to: "/privacy-policy" },
         {
-          label: "Refund & Cancellation Policy",
+          id: "refund-policy",
+          label: <TranslatedText>Refund & Cancellation Policy</TranslatedText>,
           to: "/refund-cancellation-policy",
         },
-        { label: "Terms & Conditions", to: "/terms-conditions" },
+        { id: "terms", label: <TranslatedText>Terms & Conditions</TranslatedText>, to: "/terms-conditions" },
       ],
     },
   ];
 
   // Build social links array from dynamic settings
   const socialLinksArray = [
-    { label: "LinkedIn", url: socialLinks.linkedin },
-    { label: "Instagram", url: socialLinks.instagram },
-    { label: "YouTube", url: socialLinks.youtube },
-    { label: "Facebook", url: socialLinks.facebook },
+    { id: "linkedin", label: <TranslatedText>LinkedIn</TranslatedText>, url: socialLinks.linkedin },
+    { id: "instagram", label: <TranslatedText>Instagram</TranslatedText>, url: socialLinks.instagram },
+    { id: "youtube", label: <TranslatedText>YouTube</TranslatedText>, url: socialLinks.youtube },
+    { id: "facebook", label: <TranslatedText>Facebook</TranslatedText>, url: socialLinks.facebook },
   ].filter((link) => link.url); // Only show links that have URLs
 
   return (
@@ -103,10 +114,12 @@ export const Footer = () => {
               </Link>
             </div>
             <p className="text-xs md:text-sm text-white/80 leading-relaxed">
-              Digital AELA is a leading educational platform dedicated to
-              empowering learners worldwide through innovative digital courses,
-              comprehensive training programs, and transformative learning
-              experiences.
+              <TranslatedText>
+                Digital AELA is a leading educational platform dedicated to
+                empowering learners worldwide through innovative digital courses,
+                comprehensive training programs, and transformative learning
+                experiences.
+              </TranslatedText>
             </p>
           </motion.div>
 
@@ -114,7 +127,7 @@ export const Footer = () => {
           <div className="flex-1 grid gap-12 md:gap-16 lg:gap-20 xl:gap-24 2xl:gap-28 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 lg:ml-0 xl:ml-0 2xl:ml-0 lg:min-w-0 lg:w-full xl:max-w-none">
             {footerColumns.map((column, columnIndex) => (
               <motion.div
-                key={column.title}
+                key={column.id}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -130,7 +143,7 @@ export const Footer = () => {
                 <ul className="space-y-1.5">
                   {column.links.map((link, linkIndex) => (
                     <motion.li
-                      key={link.label}
+                      key={link.id || link.to || link.url}
                       initial={{ opacity: 0, x: -8 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -155,7 +168,7 @@ export const Footer = () => {
                       )}
                     </motion.li>
                   ))}
-                  {column.title === "Explore" && (
+                  {column.id === "explore" && (
                     <motion.li
                       initial={{ opacity: 0, x: -8 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -185,13 +198,13 @@ export const Footer = () => {
 
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p className="text-[11px] md:text-xs text-[#F5D26A]/60">
-            © {currentYear} Digital AELA. All rights reserved.
+            © {currentYear} <TranslatedText>Digital AELA. All rights reserved.</TranslatedText>
           </p>
           <div className="flex flex-wrap items-center gap-3 justify-end">
             {socialLinksArray.length > 0 ? (
               socialLinksArray.map((social) => (
                 <a
-                  key={social.label}
+                  key={social.id}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -206,28 +219,28 @@ export const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
-                  LinkedIn
+                  <TranslatedText>LinkedIn</TranslatedText>
                 </a>
                 <a
                   href={socialLinks.instagram || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
-                  Instagram
+                  <TranslatedText>Instagram</TranslatedText>
                 </a>
                 <a
                   href={socialLinks.youtube || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
-                  YouTube
+                  <TranslatedText>YouTube</TranslatedText>
                 </a>
                 <a
                   href={socialLinks.facebook || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs md:text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200">
-                  Facebook
+                  <TranslatedText>Facebook</TranslatedText>
                 </a>
               </>
             )}

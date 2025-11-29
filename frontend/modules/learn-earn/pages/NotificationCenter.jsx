@@ -5,6 +5,7 @@ import { FaBell, FaCheck, FaTrash, FaArrowLeft } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   fetchNotifications,
   markAsRead,
@@ -222,9 +223,9 @@ const NotificationCenter = () => {
               <FaArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-white">Notifications</h1>
+              <h1 className="text-2xl font-bold text-white"><TranslatedText>Notifications</TranslatedText></h1>
               <p className="text-sm text-gray-400 mt-1">
-                {unreadCount} unread · {readCount} read
+                {unreadCount} <TranslatedText>unread</TranslatedText> · {readCount} <TranslatedText>read</TranslatedText>
               </p>
             </div>
           </div>
@@ -233,14 +234,14 @@ const NotificationCenter = () => {
               <button
                 onClick={handleMarkAllAsRead}
                 className="px-4 py-2 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 transition text-sm font-semibold">
-                Mark all read
+                <TranslatedText>Mark all read</TranslatedText>
               </button>
             )}
             {readCount > 0 && (
               <button
                 onClick={handleClearAllRead}
                 className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition text-sm font-semibold">
-                Clear read
+                <TranslatedText>Clear read</TranslatedText>
               </button>
             )}
           </div>
@@ -255,7 +256,7 @@ const NotificationCenter = () => {
                 ? "bg-[#D4AF37]/20 text-[#D4AF37]"
                 : "bg-white/5 text-gray-400 hover:text-white"
             }`}>
-            All
+            <TranslatedText>All</TranslatedText>
           </button>
           <button
             onClick={() => setFilter("unread")}
@@ -264,7 +265,7 @@ const NotificationCenter = () => {
                 ? "bg-[#D4AF37]/20 text-[#D4AF37]"
                 : "bg-white/5 text-gray-400 hover:text-white"
             }`}>
-            Unread ({unreadCount})
+            <TranslatedText>Unread</TranslatedText> ({unreadCount})
           </button>
           <button
             onClick={() => setFilter("read")}
@@ -273,17 +274,17 @@ const NotificationCenter = () => {
                 ? "bg-[#D4AF37]/20 text-[#D4AF37]"
                 : "bg-white/5 text-gray-400 hover:text-white"
             }`}>
-            Read ({readCount})
+            <TranslatedText>Read</TranslatedText> ({readCount})
           </button>
         </div>
 
         {/* Notifications List */}
         {isLoading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400"><TranslatedText>Loading...</TranslatedText></div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12">
             <FaBell className="h-16 w-16 mx-auto mb-4 opacity-30 text-gray-500" />
-            <p className="text-gray-400">No notifications found</p>
+            <p className="text-gray-400"><TranslatedText>No notifications found</TranslatedText></p>
           </div>
         ) : (
           <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">

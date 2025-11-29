@@ -17,6 +17,9 @@ import SEO from "../../src/components/SEO";
 import { useUser } from "../../src/contexts/UserContext";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { usePoints } from "../../src/contexts/PointsContext";
+import { useLanguage } from "../../src/contexts/LanguageContext";
+import { useDynamicTranslation } from "../../src/hooks/useDynamicTranslation";
+import TranslatedText from "../../src/components/TranslatedText";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
 import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
 import { getStudentAssignments } from "../../src/services/api/assignments";
@@ -44,6 +47,7 @@ const StudentDashboard = () => {
   const { profile, notifications, followers } = useUser();
   const { user: authUser, tokens } = useAuth();
   const { aelaPoints, refreshPoints } = usePoints(); // Get live coin balance
+  const { translateBatch, isTranslating } = useDynamicTranslation({ sourceLang: "en" });
 
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +63,7 @@ const StudentDashboard = () => {
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
+  const [translatedAnnouncements, setTranslatedAnnouncements] = useState([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
 
   // Load real-time data from backend
@@ -189,6 +194,40 @@ const StudentDashboard = () => {
     return () => window.removeEventListener("storage", handleStorage);
   }, [loadDashboard, loadWidgets, loadAssignments, loadAnnouncements]);
 
+  // Translate announcements when language changes
+  useEffect(() => {
+    const runTranslation = async () => {
+      if (!announcements || announcements.length === 0) {
+        setTranslatedAnnouncements([]);
+        return;
+      }
+
+      try {
+        const titles = announcements.map((a) => a.title || "");
+        const contents = announcements.map((a) => a.content || "");
+
+        const [translatedTitles, translatedContents] = await Promise.all([
+          translateBatch(titles),
+          translateBatch(contents),
+        ]);
+
+        const merged = announcements.map((announcement, index) => ({
+          ...announcement,
+          title: translatedTitles[index] || announcement.title,
+          content: translatedContents[index] || announcement.content,
+        }));
+
+        setTranslatedAnnouncements(merged);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[StudentDashboard] Failed to translate announcements:", error);
+        setTranslatedAnnouncements(announcements);
+      }
+    };
+
+    runTranslation();
+  }, [announcements, translateBatch]);
+
   // Listen for quiz completion events to refresh dashboard and points
   useEffect(() => {
     const handleQuizComplete = () => {
@@ -252,10 +291,10 @@ const StudentDashboard = () => {
 
   if (isLoading || !dashboardData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020409] text-white">
+          <div className="flex min-h-screen items-center justify-center bg-[#020409] text-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto mb-4"></div>
-          <p className="text-sm text-slate-300/80">Loading your dashboard...</p>
+          <p className="text-sm text-slate-300/80"><TranslatedText>Loading your dashboard...</TranslatedText></p>
         </div>
       </div>
     );
@@ -469,17 +508,26 @@ const StudentDashboard = () => {
                 View all
               </Link>
             </header>
-            {loadingAnnouncements ? (
-              <div className="py-8 text-center text-sm text-slate-400">Loading announcements...</div>
+            {loadingAnnouncements || isTranslating ? (
+              <div className="py-8 text-center text-sm text-slate-400">
+                <TranslatedText>Loading announcements...</TranslatedText>
+              </div>
             ) : announcements.length === 0 ? (
               <div className="text-center py-8 text-sm text-slate-400">
                 <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-                <p>No announcements at the moment</p>
-                <p className="mt-2 text-xs text-slate-500">Stay tuned for updates!</p>
+                <p>
+                  <TranslatedText>No announcements at the moment</TranslatedText>
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  <TranslatedText>Stay tuned for updates!</TranslatedText>
+                </p>
               </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {announcements.map((announcement) => {
+                {(translatedAnnouncements.length > 0
+                  ? translatedAnnouncements
+                  : announcements
+                ).map((announcement) => {
                   const isRead = announcement.isRead || false;
                   const publishedDate = announcement.publishedAt || announcement.createdAt;
                   const timeAgo = publishedDate
@@ -541,12 +589,12 @@ const StudentDashboard = () => {
             <header className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <HiOutlineDocumentText className="h-5 w-5" />
-                Due Assignments
+                <TranslatedText>Due Assignments</TranslatedText>
               </h2>
               <Link
                 to="/student/assignments"
                 className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                View all
+                <TranslatedText>View all</TranslatedText>
               </Link>
             </header>
             {loadingAssignments ? (

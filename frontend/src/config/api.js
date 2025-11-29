@@ -46,7 +46,4 @@ export const getApiBaseUrlWithoutPath = () => {
   return API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 };
 
-// Log the API URL in development for debugging
-if (import.meta.env.DEV) {
-  console.log("[API Config] Using API Base URL:", API_BASE_URL);
-}
+// API Base URL is configured above

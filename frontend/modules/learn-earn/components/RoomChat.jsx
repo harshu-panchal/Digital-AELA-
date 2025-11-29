@@ -10,6 +10,7 @@ import {
 import { FaSpinner, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   getRoomMessages,
   sendRoomMessage,

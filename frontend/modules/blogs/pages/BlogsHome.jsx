@@ -7,6 +7,7 @@ import BlogCategoryFilter from "../components/BlogCategoryFilter";
 import BlogList from "../components/BlogList";
 import SEO from "../../../src/components/SEO";
 import { useBlogs } from "../../../src/contexts/BlogContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const BlogsHome = () => {
   const {
@@ -38,7 +39,7 @@ const BlogsHome = () => {
     });
 
     const descriptionBase =
-      "Explore trending learner and mentor stories inside the Digital AELA community. Discover tips, speaking challenges, and learning opportunities.";
+      "Explore trending learner and mentor stories inside the Digital AELA community. Discover tips, speaking challenges, and learning opportunities."; // This will be translated via SEO component
 
     return {
       metaDescription: descriptionBase,
@@ -61,7 +62,7 @@ const BlogsHome = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
       <SEO
-        title="AELA Blogs - Learn & Earn Stories"
+        title={<TranslatedText>AELA Blogs - Learn & Earn Stories</TranslatedText>}
         description={metaDescription}
         keywords={metaKeywords}
         type="website"
@@ -75,14 +76,13 @@ const BlogsHome = () => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="max-w-3xl space-y-4">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#F5D26A]">
-              AELA Blogs
+              <TranslatedText>AELA Blogs</TranslatedText>
             </span>
             <h1 className="clamp-heading font-semibold text-balance">
-              Stories, strategies, and wins from the Digital AELA community.
+              <TranslatedText>Stories, strategies, and wins from the Digital AELA community.</TranslatedText>
             </h1>
             <p className="text-sm text-gray-300 sm:text-base text-balance">
-              Explore the journeys of speakers, educators, and learners. Publish
-              your ideas, grow your influence, and connect with the community.
+              <TranslatedText>Explore the journeys of speakers, educators, and learners. Publish your ideas, grow your influence, and connect with the community.</TranslatedText>
             </p>
 
             {isAuthenticated && (
@@ -91,12 +91,12 @@ const BlogsHome = () => {
                   to="/blogs/create"
                   className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#D4AF37] to-[#F5D26A] px-5 py-3 text-sm font-semibold text-black shadow-xl shadow-[#D4AF37]/30 transition hover:brightness-110">
                   <HiOutlinePencilSquare className="h-5 w-5" />
-                  Create Blog
+                  <TranslatedText>Create Blog</TranslatedText>
                 </Link>
                 <Link
                   to="/my-blogs"
                   className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-[#101010]/80 px-5 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
-                  Manage My Blogs
+                  <TranslatedText>Manage My Blogs</TranslatedText>
                   <HiOutlineArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -119,22 +119,21 @@ const BlogsHome = () => {
 
             {loadError && (
               <div className="rounded-2xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-200">
-                {loadError.message ||
-                  "Unable to load blogs. Please try refreshing."}
+                {loadError.message || <TranslatedText>Unable to load blogs. Please try refreshing.</TranslatedText>}
               </div>
             )}
 
             {isLoading && (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
-                Loading latest community posts…
+                <TranslatedText>Loading latest community posts…</TranslatedText>
               </div>
             )}
 
             <BlogList
-              title="All Results"
-              description="Personalized feed based on your filters and search."
+              title={<TranslatedText>All Results</TranslatedText>}
+              description={<TranslatedText>Personalized feed based on your filters and search.</TranslatedText>}
               blogs={filteredBlogs}
-              emptyState="No blogs match your current filters. Try adjusting categories or tags."
+              emptyState={<TranslatedText>No blogs match your current filters. Try adjusting categories or tags.</TranslatedText>}
             />
           </div>
         </div>

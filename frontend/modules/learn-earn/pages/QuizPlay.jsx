@@ -7,6 +7,7 @@ import { fetchQuizById, submitQuizAttempt, fetchQuizHistory } from "../../../src
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import SEO from "../../../src/components/SEO";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const QuizPlay = () => {
   const { quizId } = useParams();
@@ -230,7 +231,7 @@ const QuizPlay = () => {
       <div className="min-h-screen bg-[#05060D] flex items-center justify-center">
         <div className="text-center">
           <FaSpinner className="w-12 h-12 text-[#D4AF37] animate-spin mx-auto mb-4" />
-          <p className="text-white">Loading quiz...</p>
+          <p className="text-white"><TranslatedText>Loading quiz...</TranslatedText></p>
         </div>
       </div>
     );
@@ -241,14 +242,14 @@ const QuizPlay = () => {
       <div className="min-h-screen bg-[#05060D] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <FaLock className="w-16 h-16 text-[#D4AF37] mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Quiz Already Attempted</h2>
+          <h2 className="text-2xl font-bold text-white mb-2"><TranslatedText>Quiz Already Attempted</TranslatedText></h2>
           <p className="text-gray-400 mb-6">
-            You have already completed this quiz. Each quiz can only be attempted once.
+            <TranslatedText>You have already completed this quiz. Each quiz can only be attempted once.</TranslatedText>
           </p>
           <button
             onClick={() => navigate("/learn-earn/activities")}
             className="bg-[#D4AF37] text-black py-3 px-6 rounded-lg font-bold hover:bg-[#E5C158] transition-colors">
-            Back to Activities
+            <TranslatedText>Back to Activities</TranslatedText>
           </button>
         </div>
       </div>
@@ -277,9 +278,9 @@ const QuizPlay = () => {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-[#0A0E1C] rounded-xl p-8 border border-white/10 text-center">
             <FaLock className="w-16 h-16 text-[#D4AF37] mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
+            <h2 className="text-2xl font-bold text-white mb-2"><TranslatedText>Login Required</TranslatedText></h2>
             <p className="text-gray-400 mb-6">
-              Please sign in to attempt this quiz and earn AELA coins.
+              <TranslatedText>Please sign in to attempt this quiz and earn AELA coins.</TranslatedText>
             </p>
             <div className="space-y-3">
               <button
@@ -287,22 +288,22 @@ const QuizPlay = () => {
                   state: { from: `/learn-earn/quiz/${quizId}` },
                 })}
                 className="w-full bg-[#D4AF37] text-black py-3 px-6 rounded-lg font-bold hover:bg-[#E5C158] transition-colors">
-                Sign In to Attempt Quiz
+                <TranslatedText>Sign In to Attempt Quiz</TranslatedText>
               </button>
               <button
                 onClick={() => navigate("/learn-earn/activities")}
                 className="w-full bg-transparent border border-white/20 text-white py-3 px-6 rounded-lg font-bold hover:bg-white/10 transition-colors">
-                Back to Activities
+                <TranslatedText>Back to Activities</TranslatedText>
               </button>
             </div>
             {/* Show quiz info for preview */}
             <div className="mt-8 pt-8 border-t border-white/10 text-left">
-              <h3 className="text-lg font-semibold text-white mb-2">Quiz Preview</h3>
+              <h3 className="text-lg font-semibold text-white mb-2"><TranslatedText>Quiz Preview</TranslatedText></h3>
               <p className="text-gray-300 mb-4">{quiz.description || quiz.title}</p>
               <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                <span>Questions: {questions.length}</span>
-                {quiz.duration && <span>Duration: {quiz.duration} min</span>}
-                {quiz.rewardCoins && <span>Reward: {quiz.rewardCoins} AELA coins</span>}
+                <span><TranslatedText>Questions:</TranslatedText> {questions.length}</span>
+                {quiz.duration && <span><TranslatedText>Duration:</TranslatedText> {quiz.duration} <TranslatedText>min</TranslatedText></span>}
+                {quiz.rewardCoins && <span><TranslatedText>Reward:</TranslatedText> {quiz.rewardCoins} <TranslatedText>AELA coins</TranslatedText></span>}
               </div>
             </div>
           </div>
@@ -328,7 +329,7 @@ const QuizPlay = () => {
               onClick={() => navigate("/learn-earn/activities")}
               className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-colors">
               <FaArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <span><TranslatedText>Back</TranslatedText></span>
             </button>
             {timeRemaining !== null && (
               <div className="flex items-center gap-2 text-[#D4AF37]">
@@ -341,7 +342,7 @@ const QuizPlay = () => {
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-xl font-bold text-white">{quiz.title}</h1>
               <span className="text-sm text-gray-400">
-                Question {currentQuestionIndex + 1} of {questions.length}
+                <TranslatedText>Question</TranslatedText> {currentQuestionIndex + 1} <TranslatedText>of</TranslatedText> {questions.length}
               </span>
             </div>
             <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
@@ -373,9 +374,9 @@ const QuizPlay = () => {
                   {results.score}%
                 </span>
               </motion.div>
-              <h2 className="text-3xl font-bold text-white mb-2">Quiz Completed!</h2>
+              <h2 className="text-3xl font-bold text-white mb-2"><TranslatedText>Quiz Completed!</TranslatedText></h2>
               <p className="text-gray-400 mb-6">
-                You got {results.correctAnswers} out of {results.totalQuestions} questions correct
+                <TranslatedText>You got</TranslatedText> {results.correctAnswers} <TranslatedText>out of</TranslatedText> {results.totalQuestions} <TranslatedText>questions correct</TranslatedText>
               </p>
               <div className="flex items-center justify-center gap-6 mb-8">
                 <div className="text-center">
@@ -383,20 +384,20 @@ const QuizPlay = () => {
                     <FaCoins className="w-6 h-6" />
                     {results.coinsEarned}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">Coins Earned</div>
+                  <div className="text-xs text-gray-400 mt-1"><TranslatedText>Coins Earned</TranslatedText></div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white">
                     {Math.floor(results.timeSpent / 60)}:{(results.timeSpent % 60).toString().padStart(2, "0")}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">Time Taken</div>
+                  <div className="text-xs text-gray-400 mt-1"><TranslatedText>Time Taken</TranslatedText></div>
                 </div>
               </div>
             </div>
 
             {/* Question Review */}
             <div className="space-y-4">
-              <h3 className="text-xl font-bold text-white">Question Review</h3>
+              <h3 className="text-xl font-bold text-white"><TranslatedText>Question Review</TranslatedText></h3>
               {results.submittedAnswers.map((answer, index) => (
                 <motion.div
                   key={index}
@@ -410,7 +411,7 @@ const QuizPlay = () => {
                   }`}>
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-sm font-semibold text-gray-400">
-                      Question {index + 1}
+                      <TranslatedText>Question</TranslatedText> {index + 1}
                     </span>
                     {answer.isCorrect ? (
                       <FaCheck className="w-5 h-5 text-green-500" />
@@ -428,16 +429,16 @@ const QuizPlay = () => {
                           ? "bg-red-500/20 border border-red-500/50"
                           : "bg-gray-800 border border-gray-700"
                       }`}>
-                      <span className="text-xs text-gray-400">Your Answer: </span>
+                      <span className="text-xs text-gray-400"><TranslatedText>Your Answer:</TranslatedText> </span>
                       <span className="text-white">
                         {answer.userAnswer !== -1
                           ? answer.userAnswer + 1
-                          : "Not answered"}
+                          : <TranslatedText>Not answered</TranslatedText>}
                       </span>
                     </div>
                     {!answer.isCorrect && (
                       <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/50">
-                        <span className="text-xs text-gray-400">Correct Answer: </span>
+                        <span className="text-xs text-gray-400"><TranslatedText>Correct Answer:</TranslatedText> </span>
                         <span className="text-white">{answer.correctAnswer + 1}</span>
                       </div>
                     )}
@@ -461,7 +462,7 @@ const QuizPlay = () => {
                   }, 100);
                 }}
                 className="w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold hover:bg-[#E5C158] transition-colors">
-                Back to Activities
+                <TranslatedText>Back to Activities</TranslatedText>
               </button>
             </div>
           </motion.div>
@@ -513,13 +514,13 @@ const QuizPlay = () => {
                       onClick={handlePrevious}
                       disabled={currentQuestionIndex === 0}
                       className="px-6 py-2 rounded-lg border border-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#D4AF37] transition-colors">
-                      Previous
+                      <TranslatedText>Previous</TranslatedText>
                     </button>
                     {currentQuestionIndex < questions.length - 1 ? (
                       <button
                         onClick={handleNext}
                         className="px-6 py-2 rounded-lg bg-[#D4AF37] text-black font-bold hover:bg-[#E5C158] transition-colors">
-                        Next
+                        <TranslatedText>Next</TranslatedText>
                       </button>
                     ) : (
                       <button
@@ -529,10 +530,10 @@ const QuizPlay = () => {
                         {isSubmitting ? (
                           <>
                             <FaSpinner className="w-4 h-4 animate-spin" />
-                            Submitting...
+                            <TranslatedText>Submitting...</TranslatedText>
                           </>
                         ) : (
-                          "Submit Quiz"
+                          <TranslatedText>Submit Quiz</TranslatedText>
                         )}
                       </button>
                     )}

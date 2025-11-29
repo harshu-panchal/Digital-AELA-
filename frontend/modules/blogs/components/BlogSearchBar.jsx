@@ -1,6 +1,7 @@
 import { motion as Motion } from "framer-motion";
 import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import { useBlogs } from "../../../src/contexts/BlogContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const shimmerVariants = {
   animate: {
@@ -14,7 +15,7 @@ const shimmerVariants = {
 };
 
 const BlogSearchBar = ({
-  placeholder = "Search blogs, tags or authors",
+  placeholder = "Search blogs, tags or authors", // Placeholder
   onSubmit,
 }) => {
   const { searchTerm, setSearchTerm, performSearch, activeFilters } = useBlogs();
@@ -63,7 +64,7 @@ const BlogSearchBar = ({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
             className="rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F5D26A] px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/40 transition hover:brightness-110">
-            Search
+            <TranslatedText>Search</TranslatedText>
           </Motion.button>
         </div>
       </div>

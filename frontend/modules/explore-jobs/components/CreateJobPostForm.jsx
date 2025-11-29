@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { HiOutlinePlusCircle } from "react-icons/hi2";
 import { useExploreJobs } from "../context/ExploreJobsContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const defaultValues = {
   title: "",
@@ -95,23 +96,23 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
       className="space-y-6 rounded-[28px] border border-white/10 bg-[#040404]/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
       <header className="flex flex-col gap-1">
         <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-          {isEditing ? "Update Role Drop" : "New Job Drop"}
+          {isEditing ? <TranslatedText>Update Role Drop</TranslatedText> : <TranslatedText>New Job Drop</TranslatedText>}
         </p>
         <h3 className="text-xl font-semibold text-white">
-          {isEditing ? "Edit job post" : "Share a role within 90 seconds"}
+          {isEditing ? <TranslatedText>Edit job post</TranslatedText> : <TranslatedText>Share a role within 90 seconds</TranslatedText>}
         </h3>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Job Title*
+            <TranslatedText>Job Title*</TranslatedText>
           </label>
           <input
             name="title"
             value={formValues.title}
             onChange={handleChange}
-            placeholder="Lead Product Designer"
+            placeholder="Lead Product Designer" // Placeholder
             className={inputBase}
             required
           />
@@ -119,13 +120,13 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Company*
+            <TranslatedText>Company*</TranslatedText>
           </label>
           <input
             name="company"
             value={formValues.company}
             onChange={handleChange}
-            placeholder="Aurora Finance"
+            placeholder="Aurora Finance" // Placeholder
             className={inputBase}
             required
           />
@@ -133,13 +134,13 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Location*
+            <TranslatedText>Location*</TranslatedText>
           </label>
           <input
             name="location"
             value={formValues.location}
             onChange={handleChange}
-            placeholder="Remote · Europe / India"
+            placeholder="Remote · Europe / India" // Placeholder
             className={inputBase}
             required
           />
@@ -147,39 +148,39 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Salary Range
+            <TranslatedText>Salary Range</TranslatedText>
           </label>
           <input
             name="salary"
             value={formValues.salary}
             onChange={handleChange}
-            placeholder="₹28L – ₹36L / $80k – $110k"
+            placeholder="₹28L – ₹36L / $80k – $110k" // Placeholder
             className={inputBase}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Experience Level
+            <TranslatedText>Experience Level</TranslatedText>
           </label>
           <input
             name="experience"
             value={formValues.experience}
             onChange={handleChange}
-            placeholder="5–7 years · Fintech"
+            placeholder="5–7 years · Fintech" // Placeholder
             className={inputBase}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Employment Type
+            <TranslatedText>Employment Type</TranslatedText>
           </label>
           <input
             name="employmentType"
             value={formValues.employmentType}
             onChange={handleChange}
-            placeholder="Full-time · Remote"
+            placeholder="Full-time · Remote" // Placeholder
             className={inputBase}
           />
         </div>
@@ -188,26 +189,26 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Primary Tags (comma separated)
+            <TranslatedText>Primary Tags (comma separated)</TranslatedText>
           </label>
           <input
             name="tags"
             value={formValues.tags}
             onChange={handleChange}
-            placeholder="Design Systems, Figma, Accessibility"
+            placeholder="Design Systems, Figma, Accessibility" // Placeholder
             className={inputBase}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Culture Highlights
+            <TranslatedText>Culture Highlights</TranslatedText>
           </label>
           <input
             name="cultureHighlights"
             value={formValues.cultureHighlights}
             onChange={handleChange}
-            placeholder="Quarterly design retreats, Learning wallet"
+            placeholder="Quarterly design retreats, Learning wallet" // Placeholder
             className={inputBase}
           />
         </div>
@@ -215,26 +216,26 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
 
       <div className="space-y-2">
         <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-          Cover Image URL
+          <TranslatedText>Cover Image URL</TranslatedText>
         </label>
         <input
           name="image"
           value={formValues.image}
           onChange={handleChange}
-          placeholder="https://images.unsplash.com/..."
+          placeholder="https://images.unsplash.com/..." // Placeholder
           className={inputBase}
         />
       </div>
 
       <div className="space-y-2">
         <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-          Description*
+          <TranslatedText>Description*</TranslatedText>
         </label>
         <textarea
           name="description"
           value={formValues.description}
           onChange={handleChange}
-          placeholder="Why is this role exciting? What challenges will they own?"
+          placeholder="Why is this role exciting? What challenges will they own?" // Placeholder
           className={`${inputBase} min-h-[140px]`}
           required
         />
@@ -242,27 +243,27 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
 
       <div className="space-y-2">
         <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-          Application CTA
+          <TranslatedText>Application CTA</TranslatedText>
         </label>
         <input
           name="applyCTA"
           value={formValues.applyCTA}
           onChange={handleChange}
-          placeholder="Apply via portfolio drop"
+          placeholder="Apply via portfolio drop" // Placeholder
           className={inputBase}
         />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
         <p className="text-xs text-gray-500">
-          Tip: Keep it crisp like an Instagram drop. Add images, highlights, and perks.
+          <TranslatedText>Tip: Keep it crisp like an Instagram drop. Add images, highlights, and perks.</TranslatedText>
         </p>
         <div className="flex items-center gap-3">
           <button
             type="reset"
             onClick={() => setFormValues(initialData ?? defaultValues)}
             className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30">
-            Reset
+            <TranslatedText>Reset</TranslatedText>
           </button>
           <button
             type="submit"
@@ -273,7 +274,7 @@ const CreateJobPostForm = ({ onSubmitComplete, isEditing, initialData, onSubmitO
                 : "bg-white text-black shadow-lg shadow-white/30 hover:-translate-y-0.5"
             }`}>
             <HiOutlinePlusCircle className="h-5 w-5" />
-            {isSubmitting ? "Publishing..." : isEditing ? "Update Post" : "Publish Job"}
+            {isSubmitting ? <TranslatedText>Publishing...</TranslatedText> : isEditing ? <TranslatedText>Update Post</TranslatedText> : <TranslatedText>Publish Job</TranslatedText>}
           </button>
         </div>
       </div>

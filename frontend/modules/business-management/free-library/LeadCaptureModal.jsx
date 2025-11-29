@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { createPublicLead } from "../../../src/services/api/crm";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const BOOK_PREFERENCES = [
   "Public Speaking",
@@ -220,9 +221,9 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="sticky top-0 border-b border-[#F5D26A]/20 bg-[#04060F]/95 backdrop-blur-sm px-6 py-4">
-              <h2 className="text-2xl font-bold text-[#F5D26A]">Welcome to Free Library</h2>
+              <h2 className="text-2xl font-bold text-[#F5D26A]"><TranslatedText>Welcome to Free Library</TranslatedText></h2>
               <p className="mt-2 text-sm text-slate-300">
-                Please fill in your details to access our free e-books
+                <TranslatedText>Please fill in your details to access our free e-books</TranslatedText>
               </p>
             </div>
 
@@ -235,7 +236,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
               {/* First Name */}
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-slate-200 mb-2">
-                  First Name <span className="text-red-400">*</span>
+                  <TranslatedText>First Name</TranslatedText> <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -260,7 +261,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
               {/* Last Name */}
               <div>
                 <label htmlFor="lastName" className="block text-sm font-medium text-slate-200 mb-2">
-                  Last Name <span className="text-red-400">*</span>
+                  <TranslatedText>Last Name</TranslatedText> <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -285,7 +286,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-2">
-                  Email <span className="text-red-400">*</span>
+                  <TranslatedText>Email</TranslatedText> <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="email"
@@ -310,7 +311,7 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
               {/* Phone - NO validation, accept any input */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-slate-200 mb-2">
-                  Phone Number <span className="text-red-400">*</span>
+                  <TranslatedText>Phone Number</TranslatedText> <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -335,9 +336,9 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
               {/* Book Preferences */}
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-3">
-                  Book Preferences <span className="text-red-400">*</span>
+                  <TranslatedText>Book Preferences</TranslatedText> <span className="text-red-400">*</span>
                   <span className="text-xs text-slate-400 font-normal ml-2">
-                    (Select all that apply)
+                    <TranslatedText>(Select all that apply)</TranslatedText>
                   </span>
                 </label>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
@@ -385,10 +386,10 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Submitting...
+                    <TranslatedText>Submitting...</TranslatedText>
                   </span>
                 ) : (
-                  "Submit & Continue"
+                  <TranslatedText>Submit & Continue</TranslatedText>
                 )}
               </button>
             </form>

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineCalendarDays } from "react-icons/hi2";
 import PostGrid from "../components/PostGrid";
 import { useExploreJobs } from "../context/ExploreJobsContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const ExploreFeed = () => {
   const navigate = useNavigate();
@@ -30,16 +31,16 @@ const ExploreFeed = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              {searchQuery || searchResults ? "Search Results" : "Explore Feed"}
+              {searchQuery || searchResults ? <TranslatedText>Search Results</TranslatedText> : <TranslatedText>Explore Feed</TranslatedText>}
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
               {searchQuery || searchResults
-                ? `Found ${searchResults?.total || 0} job${searchResults?.total !== 1 ? "s" : ""}`
-                : "Job opportunities from recruiters"}
+                ? <TranslatedText>Found {searchResults?.total || 0} job{searchResults?.total !== 1 ? "s" : ""}</TranslatedText>
+                : <TranslatedText>Job opportunities from recruiters</TranslatedText>}
             </h1>
             {searchQuery && (
               <p className="mt-1 text-sm text-gray-400">
-                Searching for: "{searchQuery}"
+                <TranslatedText>Searching for:</TranslatedText> "<TranslatedText>{searchQuery}</TranslatedText>"
               </p>
             )}
           </div>
@@ -49,12 +50,12 @@ const ExploreFeed = () => {
                 onClick={clearSearch}
                 className="text-xs text-gray-400 hover:text-white transition-colors"
               >
-                Clear search
+                <TranslatedText>Clear search</TranslatedText>
               </button>
             ) : (
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <HiOutlineCalendarDays className="h-4 w-4" />
-            Updated daily
+            <TranslatedText>Updated daily</TranslatedText>
               </div>
             )}
           </div>
@@ -64,7 +65,7 @@ const ExploreFeed = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
-              <p className="mt-4 text-sm text-gray-400">Searching jobs...</p>
+              <p className="mt-4 text-sm text-gray-400"><TranslatedText>Searching jobs...</TranslatedText></p>
             </div>
           </div>
         ) : (
@@ -79,13 +80,13 @@ const ExploreFeed = () => {
             <>
               <h3 className="text-lg font-semibold text-white">
                   {searchQuery || searchResults
-                    ? "No jobs found"
-                    : "No posts yet — kickstart the feed!"}
+                    ? <TranslatedText>No jobs found</TranslatedText>
+                    : <TranslatedText>No posts yet — kickstart the feed!</TranslatedText>}
               </h3>
               <p className="mt-2 max-w-md text-sm text-gray-400">
                   {searchQuery || searchResults
-                    ? "Try adjusting your search or filters to find more opportunities."
-                    : "Recruiters can post jobs here. Check back later for new opportunities."}
+                    ? <TranslatedText>Try adjusting your search or filters to find more opportunities.</TranslatedText>
+                    : <TranslatedText>Recruiters can post jobs here. Check back later for new opportunities.</TranslatedText>}
               </p>
             </>
           }

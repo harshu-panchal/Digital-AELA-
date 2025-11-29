@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
+import TranslatedText from "./TranslatedText";
 
 const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
   const [password, setPassword] = useState("");
@@ -46,15 +47,15 @@ const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#D4AF37]/20 mb-4">
               <HiOutlineLockClosed className="h-8 w-8 text-[#D4AF37]" />
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-2">Financial Access Required</h2>
+            <h2 className="text-2xl font-semibold text-white mb-2"><TranslatedText>Financial Access Required</TranslatedText></h2>
             <p className="text-slate-400 text-sm">
-              This section contains sensitive financial information. Please enter the financial password to continue.
+              <TranslatedText>This section contains sensitive financial information. Please enter the financial password to continue.</TranslatedText>
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Financial Password</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2"><TranslatedText>Financial Password</TranslatedText></label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -94,20 +95,20 @@ const FinancialPasswordModal = ({ isOpen, onSuccess, onCancel }) => {
                   type="button"
                   onClick={onCancel}
                   className="flex-1 px-4 py-3 rounded-xl border border-white/10 bg-[#111] text-white font-semibold hover:bg-white/5 transition">
-                  Cancel
+                  <TranslatedText>Cancel</TranslatedText>
                 </button>
               )}
               <button
                 type="submit"
                 disabled={isSubmitting || !password}
                 className="flex-1 px-4 py-3 rounded-xl bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black font-semibold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                {isSubmitting ? "Verifying..." : "Access Financial Data"}
+                {isSubmitting ? <TranslatedText>Verifying...</TranslatedText> : <TranslatedText>Access Financial Data</TranslatedText>}
               </button>
             </div>
           </form>
 
           <p className="mt-4 text-xs text-slate-500 text-center">
-            Your session will remain active for 2 hours
+            <TranslatedText>Your session will remain active for 2 hours</TranslatedText>
           </p>
         </motion.div>
       </div>

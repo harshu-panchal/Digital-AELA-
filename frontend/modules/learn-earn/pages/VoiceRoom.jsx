@@ -17,6 +17,7 @@ import { useSocket } from "../../../src/hooks/useSocket";
 import { useWebRTC } from "../../../src/hooks/useWebRTC";
 import { fetchLiveRoom, deleteLiveRoom } from "../../../src/services/api/liveRooms";
 import RoomChat from "../components/RoomChat.jsx";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const VoiceRoom = () => {
   const { roomId } = useParams();

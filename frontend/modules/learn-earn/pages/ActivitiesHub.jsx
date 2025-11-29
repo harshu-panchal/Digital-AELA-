@@ -8,6 +8,7 @@ import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import { submitQuizAttempt, fetchQuizzes, fetchQuizHistory } from "../../../src/services/api/quizzes";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const ActivitiesHub = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const ActivitiesHub = () => {
         } else if (quizzesResponse.status === "rejected") {
           // eslint-disable-next-line no-console
           console.error("Failed to load quizzes:", quizzesResponse.reason);
-          toast.error("Failed to load quizzes");
+          toast.error("Failed to load quizzes"); // Toast message
         }
 
         // Handle quiz history response
@@ -259,10 +260,10 @@ const ActivitiesHub = () => {
   // Map difficulty from backend to display format
   const formatDifficulty = (difficulty) => {
     const map = {
-      beginner: "Beginner",
-      intermediate: "Intermediate",
-      advanced: "Advanced",
-      "all-levels": "All Levels",
+      beginner: <TranslatedText>Beginner</TranslatedText>,
+      intermediate: <TranslatedText>Intermediate</TranslatedText>,
+      advanced: <TranslatedText>Advanced</TranslatedText>,
+      "all-levels": <TranslatedText>All Levels</TranslatedText>,
     };
     return map[difficulty] || difficulty;
   };
@@ -271,9 +272,9 @@ const ActivitiesHub = () => {
   const categories = useMemo(() => {
     const grouped = {
       quiz: {
-        title: "Quizzes",
+        title: <TranslatedText>Quizzes</TranslatedText>,
         icon: FaBookReader,
-        description: "Test your knowledge and earn coins with interactive quizzes covering various topics.",
+        description: <TranslatedText>Test your knowledge and earn coins with interactive quizzes covering various topics.</TranslatedText>,
         items: [],
       },
     };
@@ -334,10 +335,10 @@ const ActivitiesHub = () => {
   return (
     <div className="space-y-8">
       <div className="rounded-3xl border border-white/5 bg-gradient-to-br from-[#161616] via-[#0c0c0c] to-black p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Daily streak reset</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Daily streak reset</TranslatedText></p>
         <div className="mt-4 flex flex-wrap items-center gap-6">
           <div>
-            <p className="text-sm text-gray-300">Complete at least one challenge before midnight</p>
+            <p className="text-sm text-gray-300"><TranslatedText>Complete at least one challenge before midnight</TranslatedText></p>
             <p className="mt-2 text-2xl font-semibold text-white">
               {hours.toString().padStart(2, "0")}:{minutes.toString().padStart(2, "0")}:{seconds
                 .toString()
@@ -345,7 +346,7 @@ const ActivitiesHub = () => {
             </p>
           </div>
           <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#151515] px-4 py-2 text-xs text-[#D4AF37]">
-            3-day streak active · +60 bonus coins on completion
+            <TranslatedText>3-day streak active</TranslatedText> · <TranslatedText>+60 bonus coins on completion</TranslatedText>
           </div>
         </div>
       </div>
@@ -388,9 +389,9 @@ const ActivitiesHub = () => {
             </div>
           ) : activeData.items.length === 0 ? (
             <div className="col-span-2 rounded-2xl border border-white/5 bg-[#111] p-8 text-center">
-              <p className="text-sm text-gray-400">No {activeData.title.toLowerCase()} available at the moment.</p>
+              <p className="text-sm text-gray-400"><TranslatedText>No quizzes available at the moment.</TranslatedText></p>
               <p className="mt-2 text-xs text-gray-500">
-                Check back later or ask your teacher/admin to upload new quizzes!
+                <TranslatedText>Check back later or ask your teacher/admin to upload new quizzes!</TranslatedText>
               </p>
             </div>
           ) : (
@@ -412,7 +413,7 @@ const ActivitiesHub = () => {
                   <p className="text-xs text-gray-400">{item.difficulty}</p>
                 </div>
                 <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37]">
-                  +{item.reward} coins
+                  +{item.reward} <TranslatedText>coins</TranslatedText>
                 </span>
               </div>
               
@@ -420,24 +421,24 @@ const ActivitiesHub = () => {
               {item.hasAttempted && item.attemptResult && (
                 <div className="rounded-lg border border-[#D4AF37]/20 bg-[#D4AF37]/5 p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">Your Score</span>
+                    <span className="text-xs text-gray-400"><TranslatedText>Your Score</TranslatedText></span>
                     <span className="text-lg font-bold text-[#D4AF37]">
                       {item.attemptResult.score}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-400">
-                      {item.attemptResult.correctAnswers} / {item.attemptResult.totalQuestions} correct
+                      {item.attemptResult.correctAnswers} / {item.attemptResult.totalQuestions} <TranslatedText>correct</TranslatedText>
                     </span>
                     <span className="text-[#D4AF37] font-semibold">
-                      +{item.attemptResult.coinsEarned} coins earned
+                      +{item.attemptResult.coinsEarned} <TranslatedText>coins earned</TranslatedText>
                     </span>
                 </div>
                 </div>
               )}
               
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-                {!item.hasAttempted && <span>Complete in under 6 minutes</span>}
+                {!item.hasAttempted && <span><TranslatedText>Complete in under 6 minutes</TranslatedText></span>}
                 <button
                   type="button"
                   onClick={() => !item.hasAttempted && handleStart(item)}
@@ -448,10 +449,10 @@ const ActivitiesHub = () => {
                       : "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
                   }`}>
                   {submitting.has(item.id) 
-                    ? "Submitting..." 
+                    ? <TranslatedText>Submitting...</TranslatedText> 
                     : item.hasAttempted 
-                    ? "Attempted" 
-                    : "Start challenge"}
+                    ? <TranslatedText>Attempted</TranslatedText> 
+                    : <TranslatedText>Start challenge</TranslatedText>}
                 </button>
               </div>
             </Motion.div>

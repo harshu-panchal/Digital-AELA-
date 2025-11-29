@@ -83,3 +83,28 @@
 - ✅ Applicant stage updates exposed in dashboard table; monitor for UX tweaks (loading indicators, bulk updates).
 - ✅ Blog composer shipped (draft/publish) — add rich editor + cover image uploads in future iteration.
 - Next: incorporate blog editing & deletion, plus analytics cards once backend endpoints exist.
+
+---
+
+## i18n & Translation Guidelines
+
+- **Static UI text (labels, headings, buttons)**
+  - Use i18next keys instead of hard-coded strings.
+  - Prefer the `common.json` and feature-specific namespaces under `frontend/public/locales/<lng>/`.
+  - For React components, get the translator via `const { t } = useLanguage();` and call `t("namespace.key", { defaultValue: "English text" })`.
+
+- **Dynamic / API-driven text**
+  - Use the shared hooks/components:
+    - `useDynamicTranslation({ sourceLang: "en" })`
+    - `TranslatedText` for single strings.
+    - `TranslatedContent` or `translateBatch` / `translateObject` for lists and objects.
+  - Always batch where possible (e.g., translate all announcement titles in one `translateBatch` call).
+
+- **Language state**
+  - The navbar language dropdown must always use `useLanguage().changeLanguage`.
+  - `LanguageContext` keeps `i18next`, `localStorage`, and document `dir/lang` in sync for RTL and LTR layouts.
+
+- **When adding new features**
+  - Add any new static copy to the appropriate JSON file first.
+  - Use `defaultValue` in `t()` calls so English text is still shown while non-English JSONs are being filled.
+  - For new dynamic pages (blogs, jobs, dashboards), wire translation once at the data layer instead of inside each small child component.

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import i18n, { normalizeLanguageCode, denormalizeLanguageCode } from "../config/i18n.js";
+import { normalizeLanguageCode, denormalizeLanguageCode } from "../utils/languageUtils";
 
 const LanguageContext = createContext();
 
@@ -98,34 +98,27 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(getInitialLanguage);
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
 
-  // Sync language with i18next
+  // Update document direction and language for RTL / LTR layouts
   useEffect(() => {
     const normalizedLang = normalizeLanguageCode(language);
-    if (i18n.language !== normalizedLang) {
-      setIsChangingLanguage(true);
-      i18n.changeLanguage(normalizedLang).then(() => {
-        setIsChangingLanguage(false);
-      });
-    } else {
-      setIsChangingLanguage(false);
+    
+    if (typeof document !== "undefined") {
+      const rtlLanguages = ["ar", "ur", "ps"];
+      const isRtl = rtlLanguages.includes(normalizedLang);
+
+      document.documentElement.setAttribute("dir", isRtl ? "rtl" : "ltr");
+      document.documentElement.setAttribute("lang", normalizedLang || "en");
     }
+
+    // Set isChangingLanguage flag (can be used by components to show loading states)
+    setIsChangingLanguage(true);
+    // Small delay to allow components to react to language change
+    const timer = setTimeout(() => {
+      setIsChangingLanguage(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [language]);
-
-  // Update language state when i18next language changes
-  useEffect(() => {
-    const handleLanguageChanged = (lng) => {
-      const frontendLang = denormalizeLanguageCode(lng);
-      if (frontendLang !== language && Object.prototype.hasOwnProperty.call(languages, frontendLang)) {
-        setLanguage(frontendLang);
-      }
-    };
-
-    i18n.on("languageChanged", handleLanguageChanged);
-
-    return () => {
-      i18n.off("languageChanged", handleLanguageChanged);
-    };
-  }, [language, languages]);
 
   useEffect(() => {
     // Save language preference to localStorage
@@ -141,27 +134,13 @@ export const LanguageProvider = ({ children }) => {
 
     setIsChangingLanguage(true);
     setLanguage(langCode);
-
-    // i18next language change is handled in useEffect
   }, [languages]);
-
-  // Translation function that uses i18next
-  const t = useCallback((key, options = {}) => {
-    if (!i18n.isInitialized) {
-      return options.defaultValue || key;
-    }
-
-    // Use i18next's t function directly
-    return i18n.t(key, options);
-  }, []);
 
   const value = {
     language,
     languages,
     changeLanguage,
-    t,
     isChangingLanguage,
-    i18nReady: i18n.isInitialized,
   };
 
   return (

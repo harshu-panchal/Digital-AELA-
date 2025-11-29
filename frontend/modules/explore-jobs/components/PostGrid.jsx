@@ -1,6 +1,7 @@
 import React from "react";
 import { AnimatePresence, LayoutGroup } from "framer-motion";
 import PostCard from "./PostCard";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const PostGrid = ({
   posts,
@@ -20,10 +21,10 @@ const PostGrid = ({
         {emptyState ?? (
           <>
             <h3 className="text-lg font-semibold text-white">
-              No posts available yet
+              <TranslatedText>No posts available yet</TranslatedText>
             </h3>
             <p className="mt-2 max-w-md text-sm text-gray-400">
-              Create your first job post to see it appear here.
+              <TranslatedText>Create your first job post to see it appear here.</TranslatedText>
             </p>
           </>
         )}

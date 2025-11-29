@@ -21,6 +21,7 @@ import { usePoints } from "../../../src/contexts/PointsContext";
 import { getRewards } from "../../../src/services/api/rewards";
 import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
 import { claimDailyBonus, fetchStudentPoints } from "../../../src/services/api/points";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -206,11 +207,11 @@ const WalletDashboard = () => {
           className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1f1f1f] via-[#0d0d0d] to-black p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Wallet overview</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Wallet overview</TranslatedText></p>
               <h1 className="mt-2 text-3xl font-semibold text-white">
-                {totals.current.toLocaleString()} <span className="text-sm text-[#D4AF37]">AELA coins</span>
+                {totals.current.toLocaleString()} <span className="text-sm text-[#D4AF37]"><TranslatedText>AELA coins</TranslatedText></span>
               </h1>
-              <p className="mt-2 text-sm text-gray-400">Lifetime earnings {totals.earned.toLocaleString()} · Redeemed {totals.redeemed.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-gray-400"><TranslatedText>Lifetime earnings</TranslatedText> {totals.earned.toLocaleString()} · <TranslatedText>Redeemed</TranslatedText> {totals.redeemed.toLocaleString()}</p>
             </div>
             <button
               type="button"
@@ -222,7 +223,7 @@ const WalletDashboard = () => {
                   : "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
               }`}>
               <HiOutlineArrowPath className={`h-4 w-4 ${isClaimingBonus ? "animate-spin" : ""}`} /> 
-              {isClaimingBonus ? "Claiming..." : isBonusClaimed ? "Already claimed today" : "Claim daily bonus"}
+              {isClaimingBonus ? <TranslatedText>Claiming...</TranslatedText> : isBonusClaimed ? <TranslatedText>Already claimed today</TranslatedText> : <TranslatedText>Claim daily bonus</TranslatedText>}
             </button>
           </div>
           <div className="mt-6">
@@ -240,11 +241,11 @@ const WalletDashboard = () => {
           transition={{ duration: 0.3 }}
           className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Redeem coins</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Redeem coins</TranslatedText></p>
             <Link
               to="/learn-earn/redemption-history"
               className="text-xs text-[#D4AF37] hover:text-[#E5C158] transition">
-              View History →
+              <TranslatedText>View History</TranslatedText> →
             </Link>
           </div>
 
@@ -258,7 +259,7 @@ const WalletDashboard = () => {
                     ? "bg-[#D4AF37] text-black"
                     : "border border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
                 }`}>
-                All
+                <TranslatedText>All</TranslatedText>
               </button>
               {Array.from(new Set(rewards.map((r) => r.category))).map((category) => (
                 <button
@@ -276,9 +277,9 @@ const WalletDashboard = () => {
           )}
 
           {loadingRewards ? (
-            <div className="text-center py-8 text-gray-400">Loading rewards...</div>
+            <div className="text-center py-8 text-gray-400"><TranslatedText>Loading rewards...</TranslatedText></div>
           ) : rewards.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">No rewards available at the moment</div>
+            <div className="text-center py-8 text-gray-400"><TranslatedText>No rewards available at the moment</TranslatedText></div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {rewards
@@ -299,14 +300,14 @@ const WalletDashboard = () => {
                           <p className="font-semibold text-white">{reward.name}</p>
                         </div>
                         <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37]">
-                          {reward.cost} coins
+                          {reward.cost} <TranslatedText>coins</TranslatedText>
                         </span>
                       </div>
                       {reward.description && (
                         <p className="mt-2 text-xs text-gray-400 mb-2">{reward.description}</p>
                       )}
                       {reward.limitPerUser && (
-                        <p className="text-xs text-gray-500 mb-2">Limit: {reward.limitPerUser} per user</p>
+                        <p className="text-xs text-gray-500 mb-2"><TranslatedText>Limit:</TranslatedText> {reward.limitPerUser} <TranslatedText>per user</TranslatedText></p>
                       )}
                       <button
                         type="button"
@@ -317,7 +318,7 @@ const WalletDashboard = () => {
                             ? "border-[#D4AF37]/40 bg-[#151515] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
                             : "border-gray-600/40 bg-gray-800/50 text-gray-500 cursor-not-allowed"
                         }`}>
-                        {canRedeem ? "Request Redemption" : "Insufficient Coins"}
+                        {canRedeem ? <TranslatedText>Request Redemption</TranslatedText> : <TranslatedText>Insufficient Coins</TranslatedText>}
                       </button>
                     </Motion.div>
                   );

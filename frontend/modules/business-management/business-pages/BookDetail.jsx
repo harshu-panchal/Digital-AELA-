@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import { FaStar, FaBook, FaDownload, FaArrowLeft, FaCheck, FaSpinner, FaBookmark, FaBookOpen } from "react-icons/fa";
 import { HiOutlineHeart, HiOutlineLightBulb, HiOutlineHandThumbUp } from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
+import TranslatedText from "../../../src/components/TranslatedText";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -14,6 +16,7 @@ import bookSentenceStructureImg from "../../../src/assets/images/books/sentence 
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import {
   fetchEbookById,
   fetchEbookProgress,
@@ -212,6 +215,7 @@ const BookDetail = () => {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { translate, translateObject } = useDynamicTranslation();
 
   useEffect(() => {
     const loadBook = async () => {
@@ -293,7 +297,7 @@ const BookDetail = () => {
         if (staticBook) {
           setBook(staticBook);
         } else {
-          setError("Book not found");
+          setError("Book not found"); // Error message - will be translated in UI
         }
       } catch (err) {
         console.error("Failed to load book:", err);
@@ -313,7 +317,7 @@ const BookDetail = () => {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <FaSpinner className="h-12 w-12 animate-spin text-[#D4AF37] mx-auto mb-4" />
-          <p className="text-white">Loading book details...</p>
+          <p className="text-white"><TranslatedText>Loading book details...</TranslatedText></p>
         </div>
       </div>
     );
@@ -324,12 +328,12 @@ const BookDetail = () => {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-4 font-display">
-            {error || "Book not found"}
+            <TranslatedText>{error || "Book not found"}</TranslatedText>
           </h2>
           <Link
             to="/books"
             className="text-[#D4AF37] hover:text-[#E5C158] transition-colors">
-            Back to Books
+            <TranslatedText>Back to Books</TranslatedText>
           </Link>
         </div>
       </div>
@@ -361,7 +365,7 @@ const BookDetail = () => {
             to="/books"
             className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4">
             <FaArrowLeft className="w-4 h-4" />
-            <span>Back to Books</span>
+            <span><TranslatedText>Back to Books</TranslatedText></span>
           </Link>
         </div>
       </motion.section>
@@ -389,12 +393,12 @@ const BookDetail = () => {
                   {book.format === "ebook" ? (
                     <span className="bg-[#D4AF37] text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#D4AF37]/30">
                       <FaDownload className="w-4 h-4" />
-                      E-Book
+                      <TranslatedText>E-Book</TranslatedText>
                     </span>
                   ) : (
                     <span className="bg-[#D4AF37] text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#D4AF37]/30">
                       <FaBook className="w-4 h-4" />
-                      Physical Book
+                      <TranslatedText>Physical Book</TranslatedText>
                     </span>
                   )}
                 </div>
@@ -405,7 +409,7 @@ const BookDetail = () => {
                       ((book.originalPrice - book.price) / book.originalPrice) *
                         100
                     )}
-                    % OFF
+                    % <TranslatedText>OFF</TranslatedText>
                   </div>
                 )}
               </div>
@@ -423,11 +427,11 @@ const BookDetail = () => {
 
               {/* Title */}
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 font-display mt-2">
-                {book.title}
+                <TranslatedText>{book.title}</TranslatedText>
               </h1>
 
               {/* Author */}
-              <p className="text-lg text-gray-300 mb-4">by {book.author}</p>
+              <p className="text-lg text-gray-300 mb-4"><TranslatedText>by</TranslatedText> <TranslatedText>{book.author}</TranslatedText></p>
 
               {/* Rating */}
               <div className="flex items-center gap-3 mb-6">
@@ -447,13 +451,13 @@ const BookDetail = () => {
                   {book.rating}
                 </span>
                 <span className="text-sm text-gray-500">
-                  ({book.reviews} reviews)
+                  ({book.reviews} <TranslatedText>reviews</TranslatedText>)
                 </span>
                 {isAuthenticated && (
                   <button
                     onClick={() => setShowRatingModal(true)}
                     className="ml-2 text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors">
-                    Rate this book
+                    <TranslatedText>Rate this book</TranslatedText>
                   </button>
                 )}
               </div>
@@ -462,7 +466,7 @@ const BookDetail = () => {
               {isAuthenticated && book.format === "ebook" && readingProgress && (
                 <div className="mb-6 bg-[#1a1a1a] rounded-xl p-4 border border-[#D4AF37]/20">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-white">Reading Progress</h3>
+                    <h3 className="text-sm font-semibold text-white"><TranslatedText>Reading Progress</TranslatedText></h3>
                     <span className="text-sm text-[#D4AF37] font-semibold">
                       {readingProgress.progressPercentage}%
                     </span>
@@ -474,9 +478,9 @@ const BookDetail = () => {
                     />
                   </div>
                   <p className="text-xs text-gray-400">
-                    Page {readingProgress.currentPage} of {readingProgress.totalPages}
+                    <TranslatedText>Page</TranslatedText> {readingProgress.currentPage} <TranslatedText>of</TranslatedText> {readingProgress.totalPages}
                     {readingProgress.isCompleted && (
-                      <span className="ml-2 text-green-400">✓ Completed</span>
+                      <span className="ml-2 text-green-400">✓ <TranslatedText>Completed</TranslatedText></span>
                     )}
                   </p>
                 </div>
@@ -489,7 +493,7 @@ const BookDetail = () => {
                   if (isFreeBook) {
                     return (
                       <span className="text-4xl font-bold text-green-400 font-display">
-                        Free
+                        <TranslatedText>Free</TranslatedText>
                       </span>
                     );
                   }
@@ -504,7 +508,7 @@ const BookDetail = () => {
                             ₹{book.originalPrice}
                           </span>
                           <span className="text-sm text-[#D4AF37] font-semibold">
-                            Save ₹{book.originalPrice - book.price}
+                            <TranslatedText>Save</TranslatedText> ₹{Math.round(book.originalPrice - book.price)}
                           </span>
                         </>
                       )}
@@ -516,51 +520,51 @@ const BookDetail = () => {
               {/* Description */}
               <div className="mb-6">
                 <h2 className="text-xl font-bold text-white mb-3 font-display">
-                  Description
+                  <TranslatedText>Description</TranslatedText>
                 </h2>
                 <p className="text-gray-300 leading-relaxed">
-                  {book.fullDescription || book.description}
+                  <TranslatedText>{book.fullDescription || book.description}</TranslatedText>
                 </p>
               </div>
 
               {/* Book Details */}
               <div className="bg-[#1a1a1a] rounded-xl p-6 mb-6 border border-[#D4AF37]/20">
                 <h3 className="text-lg font-bold text-white mb-4 font-display">
-                  Book Details
+                  <TranslatedText>Book Details</TranslatedText>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {book.pages && book.pages > 0 && (
                   <div>
-                    <span className="text-sm text-gray-400">Pages:</span>
+                    <span className="text-sm text-gray-400"><TranslatedText>Pages:</TranslatedText></span>
                     <p className="text-white font-semibold">{book.pages}</p>
                   </div>
                   )}
                   <div>
-                    <span className="text-sm text-gray-400">Language:</span>
-                    <p className="text-white font-semibold">{book.language}</p>
+                    <span className="text-sm text-gray-400"><TranslatedText>Language:</TranslatedText></span>
+                    <p className="text-white font-semibold"><TranslatedText>{book.language}</TranslatedText></p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400">ISBN:</span>
+                    <span className="text-sm text-gray-400"><TranslatedText>ISBN:</TranslatedText></span>
                     <p className="text-white font-semibold text-sm">
                       {book.isbn}
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400">Publisher:</span>
+                    <span className="text-sm text-gray-400"><TranslatedText>Publisher:</TranslatedText></span>
                     <p className="text-white font-semibold text-sm">
-                      {book.publisher}
+                      <TranslatedText>{book.publisher}</TranslatedText>
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400">Published:</span>
+                    <span className="text-sm text-gray-400"><TranslatedText>Published:</TranslatedText></span>
                     <p className="text-white font-semibold">
                       {book.publishedDate}
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400">Format:</span>
+                    <span className="text-sm text-gray-400"><TranslatedText>Format:</TranslatedText></span>
                     <p className="text-white font-semibold capitalize">
-                      {book.format === "ebook" ? "E-Book" : "Physical Book"}
+                      {book.format === "ebook" ? <TranslatedText>E-Book</TranslatedText> : <TranslatedText>Physical Book</TranslatedText>}
                     </p>
                   </div>
                 </div>
@@ -570,7 +574,7 @@ const BookDetail = () => {
               {book.features && (
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-white mb-3 font-display">
-                    Key Features
+                    <TranslatedText>Key Features</TranslatedText>
                   </h3>
                   <ul className="space-y-2">
                     {book.features.map((feature, index) => (
@@ -578,7 +582,7 @@ const BookDetail = () => {
                         key={index}
                         className="flex items-start gap-3 text-gray-300">
                         <FaCheck className="w-5 h-5 text-[#D4AF37] mt-0.5 shrink-0" />
-                        <span>{feature}</span>
+                        <span><TranslatedText>{feature}</TranslatedText></span>
                       </li>
                     ))}
                   </ul>
@@ -600,7 +604,7 @@ const BookDetail = () => {
                         }}
                         className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                         <FaBookOpen className="inline mr-2" />
-                        Read for Free
+                        <TranslatedText>Read for Free</TranslatedText>
                       </motion.button>
                     );
                   } else if (isFreeBook) {
@@ -611,7 +615,7 @@ const BookDetail = () => {
                         whileTap={{ scale: 0.98 }}
                         disabled
                         className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg opacity-80 cursor-not-allowed">
-                        Free - Contact for Delivery
+                        <TranslatedText>Free - Contact for Delivery</TranslatedText>
                       </motion.button>
                     );
                   } else {
@@ -621,16 +625,38 @@ const BookDetail = () => {
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            window.location.href = `/books/${book.id}/payment`;
+                          onClick={async () => {
+                            if (!user) {
+                              toast.info("Please log in to purchase this book"); // Toast message
+                              navigate("/login/student");
+                              return;
+                            }
+                            
+                            // Validate price
+                            const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                            if (!bookPrice || bookPrice <= 0) {
+                              toast.error("This book price is not available. Please contact support."); // Toast message
+                              return;
+                            }
+                            
+                            await redirectToRazorpay({
+                              bookId: book.id || book._id,
+                              amount: bookPrice,
+                              currency: "AED",
+                              description: `Payment for ${book.title || "book"} by ${book.author || "Digital AELA"}`,
+                              userName: user?.fullName || "",
+                              userEmail: user?.email || "",
+                              userPhone: user?.phone || "",
+                              quantity: 1,
+                            });
                           }}
                           className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                          Buy Now - ₹{book.price}
+                          <TranslatedText>Buy Now</TranslatedText> - ₹{book.price}
                         </motion.button>
                         <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black"
                           size="lg">
-                          Gift
+                          <TranslatedText>Gift</TranslatedText>
                         </GiftButton>
                       </>
                     );
@@ -646,7 +672,7 @@ const BookDetail = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={async () => {
                       if (!isAuthenticated) {
-                        toast.info("Please log in to download");
+                        toast.info("Please log in to download"); // Toast message
                         return;
                       }
                       setIsDownloading(true);
@@ -654,10 +680,10 @@ const BookDetail = () => {
                         const result = await downloadEbook(id);
                         if (result.downloadUrl) {
                           window.open(result.downloadUrl, "_blank");
-                          toast.success("Download started!");
+                          toast.success("Download started!"); // Toast message
                         }
                       } catch (err) {
-                        toast.error(err.message || "Failed to download");
+                        toast.error(err.message || "Failed to download"); // Toast message
                       } finally {
                         setIsDownloading(false);
                       }
@@ -665,7 +691,7 @@ const BookDetail = () => {
                     disabled={isDownloading}
                     className="flex-1 flex items-center justify-center gap-2 border border-[#D4AF37]/60 text-[#F5D26A] py-3 rounded-lg font-semibold hover:bg-[#D4AF37] hover:text-black transition-colors disabled:opacity-50">
                     <FaDownload className="w-4 h-4" />
-                    {isDownloading ? "Downloading..." : "Download"}
+                    {isDownloading ? <TranslatedText>Downloading...</TranslatedText> : <TranslatedText>Download</TranslatedText>}
                   </motion.button>
                   {isAuthenticated && (
                     <motion.button
@@ -674,9 +700,9 @@ const BookDetail = () => {
                       onClick={async () => {
                         try {
                           await addEbookBookmark(id, { page: currentPage, note: "" });
-                          toast.success("Bookmark added!");
+                          toast.success("Bookmark added!"); // Toast message
                         } catch (err) {
-                          toast.error(err.message || "Failed to add bookmark");
+                          toast.error(err.message || "Failed to add bookmark"); // Toast message
                         }
                       }}
                       className="flex items-center justify-center gap-2 border border-[#D4AF37]/60 text-[#F5D26A] px-4 py-3 rounded-lg font-semibold hover:bg-[#D4AF37] hover:text-black transition-colors">
@@ -691,13 +717,13 @@ const BookDetail = () => {
                 {(() => {
                   const isFreeBook = book.price === 0 || book.price === "Free";
                   if (isFreeBook && book.format === "ebook") {
-                    return "Free ebook - Start reading immediately";
+                    return <TranslatedText>Free ebook - Start reading immediately</TranslatedText>;
                   } else if (isFreeBook) {
-                    return "Free - Contact us for delivery options";
+                    return <TranslatedText>Free - Contact us for delivery options</TranslatedText>;
                   } else if (book.format === "ebook") {
-                    return "Instant download after payment";
+                    return <TranslatedText>Instant download after payment</TranslatedText>;
                   } else {
-                    return "Free shipping available";
+                    return <TranslatedText>Free shipping available</TranslatedText>;
                   }
                 })()}
               </p>
@@ -710,7 +736,7 @@ const BookDetail = () => {
       {ratings && (
         <section className="py-8 bg-[#141414]">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
-            <h2 className="text-2xl font-bold text-white mb-6 font-display">Ratings & Reviews</h2>
+            <h2 className="text-2xl font-bold text-white mb-6 font-display"><TranslatedText>Ratings & Reviews</TranslatedText></h2>
             
             {/* Rating Statistics */}
             {ratings.statistics && (
@@ -733,7 +759,7 @@ const BookDetail = () => {
                       ))}
                     </div>
                     <div className="text-sm text-gray-400 mt-1">
-                      {ratings.statistics.totalRatings} reviews
+                      {ratings.statistics.totalRatings} <TranslatedText>reviews</TranslatedText>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -781,7 +807,7 @@ const BookDetail = () => {
                     </span>
                   </div>
                   {rating.review && (
-                    <p className="text-gray-300 text-sm mt-2">{rating.review}</p>
+                    <p className="text-gray-300 text-sm mt-2"><TranslatedText>{rating.review}</TranslatedText></p>
                   )}
                 </div>
               ))}
@@ -797,7 +823,7 @@ const BookDetail = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-[#1a1a1a] rounded-xl p-6 max-w-md w-full border border-[#D4AF37]/20">
-            <h3 className="text-xl font-bold text-white mb-4">Rate this book</h3>
+            <h3 className="text-xl font-bold text-white mb-4"><TranslatedText>Rate this book</TranslatedText></h3>
             <div className="flex items-center gap-2 mb-4">
               {[...Array(5)].map((_, i) => (
                 <button
@@ -815,7 +841,7 @@ const BookDetail = () => {
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Write a review (optional)"
+              placeholder="Write a review (optional)" // Placeholder
               className="w-full bg-[#0a0a0a] border border-white/10 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]/50 mb-4"
               rows={4}
             />
@@ -825,25 +851,25 @@ const BookDetail = () => {
                   setIsSubmittingRating(true);
                   try {
                     await rateEbook(id, { rating: ratingValue, review: reviewText });
-                    toast.success("Rating submitted!");
+                    toast.success("Rating submitted!"); // Toast message
                     setShowRatingModal(false);
                     // Reload ratings
                     const ratingsData = await fetchEbookRatings(id);
                     setRatings(ratingsData);
                   } catch (err) {
-                    toast.error(err.message || "Failed to submit rating");
+                    toast.error(err.message || "Failed to submit rating"); // Toast message
                   } finally {
                     setIsSubmittingRating(false);
                   }
                 }}
                 disabled={isSubmittingRating}
                 className="flex-1 bg-[#D4AF37] text-black py-2 rounded-lg font-semibold hover:bg-[#E5C158] transition-colors disabled:opacity-50">
-                {isSubmittingRating ? "Submitting..." : "Submit"}
+                {isSubmittingRating ? <TranslatedText>Submitting...</TranslatedText> : <TranslatedText>Submit</TranslatedText>}
               </button>
               <button
                 onClick={() => setShowRatingModal(false)}
                 className="px-4 py-2 border border-white/10 text-white rounded-lg font-semibold hover:border-[#D4AF37]/50 transition-colors">
-                Cancel
+                <TranslatedText>Cancel</TranslatedText>
               </button>
             </div>
           </motion.div>

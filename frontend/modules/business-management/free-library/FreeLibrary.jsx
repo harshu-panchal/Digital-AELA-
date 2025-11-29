@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { getFreeEbooks } from "../../../src/services/ebooks";
 import LeadCaptureModal from "./LeadCaptureModal";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const FreeLibrary = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const FreeLibrary = () => {
         setEbooks(response.data || []);
       } catch (error) {
         console.error("Error fetching free ebooks:", error);
-        toast.error("Failed to load free ebooks. Please try again.");
+        toast.error("Failed to load free ebooks. Please try again."); // Toast message
       } finally {
         setLoading(false);
       }
@@ -55,16 +56,14 @@ const FreeLibrary = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="text-3xl font-bold text-[#F5D26A] sm:text-4xl md:text-5xl">
-            Free Library
+            <TranslatedText>Free Library</TranslatedText>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
             className="text-base text-slate-200/85 sm:text-lg">
-            Discover curated e-books created by the Digital AELA team. Dive into
-            leadership, communication, marketing and wellbeing playbooks crafted
-            to elevate your growth—all free and ready to read instantly.
+            <TranslatedText>Discover curated e-books created by the Digital AELA team. Dive into leadership, communication, marketing and wellbeing playbooks crafted to elevate your growth—all free and ready to read instantly.</TranslatedText>
           </motion.p>
         </header>
 
@@ -72,12 +71,12 @@ const FreeLibrary = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#F5D26A]/30 border-t-[#F5D26A]" />
-              <p className="mt-4 text-sm text-slate-300">Loading free ebooks...</p>
+              <p className="mt-4 text-sm text-slate-300"><TranslatedText>Loading free ebooks...</TranslatedText></p>
             </div>
           ) : ebooks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-lg text-slate-300">No free ebooks available at the moment.</p>
-              <p className="mt-2 text-sm text-slate-400">Check back later for new additions!</p>
+              <p className="text-lg text-slate-300"><TranslatedText>No free ebooks available at the moment.</TranslatedText></p>
+              <p className="mt-2 text-sm text-slate-400"><TranslatedText>Check back later for new additions!</TranslatedText></p>
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -106,19 +105,19 @@ const FreeLibrary = () => {
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-[#04060F]/70 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="absolute top-4 left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#F5D26A] backdrop-blur">
-                      Free E-book
+                      <TranslatedText>Free E-book</TranslatedText>
                     </div>
                   </div>
 
                   <div className="flex flex-1 flex-col gap-3 px-6 py-6">
                     <h3 className="text-xl font-semibold text-white">
-                      {book.title}
+                      <TranslatedText>{book.title}</TranslatedText>
                     </h3>
                     <p className="text-sm font-medium uppercase tracking-wider text-[#F5D26A]/80">
-                      {book.metadata?.author || book.author || "Digital AELA"}
+                      {book.metadata?.author || book.author || <TranslatedText>Digital AELA</TranslatedText>}
                     </p>
                     <p className="text-sm leading-relaxed text-slate-200/80 line-clamp-3">
-                      {book.description}
+                      <TranslatedText>{book.description}</TranslatedText>
                     </p>
                     <div className="mt-4 flex items-center justify-between">
                       <button
@@ -128,10 +127,10 @@ const FreeLibrary = () => {
                           handleOpenReader(book._id || book.id);
                         }}
                         className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/20 px-5 py-2 text-sm font-semibold text-[#F5D26A] transition-all duration-300 hover:border-[#F5D26A]/80 hover:bg-[#F5D26A]/30">
-                        Read Now
+                        <TranslatedText>Read Now</TranslatedText>
                       </button>
                       <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-200/75">
-                        {book.pages || 0} pages
+                        {book.pages || 0} <TranslatedText>pages</TranslatedText>
                       </span>
                     </div>
                   </div>

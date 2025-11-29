@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import { motion as Motion } from "framer-motion";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 import { useBlogs } from "../../../src/contexts/BlogContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const FILTER_SORT_OPTIONS = [
-  { label: "Trending", value: "trending" },
-  { label: "Recent", value: "recent" },
-  { label: "Most Viewed", value: "views" },
-  { label: "Top Rated", value: "popular" },
+  { label: <TranslatedText>Trending</TranslatedText>, value: "trending" },
+  { label: <TranslatedText>Recent</TranslatedText>, value: "recent" },
+  { label: <TranslatedText>Most Viewed</TranslatedText>, value: "views" },
+  { label: <TranslatedText>Top Rated</TranslatedText>, value: "popular" },
 ];
 
 const BlogCategoryFilter = () => {
@@ -75,7 +76,7 @@ const BlogCategoryFilter = () => {
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-white">
           <HiOutlineAdjustmentsHorizontal className="h-5 w-5 text-[#D4AF37]" />
-          <h3 className="text-base font-semibold">Refine Your Feed</h3>
+          <h3 className="text-base font-semibold"><TranslatedText>Refine Your Feed</TranslatedText></h3>
         </div>
         <div className="flex flex-wrap gap-2">
           {FILTER_SORT_OPTIONS.map((option) => {
@@ -101,7 +102,7 @@ const BlogCategoryFilter = () => {
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex-1">
           <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-            Categories
+            <TranslatedText>Categories</TranslatedText>
           </p>
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => {
@@ -117,7 +118,7 @@ const BlogCategoryFilter = () => {
                       ? "bg-[#D4AF37]/20 text-[#F5D26A] border border-[#D4AF37]/60"
                       : "border border-white/10 bg-[#0d0d0d] text-gray-300 hover:text-[#D4AF37]"
                   }`}>
-                  {category}
+                  <TranslatedText>{category}</TranslatedText>
                 </Motion.button>
               );
             })}
@@ -126,12 +127,12 @@ const BlogCategoryFilter = () => {
 
         <div className="flex-1">
           <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-            Tags
+            <TranslatedText>Tags</TranslatedText>
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {tags.length === 0 && (
               <p className="col-span-full text-sm text-gray-400">
-                Tags will appear as blogs are created.
+                <TranslatedText>Tags will appear as blogs are created.</TranslatedText>
               </p>
             )}
             {tags.map((tag) => {
@@ -147,7 +148,7 @@ const BlogCategoryFilter = () => {
                       ? "bg-gradient-to-r from-[#D4AF37]/30 to-[#F5D26A]/30 text-[#F5D26A] border-[#D4AF37]/50"
                       : "border-white/10 bg-[#0f0f0f] text-gray-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]"
                   }`}>
-                  <span className="truncate w-full">#{tag}</span>
+                  <span className="truncate w-full">#<TranslatedText>{tag}</TranslatedText></span>
                 </Motion.button>
               );
             })}

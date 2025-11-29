@@ -6,17 +6,18 @@ import {
   HiOutlineSparkles,
   HiOutlinePlusCircle,
 } from "react-icons/hi2";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const bottomItems = [
-  { to: "/explore-jobs", label: "Feed", icon: HiOutlineHome },
+  { to: "/explore-jobs", label: <TranslatedText>Feed</TranslatedText>, icon: HiOutlineHome },
   {
     to: "/recruiter/dashboard",
-    label: "Recruit",
+    label: <TranslatedText>Recruit</TranslatedText>,
     icon: HiOutlineBriefcase,
   },
   {
     to: "/explore-jobs/seeker-dashboard",
-    label: "Apply",
+    label: <TranslatedText>Apply</TranslatedText>,
     icon: HiOutlineSparkles,
   },
 ];

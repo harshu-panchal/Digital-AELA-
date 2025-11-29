@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import microphoneIcon from "../assets/microphone.png";
+import TranslatedText from "./TranslatedText";
 
 const FloatingDebateButton = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const FloatingDebateButton = () => {
             ? "translate-x-0 opacity-100"
             : "translate-x-4 opacity-0 pointer-events-none"
         }`}>
-        Live Debate Room
+        <TranslatedText>Live Debate Room</TranslatedText>
       </div>
 
       {/* Microphone Icon Button */}

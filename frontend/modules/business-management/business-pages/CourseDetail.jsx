@@ -7,6 +7,7 @@ import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { buildCoursePaymentLink, extractNumericPrice } from "../utils/paymentLinks";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { getCourseBySlug } from "../data/courseCatalog";
 import {
   enrollInCourse,
@@ -15,6 +16,9 @@ import {
 } from "../../../src/services/api/courses";
 import CourseVideosList from "../../student/CourseVideosList";
 import CourseReviews from "../common/CourseReviews";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
+import { useLanguage } from "../../../src/contexts/LanguageContext";
+import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -48,6 +52,8 @@ const normalizeCourseData = (backendCourse) => {
       duration: courseData.duration ? `${courseData.duration} hours` : metadata.duration || "",
       price: courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request",
       priceLabel: courseData.priceLabel || (courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request"),
+      // Preserve original numeric price for payment processing
+      originalPrice: typeof courseData.price === 'number' ? courseData.price : (courseData.price ? parseFloat(courseData.price) : null),
       discountPrice: courseData.discountPrice || metadata.discountPrice || null,
       format: courseData.format || metadata.deliveryMode || courseData.deliveryMode || "",
       deliveryMode: courseData.deliveryMode || metadata.deliveryMode || "",
@@ -91,6 +97,11 @@ const CourseDetail = () => {
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isLoadingCourse, setIsLoadingCourse] = useState(true);
+  
+  // Translation hooks
+  const { language } = useLanguage();
+  const { translateObject } = useDynamicTranslation();
+  const [translatedCourse, setTranslatedCourse] = useState(null);
 
   // Load course data
   useEffect(() => {
@@ -220,6 +231,45 @@ const CourseDetail = () => {
     checkEnrollment();
   }, [isAuthenticated, user, tokens?.accessToken, course?._id]);
 
+  // Translate course content when language changes
+  useEffect(() => {
+    const translateCourseContent = async () => {
+      if (!course) {
+        setTranslatedCourse(null);
+        return;
+      }
+
+      if (normalizeLanguageCode(language) === "en") {
+        setTranslatedCourse(course);
+        return;
+      }
+
+      try {
+        const keysToTranslate = [
+          "title",
+          "description",
+          "longDescription",
+          "learningOutcomes",
+          "requirements",
+          "syllabus",
+          "subtitle",
+        ];
+
+        const translated = await translateObject(course, keysToTranslate);
+        setTranslatedCourse(translated);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[CourseDetail] Error translating course:", error);
+        setTranslatedCourse(course);
+      }
+    };
+
+    translateCourseContent();
+  }, [course, language, translateObject]);
+
+  // Use translated course if available, otherwise use original
+  const displayCourse = translatedCourse || course;
+
   if (isLoadingCourse) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -244,7 +294,7 @@ const CourseDetail = () => {
     duration,
     format,
     deliveryMode,
-    language,
+    language: courseLanguage,
     difficulty,
     lessonCount,
     learningOutcomes,
@@ -259,11 +309,25 @@ const CourseDetail = () => {
     features = [],
     detailedSyllabus,
     tags = [],
-  } = course;
+  } = displayCourse || course;
 
+  // Get the actual numeric price - use originalPrice if available, otherwise extract from display string
   const priceDisplay = priceLabel || price || "On Request";
-  const priceValue = extractNumericPrice(priceDisplay);
-  const isFreeCourse = priceValue === 0 || course.price === 0 || (typeof course.price === 'number' && course.price === 0);
+  const originalPrice = course.originalPrice; // Preserved numeric price from backend
+  let priceValue = 0;
+  
+  // First try to use the preserved original numeric price
+  if (typeof originalPrice === 'number' && originalPrice > 0) {
+    priceValue = originalPrice;
+  } else if (typeof course.price === 'number' && course.price > 0) {
+    // Fallback to course.price if it's still a number
+    priceValue = course.price;
+  } else {
+    // Last resort: extract from display string
+    priceValue = extractNumericPrice(priceDisplay);
+  }
+  
+  const isFreeCourse = priceValue === 0 || originalPrice === 0 || (typeof originalPrice === 'number' && originalPrice === 0);
   const categoryPath = categoryPaths[category] ?? "/courses";
   const summaryText = longDescription || description || fallbackSummary;
 
@@ -277,24 +341,43 @@ const CourseDetail = () => {
       return;
     }
 
-    // If course has _id, use API enrollment (works for both free and paid)
+    // If course has _id, check if it's free or paid
     if (course._id) {
-      setIsEnrolling(true);
-      try {
-        const result = await enrollInCourse(course._id);
-        setEnrollmentStatus({ enrolled: true, enrollment: result.enrollment });
-        toast.success("Successfully enrolled in course!");
-        // Optionally navigate to course content
-        // navigate(`/student/courses/${course._id}`);
-      } catch (error) {
-        if (error.code === "ALREADY_ENROLLED") {
-          setEnrollmentStatus({ enrolled: true, enrollment: error.enrollment });
-          toast.info("You are already enrolled in this course");
-        } else {
-          toast.error(error.message || "Failed to enroll. Please try again.");
+      if (isFreeCourse) {
+        // Free course - use API enrollment
+        setIsEnrolling(true);
+        try {
+          const result = await enrollInCourse(course._id);
+          setEnrollmentStatus({ enrolled: true, enrollment: result.enrollment });
+          toast.success("Successfully enrolled in course!");
+        } catch (error) {
+          if (error.code === "ALREADY_ENROLLED") {
+            setEnrollmentStatus({ enrolled: true, enrollment: error.enrollment });
+            toast.info("You are already enrolled in this course");
+          } else {
+            toast.error(error.message || "Failed to enroll. Please try again.");
+          }
+        } finally {
+          setIsEnrolling(false);
         }
-      } finally {
-        setIsEnrolling(false);
+      } else {
+        // Paid course - redirect directly to Razorpay
+        // Validate price before proceeding
+        if (!priceValue || priceValue <= 0) {
+          toast.error("This course price is not available. Please contact support.");
+          return;
+        }
+        
+        await redirectToRazorpay({
+          courseId: course._id,
+          amount: priceValue,
+          currency: "AED",
+          description: `Payment for ${title || course.title || "course"}`,
+          userName: user?.fullName || "",
+          userEmail: user?.email || "",
+          userPhone: user?.phone || "",
+          quantity: 1,
+        });
       }
     } else {
       // For catalog courses without _id, check if it's free
@@ -304,15 +387,21 @@ const CourseDetail = () => {
         return;
       }
       
-      // Paid catalog course - go to payment flow
-      const payload = {
-        ...course,
-        price: priceDisplay,
-      };
-      navigate(buildCoursePaymentLink(payload), {
-        state: {
-          course: payload,
-        },
+      // Paid catalog course - redirect directly to Razorpay
+      // Validate price before proceeding
+      if (!priceValue || priceValue <= 0) {
+        toast.error("This course price is not available. Please contact support.");
+        return;
+      }
+      
+      await redirectToRazorpay({
+        amount: priceValue,
+        currency: "AED",
+        description: `Payment for ${title || "course"}`,
+        userName: user?.fullName || "",
+        userEmail: user?.email || "",
+        userPhone: user?.phone || "",
+        quantity: 1,
       });
     }
   };

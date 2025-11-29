@@ -25,6 +25,7 @@ import {
   highlightTags,
 } from "../data/posts";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   fetchRecruiterProfile,
   fetchRecruiterJobs,
@@ -101,12 +102,12 @@ const RecruiterDashboard = () => {
 
   const applicantStageOptions = useMemo(
     () => [
-      { value: "screening", label: "Screening" },
-      { value: "assessment", label: "Assessment" },
-      { value: "interview", label: "Interview" },
-      { value: "offer", label: "Offer" },
-      { value: "hired", label: "Hired" },
-      { value: "rejected", label: "Rejected" },
+      { value: "screening", label: <TranslatedText>Screening</TranslatedText> },
+      { value: "assessment", label: <TranslatedText>Assessment</TranslatedText> },
+      { value: "interview", label: <TranslatedText>Interview</TranslatedText> },
+      { value: "offer", label: <TranslatedText>Offer</TranslatedText> },
+      { value: "hired", label: <TranslatedText>Hired</TranslatedText> },
+      { value: "rejected", label: <TranslatedText>Rejected</TranslatedText> },
     ],
     []
   );
@@ -334,32 +335,32 @@ const RecruiterDashboard = () => {
           actionShortcuts: [
             {
               id: "post-job",
-              title: "Post a New Role",
-              description: "Launch a fresh job drop to attract applications.",
+              title: <TranslatedText>Post a New Role</TranslatedText>,
+              description: <TranslatedText>Launch a fresh job drop to attract applications.</TranslatedText>,
               icon: "briefcase",
               tone: "from-emerald-500/15 to-emerald-400/10 border-emerald-400/30 text-emerald-100",
               to: "composer:job",
             },
             {
               id: "analytics",
-              title: "Analytics Hub",
-              description: "View comprehensive recruitment analytics and metrics.",
+              title: <TranslatedText>Analytics Hub</TranslatedText>,
+              description: <TranslatedText>View comprehensive recruitment analytics and metrics.</TranslatedText>,
               icon: "chart",
               tone: "from-[#D4AF37]/15 to-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37]",
               to: "/explore-jobs/recruiter/analytics",
             },
             {
               id: "post-blog",
-              title: "Share a Hiring Update",
-              description: "Publish insights to the Digital AELA community.",
+              title: <TranslatedText>Share a Hiring Update</TranslatedText>,
+              description: <TranslatedText>Publish insights to the Digital AELA community.</TranslatedText>,
               icon: "blog",
               tone: "from-sky-500/15 to-sky-400/10 border-sky-400/30 text-sky-100",
               to: "/blogs/create",
             },
             {
               id: "read-ebooks",
-              title: "Hiring Playbooks",
-              description: "Download playbooks and scorecards for interviews.",
+              title: <TranslatedText>Hiring Playbooks</TranslatedText>,
+              description: <TranslatedText>Download playbooks and scorecards for interviews.</TranslatedText>,
               icon: "book",
               tone: "from-fuchsia-500/15 to-fuchsia-400/10 border-fuchsia-400/30 text-fuchsia-100",
               to: "/free-library",
@@ -378,14 +379,14 @@ const RecruiterDashboard = () => {
         }));
 
         if (showToast) {
-          toast.success("Recruiter dashboard refreshed");
+          toast.success(<TranslatedText>Recruiter dashboard refreshed</TranslatedText>);
         }
       } catch (error) {
         setLoadError(error);
         // eslint-disable-next-line no-console
         console.error("Failed to load recruiter dashboard", error);
         if (showToast) {
-          toast.error(error.message || "Unable to refresh dashboard");
+          toast.error(error.message || <TranslatedText>Unable to refresh dashboard</TranslatedText>);
         }
       } finally {
         setIsLoading(false);
@@ -451,10 +452,10 @@ const RecruiterDashboard = () => {
     };
 
     return [
-      { label: "Active Roles", value: dashboardStats.activeRoles },
-      { label: "Total Views", value: dashboardStats.totalViews },
-      { label: "Applications", value: dashboardStats.totalApplications },
-      { label: "Avg. Applies / Post", value: `${dashboardStats.avgAppliesPerPost}` },
+      { label: <TranslatedText>Active Roles</TranslatedText>, value: dashboardStats.activeRoles },
+      { label: <TranslatedText>Total Views</TranslatedText>, value: dashboardStats.totalViews },
+      { label: <TranslatedText>Applications</TranslatedText>, value: dashboardStats.totalApplications },
+      { label: <TranslatedText>Avg. Applies / Post</TranslatedText>, value: `${dashboardStats.avgAppliesPerPost}` },
     ];
   }, [dashboardData?.stats]);
 
@@ -469,10 +470,10 @@ const RecruiterDashboard = () => {
   const handleDelete = async (postId) => {
     try {
       await deleteRecruiterJob(postId);
-      toast.success("Job archived");
+      toast.success(<TranslatedText>Job archived</TranslatedText>);
       await loadDashboard(true);
     } catch (error) {
-      toast.error(error.message || "Unable to delete job");
+      toast.error(error.message || <TranslatedText>Unable to delete job</TranslatedText>);
     }
   };
 
@@ -500,14 +501,14 @@ const RecruiterDashboard = () => {
     try {
       if (context.isEditing && context.id) {
         await updateRecruiterJob(context.id, body);
-        toast.success("Job updated");
+        toast.success(<TranslatedText>Job updated</TranslatedText>);
       } else {
         await createRecruiterJob(body);
-        toast.success("Job created");
+        toast.success(<TranslatedText>Job created</TranslatedText>);
       }
       await loadDashboard(true);
     } catch (error) {
-      toast.error(error.message || "Unable to save job");
+      toast.error(error.message || <TranslatedText>Unable to save job</TranslatedText>);
       throw error;
     }
   };
@@ -544,9 +545,9 @@ const RecruiterDashboard = () => {
             : group
         ),
       }));
-      toast.success("Applicant stage updated");
+      toast.success(<TranslatedText>Applicant stage updated</TranslatedText>);
     } catch (error) {
-      toast.error(error.message || "Unable to update applicant");
+      toast.error(error.message || <TranslatedText>Unable to update applicant</TranslatedText>);
     } finally {
       setPipelineUpdates((prev) => {
         const next = new Map(prev);
@@ -586,7 +587,7 @@ const RecruiterDashboard = () => {
   const handleBlogSave = async (event, publish = false) => {
     event.preventDefault();
     if (!blogDraft.title.trim() || !blogDraft.content.trim()) {
-      toast.error("Please add a title and content before saving.");
+      toast.error(<TranslatedText>Please add a title and content before saving.</TranslatedText>);
       return;
     }
 
@@ -598,13 +599,13 @@ const RecruiterDashboard = () => {
         content: blogDraft.content.trim(),
         status: publish ? "published" : "draft",
       });
-      toast.success(publish ? "Blog published!" : "Blog draft saved.");
+      toast.success(publish ? <TranslatedText>Blog published!</TranslatedText> : <TranslatedText>Blog draft saved.</TranslatedText>);
       setBlogComposerOpen(false);
       resetBlogDraft();
       await loadDashboard(true);
       await refreshBlogs();
     } catch (error) {
-      toast.error(error.message || "Unable to save blog");
+      toast.error(error.message || <TranslatedText>Unable to save blog</TranslatedText>);
     } finally {
       setIsSavingBlog(false);
     }
@@ -618,7 +619,7 @@ const RecruiterDashboard = () => {
   const handleProfileSave = async (event) => {
     event.preventDefault();
     if (!profileForm.fullName.trim()) {
-      toast.error("Please provide your full name.");
+      toast.error(<TranslatedText>Please provide your full name.</TranslatedText>);
       return;
     }
 
@@ -652,10 +653,10 @@ const RecruiterDashboard = () => {
         )
       );
 
-      toast.success("Profile updated");
+      toast.success(<TranslatedText>Profile updated</TranslatedText>);
       setProfileEditorOpen(false);
     } catch (error) {
-      toast.error(error.message || "Unable to update profile");
+      toast.error(error.message || <TranslatedText>Unable to update profile</TranslatedText>);
     } finally {
       setIsSavingProfile(false);
     }
@@ -667,8 +668,8 @@ const RecruiterDashboard = () => {
       <div className="flex min-h-screen items-center justify-center pt-32 pb-24">
         <div className="text-center">
           <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-white"></div>
-          <p className="text-lg font-semibold text-white">Loading recruiter dashboard...</p>
-          <p className="mt-2 text-sm text-slate-400">Fetching your jobs, applicants, and analytics</p>
+          <p className="text-lg font-semibold text-white"><TranslatedText>Loading recruiter dashboard...</TranslatedText></p>
+          <p className="mt-2 text-sm text-slate-400"><TranslatedText>Fetching your jobs, applicants, and analytics</TranslatedText></p>
         </div>
       </div>
     );
@@ -681,7 +682,7 @@ const RecruiterDashboard = () => {
         roleBadge={
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white">
             <HiOutlineBriefcase className="h-4 w-4" />
-            Recruiter Mode
+            <TranslatedText>Recruiter Mode</TranslatedText>
           </span>
         }
         actionSlot={
@@ -690,20 +691,20 @@ const RecruiterDashboard = () => {
               type="button"
               onClick={() => loadDashboard(true)}
               className="inline-flex items-center gap-2 rounded-3xl border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-white/40">
-              Refresh
+              <TranslatedText>Refresh</TranslatedText>
             </button>
             <button
               type="button"
               onClick={() => setProfileEditorOpen(true)}
               className="inline-flex items-center gap-2 rounded-3xl border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-white/40">
-              Edit Profile
+              <TranslatedText>Edit Profile</TranslatedText>
             </button>
           <button
             type="button"
             onClick={() => openComposer("job")}
             className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
             <HiOutlinePlusCircle className="h-5 w-5" />
-            New Job Drop
+            <TranslatedText>New Job Drop</TranslatedText>
           </button>
           </div>
         }
@@ -712,7 +713,7 @@ const RecruiterDashboard = () => {
 
       {loadError && (
         <div className="rounded-3xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
-          {loadError.message || "We couldn't load your recruiter data. Please refresh."}
+          {loadError.message || <TranslatedText>We couldn't load your recruiter data. Please refresh.</TranslatedText>}
         </div>
       )}
 
@@ -736,7 +737,7 @@ const RecruiterDashboard = () => {
                 <Icon className="h-6 w-6 opacity-80" />
               </div>
               <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:text-white">
-                Open <HiOutlineArrowRight className="h-4 w-4" />
+                <TranslatedText>Open</TranslatedText> <HiOutlineArrowRight className="h-4 w-4" />
               </span>
             </motion.button>
           );
@@ -747,10 +748,10 @@ const RecruiterDashboard = () => {
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Role Library
+              <TranslatedText>Role Library</TranslatedText>
             </p>
             <h2 className="text-xl font-semibold text-white">
-              Manage your active job drops
+              <TranslatedText>Manage your active job drops</TranslatedText>
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -758,7 +759,7 @@ const RecruiterDashboard = () => {
               <span
                 key={tag}
                 className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-                {tag}
+                <TranslatedText>{tag}</TranslatedText>
               </span>
             ))}
           </div>
@@ -776,18 +777,17 @@ const RecruiterDashboard = () => {
           emptyState={
             <>
               <h3 className="text-lg font-semibold text-white">
-                Drop your first role to activate the feed
+                <TranslatedText>Drop your first role to activate the feed</TranslatedText>
               </h3>
               <p className="mt-2 max-w-md text-sm text-gray-400">
-                Post your active openings with visual storytelling. Perfect for
-                Instagram-style recruiting.
+                <TranslatedText>Post your active openings with visual storytelling. Perfect for Instagram-style recruiting.</TranslatedText>
               </p>
               <button
                 type="button"
                 onClick={() => openComposer("job")}
                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black">
                 <HiOutlinePlusCircle className="h-4 w-4" />
-                Create Role
+                <TranslatedText>Create Role</TranslatedText>
               </button>
             </>
           }
@@ -798,17 +798,17 @@ const RecruiterDashboard = () => {
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Applicant Pipeline
+              <TranslatedText>Applicant Pipeline</TranslatedText>
             </p>
             <h2 className="text-xl font-semibold text-white">
-              Track candidates across each role
+              <TranslatedText>Track candidates across each role</TranslatedText>
             </h2>
           </div>
           <div className="flex items-center gap-2">
             <Link
               to="/explore-jobs/recruiter/analytics"
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white/20 hover:bg-white/5">
-              View Analytics Hub
+              <TranslatedText>View Analytics Hub</TranslatedText>
             </Link>
           </div>
         </header>
@@ -816,19 +816,19 @@ const RecruiterDashboard = () => {
           <table className="min-w-full text-left text-sm text-slate-200">
             <thead className="text-xs uppercase tracking-[0.25em] text-slate-400">
               <tr className="border-b border-white/10">
-                <th className="px-3 py-3 font-semibold">Role</th>
-                <th className="px-3 py-3 font-semibold">Candidate</th>
-                <th className="px-3 py-3 font-semibold">Status</th>
-                <th className="px-3 py-3 font-semibold">Submitted</th>
+                <th className="px-3 py-3 font-semibold"><TranslatedText>Role</TranslatedText></th>
+                <th className="px-3 py-3 font-semibold"><TranslatedText>Candidate</TranslatedText></th>
+                <th className="px-3 py-3 font-semibold"><TranslatedText>Status</TranslatedText></th>
+                <th className="px-3 py-3 font-semibold"><TranslatedText>Submitted</TranslatedText></th>
               </tr>
             </thead>
             <tbody>
               {applicantPipeline.length === 0 || applicantPipeline.every((s) => s.stages.length === 0) ? (
                 <tr>
                   <td colSpan={4} className="px-3 py-8 text-center">
-                    <p className="text-sm text-slate-400">No applications yet</p>
+                    <p className="text-sm text-slate-400"><TranslatedText>No applications yet</TranslatedText></p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Applications from students will appear here once they apply to your jobs.
+                      <TranslatedText>Applications from students will appear here once they apply to your jobs.</TranslatedText>
                     </p>
                   </td>
                 </tr>
@@ -836,12 +836,12 @@ const RecruiterDashboard = () => {
                 applicantPipeline.flatMap((stage) =>
                   stage.stages.map((applicant) => (
                     <tr key={`${stage.jobId}-${applicant.id || applicant.applicationId}`} className="border-b border-white/5 last:border-b-0">
-                      <td className="px-3 py-3 text-xs text-slate-300/85">{stage.jobTitle}</td>
+                      <td className="px-3 py-3 text-xs text-slate-300/85"><TranslatedText>{stage.jobTitle}</TranslatedText></td>
                       <td className="px-3 py-3 text-xs text-slate-200">
                         <Link
                           to={`/explore-jobs/recruiter/applicants/${stage.jobId}/${applicant.id || applicant.applicationId}`}
                           className="font-semibold text-white hover:text-sky-200 transition hover:underline">
-                          {applicant.name}
+                          <TranslatedText>{applicant.name}</TranslatedText>
                         </Link>
                       </td>
                       <td className="px-3 py-3 text-xs">
@@ -866,7 +866,7 @@ const RecruiterDashboard = () => {
                           </select>
                           {pipelineUpdates.has(`${stage.jobId}:${applicant.id || applicant.applicationId}`) && (
                             <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                            Updating…
+                            <TranslatedText>Updating…</TranslatedText>
                           </span>
                         )}
                       </div>
@@ -888,10 +888,10 @@ const RecruiterDashboard = () => {
           <header className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                Talent Spotlight
+                <TranslatedText>Talent Spotlight</TranslatedText>
               </p>
               <h2 className="text-lg font-semibold text-white">
-                Recommended student profiles
+                <TranslatedText>Recommended student profiles</TranslatedText>
               </h2>
             </div>
           </header>
@@ -903,12 +903,12 @@ const RecruiterDashboard = () => {
                   to={talent.profileUrl}
                   className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
                   <div>
-                    <p className="font-semibold text-white">{talent.name}</p>
-                    <p className="text-xs text-slate-400/80">{talent.headline}</p>
+                    <p className="font-semibold text-white"><TranslatedText>{talent.name}</TranslatedText></p>
+                    <p className="text-xs text-slate-400/80"><TranslatedText>{talent.headline}</TranslatedText></p>
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-400">
                       {talent.skills.map((skill) => (
                         <span key={skill} className="rounded-full border border-white/10 px-2 py-1">
-                          {skill}
+                          <TranslatedText>{skill}</TranslatedText>
                         </span>
                       ))}
                     </div>
@@ -918,7 +918,7 @@ const RecruiterDashboard = () => {
               ))
             ) : (
               <div className="rounded-3xl border border-white/10 bg-black/70 px-4 py-6 text-center">
-                <p className="text-sm text-slate-400">No talent recommendations available yet</p>
+                <p className="text-sm text-slate-400"><TranslatedText>No talent recommendations available yet</TranslatedText></p>
               </div>
             )}
           </div>
@@ -928,14 +928,14 @@ const RecruiterDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                  Hiring Playbooks
+                  <TranslatedText>Hiring Playbooks</TranslatedText>
                 </p>
-                <h3 className="text-lg font-semibold text-white">Recommended e-books</h3>
+                <h3 className="text-lg font-semibold text-white"><TranslatedText>Recommended e-books</TranslatedText></h3>
               </div>
               <Link
                 to="/free-library"
                 className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
-                View library
+                <TranslatedText>View library</TranslatedText>
               </Link>
             </div>
             <div className="space-y-3">
@@ -945,8 +945,8 @@ const RecruiterDashboard = () => {
                   to={book.url}
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
                   <div>
-                    <p className="font-semibold text-white">{book.title}</p>
-                    <p className="text-slate-400/80">{book.pages} pages</p>
+                    <p className="font-semibold text-white"><TranslatedText>{book.title}</TranslatedText></p>
+                    <p className="text-slate-400/80"><TranslatedText>{book.pages} pages</TranslatedText></p>
                   </div>
                   <HiOutlineBookOpen className="h-5 w-5 text-sky-200" />
                 </Link>
@@ -958,14 +958,14 @@ const RecruiterDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                  Content Studio
+                  <TranslatedText>Content Studio</TranslatedText>
                 </p>
-                <h3 className="text-lg font-semibold text-white">Blogs in progress</h3>
+                <h3 className="text-lg font-semibold text-white"><TranslatedText>Blogs in progress</TranslatedText></h3>
               </div>
               <Link
                 to="/my-blogs"
                 className="text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 hover:text-sky-100">
-                View drafts
+                <TranslatedText>View drafts</TranslatedText>
               </Link>
             </div>
             <div className="space-y-3">
@@ -975,8 +975,8 @@ const RecruiterDashboard = () => {
                   to={draft.url}
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200 transition hover:border-sky-400/50">
                   <div>
-                    <p className="font-semibold text-white">{draft.title}</p>
-                    <p className="text-slate-400/80">{draft.status} · {draft.updatedAt}</p>
+                    <p className="font-semibold text-white"><TranslatedText>{draft.title}</TranslatedText></p>
+                    <p className="text-slate-400/80"><TranslatedText>{draft.status}</TranslatedText> · {draft.updatedAt}</p>
                   </div>
                   <HiOutlineNewspaper className="h-5 w-5 text-sky-200" />
                 </Link>
@@ -996,13 +996,13 @@ const RecruiterDashboard = () => {
             <div className="relative flex w-full max-h-[85vh] flex-col rounded-[36px] border border-white/10 bg-[#050505]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,0.65)] backdrop-blur-xl">
               <div className="flex items-center justify-between pb-4">
                 <h3 className="text-lg font-semibold text-white">
-                  {composerState.post ? "Edit Job Post" : "Create Job Drop"}
+                  {composerState.post ? <TranslatedText>Edit Job Post</TranslatedText> : <TranslatedText>Create Job Drop</TranslatedText>}
                 </h3>
                 <button
                   type="button"
                   onClick={closeComposer}
                   className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white">
-                  Close
+                  <TranslatedText>Close</TranslatedText>
                 </button>
               </div>
               <div className="overflow-y-auto pr-1 sm:pr-2">
@@ -1038,13 +1038,13 @@ const RecruiterDashboard = () => {
           >
             <div className="relative flex w-full max-h-[82vh] flex-col rounded-[36px] border border-white/10 bg-[#050505]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,0.65)] backdrop-blur-xl">
               <div className="flex items-center justify-between pb-4">
-                <h3 className="text-lg font-semibold text-white">Update recruiter profile</h3>
+                <h3 className="text-lg font-semibold text-white"><TranslatedText>Update recruiter profile</TranslatedText></h3>
                 <button
                   type="button"
                   onClick={() => setProfileEditorOpen(false)}
                   className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white"
                 >
-                  Close
+                  <TranslatedText>Close</TranslatedText>
                 </button>
               </div>
               <div className="overflow-y-auto pr-1 sm:pr-2">
@@ -1052,93 +1052,93 @@ const RecruiterDashboard = () => {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Full Name*
+                        <TranslatedText>Full Name*</TranslatedText>
                       </label>
                       <input
                         name="fullName"
                         value={profileForm.fullName}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="Adil Rahman"
+                        placeholder="Adil Rahman" // Placeholder
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Company
+                        <TranslatedText>Company</TranslatedText>
                       </label>
                       <input
                         name="company"
                         value={profileForm.company}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="AELA Talent Collective"
+                        placeholder="AELA Talent Collective" // Placeholder
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Headline
+                        <TranslatedText>Headline</TranslatedText>
                       </label>
                       <input
                         name="headline"
                         value={profileForm.headline}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="Talent Partner · GCC"
+                        placeholder="Talent Partner · GCC" // Placeholder
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Location
+                        <TranslatedText>Location</TranslatedText>
                       </label>
                       <input
                         name="location"
                         value={profileForm.location}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="Dubai, UAE"
+                        placeholder="Dubai, UAE" // Placeholder
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Website
+                        <TranslatedText>Website</TranslatedText>
                       </label>
                       <input
                         name="website"
                         value={profileForm.website}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="https://yourcompany.com"
+                        placeholder="https://yourcompany.com" // Placeholder
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        LinkedIn
+                        <TranslatedText>LinkedIn</TranslatedText>
                       </label>
                       <input
                         name="linkedin"
                         value={profileForm.linkedin}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="https://linkedin.com/in/..."
+                        placeholder="https://linkedin.com/in/..." // Placeholder
                       />
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Avatar URL
+                        <TranslatedText>Avatar URL</TranslatedText>
                       </label>
                       <input
                         name="avatarUrl"
                         value={profileForm.avatarUrl}
                         onChange={handleProfileInputChange}
                         className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
-                        placeholder="https://images.unsplash.com/..."
+                        placeholder="https://images.unsplash.com/..." // Placeholder
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                      Bio
+                      <TranslatedText>Bio</TranslatedText>
                     </label>
                     <textarea
                       name="bio"
@@ -1146,12 +1146,12 @@ const RecruiterDashboard = () => {
                       onChange={handleProfileInputChange}
                       className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
                       rows={4}
-                      placeholder="Share a short introduction so learners understand your hiring focus."
+                      placeholder="Share a short introduction so learners understand your hiring focus." // Placeholder
                     />
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                     <p className="text-xs text-gray-500">
-                      Updating your profile refreshes what students, teachers, and recruiters see.
+                      <TranslatedText>Updating your profile refreshes what students, teachers, and recruiters see.</TranslatedText>
                     </p>
                     <div className="flex items-center gap-3">
                       <button
@@ -1159,14 +1159,14 @@ const RecruiterDashboard = () => {
                         onClick={() => setProfileEditorOpen(false)}
                         className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30"
                       >
-                        Cancel
+                        <TranslatedText>Cancel</TranslatedText>
                       </button>
                       <button
                         type="submit"
                         disabled={isSavingProfile}
                         className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {isSavingProfile ? "Saving…" : "Save Profile"}
+                        {isSavingProfile ? <TranslatedText>Saving…</TranslatedText> : <TranslatedText>Save Profile</TranslatedText>}
                       </button>
                     </div>
                   </div>
@@ -1187,7 +1187,7 @@ const RecruiterDashboard = () => {
           >
             <div className="rounded-[36px] border border-white/10 bg-[#050505]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,0.65)] backdrop-blur-xl">
               <div className="flex items-center justify-between pb-4">
-                <h3 className="text-lg font-semibold text-white">Share a community update</h3>
+                <h3 className="text-lg font-semibold text-white"><TranslatedText>Share a community update</TranslatedText></h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -1196,48 +1196,48 @@ const RecruiterDashboard = () => {
                   }}
                   className="rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-semibold text-gray-300 hover:border-white/20 hover:text-white"
                 >
-                  Close
+                  <TranslatedText>Close</TranslatedText>
                 </button>
               </div>
               <form className="space-y-4" onSubmit={handleBlogSave}>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                    Title*
+                    <TranslatedText>Title*</TranslatedText>
                   </label>
                   <input
                     value={blogDraft.title}
                     onChange={(event) =>
                       setBlogDraft((prev) => ({ ...prev, title: event.target.value }))
                     }
-                    placeholder="How we hired 3 coaches in 30 days"
+                    placeholder="How we hired 3 coaches in 30 days" // Placeholder
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                    Excerpt
+                    <TranslatedText>Excerpt</TranslatedText>
                   </label>
                   <textarea
                     value={blogDraft.excerpt}
                     onChange={(event) =>
                       setBlogDraft((prev) => ({ ...prev, excerpt: event.target.value }))
                     }
-                    placeholder="Share a teaser for your blog drop (optional)"
+                    placeholder="Share a teaser for your blog drop (optional)" // Placeholder
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
                     rows={2}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                    Content*
+                    <TranslatedText>Content*</TranslatedText>
                   </label>
                   <textarea
                     value={blogDraft.content}
                     onChange={(event) =>
                       setBlogDraft((prev) => ({ ...prev, content: event.target.value }))
                     }
-                    placeholder="Tell the story behind your latest hiring win..."
+                    placeholder="Tell the story behind your latest hiring win..." // Placeholder
                     className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/10 placeholder:text-gray-500"
                     rows={6}
                     required
@@ -1245,7 +1245,7 @@ const RecruiterDashboard = () => {
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                   <p className="text-xs text-gray-500">
-                    You can keep this as a draft or publish directly to the community feed.
+                    <TranslatedText>You can keep this as a draft or publish directly to the community feed.</TranslatedText>
                   </p>
                   <div className="flex items-center gap-3">
                     <button
@@ -1254,7 +1254,7 @@ const RecruiterDashboard = () => {
                       disabled={isSavingBlog}
                       className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isSavingBlog ? "Saving…" : "Save as Draft"}
+                      {isSavingBlog ? <TranslatedText>Saving…</TranslatedText> : <TranslatedText>Save as Draft</TranslatedText>}
                     </button>
                     <button
                       type="button"
@@ -1262,7 +1262,7 @@ const RecruiterDashboard = () => {
                       disabled={isSavingBlog}
                       className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-white/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isSavingBlog ? "Publishing…" : "Publish"}
+                      {isSavingBlog ? <TranslatedText>Publishing…</TranslatedText> : <TranslatedText>Publish</TranslatedText>}
                     </button>
                   </div>
                 </div>

@@ -15,6 +15,7 @@ import AdvancedCandidateFilter from "./AdvancedCandidateFilter";
 import InterviewScheduling from "./InterviewScheduling";
 import BulkApplicantActions from "./BulkApplicantActions";
 import HiringStatistics from "./HiringStatistics";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const RecruiterAnalyticsHub = () => {
   const location = useLocation();
@@ -41,37 +42,37 @@ const RecruiterAnalyticsHub = () => {
   const tabs = [
     {
       id: "dashboard",
-      label: "Analytics Dashboard",
+      label: <TranslatedText>Analytics Dashboard</TranslatedText>,
       icon: HiOutlineChartBar,
       component: RecruiterAnalyticsDashboard,
     },
     {
       id: "pipeline",
-      label: "Candidate Pipeline",
+      label: <TranslatedText>Candidate Pipeline</TranslatedText>,
       icon: HiOutlineUserGroup,
       component: CandidatePipeline,
     },
     {
       id: "candidates",
-      label: "Advanced Search",
+      label: <TranslatedText>Advanced Search</TranslatedText>,
       icon: HiOutlineFunnel,
       component: AdvancedCandidateFilter,
     },
     {
       id: "interviews",
-      label: "Interview Schedule",
+      label: <TranslatedText>Interview Schedule</TranslatedText>,
       icon: HiOutlineCalendar,
       component: InterviewScheduling,
     },
     {
       id: "bulk-actions",
-      label: "Bulk Actions",
+      label: <TranslatedText>Bulk Actions</TranslatedText>,
       icon: HiOutlineDocumentText,
       component: BulkApplicantActions,
     },
     {
       id: "hiring-stats",
-      label: "Hiring Statistics",
+      label: <TranslatedText>Hiring Statistics</TranslatedText>,
       icon: HiOutlineArrowTrendingUp,
       component: HiringStatistics,
     },
@@ -87,10 +88,10 @@ const RecruiterAnalyticsHub = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              Recruiter Analytics Hub
+              <TranslatedText>Recruiter Analytics Hub</TranslatedText>
             </h1>
             <p className="text-gray-400">
-              Comprehensive recruitment analytics and management tools
+              <TranslatedText>Comprehensive recruitment analytics and management tools</TranslatedText>
             </p>
           </div>
         </div>

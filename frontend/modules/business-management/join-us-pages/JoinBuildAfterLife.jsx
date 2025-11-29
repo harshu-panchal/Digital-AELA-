@@ -12,6 +12,7 @@ import {
   FaArrowLeft,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
+import TranslatedText from "../../../src/components/TranslatedText";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -20,11 +21,14 @@ import bookSentenceStructureImg from "../../../src/assets/images/books/sentence 
 import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [afterLifeCourses, setAfterLifeCourses] = useState([]);
   const [afterLifeBooks, setAfterLifeBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,7 +216,14 @@ const JoinBuildAfterLife = () => {
     return false;
   };
 
-  const handleBuyCourse = (course) => {
+  const handleBuyCourse = async (course) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.info("Please log in to enroll in this course");
+      navigate("/login/student");
+      return;
+    }
+
     const payload = {
       ...course,
       category: "Build Your Afterlife",
@@ -224,11 +235,21 @@ const JoinBuildAfterLife = () => {
       // Free course - navigate to course detail page for enrollment
       handleViewCourse(course);
     } else {
-      // Paid course - go to payment flow
-      navigate(buildCoursePaymentLink(payload), {
-        state: {
-          course: payload,
-        },
+      // Paid course - redirect directly to Razorpay
+      const priceValue = typeof course.price === 'number' ? course.price : 
+                        (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
+                        (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
+                        parseFloat(course.price) || 0;
+      
+      await redirectToRazorpay({
+        courseId: course._id || course.id || null,
+        amount: priceValue,
+        currency: "AED",
+        description: `Payment for ${course.title || "course"}`,
+        userName: user?.fullName || "",
+        userEmail: user?.email || "",
+        userPhone: user?.phone || "",
+        quantity: 1,
       });
     }
   };
@@ -299,15 +320,14 @@ const JoinBuildAfterLife = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
-            Build Your <span className="text-[#D4AF37]">Afterlife</span>
+            <TranslatedText>Build Your</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Afterlife</TranslatedText></span>
               </motion.h1>
           <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.15 }}
             className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
-            Craft lifelong learning hubs powered by Digital AELA courses & books.
-            Explore every course track and book collection in one immersive space.
+            <TranslatedText>Craft lifelong learning hubs powered by Digital AELA courses & books. Explore every course track and book collection in one immersive space.</TranslatedText>
           </motion.p>
 
           {/* Search and Filters */}
@@ -336,7 +356,7 @@ const JoinBuildAfterLife = () => {
                       ? "bg-[#D4AF37] text-black"
                       : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
                   }`}>
-                  {type === "all" ? "All" : type === "course" ? "Courses" : "Books"}
+                  {type === "all" ? <TranslatedText>All</TranslatedText> : type === "course" ? <TranslatedText>Courses</TranslatedText> : <TranslatedText>Books</TranslatedText>}
                 </button>
               ))}
             </div>
@@ -355,9 +375,9 @@ const JoinBuildAfterLife = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
             <p className="text-gray-300 text-sm">
-              {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
-              {searchQuery && ` for "${searchQuery}"`}
-              {selectedType !== "all" && ` in ${selectedType === "course" ? "Courses" : "Books"}`}
+              {filteredItems.length} <TranslatedText>item{filteredItems.length !== 1 ? "s" : ""} found</TranslatedText>
+              {searchQuery && ` ${<TranslatedText>for</TranslatedText>} "${searchQuery}"`}
+              {selectedType !== "all" && ` ${<TranslatedText>in</TranslatedText>} ${selectedType === "course" ? <TranslatedText>Courses</TranslatedText> : <TranslatedText>Books</TranslatedText>}`}
             </p>
           </motion.div>
 
@@ -400,29 +420,29 @@ const JoinBuildAfterLife = () => {
                         <div className="absolute top-2 left-2">
                           <span className="bg-[#D4AF37] text-black px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
                             <FaGraduationCap className="w-2.5 h-2.5" />
-                            Course
+                            <TranslatedText>Course</TranslatedText>
                           </span>
                         </div>
                       </div>
 
                       <div className="p-4 flex flex-col flex-1 min-h-0">
                         <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
-                          {item.title}
+                          <TranslatedText>{item.title}</TranslatedText>
                         </h3>
                         <p className="text-xs text-gray-400 mb-2 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
-                          {item.description || "No description available"}
+                          {item.description ? <TranslatedText>{item.description}</TranslatedText> : <TranslatedText>No description available</TranslatedText>}
                         </p>
 
                         {highlights.length > 0 ? (
                           <div className="mb-3 flex-shrink-0">
                             <p className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide mb-1">
-                              Key Highlights
+                              <TranslatedText>Key Highlights</TranslatedText>
                             </p>
                             <ul className="space-y-1">
                               {highlights.slice(0, 2).map((feature, idx) => (
                                 <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-300">
                                   <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                                  <span className="line-clamp-1">{cleanText(feature)}</span>
+                                  <span className="line-clamp-1"><TranslatedText>{cleanText(feature)}</TranslatedText></span>
                                 </li>
                               ))}
                             </ul>
@@ -433,7 +453,7 @@ const JoinBuildAfterLife = () => {
 
                         <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700 mt-auto flex-shrink-0">
                           <span className="text-lg font-bold text-[#D4AF37] font-display">
-                            {item.price || "On Request"}
+                            {item.price || <TranslatedText>On Request</TranslatedText>}
                           </span>
                         </div>
 
@@ -446,7 +466,7 @@ const JoinBuildAfterLife = () => {
                               handleViewCourse(item);
                             }}
                             className="w-full border border-[#D4AF37]/60 bg-transparent text-[#D4AF37] py-2 rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black transition-colors duration-200">
-                            See Full Course
+                            <TranslatedText>See Full Course</TranslatedText>
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -456,7 +476,7 @@ const JoinBuildAfterLife = () => {
                               handleBuyCourse(item);
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                            {isFreeCourse(item) ? "Enroll Free" : "Buy Now"}
+                            {isFreeCourse(item) ? <TranslatedText>Enroll Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
                           </motion.button>
                           <div
                             onClick={(e) => e.stopPropagation()}
@@ -522,10 +542,10 @@ const JoinBuildAfterLife = () => {
                       </span>
 
                       <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
-                            {item.title}
+                            <TranslatedText>{item.title}</TranslatedText>
                       </h3>
 
-                          <p className="text-xs text-gray-400 mb-2">by {item.author}</p>
+                          <p className="text-xs text-gray-400 mb-2"><TranslatedText>by</TranslatedText> {item.author}</p>
 
                       <div className="flex items-center gap-1.5 mb-3">
                         <div className="flex items-center gap-0.5">
@@ -550,7 +570,7 @@ const JoinBuildAfterLife = () => {
 
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
-                              {item.price > 0 ? `₹${item.price}` : "Free"}
+                              {item.price > 0 ? `₹${item.price}` : <TranslatedText>Free</TranslatedText>}
                         </span>
                             {item.originalPrice > item.price && (
                           <span className="text-xs text-gray-500 line-through">
@@ -579,12 +599,33 @@ const JoinBuildAfterLife = () => {
                                 navigate(`/books/${item.id}`);
                               }
                             } else {
-                              // Paid book - go to payment page
-                              navigate(`/books/${item.id}/payment`);
+                              // Paid book - redirect directly to Razorpay
+                              if (!isAuthenticated) {
+                                toast.info("Please log in to purchase this book");
+                                navigate("/login/student");
+                                return;
+                              }
+                              // Validate price
+                              const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+                              if (!itemPrice || itemPrice <= 0) {
+                                toast.error("This book price is not available. Please contact support.");
+                                return;
+                              }
+                              
+                              redirectToRazorpay({
+                                bookId: item.id,
+                                amount: itemPrice,
+                                currency: "AED",
+                                description: `Payment for ${item.title || "book"}`,
+                                userName: user?.fullName || "",
+                                userEmail: user?.email || "",
+                                userPhone: user?.phone || "",
+                                quantity: 1,
+                              });
                             }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          {isFreeBook(item) ? "Get Free" : "Buy Now"}
+                          {isFreeBook(item) ? <TranslatedText>Get Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
                         </motion.button>
                         <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
@@ -608,20 +649,20 @@ const JoinBuildAfterLife = () => {
                 <>
                   <div className="text-6xl mb-4">📚</div>
                   <h3 className="text-2xl font-bold text-white mb-2 font-display">
-                    No courses or books available yet
+                    <TranslatedText>No courses or books available yet</TranslatedText>
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    Approved courses and books will appear here once they are published.
+                    <TranslatedText>Approved courses and books will appear here once they are published.</TranslatedText>
                   </p>
                 </>
               ) : (
                 <>
                   <div className="text-6xl mb-4">🔍</div>
                   <h3 className="text-2xl font-bold text-white mb-2 font-display">
-                    No items found
+                    <TranslatedText>No items found</TranslatedText>
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    Try adjusting your search or filter criteria
+                    <TranslatedText>Try adjusting your search or filter criteria</TranslatedText>
                   </p>
                   <button
                     onClick={() => {
@@ -629,7 +670,7 @@ const JoinBuildAfterLife = () => {
                       setSelectedType("all");
                     }}
                     className="text-[#D4AF37] hover:text-[#E5C158] transition-colors">
-                    Clear filters
+                    <TranslatedText>Clear filters</TranslatedText>
                   </button>
                 </>
               )}

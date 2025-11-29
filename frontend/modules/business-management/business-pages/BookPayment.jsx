@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
@@ -7,11 +7,14 @@ import SEO from "../../../src/components/SEO";
 import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
 import { fetchEbookById } from "../../../src/services/api/resources";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
+import { createPayment, createRazorpayPaymentLink } from "../../../src/services/api/payments";
 
 const BookPayment = () => {
   const { id } = useParams();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -56,12 +59,46 @@ const BookPayment = () => {
     }
   }, [id]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In production, this would integrate with a payment gateway
-    alert(
-      "Payment gateway integration will be implemented here. This is a placeholder."
-    );
+    
+    if (isProcessing || !book || book.price <= 0) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Step 1: Create payment record
+      const paymentResponse = await createPayment({
+        amount: book.price,
+        currency: "INR", // Razorpay primarily uses INR
+        description: `Payment for ${book.title} by ${book.author}`,
+        paymentMethod: formData.paymentMethod,
+        gateway: "razorpay",
+      });
+
+      if (!paymentResponse?.payment?._id) {
+        throw new Error("Failed to create payment record");
+      }
+
+      const paymentId = paymentResponse.payment._id;
+
+      // Step 2: Create Razorpay Payment Link (Redirect-based)
+      const linkResponse = await createRazorpayPaymentLink(paymentId);
+
+      if (!linkResponse?.paymentLink?.url) {
+        throw new Error("Failed to create Razorpay payment link");
+      }
+
+      // Step 3: Redirect to Razorpay's payment page
+      toast.info("Redirecting to payment page...");
+      window.location.href = linkResponse.paymentLink.url;
+    } catch (error) {
+      console.error("[Payment] Error processing payment:", error);
+      toast.error(error.message || "Failed to process payment. Please try again.");
+      setIsProcessing(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -357,8 +394,15 @@ const BookPayment = () => {
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                    Pay ₹{book.price} - Complete Purchase
+                    className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    {isProcessing ? (
+                      <>
+                        <FaSpinner className="animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay ₹${book.price} - Complete Purchase`
+                    )}
                   </motion.button>
 
                   <p className="text-xs text-gray-500 text-center">

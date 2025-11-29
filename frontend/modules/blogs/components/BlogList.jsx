@@ -8,6 +8,7 @@ import {
 } from "react-icons/hi2";
 import { FaRegEye } from "react-icons/fa6";
 import { useBlogs } from "../../../src/contexts/BlogContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -65,9 +66,9 @@ const BlogList = ({
   if (!visibleBlogs || visibleBlogs.length === 0) {
     return (
       <section className="rounded-2xl border border-white/10 bg-black/60 p-8 text-center text-gray-300">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <h3 className="text-lg font-semibold text-white">{typeof title === "string" ? title : title}</h3>
         <p className="mt-2 text-sm text-gray-400">
-          {emptyState || "No blogs available yet. Be the first to create one!"}
+          {emptyState || <TranslatedText>No blogs available yet. Be the first to create one!</TranslatedText>}
         </p>
       </section>
     );
@@ -94,9 +95,9 @@ const BlogList = ({
       )}
       {(title || description) && (
         <header className="space-y-2">
-          {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
+          {title && <h3 className="text-lg font-semibold text-white">{typeof title === "string" ? title : title}</h3>}
           {description && (
-            <p className="text-sm text-gray-400">{description}</p>
+            <p className="text-sm text-gray-400">{typeof description === "string" ? description : description}</p>
           )}
         </header>
       )}
@@ -145,7 +146,7 @@ const BlogList = ({
                   loading="lazy"
                 />
                 <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                  {blog.category}
+                  <TranslatedText>{blog.category}</TranslatedText>
                 </span>
               </div>
 
@@ -158,7 +159,7 @@ const BlogList = ({
                   />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white truncate">
-                      {blog.author.name}
+                      <TranslatedText>{blog.author.name}</TranslatedText>
                     </p>
                     <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
                       {formatTimestamp(blog.publishedAt)}
@@ -168,17 +169,17 @@ const BlogList = ({
 
                 <div className="flex-1 min-h-0 space-y-3">
                   <h3 className="block text-lg font-semibold text-white transition hover:text-[#D4AF37] line-clamp-2">
-                    {blog.title}
+                    <TranslatedText>{blog.title}</TranslatedText>
                   </h3>
                   <p className="text-sm text-gray-300 line-clamp-3">
-                    {stripHtmlTags(blog.excerpt)}
+                    <TranslatedText>{stripHtmlTags(blog.excerpt)}</TranslatedText>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {blog.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
                         className="inline-flex max-w-full items-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#F5D26A]">
-                        <span className="truncate">#{tag}</span>
+                        <span className="truncate">#<TranslatedText>{tag}</TranslatedText></span>
                       </span>
                     ))}
                   </div>
@@ -188,7 +189,7 @@ const BlogList = ({
                   <div className="flex items-center gap-3">
                     <span className="inline-flex items-center gap-1">
                       <HiOutlineClock className="h-4 w-4 text-[#D4AF37]" />
-                      {blog.readTime} min read
+                      <TranslatedText>{blog.readTime} min read</TranslatedText>
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <FaRegEye className="h-4 w-4 text-[#D4AF37]" />

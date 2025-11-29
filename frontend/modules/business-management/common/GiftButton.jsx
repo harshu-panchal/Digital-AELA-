@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const formDefaults = {
   userId: "",
@@ -94,10 +95,10 @@ const GiftButton = ({
   const validateForm = () => {
     const nextErrors = {};
     if (!formData.userId.trim()) {
-      nextErrors.userId = "User ID is required";
+      nextErrors.userId = "User ID is required"; // Error messages can stay in English for now
     }
     if (!formData.fullName.trim()) {
-      nextErrors.fullName = "Full name is required";
+      nextErrors.fullName = "Full name is required"; // Error messages can stay in English for now
     }
     return nextErrors;
   };
@@ -219,7 +220,7 @@ const GiftButton = ({
                   onPointerDown={trapEvent}
                   onTouchStart={trapEvent}
                   className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10">
-                  Gift to a near one
+                  <TranslatedText>Gift to a near one</TranslatedText>
                 </button>
                 <button
                   type="button"
@@ -228,7 +229,7 @@ const GiftButton = ({
                   onPointerDown={trapEvent}
                   onTouchStart={trapEvent}
                   className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10">
-                  Gift to anyone
+                  <TranslatedText>Gift to anyone</TranslatedText>
                 </button>
               </motion.div>
             )}
@@ -257,10 +258,10 @@ const GiftButton = ({
                     <div className="mb-6 flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#D4AF37]/80">
-                          Dedicate your gift
+                          <TranslatedText>Dedicate your gift</TranslatedText>
                         </p>
                         <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
-                          Recipient details
+                          <TranslatedText>Recipient details</TranslatedText>
                         </h2>
                       </div>
                       <button
@@ -278,7 +279,7 @@ const GiftButton = ({
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            User ID*
+                            <TranslatedText>User ID*</TranslatedText>
                           </label>
                           <input
                             type="text"
@@ -293,7 +294,7 @@ const GiftButton = ({
                         </div>
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            Full name*
+                            <TranslatedText>Full name*</TranslatedText>
                           </label>
                           <input
                             type="text"
@@ -311,7 +312,7 @@ const GiftButton = ({
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            Email
+                            <TranslatedText>Email</TranslatedText>
                           </label>
                           <input
                             type="email"
@@ -323,7 +324,7 @@ const GiftButton = ({
                         </div>
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            Phone
+                            <TranslatedText>Phone</TranslatedText>
                           </label>
                           <input
                             type="tel"
@@ -338,7 +339,7 @@ const GiftButton = ({
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            Relation
+                            <TranslatedText>Relation</TranslatedText>
                           </label>
                           <input
                             type="text"
@@ -350,7 +351,7 @@ const GiftButton = ({
                         </div>
                         <div>
                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                            City / Country
+                            <TranslatedText>City / Country</TranslatedText>
                           </label>
                           <input
                             type="text"
@@ -364,7 +365,7 @@ const GiftButton = ({
 
                       <div>
                         <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
-                          Message (optional)
+                          <TranslatedText>Message (optional)</TranslatedText>
                         </label>
                         <textarea
                           rows={3}
@@ -384,7 +385,7 @@ const GiftButton = ({
                             setErrors({});
                           }}
                           className="inline-flex items-center justify-center rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/40 hover:text-white">
-                          ← Back
+                          <TranslatedText>← Back</TranslatedText>
                         </button>
 
                         <motion.button
@@ -392,7 +393,7 @@ const GiftButton = ({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-2 text-sm font-bold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                          Continue to payment
+                          <TranslatedText>Continue to payment</TranslatedText>
                         </motion.button>
                       </div>
                     </form>

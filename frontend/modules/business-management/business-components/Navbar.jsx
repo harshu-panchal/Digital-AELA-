@@ -24,6 +24,7 @@ import { useSocket } from "../../../src/hooks/useSocket";
 import { fetchUnreadCount } from "../../../src/services/api/notifications";
 import { fetchPublicSettings } from "../../../src/services/api/publicSettings";
 import NotificationDropdown from "./NotificationDropdown";
+import TranslatedText from "../../../src/components/TranslatedText";
 import logo from "../../../src/assets/MainLogo.png";
 
 const Navbar = () => {
@@ -39,7 +40,7 @@ const Navbar = () => {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [contactEmail, setContactEmail] = useState("info@digitalaela.com");
   const [contactPhone, setContactPhone] = useState("+971 502270625");
-  const { language, languages, changeLanguage, t } = useLanguage();
+  const { language, languages, changeLanguage } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
   const { socialLinks } = useSocialMedia();
   const { user, logout, getRoleLabel, getRoleHome } = useAuth();
@@ -162,41 +163,37 @@ const Navbar = () => {
 
   const baseNavItems = [
     {
-      label: t("nav.home", { defaultValue: "Home" }),
+      label: "Home",
       path: "/",
     },
     {
-      label: t("nav.courses", { defaultValue: "Courses" }),
+      label: "Courses",
       path: "/courses",
       dropdown: [
         {
-          label: t("nav.englishLanguage", { defaultValue: "English Language" }),
+          label: "English Language",
           path: "/courses/english-language",
         },
         {
-          label: t("nav.digitalMarketing", {
-            defaultValue: "Digital Marketing",
-          }),
+          label: "Digital Marketing",
           path: "/courses/digital-marketing",
         },
         {
-          label: t("nav.corporateTraining", {
-            defaultValue: "Corporate Training",
-          }),
+          label: "Corporate Training",
           path: "/courses/corporate-training",
         },
       ],
     },
     {
-      label: t("nav.learnEarn", { defaultValue: "Learn & Earn" }),
+      label: "Learn & Earn",
       path: "/learn-earn",
     },
     {
-      label: t("nav.resources", { defaultValue: "Resources" }),
+      label: "Resources",
       path: "/resources",
       dropdown: [
         {
-          label: t("nav.aelaBlogs", { defaultValue: "AELA Blogs" }),
+          label: "AELA Blogs",
           path: "/blogs",
         },
         ...(socialLinks.youtube
@@ -209,78 +206,70 @@ const Navbar = () => {
             ]
           : []),
         {
-          label: t("nav.freeLibrary", { defaultValue: "Free Library" }),
+          label: "Free Library",
           path: "/free-library",
         },
-        { label: t("nav.books", { defaultValue: "Books" }), path: "/books" },
+        { label: "Books", path: "/books" },
         {
-          label: t("nav.exploreJobs", { defaultValue: "Explore Jobs" }),
+          label: "Explore Jobs",
           path: "/explore-jobs",
         },
       ],
     },
     {
-      label: t("nav.joinUs", { defaultValue: "Join Us" }),
+      label: "Join Us",
       path: "/join-us",
       dropdown: [
         {
-          label: t("nav.asTeacher", { defaultValue: "As Teacher" }),
+          label: "As Teacher",
           path: "/join-us/teacher",
         },
         {
-          label: t("nav.influencerFreelancer", {
-            defaultValue: "Influencer / Freelancer",
-          }),
+          label: "Influencer / Freelancer",
           path: "/join-us/influencer",
         },
         {
-          label: t("nav.buildYourAfterlife", {
-            defaultValue: "Build Your Afterlife",
-          }),
+          label: "Build Your Afterlife",
           path: "/join-us/afterlife",
         },
       ],
     },
     {
-      label: t("nav.about", { defaultValue: "About" }),
+      label: "About",
       path: "/about",
       dropdown: [
         {
-          label: t("nav.ourStory", { defaultValue: "Our Story" }),
+          label: "Our Story",
           path: "/about/our-story",
         },
         {
-          label: t("nav.missionVision", { defaultValue: "Mission & Vision" }),
+          label: "Mission & Vision",
           path: "/about/mission-vision",
         },
         {
-          label: t("nav.meetTheFounder", { defaultValue: "Meet the Founder" }),
+          label: "Meet the Founder",
           path: "/about/founder",
         },
         {
-          label: t("nav.successStories", { defaultValue: "Our Achievement" }),
+          label: "Our Achievement",
           path: "/about/success-stories",
         },
       ],
     },
     {
-      label: t("nav.contact", { defaultValue: "Contact" }),
+      label: "Contact",
       path: "/contact",
       dropdown: [
         {
-          label: t("nav.bookDemo", { defaultValue: "Book a Demo Class" }),
+          label: "Book a Demo Class",
           path: "/contact/book-demo",
         },
         {
-          label: t("nav.businessCollaboration", {
-            defaultValue: "Request Business Collaboration",
-          }),
+          label: "Request Business Collaboration",
           path: "/contact/business-collaboration",
         },
         {
-          label: t("nav.franchisePartnership", {
-            defaultValue: "Franchise Partnership Inquiry",
-          }),
+          label: "Franchise Partnership Inquiry",
           path: "/contact/franchise-partnership",
         },
       ],
@@ -654,7 +643,7 @@ const Navbar = () => {
               {navItems.map((item, index) => {
                 const isLastItem = index === navItems.length - 1;
                 return (
-                  <React.Fragment key={item.label}>
+                  <React.Fragment key={item.path || item.href || `nav-item-${index}`}>
                     <div
                       className="relative"
                       onMouseEnter={() => handleMouseEnter(index)}
@@ -666,7 +655,7 @@ const Navbar = () => {
                             whileTap={{ scale: 0.95 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                            {item.label}
+                            <TranslatedText>{item.label}</TranslatedText>
                             <motion.div
                               className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
                               whileHover={{ width: "100%" }}
@@ -685,7 +674,7 @@ const Navbar = () => {
                             whileTap={{ scale: 0.95 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                            {item.label}
+                            <TranslatedText>{item.label}</TranslatedText>
                             <motion.div
                               className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
                               whileHover={{ width: "100%" }}
@@ -700,7 +689,7 @@ const Navbar = () => {
                             whileTap={{ scale: 0.95 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             className="relative inline-block text-[#F5D26A] font-semibold text-base tracking-wide transition-colors duration-300 hover:text-[#FFE28A] font-accent">
-                            {item.label}
+                            <TranslatedText>{item.label}</TranslatedText>
                             <motion.div
                               className="absolute bottom-0 left-0 h-px w-0 bg-linear-to-r from-[#F5D26A] via-[#E7C35D] to-transparent"
                               whileHover={{ width: "100%" }}
@@ -726,7 +715,7 @@ const Navbar = () => {
                                     <div
                                       key={dropdownItem.label}
                                       className="border-b border-white/10 px-4 py-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-[#FFE28A]/70 last:border-b-0">
-                                      {dropdownItem.label}
+                                      <TranslatedText>{dropdownItem.label}</TranslatedText>
                                     </div>
                                   );
                                 }
@@ -753,7 +742,7 @@ const Navbar = () => {
                                           x: 5,
                                         }}
                                         className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                        {dropdownItem.label}
+                                        <TranslatedText>{dropdownItem.label}</TranslatedText>
                                       </motion.div>
                                     </button>
                                   );
@@ -780,7 +769,7 @@ const Navbar = () => {
                                           x: 5,
                                         }}
                                         className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                        {dropdownItem.label}
+                                        <TranslatedText>{dropdownItem.label}</TranslatedText>
                                       </motion.div>
                                     </a>
                                   );
@@ -804,7 +793,7 @@ const Navbar = () => {
                                         x: 5,
                                       }}
                                       className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                      {dropdownItem.label}
+                                      <TranslatedText>{dropdownItem.label}</TranslatedText>
                                     </motion.div>
                                   </Link>
                                 );
@@ -829,9 +818,7 @@ const Navbar = () => {
                           <FaMicrophone className="h-3.5 w-3.5 text-green-400 group-hover:text-green-300 transition-colors" />
                           {/* Label */}
                           <span className="text-xs font-semibold text-green-300 group-hover:text-green-200 whitespace-nowrap">
-                            {t("nav.speakingClub", {
-                              defaultValue: "Speaking Club",
-                            })}
+                            <TranslatedText>Speaking Club</TranslatedText>
                           </span>
                         </Link>
                         {/* Notification icon - separate from Speaking Club button */}
@@ -929,7 +916,7 @@ const Navbar = () => {
                     <FaMicrophone className="h-4 w-4 text-green-400 group-hover:text-green-300 transition-colors" />
                     {/* Label */}
                     <span className="text-sm font-semibold text-green-300 group-hover:text-green-200">
-                      {t("nav.speakingClub", { defaultValue: "Speaking Club" })}
+                      <TranslatedText>Speaking Club</TranslatedText>
                     </span>
                   </Link>
                   {/* Notification icon - separate from Speaking Club button */}
@@ -941,15 +928,15 @@ const Navbar = () => {
                     <FaBell className="h-5 w-5 transition-colors" />
                   </button>
                 </div>
-                {navItems.map((item) => (
-                  <div key={item.label}>
+                {navItems.map((item, index) => (
+                  <div key={item.path || item.href || `mobile-nav-item-${index}`}>
                     {item.dropdown ? (
                       <span className="text-[#B8831A] font-semibold text-base tracking-wide hover:text-[#8A6611] transition-colors duration-300 font-accent relative group block py-2 cursor-pointer">
                         <motion.span
                           whileHover={{ x: 5, scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="inline-block">
-                          {item.label}
+                          <TranslatedText>{item.label}</TranslatedText>
                         </motion.span>
                         <motion.div
                           className="absolute bottom-0 left-0 w-0 h-px bg-[#B8831A]"
@@ -968,7 +955,7 @@ const Navbar = () => {
                           whileHover={{ x: 5, scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="inline-block">
-                          {item.label}
+                          <TranslatedText>{item.label}</TranslatedText>
                         </motion.span>
                         <motion.div
                           className="absolute bottom-0 left-0 w-0 h-px bg-[#B8831A]"
@@ -987,7 +974,7 @@ const Navbar = () => {
                           whileHover={{ x: 5, scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="inline-block">
-                          {item.label}
+                          <TranslatedText>{item.label}</TranslatedText>
                         </motion.span>
                         <motion.div
                           className="absolute bottom-0 left-0 w-0 h-px bg-[#B8831A]"
@@ -1004,7 +991,7 @@ const Navbar = () => {
                               <span
                                 key={dropdownItem.label}
                                 className="block text-[#FFE28A]/70 text-[11px] sm:text-xs uppercase tracking-wide py-1">
-                                {dropdownItem.label}
+                                <TranslatedText>{dropdownItem.label}</TranslatedText>
                               </span>
                             );
                           }
@@ -1019,7 +1006,7 @@ const Navbar = () => {
                                   setMobileMenuOpen(false);
                                 }}
                                 className="block text-left text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1 w-full">
-                                {dropdownItem.label}
+                                <TranslatedText>{dropdownItem.label}</TranslatedText>
                               </button>
                             );
                           }
@@ -1033,7 +1020,7 @@ const Navbar = () => {
                                 rel="noopener noreferrer"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                                {dropdownItem.label}
+                                <TranslatedText>{dropdownItem.label}</TranslatedText>
                               </a>
                             );
                           }
@@ -1044,7 +1031,7 @@ const Navbar = () => {
                               to={dropdownItem.path}
                               onClick={() => setMobileMenuOpen(false)}
                               className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                              {dropdownItem.label}
+                              <TranslatedText>{dropdownItem.label}</TranslatedText>
                             </Link>
                           );
                         })}
@@ -1056,7 +1043,7 @@ const Navbar = () => {
                 {/* Language Selection in Mobile Menu */}
                 <div className="mt-4 border-t border-white/10 pt-4">
                   <p className="text-[#B8831A] text-sm font-semibold mb-2 font-accent px-2">
-                    {t("nav.language", { defaultValue: "Language" })}
+                    <TranslatedText>Language</TranslatedText>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(languages).map(([code, option]) => (

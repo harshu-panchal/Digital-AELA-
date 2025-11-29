@@ -4,6 +4,7 @@ import { HiOutlineUserPlus, HiOutlineSparkles } from "react-icons/hi2";
 import PostGrid from "../components/PostGrid";
 import ProfileHeader from "../components/ProfileHeader";
 import { useExploreJobs } from "../context/ExploreJobsContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -26,10 +27,9 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <div className="rounded-[32px] border border-white/10 bg-white/5 p-10 text-center">
-        <h2 className="text-2xl font-semibold text-white">Profile not found</h2>
+        <h2 className="text-2xl font-semibold text-white"><TranslatedText>Profile not found</TranslatedText></h2>
         <p className="mt-2 text-sm text-gray-400">
-          The profile you are looking for might have been moved or does not exist.
-          Explore the feed to discover more job opportunities.
+          <TranslatedText>The profile you are looking for might have been moved or does not exist. Explore the feed to discover more job opportunities.</TranslatedText>
         </p>
       </div>
     );
@@ -46,7 +46,7 @@ const ProfilePage = () => {
         roleBadge={
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white">
             <HiOutlineSparkles className="h-4 w-4" />
-            {isRecruiter ? "Recruiter" : "Job Seeker"}
+            {isRecruiter ? <TranslatedText>Recruiter</TranslatedText> : <TranslatedText>Job Seeker</TranslatedText>}
           </span>
         }
         actionSlot={
@@ -54,21 +54,21 @@ const ProfilePage = () => {
             type="button"
             className="inline-flex items-center gap-2 rounded-3xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5">
             <HiOutlineUserPlus className="h-5 w-5" />
-            Follow
+            <TranslatedText>Follow</TranslatedText>
           </button>
         }
         metrics={[
-          { label: "Job Posts", value: posts.length },
+          { label: <TranslatedText>Job Posts</TranslatedText>, value: posts.length },
           {
-            label: "Hires",
+            label: <TranslatedText>Hires</TranslatedText>,
             value: profile.stats?.hires ?? 0,
           },
           {
-            label: "Followers",
+            label: <TranslatedText>Followers</TranslatedText>,
             value: profile.stats?.followers ?? 0,
           },
           {
-            label: "Following",
+            label: <TranslatedText>Following</TranslatedText>,
             value: profile.stats?.following ?? 0,
           },
         ]}
@@ -78,18 +78,18 @@ const ProfilePage = () => {
         <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Posts
+              <TranslatedText>Posts</TranslatedText>
             </p>
             <h2 className="text-xl font-semibold text-white">
-              Job posts
+              <TranslatedText>Job posts</TranslatedText>
             </h2>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-gray-400">
             <span className="rounded-full border border-white/10 px-4 py-2">
-              {profile.location}
+              <TranslatedText>{profile.location}</TranslatedText>
             </span>
             <span className="rounded-full border border-white/10 px-4 py-2">
-              Active since 2024
+              <TranslatedText>Active since 2024</TranslatedText>
             </span>
           </div>
         </header>
@@ -107,9 +107,9 @@ const ProfilePage = () => {
           appliedPostIds={appliedPostIds}
           emptyState={
             <>
-              <h3 className="text-lg font-semibold text-white">No job posts yet</h3>
+              <h3 className="text-lg font-semibold text-white"><TranslatedText>No job posts yet</TranslatedText></h3>
               <p className="mt-2 max-w-md text-sm text-gray-400">
-                This recruiter hasn't posted any job opportunities yet.
+                <TranslatedText>This recruiter hasn't posted any job opportunities yet.</TranslatedText>
               </p>
             </>
           }

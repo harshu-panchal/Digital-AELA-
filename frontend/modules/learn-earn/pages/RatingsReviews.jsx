@@ -7,6 +7,7 @@ import { useUser } from "../../../src/contexts/UserContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { searchLearners as searchLearnersAPI } from "../../../src/services/api/learnEarn";
 import { fetchFollowing, fetchFollowers } from "../../../src/services/api/social";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   submitUserRating,
   getUserRatings,

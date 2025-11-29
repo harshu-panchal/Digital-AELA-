@@ -19,6 +19,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { fetchEnhancedLeaderboard } from "../../../src/services/api/learnEarn";
 import { getUserRatingStats } from "../../../src/services/api/userRating";
 import { FaSpinner } from "react-icons/fa";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const DashboardOverview = () => {
   const {
@@ -322,31 +323,31 @@ const DashboardOverview = () => {
     () => [
       {
         id: "messages",
-        label: "Messages",
+        label: <TranslatedText>Messages</TranslatedText>,
         count: unreadMessages,
         icon: FaCommentDots,
       },
       {
         id: "followers",
-        label: "Friends",
+        label: <TranslatedText>Friends</TranslatedText>,
         count: followerCount,
         icon: FaUsers,
       },
       {
         id: "notifications",
-        label: "Notifications",
+        label: <TranslatedText>Notifications</TranslatedText>,
         count: notificationCount,
         icon: HiOutlineBellAlert,
       },
       {
         id: "wallet",
-        label: "Wallet",
+        label: <TranslatedText>Wallet</TranslatedText>,
         count: totalCoins,
         icon: FaCoins,
       },
       {
         id: "live",
-        label: "Live Groups",
+        label: <TranslatedText>Live Groups</TranslatedText>,
         count: liveRoomCount,
         icon: HiOutlineMicrophone,
       },
@@ -387,7 +388,7 @@ const DashboardOverview = () => {
                 <p className="mt-1 text-sm text-gray-300">{chat.preview}</p>
                 {chat.unread > 0 && (
                   <span className="mt-3 inline-flex rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-semibold text-[#D4AF37]">
-                    {chat.unread} unread
+                    {chat.unread} <TranslatedText>unread</TranslatedText>
                   </span>
                 )}
               </div>
@@ -400,14 +401,14 @@ const DashboardOverview = () => {
       <div className="auto-grid-sm lg:grid-cols-3 lg:gap-6">
         {combinedFollowersFollowing.length === 0 ? (
           <div className="col-span-full rounded-2xl border border-white/5 bg-linear-to-br from-[#101010] via-[#0c0c0c] to-[#050505] p-8 text-center">
-            <p className="text-gray-400">No followers or following yet.</p>
+            <p className="text-gray-400"><TranslatedText>No followers or following yet.</TranslatedText></p>
             <p className="mt-2 text-sm text-gray-500">
-              Start following users to see them here!
+              <TranslatedText>Start following users to see them here!</TranslatedText>
             </p>
             <Link
               to="/learn-earn/find-learners"
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-sm font-semibold text-black hover:brightness-110">
-              Find Learners
+              <TranslatedText>Find Learners</TranslatedText>
             </Link>
           </div>
         ) : (
@@ -415,10 +416,10 @@ const DashboardOverview = () => {
             const userId = user.id || user.userId;
             const relationshipLabel =
               user.relationshipType === "mutual"
-                ? "Mutual"
+                ? <TranslatedText>Mutual</TranslatedText>
                 : user.relationshipType === "follower"
-                ? "Follows you"
-                : "Following";
+                ? <TranslatedText>Follows you</TranslatedText>
+                : <TranslatedText>Following</TranslatedText>;
 
             return (
               <Motion.div
@@ -458,22 +459,22 @@ const DashboardOverview = () => {
                   </div>
                 </div>
                 <p className="mt-3 text-sm text-gray-300">
-                  {user.tagline || user.headline || "Learner"}
+                  {user.tagline || user.headline || <TranslatedText>Learner</TranslatedText>}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
                   <span>⭐ {(user.rating || 0).toFixed(1)}</span>
                   {user.mutuals !== undefined && (
-                    <span>{user.mutuals} mutuals</span>
+                    <span>{user.mutuals} <TranslatedText>mutuals</TranslatedText></span>
                   )}
                   {user.coinsShared !== undefined && (
-                    <span>{user.coinsShared} coins shared</span>
+                    <span>{user.coinsShared} <TranslatedText>coins shared</TranslatedText></span>
                   )}
                 </div>
                 <Link
                   to={`/learn-earn/chat?userId=${userId}`}
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2.5 text-xs font-semibold text-[#D4AF37] transition hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/20 active:scale-[0.98]">
                   <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
-                  Messages
+                  <TranslatedText>Messages</TranslatedText>
                 </Link>
               </Motion.div>
             );
@@ -510,7 +511,7 @@ const DashboardOverview = () => {
                         hour: "2-digit",
                         minute: "2-digit",
                       })
-                    : "Just now"}
+                    : <TranslatedText>Just now</TranslatedText>}
                 </p>
               </div>
               {!notification.isRead && (
@@ -529,7 +530,7 @@ const DashboardOverview = () => {
           transition={{ duration: 0.28 }}
           className="rounded-2xl border border-[#D4AF37]/20 bg-[#101010] p-6">
           <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/80">
-            Balance
+            <TranslatedText>Balance</TranslatedText>
           </p>
           <p className="mt-3 text-3xl font-bold text-white">
             {safeTotals.current.toLocaleString()}{" "}
@@ -537,13 +538,13 @@ const DashboardOverview = () => {
           </p>
           <div className="mt-6 space-y-3 text-sm text-gray-300">
             <div className="flex justify-between">
-              <span>Total earned</span>
+              <span><TranslatedText>Total earned</TranslatedText></span>
               <span className="text-emerald-300">
                 +{safeTotals.earned.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Total redeemed</span>
+              <span><TranslatedText>Total redeemed</TranslatedText></span>
               <span className="text-rose-300">
                 -{safeTotals.redeemed.toLocaleString()}
               </span>
@@ -556,28 +557,28 @@ const DashboardOverview = () => {
           transition={{ duration: 0.28 }}
           className="rounded-2xl border border-white/5 bg-[#0f0f0f] p-6">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-            Quick actions
+            <TranslatedText>Quick actions</TranslatedText>
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               to="/learn-earn/wallet"
               className="inline-flex flex-1 min-w-[140px] items-center justify-between gap-2 rounded-xl bg-[#151515] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:text-[#D4AF37]">
-              Redeem
+              <TranslatedText>Redeem</TranslatedText>
               <FaCoins className="h-4 w-4" />
             </Link>
             <Link
               to="/learn-earn/wallet"
               className="inline-flex flex-1 min-w-[140px] items-center justify-between gap-2 rounded-xl bg-[#151515] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:text-[#D4AF37]">
-              Send Coins
+              <TranslatedText>Send Coins</TranslatedText>
               <FaBolt className="h-4 w-4 text-[#D4AF37]" />
             </Link>
           </div>
           <p className="mt-6 text-[13px] text-gray-400">
-            Daily streak:{" "}
+            <TranslatedText>Daily streak:</TranslatedText>{" "}
             <span className="font-semibold text-emerald-300">
               {streak > 0
-                ? `Active · ${streak} ${streak === 1 ? "day" : "days"}`
-                : "Start your streak"}
+                ? <><TranslatedText>Active</TranslatedText> · {streak} {streak === 1 ? <TranslatedText>day</TranslatedText> : <TranslatedText>days</TranslatedText>}</>
+                : <TranslatedText>Start your streak</TranslatedText>}
             </span>
           </p>
         </Motion.div>
@@ -593,18 +594,18 @@ const DashboardOverview = () => {
             transition={{ duration: 0.28 }}
             className="rounded-2xl border border-[#D4AF37]/15 bg-[#0f0f0f] p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-              Live Debate
+              <TranslatedText>Live Debate</TranslatedText>
             </p>
             <p className="mt-2 text-lg font-semibold text-white">
               {room.topic}
             </p>
             <p className="mt-2 text-xs text-gray-400">
               {room.startInMinutes > 0
-                ? `Starts in ${room.startInMinutes} min`
+                ? <><TranslatedText>Starts in</TranslatedText> {room.startInMinutes} <TranslatedText>min</TranslatedText></>
                 : room.status === "live"
-                ? "Live Now"
-                : "Starting soon"}{" "}
-              · Hosts {room.speakers?.join(" & ") || "TBD"}
+                ? <TranslatedText>Live Now</TranslatedText>
+                : <TranslatedText>Starting soon</TranslatedText>}{" "}
+              · <TranslatedText>Hosts</TranslatedText> {room.speakers?.join(" & ") || <TranslatedText>TBD</TranslatedText>}
             </p>
           </Motion.div>
         ))}
@@ -616,14 +617,14 @@ const DashboardOverview = () => {
             transition={{ duration: 0.28 }}
             className="rounded-2xl border border-white/5 bg-[#101010] p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-              Open Room
+              <TranslatedText>Open Room</TranslatedText>
             </p>
             <p className="mt-2 text-lg font-semibold text-white">
               {room.title}
             </p>
-            <p className="mt-1 text-sm text-gray-300">Host: {room.host}</p>
+            <p className="mt-1 text-sm text-gray-300"><TranslatedText>Host:</TranslatedText> {room.host}</p>
             <p className="mt-2 text-xs text-gray-500">
-              Listeners online: {room.listeners}
+              <TranslatedText>Listeners online:</TranslatedText> {room.listeners}
             </p>
             <div className="mt-3 space-y-1 text-xs text-[#D4AF37]">
               {room.winners.map((item) => (
@@ -648,14 +649,13 @@ const DashboardOverview = () => {
           <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-[#D4AF37]/80">
-                Good to see you
+                <TranslatedText>Good to see you</TranslatedText>
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
                 {safeProfile.name}
               </h1>
               <p className="mt-2 max-w-md text-sm text-gray-300">
-                Keep the momentum going — your learners are engaging 14% more
-                this week.
+                <TranslatedText>Keep the momentum going — your learners are engaging 14% more this week.</TranslatedText>
               </p>
             </div>
             <Motion.div
@@ -664,32 +664,32 @@ const DashboardOverview = () => {
               transition={{ duration: 0.4, delay: 0.1 }}
               className="rounded-2xl border border-white/10 bg-[#0f0f0f]/80 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/80">
-                AELA Coins
+                <TranslatedText>AELA Coins</TranslatedText>
               </p>
               <p className="mt-2 text-3xl font-bold text-white">
                 {totals.current.toLocaleString()}
-                <span className="ml-1 text-sm text-[#D4AF37]">coins</span>
+                <span className="ml-1 text-sm text-[#D4AF37]"><TranslatedText>coins</TranslatedText></span>
               </p>
               <p className="mt-2 text-xs text-gray-400">
-                +340 coins vs last week
+                +340 <TranslatedText>coins vs last week</TranslatedText>
               </p>
             </Motion.div>
           </div>
           <div className="relative z-10 mt-6 grid grid-cols-3 gap-3 text-center text-xs text-gray-300 sm:text-sm">
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
-              <p className="text-[#D4AF37]">Friends</p>
+              <p className="text-[#D4AF37]"><TranslatedText>Friends</TranslatedText></p>
               <p className="mt-1 text-lg font-semibold text-white">
                 {actualFollowersCount.toLocaleString()}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
-              <p className="text-[#D4AF37]">Following</p>
+              <p className="text-[#D4AF37]"><TranslatedText>Following</TranslatedText></p>
               <p className="mt-1 text-lg font-semibold text-white">
                 {actualFollowingCount.toLocaleString()}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#111]/80 p-4">
-              <p className="text-[#D4AF37]">Rating</p>
+              <p className="text-[#D4AF37]"><TranslatedText>Rating</TranslatedText></p>
               <p className="mt-1 text-lg font-semibold text-white">
                 ⭐{" "}
                 {ratingStats !== null &&
@@ -707,7 +707,7 @@ const DashboardOverview = () => {
           transition={{ duration: 0.35 }}
           className="rounded-3xl border border-white/5 bg-linear-to-br from-[#111] via-[#090909] to-black p-6 lg:col-span-5">
           <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">
-            Leaderboard snapshot
+            <TranslatedText>Leaderboard snapshot</TranslatedText>
           </p>
           <div className="mt-4 space-y-3">
             {loadingLeaderboard ? (
@@ -716,7 +716,7 @@ const DashboardOverview = () => {
               </div>
             ) : leaderboardSnapshot.length === 0 ? (
               <div className="rounded-2xl border border-white/5 bg-[#141414]/80 px-4 py-3 text-center text-sm text-gray-400">
-                No leaderboard data available yet.
+                <TranslatedText>No leaderboard data available yet.</TranslatedText>
               </div>
             ) : (
               leaderboardSnapshot.map((user, index) => {
@@ -733,7 +733,7 @@ const DashboardOverview = () => {
                         {user.name}
                       </p>
                       <p className="text-xs text-gray-400">
-                        Earned {totalEarned.toLocaleString()} coins
+                        <TranslatedText>Earned</TranslatedText> {totalEarned.toLocaleString()} <TranslatedText>coins</TranslatedText>
                       </p>
                     </div>
                     <p className="text-xs text-[#D4AF37]">
@@ -747,7 +747,7 @@ const DashboardOverview = () => {
           <Link
             to="/learn-earn/leaderboard"
             className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37] transition hover:text-[#E5C158]">
-            See full leaderboard →
+            <TranslatedText>See full leaderboard</TranslatedText> →
           </Link>
         </Motion.div>
       </section>

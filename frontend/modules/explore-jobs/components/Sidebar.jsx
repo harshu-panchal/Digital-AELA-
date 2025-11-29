@@ -12,10 +12,11 @@ import {
   HiOutlineDocumentText,
 } from "react-icons/hi2";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const baseNavItems = [
   {
-    label: "Explore Feed",
+    label: <TranslatedText>Explore Feed</TranslatedText>,
     to: "/explore-jobs",
     icon: HiOutlineHome,
   },
@@ -23,7 +24,7 @@ const baseNavItems = [
 
 const recruiterNavItems = [
   {
-    label: "Analytics Hub",
+    label: <TranslatedText>Analytics Hub</TranslatedText>,
     to: "/recruiter/analytics",
     icon: HiOutlineChartBar,
   },
@@ -51,10 +52,10 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-              Explore Jobs
+              <TranslatedText>Explore Jobs</TranslatedText>
             </p>
             <h2 className="mt-2 text-xl font-semibold text-white">
-              Opportunities
+              <TranslatedText>Opportunities</TranslatedText>
             </h2>
           </div>
         </div>
@@ -83,7 +84,7 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
         {isRecruiterPage && user?.role === "recruiter" && (
           <div className="space-y-2">
             <p className="px-4 text-xs uppercase tracking-[0.3em] text-gray-500">
-              Analytics & Tools
+              <TranslatedText>Analytics & Tools</TranslatedText>
             </p>
             {recruiterNavItems.map((item) => {
               const Icon = item.icon;
@@ -113,7 +114,7 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
               onClick={() => onCreatePost?.()}
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-white/20 transition hover:-translate-y-0.5 hover:shadow-white/30 active:translate-y-0">
               <HiOutlinePlusCircle className="h-5 w-5" />
-              Create Job Post
+              <TranslatedText>Create Job Post</TranslatedText>
             </button>
           </div>
         )}
@@ -123,10 +124,10 @@ const ExploreJobsSidebar = ({ onCreatePost }) => {
               <HiOutlineUserCircle className="h-8 w-8 text-gray-300" />
               <div>
                 <p className="text-sm font-semibold text-white">
-                  Smart Matching (Soon)
+                  <TranslatedText>Smart Matching (Soon)</TranslatedText>
                 </p>
                 <p className="text-xs text-gray-400">
-                  Activate AI-matched roles & referrals when backend is ready.
+                  <TranslatedText>Activate AI-matched roles & referrals when backend is ready.</TranslatedText>
                 </p>
               </div>
             </div>

@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { toast } from "react-toastify";
@@ -261,9 +262,27 @@ export const BlogProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
 
+  // Refs to prevent duplicate requests
+  const isLoadingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
+  const lastLoadTimeRef = useRef(0);
+  const MIN_LOAD_INTERVAL = 10000; // Minimum 10 seconds between loads
+
   const refreshBlogs = useCallback(
     async (params = {}) => {
+      // Prevent duplicate concurrent requests
+      if (isLoadingRef.current) {
+        return;
+      }
+
+      // Prevent requests too close together (rate limiting protection)
+      const now = Date.now();
+      if (hasLoadedRef.current && now - lastLoadTimeRef.current < MIN_LOAD_INTERVAL) {
+        return;
+      }
+
       try {
+        isLoadingRef.current = true;
         setIsLoading(true);
         const response = await fetchPublishedBlogs(params);
         const remote = response?.data ?? [];
@@ -320,9 +339,15 @@ export const BlogProvider = ({ children }) => {
             : [];
         });
         setLoadError(null);
+        hasLoadedRef.current = true;
+        lastLoadTimeRef.current = Date.now();
       } catch (error) {
-        setLoadError(error);
+        // Don't set error for 429 rate limit errors - they're expected
+        if (error?.status !== 429) {
+          setLoadError(error);
+        }
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },
@@ -330,19 +355,42 @@ export const BlogProvider = ({ children }) => {
   );
 
   // Load categories and tags from API
+  const isLoadingCategoriesRef = useRef(false);
+  const hasLoadedCategoriesRef = useRef(false);
+  const lastLoadCategoriesTimeRef = useRef(0);
+
   const loadCategories = useCallback(async () => {
+    // Prevent duplicate concurrent requests
+    if (isLoadingCategoriesRef.current) {
+      return;
+    }
+
+    // Prevent requests too close together (rate limiting protection)
+    const now = Date.now();
+    if (hasLoadedCategoriesRef.current && now - lastLoadCategoriesTimeRef.current < MIN_LOAD_INTERVAL) {
+      return;
+    }
+
     try {
+      isLoadingCategoriesRef.current = true;
       const data = await fetchBlogCategories();
       if (data) {
         setCategories(data.categories || []);
         setTags(data.tags || []);
+        hasLoadedCategoriesRef.current = true;
+        lastLoadCategoriesTimeRef.current = Date.now();
       }
     } catch (error) {
-      if (isNetworkError(error) && !isDevelopment) {
-        console.error("[BlogContext] Failed to load categories:", error.message);
-      } else if (!isNetworkError(error)) {
-        console.warn("Failed to load categories:", error);
+      // Suppress 429 rate limit errors - they're expected
+      if (error?.status !== 429) {
+        if (isNetworkError(error) && !isDevelopment) {
+          console.error("[BlogContext] Failed to load categories:", error.message);
+        } else if (!isNetworkError(error)) {
+          console.warn("Failed to load categories:", error);
+        }
       }
+    } finally {
+      isLoadingCategoriesRef.current = false;
     }
   }, []);
 
@@ -365,10 +413,17 @@ export const BlogProvider = ({ children }) => {
     }
   }, []);
 
+  // Load data only once on mount
   useEffect(() => {
-    refreshBlogs();
-    loadCategories();
-  }, [refreshBlogs, loadCategories]);
+    // Only load if we haven't loaded yet
+    if (!hasLoadedRef.current) {
+      refreshBlogs();
+    }
+    if (!hasLoadedCategoriesRef.current) {
+      loadCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run once on mount
 
   const saveDraft = useCallback((draft) => {
     setDrafts((prev) => {

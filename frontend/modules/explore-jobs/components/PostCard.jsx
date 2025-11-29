@@ -14,6 +14,7 @@ import {
   HiOutlinePencilSquare,
   HiOutlineTrash,
 } from "react-icons/hi2";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const PostCard = ({
   post,
@@ -84,15 +85,15 @@ const PostCard = ({
             />
             <div className="text-left">
               <p className="text-sm font-semibold text-white">
-                {post.authorName}
+                <TranslatedText>{post.authorName}</TranslatedText>
               </p>
               <p className="text-xs uppercase tracking-[0.25em] text-gray-300">
-                {isJob ? "Recruiter" : "Job Seeker"}
+                {isJob ? <TranslatedText>Recruiter</TranslatedText> : <TranslatedText>Job Seeker</TranslatedText>}
               </p>
             </div>
           </div>
           <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-            {isJob ? "Role Drop" : "Showcase"}
+            {isJob ? <TranslatedText>Role Drop</TranslatedText> : <TranslatedText>Showcase</TranslatedText>}
           </span>
         </div>
       </button>
@@ -100,12 +101,12 @@ const PostCard = ({
       <div className="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-5">
         <div className="flex-shrink-0">
           <h3 className="text-lg font-semibold leading-tight text-white">
-            {post.title}
+            <TranslatedText>{post.title}</TranslatedText>
           </h3>
           {isJob ? (
-            <p className="mt-1 text-sm text-gray-400">{post.company}</p>
+            <p className="mt-1 text-sm text-gray-400"><TranslatedText>{post.company}</TranslatedText></p>
           ) : (
-            <p className="mt-1 text-sm text-gray-400">{post.headline}</p>
+            <p className="mt-1 text-sm text-gray-400"><TranslatedText>{post.headline}</TranslatedText></p>
           )}
         </div>
 
@@ -114,34 +115,34 @@ const PostCard = ({
             <div className="space-y-3 text-sm text-gray-300">
               <p className="flex items-center gap-2">
                 <HiOutlineMapPin className="h-5 w-5 text-white/70 flex-shrink-0" />
-                {post.location}
+                <TranslatedText>{post.location}</TranslatedText>
               </p>
               {post.salary && (
                 <p className="flex items-center gap-2">
                   <HiOutlineCurrencyRupee className="h-5 w-5 text-white/70 flex-shrink-0" />
-                  {post.salary}
+                  <TranslatedText>{post.salary}</TranslatedText>
                 </p>
               )}
               <p className="flex items-center gap-2">
                 <HiOutlineBriefcase className="h-5 w-5 text-white/70 flex-shrink-0" />
-                {post.employmentType}
+                <TranslatedText>{post.employmentType}</TranslatedText>
               </p>
               {post.experience && (
                 <p className="flex items-center gap-2">
                   <HiOutlineClock className="h-5 w-5 text-white/70 flex-shrink-0" />
-                  {post.experience}
+                  <TranslatedText>{post.experience}</TranslatedText>
                 </p>
               )}
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-gray-300 line-clamp-3">{post.summary}</p>
+              <p className="text-sm text-gray-300 line-clamp-3"><TranslatedText>{post.summary}</TranslatedText></p>
               <div className="flex flex-wrap gap-2">
                 {post.skills?.slice(0, 4).map((skill) => (
                   <span
                     key={skill}
                     className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-200">
-                    {skill}
+                    <TranslatedText>{skill}</TranslatedText>
                   </span>
                 ))}
               </div>
@@ -154,7 +155,7 @@ const PostCard = ({
             <span
               key={tag}
               className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80">
-              {tag}
+              <TranslatedText>{tag}</TranslatedText>
             </span>
           ))}
         </div>
@@ -187,7 +188,7 @@ const PostCard = ({
                     : "border border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                 }`}>
                 <HiOutlineSparkles className="h-4 w-4" />
-                {hasApplied ? "Applied" : "Apply"}
+                {hasApplied ? <TranslatedText>Applied</TranslatedText> : <TranslatedText>Apply</TranslatedText>}
               </button>
             )}
 

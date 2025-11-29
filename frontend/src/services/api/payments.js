@@ -103,3 +103,35 @@ export const getTeacherEarnings = async (params = {}) => {
   });
 };
 
+/**
+ * Create Razorpay Order
+ * POST /api/v1/payments/:paymentId/razorpay/order
+ */
+export const createRazorpayOrder = async (paymentId) => {
+  return apiRequest(`/payments/${paymentId}/razorpay/order`, {
+    method: "POST",
+  });
+};
+
+/**
+ * Verify Razorpay Payment
+ * POST /api/v1/payments/razorpay/verify
+ */
+export const verifyRazorpayPayment = async (payload) => {
+  return apiRequest("/payments/razorpay/verify", {
+    method: "POST",
+    body: payload,
+  });
+};
+
+/**
+ * Create Razorpay Payment Link (Redirect-based)
+ * POST /api/v1/payments/:paymentId/razorpay/payment-link
+ */
+export const createRazorpayPaymentLink = async (paymentId, callbackUrl) => {
+  return apiRequest(`/payments/${paymentId}/razorpay/payment-link`, {
+    method: "POST",
+    body: callbackUrl ? { callbackUrl } : {},
+  });
+};
+

@@ -14,6 +14,7 @@ import { FaVoteYea, FaSpinner, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSocket } from "../../../src/hooks/useSocket";
+import TranslatedText from "../../../src/components/TranslatedText";
 import {
   fetchLiveRooms,
   voteOnDebate,
@@ -97,9 +98,9 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
       className="space-y-4 rounded-3xl border border-[#D4AF37]/20 bg-[#101010] p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Featured debate</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Featured debate</TranslatedText></p>
           <h3 className="mt-2 text-lg font-semibold text-white">{room.topic}</h3>
-          <p className="mt-1 text-xs text-gray-400">Speakers: {room.speakers?.join(" · ") || "TBD"}</p>
+          <p className="mt-1 text-xs text-gray-400"><TranslatedText>Speakers:</TranslatedText> {room.speakers?.join(" · ") || <TranslatedText>TBD</TranslatedText>}</p>
           {room.description && (
             <p className="mt-2 text-sm text-gray-300 truncate">{room.description}</p>
           )}
@@ -107,10 +108,10 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
         <div className="flex items-center gap-2">
           <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-gray-300">
             {isLive ? (
-              <span className="font-semibold text-green-400">● Live</span>
+              <span className="font-semibold text-green-400">● <TranslatedText>Live</TranslatedText></span>
             ) : (
               <>
-            Starts in <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
+            <TranslatedText>Starts in</TranslatedText> <span className="font-semibold text-white">{minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}</span>
               </>
             )}
           </div>
@@ -126,7 +127,7 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
               className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400/60 hover:bg-red-500/20"
               title="Delete room">
               <HiOutlineTrash className="h-4 w-4" />
-              Delete
+              <TranslatedText>Delete</TranslatedText>
             </button>
           )}
         </div>
@@ -143,9 +144,9 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
               : "border-white/10 bg-[#151515] text-gray-300"
           }`}>
           {micEnabled ? <HiOutlineMicrophone className="h-4 w-4" /> : <HiOutlineNoSymbol className="h-4 w-4" />}
-          Mic {micEnabled ? "on" : "off"}
+          <TranslatedText>Mic</TranslatedText> {micEnabled ? <TranslatedText>on</TranslatedText> : <TranslatedText>off</TranslatedText>}
         </button>
-        <span className="rounded-full border border-white/10 px-4 py-2 text-gray-300">Audience votes: {totalVotes}</span>
+        <span className="rounded-full border border-white/10 px-4 py-2 text-gray-300"><TranslatedText>Audience votes:</TranslatedText> {totalVotes}</span>
       </div>
 
       {room.status === "live" && (
@@ -154,7 +155,7 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
           onClick={() => navigate(`/learn-earn/live-debate-room/voice-room/${room.id}`)}
           className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
           <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
-          Join Voice Room
+          <TranslatedText>Join Voice Room</TranslatedText>
         </button>
       )}
     </Motion.div>
@@ -461,10 +462,10 @@ const LiveDebates = () => {
     <div className="space-y-8">
           <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-gradient-to-br from-[#121212] via-[#090909] to-black p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70">Live debate arena</p>
-          <h1 className="mt-2 text-2xl font-semibold text-white">Join, vote & climb the leaderboard</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Live debate arena</TranslatedText></p>
+          <h1 className="mt-2 text-2xl font-semibold text-white"><TranslatedText>Join, vote & climb the leaderboard</TranslatedText></h1>
           <p className="mt-2 text-sm text-gray-400">
-            Choose your stance, keep mics ready, and earn bonus coins for impactful arguments.
+            <TranslatedText>Choose your stance, keep mics ready, and earn bonus coins for impactful arguments.</TranslatedText>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -472,7 +473,7 @@ const LiveDebates = () => {
             type="button"
             onClick={() => {
               if (!authUser) {
-                toast.info("Please sign in to create a debate", {
+                toast.info("Please sign in to create a debate", { // Toast message
                   icon: "🔐",
                 });
                 navigate("/login/student", {
@@ -484,7 +485,7 @@ const LiveDebates = () => {
             }}
             className="inline-flex items-center gap-2 rounded-2xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
             <HiOutlinePlus className="h-4 w-4" />
-            Create Debate
+            <TranslatedText>Create Debate</TranslatedText>
           </button>
         <div className="flex items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-[#151515] px-4 py-3 text-xs text-[#D4AF37]">
             <HiOutlineSpeakerWave className="h-5 w-5" />{" "}
@@ -495,12 +496,12 @@ const LiveDebates = () => {
               const totalListeners = liveRooms.reduce((sum, r) => sum + (r.listeners || 0), 0);
               
               if (liveCount === 0) {
-                return "No rooms live";
+                return <TranslatedText>No rooms live</TranslatedText>;
               }
-              return `${liveCount} rooms live · ${totalListeners} learners debating now`;
+              return <><TranslatedText>{liveCount} rooms live</TranslatedText> · <TranslatedText>{totalListeners} learners debating now</TranslatedText></>;
             })()}
             {!isConnected && (
-              <span className="ml-2 text-yellow-400">(Connecting...)</span>
+              <span className="ml-2 text-yellow-400">(<TranslatedText>Connecting...</TranslatedText>)</span>
             )}
           </div>
         </div>
@@ -513,8 +514,8 @@ const LiveDebates = () => {
           </div>
         ) : liveDebates.length === 0 ? (
           <div className="col-span-2 rounded-3xl border border-white/5 bg-[#101010] p-8 text-center">
-            <p className="text-sm text-gray-400">No debates scheduled at the moment.</p>
-            <p className="mt-2 text-xs text-gray-500">Check back later for new debates!</p>
+            <p className="text-sm text-gray-400"><TranslatedText>No debates scheduled at the moment.</TranslatedText></p>
+            <p className="mt-2 text-xs text-gray-500"><TranslatedText>Check back later for new debates!</TranslatedText></p>
           </div>
         ) : (
           liveDebates.map((debate) => (
@@ -539,7 +540,7 @@ const LiveDebates = () => {
           </div>
         ) : openRooms.length === 0 ? (
           <div className="col-span-3 rounded-3xl border border-white/5 bg-[#101010] p-8 text-center">
-            <p className="text-sm text-gray-400">No open rooms available at the moment.</p>
+            <p className="text-sm text-gray-400"><TranslatedText>No open rooms available at the moment.</TranslatedText></p>
           </div>
         ) : (
           openRooms.map((room) => {
@@ -553,24 +554,24 @@ const LiveDebates = () => {
                 className="rounded-3xl border border-white/5 bg-[#101010] p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Open discussion room</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-400"><TranslatedText>Open discussion room</TranslatedText></p>
                     <p className="mt-2 text-lg font-semibold text-white">{room.title}</p>
-                    <p className="mt-1 text-xs text-gray-400">Hosted by {room.hostName || room.host}</p>
-                    <p className="mt-3 text-sm text-gray-300">Listeners online: {room.listeners}</p>
+                    <p className="mt-1 text-xs text-gray-400"><TranslatedText>Hosted by</TranslatedText> {room.hostName || room.host}</p>
+                    <p className="mt-3 text-sm text-gray-300"><TranslatedText>Listeners online:</TranslatedText> {room.listeners}</p>
                   </div>
                   {isHost && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
+                        if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) { // Confirm dialog
                           handleDeleteRoom(room.id);
                         }
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400/60 hover:bg-red-500/20"
                       title="Delete room">
                       <HiOutlineTrash className="h-4 w-4" />
-                      Delete
+                      <TranslatedText>Delete</TranslatedText>
                     </button>
                   )}
                 </div>
@@ -584,7 +585,7 @@ const LiveDebates = () => {
                     onClick={() => navigate(`/learn-earn/live-debate-room/voice-room/${room.id}`)}
                     className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2.5 text-xs font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110">
                     <HiOutlineArrowRight className="mr-2 inline h-4 w-4" />
-                    Join Voice Room
+                    <TranslatedText>Join Voice Room</TranslatedText>
                   </button>
                 )}
               </Motion.div>

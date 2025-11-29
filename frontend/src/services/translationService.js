@@ -30,6 +30,16 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   }
 
   try {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[Translation Service] Calling API:", {
+        endpoint: "/translate",
+        targetLang,
+        sourceLang,
+        textLength: text.length,
+      });
+    }
+
     // Call backend translation API
     const response = await apiRequest(
       "/translate",
@@ -43,6 +53,14 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
         skipAuth: true, // Translation can be public
       }
     );
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[Translation Service] API Response:", {
+        success: !!response?.data?.translation,
+        translationLength: response?.data?.translation?.length,
+      });
+    }
 
     const translation = response?.data?.translation || text;
 
@@ -113,6 +131,16 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
   }
 
   try {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[Translation Service] Calling batch API:", {
+        endpoint: "/translate/batch",
+        targetLang,
+        sourceLang,
+        textCount: uncachedTexts.length,
+      });
+    }
+
     // Call backend batch translation API
     const response = await apiRequest(
       "/translate/batch",
@@ -126,6 +154,14 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
         skipAuth: true,
       }
     );
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[Translation Service] Batch API Response:", {
+        success: !!response?.data?.translations,
+        translationCount: response?.data?.translations?.length,
+      });
+    }
 
     const translations = response?.data?.translations || uncachedTexts;
 
@@ -195,11 +231,32 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
 
   // If no texts to translate, return original
   if (textsToTranslate.length === 0) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[Translation Service] translateObject: No texts to translate");
+    }
     return obj;
+  }
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log("[Translation Service] translateObject: Translating", {
+      textCount: textsToTranslate.length,
+      keys: keysToTranslate || "all",
+      targetLang,
+      sourceLang,
+    });
   }
 
   // Translate all texts in batch
   const translations = await translateBatch(textsToTranslate, targetLang, sourceLang);
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log("[Translation Service] translateObject: Batch translation complete", {
+      translationCount: translations.length,
+    });
+  }
 
   // Reconstruct object with translated values
   const translated = { ...obj };

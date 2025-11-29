@@ -7,6 +7,12 @@ import { FaSearch, FaStar, FaBook, FaDownload, FaSpinner } from "react-icons/fa"
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { fetchEbooks } from "../../../src/services/api/resources";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
+import { useLanguage } from "../../../src/contexts/LanguageContext";
+import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
+import TranslatedText from "../../../src/components/TranslatedText";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -131,6 +137,7 @@ const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'developme
 
 const Books = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [books, setBooks] = useState(() => {
     // Try to load from sessionStorage first (cached data from previous visit)
@@ -149,6 +156,11 @@ const Books = () => {
     return [];
   });
   const [loading, setLoading] = useState(true);
+  
+  // Translation hooks
+  const { language } = useLanguage();
+  const { translateObject } = useDynamicTranslation();
+  const [translatedBooks, setTranslatedBooks] = useState([]);
 
   useEffect(() => {
     // Always fetch fresh data on mount to show newly approved books
@@ -223,8 +235,58 @@ const Books = () => {
     loadBooks();
   }, []); // Empty dependency array - fetch on mount only
 
+  // Translate books when language changes
+  useEffect(() => {
+    const translateBooks = async () => {
+      if (books.length === 0) {
+        setTranslatedBooks([]);
+        return;
+      }
+
+      if (normalizeLanguageCode(language) === "en") {
+        setTranslatedBooks(books);
+        return;
+      }
+
+      try {
+        // Translate each book individually
+        const translatedBooksList = await Promise.all(
+          books.map(async (book) => {
+            try {
+              const translated = await translateObject(
+                { title: book.title, description: book.description, author: book.author },
+                ["title", "description", "author"]
+              );
+              return {
+                ...book,
+                title: translated.title || book.title,
+                description: translated.description || book.description,
+                author: translated.author || book.author,
+              };
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error("[Books] Error translating book:", error);
+              return book;
+            }
+          })
+        );
+
+        setTranslatedBooks(translatedBooksList);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Books] Error translating books:", error);
+        setTranslatedBooks(books);
+      }
+    };
+
+    translateBooks();
+  }, [books, language, translateObject]);
+
+  // Use translated books if available, otherwise use original
+  const displayBooks = translatedBooks.length > 0 ? translatedBooks : books;
+
   // Filter books based on search query
-  const filteredBooks = books.filter(
+  const filteredBooks = displayBooks.filter(
     (book) =>
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,15 +327,14 @@ const Books = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
-            Our <span className="text-[#D4AF37]">Book Store</span>
+            <TranslatedText>Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Book Store</TranslatedText></span>
           </motion.h1>
           <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.15 }}
             className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
-            Discover expert-authored books on English Grammar, Vocabulary, Self
-            Help, and more. Available in physical and e-book formats.
+            <TranslatedText>Discover expert-authored books on English Grammar, Vocabulary, Self Help, and more. Available in physical and e-book formats.</TranslatedText>
           </motion.p>
 
           {/* Search Bar */}
@@ -291,6 +352,7 @@ const Books = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-lg pl-12 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-colors duration-200"
               />
+              {/* Note: Placeholder text translation would require a custom input component */}
             </div>
           </motion.div>
         </div>
@@ -307,9 +369,8 @@ const Books = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
             <p className="text-gray-300 text-sm">
-              {filteredBooks.length} book{filteredBooks.length !== 1 ? "s" : ""}{" "}
-              found
-              {searchQuery && ` for "${searchQuery}"`}
+              {filteredBooks.length} <TranslatedText>book{filteredBooks.length !== 1 ? "s" : ""} found</TranslatedText>
+              {searchQuery && ` ${<TranslatedText>for</TranslatedText>} "${searchQuery}"`}
             </p>
           </motion.div>
 
@@ -344,12 +405,12 @@ const Books = () => {
                         {book.format === "ebook" ? (
                           <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                             <FaDownload className="w-2.5 h-2.5" />
-                            E-Book
+                            <TranslatedText>E-Book</TranslatedText>
                           </span>
                         ) : (
                           <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                             <FaBook className="w-2.5 h-2.5" />
-                            Physical
+                            <TranslatedText>Physical</TranslatedText>
                           </span>
                         )}
                       </div>
@@ -361,7 +422,7 @@ const Books = () => {
                               book.originalPrice) *
                               100
                           )}
-                          % OFF
+                          % <TranslatedText>OFF</TranslatedText>
                         </div>
                       )}
                     </div>
@@ -370,7 +431,7 @@ const Books = () => {
                     <div className="flex flex-1 flex-col p-4">
                       {/* Category */}
                       <span className="flex-shrink-0 text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
-                        {book.category}
+                        <TranslatedText>{book.category}</TranslatedText>
                       </span>
 
                       {/* Title */}
@@ -380,7 +441,7 @@ const Books = () => {
 
                       {/* Author */}
                       <p className="flex-shrink-0 text-xs text-gray-400 mb-2">
-                        by {book.author}
+                        <TranslatedText>by</TranslatedText> {book.author}
                       </p>
 
                       {/* Rating */}
@@ -408,7 +469,7 @@ const Books = () => {
                       {/* Price */}
                       <div className="flex-shrink-0 flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
-                          {book.price > 0 ? `₹${book.price}` : "Free"}
+                          {book.price > 0 ? `₹${book.price}` : <TranslatedText>Free</TranslatedText>}
                         </span>
                         {book.originalPrice > book.price && (
                           <span className="text-xs text-gray-500 line-through">
@@ -432,15 +493,36 @@ const Books = () => {
                               navigate(`/free-library/ebook/${book.id}/read`);
                             } else if (isFreeBook) {
                               // Free physical book - show message
-                              toast.info("Free physical books require contact for delivery. Please visit the book detail page.");
+                              toast.info("Free physical books require contact for delivery. Please visit the book detail page."); // Toast message
                               navigate(`/books/${book.id}`);
                             } else {
-                              // Paid book - go to payment page
-                              navigate(`/books/${book.id}/payment`);
+                              // Paid book - redirect directly to Razorpay
+                              if (!isAuthenticated) {
+                                toast.info("Please log in to purchase this book"); // Toast message
+                                navigate("/login/student");
+                                return;
+                              }
+                              // Validate price
+                              const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                              if (!bookPrice || bookPrice <= 0) {
+                                toast.error("This book price is not available. Please contact support."); // Toast message
+                                return;
+                              }
+                              
+                              redirectToRazorpay({
+                                bookId: book.id,
+                                amount: bookPrice,
+                                currency: "AED",
+                                description: `Payment for ${book.title || "book"}`,
+                                userName: user?.fullName || "",
+                                userEmail: user?.email || "",
+                                userPhone: user?.phone || "",
+                                quantity: 1,
+                              });
                             }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          {book.price > 0 ? "Buy Now" : "Get Free"}
+                          {book.price > 0 ? <TranslatedText>Buy Now</TranslatedText> : <TranslatedText>Get Free</TranslatedText>}
                         </motion.button>
                         <GiftButton
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
@@ -460,15 +542,15 @@ const Books = () => {
               className="text-center py-20">
               <div className="text-6xl mb-4">📚</div>
               <h3 className="text-2xl font-bold text-white mb-2 font-display">
-                No books found
+                <TranslatedText>No books found</TranslatedText>
               </h3>
               <p className="text-gray-400 mb-6">
-                Try adjusting your search query
+                <TranslatedText>Try adjusting your search query</TranslatedText>
               </p>
               <button
                 onClick={() => setSearchQuery("")}
                 className="text-[#D4AF37] hover:text-[#E5C158] transition-colors">
-                Clear search
+                <TranslatedText>Clear search</TranslatedText>
               </button>
             </motion.div>
           )}

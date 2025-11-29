@@ -3,6 +3,7 @@ import ContactPageLayout from "../business-components/contact/ContactPageLayout"
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitJoinUsLead } from "../../../src/services/joinUsSubmission";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const JoinInfluencer = () => {
   const { user } = useAuth();
@@ -201,19 +202,19 @@ const JoinInfluencer = () => {
 
   return (
     <ContactPageLayout
-      badge="Join Digital AELA"
-      title="Collaborate as an Influencer / Freelancer"
-      subtitle="Co-create campaigns, programs, and learner experiences with Digital AELA—whether you move communities online or build projects behind the scenes."
-      description="Join our creator community and scale your influence while making a meaningful impact.">
+      badge={<TranslatedText>Join Digital AELA</TranslatedText>}
+      title={<TranslatedText>Collaborate as an Influencer / Freelancer</TranslatedText>}
+      subtitle={<TranslatedText>Co-create campaigns, programs, and learner experiences with Digital AELA—whether you move communities online or build projects behind the scenes.</TranslatedText>}
+      description={<TranslatedText>Join our creator community and scale your influence while making a meaningful impact.</TranslatedText>}>
       <div className="max-w-4xl mx-auto">
         <ContactForm
           fields={fields}
-          submitLabel="Apply"
-          successMessage="Thanks for reaching out! Our partnerships team will respond within 5 business days."
-          disclaimer="Only our partnerships team will review these details. We will reach out within 5 business days."
+          submitLabel={<TranslatedText>Apply</TranslatedText>}
+          successMessage={<TranslatedText>Thanks for reaching out! Our partnerships team will respond within 5 business days.</TranslatedText>}
+          disclaimer={<TranslatedText>Only our partnerships team will review these details. We will reach out within 5 business days.</TranslatedText>}
           onSubmit={handleSubmit}
           formId="influencer"
-          pendingMessage="Your application is pending approval. Our partnerships team will review it and respond within 5 business days."
+          pendingMessage={<TranslatedText>Your application is pending approval. Our partnerships team will review it and respond within 5 business days.</TranslatedText>}
         />
       </div>
     </ContactPageLayout>

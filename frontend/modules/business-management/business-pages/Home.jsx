@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import {
@@ -23,10 +23,16 @@ import slideLearnAndEarn from "../../../src/assets/images/slide-images/learn and
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
+import { useAuth } from "../../../src/contexts/AuthContext";
+import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getGalleryImages } from "../../../src/services/api/gallery";
 import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
+import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
+import { useLanguage } from "../../../src/contexts/LanguageContext";
+import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const MotionLink = motion.create(Link);
 
@@ -40,6 +46,8 @@ const Home = () => {
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const [premiumCourses, setPremiumCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [featuredBooks, setFeaturedBooks] = useState([]);
@@ -48,6 +56,12 @@ const Home = () => {
   const [loadingGallery, setLoadingGallery] = useState(true);
   const [testimonials, setTestimonials] = useState([]);
   const [loadingTestimonials, setLoadingTestimonials] = useState(true);
+  
+  // Translation hooks
+  const { language } = useLanguage();
+  const { translateObject } = useDynamicTranslation();
+  const [translatedCourses, setTranslatedCourses] = useState([]);
+  const [translatedBooks, setTranslatedBooks] = useState([]);
 
   // Get neon light color based on active slide
   const getNeonTextShadow = (slideId) => {
@@ -250,10 +264,103 @@ const Home = () => {
     loadGalleryImages();
   }, []);
 
-  // Define home courses - use premium courses from backend
+  // Translate courses when language changes
+  useEffect(() => {
+    const translateCourses = async () => {
+      if (premiumCourses.length === 0) {
+        setTranslatedCourses([]);
+        return;
+      }
+
+      if (normalizeLanguageCode(language) === "en") {
+        setTranslatedCourses(premiumCourses);
+        return;
+      }
+
+      try {
+        // Translate each course individually
+        const translatedCoursesList = await Promise.all(
+          premiumCourses.map(async (course) => {
+            try {
+              const translated = await translateObject(
+                { title: course.title, description: course.description },
+                ["title", "description"]
+              );
+              return {
+                ...course,
+                title: translated.title || course.title,
+                description: translated.description || course.description,
+              };
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error("[Home] Error translating course:", error);
+              return course;
+            }
+          })
+        );
+
+        setTranslatedCourses(translatedCoursesList);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Home] Error translating courses:", error);
+        setTranslatedCourses(premiumCourses);
+      }
+    };
+
+    translateCourses();
+  }, [premiumCourses, language, translateObject]);
+
+  // Translate books when language changes
+  useEffect(() => {
+    const translateBooks = async () => {
+      if (featuredBooks.length === 0) {
+        setTranslatedBooks([]);
+        return;
+      }
+
+      if (normalizeLanguageCode(language) === "en") {
+        setTranslatedBooks(featuredBooks);
+        return;
+      }
+
+      try {
+        // Translate each book individually
+        const translatedBooksList = await Promise.all(
+          featuredBooks.map(async (book) => {
+            try {
+              const translated = await translateObject(
+                { title: book.title, description: book.description, author: book.author },
+                ["title", "description", "author"]
+              );
+              return {
+                ...book,
+                title: translated.title || book.title,
+                description: translated.description || book.description,
+                author: translated.author || book.author,
+              };
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error("[Home] Error translating book:", error);
+              return book;
+            }
+          })
+        );
+
+        setTranslatedBooks(translatedBooksList);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[Home] Error translating books:", error);
+        setTranslatedBooks(featuredBooks);
+      }
+    };
+
+    translateBooks();
+  }, [featuredBooks, language, translateObject]);
+
+  // Define home courses - use translated courses
   const homeCourses = useMemo(() => {
-    return premiumCourses;
-  }, [premiumCourses]);
+    return translatedCourses.length > 0 ? translatedCourses : premiumCourses;
+  }, [translatedCourses, premiumCourses]);
 
   // Duplicate courses for seamless infinite scroll
   const duplicatedCourses = useMemo(() => {
@@ -311,16 +418,36 @@ const Home = () => {
     return false;
   };
 
-  const redirectToCoursePayment = (course, extra = {}) => {
+  const redirectToCoursePayment = async (course, extra = {}) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      navigate("/login/student", {
+        state: { from: location.pathname },
+      });
+      return;
+    }
+
     const payload = {
       ...course,
       ...extra,
     };
-    const paymentLink = buildCoursePaymentLink(payload);
-    navigate(paymentLink, {
-      state: {
-        course: payload,
-      },
+    
+    // Extract price
+    const priceValue = typeof course.price === 'number' ? course.price : 
+                      (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
+                      (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
+                      parseFloat(course.price) || 0;
+
+    // Redirect directly to Razorpay
+      await redirectToRazorpay({
+        courseId: course._id || course.id || null,
+        amount: priceValue,
+        currency: "AED",
+      description: `Payment for ${course.title || "course"}`,
+      userName: user?.fullName || "",
+      userEmail: user?.email || "",
+      userPhone: user?.phone || "",
+      quantity: 1,
     });
   };
 
@@ -365,7 +492,7 @@ const Home = () => {
       { value: 6, suffix: "+", label: "Countries Reached" },
       { value: 100, suffix: "+", label: "Job Sectors Targeted" },
     ],
-    []
+    [language]
   );
 
   const [ribbonCounts, setRibbonCounts] = useState(() =>
@@ -375,57 +502,60 @@ const Home = () => {
   const ribbonRef = useRef(null);
 
   // Benefits for Why Choose Digital AELA section
-  const benefits = [
-    {
-      id: 1,
-      title: "24/7 Support for Every Learner",
-      seoKeyword: "24/7 online learning support South Asia Gulf",
-      description:
-        "Education ka safar raat-din nahi dekhta, aur hum bhi nahi. With round-the-clock student support, you are never alone in your journey. Whether you are in India, Pakistan, Bangladesh, Nepal, or the Gulf countries, help is always one click away.",
-      icon: "clock",
-    },
-    {
-      id: 2,
-      title: "Live + Recorded Classes for Flexibility",
-      seoKeyword: "live and recorded online classes India Pakistan Gulf",
-      description:
-        "We understand every learner has a different routine. That's why Digital AELA offers live interactive sessions plus recorded lessons. You can learn in real-time with mentors or revise at your own pace — anytime, anywhere.",
-      icon: "video",
-    },
-    {
-      id: 3,
-      title: "100% Placement Assistance",
-      seoKeyword: "job placement training India Pakistan Bangladesh Nepal Gulf",
-      description:
-        "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
-      icon: "briefcase",
-    },
-    {
-      id: 4,
-      title: "Expert Trainers & Mentors",
-      seoKeyword: "expert online trainers South Asia Gulf",
-      description:
-        "Our trainers are not just teachers, they are industry professionals who know what works in the real world. They bring practical knowledge, global experience, and personal mentorship that transforms learners into professionals.",
-      icon: "teacher",
-    },
-    {
-      id: 5,
-      title: "Equal Opportunity for All",
-      seoKeyword: "equal opportunity education learning to earning platform",
-      description:
-        "At Digital AELA, we believe education should be free of age, degree, and gender discrimination. Whether you are a student, homemaker, working professional, or retired individual — we provide equal opportunities to learn, grow, and earn.",
-      icon: "handshake",
-    },
-    {
-      id: 6,
-      title: "Affordable & Accessible Globally",
-      seoKeyword:
-        "affordable online courses India Pakistan Bangladesh Nepal Gulf",
-      description:
-        "High-quality education should not be limited to the rich. Digital AELA ensures affordable learning solutions so that anyone from South Asia to the Gulf can access top-class training and career opportunities.",
-      icon: "globe",
-    },
-  ];
+  const benefits = useMemo(
+    () => [
+      {
+        id: 1,
+        title: "24/7 Support for Every Learner",
+        seoKeyword: "24/7 online learning support South Asia Gulf",
+        description:
+            "Education ka safar raat-din nahi dekhta, aur hum bhi nahi. With round-the-clock student support, you are never alone in your journey. Whether you are in India, Pakistan, Bangladesh, Nepal, or the Gulf countries, help is always one click away.",
+        icon: "clock",
+      },
+      {
+        id: 2,
+        title: "Live + Recorded Classes for Flexibility",
+        seoKeyword: "live and recorded online classes India Pakistan Gulf",
+        description:
+            "We understand every learner has a different routine. That's why Digital AELA offers live interactive sessions plus recorded lessons. You can learn in real-time with mentors or revise at your own pace — anytime, anywhere.",
+        icon: "video",
+      },
+      {
+        id: 3,
+        title: "100% Placement Assistance",
+        seoKeyword: "job placement training India Pakistan Bangladesh Nepal Gulf",
+        description:
+            "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
+        icon: "briefcase",
+      },
+      {
+        id: 4,
+        title: "Expert Trainers & Mentors",
+        seoKeyword: "expert online trainers South Asia Gulf",
+        description:
+            "Our trainers are not just teachers, they are industry professionals who know what works in the real world. They bring practical knowledge, global experience, and personal mentorship that transforms learners into professionals.",
+        icon: "teacher",
+      },
+      {
+        id: 5,
+        title: "Equal Opportunity for All",
+        seoKeyword: "equal opportunity education learning to earning platform",
+        description:
+            "At Digital AELA, we believe education should be free of age, degree, and gender discrimination. Whether you are a student, homemaker, working professional, or retired individual — we provide equal opportunities to learn, grow, and earn.",
+        icon: "handshake",
+      },
+      {
+        id: 6,
+        title: "Affordable & Accessible Globally",
+        seoKeyword:
+          "affordable online courses India Pakistan Bangladesh Nepal Gulf",
+        description:
+            "High-quality education should not be limited to the rich. Digital AELA ensures affordable learning solutions so that anyone from South Asia to the Gulf can access top-class training and career opportunities.",
+        icon: "globe",
+      },
+    ],
+    [language]
+  );
 
   // Icon component renderer
   const renderIcon = (iconName) => {
@@ -540,7 +670,7 @@ const Home = () => {
         ),
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
-          "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
+            "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
         primaryCta: null, // Removed "Start Your Journey"
         primaryLink: "/join-us/afterlife",
         secondaryCta: "Start Learning",
@@ -553,7 +683,7 @@ const Home = () => {
         title: "A Free Digital Library for All Learners",
         highlight: "Unlimited Books Free Access Anytime, Anywhere",
         description:
-          "Digital AELA offers an open online library where anyone can read thousands of books for free. We believe knowledge should be available to everyone-without barriers, limits, or cost.",
+            "Digital AELA offers an open online library where anyone can read thousands of books for free. We believe knowledge should be available to everyone-without barriers, limits, or cost.",
         primaryCta: null,
         primaryLink: "/free-library",
         secondaryCta: "Explore the Free Library",
@@ -566,7 +696,7 @@ const Home = () => {
         title: "Create a Lasting Impact Through Education",
         highlight: "Donate a Course Gift a Book Support a Student",
         description:
-          "The most meaningful donation is the one that transforms lives for generations. By gifting a book or sponsoring a course through Digital AELA, you help someone learn today and empower many more in the future. Your contribution becomes a legacy that continues to benefit long after you.",
+            "The most meaningful donation is the one that transforms lives for generations. By gifting a book or sponsoring a course through Digital AELA, you help someone learn today and empower many more in the future. Your contribution becomes a legacy that continues to benefit long after you.",
         primaryCta: null,
         primaryLink: "/gift/payment?type=anyone",
         secondaryCta: "Donate Education",
@@ -579,7 +709,7 @@ const Home = () => {
         title: "Partner With Digital AELA",
         highlight: "Collaboration Franchise Global Partnerships",
         description:
-          "We welcome individuals and institutions who want to expand education and create global impact. Whether you want to collaborate, become a franchise partner, or build a joint project-Digital AELA is ready to work with you.",
+            "We welcome individuals and institutions who want to expand education and create global impact. Whether you want to collaborate, become a franchise partner, or build a joint project-Digital AELA is ready to work with you.",
         primaryCta: null,
         primaryLink: "/contact",
         secondaryCta: "Apply for Partnership",
@@ -590,10 +720,9 @@ const Home = () => {
         id: "learn-earn-opportunity",
         badge: "Learn & Earn Opportunity – For Everyone",
         title: "Learn New Skills and Earn from Anywhere",
-        highlight:
-          "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
+        highlight: "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
         description:
-          "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
+            "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
         primaryCta: "Start Learning",
         primaryLink: "/courses/english-language",
         secondaryCta: "Start Earning",
@@ -601,7 +730,7 @@ const Home = () => {
         image: slideLearnAndEarn,
       },
     ],
-    []
+    [language]
   );
 
   const getPrimaryCtaClasses = (label) => {
@@ -811,170 +940,77 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
-  const faqItems = [
-    {
-      question: "What types of courses do you offer?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          We offer a wide range of programs including
-          <span className="font-semibold text-[#D4AF37]">
-            {" "}
-            English language training, digital marketing, corporate training,
-            computer skills, job interview preparation, and career counselling
-          </span>
-          . Each course blends academic depth with real-world career skills.
-        </p>
-      ),
-    },
-    {
-      question: "Who can join your courses?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Our courses are designed for
-          <span className="font-semibold text-[#D4AF37]">
-            {" "}
-            school & college students, working professionals, job seekers, and
-            entrepreneurs
-          </span>
-          . Whether you are just starting or planning your next career leap,
-          there is a pathway for you.
-        </p>
-      ),
-    },
-    {
-      question: "Are the classes online or offline?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          We provide both{" "}
-          <span className="font-semibold text-[#D4AF37]">online</span> (live and
-          recorded) and
-          <span className="font-semibold text-[#D4AF37]">
-            {" "}
-            offline classroom
-          </span>{" "}
-          sessions. Choose the mode that best matches your schedule and learning
-          style.
-        </p>
-      ),
-    },
-    {
-      question: "How do I enroll in a course?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          You can enroll directly through our website by clicking the
-          <span className="font-semibold text-[#D4AF37]">
-            {" "}
-            "Enroll Now"
-          </span>{" "}
-          button on your preferred course. Need help choosing? Reach out via{" "}
-          <span className="font-semibold text-[#D4AF37]">
-            WhatsApp, phone, or email
-          </span>{" "}
-          for personalised guidance.
-        </p>
-      ),
-    },
-    {
-      question: "Do you provide certificates after course completion?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Yes, all graduates receive an{" "}
-          <span className="font-semibold text-[#D4AF37]">
-            ISO Certified certificate
-          </span>{" "}
-          that boosts your credibility for job applications, interviews, and
-          career advancement.
-        </p>
-      ),
-    },
-    {
-      question: "What is the Job Portal and how does it work?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Our <span className="font-semibold text-[#D4AF37]">Job Portal</span>{" "}
-          links learners with top recruiters. Upload your resume, browse curated
-          openings, apply instantly, and receive dedicated placement support.
-        </p>
-      ),
-    },
-    {
-      question: "Do you offer demo classes before enrollment?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Absolutely. Join our{" "}
-          <span className="font-semibold text-[#D4AF37]">
-            free demo sessions
-          </span>{" "}
-          to experience the teaching style, curriculum, and trainer interaction
-          before you commit.
-        </p>
-      ),
-    },
-    {
-      question: "What makes Digital AELA different from other institutes?",
-      answer: (
-        <div className="text-gray-300 leading-relaxed space-y-3">
-          <p>
-            We combine{" "}
-            <span className="font-semibold text-[#D4AF37]">
-              practical learning with career outcomes
-            </span>
-            . Alongside expert-led training, you benefit from:
+  const faqItems = useMemo(
+    () => [
+      {
+        question: "What courses does Digital AELA offer?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>We offer comprehensive English language courses including Beginner, Intermediate, Advanced, Spoken English, IELTS & TOEFL preparation, Corporate Training, and Teacher Training programs. All courses are designed to be practical, career-focused, and accessible to learners across South Asia and the Gulf.</TranslatedText>
           </p>
-          <ul className="list-disc list-inside space-y-1">
-            <li>
-              <span className="font-semibold text-[#D4AF37]">
-                Job assistance
-              </span>{" "}
-              through our talent portal
-            </li>
-            <li>
-              <span className="font-semibold text-[#D4AF37]">
-                Interview preparation & mock tests
-              </span>
-            </li>
-            <li>
-              <span className="font-semibold text-[#D4AF37]">
-                Personalised study plans
-              </span>
-            </li>
-            <li>
-              Courses delivered in{" "}
-              <span className="font-semibold text-[#D4AF37]">
-                Hindi & English
-              </span>
-            </li>
-          </ul>
-        </div>
-      ),
-    },
-    {
-      question: "How can I buy your English learning books?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Explore the{" "}
-          <span className="font-semibold text-[#D4AF37]">Books</span> section on
-          our website to order titles covering grammar, vocabulary, and English
-          structures. They are also available on{" "}
-          <span className="font-semibold text-[#D4AF37]">Amazon, Flipkart</span>
-          , or directly from the institute.
-        </p>
-      ),
-    },
-    {
-      question: "Do you provide career counselling services?",
-      answer: (
-        <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-          Yes, our experts conduct{" "}
-          <span className="font-semibold text-[#D4AF37]">
-            one-on-one counselling sessions
-          </span>{" "}
-          to help you select the right course, elevate your interview skills,
-          and map a clear career roadmap.
-        </p>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        question: "How does the Learn & Earn program work?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Our Learn & Earn platform allows you to earn points (AELA Coins) by completing quizzes, participating in activities, and engaging with the community. These coins can be redeemed for rewards, courses, or cash. It's our way of making learning rewarding while you build valuable skills.</TranslatedText>
+          </p>
+        ),
+      },
+      {
+        question: "What certification will I receive after completing a course?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Upon successful completion, you receive an internationally recognized ISO Certified certificate that boosts your credibility for job applications, interviews, and career advancement.</TranslatedText>
+          </p>
+        ),
+      },
+      {
+        question: "What is the Job Portal and how does it work?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Our Job Portal links learners with top recruiters. Upload your resume, browse curated openings, apply instantly, and receive dedicated placement support.</TranslatedText>
+          </p>
+        ),
+      },
+      {
+        question: "Do you offer demo classes before enrollment?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Absolutely. Join our free demo sessions to experience the teaching style, curriculum, and trainer interaction before you commit.</TranslatedText>
+          </p>
+        ),
+      },
+      {
+        question: "What makes Digital AELA different from other institutes?",
+        answer: (
+          <div className="text-gray-300 leading-relaxed space-y-3">
+            <p>
+              <TranslatedText>We combine practical learning with career outcomes. Alongside expert-led training, you benefit from: Job assistance through our talent portal, Interview preparation & mock tests, Personalised study plans, Courses delivered in Hindi & English</TranslatedText>
+            </p>
+          </div>
+        ),
+      },
+      {
+        question: "How can I buy your English learning books?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Explore the Books section on our website to order titles covering grammar, vocabulary, and English structures. They are also available on Amazon, Flipkart, or directly from the institute.</TranslatedText>
+          </p>
+        ),
+      },
+      {
+        question: "Do you provide career counselling services?",
+        answer: (
+          <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
+            <TranslatedText>Yes, our experts conduct one-on-one counselling sessions to help you select the right course, elevate your interview skills, and map a clear career roadmap.</TranslatedText>
+          </p>
+        ),
+      },
+    ],
+    [language]
+  );
 
 
   return (
@@ -1119,7 +1155,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
-                  {heroSlides[activeHeroSlide].badge}
+                  <TranslatedText>{heroSlides[activeHeroSlide].badge}</TranslatedText>
                 </motion.span>
 
                 <motion.h1
@@ -1132,7 +1168,11 @@ const Home = () => {
                       heroSlides[activeHeroSlide].id
                     ),
                   }}>
-                  {heroSlides[activeHeroSlide].title}
+                  {typeof heroSlides[activeHeroSlide].title === "string" ? (
+                    <TranslatedText>{heroSlides[activeHeroSlide].title}</TranslatedText>
+                  ) : (
+                    heroSlides[activeHeroSlide].title
+                  )}
                 </motion.h1>
 
                 <motion.p
@@ -1140,7 +1180,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.18, ease: "easeOut" }}
                   className="mt-3 text-lg font-semibold text-[#F5D26A]">
-                  {heroSlides[activeHeroSlide].highlight}
+                  <TranslatedText>{heroSlides[activeHeroSlide].highlight}</TranslatedText>
                 </motion.p>
 
                 <motion.p
@@ -1148,7 +1188,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.26, ease: "easeOut" }}
                   className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
-                  {heroSlides[activeHeroSlide].description}
+                  <TranslatedText>{heroSlides[activeHeroSlide].description}</TranslatedText>
                 </motion.p>
 
                 <motion.div
@@ -1164,7 +1204,7 @@ const Home = () => {
                       className={getPrimaryCtaClasses(
                         heroSlides[activeHeroSlide].primaryCta
                       )}>
-                      {heroSlides[activeHeroSlide].primaryCta}
+                      <TranslatedText>{heroSlides[activeHeroSlide].primaryCta}</TranslatedText>
                     </MotionLink>
                   )}
                   {heroSlides[activeHeroSlide].secondaryCta && (
@@ -1175,7 +1215,7 @@ const Home = () => {
                       className={getSecondaryCtaClasses(
                         heroSlides[activeHeroSlide].secondaryCta
                       )}>
-                      {heroSlides[activeHeroSlide].secondaryCta}
+                      <TranslatedText>{heroSlides[activeHeroSlide].secondaryCta}</TranslatedText>
                     </MotionLink>
                   )}
                 </motion.div>
@@ -1280,7 +1320,7 @@ const Home = () => {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="text-center mb-5 md:mb-8">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-display tracking-tight">
-              Achievements
+              <TranslatedText>Achievements</TranslatedText>
             </h2>
           </motion.div>
 
@@ -1329,7 +1369,7 @@ const Home = () => {
 
                       {/* Label */}
                       <div className="text-slate-300 text-[10px] md:text-xs font-medium leading-tight px-2">
-                        {stat.label}
+                        <TranslatedText>{stat.label}</TranslatedText>
                       </div>
                     </div>
 
@@ -1369,11 +1409,11 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-              Digital AELA –{" "}
-              <span className="text-[#D4AF37]">5 Step Learning Strategy</span>
+              <TranslatedText>Digital AELA –</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>5 Step Learning Strategy</TranslatedText></span>
             </h2>
             <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
-              Learn → Practice → Get Certified → Grow Your Career
+              <TranslatedText>Learn → Practice → Get Certified → Grow Your Career</TranslatedText>
             </p>
           </motion.div>
 
@@ -1391,16 +1431,16 @@ const Home = () => {
                   <FaCalendarCheck className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  Step 1: Book a Free Demo Class
+                  <TranslatedText>Step 1: Book a Free Demo Class</TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                Assess your current proficiency level, interact with our expert trainers, and experience a comprehensive course demonstration to understand our teaching methodology.
+                <TranslatedText>Assess your current proficiency level, interact with our expert trainers, and experience a comprehensive course demonstration to understand our teaching methodology.</TranslatedText>
               </p>
               <Link
                 to="/contact/book-demo"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                Book Demo →
+                <TranslatedText>Book Demo →</TranslatedText>
               </Link>
             </motion.div>
 
@@ -1416,16 +1456,16 @@ const Home = () => {
                   <FaCheckCircle className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  Step 2: Enroll in the Right Course
+                  <TranslatedText>Step 2: Enroll in the Right Course</TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                Choose from our Beginner, Intermediate, or Spoken English programs - select the course that best aligns with your learning objectives and career goals.
+                <TranslatedText>Choose from our Beginner, Intermediate, or Spoken English programs - select the course that best aligns with your learning objectives and career goals.</TranslatedText>
               </p>
               <Link
                 to="/courses/english-language"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#10B981] hover:bg-[#059669] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                Enroll Now →
+                <TranslatedText>Enroll Now →</TranslatedText>
               </Link>
             </motion.div>
 
@@ -1441,16 +1481,16 @@ const Home = () => {
                   <FaPlayCircle className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  Step 3: Get Trained (Online + Books)
+                  <TranslatedText>Step 3: Get Trained (Online + Books)</TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                Access 40+ comprehensive video lessons, receive 3 professionally printed books, participate in interactive live Q&A sessions, and join practice groups to enhance your daily learning experience.
+                <TranslatedText>Access 40+ comprehensive video lessons, receive 3 professionally printed books, participate in interactive live Q&A sessions, and join practice groups to enhance your daily learning experience.</TranslatedText>
               </p>
               <Link
                 to="/books"
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                Start Learning →
+                <TranslatedText>Start Learning →</TranslatedText>
               </Link>
             </motion.div>
           </div>
@@ -1470,16 +1510,16 @@ const Home = () => {
                     <FaCertificate className="w-8 h-8 text-black" />
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                    Step 4: Get Certified
+                    <TranslatedText>Step 4: Get Certified</TranslatedText>
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  Complete your comprehensive course curriculum, successfully pass the final assessment, and earn an internationally recognized certificate that validates your English language proficiency.
+                  <TranslatedText>Complete your comprehensive course curriculum, successfully pass the final assessment, and earn an internationally recognized certificate that validates your English language proficiency.</TranslatedText>
                 </p>
                 <Link
                   to="/gallery"
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                  Get Certified →
+                  <TranslatedText>Get Certified →</TranslatedText>
                 </Link>
               </motion.div>
 
@@ -1495,16 +1535,16 @@ const Home = () => {
                     <FaGlobe className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                    Step 5: Placement & Abroad Opportunities
+                    <TranslatedText>Step 5: Placement & Abroad Opportunities</TranslatedText>
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  Join advanced training batches, receive specialized communication training and comprehensive interview preparation support - prepare yourself for rewarding opportunities in Gulf countries and global markets.
+                  <TranslatedText>Join advanced training batches, receive specialized communication training and comprehensive interview preparation support - prepare yourself for rewarding opportunities in Gulf countries and global markets.</TranslatedText>
                 </p>
                 <Link
                   to="/explore-jobs"
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
-                  Explore Opportunities →
+                  <TranslatedText>Explore Opportunities →</TranslatedText>
                 </Link>
               </motion.div>
             </div>
@@ -1528,11 +1568,13 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Our Premium <span className="text-[#D4AF37]">Courses</span>
+              <TranslatedText>Our Premium</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Courses</TranslatedText></span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Choose from our carefully designed programs tailored to your
-              learning level and goals
+              <TranslatedText>Choose from our carefully designed programs tailored to your learning level and goals</TranslatedText>
+                defaultValue: "Choose from our carefully designed programs tailored to your learning level and goals",
+              })}
             </p>
           </motion.div>
 
@@ -1570,13 +1612,13 @@ const Home = () => {
               {loadingCourses ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-[#D4AF37] text-lg">
-                    Loading premium courses...
+                    <TranslatedText>Loading premium courses...</TranslatedText>
                   </div>
                 </div>
               ) : homeCourses.length === 0 ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-gray-300 text-lg">
-                    No premium courses available yet.
+                    <TranslatedText>No premium courses available yet.</TranslatedText>
                   </div>
                 </div>
               ) : (
@@ -1650,7 +1692,7 @@ const Home = () => {
                                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                               </svg>
-                              {course.duration || "N/A"}
+                              {course.duration || <TranslatedText>N/A</TranslatedText>}
                             </span>
                             <span className="flex items-center gap-2">
                               <svg
@@ -1665,14 +1707,14 @@ const Home = () => {
                                   d="M17 8l4 4m0 0l-4 4m4-4H3"
                                 />
                               </svg>
-                              {course.format || "Online"}
+                              {course.format || <TranslatedText>Online</TranslatedText>}
                             </span>
                           </div>
 
                           {course.features && course.features.length > 0 ? (
                             <div className="shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
                               <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                                Key Highlights
+                                <TranslatedText>Key Highlights</TranslatedText>
                               </p>
                               <ul className="space-y-2 text-xs md:text-sm text-gray-300">
                                 {course.features
@@ -1695,7 +1737,7 @@ const Home = () => {
 
                           <div className="shrink-0 flex flex-col gap-3 mt-auto pt-2">
                             <div className="flex items-center justify-between text-sm text-gray-300">
-                              <span>Course Fee</span>
+                              <span><TranslatedText>Course Fee</TranslatedText></span>
                               <span className="text-lg font-semibold text-[#F5D26A]">
                                 {course.price}
                               </span>
@@ -1708,7 +1750,7 @@ const Home = () => {
                                 handleViewCourseDetail(course, "home-featured");
                               }}
                               className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
-                              See Full Course
+                              <TranslatedText>See Full Course</TranslatedText>
                             </motion.button>
                             <div className="grid gap-3 sm:grid-cols-2">
                               <motion.button
@@ -1731,7 +1773,7 @@ const Home = () => {
                                   }
                                 }}
                                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                                {isFreeCourse(course) ? "Enroll Free" : "Buy Now"}
+                                {isFreeCourse(course) ? <TranslatedText>Enroll Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
                               </motion.button>
                               <div
                                 onClick={(event) => event.stopPropagation()}
@@ -1741,7 +1783,7 @@ const Home = () => {
                                   origin="home-featured"
                                   className="inline-flex w-full items-center justify-center rounded-full border border-[#D4AF37]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                                   size="sm">
-                                  Gift
+                                  <TranslatedText>Gift</TranslatedText>
                                 </GiftButton>
                               </div>
                             </div>
@@ -1768,7 +1810,7 @@ const Home = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                Explore All Courses
+                <TranslatedText>Explore All Courses</TranslatedText>
               </motion.button>
             </Link>
           </motion.div>
@@ -1813,26 +1855,22 @@ const Home = () => {
               {/* "About Our Founder" Badge */}
               <div className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-white px-4 py-2 rounded-lg text-sm font-semibold font-display">
-                  About Our Founder
+                  <TranslatedText>About Our Founder</TranslatedText>
                 </span>
               </div>
 
               {/* Main Heading */}
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-display tracking-tight leading-none">
-                Meet Our{" "}
-                <span className="text-[#D4AF37]">Visionary Leader</span>
+                <TranslatedText>Meet Our</TranslatedText>{" "}
+                <span className="text-[#D4AF37]"><TranslatedText>Visionary Leader</TranslatedText></span>
               </h2>
 
               {/* Descriptive Paragraph */}
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                With over 15 years of experience in English language education,
-                our founder has dedicated their career to helping students
-                achieve fluency and confidence. Specializing in IELTS
-                preparation and corporate training, we understand that
-                confidence in English opens doors to unlimited opportunities.
-                Our innovative teaching methodology combines personalized
-                approach with proven techniques, helping thousands of students
-                achieve their dreams.
+                <TranslatedText>With over 15 years of experience in English language education, our founder has dedicated their career to helping students achieve fluency and confidence. Specializing in IELTS preparation and corporate training, we understand that confidence in English opens doors to unlimited opportunities.</TranslatedText>
+              </p>
+              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+                <TranslatedText>Our innovative teaching methodology combines personalized approach with proven techniques, helping thousands of students achieve their dreams.</TranslatedText>
               </p>
 
               {/* Statistics Section */}
@@ -1865,7 +1903,7 @@ const Home = () => {
                       {stat.number}
                     </span>
                     <p className="text-sm text-white font-normal">
-                      {stat.label}
+                      <TranslatedText>{stat.label}</TranslatedText>
                     </p>
                   </motion.div>
                 ))}
@@ -1883,7 +1921,7 @@ const Home = () => {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate("/about/founder")}
                   className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                  Know More
+                  <TranslatedText>Know More</TranslatedText>
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -1919,10 +1957,11 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Start Your <span className="text-[#D4AF37]">Journey Free</span>
+              <TranslatedText>Start Your</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Journey Free</TranslatedText></span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Experience premium English learning with our exclusive free offers
+              <TranslatedText>Experience premium English learning with our exclusive free offers</TranslatedText>
             </p>
           </motion.div>
 
@@ -1953,13 +1992,12 @@ const Home = () => {
 
               {/* Title */}
               <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
-                Free Demo Class
+                <TranslatedText>Free Demo Class</TranslatedText>
               </h3>
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                Join our interactive demo class and experience our teaching
-                methodology firsthand.
+                <TranslatedText>Join our interactive demo class and experience our teaching methodology firsthand.</TranslatedText>
               </p>
 
               {/* Button */}
@@ -1969,7 +2007,7 @@ const Home = () => {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 to="/contact/book-demo"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
-                Book Your Class
+                <TranslatedText>Book Your Class</TranslatedText>
               </MotionLink>
             </motion.div>
 
@@ -2005,13 +2043,12 @@ const Home = () => {
 
               {/* Title */}
               <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
-                Free English Guide
+                <TranslatedText>Free English Guide</TranslatedText>
               </h3>
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                Download our comprehensive English learning guide with tips,
-                tricks, and study resources.
+                <TranslatedText>Download our comprehensive English learning guide with tips, tricks, and study resources.</TranslatedText>
               </p>
 
               {/* Button */}
@@ -2021,7 +2058,7 @@ const Home = () => {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 to="/free-library"
                 className="block w-full bg-[#1a1a1a] text-[#D4AF37] py-3 rounded-lg font-bold text-center border-2 border-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
-                Download Now
+                <TranslatedText>Download Now</TranslatedText>
               </MotionLink>
             </motion.div>
 
@@ -2057,13 +2094,12 @@ const Home = () => {
 
               {/* Title */}
               <h3 className="shrink-0 text-2xl font-bold text-white mb-4 font-display">
-                Gift a Future
+                <TranslatedText>Gift a Future</TranslatedText>
               </h3>
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                Sponsor a classroom, dedicate scholarships, and help transform
-                lives through education.
+                <TranslatedText>Sponsor a classroom, dedicate scholarships, and help transform lives through education.</TranslatedText>
               </p>
 
               {/* Button */}
@@ -2073,7 +2109,7 @@ const Home = () => {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 href="/join-us/afterlife"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
-                Gift Now
+                <TranslatedText>Gift Now</TranslatedText>
               </motion.a>
             </motion.div>
           </div>
@@ -2102,19 +2138,18 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
-              • OUR RESOURCES •
+              <TranslatedText>• OUR RESOURCES •</TranslatedText>
             </motion.p>
 
             {/* Main Title */}
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Master English with Our{" "}
-              <span className="text-[#D4AF37]">Premium Books</span>
+              <TranslatedText>Master English with Our</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Premium Books</TranslatedText></span>
             </h2>
 
             {/* Subtitle */}
             <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Carefully curated learning materials designed by expert linguists
-              to accelerate your English learning journey
+              <TranslatedText>Carefully curated learning materials designed by expert linguists to accelerate your English learning journey</TranslatedText>
             </p>
           </motion.div>
 
@@ -2122,7 +2157,7 @@ const Home = () => {
           {loadingBooks && (
             <div className="flex items-center justify-center py-20">
               <div className="text-[#D4AF37] text-lg">
-                Loading featured books...
+                <TranslatedText>Loading featured books...</TranslatedText>
               </div>
             </div>
           )}
@@ -2130,7 +2165,7 @@ const Home = () => {
           {/* Books Grid */}
           {!loadingBooks && featuredBooks.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {featuredBooks.map((book, index) => {
+              {(translatedBooks.length > 0 ? translatedBooks : featuredBooks).map((book, index) => {
                 const discountPercent =
                   book.originalPrice > 0
                     ? Math.round(
@@ -2205,7 +2240,7 @@ const Home = () => {
 
                         {/* Author */}
                         <p className="shrink-0 text-xs text-gray-400 mb-2">
-                          by {book.author}
+                          <TranslatedText>by</TranslatedText> {book.author}
                         </p>
 
                         {/* Rating */}
@@ -2266,7 +2301,28 @@ const Home = () => {
                                 navigate(`/books/${book.id}`);
                               } else {
                                 // Paid book - go to payment page
-                                window.location.href = `/books/${book.id}/payment`;
+                                if (!isAuthenticated) {
+                                  navigate("/login/student");
+                                  return;
+                                }
+                                
+                                // Validate price
+                                const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                                if (!bookPrice || bookPrice <= 0) {
+                                  toast.error("This book price is not available. Please contact support.");
+                                  return;
+                                }
+                                
+                                redirectToRazorpay({
+                                  bookId: book.id,
+                                  amount: bookPrice,
+                                  currency: "AED",
+                                  description: `Payment for ${book.title || "book"}`,
+                                  userName: user?.fullName || "",
+                                  userEmail: user?.email || "",
+                                  userPhone: user?.phone || "",
+                                  quantity: 1,
+                                });
                               }
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
@@ -2310,7 +2366,7 @@ const Home = () => {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
-                View All Books
+                <TranslatedText>View All Books</TranslatedText>
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -2344,11 +2400,11 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Why Choose <span className="text-[#D4AF37]">Digital AELA</span>?
+              <TranslatedText>Why Choose</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>?
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Your partner in building a strong future with knowledge that
-              creates income, and income that creates freedom
+              <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
             </p>
           </motion.div>
 
@@ -2374,12 +2430,12 @@ const Home = () => {
 
                 {/* Title */}
                 <h3 className="shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
-                  {benefit.title}
+                  <TranslatedText>{benefit.title}</TranslatedText>
                 </h3>
 
                 {/* Description */}
                 <p className="flex-1 text-gray-300 leading-relaxed">
-                  {benefit.description}
+                  <TranslatedText>{benefit.description}</TranslatedText>
                 </p>
               </motion.div>
             ))}
@@ -2402,16 +2458,15 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-12">
             <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
-              • WATCH OUR STORIES •
+              <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
             </p>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-              Step Inside the{" "}
-              <span className="text-[#D4AF37]">Digital AELA</span> Experience
+              <TranslatedText>Step Inside the</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>{" "}
+              <TranslatedText>Experience</TranslatedText>
             </h2>
             <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Hear from our learners, mentors, and community as they share
-              milestones, transformations, and the heart behind the Afterlife
-              movement.
+              <TranslatedText>Hear from our learners, mentors, and community as they share milestones, transformations, and the heart behind the Afterlife movement.</TranslatedText>
             </p>
           </motion.div>
 
@@ -2449,7 +2504,7 @@ const Home = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 hover:text-[#FFE28A]">
-                    Watch on YouTube
+                    <TranslatedText>Watch on YouTube</TranslatedText>
                     <FaArrowRight className="h-4 w-4" />
                   </a>
                 </div>
@@ -2474,16 +2529,14 @@ const Home = () => {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
-                • BLOGS •
+                <TranslatedText>• BLOGS •</TranslatedText>
               </p>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-                Latest Stories from the{" "}
-                <span className="text-[#D4AF37]">AELA Community</span>
+                <TranslatedText>Latest Stories from the</TranslatedText>{" "}
+                <span className="text-[#D4AF37]"><TranslatedText>AELA Community</TranslatedText></span>
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Quick reads curated by our mentors and learners. Dive into
-                frameworks, wins, and behind-the-scenes playbooks powering the
-                Afterlife movement.
+                <TranslatedText>Quick reads curated by our mentors and learners. Dive into frameworks, wins, and behind-the-scenes playbooks powering the Afterlife movement.</TranslatedText>
               </p>
             </motion.div>
 
@@ -2518,7 +2571,7 @@ const Home = () => {
                         {blog.category}
                       </span>
                       <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-semibold text-white/90">
-                        {blog.readTime} min read
+                        {blog.readTime} <TranslatedText>min read</TranslatedText>
                       </span>
                     </div>
                     <div className="flex flex-1 flex-col p-6">
@@ -2547,7 +2600,7 @@ const Home = () => {
                         {blog.excerpt?.replace(/<[^>]+>/g, "") || ""}
                       </p>
                       <span className="shrink-0 mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 group-hover:text-[#FFE28A]">
-                        Read Story
+                        <TranslatedText>Read Story</TranslatedText>
                         <FaArrowRight className="h-4 w-4" />
                       </span>
                     </div>
@@ -2560,7 +2613,7 @@ const Home = () => {
               <Link
                 to="/blogs"
                 className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#0f0f0f] px-6 py-3 text-sm font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/60 hover:text-[#FFE28A]">
-                Explore All Blogs
+                <TranslatedText>Explore All Blogs</TranslatedText>
                 <FaArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -2583,19 +2636,18 @@ const Home = () => {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
-                • AELA GALLERY •
+                <TranslatedText>• AELA GALLERY •</TranslatedText>
               </p>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-                From Hesitation to Certification —{" "}
+                <TranslatedText>From Hesitation to Certification —</TranslatedText>{" "}
                 <span className="text-[#D4AF37]">
-                  Their Journey, Your Inspiration
+                  <TranslatedText>Their Journey, Your Inspiration</TranslatedText>
                 </span>
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Certificate ke saath real learning, real confidence aur real
-                speaking skills.
+                <TranslatedText>Certificate ke saath real learning, real confidence aur real speaking skills.</TranslatedText>
                 <br />
-                Aaj se aapka English journey bhi start ho sakta hai.
+                <TranslatedText>Aaj se aapka English journey bhi start ho sakta hai.</TranslatedText>
               </p>
             </motion.div>
 
@@ -2632,7 +2684,7 @@ const Home = () => {
                 whileTap={{ scale: 0.96 }}
                 to="/gallery"
                 className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
-                Get Certified with Digital AELA → Enroll Now
+                <TranslatedText>Get Certified with Digital AELA → Enroll Now</TranslatedText>
               </MotionLink>
             </div>
           </div>
@@ -2654,10 +2706,11 @@ const Home = () => {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              Student <span className="text-[#D4AF37]">Testimonials</span>
+              <TranslatedText>Student</TranslatedText>{" "}
+              <span className="text-[#D4AF37]"><TranslatedText>Testimonials</TranslatedText></span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              Success stories from our amazing students
+              <TranslatedText>Success stories from our amazing students</TranslatedText>
             </p>
           </motion.div>
 
@@ -2709,11 +2762,11 @@ const Home = () => {
               className="grid gap-6 md:grid-cols-3">
               {loadingTestimonials ? (
                 <div className="col-span-3 text-center py-12 text-gray-400">
-                  Loading testimonials...
+                  <TranslatedText>Loading testimonials...</TranslatedText>
                 </div>
               ) : visibleTestimonials.length === 0 ? (
                 <div className="col-span-3 text-center py-12 text-gray-400">
-                  No testimonials available
+                  <TranslatedText>No testimonials available</TranslatedText>
                 </div>
               ) : (
                 visibleTestimonials.map((item) => (
@@ -2741,7 +2794,7 @@ const Home = () => {
                       </div>
                     </div>
                     <span className="shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
-                      Verified
+                      <TranslatedText>Verified</TranslatedText>
                     </span>
                   </div>
 
@@ -2822,14 +2875,13 @@ const Home = () => {
         <div className="layout-container">
           <div className="text-center mb-9">
             <p className="text-[11px] md:text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70 font-semibold font-accent">
-              Frequently Asked Questions
+              <TranslatedText>Frequently Asked Questions</TranslatedText>
             </p>
             <h2 className="text-xl md:text-3xl font-bold text-white mt-3 font-display">
-              Answers designed for curious learners
+              <TranslatedText>Answers designed for curious learners</TranslatedText>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto mt-3 text-xs md:text-sm">
-              Everything you need to know about Digital AELA courses, support,
-              and the career outcomes we help you unlock.
+              <TranslatedText>Everything you need to know about Digital AELA courses, support, and the career outcomes we help you unlock.</TranslatedText>
             </p>
           </div>
 

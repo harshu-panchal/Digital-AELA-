@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { translateText, translateBatch, translateObject } from "../services/translationService.js";
-import { useLanguage } from "../contexts/LanguageContext.js";
+import { useLanguage } from "../contexts/LanguageContext";
+import { normalizeLanguageCode } from "../utils/languageUtils";
 
 /**
  * Hook for translating dynamic content (API responses, user-generated content, etc.)
@@ -16,10 +17,16 @@ export const useDynamicTranslation = (options = {}) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(null);
 
+  // Normalize language codes for comparison
+  const normalizedLanguage = normalizeLanguageCode(language);
+  const normalizedSourceLang = normalizeLanguageCode(sourceLang);
+
   // Translate single text
   const translate = useCallback(
     async (text) => {
-      if (!text || !autoTranslate || language === sourceLang || isChangingLanguage) {
+      // Skip translation if conditions not met
+      // Note: We allow translation even during language change to ensure content updates
+      if (!text || !autoTranslate || normalizedLanguage === normalizedSourceLang) {
         return text;
       }
 
@@ -38,13 +45,13 @@ export const useDynamicTranslation = (options = {}) => {
         setIsTranslating(false);
       }
     },
-    [language, sourceLang, autoTranslate, isChangingLanguage]
+    [language, normalizedLanguage, sourceLang, normalizedSourceLang, autoTranslate]
   );
 
   // Translate batch
   const translateBatchTexts = useCallback(
     async (texts) => {
-      if (!texts || !Array.isArray(texts) || texts.length === 0 || !autoTranslate || language === sourceLang || isChangingLanguage) {
+      if (!texts || !Array.isArray(texts) || texts.length === 0 || !autoTranslate || normalizedLanguage === normalizedSourceLang) {
         return texts || [];
       }
 
@@ -63,13 +70,13 @@ export const useDynamicTranslation = (options = {}) => {
         setIsTranslating(false);
       }
     },
-    [language, sourceLang, autoTranslate, isChangingLanguage]
+    [language, normalizedLanguage, sourceLang, normalizedSourceLang, autoTranslate]
   );
 
   // Translate object
   const translateObj = useCallback(
     async (obj, keysToTranslate = null) => {
-      if (!obj || typeof obj !== "object" || !autoTranslate || language === sourceLang || isChangingLanguage) {
+      if (!obj || typeof obj !== "object" || !autoTranslate || normalizedLanguage === normalizedSourceLang) {
         return obj;
       }
 
@@ -88,7 +95,7 @@ export const useDynamicTranslation = (options = {}) => {
         setIsTranslating(false);
       }
     },
-    [language, sourceLang, autoTranslate, isChangingLanguage]
+    [language, normalizedLanguage, sourceLang, normalizedSourceLang, autoTranslate]
   );
 
   return {

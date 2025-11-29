@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
+import TranslatedText from "../../../src/components/TranslatedText";
 import founderImage2 from "../../../src/assets/Founder2.png";
 
 const OurStory = () => {
@@ -115,7 +116,7 @@ const OurStory = () => {
                 transition={{ duration: 0.4, delay: 0.2 }}
                 className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
-                  Discover the Journey
+                  <TranslatedText>Discover the Journey</TranslatedText>
                 </span>
               </motion.div>
 
@@ -124,8 +125,8 @@ const OurStory = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-                A Story of One Teacher,{" "}
-                <span className="text-[#D4AF37]">Thousands of Futures</span>
+                <TranslatedText>A Story of One Teacher,</TranslatedText>{" "}
+                <span className="text-[#D4AF37]"><TranslatedText>Thousands of Futures</TranslatedText></span>
               </motion.h1>
 
               <motion.p
@@ -133,14 +134,9 @@ const OurStory = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.4 }}
                 className="text-base md:text-lg text-gray-300 mb-6 leading-relaxed">
-                From a single boy with a vision to an academy that empowers
-                thousands, Digital AELA is more than an institution — it is
-                hope, hard work, and a promise fulfilled. Every class, every
-                book, every branch, and every success story carries the same
-                message:{" "}
+                <TranslatedText>From a single boy with a vision to an academy that empowers thousands, Digital AELA is more than an institution — it is hope, hard work, and a promise fulfilled. Every class, every book, every branch, and every success story carries the same message:</TranslatedText>{" "}
                 <i className="text-[#D4AF37]">
-                  with Digital AELA, your future is not just possible, it is
-                  unstoppable.
+                  <TranslatedText>with Digital AELA, your future is not just possible, it is unstoppable.</TranslatedText>
                 </i>
               </motion.p>
 
@@ -207,12 +203,11 @@ const OurStory = () => {
             className="text-center mb-12 md:mb-16">
             <div className="mb-4">
               <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
-                Our Story
+                <TranslatedText>Our Story</TranslatedText>
               </span>
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              From a <span className="text-[#D4AF37]">Classroom Dream</span> to
-              a <span className="text-[#D4AF37]">Global Mission</span>
+              <TranslatedText>From a</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Classroom Dream</TranslatedText></span> <TranslatedText>to a</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Global Mission</TranslatedText></span>
             </h2>
           </motion.div>
 
@@ -242,10 +237,10 @@ const OurStory = () => {
                   {/* Content */}
                   <div className="flex-1 md:ml-20">
                     <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 font-display">
-                      {section.title}
+                      <TranslatedText>{section.title}</TranslatedText>
                     </h3>
                     <p className="text-base md:text-lg text-gray-300 leading-relaxed">
-                      {section.content}
+                      <TranslatedText>{section.content}</TranslatedText>
                     </p>
                   </div>
 
@@ -276,10 +271,9 @@ const OurStory = () => {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-8 md:p-12 border border-[#D4AF37]/20 shadow-lg">
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed">
-              Today, Digital AELA connects learners from India, Pakistan,
-              Bangladesh, Nepal, and the Gulf, carrying the same torch:{" "}
+              <TranslatedText>Today, Digital AELA connects learners from India, Pakistan, Bangladesh, Nepal, and the Gulf, carrying the same torch:</TranslatedText>{" "}
               <i className="text-[#D4AF37] font-semibold">
-                Learning to Earning, without limits.
+                <TranslatedText>Learning to Earning, without limits.</TranslatedText>
               </i>
             </p>
           </motion.div>

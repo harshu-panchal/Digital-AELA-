@@ -5,6 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const toolbarButtonStyles =
   "rounded-lg border border-white/10 bg-[#111]/80 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37] disabled:cursor-not-allowed disabled:border-white/5 disabled:text-gray-500";
@@ -102,11 +103,10 @@ const BlogEditor = ({
       className="overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-[0_24px_55px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="border-b border-white/5 bg-[#0b0b0b]/80 px-6 py-4">
         <h3 className="text-sm font-semibold uppercase tracking-[0.35em] text-[#D4AF37]">
-          Blog Editor
+          <TranslatedText>Blog Editor</TranslatedText>
         </h3>
         <p className="mt-1 text-xs text-gray-400">
-          Format your ideas with headers, highlights, embeds and more. Autosave
-          will use your draft state.
+          <TranslatedText>Format your ideas with headers, highlights, embeds and more. Autosave will use your draft state.</TranslatedText>
         </p>
       </div>
 
@@ -138,10 +138,10 @@ const BlogEditor = ({
             <button
               type="button"
               onClick={() => toggle("toggleBold")}
-              className={`${toolbarButtonStyles} ${
-                isActive("bold") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
-              }`}>
-              Bold
+                className={`${toolbarButtonStyles} ${
+                  isActive("bold") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
+                }`}>
+              <TranslatedText>Bold</TranslatedText>
             </button>
             <button
               type="button"
@@ -149,7 +149,7 @@ const BlogEditor = ({
               className={`${toolbarButtonStyles} ${
                 isActive("italic") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
-              Italic
+              <TranslatedText>Italic</TranslatedText>
             </button>
             <button
               type="button"
@@ -159,7 +159,7 @@ const BlogEditor = ({
                   ? "border-[#D4AF37]/60 text-[#F5D26A]"
                   : ""
               }`}>
-              Underline
+              <TranslatedText>Underline</TranslatedText>
             </button>
             <button
               type="button"
@@ -167,7 +167,7 @@ const BlogEditor = ({
               className={`${toolbarButtonStyles} ${
                 isActive("strike") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
-              Strike
+              <TranslatedText>Strike</TranslatedText>
             </button>
           </div>
 
@@ -186,7 +186,7 @@ const BlogEditor = ({
                   ? "border-[#D4AF37]/60 text-[#F5D26A]"
                   : ""
               }`}>
-              Bullet List
+              <TranslatedText>Bullet List</TranslatedText>
             </button>
             <button
               type="button"
@@ -200,7 +200,7 @@ const BlogEditor = ({
                   ? "border-[#D4AF37]/60 text-[#F5D26A]"
                   : ""
               }`}>
-              Numbered List
+              <TranslatedText>Numbered List</TranslatedText>
             </button>
             <button
               type="button"
@@ -214,13 +214,13 @@ const BlogEditor = ({
                   ? "border-[#D4AF37]/60 text-[#F5D26A]"
                   : ""
               }`}>
-              Quote
+              <TranslatedText>Quote</TranslatedText>
             </button>
             <button
               type="button"
               onClick={() => toggle("toggleCodeBlock")}
               className={toolbarButtonStyles}>
-              Code
+              <TranslatedText>Code</TranslatedText>
             </button>
           </div>
 
@@ -233,25 +233,25 @@ const BlogEditor = ({
               className={`${toolbarButtonStyles} ${
                 isActive("link") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
               }`}>
-              Link
+              <TranslatedText>Link</TranslatedText>
             </button>
             <button
               type="button"
               onClick={() => toggle("unsetLink")}
               className={toolbarButtonStyles}>
-              Clear Link
+              <TranslatedText>Clear Link</TranslatedText>
             </button>
             <button
               type="button"
               onClick={() => editor?.chain().focus().undo().run()}
               className={toolbarButtonStyles}>
-              Undo
+              <TranslatedText>Undo</TranslatedText>
             </button>
             <button
               type="button"
               onClick={() => editor?.chain().focus().redo().run()}
               className={toolbarButtonStyles}>
-              Redo
+              <TranslatedText>Redo</TranslatedText>
             </button>
           </div>
         </div>

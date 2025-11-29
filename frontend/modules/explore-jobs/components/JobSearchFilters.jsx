@@ -6,12 +6,13 @@ import {
   HiOutlineSparkles,
 } from "react-icons/hi2";
 import { searchJobs } from "../../../src/services/api/jobs";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const employmentTypes = [
-  { value: "full-time", label: "Full Time" },
-  { value: "part-time", label: "Part Time" },
-  { value: "contract", label: "Contract" },
-  { value: "internship", label: "Internship" },
+  { value: "full-time", label: <TranslatedText>Full Time</TranslatedText> },
+  { value: "part-time", label: <TranslatedText>Part Time</TranslatedText> },
+  { value: "contract", label: <TranslatedText>Contract</TranslatedText> },
+  { value: "internship", label: <TranslatedText>Internship</TranslatedText> },
 ];
 
 const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFilters }) => {
@@ -115,14 +116,14 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
             <header className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                  Job Filters
+                  <TranslatedText>Job Filters</TranslatedText>
                 </p>
                 <h3 className="text-xl font-semibold text-white">
-                  Refine your search
+                  <TranslatedText>Refine your search</TranslatedText>
                 </h3>
                 {activeFiltersCount > 0 && (
                   <p className="text-sm text-gray-400 mt-1">
-                    {activeFiltersCount} filter{activeFiltersCount !== 1 ? "s" : ""} active
+                    <TranslatedText>{activeFiltersCount} filter{activeFiltersCount !== 1 ? "s" : ""} active</TranslatedText>
                   </p>
                 )}
               </div>
@@ -138,12 +139,12 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
             <div className="space-y-6">
               {/* Location Filter */}
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-300">Location</p>
+                <p className="text-sm font-semibold text-gray-300"><TranslatedText>Location</TranslatedText></p>
                 <input
                   type="text"
                   value={localFilters.location || ""}
                   onChange={(e) => handleFilterChange("location", e.target.value)}
-                  placeholder="Enter location..."
+                  placeholder="Enter location..." // Placeholder
                   className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
                 />
                 {availableFilters.locations.length > 0 && (
@@ -159,7 +160,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                             : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
                         }`}
                       >
-                        {location}
+                        <TranslatedText>{location}</TranslatedText>
                       </button>
                     ))}
                   </div>
@@ -168,7 +169,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
 
               {/* Employment Type Filter */}
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-300">Employment Type</p>
+                <p className="text-sm font-semibold text-gray-300"><TranslatedText>Employment Type</TranslatedText></p>
                 <div className="flex flex-wrap gap-2">
                   {employmentTypes.map((type) => (
                     <button
@@ -189,7 +190,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
 
               {/* Remote Filter */}
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-300">Work Mode</p>
+                <p className="text-sm font-semibold text-gray-300"><TranslatedText>Work Mode</TranslatedText></p>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -200,7 +201,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                         : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
                     }`}
                   >
-                    Remote
+                    <TranslatedText>Remote</TranslatedText>
                   </button>
                   <button
                     type="button"
@@ -211,7 +212,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                         : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
                     }`}
                   >
-                    On-site
+                    <TranslatedText>On-site</TranslatedText>
                   </button>
                   <button
                     type="button"
@@ -222,31 +223,31 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                         : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
                     }`}
                   >
-                    Any
+                    <TranslatedText>Any</TranslatedText>
                   </button>
                 </div>
               </div>
 
               {/* Experience Filter */}
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-300">Experience Level</p>
+                <p className="text-sm font-semibold text-gray-300"><TranslatedText>Experience Level</TranslatedText></p>
                 <input
                   type="text"
                   value={localFilters.experience || ""}
                   onChange={(e) => handleFilterChange("experience", e.target.value)}
-                  placeholder="e.g., Entry, Mid-level, Senior..."
+                  placeholder="e.g., Entry, Mid-level, Senior..." // Placeholder
                   className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
                 />
               </div>
 
               {/* Company Filter */}
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-300">Company</p>
+                <p className="text-sm font-semibold text-gray-300"><TranslatedText>Company</TranslatedText></p>
                 <input
                   type="text"
                   value={localFilters.company || ""}
                   onChange={(e) => handleFilterChange("company", e.target.value)}
-                  placeholder="Search by company name..."
+                  placeholder="Search by company name..." // Placeholder
                   className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
                 />
                 {availableFilters.companies.length > 0 && (
@@ -262,7 +263,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                             : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
                         }`}
                       >
-                        {company}
+                        <TranslatedText>{company}</TranslatedText>
                       </button>
                     ))}
                   </div>
@@ -277,7 +278,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                   onClick={handleReset}
                   className="flex-1 rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm font-semibold text-gray-300 transition hover:border-white/30 hover:text-white"
                 >
-                  Reset
+                  <TranslatedText>Reset</TranslatedText>
                 </button>
                 <button
                   type="button"
@@ -285,7 +286,7 @@ const JobSearchFilters = ({ isOpen, onClose, filters, onFiltersChange, onApplyFi
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#F5D26A]"
                 >
                   <HiOutlineSparkles className="h-5 w-5" />
-                  Apply Filters
+                  <TranslatedText>Apply Filters</TranslatedText>
                 </button>
               </div>
             </div>

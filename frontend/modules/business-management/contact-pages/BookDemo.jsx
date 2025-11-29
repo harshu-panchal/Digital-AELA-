@@ -4,6 +4,7 @@ import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
 import { submitContactLead } from "../../../src/services/contactSubmission";
+import TranslatedText from "../../../src/components/TranslatedText";
 
 const BookDemo = () => {
   const fields = [
@@ -116,19 +117,19 @@ const BookDemo = () => {
       />
 
       <ContactPageLayout
-        badge="Experience Digital AELA"
-        title="Book a Personalised Demo Class"
-        subtitle="See how we transform learning into placement-ready skills"
-        description="Share your requirements and we will schedule a tailored session with our senior faculty. Demos are available online, in-person, or at your corporate location.">
+        badge={<TranslatedText>Experience Digital AELA</TranslatedText>}
+        title={<TranslatedText>Book a Personalised Demo Class</TranslatedText>}
+        subtitle={<TranslatedText>See how we transform learning into placement-ready skills</TranslatedText>}
+        description={<TranslatedText>Share your requirements and we will schedule a tailored session with our senior faculty. Demos are available online, in-person, or at your corporate location.</TranslatedText>}>
         <div className="max-w-4xl mx-auto">
           <ContactForm
             fields={fields}
-            submitLabel="Book My Demo Class"
-            successMessage="Demo request received! Our academic advisor will reach out within 24 hours to confirm your session."
-            disclaimer="By submitting this form you consent to be contacted by Digital AELA's programme advisors via phone, email, or WhatsApp."
+            submitLabel={<TranslatedText>Book My Demo Class</TranslatedText>}
+            successMessage={<TranslatedText>Demo request received! Our academic advisor will reach out within 24 hours to confirm your session.</TranslatedText>}
+            disclaimer={<TranslatedText>By submitting this form you consent to be contacted by Digital AELA's programme advisors via phone, email, or WhatsApp.</TranslatedText>}
             onSubmit={handleSubmit}
             formId="book-demo"
-            pendingMessage="Your demo request is pending approval. Our team will review it and contact you within 24 hours."
+            pendingMessage={<TranslatedText>Your demo request is pending approval. Our team will review it and contact you within 24 hours.</TranslatedText>}
           />
         </div>
 
@@ -141,25 +142,22 @@ const BookDemo = () => {
           {[
             {
               icon: "🎯",
-              title: "Customised Agenda",
-              description:
-                "We tailor every demo to your business use-case, learner profile, and regional requirements.",
+              title: <TranslatedText>Customised Agenda</TranslatedText>,
+              description: <TranslatedText>We tailor every demo to your business use-case, learner profile, and regional requirements.</TranslatedText>,
             },
             {
               icon: "👨‍🏫",
-              title: "Expert Faculty",
-              description:
-                "Interact with senior trainers who have 10-18 years of experience coaching CXOs, teams, and students across 5+ countries.",
+              title: <TranslatedText>Expert Faculty</TranslatedText>,
+              description: <TranslatedText>Interact with senior trainers who have 10-18 years of experience coaching CXOs, teams, and students across 5+ countries.</TranslatedText>,
             },
             {
               icon: "📊",
-              title: "Outcome Framework",
-              description:
-                "Understand our assessment models, feedback reports, and placement assistance approach during the demo.",
+              title: <TranslatedText>Outcome Framework</TranslatedText>,
+              description: <TranslatedText>Understand our assessment models, feedback reports, and placement assistance approach during the demo.</TranslatedText>,
             },
           ].map((card, index) => (
             <div
-              key={card.title}
+              key={index}
               className="bg-[#0b0b0b] border border-[#D4AF37]/15 rounded-2xl px-5 py-6 space-y-3">
               <div className="text-3xl">{card.icon}</div>
               <h4 className="text-lg font-semibold text-white font-display">
