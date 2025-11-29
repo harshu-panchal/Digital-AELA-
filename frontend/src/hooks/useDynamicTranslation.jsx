@@ -38,8 +38,23 @@ export const useDynamicTranslation = (options = {}) => {
         return translated;
       } catch (error) {
         setTranslationError(error);
-        // eslint-disable-next-line no-console
-        console.error("[Dynamic Translation] Error:", error);
+        // Enhanced error logging for production
+        if (import.meta.env.PROD) {
+          console.error("[Dynamic Translation] Translation error:", {
+            error: error.message,
+            status: error?.status,
+            code: error?.code,
+            text: typeof text === "string" ? text.substring(0, 50) + (text.length > 50 ? "..." : "") : "non-string",
+            targetLang: language,
+            sourceLang,
+            hint: error?.isNetworkError 
+              ? "Check if backend server is running and VITE_API_URL is set correctly" 
+              : "Check translation service configuration",
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.error("[Dynamic Translation] Error:", error);
+        }
         return text; // Return original on error
       } finally {
         setIsTranslating(false);
@@ -63,8 +78,23 @@ export const useDynamicTranslation = (options = {}) => {
         return translated;
       } catch (error) {
         setTranslationError(error);
-        // eslint-disable-next-line no-console
-        console.error("[Dynamic Translation] Batch error:", error);
+        // Enhanced error logging for production
+        if (import.meta.env.PROD) {
+          console.error("[Dynamic Translation] Batch translation error:", {
+            error: error.message,
+            status: error?.status,
+            code: error?.code,
+            textCount: Array.isArray(texts) ? texts.length : 0,
+            targetLang: language,
+            sourceLang,
+            hint: error?.isNetworkError 
+              ? "Check if backend server is running and VITE_API_URL is set correctly" 
+              : "Check translation service configuration",
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.error("[Dynamic Translation] Batch error:", error);
+        }
         return texts; // Return original on error
       } finally {
         setIsTranslating(false);
@@ -88,8 +118,23 @@ export const useDynamicTranslation = (options = {}) => {
         return translated;
       } catch (error) {
         setTranslationError(error);
-        // eslint-disable-next-line no-console
-        console.error("[Dynamic Translation] Object error:", error);
+        // Enhanced error logging for production
+        if (import.meta.env.PROD) {
+          console.error("[Dynamic Translation] Object translation error:", {
+            error: error.message,
+            status: error?.status,
+            code: error?.code,
+            targetLang: language,
+            sourceLang,
+            keysToTranslate: keysToTranslate || "all",
+            hint: error?.isNetworkError 
+              ? "Check if backend server is running and VITE_API_URL is set correctly" 
+              : "Check translation service configuration",
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.error("[Dynamic Translation] Object error:", error);
+        }
         return obj; // Return original on error
       } finally {
         setIsTranslating(false);

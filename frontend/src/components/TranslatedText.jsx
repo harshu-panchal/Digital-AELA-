@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDynamicTranslation } from "../hooks/useDynamicTranslation";
 import { useLanguage } from "../contexts/LanguageContext";
 import { normalizeLanguageCode } from "../utils/languageUtils";
+import { API_BASE_URL } from "../config/api.js";
 
 /**
  * Component that automatically translates text based on current language
@@ -50,8 +51,26 @@ const TranslatedText = ({
         const translated = await translate(children);
         setTranslatedText(translated);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("[TranslatedText] Translation error:", error);
+        // Enhanced error logging with language context and API URL
+        if (import.meta.env.PROD) {
+          console.error("[TranslatedText] Translation error:", {
+            error: error.message,
+            status: error?.status,
+            code: error?.code,
+            text: typeof children === "string" ? children.substring(0, 50) + (children.length > 50 ? "..." : "") : "non-string",
+            currentLanguage: language,
+            normalizedLanguage,
+            sourceLang,
+            normalizedSourceLang,
+            apiUrl: API_BASE_URL,
+            hint: error?.isNetworkError 
+              ? "Check if backend server is running and VITE_API_URL is set correctly" 
+              : "Check translation service and language configuration",
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.error("[TranslatedText] Translation error:", error);
+        }
         setTranslatedText(children);
       }
     };

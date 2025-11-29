@@ -50,7 +50,7 @@ const processTranslationQueue = async () => {
 
       // If single request, use single endpoint
       if (batch.length === 1) {
-        const { text, targetLang, sourceLang, resolve, reject } = batch[0];
+        const { text, targetLang, sourceLang, normalizedTarget, normalizedSource, resolve, reject } = batch[0];
         try {
           const response = await apiRequest(
             "/translate",
@@ -60,10 +60,40 @@ const processTranslationQueue = async () => {
               skipAuth: true,
             }
           );
-          resolve(response?.data?.translation || text);
+          const translation = response?.data?.translation || text;
+          
+          // Cache the translation for future use
+          if (translation !== text && normalizedTarget && normalizedSource) {
+            try {
+              await cacheTranslation(text, translation, normalizedTarget, normalizedSource);
+            } catch (cacheError) {
+              // Cache error, ignore but continue
+              if (import.meta.env.PROD) {
+                console.warn("[Translation Service] Failed to cache translation:", cacheError.message);
+              }
+            }
+          }
+          
+          resolve(translation);
         } catch (error) {
           // Suppress 429 errors - they're expected when rate limited
           if (error?.status !== 429) {
+            // Enhanced error logging for production
+            if (import.meta.env.PROD) {
+              console.error("[Translation Service] Single translation failed:", {
+                error: error.message,
+                status: error?.status,
+                code: error?.code,
+                apiUrl: API_BASE_URL,
+                endpoint: "/translate",
+                requestBody: { text: text.substring(0, 50) + "...", targetLang, sourceLang },
+                hint: error?.isNetworkError 
+                  ? "Check if backend server is running and VITE_API_URL is set correctly" 
+                  : error?.status === 502
+                  ? "Backend server may be down or restarting"
+                  : "Check backend translation endpoint and Google Cloud Translate configuration",
+              });
+            }
             reject(error);
           } else {
             // Return original text on rate limit
@@ -73,6 +103,9 @@ const processTranslationQueue = async () => {
       } else {
         // Batch multiple requests
         const texts = batch.map(b => b.text);
+        const batchNormalizedTarget = batch[0]?.normalizedTarget;
+        const batchNormalizedSource = batch[0]?.normalizedSource;
+        
         try {
           const response = await apiRequest(
             "/translate/batch",
@@ -83,12 +116,52 @@ const processTranslationQueue = async () => {
             }
           );
           const translations = response?.data?.translations || texts;
+          
+          // Cache all translations for future use
+          if (batchNormalizedTarget && batchNormalizedSource) {
+            for (let i = 0; i < batch.length; i++) {
+              const originalText = batch[i].text;
+              const translation = translations[i] || originalText;
+              
+              if (translation !== originalText) {
+                try {
+                  await cacheTranslation(originalText, translation, batchNormalizedTarget, batchNormalizedSource);
+                } catch (cacheError) {
+                  // Cache error, ignore but continue
+                  if (import.meta.env.PROD && i === 0) {
+                    console.warn("[Translation Service] Failed to cache batch translations:", cacheError.message);
+                  }
+                }
+              }
+            }
+          }
+          
           batch.forEach((item, index) => {
             item.resolve(translations[index] || item.text);
           });
         } catch (error) {
           // Suppress 429 errors - they're expected when rate limited
           if (error?.status !== 429) {
+            // Enhanced error logging for production
+            if (import.meta.env.PROD) {
+              console.error("[Translation Service] Batch translation failed:", {
+                error: error.message,
+                status: error?.status,
+                code: error?.code,
+                apiUrl: API_BASE_URL,
+                endpoint: "/translate/batch",
+                requestBody: { 
+                  textCount: texts.length, 
+                  targetLang: batchTargetLang, 
+                  sourceLang: batchSourceLang 
+                },
+                hint: error?.isNetworkError 
+                  ? "Check if backend server is running and VITE_API_URL is set correctly" 
+                  : error?.status === 502
+                  ? "Backend server may be down or restarting"
+                  : "Check backend translation endpoint and Google Cloud Translate configuration",
+              });
+            }
             batch.forEach(item => item.reject(error));
           } else {
             // Return original texts on rate limit
@@ -112,9 +185,17 @@ const processTranslationQueue = async () => {
 };
 
 // Queue translation request
-const queueTranslation = (text, targetLang, sourceLang) => {
+const queueTranslation = (text, targetLang, sourceLang, normalizedTarget, normalizedSource) => {
   return new Promise((resolve, reject) => {
-    translationQueue.push({ text, targetLang, sourceLang, resolve, reject });
+    translationQueue.push({ 
+      text, 
+      targetLang, 
+      sourceLang, 
+      normalizedTarget, 
+      normalizedSource, 
+      resolve, 
+      reject 
+    });
     
     // Process queue after a short delay to allow batching
     setTimeout(() => {
@@ -159,14 +240,22 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   } catch (error) {
     // Suppress 429 rate limit errors - they're expected
     if (error?.status !== 429) {
-      // Log errors in production to help debug API issues
+      // Enhanced error logging for production
       if (import.meta.env.PROD) {
         console.error("[Translation Service] Translation failed:", {
           error: error.message,
           status: error?.status,
           code: error?.code,
           apiUrl: API_BASE_URL,
-          hint: error?.isNetworkError ? "Check if backend server is running and VITE_API_URL is set correctly" : "Check backend translation endpoint",
+          endpoint: "/translate",
+          text: text.substring(0, 50) + (text.length > 50 ? "..." : ""),
+          targetLang,
+          sourceLang,
+          hint: error?.isNetworkError 
+            ? "Check if backend server is running and VITE_API_URL is set correctly" 
+            : error?.status === 502
+            ? "Backend server may be down or restarting"
+            : "Check backend translation endpoint and Google Cloud Translate configuration",
         });
       }
     }
@@ -288,15 +377,22 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
   } catch (error) {
     // Suppress 429 rate limit errors - they're expected
     if (error?.status !== 429) {
-      // Log errors in production to help debug API issues
+      // Enhanced error logging for production
       if (import.meta.env.PROD) {
         console.error("[Translation Service] Batch translation failed:", {
           error: error.message,
           status: error?.status,
           code: error?.code,
           apiUrl: API_BASE_URL,
+          endpoint: "/translate/batch",
           textCount: uncachedTexts.length,
-          hint: error?.isNetworkError ? "Check if backend server is running and VITE_API_URL is set correctly" : "Check backend translation endpoint",
+          targetLang,
+          sourceLang,
+          hint: error?.isNetworkError 
+            ? "Check if backend server is running and VITE_API_URL is set correctly" 
+            : error?.status === 502
+            ? "Backend server may be down or restarting"
+            : "Check backend translation endpoint and Google Cloud Translate configuration",
         });
       }
     }
