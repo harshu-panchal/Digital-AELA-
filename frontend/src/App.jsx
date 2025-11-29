@@ -9,165 +9,431 @@ import FloatingDebateButton from "./components/FloatingDebateButton";
 import WebsitePopupForm from "./components/WebsitePopupForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FinancialProtectedRoute from "./components/FinancialProtectedRoute";
-import Home from "../modules/business-management/business-pages/Home";
-import LearnEarnLayout from "../modules/learn-earn/layout/LearnEarnLayout";
-import DashboardOverview from "../modules/learn-earn/pages/DashboardOverview";
-import NotificationCenter from "../modules/learn-earn/pages/NotificationCenter";
-import ProfilePage from "../modules/learn-earn/pages/ProfilePage";
-import ChatCentre from "../modules/learn-earn/pages/ChatCentre";
-import FindLearners from "../modules/learn-earn/pages/FindLearners";
-import UserProfileView from "../modules/learn-earn/pages/UserProfileView";
-import FullLeaderboard from "../modules/learn-earn/pages/FullLeaderboard";
-import LiveDebates from "../modules/learn-earn/pages/LiveDebates";
-import VoiceRoom from "../modules/learn-earn/pages/VoiceRoom";
-import ActivitiesHub from "../modules/learn-earn/pages/ActivitiesHub";
-import QuizPlay from "../modules/learn-earn/pages/QuizPlay";
-import WalletDashboard from "../modules/learn-earn/pages/WalletDashboard";
-import RedemptionHistory from "../modules/learn-earn/pages/RedemptionHistory";
-import RatingsReviews from "../modules/learn-earn/pages/RatingsReviews";
-import AdminControl from "../modules/learn-earn/pages/AdminControl";
-import RewardManagement from "../modules/admin/pages/RewardManagement";
-import RedemptionRequestsManagement from "../modules/admin/pages/RedemptionRequestsManagement";
-import CorporateTrainingCourses from "../modules/business-management/cources-pages/Corporate-training-cources";
-import DigitalMarketingCourses from "../modules/business-management/cources-pages/Digital-marketing-cources";
-import EnglishLanguageCourses from "../modules/business-management/cources-pages/English-language-cources";
-import Books from "../modules/business-management/business-pages/Books";
-import BookDetail from "../modules/business-management/business-pages/BookDetail";
-import BookPayment from "../modules/business-management/business-pages/BookPayment";
-import GiftPayment from "../modules/business-management/gift-pages/GiftPayment";
-import OurStory from "../modules/business-management/business-pages/OurStory";
-import MissionVision from "../modules/business-management/business-pages/MissionVision";
-import MeetTheFounder from "../modules/business-management/business-pages/MeetTheFounder";
-import StudentSuccessStories from "../modules/business-management/business-pages/StudentSuccessStories";
-import Disclaimer from "../modules/business-management/business-pages/Disclaimer";
-import PrivacyPolicy from "../modules/business-management/business-pages/PrivacyPolicy";
-import RefundCancellationPolicy from "../modules/business-management/business-pages/RefundCancellationPolicy";
-import TermsConditions from "../modules/business-management/business-pages/TermsConditions";
-import CoursePayment from "../modules/business-management/business-pages/CoursePayment";
-import CourseDetail from "../modules/business-management/business-pages/CourseDetail";
-import PaymentCallback from "../modules/payment/PaymentCallback";
-import BookDemo from "../modules/business-management/contact-pages/BookDemo";
-import BusinessCollaboration from "../modules/business-management/contact-pages/BusinessCollaboration";
-import FranchiseInquiry from "../modules/business-management/contact-pages/FranchiseInquiry";
-import TeacherLogin from "../modules/business-management/login-pages/TeacherLogin";
-import StudentLogin from "../modules/business-management/login-pages/StudentLogin";
-import RecruiterLogin from "../modules/business-management/login-pages/RecruiterLogin";
-import BranchOwnerLogin from "../modules/business-management/login-pages/BranchOwnerLogin";
-import ForgotPassword from "../modules/business-management/login-pages/ForgotPassword";
-import ResetPassword from "../modules/business-management/login-pages/ResetPassword";
-import TeacherRegister from "../modules/business-management/login-pages/TeacherRegister";
-import StudentRegister from "../modules/business-management/login-pages/StudentRegister";
-import RecruiterRegister from "../modules/business-management/login-pages/RecruiterRegister";
-import BranchOwnerRegister from "../modules/business-management/login-pages/BranchOwnerRegister";
-import BlogsHome from "../modules/blogs/pages/BlogsHome";
-import BlogDetails from "../modules/blogs/pages/BlogDetails";
-import CreateBlog from "../modules/blogs/pages/CreateBlog";
-import MyBlogs from "../modules/blogs/pages/MyBlogs";
-import ExploreJobsLayout from "../modules/explore-jobs/layout/ExploreJobsLayout";
-import ExploreFeed from "../modules/explore-jobs/pages/ExploreFeed";
-import SeekerDashboard from "../modules/explore-jobs/pages/SeekerDashboard";
-import ExplorePostDetailPage from "../modules/explore-jobs/pages/PostDetailPage";
+import LoadingFallback from "./components/LoadingFallback";
 import { ExploreJobsProvider } from "../modules/explore-jobs/context/ExploreJobsContext";
-import RecruiterDashboard from "../modules/recruiter/RecruiterDashboard";
-import RecruiterAnalyticsHub from "../modules/recruiter/RecruiterAnalyticsHub";
-import JobApplicationAnalytics from "../modules/recruiter/JobApplicationAnalytics";
-import ApplicantProfilePage from "../modules/recruiter/ApplicantProfilePage";
-import JoinAsTeacher from "../modules/business-management/join-us-pages/JoinAsTeacher";
-import JoinInfluencer from "../modules/business-management/join-us-pages/JoinInfluencer";
-import JoinFreelancer from "../modules/business-management/join-us-pages/JoinFreelancer";
-import JoinBuildAfterLife from "../modules/business-management/join-us-pages/JoinBuildAfterLife";
-import FreeLibrary from "../modules/business-management/free-library/FreeLibrary";
-import FreeLibraryReader from "../modules/business-management/free-library/FreeLibraryReader";
-import PDFEbookReader from "../modules/business-management/free-library/PDFEbookReader";
-import Gallery from "../modules/business-management/business-pages/Gallery";
-import SuperAdminDashboard from "../modules/admin/SuperAdminDashboard";
+
+// Keep Home and AdminLogin as static imports for fast initial load
+import Home from "../modules/business-management/business-pages/Home";
 import AdminLogin from "../modules/admin/AdminLogin";
-import AdminLayout from "../modules/admin/layout/AdminLayout";
-import UserManagement from "../modules/admin/pages/UserManagement";
-import ApprovalPage from "../modules/admin/pages/ApprovalPage";
-import ReviewModeration from "../modules/admin/ReviewModeration";
-import LiveRoomModeration from "../modules/admin/pages/LiveRoomModeration";
-import AdvancedAnalytics from "../modules/admin/pages/AdvancedAnalytics";
-import SystemSettings from "../modules/admin/pages/SystemSettings";
-import AdminCourseCreate from "../modules/admin/pages/AdminCourseCreate";
-import AdminCourseDetail from "../modules/admin/pages/AdminCourseDetail";
-import AdminBookCreate from "../modules/admin/pages/AdminBookCreate";
-import AdminBlogCreate from "../modules/admin/pages/AdminBlogCreate";
-import ContentManagement from "../modules/admin/pages/ContentManagement";
-import GalleryManagement from "../modules/admin/pages/GalleryManagement";
-import TestimonialManagement from "../modules/admin/pages/TestimonialManagement";
-import UserDetail from "../modules/admin/pages/UserDetail";
-import SystemHealth from "../modules/admin/pages/SystemHealth";
-import AdminAssignmentList from "../modules/admin/pages/AdminAssignmentList";
-import AdminAssignmentDetail from "../modules/admin/pages/AdminAssignmentDetail";
-import AdminAssignmentCreate from "../modules/admin/pages/AdminAssignmentCreate";
-import AdminStudentManagement from "../modules/admin/pages/AdminStudentManagement";
-import AdminDoubtTicketManagement from "../modules/admin/pages/AdminDoubtTicketManagement";
-import AdminDoubtTicketDetail from "../modules/admin/pages/AdminDoubtTicketDetail";
-// Use lazy loading to prevent circular dependency issues
+
+// Lazy load all route components
+const LearnEarnLayout = lazy(() =>
+  import("../modules/learn-earn/layout/LearnEarnLayout")
+);
+const DashboardOverview = lazy(() =>
+  import("../modules/learn-earn/pages/DashboardOverview")
+);
+const NotificationCenter = lazy(() =>
+  import("../modules/learn-earn/pages/NotificationCenter")
+);
+const ProfilePage = lazy(() =>
+  import("../modules/learn-earn/pages/ProfilePage")
+);
+const ChatCentre = lazy(() => import("../modules/learn-earn/pages/ChatCentre"));
+const FindLearners = lazy(() =>
+  import("../modules/learn-earn/pages/FindLearners")
+);
+const UserProfileView = lazy(() =>
+  import("../modules/learn-earn/pages/UserProfileView")
+);
+const FullLeaderboard = lazy(() =>
+  import("../modules/learn-earn/pages/FullLeaderboard")
+);
+const LiveDebates = lazy(() =>
+  import("../modules/learn-earn/pages/LiveDebates")
+);
+const VoiceRoom = lazy(() => import("../modules/learn-earn/pages/VoiceRoom"));
+const ActivitiesHub = lazy(() =>
+  import("../modules/learn-earn/pages/ActivitiesHub")
+);
+const QuizPlay = lazy(() => import("../modules/learn-earn/pages/QuizPlay"));
+const WalletDashboard = lazy(() =>
+  import("../modules/learn-earn/pages/WalletDashboard")
+);
+const RedemptionHistory = lazy(() =>
+  import("../modules/learn-earn/pages/RedemptionHistory")
+);
+const RatingsReviews = lazy(() =>
+  import("../modules/learn-earn/pages/RatingsReviews")
+);
+const AdminControl = lazy(() =>
+  import("../modules/learn-earn/pages/AdminControl")
+);
+
+// Admin pages - lazy loaded
+const SuperAdminDashboard = lazy(() =>
+  import("../modules/admin/SuperAdminDashboard")
+);
+const AdminLayout = lazy(() => import("../modules/admin/layout/AdminLayout"));
+const UserManagement = lazy(() =>
+  import("../modules/admin/pages/UserManagement")
+);
+const ApprovalPage = lazy(() => import("../modules/admin/pages/ApprovalPage"));
+const ReviewModeration = lazy(() =>
+  import("../modules/admin/ReviewModeration")
+);
+const LiveRoomModeration = lazy(() =>
+  import("../modules/admin/pages/LiveRoomModeration")
+);
+const AdvancedAnalytics = lazy(() =>
+  import("../modules/admin/pages/AdvancedAnalytics")
+);
+const SystemSettings = lazy(() =>
+  import("../modules/admin/pages/SystemSettings")
+);
+const AdminCourseCreate = lazy(() =>
+  import("../modules/admin/pages/AdminCourseCreate")
+);
+const AdminCourseDetail = lazy(() =>
+  import("../modules/admin/pages/AdminCourseDetail")
+);
+const AdminBookCreate = lazy(() =>
+  import("../modules/admin/pages/AdminBookCreate")
+);
+const AdminBlogCreate = lazy(() =>
+  import("../modules/admin/pages/AdminBlogCreate")
+);
+const ContentManagement = lazy(() =>
+  import("../modules/admin/pages/ContentManagement")
+);
+const GalleryManagement = lazy(() =>
+  import("../modules/admin/pages/GalleryManagement")
+);
+const TestimonialManagement = lazy(() =>
+  import("../modules/admin/pages/TestimonialManagement")
+);
+const UserDetail = lazy(() => import("../modules/admin/pages/UserDetail"));
+const SystemHealth = lazy(() => import("../modules/admin/pages/SystemHealth"));
+const AdminAssignmentList = lazy(() =>
+  import("../modules/admin/pages/AdminAssignmentList")
+);
+const AdminAssignmentDetail = lazy(() =>
+  import("../modules/admin/pages/AdminAssignmentDetail")
+);
+const AdminAssignmentCreate = lazy(() =>
+  import("../modules/admin/pages/AdminAssignmentCreate")
+);
+const AdminStudentManagement = lazy(() =>
+  import("../modules/admin/pages/AdminStudentManagement")
+);
+const AdminDoubtTicketManagement = lazy(() =>
+  import("../modules/admin/pages/AdminDoubtTicketManagement")
+);
+const AdminDoubtTicketDetail = lazy(() =>
+  import("../modules/admin/pages/AdminDoubtTicketDetail")
+);
+const RewardManagement = lazy(() =>
+  import("../modules/admin/pages/RewardManagement")
+);
+const RedemptionRequestsManagement = lazy(() =>
+  import("../modules/admin/pages/RedemptionRequestsManagement")
+);
+const AnnouncementManagement = lazy(() =>
+  import("../modules/admin/AnnouncementManagement")
+);
+const AdminAnnouncementCreate = lazy(() =>
+  import("../modules/admin/AnnouncementCreate")
+);
+const AdminAnnouncementDetail = lazy(() =>
+  import("../modules/admin/AnnouncementDetail")
+);
+const ActiveSessions = lazy(() => import("../modules/admin/ActiveSessions"));
+const BackupManagement = lazy(() =>
+  import("../modules/admin/BackupManagement")
+);
+const PaymentManagement = lazy(() =>
+  import("../modules/admin/PaymentManagement")
+);
+const CertificateManagement = lazy(() =>
+  import("../modules/admin/CertificateManagement")
+);
+const LeadManagement = lazy(() => import("../modules/admin/LeadManagement"));
+const LeadDetail = lazy(() => import("../modules/admin/LeadDetail"));
+const ExpenseManagement = lazy(() =>
+  import("../modules/admin/ExpenseManagement")
+);
+const FinancialDashboard = lazy(() =>
+  import("../modules/admin/FinancialDashboard")
+);
+
+// Teacher pages - lazy loaded
 const TeacherDashboard = lazy(() =>
   import("../modules/teacher/TeacherDashboard")
 );
 const TeacherLayout = lazy(() =>
   import("../modules/teacher/layout/TeacherLayout")
 );
-import CourseList from "../modules/teacher/CourseList";
-import EbookList from "../modules/teacher/EbookList";
-import QuizList from "../modules/teacher/QuizList";
-import TeacherProfile from "../modules/teacher/TeacherProfile";
-import StudentDashboard from "../modules/student/StudentDashboard";
-import EnrolledCourses from "../modules/student/EnrolledCourses";
-import PointsHistory from "../modules/student/PointsHistory";
-import ApplicationHistory from "../modules/student/ApplicationHistory";
-import StudentLayout from "../modules/student/layout/StudentLayout";
-import StudentProfile from "../modules/student/StudentProfile";
-import CourseCreate from "../modules/teacher/CourseCreate";
-import TeacherCourseDetail from "../modules/teacher/CourseDetail";
-import EbookUpload from "../modules/teacher/EbookUpload";
-import EbookDetail from "../modules/teacher/EbookDetail";
-import QuizCreate from "../modules/teacher/QuizCreate";
-import QuizAnalytics from "../modules/teacher/QuizAnalytics";
-import QuizLeaderboard from "../modules/student/QuizLeaderboard";
-import QuizDetail from "../modules/teacher/QuizDetail";
-import TeacherAnalytics from "../modules/teacher/TeacherAnalytics";
-import StudentManagement from "../modules/teacher/StudentManagement";
-import AssignmentCreate from "../modules/teacher/AssignmentCreate";
-import AssignmentList from "../modules/teacher/AssignmentList";
-import AssignmentDetail from "../modules/teacher/AssignmentDetail";
-import StudentAssignmentList from "../modules/student/AssignmentList";
-import StudentAssignmentDetail from "../modules/student/AssignmentDetail";
-import PaymentHistory from "../modules/student/PaymentHistory";
-import DoubtTicketList from "../modules/student/DoubtTicketList";
-import DoubtTicketCreate from "../modules/student/DoubtTicketCreate";
-import DoubtTicketDetail from "../modules/student/DoubtTicketDetail";
-import DoubtTicketInbox from "../modules/teacher/DoubtTicketInbox";
-import TeacherDoubtTicketDetail from "../modules/teacher/DoubtTicketDetail";
-import AnnouncementList from "../modules/teacher/AnnouncementList";
-import AnnouncementCreate from "../modules/teacher/AnnouncementCreate";
-import AnnouncementDetail from "../modules/teacher/AnnouncementDetail";
-import AnnouncementManagement from "../modules/admin/AnnouncementManagement";
-import AdminAnnouncementCreate from "../modules/admin/AnnouncementCreate";
-import AdminAnnouncementDetail from "../modules/admin/AnnouncementDetail";
-import ActiveSessions from "../modules/admin/ActiveSessions";
-import BackupManagement from "../modules/admin/BackupManagement";
-import StudentAnnouncementList from "../modules/student/AnnouncementList";
-import StudentAnnouncementDetail from "../modules/student/AnnouncementDetail";
-import BatchInformation from "../modules/student/BatchInformation";
-import CertificateList from "../modules/student/CertificateList";
-import TeacherEarnings from "../modules/teacher/TeacherEarnings";
-import PayoutRequests from "../modules/teacher/PayoutRequests";
-import PaymentSlips from "../modules/teacher/PaymentSlips";
-import PaymentManagement from "../modules/admin/PaymentManagement";
-import CertificateManagement from "../modules/admin/CertificateManagement";
-import LeadManagement from "../modules/admin/LeadManagement";
-import LeadDetail from "../modules/admin/LeadDetail";
-import ExpenseManagement from "../modules/admin/ExpenseManagement";
-import FinancialDashboard from "../modules/admin/FinancialDashboard";
-import CommunityHub from "../modules/community/pages/CommunityHub";
-import StudentProfileDetail from "../modules/community/pages/StudentProfileDetail";
-import TeacherProfileDetail from "../modules/community/pages/TeacherProfileDetail";
-import RecruiterProfileDetail from "../modules/community/pages/RecruiterProfileDetail";
-import CourseVideoPlayer from "../modules/student/CourseVideoPlayer";
+const CourseList = lazy(() => import("../modules/teacher/CourseList"));
+const EbookList = lazy(() => import("../modules/teacher/EbookList"));
+const QuizList = lazy(() => import("../modules/teacher/QuizList"));
+const TeacherProfile = lazy(() => import("../modules/teacher/TeacherProfile"));
+const CourseCreate = lazy(() => import("../modules/teacher/CourseCreate"));
+const TeacherCourseDetail = lazy(() =>
+  import("../modules/teacher/CourseDetail")
+);
+const EbookUpload = lazy(() => import("../modules/teacher/EbookUpload"));
+const EbookDetail = lazy(() => import("../modules/teacher/EbookDetail"));
+const QuizCreate = lazy(() => import("../modules/teacher/QuizCreate"));
+const QuizAnalytics = lazy(() => import("../modules/teacher/QuizAnalytics"));
+const QuizDetail = lazy(() => import("../modules/teacher/QuizDetail"));
+const TeacherAnalytics = lazy(() =>
+  import("../modules/teacher/TeacherAnalytics")
+);
+const StudentManagement = lazy(() =>
+  import("../modules/teacher/StudentManagement")
+);
+const AssignmentCreate = lazy(() =>
+  import("../modules/teacher/AssignmentCreate")
+);
+const AssignmentList = lazy(() => import("../modules/teacher/AssignmentList"));
+const AssignmentDetail = lazy(() =>
+  import("../modules/teacher/AssignmentDetail")
+);
+const DoubtTicketInbox = lazy(() =>
+  import("../modules/teacher/DoubtTicketInbox")
+);
+const TeacherDoubtTicketDetail = lazy(() =>
+  import("../modules/teacher/DoubtTicketDetail")
+);
+const AnnouncementList = lazy(() =>
+  import("../modules/teacher/AnnouncementList")
+);
+const AnnouncementCreate = lazy(() =>
+  import("../modules/teacher/AnnouncementCreate")
+);
+const AnnouncementDetail = lazy(() =>
+  import("../modules/teacher/AnnouncementDetail")
+);
+const TeacherEarnings = lazy(() =>
+  import("../modules/teacher/TeacherEarnings")
+);
+const PayoutRequests = lazy(() => import("../modules/teacher/PayoutRequests"));
+const PaymentSlips = lazy(() => import("../modules/teacher/PaymentSlips"));
+
+// Student pages - lazy loaded
+const StudentDashboard = lazy(() =>
+  import("../modules/student/StudentDashboard")
+);
+const EnrolledCourses = lazy(() =>
+  import("../modules/student/EnrolledCourses")
+);
+const PointsHistory = lazy(() => import("../modules/student/PointsHistory"));
+const ApplicationHistory = lazy(() =>
+  import("../modules/student/ApplicationHistory")
+);
+const StudentLayout = lazy(() =>
+  import("../modules/student/layout/StudentLayout")
+);
+const StudentProfile = lazy(() => import("../modules/student/StudentProfile"));
+const StudentAssignmentList = lazy(() =>
+  import("../modules/student/AssignmentList")
+);
+const StudentAssignmentDetail = lazy(() =>
+  import("../modules/student/AssignmentDetail")
+);
+const PaymentHistory = lazy(() => import("../modules/student/PaymentHistory"));
+const DoubtTicketList = lazy(() =>
+  import("../modules/student/DoubtTicketList")
+);
+const DoubtTicketCreate = lazy(() =>
+  import("../modules/student/DoubtTicketCreate")
+);
+const DoubtTicketDetail = lazy(() =>
+  import("../modules/student/DoubtTicketDetail")
+);
+const StudentAnnouncementList = lazy(() =>
+  import("../modules/student/AnnouncementList")
+);
+const StudentAnnouncementDetail = lazy(() =>
+  import("../modules/student/AnnouncementDetail")
+);
+const BatchInformation = lazy(() =>
+  import("../modules/student/BatchInformation")
+);
+const CertificateList = lazy(() =>
+  import("../modules/student/CertificateList")
+);
+const QuizLeaderboard = lazy(() =>
+  import("../modules/student/QuizLeaderboard")
+);
+const CourseVideoPlayer = lazy(() =>
+  import("../modules/student/CourseVideoPlayer")
+);
+
+// Business management pages - lazy loaded
+const CorporateTrainingCourses = lazy(() =>
+  import(
+    "../modules/business-management/cources-pages/Corporate-training-cources"
+  )
+);
+const DigitalMarketingCourses = lazy(() =>
+  import(
+    "../modules/business-management/cources-pages/Digital-marketing-cources"
+  )
+);
+const EnglishLanguageCourses = lazy(() =>
+  import(
+    "../modules/business-management/cources-pages/English-language-cources"
+  )
+);
+const Books = lazy(() =>
+  import("../modules/business-management/business-pages/Books")
+);
+const BookDetail = lazy(() =>
+  import("../modules/business-management/business-pages/BookDetail")
+);
+const BookPayment = lazy(() =>
+  import("../modules/business-management/business-pages/BookPayment")
+);
+const GiftPayment = lazy(() =>
+  import("../modules/business-management/gift-pages/GiftPayment")
+);
+const OurStory = lazy(() =>
+  import("../modules/business-management/business-pages/OurStory")
+);
+const MissionVision = lazy(() =>
+  import("../modules/business-management/business-pages/MissionVision")
+);
+const MeetTheFounder = lazy(() =>
+  import("../modules/business-management/business-pages/MeetTheFounder")
+);
+const StudentSuccessStories = lazy(() =>
+  import("../modules/business-management/business-pages/StudentSuccessStories")
+);
+const Disclaimer = lazy(() =>
+  import("../modules/business-management/business-pages/Disclaimer")
+);
+const PrivacyPolicy = lazy(() =>
+  import("../modules/business-management/business-pages/PrivacyPolicy")
+);
+const RefundCancellationPolicy = lazy(() =>
+  import(
+    "../modules/business-management/business-pages/RefundCancellationPolicy"
+  )
+);
+const TermsConditions = lazy(() =>
+  import("../modules/business-management/business-pages/TermsConditions")
+);
+const CoursePayment = lazy(() =>
+  import("../modules/business-management/business-pages/CoursePayment")
+);
+const CourseDetail = lazy(() =>
+  import("../modules/business-management/business-pages/CourseDetail")
+);
+const PaymentCallback = lazy(() =>
+  import("../modules/payment/PaymentCallback")
+);
+const BookDemo = lazy(() =>
+  import("../modules/business-management/contact-pages/BookDemo")
+);
+const BusinessCollaboration = lazy(() =>
+  import("../modules/business-management/contact-pages/BusinessCollaboration")
+);
+const FranchiseInquiry = lazy(() =>
+  import("../modules/business-management/contact-pages/FranchiseInquiry")
+);
+const TeacherLogin = lazy(() =>
+  import("../modules/business-management/login-pages/TeacherLogin")
+);
+const StudentLogin = lazy(() =>
+  import("../modules/business-management/login-pages/StudentLogin")
+);
+const RecruiterLogin = lazy(() =>
+  import("../modules/business-management/login-pages/RecruiterLogin")
+);
+const BranchOwnerLogin = lazy(() =>
+  import("../modules/business-management/login-pages/BranchOwnerLogin")
+);
+const ForgotPassword = lazy(() =>
+  import("../modules/business-management/login-pages/ForgotPassword")
+);
+const ResetPassword = lazy(() =>
+  import("../modules/business-management/login-pages/ResetPassword")
+);
+const TeacherRegister = lazy(() =>
+  import("../modules/business-management/login-pages/TeacherRegister")
+);
+const StudentRegister = lazy(() =>
+  import("../modules/business-management/login-pages/StudentRegister")
+);
+const RecruiterRegister = lazy(() =>
+  import("../modules/business-management/login-pages/RecruiterRegister")
+);
+const BranchOwnerRegister = lazy(() =>
+  import("../modules/business-management/login-pages/BranchOwnerRegister")
+);
+const JoinAsTeacher = lazy(() =>
+  import("../modules/business-management/join-us-pages/JoinAsTeacher")
+);
+const JoinInfluencer = lazy(() =>
+  import("../modules/business-management/join-us-pages/JoinInfluencer")
+);
+const JoinFreelancer = lazy(() =>
+  import("../modules/business-management/join-us-pages/JoinFreelancer")
+);
+const JoinBuildAfterLife = lazy(() =>
+  import("../modules/business-management/join-us-pages/JoinBuildAfterLife")
+);
+const FreeLibrary = lazy(() =>
+  import("../modules/business-management/free-library/FreeLibrary")
+);
+const FreeLibraryReader = lazy(() =>
+  import("../modules/business-management/free-library/FreeLibraryReader")
+);
+const PDFEbookReader = lazy(() =>
+  import("../modules/business-management/free-library/PDFEbookReader")
+);
+const Gallery = lazy(() =>
+  import("../modules/business-management/business-pages/Gallery")
+);
+
+// Blog pages - lazy loaded
+const BlogsHome = lazy(() => import("../modules/blogs/pages/BlogsHome"));
+const BlogDetails = lazy(() => import("../modules/blogs/pages/BlogDetails"));
+const CreateBlog = lazy(() => import("../modules/blogs/pages/CreateBlog"));
+const MyBlogs = lazy(() => import("../modules/blogs/pages/MyBlogs"));
+
+// Explore Jobs pages - lazy loaded
+const ExploreJobsLayout = lazy(() =>
+  import("../modules/explore-jobs/layout/ExploreJobsLayout")
+);
+const ExploreFeed = lazy(() =>
+  import("../modules/explore-jobs/pages/ExploreFeed")
+);
+const SeekerDashboard = lazy(() =>
+  import("../modules/explore-jobs/pages/SeekerDashboard")
+);
+const ExplorePostDetailPage = lazy(() =>
+  import("../modules/explore-jobs/pages/PostDetailPage")
+);
+
+// Recruiter pages - lazy loaded
+const RecruiterDashboard = lazy(() =>
+  import("../modules/recruiter/RecruiterDashboard")
+);
+const RecruiterAnalyticsHub = lazy(() =>
+  import("../modules/recruiter/RecruiterAnalyticsHub")
+);
+const JobApplicationAnalytics = lazy(() =>
+  import("../modules/recruiter/JobApplicationAnalytics")
+);
+const ApplicantProfilePage = lazy(() =>
+  import("../modules/recruiter/ApplicantProfilePage")
+);
+
+// Community pages - lazy loaded
+const CommunityHub = lazy(() =>
+  import("../modules/community/pages/CommunityHub")
+);
+const StudentProfileDetail = lazy(() =>
+  import("../modules/community/pages/StudentProfileDetail")
+);
+const TeacherProfileDetail = lazy(() =>
+  import("../modules/community/pages/TeacherProfileDetail")
+);
+const RecruiterProfileDetail = lazy(() =>
+  import("../modules/community/pages/RecruiterProfileDetail")
+);
 
 export const App = () => {
   const location = useLocation();
@@ -197,7 +463,10 @@ export const App = () => {
           path="/super-admin/*"
           element={
             <ProtectedRoute roles={["super-admin"]}>
-              <AdminLayout />
+              <Suspense
+                fallback={<LoadingFallback message="Loading admin panel..." />}>
+                <AdminLayout />
+              </Suspense>
             </ProtectedRoute>
           }>
           <Route index element={<SuperAdminDashboard />} />
@@ -284,12 +553,7 @@ export const App = () => {
             <ProtectedRoute roles={["teacher", "super-admin"]}>
               <Suspense
                 fallback={
-                  <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
-                      <p className="mt-4 text-gray-400">Loading...</p>
-                    </div>
-                  </div>
+                  <LoadingFallback message="Loading teacher dashboard..." />
                 }>
                 <TeacherLayout />
               </Suspense>
@@ -299,14 +563,7 @@ export const App = () => {
             path="dashboard"
             element={
               <Suspense
-                fallback={
-                  <div className="min-h-screen bg-[#020409] text-white flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto"></div>
-                      <p className="mt-4 text-gray-400">Loading dashboard...</p>
-                    </div>
-                  </div>
-                }>
+                fallback={<LoadingFallback message="Loading dashboard..." />}>
                 <TeacherDashboard />
               </Suspense>
             }
@@ -353,7 +610,12 @@ export const App = () => {
           path="/student/*"
           element={
             <ProtectedRoute roles={["student", "super-admin"]}>
-              <StudentLayout />
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading student dashboard..." />
+                }>
+                <StudentLayout />
+              </Suspense>
             </ProtectedRoute>
           }>
           <Route path="dashboard" element={<StudentDashboard />} />
@@ -386,13 +648,22 @@ export const App = () => {
           path="/courses/videos/:videoId"
           element={
             <ProtectedRoute roles={["student", "teacher", "super-admin"]}>
-              <CourseVideoPlayer />
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading video player..." />
+                }>
+                <CourseVideoPlayer />
+              </Suspense>
             </ProtectedRoute>
           }
         />
         <Route
           path="/learn-earn"
-          element={<LearnEarnLayout />}
+          element={
+            <Suspense fallback={<LoadingFallback message="Loading..." />}>
+              <LearnEarnLayout />
+            </Suspense>
+          }
           key="learn-earn">
           {/* Public routes - accessible without login */}
           <Route path="live-debate-room" element={<LiveDebates />} />
@@ -565,18 +836,44 @@ export const App = () => {
         </Route>
         <Route
           path="/courses/corporate-training"
-          element={<CorporateTrainingCourses />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CorporateTrainingCourses />
+            </Suspense>
+          }
         />
         <Route
           path="/courses/digital-marketing"
-          element={<DigitalMarketingCourses />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <DigitalMarketingCourses />
+            </Suspense>
+          }
         />
         <Route
           path="/courses/english-language"
-          element={<EnglishLanguageCourses />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <EnglishLanguageCourses />
+            </Suspense>
+          }
         />
-        <Route path="/books" element={<Books />} />
-        <Route path="/books/:id" element={<BookDetail />} />
+        <Route
+          path="/books"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Books />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/books/:id"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BookDetail />
+            </Suspense>
+          }
+        />
         <Route
           path="/books/:id/payment"
           element={
@@ -589,14 +886,44 @@ export const App = () => {
                 "freelancer",
                 "super-admin",
               ]}>
-              <BookPayment />
+              <Suspense fallback={<LoadingFallback />}>
+                <BookPayment />
+              </Suspense>
             </ProtectedRoute>
           }
         />
-        <Route path="/courses/:slug" element={<CourseDetail />} />
-        <Route path="/courses/id/:courseId" element={<CourseDetail />} />
-        <Route path="/courses/payment" element={<CoursePayment />} />
-        <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route
+          path="/courses/:slug"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CourseDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/courses/id/:courseId"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CourseDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/courses/payment"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CoursePayment />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/payment/callback"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PaymentCallback />
+            </Suspense>
+          }
+        />
         <Route
           path="/gift/payment"
           element={
@@ -609,41 +936,141 @@ export const App = () => {
                 "freelancer",
                 "super-admin",
               ]}>
-              <GiftPayment />
+              <Suspense fallback={<LoadingFallback />}>
+                <GiftPayment />
+              </Suspense>
             </ProtectedRoute>
           }
         />
-        <Route path="/free-library" element={<FreeLibrary />} />
-        <Route path="/free-library/:bookId" element={<FreeLibraryReader />} />
+        <Route
+          path="/free-library"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <FreeLibrary />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/free-library/:bookId"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <FreeLibraryReader />
+            </Suspense>
+          }
+        />
         <Route
           path="/free-library/ebook/:ebookId/read"
-          element={<PDFEbookReader />}
+          element={
+            <Suspense
+              fallback={<LoadingFallback message="Loading PDF reader..." />}>
+              <PDFEbookReader />
+            </Suspense>
+          }
         />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/about/our-story" element={<OurStory />} />
-        <Route path="/about/mission-vision" element={<MissionVision />} />
-        <Route path="/about/founder" element={<MeetTheFounder />} />
+        <Route
+          path="/gallery"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Gallery />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/about/our-story"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OurStory />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/about/mission-vision"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <MissionVision />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/about/founder"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <MeetTheFounder />
+            </Suspense>
+          }
+        />
         <Route
           path="/about/success-stories"
-          element={<StudentSuccessStories />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <StudentSuccessStories />
+            </Suspense>
+          }
         />
-        <Route path="/disclaimer" element={<Disclaimer />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route
+          path="/disclaimer"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Disclaimer />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/privacy-policy"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PrivacyPolicy />
+            </Suspense>
+          }
+        />
         <Route
           path="/refund-cancellation-policy"
-          element={<RefundCancellationPolicy />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <RefundCancellationPolicy />
+            </Suspense>
+          }
         />
-        <Route path="/terms-conditions" element={<TermsConditions />} />
-        <Route path="/contact/book-demo" element={<BookDemo />} />
+        <Route
+          path="/terms-conditions"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <TermsConditions />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/contact/book-demo"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BookDemo />
+            </Suspense>
+          }
+        />
         <Route
           path="/contact/business-collaboration"
-          element={<BusinessCollaboration />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BusinessCollaboration />
+            </Suspense>
+          }
         />
         <Route
           path="/contact/franchise-partnership"
-          element={<FranchiseInquiry />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <FranchiseInquiry />
+            </Suspense>
+          }
         />
-        <Route path="/blogs" element={<BlogsHome />} />
+        <Route
+          path="/blogs"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BlogsHome />
+            </Suspense>
+          }
+        />
         <Route
           path="/blogs/create"
           element={
@@ -656,11 +1083,20 @@ export const App = () => {
                 "freelancer",
                 "super-admin",
               ]}>
-              <CreateBlog />
+              <Suspense fallback={<LoadingFallback />}>
+                <CreateBlog />
+              </Suspense>
             </ProtectedRoute>
           }
         />
-        <Route path="/blogs/:id" element={<BlogDetails />} />
+        <Route
+          path="/blogs/:id"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BlogDetails />
+            </Suspense>
+          }
+        />
         <Route
           path="/my-blogs"
           element={
@@ -673,41 +1109,90 @@ export const App = () => {
                 "freelancer",
                 "super-admin",
               ]}>
-              <MyBlogs />
+              <Suspense fallback={<LoadingFallback />}>
+                <MyBlogs />
+              </Suspense>
             </ProtectedRoute>
           }
         />
-        <Route path="/join-us/teacher" element={<JoinAsTeacher />} />
-        <Route path="/join-us/influencer" element={<JoinInfluencer />} />
-        <Route path="/join-us/freelancer" element={<JoinFreelancer />} />
-        <Route path="/join-us/afterlife" element={<JoinBuildAfterLife />} />
+        <Route
+          path="/join-us/teacher"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <JoinAsTeacher />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/join-us/influencer"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <JoinInfluencer />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/join-us/freelancer"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <JoinFreelancer />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/join-us/afterlife"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <JoinBuildAfterLife />
+            </Suspense>
+          }
+        />
         <Route
           path="/community"
           element={
             <ProtectedRoute
               roles={["student", "teacher", "recruiter", "super-admin"]}>
-              <CommunityHub />
+              <Suspense fallback={<LoadingFallback />}>
+                <CommunityHub />
+              </Suspense>
             </ProtectedRoute>
           }
         />
         <Route
           path="/community/students/:userId"
-          element={<StudentProfileDetail />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <StudentProfileDetail />
+            </Suspense>
+          }
         />
         <Route
           path="/community/teachers/:userId"
-          element={<TeacherProfileDetail />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <TeacherProfileDetail />
+            </Suspense>
+          }
         />
         <Route
           path="/community/recruiters/:userId"
-          element={<RecruiterProfileDetail />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <RecruiterProfileDetail />
+            </Suspense>
+          }
         />
         <Route
           path="/recruiter/dashboard"
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
               <ExploreJobsProvider>
-                <RecruiterDashboard />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading recruiter dashboard..." />
+                  }>
+                  <RecruiterDashboard />
+                </Suspense>
               </ExploreJobsProvider>
             </ProtectedRoute>
           }
@@ -717,7 +1202,9 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
               <ExploreJobsProvider>
-                <RecruiterAnalyticsHub />
+                <Suspense fallback={<LoadingFallback />}>
+                  <RecruiterAnalyticsHub />
+                </Suspense>
               </ExploreJobsProvider>
             </ProtectedRoute>
           }
@@ -727,7 +1214,9 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
               <ExploreJobsProvider>
-                <JobApplicationAnalytics />
+                <Suspense fallback={<LoadingFallback />}>
+                  <JobApplicationAnalytics />
+                </Suspense>
               </ExploreJobsProvider>
             </ProtectedRoute>
           }
@@ -737,7 +1226,9 @@ export const App = () => {
           element={
             <ProtectedRoute roles={["recruiter", "super-admin"]}>
               <ExploreJobsProvider>
-                <ApplicantProfilePage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ApplicantProfilePage />
+                </Suspense>
               </ExploreJobsProvider>
             </ProtectedRoute>
           }
@@ -746,7 +1237,10 @@ export const App = () => {
           path="/explore-jobs/*"
           element={
             <ExploreJobsProvider>
-              <ExploreJobsLayout />
+              <Suspense
+                fallback={<LoadingFallback message="Loading jobs..." />}>
+                <ExploreJobsLayout />
+              </Suspense>
             </ExploreJobsProvider>
           }>
           <Route index element={<ExploreFeed />} />
@@ -782,18 +1276,85 @@ export const App = () => {
             }
           />
         </Route>
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/login/teacher" element={<TeacherLogin />} />
-        <Route path="/register/teacher" element={<TeacherRegister />} />
-        <Route path="/login/student" element={<StudentLogin />} />
-        <Route path="/register/student" element={<StudentRegister />} />
-        <Route path="/login/recruiter" element={<RecruiterLogin />} />
-        <Route path="/register/recruiter" element={<RecruiterRegister />} />
-        <Route path="/login/branch-owner" element={<BranchOwnerLogin />} />
+        <Route
+          path="/forgot-password"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <ForgotPassword />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <ResetPassword />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login/teacher"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <TeacherLogin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/register/teacher"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <TeacherRegister />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login/student"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <StudentLogin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/register/student"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <StudentRegister />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login/recruiter"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <RecruiterLogin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/register/recruiter"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <RecruiterRegister />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login/branch-owner"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BranchOwnerLogin />
+            </Suspense>
+          }
+        />
         <Route
           path="/register/branch-owner"
-          element={<BranchOwnerRegister />}
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BranchOwnerRegister />
+            </Suspense>
+          }
         />
       </Routes>
       {!isAdminLogin && !isDashboard && <Footer />}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlineX, HiOutlineUser, HiOutlinePhone, HiOutlineMail, HiOutlineMapPin, HiOutlineBriefcase, HiOutlineCalendar, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
+import { HiOutlineXMark, HiOutlineUser, HiOutlinePhone, HiOutlineEnvelope, HiOutlineMapPin, HiOutlineBriefcase, HiOutlineCalendar, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 import { useAuth } from "../contexts/AuthContext";
 import { createFormLead } from "../services/api/crm";
 
@@ -216,7 +216,7 @@ const WebsitePopupForm = () => {
                   className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg"
                   aria-label="Close"
                 >
-                  <HiOutlineX className="w-5 h-5" />
+                  <HiOutlineXMark className="w-5 h-5" />
                 </button>
               </div>
 
@@ -246,7 +246,7 @@ const WebsitePopupForm = () => {
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    <HiOutlineMail className="inline w-4 h-4 mr-1" />
+                    <HiOutlineEnvelope className="inline w-4 h-4 mr-1" />
                     Email <span className="text-red-400">*</span>
                   </label>
                   <input
