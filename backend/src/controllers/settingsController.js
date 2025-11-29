@@ -402,6 +402,10 @@ export const initializeDefaultSettings = async (req, res, next) => {
       { key: "payment.gateway.paypal.enabled", value: false, category: "payment", type: "boolean", label: "PayPal Enabled", description: "Enable PayPal payment gateway" },
       { key: "payment.gateway.paypal.clientId", value: "", category: "payment", type: "string", label: "PayPal Client ID", description: "PayPal client ID", isEncrypted: true },
       { key: "payment.gateway.paypal.secret", value: "", category: "payment", type: "string", label: "PayPal Secret", description: "PayPal client secret", isEncrypted: true },
+      { key: "payment.gateway.razorpay.enabled", value: false, category: "payment", type: "boolean", label: "Razorpay Enabled", description: "Enable Razorpay payment gateway" },
+      { key: "payment.gateway.razorpay.keyId", value: "", category: "payment", type: "string", label: "Razorpay Key ID", description: "Razorpay key ID (public key)", isEncrypted: true },
+      { key: "payment.gateway.razorpay.keySecret", value: "", category: "payment", type: "string", label: "Razorpay Key Secret", description: "Razorpay key secret (private key)", isEncrypted: true },
+      { key: "payment.gateway.razorpay.webhookSecret", value: "", category: "payment", type: "string", label: "Razorpay Webhook Secret", description: "Razorpay webhook secret for signature verification", isEncrypted: true },
 
       // Feature Flags (marked as public so frontend can check them)
       { key: "features.courses.enabled", value: true, category: "features", type: "boolean", label: "Courses Enabled", description: "Enable course functionality", isPublic: true },

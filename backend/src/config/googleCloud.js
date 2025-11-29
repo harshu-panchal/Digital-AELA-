@@ -1,5 +1,5 @@
-import pkg from "@google-cloud/translate";
-const { Translate } = pkg;
+import { v2 } from "@google-cloud/translate";
+const { Translate } = v2;
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -13,8 +13,17 @@ const initializeTranslateClient = () => {
   }
 
   const credentialsPath = process.env.GOOGLE_CLOUD_CREDENTIALS_PATH;
-  const apiKey = process.env.GOOGLE_CLOUD_TRANSLATE_API_KEY;
+  let apiKey = process.env.GOOGLE_CLOUD_TRANSLATE_API_KEY;
   const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+
+  // Trim and validate API key if provided
+  if (apiKey) {
+    apiKey = apiKey.trim();
+    // Remove quotes if present
+    if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+      apiKey = apiKey.slice(1, -1);
+    }
+  }
 
   if (!apiKey && !credentialsPath) {
     // eslint-disable-next-line no-console
@@ -39,12 +48,20 @@ const initializeTranslateClient = () => {
         keyFilename: credentialsPath,
       });
     } else if (apiKey) {
-      // Use API key (simpler setup - projectId is optional)
-      const config = { key: apiKey };
+      // Use API key authentication
+      // Note: The v2 Translate client doesn't directly support API keys in constructor
+      // We'll create a client and store the API key to use in REST API calls
+      const config = {};
       if (projectId) {
         config.projectId = projectId;
       }
+      
+      // Create client (will use REST API with API key for actual translation)
       translateClient = new Translate(config);
+      
+      // Store API key for use in translate calls via REST API
+      translateClient._apiKey = apiKey;
+      translateClient._useApiKey = true;
     }
 
     // eslint-disable-next-line no-console

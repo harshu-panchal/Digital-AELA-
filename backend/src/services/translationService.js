@@ -61,11 +61,40 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   }
 
   try {
-    // Translate using Google Cloud API
-    const [translation] = await translate.translate(text, {
-      from: normalizedSourceLang,
-      to: normalizedTargetLang,
-    });
+    let translation;
+    
+    // If using API key, use REST API directly
+    if (translate._useApiKey && translate._apiKey) {
+      const apiKey = translate._apiKey;
+      const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: text,
+          source: normalizedSourceLang,
+          target: normalizedTargetLang,
+          format: "text",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      translation = data.data?.translations?.[0]?.translatedText || text;
+    } else {
+      // Use client library (for service account authentication)
+      [translation] = await translate.translate(text, {
+        from: normalizedSourceLang,
+        to: normalizedTargetLang,
+      });
+    }
 
     // Cache the result
     translationCache.set(cacheKey, {
@@ -141,14 +170,42 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
   }
 
   try {
-    // Translate uncached texts in batch
-    const [translations] = await translate.translate(uncachedTexts, {
-      from: normalizedSourceLang,
-      to: normalizedTargetLang,
-    });
+    let translatedArray;
+    
+    // If using API key, use REST API directly
+    if (translate._useApiKey && translate._apiKey) {
+      const apiKey = translate._apiKey;
+      const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: uncachedTexts,
+          source: normalizedSourceLang,
+          target: normalizedTargetLang,
+          format: "text",
+        }),
+      });
 
-    // Google Cloud Translate returns an array or a single string
-    const translatedArray = Array.isArray(translations) ? translations : [translations];
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      translatedArray = data.data?.translations?.map((t) => t.translatedText) || uncachedTexts;
+    } else {
+      // Use client library (for service account authentication)
+      const [translations] = await translate.translate(uncachedTexts, {
+        from: normalizedSourceLang,
+        to: normalizedTargetLang,
+      });
+      // Google Cloud Translate returns an array or a single string
+      translatedArray = Array.isArray(translations) ? translations : [translations];
+    }
 
     // Update results and cache
     for (let i = 0; i < uncachedTexts.length; i++) {

@@ -8,6 +8,11 @@ import {
   getInvoice,
   getPendingPayments,
   getTeacherEarnings,
+  createRazorpayOrder,
+  createRazorpayPaymentLink,
+  verifyRazorpayPayment,
+  handleRazorpayWebhook,
+  handleRazorpayCallback,
 } from "../controllers/paymentController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { validateCsrfToken } from "../middleware/csrfMiddleware.js";
@@ -27,6 +32,15 @@ router.get("/pending", authenticate, getPendingPayments);
 // Get teacher earnings
 router.get("/earnings", authenticate, getTeacherEarnings);
 
+// Razorpay webhook (no authentication, signature verification only)
+router.post("/razorpay/webhook", express.raw({ type: "application/json" }), handleRazorpayWebhook);
+
+// Razorpay payment callback (redirect-based, no authentication)
+router.get("/razorpay/callback", handleRazorpayCallback);
+
+// Razorpay payment verification (from frontend callback)
+router.post("/razorpay/verify", authenticate, validateCsrfToken, verifyRazorpayPayment);
+
 // Get payment details
 router.get("/:paymentId", authenticate, getPaymentDetails);
 
@@ -38,6 +52,12 @@ router.post("/:paymentId/refund", authenticate, validateCsrfToken, processRefund
 
 // Get invoice
 router.get("/:paymentId/invoice", authenticate, getInvoice);
+
+// Create Razorpay order for payment (modal-based)
+router.post("/:paymentId/razorpay/order", authenticate, paymentRateLimiter, validateCsrfToken, createRazorpayOrder);
+
+// Create Razorpay payment link (redirect-based)
+router.post("/:paymentId/razorpay/payment-link", authenticate, paymentRateLimiter, validateCsrfToken, createRazorpayPaymentLink);
 
 export default router;
 

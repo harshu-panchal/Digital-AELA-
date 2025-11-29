@@ -5,6 +5,15 @@ import Enrollment from "../models/Enrollment.js";
 import User from "../models/User.js";
 import { generateInvoicePDF } from "../utils/pdfGenerator.js";
 import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
+import {
+  createOrder,
+  createPaymentLink,
+  verifyPaymentSignature,
+  verifyWebhookSignature,
+  fetchPayment,
+  getRazorpayKeyId,
+  isRazorpayEnabled,
+} from "../services/razorpayService.js";
 
 /**
  * Create Payment Record
@@ -871,6 +880,753 @@ export const getTeacherEarnings = async (req, res, next) => {
     });
   } catch (error) {
     return next(error);
+  }
+};
+
+/**
+ * Create Razorpay Order
+ * POST /api/v1/payments/:paymentId/razorpay/order
+ */
+export const createRazorpayOrder = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const { userId } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Check if Razorpay is enabled
+    const enabled = await isRazorpayEnabled();
+    if (!enabled) {
+      return res.status(400).json({
+        error: {
+          code: "GATEWAY_DISABLED",
+          message: "Razorpay payment gateway is not enabled",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(paymentId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid payment ID",
+        },
+      });
+    }
+
+    const payment = await Payment.findById(paymentId)
+      .populate("user", "fullName email")
+      .populate("course", "title")
+      .lean();
+
+    if (!payment) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Payment not found",
+        },
+      });
+    }
+
+    // Check permissions
+    const userObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (payment.user._id.toString() !== userObjectId.toString()) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only create orders for your own payments",
+        },
+      });
+    }
+
+    if (payment.gateway !== "razorpay") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Payment gateway is not Razorpay",
+        },
+      });
+    }
+
+    if (payment.status !== "pending") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Payment is not in pending status",
+        },
+      });
+    }
+
+    // Create Razorpay order
+    const receipt = payment._id.toString();
+    const notes = {
+      payment_id: receipt,
+      user_id: payment.user._id.toString(),
+      description: payment.description || "Payment",
+    };
+
+    if (payment.course) {
+      notes.course_id = payment.course._id.toString();
+      notes.course_title = payment.course.title;
+    }
+
+    const razorpayOrder = await createOrder(
+      payment.amount,
+      payment.currency,
+      receipt,
+      notes
+    );
+
+    // Update payment with order ID
+    await Payment.findByIdAndUpdate(paymentId, {
+      gatewayPaymentIntentId: razorpayOrder.id,
+      status: "processing",
+    });
+
+    // Get Razorpay key ID for frontend
+    const keyId = await getRazorpayKeyId();
+
+    return res.json({
+      order: razorpayOrder,
+      keyId: keyId,
+      payment: {
+        id: payment._id.toString(),
+        amount: payment.amount,
+        currency: payment.currency,
+      },
+      message: "Razorpay order created successfully",
+    });
+    } catch (error) {
+      console.error("[Payment] Error creating Razorpay order:", {
+        error: error.message,
+        paymentId,
+        userId,
+        stack: error.stack,
+      });
+      return res.status(500).json({
+        error: {
+          code: "ORDER_CREATION_FAILED",
+          message: error.message || "Failed to create Razorpay order. Please try again.",
+        },
+      });
+    }
+};
+
+/**
+ * Create Razorpay Payment Link (Redirect-based)
+ * POST /api/v1/payments/:paymentId/razorpay/payment-link
+ */
+export const createRazorpayPaymentLink = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const { userId } = req.auth || {};
+    const { callbackUrl } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // Check if Razorpay is enabled
+    const enabled = await isRazorpayEnabled();
+    if (!enabled) {
+      return res.status(400).json({
+        error: {
+          code: "GATEWAY_DISABLED",
+          message: "Razorpay payment gateway is not enabled",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(paymentId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid payment ID",
+        },
+      });
+    }
+
+    const payment = await Payment.findById(paymentId)
+      .populate("user", "fullName email phone")
+      .populate("course", "title")
+      .lean();
+
+    if (!payment) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Payment not found",
+        },
+      });
+    }
+
+    // Check permissions
+    const userObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (payment.user._id.toString() !== userObjectId.toString()) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only create payment links for your own payments",
+        },
+      });
+    }
+
+    if (payment.gateway !== "razorpay") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Payment gateway is not Razorpay",
+        },
+      });
+    }
+
+    if (payment.status !== "pending") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Payment is not in pending status",
+        },
+      });
+    }
+
+    // Build callback URL if not provided
+    // For Razorpay, we need to use the backend callback endpoint which then redirects to frontend
+    const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    
+    // Use backend callback endpoint (Razorpay can reach this, then we redirect to frontend)
+    const defaultCallbackUrl = `${backendUrl}/api/v1/payments/razorpay/callback?paymentId=${paymentId}`;
+    const finalCallbackUrl = callbackUrl || defaultCallbackUrl;
+    
+    console.log("[Payment] Using callback URL:", finalCallbackUrl);
+
+    // Create payment link
+    const receipt = payment._id.toString();
+    const notes = {
+      payment_id: receipt,
+      user_id: payment.user._id.toString(),
+      description: payment.description || "Payment",
+    };
+
+    if (payment.course) {
+      notes.course_id = payment.course._id.toString();
+      notes.course_title = payment.course.title;
+    }
+
+    // Validate user information before creating payment link
+    if (!payment.user.email) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "User email is required for Razorpay payment. Please update your profile with an email address.",
+        },
+      });
+    }
+
+    const paymentLink = await createPaymentLink(
+      payment.amount,
+      payment.currency,
+      receipt,
+      payment.description || (payment.course ? `Payment for ${payment.course.title}` : "Payment"),
+      payment.user.fullName || payment.user.email.split("@")[0] || "Customer",
+      payment.user.email,
+      payment.user.phone || "",
+      finalCallbackUrl,
+      notes
+    );
+
+    // Update payment with payment link ID
+    await Payment.findByIdAndUpdate(paymentId, {
+      gatewayPaymentIntentId: paymentLink.id,
+      status: "processing",
+      metadata: {
+        ...payment.metadata,
+        paymentLinkId: paymentLink.id,
+        paymentLinkUrl: paymentLink.short_url,
+      },
+    });
+
+    return res.json({
+      paymentLink: {
+        id: paymentLink.id,
+        url: paymentLink.short_url,
+        status: paymentLink.status,
+      },
+      payment: {
+        id: payment._id.toString(),
+        amount: payment.amount,
+        currency: payment.currency,
+      },
+      message: "Razorpay payment link created successfully",
+    });
+  } catch (error) {
+    console.error("[Payment] Error creating Razorpay payment link:", {
+      error: error.message,
+      paymentId: req.params.paymentId,
+      userId: req.auth?.userId,
+      stack: error.stack,
+    });
+    return res.status(500).json({
+      error: {
+        code: "PAYMENT_LINK_CREATION_FAILED",
+        message: error.message || "Failed to create Razorpay payment link. Please try again.",
+      },
+    });
+  }
+};
+
+/**
+ * Handle Razorpay Payment Callback (Redirect-based)
+ * GET /api/v1/payments/razorpay/callback
+ */
+export const handleRazorpayCallback = async (req, res, next) => {
+  try {
+    // Razorpay payment link redirects with these parameters
+    const { payment_id, payment_link_id, status } = req.query;
+    // We pass paymentId in the callback URL
+    const paymentId = req.query.paymentId;
+
+    // If payment_id is provided, fetch and verify the payment
+    if (payment_id && paymentId) {
+      try {
+        const razorpayPayment = await fetchPayment(payment_id);
+
+        if (razorpayPayment.status === "captured" || razorpayPayment.status === "authorized") {
+          // Update payment status
+          const updateData = {
+            status: "completed",
+            gatewayTransactionId: payment_id,
+            gatewayPaymentIntentId: razorpayPayment.order_id,
+          };
+
+          const payment = await Payment.findById(paymentId).lean();
+
+          if (payment && payment.course && !payment.metadata?.enrollmentCreated) {
+            try {
+              const existingEnrollment = await Enrollment.findOne({
+                student: payment.user,
+                course: payment.course,
+              }).lean();
+
+              if (!existingEnrollment) {
+                await Enrollment.create({
+                  student: payment.user,
+                  course: payment.course,
+                  status: "active",
+                  enrolledAt: new Date(),
+                });
+                updateData.metadata = {
+                  ...payment.metadata,
+                  enrollmentCreated: true,
+                  enrollmentCreatedAt: new Date(),
+                };
+              }
+            } catch (enrollmentError) {
+              console.error("[Payment] Error creating enrollment:", enrollmentError);
+            }
+          }
+
+          await Payment.findByIdAndUpdate(paymentId, updateData);
+        } else if (razorpayPayment.status === "failed") {
+          await Payment.findByIdAndUpdate(paymentId, {
+            status: "failed",
+            failureReason: razorpayPayment.error_description || "Payment failed",
+            gatewayTransactionId: payment_id,
+          });
+        }
+      } catch (fetchError) {
+        console.error("[Payment] Error fetching payment from Razorpay:", fetchError);
+      }
+    }
+
+    // Redirect to frontend callback page with status
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const finalStatus = status === "paid" ? "success" : (status === "failed" ? "failed" : status || "unknown");
+    const redirectUrl = `${frontendUrl}/payment/callback?paymentId=${paymentId || ""}&status=${finalStatus}&payment_id=${payment_id || ""}`;
+    
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("[Payment] Error handling Razorpay callback:", error);
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    return res.redirect(`${frontendUrl}/payment/callback?status=error&error=${encodeURIComponent(error.message)}`);
+  }
+};
+
+/**
+ * Verify Razorpay Payment
+ * POST /api/v1/payments/razorpay/verify
+ */
+export const verifyRazorpayPayment = async (req, res, next) => {
+  try {
+    const { userId } = req.auth || {};
+    const { paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (!paymentId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Missing required fields: paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature",
+        },
+      });
+    }
+
+    if (!mongoose.isValidObjectId(paymentId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid payment ID",
+        },
+      });
+    }
+
+    const payment = await Payment.findById(paymentId).lean();
+
+    if (!payment) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Payment not found",
+        },
+      });
+    }
+
+    // Check permissions
+    const userObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    if (payment.user.toString() !== userObjectId.toString()) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You can only verify your own payments",
+        },
+      });
+    }
+
+    // Verify payment signature
+    const isValid = await verifyPaymentSignature(
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    );
+
+    if (!isValid) {
+      // Update payment as failed
+      await Payment.findByIdAndUpdate(paymentId, {
+        status: "failed",
+        failureReason: "Invalid payment signature",
+      });
+
+      return res.status(400).json({
+        error: {
+          code: "PAYMENT_VERIFICATION_FAILED",
+          message: "Payment signature verification failed",
+        },
+      });
+    }
+
+    // Fetch payment details from Razorpay to confirm
+    try {
+      const razorpayPayment = await fetchPayment(razorpayPaymentId);
+
+      if (razorpayPayment.status === "captured" || razorpayPayment.status === "authorized") {
+        // Update payment status
+        const updateData = {
+          status: "completed",
+          gatewayTransactionId: razorpayPaymentId,
+          gatewayPaymentIntentId: razorpayOrderId,
+        };
+
+        // Create enrollment if payment is for a course
+        if (payment.course && !payment.metadata?.enrollmentCreated) {
+          try {
+            const existingEnrollment = await Enrollment.findOne({
+              student: payment.user,
+              course: payment.course,
+            }).lean();
+
+            if (!existingEnrollment) {
+              await Enrollment.create({
+                student: payment.user,
+                course: payment.course,
+                status: "active",
+                enrolledAt: new Date(),
+              });
+              updateData.metadata = {
+                ...payment.metadata,
+                enrollmentCreated: true,
+                enrollmentCreatedAt: new Date(),
+              };
+            }
+          } catch (enrollmentError) {
+            console.error("[Payment] Error creating enrollment:", enrollmentError);
+            // Continue with payment update even if enrollment fails
+          }
+        }
+
+        const updatedPayment = await Payment.findByIdAndUpdate(paymentId, updateData, { new: true })
+          .populate("user", "fullName email")
+          .populate("course", "title thumbnailUrl price")
+          .lean();
+
+        // Generate invoice PDF when payment is completed
+        if (!payment.invoiceUrl) {
+          try {
+            const invoiceData = {
+              invoiceNumber: updatedPayment.invoiceNumber || `INV-${updatedPayment._id.toString().slice(-8)}`,
+              date: updatedPayment.createdAt,
+              amount: updatedPayment.amount,
+              currency: updatedPayment.currency,
+              payment: {
+                id: updatedPayment._id.toString(),
+                amount: updatedPayment.amount,
+                currency: updatedPayment.currency,
+                status: updatedPayment.status,
+                paymentMethod: updatedPayment.paymentMethod,
+                gateway: updatedPayment.gateway,
+                gatewayTransactionId: updatedPayment.gatewayTransactionId,
+              },
+              user: {
+                name: updatedPayment.user.fullName,
+                email: updatedPayment.user.email,
+              },
+              course: updatedPayment.course
+                ? {
+                    title: updatedPayment.course.title,
+                    description: updatedPayment.course.description,
+                    price: updatedPayment.course.price,
+                  }
+                : null,
+              description: updatedPayment.description,
+            };
+
+            const pdfBuffer = await generateInvoicePDF(invoiceData);
+            const uploadResult = await uploadPdfToCloudinary(
+              pdfBuffer,
+              `digital-aela/invoices/${paymentId}`
+            );
+
+            await Payment.findByIdAndUpdate(paymentId, {
+              invoiceUrl: uploadResult.url,
+            });
+            updatedPayment.invoiceUrl = uploadResult.url;
+          } catch (invoiceError) {
+            console.error("[Payment] Error generating invoice PDF:", invoiceError);
+          }
+        }
+
+        // Create notification when payment is completed
+        if (!payment.metadata?.notificationSent) {
+          try {
+            const { createNotification } = await import("../utils/notificationHelper.js");
+            const courseTitle = updatedPayment.course?.title || "course";
+            await createNotification(
+              updatedPayment.user._id || updatedPayment.user,
+              "Payment Successful",
+              `Your payment of ${updatedPayment.amount} ${updatedPayment.currency} for "${courseTitle}" has been completed successfully.`,
+              "payment",
+              {
+                paymentId: updatedPayment._id.toString(),
+                amount: updatedPayment.amount,
+                currency: updatedPayment.currency,
+                courseId: updatedPayment.course?._id?.toString() || null,
+              },
+              updatedPayment.course ? `/courses/${updatedPayment.course._id}` : "/student/payments"
+            );
+
+            await Payment.findByIdAndUpdate(paymentId, {
+              "metadata.notificationSent": true,
+            });
+          } catch (notifError) {
+            console.error("[Payment] Error creating notification:", notifError);
+          }
+        }
+
+        return res.json({
+          payment: updatedPayment,
+          verified: true,
+          message: "Payment verified and completed successfully",
+        });
+      } else {
+        // Payment not captured/authorized
+        await Payment.findByIdAndUpdate(paymentId, {
+          status: "failed",
+          failureReason: `Payment status: ${razorpayPayment.status}`,
+          gatewayTransactionId: razorpayPaymentId,
+        });
+
+        return res.status(400).json({
+          error: {
+            code: "PAYMENT_NOT_CAPTURED",
+            message: `Payment status is ${razorpayPayment.status}, not captured`,
+          },
+        });
+      }
+    } catch (razorpayError) {
+      console.error("[Payment] Error fetching Razorpay payment:", razorpayError);
+      return res.status(500).json({
+        error: {
+          code: "RAZORPAY_ERROR",
+          message: "Failed to verify payment with Razorpay",
+        },
+      });
+    }
+    } catch (error) {
+      console.error("[Payment] Error verifying Razorpay payment:", {
+        error: error.message,
+        paymentId,
+        userId,
+        stack: error.stack,
+      });
+      return res.status(500).json({
+        error: {
+          code: "PAYMENT_VERIFICATION_ERROR",
+          message: error.message || "Failed to verify payment. Please contact support.",
+        },
+      });
+    }
+};
+
+/**
+ * Handle Razorpay Webhook
+ * POST /api/v1/payments/razorpay/webhook
+ */
+export const handleRazorpayWebhook = async (req, res, next) => {
+  try {
+    const signature = req.headers["x-razorpay-signature"];
+    
+    // Get raw body as string (req.body is Buffer when using express.raw())
+    const rawBody = req.body.toString("utf8");
+
+    if (!signature) {
+      return res.status(400).json({
+        error: {
+          code: "MISSING_SIGNATURE",
+          message: "Webhook signature is missing",
+        },
+      });
+    }
+
+    // Verify webhook signature using raw body
+    const isValid = await verifyWebhookSignature(rawBody, signature);
+
+    if (!isValid) {
+      console.error("[Payment] Invalid webhook signature");
+      return res.status(400).json({
+        error: {
+          code: "INVALID_SIGNATURE",
+          message: "Invalid webhook signature",
+        },
+      });
+    }
+
+    // Parse JSON body
+    const event = JSON.parse(rawBody);
+
+    // Handle different event types
+    if (event.event === "payment.captured" || event.event === "payment.authorized") {
+      const razorpayPayment = event.payload.payment.entity;
+      const razorpayOrderId = razorpayPayment.order_id;
+
+      // Find payment by order ID
+      const payment = await Payment.findOne({
+        gatewayPaymentIntentId: razorpayOrderId,
+      }).lean();
+
+      if (payment) {
+        const updateData = {
+          status: "completed",
+          gatewayTransactionId: razorpayPayment.id,
+        };
+
+        // Create enrollment if payment is for a course
+        if (payment.course && !payment.metadata?.enrollmentCreated) {
+          try {
+            const existingEnrollment = await Enrollment.findOne({
+              student: payment.user,
+              course: payment.course,
+            }).lean();
+
+            if (!existingEnrollment) {
+              await Enrollment.create({
+                student: payment.user,
+                course: payment.course,
+                status: "active",
+                enrolledAt: new Date(),
+              });
+              updateData.metadata = {
+                ...payment.metadata,
+                enrollmentCreated: true,
+                enrollmentCreatedAt: new Date(),
+              };
+            }
+          } catch (enrollmentError) {
+            console.error("[Payment] Error creating enrollment:", enrollmentError);
+          }
+        }
+
+        await Payment.findByIdAndUpdate(payment._id, updateData);
+      }
+    } else if (event.event === "payment.failed") {
+      const razorpayPayment = event.payload.payment.entity;
+      const razorpayOrderId = razorpayPayment.order_id;
+
+      const payment = await Payment.findOne({
+        gatewayPaymentIntentId: razorpayOrderId,
+      }).lean();
+
+      if (payment) {
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: "failed",
+          failureReason: razorpayPayment.error_description || "Payment failed",
+          gatewayTransactionId: razorpayPayment.id,
+        });
+      }
+    }
+
+    // Always return 200 to acknowledge webhook receipt
+    return res.status(200).json({ received: true });
+  } catch (error) {
+    console.error("[Payment] Error handling Razorpay webhook:", {
+      error: error.message,
+      stack: error.stack,
+      event: event?.event,
+    });
+    // Still return 200 to prevent Razorpay from retrying excessively
+    // Log the error for manual investigation
+    return res.status(200).json({ 
+      received: true, 
+      error: "Internal error",
+      message: "Webhook received but processing failed. Check server logs.",
+    });
   }
 };
 
