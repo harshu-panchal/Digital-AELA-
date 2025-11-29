@@ -158,7 +158,7 @@ const StudentRegister = () => {
         profile: profilePayload,
         profileImage: formData.profileImage,
       });
-      toast.success("Your student account has been created successfully. Your account is pending approval from the administrator. You will receive an email notification once your account is approved and you can login.");
+      toast.success("Your student account has been created successfully! Please check your email to verify your account. Your account is also pending approval from the administrator. You will receive an email notification once your account is approved and you can login.");
       setFormData(createInitialFormState());
       // Redirect to login page instead of dashboard since account needs approval
       navigate("/login/student", { replace: true });

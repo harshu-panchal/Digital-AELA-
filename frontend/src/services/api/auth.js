@@ -86,3 +86,28 @@ export const resetPassword = async (token, newPassword) => {
   });
 };
 
+// ==================== Email Verification Functions ====================
+
+/**
+ * Verify email with token
+ * GET /api/v1/auth/verify-email?token=xxx
+ */
+export const verifyEmail = async (token) => {
+  return apiRequest(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
+    method: "GET",
+    skipAuth: true,
+  });
+};
+
+/**
+ * Resend verification email
+ * POST /api/v1/auth/resend-verification
+ */
+export const resendVerificationEmail = async (email) => {
+  return apiRequest("/auth/resend-verification", {
+    method: "POST",
+    body: { email },
+    skipAuth: true,
+  });
+};
+

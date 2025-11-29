@@ -350,6 +350,9 @@ const ForgotPassword = lazy(() =>
 const ResetPassword = lazy(() =>
   import("../modules/business-management/login-pages/ResetPassword")
 );
+const VerifyEmail = lazy(() =>
+  import("../modules/business-management/login-pages/VerifyEmail")
+);
 const TeacherRegister = lazy(() =>
   import("../modules/business-management/login-pages/TeacherRegister")
 );
@@ -1289,6 +1292,14 @@ export const App = () => {
           element={
             <Suspense fallback={<LoadingFallback />}>
               <ResetPassword />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/verify-email"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <VerifyEmail />
             </Suspense>
           }
         />

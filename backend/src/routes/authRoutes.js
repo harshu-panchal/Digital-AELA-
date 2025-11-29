@@ -8,6 +8,8 @@ import {
   resetPassword,
   changePassword,
   updateUserProfile,
+  verifyEmail,
+  resendVerificationEmail,
 } from "../controllers/authController.js";
 import { uploadSingle, handleUploadError } from "../middleware/uploadMiddleware.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
@@ -28,6 +30,10 @@ router.post("/register", registrationRateLimiter, uploadSingle("profileImage"), 
 router.post("/login", loginRateLimiter, loginUser);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);
+
+// Email verification endpoints (no authentication required)
+router.get("/verify-email", strictRateLimiter, verifyEmail);
+router.post("/resend-verification", passwordResetRateLimiter, resendVerificationEmail);
 
 // Password reset endpoints (no authentication required)
 router.post("/forgot-password", passwordResetRateLimiter, forgotPassword);

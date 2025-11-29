@@ -220,6 +220,88 @@ export const sendPasswordResetSuccessEmail = async (email, userName) => {
 };
 
 /**
+ * Send email verification email
+ */
+export const sendVerificationEmail = async (email, verificationToken, userName) => {
+  try {
+    const transporter = await createTransporter();
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+    const fromAddress = await getEmailFrom();
+
+    const mailOptions = {
+      from: fromAddress,
+      to: email,
+      subject: "Verify Your Email - Digital AELA",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Verify Your Email</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+            <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Digital AELA!</h1>
+            
+            <p>Hello ${userName || "User"},</p>
+            
+            <p>Thank you for creating an account with Digital AELA. To complete your registration, please verify your email address by clicking the button below:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationUrl}" 
+                 style="background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Verify Email Address
+              </a>
+            </div>
+            
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #3498db;">${verificationUrl}</p>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+              <strong>Important:</strong> This verification link will expire in 24 hours for security reasons.
+            </p>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If you didn't create an account with Digital AELA, please ignore this email.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            
+            <p style="font-size: 12px; color: #999; text-align: center;">
+              © ${new Date().getFullYear()} Digital AELA. All rights reserved.
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Welcome to Digital AELA!
+        
+        Hello ${userName || "User"},
+        
+        Thank you for creating an account with Digital AELA. To complete your registration, please verify your email address by clicking the following link:
+        
+        ${verificationUrl}
+        
+        This verification link will expire in 24 hours for security reasons.
+        
+        If you didn't create an account with Digital AELA, please ignore this email.
+        
+        © ${new Date().getFullYear()} Digital AELA. All rights reserved.
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    throw new Error("Failed to send verification email");
+  }
+};
+
+/**
  * Test email configuration
  */
 export const testEmailConfiguration = async () => {
