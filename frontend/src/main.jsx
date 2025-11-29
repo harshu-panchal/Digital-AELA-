@@ -8,8 +8,41 @@ import { BlogProvider } from "./contexts/BlogContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { FinancialAuthProvider } from "./contexts/FinancialAuthContext";
+import { API_BASE_URL } from "./config/api.js";
 import "./index.css";
 import App from "./App.jsx";
+
+// Diagnostic check for production API configuration
+if (import.meta.env.PROD && typeof window !== "undefined") {
+  const apiUrl = API_BASE_URL;
+  const envUrl = import.meta.env.VITE_API_URL;
+  
+  // Check if API URL is pointing to localhost in production (configuration error)
+  if (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1")) {
+    console.error(
+      "%c🚨 PRODUCTION CONFIGURATION ERROR 🚨",
+      "color: red; font-size: 16px; font-weight: bold;"
+    );
+    console.error(
+      "Translation and API calls will fail because VITE_API_URL is not set correctly.\n" +
+      `Current API URL: ${apiUrl}\n` +
+      `VITE_API_URL from env: ${envUrl || "NOT SET"}\n\n` +
+      "SOLUTION:\n" +
+      "1. Go to your deployment platform (Vercel/Netlify/etc.)\n" +
+      "2. Add environment variable: VITE_API_URL\n" +
+      "3. Set value to: https://your-backend-domain.com/api/v1\n" +
+      "4. Redeploy your application\n\n" +
+      "See TRANSLATION_PRODUCTION_FIX.md for detailed instructions."
+    );
+  } else {
+    // Configuration looks good, log for verification
+    console.log(
+      "%c✅ API Configuration OK",
+      "color: green; font-weight: bold;",
+      `API Base URL: ${apiUrl}`
+    );
+  }
+}
 
 // Suppress harmless console errors (WebSocket, YouTube ads, etc.)
 if (typeof window !== "undefined") {

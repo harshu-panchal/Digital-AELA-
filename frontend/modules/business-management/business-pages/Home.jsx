@@ -117,10 +117,29 @@ const Home = () => {
     }
   };
 
+  // Rate limiting refs
+  const isLoadingCoursesRef = useRef(false);
+  const isLoadingBooksRef = useRef(false);
+  const isLoadingGalleryRef = useRef(false);
+  const lastLoadTimeRef = useRef({ courses: 0, books: 0, gallery: 0 });
+  const MIN_LOAD_INTERVAL = 10000; // 10 seconds minimum between loads
+
   // Fetch premium courses from backend
   useEffect(() => {
     const loadPremiumCourses = async () => {
+      // Prevent duplicate concurrent requests
+      if (isLoadingCoursesRef.current) {
+        return;
+      }
+
+      // Prevent requests too close together
+      const now = Date.now();
+      if (now - lastLoadTimeRef.current.courses < MIN_LOAD_INTERVAL) {
+        return;
+      }
+
       try {
+        isLoadingCoursesRef.current = true;
         setLoadingCourses(true);
         const response = await fetchPublishedCourses({ premium: true });
 
@@ -168,10 +187,15 @@ const Home = () => {
           .slice(0, 6); // Limit to 6 courses for home page
 
         setPremiumCourses(transformedCourses);
+        lastLoadTimeRef.current.courses = Date.now();
       } catch (error) {
-        console.error("Failed to load premium courses:", error);
+        // Suppress 429 rate limit errors
+        if (error?.status !== 429) {
+          console.error("Failed to load premium courses:", error);
+        }
         setPremiumCourses([]);
       } finally {
+        isLoadingCoursesRef.current = false;
         setLoadingCourses(false);
       }
     };
@@ -182,7 +206,19 @@ const Home = () => {
   // Fetch featured books from backend
   useEffect(() => {
     const loadFeaturedBooks = async () => {
+      // Prevent duplicate concurrent requests
+      if (isLoadingBooksRef.current) {
+        return;
+      }
+
+      // Prevent requests too close together
+      const now = Date.now();
+      if (now - lastLoadTimeRef.current.books < MIN_LOAD_INTERVAL) {
+        return;
+      }
+
       try {
+        isLoadingBooksRef.current = true;
         setLoadingBooks(true);
         const response = await fetchEbooks({ featured: true, pageSize: 4 });
 
@@ -222,10 +258,15 @@ const Home = () => {
           });
 
         setFeaturedBooks(transformedBooks);
+        lastLoadTimeRef.current.books = Date.now();
       } catch (error) {
-        console.error("Failed to load featured books:", error);
+        // Suppress 429 rate limit errors
+        if (error?.status !== 429) {
+          console.error("Failed to load featured books:", error);
+        }
         setFeaturedBooks([]);
       } finally {
+        isLoadingBooksRef.current = false;
         setLoadingBooks(false);
       }
     };
@@ -236,7 +277,19 @@ const Home = () => {
   // Fetch gallery images from backend
   useEffect(() => {
     const loadGalleryImages = async () => {
+      // Prevent duplicate concurrent requests
+      if (isLoadingGalleryRef.current) {
+        return;
+      }
+
+      // Prevent requests too close together
+      const now = Date.now();
+      if (now - lastLoadTimeRef.current.gallery < MIN_LOAD_INTERVAL) {
+        return;
+      }
+
       try {
+        isLoadingGalleryRef.current = true;
         setLoadingGallery(true);
         const response = await getGalleryImages();
 
@@ -253,10 +306,15 @@ const Home = () => {
         }));
 
         setGalleryItems(transformedImages);
+        lastLoadTimeRef.current.gallery = Date.now();
       } catch (error) {
-        console.error("Failed to load gallery images:", error);
+        // Suppress 429 rate limit errors
+        if (error?.status !== 429) {
+          console.error("Failed to load gallery images:", error);
+        }
         setGalleryItems([]);
       } finally {
+        isLoadingGalleryRef.current = false;
         setLoadingGallery(false);
       }
     };

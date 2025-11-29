@@ -27,11 +27,13 @@ const getApiBaseUrl = () => {
     return "http://localhost:5000/api/v1";
   }
 
-  // In production, if VITE_API_URL is not set, log a warning
+  // In production, if VITE_API_URL is not set, log a critical error
   if (import.meta.env.PROD) {
     console.error(
-      "[API Config] VITE_API_URL is not set in production! " +
-        "API calls will fail. Please set VITE_API_URL in your deployment platform."
+      "[API Config] ❌ CRITICAL: VITE_API_URL is not set in production!\n" +
+        "Translation and all API calls will fail.\n" +
+        "Please set VITE_API_URL environment variable in your deployment platform (Vercel, Netlify, etc.)\n" +
+        "Example: VITE_API_URL=https://your-backend-domain.com/api/v1"
     );
   }
 

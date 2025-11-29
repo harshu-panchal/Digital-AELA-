@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
@@ -81,21 +81,43 @@ const Navbar = () => {
     loadContactInfo();
   }, []);
 
-  // Load unread notification count
+  // Load unread notification count with rate limiting
+  const isLoadingUnreadCountRef = useRef(false);
+  const lastUnreadCountLoadTimeRef = useRef(0);
+  const MIN_UNREAD_COUNT_INTERVAL = 60000; // Minimum 60 seconds between loads
+
   useEffect(() => {
     if (user?.id) {
       const loadCount = async () => {
+        // Prevent duplicate concurrent requests
+        if (isLoadingUnreadCountRef.current) {
+          return;
+        }
+
+        // Prevent requests too close together (rate limiting protection)
+        const now = Date.now();
+        if (now - lastUnreadCountLoadTimeRef.current < MIN_UNREAD_COUNT_INTERVAL) {
+          return;
+        }
+
         try {
+          isLoadingUnreadCountRef.current = true;
           const response = await fetchUnreadCount();
           setUnreadNotificationCount(response.unreadCount || 0);
+          lastUnreadCountLoadTimeRef.current = Date.now();
         } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error("Failed to load unread count:", error);
+          // Suppress 429 rate limit errors - they're expected
+          if (error?.status !== 429) {
+            // eslint-disable-next-line no-console
+            console.error("Failed to load unread count:", error);
+          }
+        } finally {
+          isLoadingUnreadCountRef.current = false;
         }
       };
       loadCount();
-      // Refresh every 30 seconds
-      const interval = setInterval(loadCount, 30000);
+      // Refresh every 120 seconds (2 minutes) instead of 30 seconds
+      const interval = setInterval(loadCount, 120000);
       return () => clearInterval(interval);
     }
   }, [user?.id]);
