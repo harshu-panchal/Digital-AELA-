@@ -195,12 +195,34 @@ export const getCachedTranslation = async (text, targetLang, sourceLang = "en") 
   if (db) {
     const cached = await getFromIndexedDB(key);
     if (cached) {
+      // CRITICAL: If cached value equals original, it's a bug - don't return it
+      if (cached === text) {
+        // Delete the bad cache entry
+        await deleteFromIndexedDB(key);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(`translation_${key}`);
+        }
+        return null;
+      }
       return cached;
     }
   }
 
   // Fallback to localStorage
-  return getFromLocalStorage(key);
+  const cached = getFromLocalStorage(key);
+  if (cached) {
+    // CRITICAL: If cached value equals original, it's a bug - don't return it
+    if (cached === text) {
+      // Delete the bad cache entry
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`translation_${key}`);
+      }
+      return null;
+    }
+    return cached;
+  }
+
+  return null;
 };
 
 /**
@@ -220,6 +242,11 @@ export const cacheTranslation = async (
   ttl = 24 * 60 * 60 * 1000
 ) => {
   if (!text || !translation) {
+    return false;
+  }
+
+  // CRITICAL: Never cache if translation equals original text
+  if (translation === text) {
     return false;
   }
 

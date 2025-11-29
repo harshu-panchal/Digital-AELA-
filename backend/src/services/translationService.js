@@ -148,23 +148,16 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
         }
 
         const data = await response.json();
+        const translatedText = data.data?.translations?.[0]?.translatedText;
         
-        // Log full response for debugging
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Google Cloud Translate API response:", {
-            hasData: !!data?.data,
-            hasTranslations: !!data?.data?.translations,
-            translationCount: data?.data?.translations?.length,
-            firstTranslation: data?.data?.translations?.[0]?.translatedText?.substring(0, 50),
-            originalText: text.substring(0, 50),
-            responseKeys: data ? Object.keys(data) : [],
-            dataKeys: data?.data ? Object.keys(data.data) : [],
-          });
+        // CRITICAL: If API didn't return a translation or returned original text, throw error
+        if (!translatedText) {
+          throw new Error("Google Cloud Translate API did not return a translation");
         }
         
-        translation = data.data?.translations?.[0]?.translatedText || text;
+        translation = translatedText;
         
-        // CRITICAL: If translation equals original and languages are different, log error
+        // CRITICAL: If translation equals original and languages are different, throw error
         if (translation === text && normalizedSourceLang !== normalizedTargetLang) {
           console.error("[Translation] ❌ CRITICAL: Google Cloud Translate returned original text!", {
             original: text.substring(0, 100),
@@ -174,36 +167,41 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
             apiResponse: JSON.stringify(data, null, 2).substring(0, 500),
             hint: "Google Cloud Translate API may not be configured correctly or API key may be invalid",
           });
+          throw new Error("Google Cloud Translate API returned original text instead of translation. Check API configuration and billing.");
         }
       } else {
         // Use client library (for service account authentication)
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Using Google Cloud Translate client library:", {
-            sourceLang: normalizedSourceLang,
-            targetLang: normalizedTargetLang,
-            textLength: text.length,
-          });
-        }
-        
-        [translation] = await translate.translate(text, {
+        const [translatedText] = await translate.translate(text, {
           from: normalizedSourceLang,
           to: normalizedTargetLang,
         });
         
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Client library translation received:", {
-            original: text.substring(0, 50),
-            translated: translation?.substring(0, 50),
-            isSameAsOriginal: translation === text,
+        if (!translatedText) {
+          throw new Error("Google Cloud Translate client library did not return a translation");
+        }
+        
+        translation = translatedText;
+        
+        // CRITICAL: If translation equals original and languages are different, throw error
+        if (translation === text && normalizedSourceLang !== normalizedTargetLang) {
+          console.error("[Translation] ❌ CRITICAL: Google Cloud Translate client library returned original text!", {
+            original: text.substring(0, 100),
+            translation: translation.substring(0, 100),
+            sourceLang: normalizedSourceLang,
+            targetLang: normalizedTargetLang,
+            hint: "Google Cloud Translate API may not be configured correctly or service account may not have proper permissions",
           });
+          throw new Error("Google Cloud Translate client library returned original text instead of translation. Check API configuration and service account permissions.");
         }
       }
 
-      // Cache the result
-      translationCache.set(cacheKey, {
-        translation,
-        expiresAt: Date.now() + CACHE_TTL,
-      });
+      // CRITICAL: Only cache if translation is different from original
+      if (translation !== text) {
+        translationCache.set(cacheKey, {
+          translation,
+          expiresAt: Date.now() + CACHE_TTL,
+        });
+      }
 
       return translation;
     } catch (error) {
@@ -384,24 +382,16 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
         }
 
         const data = await response.json();
+        const translationsFromAPI = data.data?.translations;
         
-        // Log full response for debugging
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Google Cloud Translate Batch API response:", {
-            hasData: !!data?.data,
-            hasTranslations: !!data?.data?.translations,
-            translationCount: data?.data?.translations?.length,
-            expectedCount: uncachedTexts.length,
-            responseKeys: data ? Object.keys(data) : [],
-            dataKeys: data?.data ? Object.keys(data.data) : [],
-          });
+        // CRITICAL: If API didn't return translations, throw error
+        if (!translationsFromAPI || translationsFromAPI.length === 0) {
+          throw new Error("Google Cloud Translate Batch API did not return translations");
         }
         
-        translatedArray =
-          data.data?.translations?.map((t) => t.translatedText) ||
-          uncachedTexts;
+        translatedArray = translationsFromAPI.map((t) => t.translatedText);
         
-        // CRITICAL: Check if all translations equal originals
+        // CRITICAL: Check if all translations equal originals - throw error if so
         const allSame = translatedArray.every((trans, idx) => trans === uncachedTexts[idx]);
         if (allSame && normalizedSourceLang !== normalizedTargetLang) {
           console.error("[Translation] ❌ CRITICAL: Google Cloud Translate Batch API returned all original texts!", {
@@ -413,34 +403,41 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
             apiResponse: JSON.stringify(data, null, 2).substring(0, 500),
             hint: "Google Cloud Translate API may not be configured correctly or API key may be invalid",
           });
+          throw new Error("Google Cloud Translate Batch API returned original texts instead of translations. Check API configuration and billing.");
         }
       } else {
         // Use client library (for service account authentication)
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Using Google Cloud Translate client library (batch):", {
-            sourceLang: normalizedSourceLang,
-            targetLang: normalizedTargetLang,
-            textCount: uncachedTexts.length,
-          });
-        }
-        
         const [translations] = await translate.translate(uncachedTexts, {
           from: normalizedSourceLang,
           to: normalizedTargetLang,
         });
+        
         // Google Cloud Translate returns an array or a single string
         translatedArray = Array.isArray(translations)
           ? translations
           : [translations];
         
-        if (process.env.NODE_ENV === "production") {
-          console.log("[Translation] Client library batch translation received:", {
-            translationCount: translatedArray.length,
-            expectedCount: uncachedTexts.length,
-            sampleOriginal: uncachedTexts[0]?.substring(0, 50),
-            sampleTranslation: translatedArray[0]?.substring(0, 50),
-            isSameAsOriginal: translatedArray[0] === uncachedTexts[0],
+        // CRITICAL: If API didn't return translations, throw error
+        if (!translatedArray || translatedArray.length === 0) {
+          throw new Error("Google Cloud Translate client library did not return translations");
+        }
+        
+        if (translatedArray.length !== uncachedTexts.length) {
+          throw new Error(`Google Cloud Translate returned ${translatedArray.length} translations but expected ${uncachedTexts.length}`);
+        }
+        
+        // CRITICAL: Check if all translations equal originals - throw error if so
+        const allSame = translatedArray.every((trans, idx) => trans === uncachedTexts[idx]);
+        if (allSame && normalizedSourceLang !== normalizedTargetLang) {
+          console.error("[Translation] ❌ CRITICAL: Google Cloud Translate client library returned all original texts!", {
+            textCount: uncachedTexts.length,
+            sourceLang: normalizedSourceLang,
+            targetLang: normalizedTargetLang,
+            sampleOriginal: uncachedTexts[0]?.substring(0, 100),
+            sampleTranslation: translatedArray[0]?.substring(0, 100),
+            hint: "Google Cloud Translate API may not be configured correctly or service account may not have proper permissions",
           });
+          throw new Error("Google Cloud Translate client library returned original texts instead of translations. Check API configuration and service account permissions.");
         }
       }
 
@@ -452,16 +449,18 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
 
         results[resultIndex] = translation;
 
-        // Cache the result
-        const cacheKey = getCacheKey(
-          originalText,
-          normalizedTargetLang,
-          normalizedSourceLang
-        );
-        translationCache.set(cacheKey, {
-          translation,
-          expiresAt: Date.now() + CACHE_TTL,
-        });
+        // CRITICAL: Only cache if translation is different from original
+        if (translation !== originalText) {
+          const cacheKey = getCacheKey(
+            originalText,
+            normalizedTargetLang,
+            normalizedSourceLang
+          );
+          translationCache.set(cacheKey, {
+            translation,
+            expiresAt: Date.now() + CACHE_TTL,
+          });
+        }
       }
 
       return results;
