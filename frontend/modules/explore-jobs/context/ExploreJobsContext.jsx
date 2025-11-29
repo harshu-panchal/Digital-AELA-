@@ -28,7 +28,7 @@ export const ExploreJobsProvider = ({ children }) => {
   const [appliedPostIds, setAppliedPostIds] = useState(() => new Set());
   const [savedPostIds, setSavedPostIds] = useState(() => new Set());
   const [composerState, setComposerState] = useState({ mode: null, post: null });
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilters, setSearchFilters] = useState({
     location: "",

@@ -1,7 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  HiOutlineBell,
   HiOutlineAdjustmentsHorizontal,
 } from "react-icons/hi2";
 import { useExploreJobs } from "../context/ExploreJobsContext";
@@ -42,14 +41,6 @@ const ExploreJobsTopbar = ({ onFilterToggle }) => {
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-white/20 hover:text-white">
               <HiOutlineAdjustmentsHorizontal className="h-5 w-5" />
               <TranslatedText>Filters</TranslatedText>
-            </button>
-            <button
-              type="button"
-              className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-black/70 text-gray-200 transition hover:border-white/20 hover:text-white">
-              <HiOutlineBell className="h-5 w-5" />
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black">
-                3
-              </span>
             </button>
           </div>
         </div>

@@ -160,34 +160,34 @@ const PostCard = ({
           ))}
         </div>
 
-        <div className="flex-shrink-0 mt-auto flex items-center justify-between border-t border-white/5 pt-4">
-          <div className="flex items-center gap-4 text-xs text-gray-400">
+        <div className="flex-shrink-0 mt-auto flex items-center justify-between gap-3 border-t border-white/5 pt-3">
+          <div className="flex items-center gap-3 text-[10px] text-gray-500">
             <span className="inline-flex items-center gap-1">
-              <HiOutlineHeart className="h-4 w-4" />
-              {post.stats?.likes ?? 0}
+              <HiOutlineHeart className="h-3.5 w-3.5" />
+              <span className="font-medium">{post.stats?.likes ?? 0}</span>
             </span>
             <span className="inline-flex items-center gap-1">
-              <HiOutlineChatBubbleOvalLeft className="h-4 w-4" />
-              {post.stats?.comments ?? 0}
+              <HiOutlineChatBubbleOvalLeft className="h-3.5 w-3.5" />
+              <span className="font-medium">{post.stats?.comments ?? 0}</span>
             </span>
             <span className="inline-flex items-center gap-1">
-              <HiOutlineEye className="h-4 w-4" />
-              {post.stats?.views ?? 0}
+              <HiOutlineEye className="h-3.5 w-3.5" />
+              <span className="font-medium">{post.stats?.views ?? 0}</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {isJob && (
               <button
                 type="button"
                 onClick={() => onApply?.(post.id)}
                 disabled={hasApplied}
-                className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold transition ${
+                className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-semibold transition ${
                   hasApplied
                     ? "cursor-not-allowed border border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
                     : "border border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                 }`}>
-                <HiOutlineSparkles className="h-4 w-4" />
+                <HiOutlineSparkles className="h-3.5 w-3.5" />
                 {hasApplied ? <TranslatedText>Applied</TranslatedText> : <TranslatedText>Apply</TranslatedText>}
               </button>
             )}
@@ -195,19 +195,19 @@ const PostCard = ({
             <button
               type="button"
               onClick={() => onSave?.(post.id)}
-              className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
+              className={`flex h-8 w-8 items-center justify-center rounded-xl border transition ${
                 isSaved
                   ? "border-white/40 bg-white/20 text-white"
                   : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
               }`}>
-              <HiOutlineBookmark className="h-5 w-5" />
+              <HiOutlineBookmark className="h-4 w-4" />
             </button>
 
             <button
               type="button"
               onClick={() => onOpen?.(post)}
-              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white transition hover:border-white/30 hover:bg-white/10">
-              <HiOutlineArrowRight className="h-5 w-5" />
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-white/30 hover:bg-white/10">
+              <HiOutlineArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>

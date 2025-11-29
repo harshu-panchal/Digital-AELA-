@@ -38,7 +38,7 @@ const PostGrid = ({
         <div className="flex gap-6 min-w-max">
           <AnimatePresence>
             {posts.map((post) => (
-              <div key={post.id} className="w-[320px] shrink-0">
+              <div key={post.id} className="w-[330px] shrink-0">
                 <PostCard
                   post={post}
                   onOpen={onOpen}

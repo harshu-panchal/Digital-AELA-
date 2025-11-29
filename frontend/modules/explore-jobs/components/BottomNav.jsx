@@ -6,6 +6,7 @@ import {
   HiOutlineSparkles,
   HiOutlinePlusCircle,
 } from "react-icons/hi2";
+import { useAuth } from "../../../src/contexts/AuthContext";
 import TranslatedText from "../../../src/components/TranslatedText";
 
 const bottomItems = [
@@ -24,15 +25,21 @@ const bottomItems = [
 
 const ExploreJobsBottomNav = ({ onCreatePost }) => {
   const location = useLocation();
+  const { user } = useAuth();
+  const isRecruiter = user?.role === "recruiter";
   const isRecruiterDashboard = location.pathname.includes(
     "/recruiter/"
   );
 
   return (
     <nav className="fixed inset-x-0 bottom-4 z-50 flex justify-center lg:hidden">
-      <div className="flex w-[94%] max-w-xl items-center justify-between rounded-3xl border border-white/10 bg-black/80 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-md sm:px-6">
+      <div className="flex w-[94%] max-w-xl items-center justify-between gap-4 rounded-3xl border border-white/10 bg-black/80 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-md sm:px-6">
         {bottomItems
           .filter((item) => {
+            // Hide "Recruit" button if user is not a recruiter
+            if (item.to.includes("/recruiter/dashboard") && !isRecruiter) {
+              return false;
+            }
             // Hide "Seeker Dashboard" (Apply) when on recruiter dashboard
             if (isRecruiterDashboard && item.to.includes("seeker-dashboard")) {
               return false;

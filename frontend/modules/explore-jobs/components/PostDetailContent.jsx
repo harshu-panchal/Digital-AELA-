@@ -8,8 +8,6 @@ import {
   HiOutlineLink,
   HiOutlineCheckCircle,
   HiOutlineArrowUpRight,
-  HiOutlineDocumentText,
-  HiOutlinePhoneArrowUpRight,
 } from "react-icons/hi2";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../../../src/contexts/AuthContext";
@@ -144,18 +142,6 @@ const PostDetailContent = ({ post, onApply, hasApplied }) => {
             <TranslatedText>Refer Candidate</TranslatedText>
           </button>
         )}
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/70 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30">
-          <HiOutlineDocumentText className="h-5 w-5" />
-          {isJob ? <TranslatedText>Save Role</TranslatedText> : <TranslatedText>Download Resume</TranslatedText>}
-        </button>
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/70 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30">
-          <HiOutlinePhoneArrowUpRight className="h-5 w-5" />
-          {isJob ? <TranslatedText>Message Recruiter</TranslatedText> : <TranslatedText>Invite to Interview</TranslatedText>}
-        </button>
         <a
           href={post.resumeUrl ?? "#"}
           target="_blank"

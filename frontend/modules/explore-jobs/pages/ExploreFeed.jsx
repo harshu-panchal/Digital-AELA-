@@ -8,7 +8,7 @@ import TranslatedText from "../../../src/components/TranslatedText";
 const ExploreFeed = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recruiterJobPosts, toggleSavePost, savedPostIds, appliedPostIds, applyToJob, isSearching, searchQuery, searchResults, clearSearch } =
+  const { recruiterJobPosts, toggleSavePost, savedPostIds, appliedPostIds, applyToJob, isSearching, searchQuery, searchResults, clearSearch, isLoadingJobs } =
     useExploreJobs();
 
   const sortedPosts = useMemo(
@@ -66,6 +66,14 @@ const ExploreFeed = () => {
             <div className="text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
               <p className="mt-4 text-sm text-gray-400"><TranslatedText>Searching jobs...</TranslatedText></p>
+            </div>
+          </div>
+        ) : isLoadingJobs && !searchQuery && !searchResults ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
+              <p className="mt-6 text-base font-medium text-white"><TranslatedText>Loading job opportunities...</TranslatedText></p>
+              <p className="mt-2 text-sm text-gray-400"><TranslatedText>Please wait while we fetch the latest jobs</TranslatedText></p>
             </div>
           </div>
         ) : (
