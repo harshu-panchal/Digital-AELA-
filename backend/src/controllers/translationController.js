@@ -35,8 +35,15 @@ export const translateSingle = async (req, res) => {
 
     // Check if translation equals original (indicates failure)
     if (translation === text && targetLang !== sourceLang) {
-      console.warn(
-        "[Translation Controller] Translation equals original - translation may have failed silently"
+      console.error(
+        "[Translation Controller] ❌ CRITICAL: Translation equals original - translation may have failed silently",
+        {
+          text: text.substring(0, 100),
+          translation: translation.substring(0, 100),
+          targetLang,
+          sourceLang,
+          hint: "Google Cloud Translate API may not be working correctly. Check backend logs for API errors.",
+        }
       );
     }
 
@@ -119,8 +126,16 @@ export const translateBatchController = async (req, res) => {
     // Check if all translations equal originals (indicates failure)
     const allSame = translations.every((trans, idx) => trans === texts[idx]);
     if (allSame && targetLang !== sourceLang) {
-      console.warn(
-        "[Translation Controller] All translations equal originals - translation may have failed silently"
+      console.error(
+        "[Translation Controller] ❌ CRITICAL: All translations equal originals - translation may have failed silently",
+        {
+          textCount: texts.length,
+          targetLang,
+          sourceLang,
+          sampleOriginal: texts[0]?.substring(0, 100),
+          sampleTranslation: translations[0]?.substring(0, 100),
+          hint: "Google Cloud Translate API may not be working correctly. Check backend logs for API errors.",
+        }
       );
     }
 
