@@ -1387,10 +1387,11 @@ export const uploadAdminCourseBrochure = async (req, res, next) => {
       });
     }
 
-    // Upload PDF to Cloudinary
+    // Save PDF to local storage
     const uploadResult = await uploadPdfToCloudinary(
       req.file.buffer,
-      `digital-aela/courses/${courseId}/brochures`
+      `digital-aela/courses/${courseId}/brochures`,
+      req.file.originalname
     );
 
     // Update course with brochure URL
@@ -1473,10 +1474,11 @@ export const createEbook = async (req, res, next) => {
     // Handle PDF file upload if provided
     let finalDownloadUrl = downloadUrl;
     if (req.file) {
-      // Upload PDF to Cloudinary
+      // Save PDF to local storage
       const uploadResult = await uploadPdfToCloudinary(
         req.file.buffer,
-        `digital-aela/ebooks/admin/${userId}`
+        `digital-aela/ebooks/admin/${userId}`,
+        req.file.originalname
       );
       finalDownloadUrl = uploadResult.url;
     } else if (downloadUrl) {

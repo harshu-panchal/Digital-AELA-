@@ -276,7 +276,7 @@ const StudentProfile = () => {
 
     setUploadingAvatar(true);
     try {
-      // Upload to Cloudinary
+      // Upload image
       const newAvatarUrl = await uploadProfileImage(file);
 
       // Update StudentProfile (backend will also update User.metadata.avatarUrl)

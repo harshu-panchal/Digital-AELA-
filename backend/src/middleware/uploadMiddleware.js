@@ -1,8 +1,7 @@
 import multer from "multer";
-import cloudinary from "../config/cloudinary.js";
-import { Readable } from "stream";
+import { saveImageToLocal, savePdfToLocal } from "../services/fileStorageService.js";
 
-// Memory storage for multer (we'll upload to Cloudinary manually)
+// Memory storage for multer (we'll save to local storage manually)
 const storage = multer.memoryStorage();
 
 // File filter for images
@@ -40,62 +39,9 @@ export const upload = multer({
   },
 });
 
-// Helper function to upload file to Cloudinary
-export const uploadToCloudinary = (buffer, folder = "digital-aela") => {
-  return new Promise((resolve, reject) => {
-    // Validate buffer
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      return reject(new Error("Invalid buffer provided"));
-    }
-
-    if (buffer.length === 0) {
-      return reject(new Error("Buffer is empty"));
-    }
-
-    try {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: folder,
-          allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
-          resource_type: "auto",
-          public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-        },
-        (error, result) => {
-          if (error) {
-            // eslint-disable-next-line no-console
-            console.error("Cloudinary upload error:", error);
-            return reject(error);
-          }
-          if (!result) {
-            return reject(new Error("No result from Cloudinary"));
-          }
-          resolve({
-            public_id: result.public_id,
-            url: result.secure_url || result.url,
-            format: result.format,
-            width: result.width,
-            height: result.height,
-            bytes: result.bytes,
-          });
-        }
-      );
-
-      // Convert buffer to stream and upload
-      const readableStream = Readable.from(buffer);
-      readableStream.pipe(uploadStream);
-      
-      // Handle stream errors
-      readableStream.on('error', (error) => {
-        // eslint-disable-next-line no-console
-        console.error("Stream error:", error);
-        reject(error);
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Upload setup error:", error);
-      reject(error);
-    }
-  });
+// Helper function to save image to local storage
+export const uploadToCloudinary = async (buffer, folder = "digital-aela", originalName = null) => {
+  return await saveImageToLocal(buffer, folder, originalName);
 };
 
 // Configure multer for PDF uploads
@@ -107,33 +53,9 @@ export const pdfUpload = multer({
   },
 });
 
-// Helper function to upload PDF to Cloudinary
-export const uploadPdfToCloudinary = (buffer, folder = "digital-aela/course-brochures") => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: "raw",
-        allowed_formats: ["pdf"],
-        public_id: `brochure-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve({
-          public_id: result.public_id,
-          url: result.secure_url,
-          format: result.format,
-          bytes: result.bytes,
-        });
-      }
-    );
-
-    // Convert buffer to stream and upload
-    const readableStream = Readable.from(buffer);
-    readableStream.pipe(uploadStream);
-  });
+// Helper function to save PDF to local storage
+export const uploadPdfToCloudinary = async (buffer, folder = "digital-aela/course-brochures", originalName = null) => {
+  return await savePdfToLocal(buffer, folder, originalName);
 };
 
 // Single PDF upload middleware

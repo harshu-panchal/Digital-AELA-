@@ -89,24 +89,25 @@ export const createTeacherEbook = async (req, res, next) => {
         size: req.file.size,
         userId: userId,
       });
-      // Upload PDF to Cloudinary
+      // Save PDF to local storage
       try {
         const uploadResult = await uploadPdfToCloudinary(
           req.file.buffer,
-          `digital-aela/ebooks/${userId}`
+          `digital-aela/ebooks/${userId}`,
+          req.file.originalname
         );
         finalDownloadUrl = uploadResult.url;
-        console.log("✅ PDF uploaded to Cloudinary successfully:", {
+        console.log("✅ PDF saved to local storage successfully:", {
           url: uploadResult.url,
-          public_id: uploadResult.public_id,
+          filePath: uploadResult.filePath,
           size: uploadResult.bytes,
         });
       } catch (uploadError) {
-        console.error("❌ Failed to upload PDF to Cloudinary:", uploadError);
+        console.error("❌ Failed to save PDF to local storage:", uploadError);
         return res.status(500).json({
           error: {
             code: "UPLOAD_ERROR",
-            message: "Failed to upload PDF to Cloudinary. Please try again.",
+            message: "Failed to save PDF. Please try again.",
           },
         });
       }

@@ -2,49 +2,25 @@ import mongoose from "mongoose";
 import JoinUsApplication from "../models/JoinUsApplication.js";
 import { uploadToCloudinary, uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
 import { uploadVideoToCloudinary } from "../middleware/videoUploadMiddleware.js";
-import cloudinary from "../config/cloudinary.js";
-import { Readable } from "stream";
 
 /**
- * Helper function to upload file to Cloudinary based on file type
+ * Helper function to save file to local storage based on file type
  */
 const uploadFileToCloudinary = async (file, folder) => {
   const { buffer, mimetype, originalname, size } = file;
 
-  // Determine file type and upload accordingly
+  // Determine file type and save accordingly
   if (mimetype.startsWith("image/")) {
-    // Upload as image
-    return await uploadToCloudinary(buffer, folder);
+    // Save as image
+    return await uploadToCloudinary(buffer, folder, originalname);
   } else if (mimetype === "application/pdf" || 
              mimetype === "application/msword" || 
              mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-    // Upload as raw document (PDF, DOC, DOCX)
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: folder,
-          resource_type: "raw",
-          public_id: `doc-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-        },
-        (error, result) => {
-          if (error) {
-            return reject(error);
-          }
-          resolve({
-            public_id: result.public_id,
-            url: result.secure_url,
-            format: result.format || mimetype.split("/")[1],
-            bytes: result.bytes || size,
-          });
-        }
-      );
-
-      const readableStream = Readable.from(buffer);
-      readableStream.pipe(uploadStream);
-    });
+    // Save as PDF/document
+    return await uploadPdfToCloudinary(buffer, folder, originalname);
   } else if (mimetype.startsWith("video/")) {
-    // Upload as video
-    return await uploadVideoToCloudinary(buffer, folder);
+    // Save as video
+    return await uploadVideoToCloudinary(buffer, folder, originalname);
   } else {
     throw new Error(`Unsupported file type: ${mimetype}`);
   }

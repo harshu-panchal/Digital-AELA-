@@ -108,7 +108,7 @@ const AdminBookCreate = () => {
         };
         reader.readAsDataURL(file);
         
-        // Upload to Cloudinary
+        // Upload image
         setIsUploadingImage(true);
         uploadImageToCloudinary(file, "digital-aela/books/covers")
           .then((url) => {

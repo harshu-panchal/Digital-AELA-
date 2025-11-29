@@ -107,6 +107,40 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
+// Serve static files from data folder
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = path.resolve(__dirname, "..");
+const dataDir = path.resolve(rootDir, "../data");
+
+app.use("/static", express.static(dataDir, {
+  setHeaders: (res, filePath) => {
+    // Set appropriate content type based on file extension
+    const ext = path.extname(filePath).toLowerCase();
+    const contentTypes = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".mp4": "video/mp4",
+      ".mov": "video/quicktime",
+      ".avi": "video/x-msvideo",
+      ".webm": "video/webm",
+      ".pdf": "application/pdf",
+    };
+    if (contentTypes[ext]) {
+      res.setHeader("Content-Type", contentTypes[ext]);
+    }
+    // Enable CORS for static files
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  },
+}));
+
 app.get("/", (_req, res) => {
   res.json({
     message: "Digital AELA Backend API",

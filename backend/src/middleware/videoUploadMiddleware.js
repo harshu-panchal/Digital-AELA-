@@ -1,6 +1,5 @@
 import multer from "multer";
-import cloudinary from "../config/cloudinary.js";
-import { Readable } from "stream";
+import { saveVideoToLocal } from "../services/fileStorageService.js";
 
 // Memory storage for multer
 const storage = multer.memoryStorage();
@@ -36,39 +35,13 @@ export const videoUpload = multer({
   },
 });
 
-// Helper function to upload video to Cloudinary
-export const uploadVideoToCloudinary = (
+// Helper function to save video to local storage
+export const uploadVideoToCloudinary = async (
   buffer,
-  folder = "digital-aela/course-videos"
+  folder = "digital-aela/course-videos",
+  originalName = null
 ) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: "video",
-        allowed_formats: ["mp4", "mov", "avi", "webm"],
-        public_id: `video-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-        chunk_size: 6000000, // 6MB chunks for large files
-      },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve({
-          public_id: result.public_id,
-          url: result.secure_url,
-          duration: result.duration, // Video duration in seconds
-          format: result.format,
-          width: result.width,
-          height: result.height,
-          bytes: result.bytes,
-        });
-      }
-    );
-
-    const readableStream = Readable.from(buffer);
-    readableStream.pipe(uploadStream);
-  });
+  return await saveVideoToLocal(buffer, folder, originalName);
 };
 
 // Single video upload middleware

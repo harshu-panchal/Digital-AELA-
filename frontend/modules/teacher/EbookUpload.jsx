@@ -83,7 +83,7 @@ const EbookUpload = () => {
       };
       reader.readAsDataURL(file);
       
-      // Upload to Cloudinary
+      // Upload image
       setIsUploadingImage(true);
       uploadImageToCloudinary(file, "digital-aela/books/covers")
         .then((url) => {
@@ -456,7 +456,7 @@ const EbookUpload = () => {
                 <header>
                   <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
                   <p className="text-xs text-slate-400">
-                    Upload the final PDF file. It will be automatically uploaded to Cloudinary when you submit the form.
+                    Upload the final PDF file. It will be automatically saved when you submit the form.
                   </p>
                 </header>
 
@@ -482,7 +482,7 @@ const EbookUpload = () => {
                 </label>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                  The PDF will be uploaded to Cloudinary when you submit the form. Maximum file size: 10MB.
+                  The PDF will be saved when you submit the form. Maximum file size: 10MB.
                 </div>
               </section>
             )}

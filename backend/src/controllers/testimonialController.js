@@ -170,7 +170,8 @@ export const createTestimonial = async (req, res, next) => {
       try {
         const uploadResult = await uploadToCloudinary(
           req.file.buffer,
-          "digital-aela/testimonials"
+          "digital-aela/testimonials",
+          req.file.originalname
         );
         avatarUrl = uploadResult.url;
       } catch (uploadError) {
@@ -273,7 +274,8 @@ export const updateTestimonial = async (req, res, next) => {
       try {
         const uploadResult = await uploadToCloudinary(
           req.file.buffer,
-          "digital-aela/testimonials"
+          "digital-aela/testimonials",
+          req.file.originalname
         );
         testimonial.avatar = uploadResult.url;
       } catch (uploadError) {

@@ -2444,13 +2444,21 @@ const Home = () => {
       </motion.section>
 
       {/* Why Choose Digital AELA Section */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="py-20 bg-[#141414]">
+      <style>{`
+        @media (max-width: 767px) {
+          .why-choose-section-content {
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+      <section className="py-20 bg-[#141414]">
         <div className="layout-container">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="why-choose-section-content">
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
@@ -2498,23 +2506,34 @@ const Home = () => {
               </motion.div>
             ))}
           </div>
+          </motion.div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Watch Our Stories Section */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="py-12 bg-black">
+      <style>{`
+        @media (max-width: 767px) {
+          .watch-stories-section-content,
+          .watch-stories-section-content * {
+            opacity: 1 !important;
+          }
+        }
+      `}</style>
+      <section className="py-12 bg-black">
         <div className="layout-container">
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="text-center mb-12">
+          <div className="watch-stories-section-content">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="md:opacity-100">
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="text-center mb-12 md:opacity-100">
             <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
               <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
             </p>
@@ -2569,8 +2588,10 @@ const Home = () => {
               </motion.article>
             ))}
           </div>
+            </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
 
       {topBlogs.length > 0 && (
         <motion.section

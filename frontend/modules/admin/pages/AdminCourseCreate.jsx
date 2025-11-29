@@ -104,7 +104,7 @@ const AdminCourseCreate = () => {
           };
           reader.readAsDataURL(file);
           
-          // Upload to Cloudinary
+          // Upload image
           setIsUploadingImage(true);
           uploadImageToCloudinary(file, "digital-aela/courses/covers")
             .then((url) => {

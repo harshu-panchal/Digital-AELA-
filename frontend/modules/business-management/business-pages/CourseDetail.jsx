@@ -424,7 +424,7 @@ const CourseDetail = () => {
     }
     
     try {
-      // Fetch the PDF file from Cloudinary
+      // Fetch the PDF file
       const response = await fetch(brochureUrl);
       if (!response.ok) {
         throw new Error("Failed to fetch brochure");

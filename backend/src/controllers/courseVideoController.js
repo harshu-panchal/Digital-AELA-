@@ -65,10 +65,11 @@ export const uploadCourseVideo = async (req, res, next) => {
 
     const { title, description, order, isPreview } = req.body;
 
-    // Upload video to Cloudinary
+    // Save video to local storage
     const uploadResult = await uploadVideoToCloudinary(
       req.file.buffer,
-      `digital-aela/courses/${courseId}/videos`
+      `digital-aela/courses/${courseId}/videos`,
+      req.file.originalname
     );
 
     // Create video record
@@ -77,12 +78,13 @@ export const uploadCourseVideo = async (req, res, next) => {
       title: title || `Video ${Date.now()}`,
       description: description || "",
       videoUrl: uploadResult.url,
-      thumbnailUrl: uploadResult.url.replace(/\.(mp4|mov|avi|webm)$/i, ".jpg"), // Cloudinary auto-generates thumbnails
+      thumbnailUrl: null, // Thumbnail generation would require additional processing
       duration: Math.round(uploadResult.duration || 0),
       order: order ? Number(order) : 0,
       isPreview: isPreview === "true" || isPreview === true,
       metadata: {
-        publicId: uploadResult.public_id,
+        filePath: uploadResult.filePath,
+        publicId: uploadResult.public_id, // Keep for backward compatibility
         format: uploadResult.format,
         size: uploadResult.bytes,
       },
@@ -437,8 +439,8 @@ export const deleteVideo = async (req, res, next) => {
       });
     }
 
-    // TODO: Delete from Cloudinary if needed
-    // await cloudinary.uploader.destroy(video.metadata.publicId, { resource_type: "video" });
+    // TODO: Delete from local storage if needed
+    // await deleteFileFromLocal(video.metadata.filePath || video.videoUrl);
 
     // Delete associated progress records
     await VideoProgress.deleteMany({ video: videoId });

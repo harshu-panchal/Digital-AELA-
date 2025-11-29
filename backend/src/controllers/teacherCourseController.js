@@ -703,10 +703,11 @@ export const uploadCourseBrochure = async (req, res, next) => {
       });
     }
 
-    // Upload PDF to Cloudinary
+    // Save PDF to local storage
     const uploadResult = await uploadPdfToCloudinary(
       req.file.buffer,
-      `digital-aela/courses/${courseId}/brochures`
+      `digital-aela/courses/${courseId}/brochures`,
+      req.file.originalname
     );
 
     // Update course with brochure URL

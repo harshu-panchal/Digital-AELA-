@@ -19,13 +19,6 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
-      # Required - Cloudinary (for file uploads)
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
       # Required - Email configuration
       - key: EMAIL_SERVICE
         sync: false

@@ -1,6 +1,6 @@
 import Gallery from "../models/Gallery.js";
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
-import cloudinary from "../config/cloudinary.js";
+import { deleteFileFromLocal } from "../services/fileStorageService.js";
 
 /**
  * Get all active gallery images (public endpoint)
@@ -109,10 +109,11 @@ export const uploadGalleryImage = async (req, res, next) => {
       });
     }
 
-    // Upload to Cloudinary
+    // Save to local storage
     const result = await uploadToCloudinary(
       req.file.buffer,
-      "digital-aela/gallery"
+      "digital-aela/gallery",
+      req.file.originalname
     );
 
     // Get the highest order value to add new image at the end
@@ -196,16 +197,18 @@ export const deleteGalleryImage = async (req, res, next) => {
       });
     }
 
-    // Delete from Cloudinary
+    // Delete from local storage
     try {
-      await cloudinary.uploader.destroy(galleryImage.publicId, {
-        resource_type: "image",
-      });
-    } catch (cloudinaryError) {
-      // Log but continue with database deletion even if Cloudinary deletion fails
+      // Use imageUrl or publicId to delete file
+      const filePath = galleryImage.imageUrl || galleryImage.publicId;
+      if (filePath) {
+        await deleteFileFromLocal(filePath);
+      }
+    } catch (deleteError) {
+      // Log but continue with database deletion even if file deletion fails
       console.error(
-        "[Gallery] Failed to delete from Cloudinary:",
-        cloudinaryError.message
+        "[Gallery] Failed to delete file from local storage:",
+        deleteError.message
       );
     }
 

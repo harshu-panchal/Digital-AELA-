@@ -237,7 +237,8 @@ export const updatePayment = async (req, res, next) => {
         const pdfBuffer = await generateInvoicePDF(invoiceData);
         const uploadResult = await uploadPdfToCloudinary(
           pdfBuffer,
-          `digital-aela/invoices/${paymentId}`
+          `digital-aela/invoices/${paymentId}`,
+          `invoice-${paymentId}.pdf`
         );
 
         // Update payment with invoice URL
@@ -678,10 +679,11 @@ export const getInvoice = async (req, res, next) => {
     try {
       const pdfBuffer = await generateInvoicePDF(invoiceData);
 
-      // Upload to Cloudinary
+      // Save to local storage
       const uploadResult = await uploadPdfToCloudinary(
         pdfBuffer,
-        `digital-aela/invoices/${payment._id}`
+        `digital-aela/invoices/${payment._id}`,
+        `invoice-${payment._id}.pdf`
       );
       invoiceUrl = uploadResult.url;
 
@@ -1431,7 +1433,8 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             const pdfBuffer = await generateInvoicePDF(invoiceData);
             const uploadResult = await uploadPdfToCloudinary(
               pdfBuffer,
-              `digital-aela/invoices/${paymentId}`
+              `digital-aela/invoices/${paymentId}`,
+              `invoice-${paymentId}.pdf`
             );
 
             await Payment.findByIdAndUpdate(paymentId, {

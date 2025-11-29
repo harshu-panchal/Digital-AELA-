@@ -1,8 +1,8 @@
 /**
- * Upload an image file to Cloudinary via the backend API
+ * Upload an image file via the backend API
  * @param {File} file - The image file to upload
- * @param {string} folder - Optional Cloudinary folder path (default: "digital-aela")
- * @returns {Promise<string>} - The Cloudinary URL of the uploaded image
+ * @param {string} folder - Optional folder path (default: "digital-aela")
+ * @returns {Promise<string>} - The URL of the uploaded image
  */
 import { API_BASE_URL } from "../config/api.js";
 
@@ -51,7 +51,7 @@ export const uploadImageToCloudinary = async (file, folder = "digital-aela") => 
     throw error;
   }
 
-  // Return the Cloudinary URL
+  // Return the image URL
   return payload.data?.url || payload.url;
 };
 

@@ -586,7 +586,7 @@ const ProfilePage = () => {
 
       setUploadingAvatar(true);
       try {
-        // Upload to Cloudinary
+        // Upload image
         const avatarUrl = await uploadProfileImage(file);
 
         // Update StudentProfile (backend will also update User.metadata.avatarUrl)

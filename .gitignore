@@ -88,3 +88,8 @@ coverage/
 # yarn.lock
 # pnpm-lock.yaml
 
+# Data folder - exclude contents but keep folder structure
+data/**/*
+!data/**/.gitkeep
+!data/**/
+

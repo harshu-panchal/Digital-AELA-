@@ -459,7 +459,7 @@ export const BlogProvider = ({ children }) => {
   const publishBlog = useCallback(
     async (blog) => {
       const referenceId = blog.id ?? crypto.randomUUID();
-      // Ensure we use the latest profile avatar (Cloudinary URL from metadata.avatarUrl)
+      // Ensure we use the latest profile avatar (URL from metadata.avatarUrl)
       const authorAvatar = 
         authUser?.metadata?.avatarUrl || 
         profile?.avatar || 

@@ -1,0 +1,441 @@
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+// Optional sharp import for image metadata
+let sharp = null;
+try {
+  const sharpModule = await import("sharp");
+  sharp = sharpModule.default;
+} catch {
+  // Sharp not available, will skip metadata extraction
+  // This is optional - image uploads will work without it
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Get the root directory (two levels up from services)
+const rootDir = path.resolve(__dirname, "../..");
+const dataDir = path.resolve(rootDir, "../data");
+
+/**
+ * Map Cloudinary folder paths to local storage paths
+ */
+const mapFolderToLocalPath = (cloudinaryFolder) => {
+  // Remove "digital-aela" prefix if present
+  let folder = cloudinaryFolder.replace(/^digital-aela\/?/, "");
+  
+  // Map common folder patterns
+  const folderMappings = {
+    "profiles": "photos/profiles",
+    "courses/covers": "photos/courses",
+    "books/covers": "photos/bookscovers",
+    "gallery": "photos/gallery",
+    "testimonials": "photos/testimonials",
+    "certificates": "photos/certificates",
+    "courses": "videos/coursesVideos",
+    "course-videos": "videos/coursesVideos",
+    "join-us": "documents", // Will be handled more specifically
+  };
+
+  // Check for specific mappings
+  for (const [key, value] of Object.entries(folderMappings)) {
+    if (folder.includes(key)) {
+      // Extract additional path info (like course ID)
+      const parts = folder.split("/");
+      const keyIndex = parts.findIndex(p => p.includes(key.split("/")[0]));
+      
+      if (key === "courses" && parts.length > keyIndex + 1) {
+        // For course videos: digital-aela/courses/{id}/videos -> videos/coursesVideos/{id}/
+        const courseId = parts[keyIndex + 1];
+        return `videos/coursesVideos/${courseId}`;
+      }
+      
+      if (folder.includes("join-us")) {
+        // Handle join-us applications - determine type from folder structure
+        const joinUsMatch = folder.match(/join-us\/([^\/]+)\/(.+)/);
+        if (joinUsMatch) {
+          const [, applicationType, fieldName] = joinUsMatch;
+          // Determine if it's image, video, or document
+          if (fieldName.includes("video") || fieldName.includes("Video")) {
+            return `videos/formVideos/${applicationType}`;
+          } else if (fieldName.includes("pdf") || fieldName.includes("document") || fieldName.includes("resume")) {
+            return `PDFs/documents/${applicationType}`;
+          } else {
+            return `photos/profiles`; // Default for images in join-us
+          }
+        }
+        return `PDFs/documents`;
+      }
+      
+      return value;
+    }
+  }
+
+  // Default mappings based on folder name
+  if (folder.includes("invoice")) {
+    return "PDFs/invoices";
+  }
+  if (folder.includes("ebook")) {
+    return "PDFs/ebooks";
+  }
+  if (folder.includes("certificate")) {
+    return "PDFs/certificates";
+  }
+  if (folder.includes("brochure")) {
+    return "PDFs/courseBrochures";
+  }
+  if (folder.includes("video")) {
+    return "videos/coursesVideos";
+  }
+  if (folder.includes("profile")) {
+    return "photos/profiles";
+  }
+  if (folder.includes("course")) {
+    return "photos/courses";
+  }
+  if (folder.includes("book")) {
+    return "photos/bookscovers";
+  }
+  if (folder.includes("job")) {
+    return "photos/jobscover";
+  }
+  if (folder.includes("blog")) {
+    return "photos/blogimages";
+  }
+
+  // Default to photos if no match
+  return "photos/profiles";
+};
+
+/**
+ * Generate unique filename
+ */
+const generateFilename = (originalName, extension) => {
+  const timestamp = Date.now();
+  const random = Math.round(Math.random() * 1e9);
+  const ext = extension || path.extname(originalName || "").slice(1) || "jpg";
+  return `${timestamp}-${random}.${ext}`;
+};
+
+/**
+ * Get file extension from mimetype
+ */
+const getExtensionFromMimeType = (mimetype) => {
+  const mimeMap = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "video/mp4": "mp4",
+    "video/mpeg": "mpg",
+    "video/quicktime": "mov",
+    "video/x-msvideo": "avi",
+    "video/webm": "webm",
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  };
+  return mimeMap[mimetype] || "bin";
+};
+
+/**
+ * Save image to local storage
+ */
+export const saveImageToLocal = async (buffer, folder = "digital-aela", originalName = null) => {
+  try {
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      throw new Error("Invalid buffer provided");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("Buffer is empty");
+    }
+
+    // Map folder to local path
+    const localFolder = mapFolderToLocalPath(folder);
+    const fullPath = path.join(dataDir, localFolder);
+
+    // Ensure directory exists
+    await fs.mkdir(fullPath, { recursive: true });
+
+    // Get image metadata using sharp (if available)
+    let metadata = {};
+    let format = "jpg";
+    let width = null;
+    let height = null;
+
+    if (sharp) {
+      try {
+        const imageMetadata = await sharp(buffer).metadata();
+        format = imageMetadata.format || "jpg";
+        width = imageMetadata.width;
+        height = imageMetadata.height;
+        metadata = {
+          format,
+          width,
+          height,
+          size: buffer.length,
+        };
+      } catch (sharpError) {
+        // If sharp fails, use defaults
+        format = getExtensionFromMimeType("image/jpeg");
+        metadata = {
+          format,
+          width: null,
+          height: null,
+          size: buffer.length,
+        };
+      }
+    } else {
+      // Sharp not available, use defaults
+      format = getExtensionFromMimeType("image/jpeg");
+      metadata = {
+        format,
+        width: null,
+        height: null,
+        size: buffer.length,
+      };
+    }
+
+    // Generate filename
+    const filename = generateFilename(originalName, format);
+    const filePath = path.join(fullPath, filename);
+
+    // Write file to disk
+    await fs.writeFile(filePath, buffer);
+
+    // Generate URL
+    const url = `/static/${localFolder}/${filename}`;
+    const relativePath = `${localFolder}/${filename}`;
+
+    return {
+      filePath: relativePath,
+      url,
+      format: metadata.format,
+      width: metadata.width,
+      height: metadata.height,
+      bytes: buffer.length,
+      // Keep public_id for backward compatibility (using relative path)
+      public_id: relativePath.replace(/\//g, "-"),
+    };
+  } catch (error) {
+    console.error("[FileStorage] Error saving image:", error);
+    throw error;
+  }
+};
+
+/**
+ * Save video to local storage
+ */
+export const saveVideoToLocal = async (buffer, folder = "digital-aela/course-videos", originalName = null) => {
+  try {
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      throw new Error("Invalid buffer provided");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("Buffer is empty");
+    }
+
+    // Map folder to local path
+    let localFolder = mapFolderToLocalPath(folder);
+    
+    // Extract course ID from folder if present (digital-aela/courses/{id}/videos)
+    const courseIdMatch = folder.match(/courses\/([^\/]+)/);
+    if (courseIdMatch) {
+      const courseId = courseIdMatch[1];
+      localFolder = `videos/coursesVideos/${courseId}`;
+    }
+
+    const fullPath = path.join(dataDir, localFolder);
+
+    // Ensure directory exists
+    await fs.mkdir(fullPath, { recursive: true });
+
+    // Determine format from original name or default to mp4
+    let format = "mp4";
+    if (originalName) {
+      const ext = path.extname(originalName).slice(1).toLowerCase();
+      if (["mp4", "mov", "avi", "webm", "mpeg"].includes(ext)) {
+        format = ext;
+      }
+    }
+
+    // Generate filename
+    const filename = generateFilename(originalName, format);
+    const filePath = path.join(fullPath, filename);
+
+    // Write file to disk
+    await fs.writeFile(filePath, buffer);
+
+    // Generate URL
+    const url = `/static/${localFolder}/${filename}`;
+    const relativePath = `${localFolder}/${filename}`;
+
+    return {
+      filePath: relativePath,
+      url,
+      format,
+      duration: null, // Video duration would require ffmpeg/ffprobe
+      width: null,
+      height: null,
+      bytes: buffer.length,
+      // Keep public_id for backward compatibility
+      public_id: relativePath.replace(/\//g, "-"),
+    };
+  } catch (error) {
+    console.error("[FileStorage] Error saving video:", error);
+    throw error;
+  }
+};
+
+/**
+ * Save PDF to local storage
+ */
+export const savePdfToLocal = async (buffer, folder = "digital-aela/course-brochures", originalName = null) => {
+  try {
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      throw new Error("Invalid buffer provided");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("Buffer is empty");
+    }
+
+    // Map folder to local path
+    let localFolder = mapFolderToLocalPath(folder);
+    
+    // Handle specific PDF types
+    if (folder.includes("invoice")) {
+      // Extract payment ID if present (digital-aela/invoices/{paymentId})
+      const invoiceMatch = folder.match(/invoices\/([^\/]+)/);
+      if (invoiceMatch) {
+        const paymentId = invoiceMatch[1];
+        localFolder = `PDFs/invoices/${paymentId}`;
+      } else {
+        localFolder = "PDFs/invoices";
+      }
+    } else if (folder.includes("ebook")) {
+      // Extract user ID if present (digital-aela/ebooks/{userId})
+      const ebookMatch = folder.match(/ebooks\/([^\/]+)/);
+      if (ebookMatch) {
+        const userId = ebookMatch[1];
+        localFolder = `PDFs/ebooks/${userId}`;
+      } else {
+        localFolder = "PDFs/ebooks";
+      }
+    } else if (folder.includes("certificate")) {
+      // Extract certificate ID if present
+      const certMatch = folder.match(/certificates\/([^\/]+)/);
+      if (certMatch) {
+        const certId = certMatch[1];
+        localFolder = `PDFs/certificates/${certId}`;
+      } else {
+        localFolder = "PDFs/certificates";
+      }
+    } else if (folder.includes("brochure")) {
+      localFolder = "PDFs/courseBrochures";
+    } else {
+      localFolder = "PDFs/documents";
+    }
+
+    const fullPath = path.join(dataDir, localFolder);
+
+    // Ensure directory exists
+    await fs.mkdir(fullPath, { recursive: true });
+
+    // Generate filename
+    const filename = generateFilename(originalName, "pdf");
+    const filePath = path.join(fullPath, filename);
+
+    // Write file to disk
+    await fs.writeFile(filePath, buffer);
+
+    // Generate URL
+    const url = `/static/${localFolder}/${filename}`;
+    const relativePath = `${localFolder}/${filename}`;
+
+    return {
+      filePath: relativePath,
+      url,
+      format: "pdf",
+      bytes: buffer.length,
+      // Keep public_id for backward compatibility
+      public_id: relativePath.replace(/\//g, "-"),
+    };
+  } catch (error) {
+    console.error("[FileStorage] Error saving PDF:", error);
+    throw error;
+  }
+};
+
+/**
+ * Delete file from local storage
+ */
+export const deleteFileFromLocal = async (filePathOrUrl) => {
+  try {
+    // Handle both URL format (/static/...) and file path format
+    let relativePath = filePathOrUrl;
+    
+    if (filePathOrUrl.startsWith("/static/")) {
+      relativePath = filePathOrUrl.replace("/static/", "");
+    } else if (filePathOrUrl.includes("static/")) {
+      relativePath = filePathOrUrl.split("static/")[1];
+    }
+
+    const fullPath = path.join(dataDir, relativePath);
+
+    // Check if file exists
+    try {
+      await fs.access(fullPath);
+    } catch {
+      // File doesn't exist, return success (idempotent)
+      return { success: true, message: "File not found, considered deleted" };
+    }
+
+    // Delete file
+    await fs.unlink(fullPath);
+
+    return { success: true, message: "File deleted successfully" };
+  } catch (error) {
+    console.error("[FileStorage] Error deleting file:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get file info (for validation)
+ */
+export const getFileInfo = async (filePathOrUrl) => {
+  try {
+    let relativePath = filePathOrUrl;
+    
+    if (filePathOrUrl.startsWith("/static/")) {
+      relativePath = filePathOrUrl.replace("/static/", "");
+    }
+
+    const fullPath = path.join(dataDir, relativePath);
+
+    const stats = await fs.stat(fullPath);
+    return {
+      exists: true,
+      size: stats.size,
+      created: stats.birthtime,
+      modified: stats.mtime,
+    };
+  } catch (error) {
+    return {
+      exists: false,
+      error: error.message,
+    };
+  }
+};
+

@@ -299,10 +299,11 @@ export const generateCertificate = async (req, res, next) => {
       // Generate PDF buffer
       const pdfBuffer = await generateCertificatePDF(certificateData);
 
-      // Upload to Cloudinary
+      // Save to local storage
       const uploadResult = await uploadPdfToCloudinary(
         pdfBuffer,
-        `digital-aela/certificates/${certificate._id}`
+        `digital-aela/certificates/${certificate._id}`,
+        `certificate-${certificate._id}.pdf`
       );
       pdfUrl = uploadResult.url;
 

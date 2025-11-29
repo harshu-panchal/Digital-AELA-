@@ -1,5 +1,5 @@
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
-import cloudinary from "../config/cloudinary.js";
+import { deleteFileFromLocal } from "../services/fileStorageService.js";
 
 /**
  * Upload single image
@@ -28,8 +28,12 @@ export const uploadImage = async (req, res, next) => {
     // Get folder from body (FormData sends it as string)
     const folder = req.body?.folder || "digital-aela";
     
-    // Upload to Cloudinary
-    const result = await uploadToCloudinary(req.file.buffer, folder);
+    // Save to local storage
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      folder,
+      req.file.originalname
+    );
 
     return res.status(200).json({
       success: true,
@@ -48,7 +52,7 @@ export const uploadImage = async (req, res, next) => {
     return res.status(500).json({
       error: {
         code: "UPLOAD_FAILED",
-        message: error.message || "Failed to upload image to Cloudinary",
+        message: error.message || "Failed to upload image",
       },
     });
   }
@@ -70,7 +74,7 @@ export const uploadImages = async (req, res, next) => {
 
     const folder = req.body.folder || "digital-aela";
     const uploadPromises = req.files.map((file) =>
-      uploadToCloudinary(file.buffer, folder)
+      uploadToCloudinary(file.buffer, folder, file.originalname)
     );
 
     const results = await Promise.all(uploadPromises);
@@ -92,7 +96,7 @@ export const uploadImages = async (req, res, next) => {
 };
 
 /**
- * Delete image from Cloudinary
+ * Delete image from local storage
  */
 export const deleteImage = async (req, res, next) => {
   try {
@@ -101,15 +105,14 @@ export const deleteImage = async (req, res, next) => {
     if (!public_id) {
       return res.status(400).json({
         error: {
-          code: "PUBLIC_ID_REQUIRED",
-          message: "Public ID is required",
+          code: "FILE_PATH_REQUIRED",
+          message: "File path or public ID is required",
         },
       });
     }
 
-    const result = await cloudinary.uploader.destroy(public_id, {
-      resource_type: "image",
-    });
+    // public_id can be either a file path or URL
+    const result = await deleteFileFromLocal(public_id);
 
     return res.status(200).json({
       success: true,

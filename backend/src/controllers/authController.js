@@ -86,7 +86,7 @@ export const registerUser = async (req, res, next) => {
     if (req.file) {
       try {
         // eslint-disable-next-line no-console
-        console.log("Uploading profile image to Cloudinary...", {
+        console.log("Uploading profile image to local storage...", {
           filename: req.file.originalname,
           mimetype: req.file.mimetype,
           size: req.file.size,
@@ -94,7 +94,8 @@ export const registerUser = async (req, res, next) => {
         });
         const uploadResult = await uploadToCloudinary(
           req.file.buffer,
-          `digital-aela/profiles/${role}`
+          `digital-aela/profiles/${role}`,
+          req.file.originalname
         );
         avatarUrl = uploadResult.url;
         // eslint-disable-next-line no-console
@@ -201,7 +202,7 @@ export const registerUser = async (req, res, next) => {
           linkedinUrl: profileData.linkedinUrl,
           preferredProgram: profileData.preferredProgram,
           goals: profileData.goals,
-          avatarUrl: avatarUrl || profileData.avatarUrl || "", // Store Cloudinary avatar URL
+          avatarUrl: avatarUrl || profileData.avatarUrl || "", // Store avatar URL
           metadata: {
             referralSource: profileData.referralSource,
             message: profileData.message,
