@@ -1,5 +1,8 @@
 import { apiRequest } from "./api/baseClient.js";
-import { getCachedTranslation, cacheTranslation } from "../utils/translationCache.js";
+import {
+  getCachedTranslation,
+  cacheTranslation,
+} from "../utils/translationCache.js";
 import { API_BASE_URL } from "../config/api.js";
 
 // Rate limiting for translation requests
@@ -36,7 +39,9 @@ const processTranslationQueue = async () => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastTranslationRequestTime;
     if (timeSinceLastRequest < MIN_TRANSLATION_INTERVAL) {
-      await new Promise(resolve => setTimeout(resolve, MIN_TRANSLATION_INTERVAL - timeSinceLastRequest));
+      await new Promise((resolve) =>
+        setTimeout(resolve, MIN_TRANSLATION_INTERVAL - timeSinceLastRequest)
+      );
     }
 
     // Collect requests to batch together (same target/source language)
@@ -63,83 +68,130 @@ const processTranslationQueue = async () => {
 
       // If single request, use single endpoint
       if (batch.length === 1) {
-        const { text, targetLang, sourceLang, normalizedTarget, normalizedSource, resolve, reject } = batch[0];
-        
+        const {
+          text,
+          targetLang,
+          sourceLang,
+          normalizedTarget,
+          normalizedSource,
+          resolve,
+          reject,
+        } = batch[0];
+
         if (import.meta.env.PROD) {
-          console.log("[Translation Service] Making single translation API call:", {
-            endpoint: "/translate",
-            apiUrl: API_BASE_URL,
-            fullUrl: `${API_BASE_URL}/translate`,
-            text: text.substring(0, 50) + "...",
-            targetLang,
-            sourceLang,
-          });
+          console.log(
+            "[Translation Service] Making single translation API call:",
+            {
+              endpoint: "/translate",
+              apiUrl: API_BASE_URL,
+              fullUrl: `${API_BASE_URL}/translate`,
+              text: text.substring(0, 50) + "...",
+              targetLang,
+              sourceLang,
+            }
+          );
         }
 
         try {
-          const response = await apiRequest(
-            "/translate",
-            {
-              method: "POST",
-              body: { text, targetLang, sourceLang },
-              skipAuth: true,
-            }
-          );
-          
+          const response = await apiRequest("/translate", {
+            method: "POST",
+            body: { text, targetLang, sourceLang },
+            skipAuth: true,
+          });
+
           if (import.meta.env.PROD) {
-            console.log("[Translation Service] Single translation API response:", {
-              success: !!response?.data?.translation,
-              hasTranslation: !!response?.data?.translation,
-              responseKeys: response ? Object.keys(response) : [],
-            });
+            console.log(
+              "[Translation Service] Single translation API response:",
+              {
+                success: !!response?.data?.translation,
+                hasTranslation: !!response?.data?.translation,
+                responseKeys: response ? Object.keys(response) : [],
+              }
+            );
           }
 
           const translation = response?.data?.translation || text;
-          
+
           if (import.meta.env.PROD) {
-            console.log("[Translation Service] Single translation API response received:", {
-              original: text.substring(0, 50) + "...",
-              translated: translation.substring(0, 50) + "...",
-              isSameAsOriginal: translation === text,
-              responseHasTranslation: !!response?.data?.translation,
-              responseKeys: response ? Object.keys(response) : [],
-              dataKeys: response?.data ? Object.keys(response.data) : [],
-            });
+            console.log(
+              "[Translation Service] Single translation API response received:",
+              {
+                original: text.substring(0, 50) + "...",
+                translated: translation.substring(0, 50) + "...",
+                isSameAsOriginal: translation === text,
+                responseHasTranslation: !!response?.data?.translation,
+                responseKeys: response ? Object.keys(response) : [],
+                dataKeys: response?.data ? Object.keys(response.data) : [],
+                responseStructure: JSON.stringify(response, null, 2).substring(
+                  0,
+                  500
+                ),
+              }
+            );
           }
-          
-          // CRITICAL: If translation is same as original, log error
+
+          // CRITICAL: If translation is same as original, log error with full response details
           if (translation === text && normalizedTarget !== normalizedSource) {
-            console.error("[Translation Service] ❌ API returned original text instead of translation!", {
-              text: text.substring(0, 50) + "...",
-              response: response,
-              targetLang,
-              sourceLang,
-              normalizedTarget,
-              normalizedSource,
-              hint: "Backend translation API may not be working correctly",
-            });
+            console.error(
+              "[Translation Service] ❌ CRITICAL ERROR: API returned original text instead of translation!",
+              {
+                text: text.substring(0, 50) + "...",
+                translation: translation.substring(0, 50) + "...",
+                targetLang,
+                sourceLang,
+                normalizedTarget,
+                normalizedSource,
+                responseStructure: {
+                  hasData: !!response?.data,
+                  hasTranslation: !!response?.data?.translation,
+                  dataKeys: response?.data ? Object.keys(response.data) : [],
+                  responseKeys: response ? Object.keys(response) : [],
+                  fullResponse: JSON.stringify(response, null, 2).substring(
+                    0,
+                    1000
+                  ),
+                },
+                apiUrl: API_BASE_URL,
+                endpoint: "/translate",
+                hint: "Backend translation API is not translating. Check backend logs and Google Cloud Translate configuration.",
+              }
+            );
           }
-          
+
           // Cache the translation for future use
           if (translation !== text && normalizedTarget && normalizedSource) {
             try {
-              await cacheTranslation(text, translation, normalizedTarget, normalizedSource);
+              await cacheTranslation(
+                text,
+                translation,
+                normalizedTarget,
+                normalizedSource
+              );
               if (import.meta.env.PROD) {
-                console.log("[Translation Service] Translation cached successfully:", {
-                  original: text.substring(0, 30) + "...",
-                  cached: translation.substring(0, 30) + "...",
-                });
+                console.log(
+                  "[Translation Service] Translation cached successfully:",
+                  {
+                    original: text.substring(0, 30) + "...",
+                    cached: translation.substring(0, 30) + "...",
+                  }
+                );
               }
             } catch (cacheError) {
               // Cache error, ignore but continue
               if (import.meta.env.PROD) {
-                console.warn("[Translation Service] Failed to cache translation:", cacheError.message);
+                console.warn(
+                  "[Translation Service] Failed to cache translation:",
+                  cacheError.message
+                );
               }
             }
           } else {
             if (import.meta.env.PROD) {
               console.warn("[Translation Service] Translation not cached:", {
-                reason: translation === text ? "translation same as original (BUG!)" : "missing normalized language codes",
+                reason:
+                  translation === text
+                    ? "translation same as original (BUG!)"
+                    : "missing normalized language codes",
                 normalizedTarget,
                 normalizedSource,
                 translation,
@@ -147,7 +199,7 @@ const processTranslationQueue = async () => {
               });
             }
           }
-          
+
           if (import.meta.env.PROD) {
             console.log("[Translation Service] Resolving single translation:", {
               original: text.substring(0, 50) + "...",
@@ -155,96 +207,223 @@ const processTranslationQueue = async () => {
               changed: translation !== text,
             });
           }
-          
+
           resolve(translation);
         } catch (error) {
-          // Suppress 429 errors - they're expected when rate limited
-          if (error?.status !== 429) {
+          // Handle rate limit errors (429) - return original text but log warning
+          if (error?.status === 429) {
+            if (import.meta.env.PROD) {
+              console.warn(
+                "[Translation Service] Rate limit exceeded, returning original text:",
+                {
+                  text: text.substring(0, 50) + "...",
+                  retryAfter: error?.data?.error?.retryAfter,
+                  hint: "Translation API rate limit exceeded. Translations will be retried automatically.",
+                }
+              );
+            }
+            // Return original text on rate limit - frontend will retry later
+            resolve(text);
+          } else {
             // Enhanced error logging for production
             if (import.meta.env.PROD) {
-              console.error("[Translation Service] Single translation failed:", {
-                error: error.message,
-                status: error?.status,
-                code: error?.code,
-                apiUrl: API_BASE_URL,
-                endpoint: "/translate",
-                requestBody: { text: text.substring(0, 50) + "...", targetLang, sourceLang },
-                hint: error?.isNetworkError 
-                  ? "Check if backend server is running and VITE_API_URL is set correctly" 
-                  : error?.status === 502
-                  ? "Backend server may be down or restarting"
-                  : "Check backend translation endpoint and Google Cloud Translate configuration",
-              });
+              console.error(
+                "[Translation Service] Single translation failed:",
+                {
+                  error: error.message,
+                  status: error?.status,
+                  code: error?.code,
+                  apiUrl: API_BASE_URL,
+                  endpoint: "/translate",
+                  requestBody: {
+                    text: text.substring(0, 50) + "...",
+                    targetLang,
+                    sourceLang,
+                  },
+                  hint: error?.isNetworkError
+                    ? "Check if backend server is running and VITE_API_URL is set correctly"
+                    : error?.status === 502
+                    ? "Backend server may be down or restarting"
+                    : "Check backend translation endpoint and Google Cloud Translate configuration",
+                }
+              );
             }
             reject(error);
-          } else {
-            // Return original text on rate limit
-            resolve(text);
           }
         }
       } else {
         // Batch multiple requests
-        const texts = batch.map(b => b.text);
+        const texts = batch.map((b) => b.text);
         const batchNormalizedTarget = batch[0]?.normalizedTarget;
         const batchNormalizedSource = batch[0]?.normalizedSource;
-        
+
         if (import.meta.env.PROD) {
-          console.log("[Translation Service] Making batch translation API call:", {
-            endpoint: "/translate/batch",
-            apiUrl: API_BASE_URL,
-            fullUrl: `${API_BASE_URL}/translate/batch`,
-            textCount: texts.length,
-            targetLang: batchTargetLang,
-            sourceLang: batchSourceLang,
-          });
-        }
-        
-        try {
-          const response = await apiRequest(
-            "/translate/batch",
+          console.log(
+            "[Translation Service] Making batch translation API call:",
             {
-              method: "POST",
-              body: { texts, targetLang: batchTargetLang, sourceLang: batchSourceLang },
-              skipAuth: true,
+              endpoint: "/translate/batch",
+              apiUrl: API_BASE_URL,
+              fullUrl: `${API_BASE_URL}/translate/batch`,
+              textCount: texts.length,
+              targetLang: batchTargetLang,
+              sourceLang: batchSourceLang,
             }
           );
-          
+        }
+
+        try {
+          const response = await apiRequest("/translate/batch", {
+            method: "POST",
+            body: {
+              texts,
+              targetLang: batchTargetLang,
+              sourceLang: batchSourceLang,
+            },
+            skipAuth: true,
+          });
+
           if (import.meta.env.PROD) {
-            console.log("[Translation Service] Batch translation API response:", {
-              success: !!response?.data?.translations,
-              translationCount: response?.data?.translations?.length,
-              expectedCount: texts.length,
-              responseKeys: response ? Object.keys(response) : [],
-            });
+            console.log(
+              "[Translation Service] Batch translation API response:",
+              {
+                success: !!response?.data?.translations,
+                translationCount: response?.data?.translations?.length,
+                expectedCount: texts.length,
+                responseKeys: response ? Object.keys(response) : [],
+              }
+            );
           }
 
           const translations = response?.data?.translations || texts;
-          
-          // Cache all translations for future use
+
+          if (import.meta.env.PROD) {
+            console.log(
+              "[Translation Service] Batch translation API response received:",
+              {
+                originalCount: texts.length,
+                translationCount: translations.length,
+                responseStructure: {
+                  hasData: !!response?.data,
+                  hasTranslations: !!response?.data?.translations,
+                  dataKeys: response?.data ? Object.keys(response.data) : [],
+                  responseKeys: response ? Object.keys(response) : [],
+                },
+                sampleOriginal: texts[0]?.substring(0, 50) + "...",
+                sampleTranslation: translations[0]?.substring(0, 50) + "...",
+                isSameAsOriginal: translations[0] === texts[0],
+              }
+            );
+          }
+
+          // CRITICAL: Check if all translations are same as originals (backend bug)
+          const allSameAsOriginal = translations.every(
+            (trans, idx) => trans === texts[idx]
+          );
+          if (
+            allSameAsOriginal &&
+            batchNormalizedTarget !== batchNormalizedSource
+          ) {
+            console.error(
+              "[Translation Service] ❌ CRITICAL ERROR: Batch API returned all original texts instead of translations!",
+              {
+                textCount: texts.length,
+                targetLang: batchTargetLang,
+                sourceLang: batchSourceLang,
+                normalizedTarget: batchNormalizedTarget,
+                normalizedSource: batchNormalizedSource,
+                responseStructure: {
+                  hasData: !!response?.data,
+                  hasTranslations: !!response?.data?.translations,
+                  dataKeys: response?.data ? Object.keys(response.data) : [],
+                  responseKeys: response ? Object.keys(response) : [],
+                  fullResponse: JSON.stringify(response, null, 2).substring(
+                    0,
+                    500
+                  ),
+                },
+                hint: "Backend translation API is not translating. Check backend logs and Google Cloud Translate configuration.",
+              }
+            );
+          }
+
+          // Cache all translations for future use (only if they're different from original)
           if (batchNormalizedTarget && batchNormalizedSource) {
             for (let i = 0; i < batch.length; i++) {
               const originalText = batch[i].text;
               const translation = translations[i] || originalText;
-              
+
+              // Only cache if translation is different from original
               if (translation !== originalText) {
                 try {
-                  await cacheTranslation(originalText, translation, batchNormalizedTarget, batchNormalizedSource);
+                  await cacheTranslation(
+                    originalText,
+                    translation,
+                    batchNormalizedTarget,
+                    batchNormalizedSource
+                  );
                 } catch (cacheError) {
                   // Cache error, ignore but continue
                   if (import.meta.env.PROD && i === 0) {
-                    console.warn("[Translation Service] Failed to cache batch translations:", cacheError.message);
+                    console.warn(
+                      "[Translation Service] Failed to cache batch translations:",
+                      cacheError.message
+                    );
                   }
                 }
+              } else if (
+                import.meta.env.PROD &&
+                batchNormalizedTarget !== batchNormalizedSource
+              ) {
+                // Log when we skip caching because translation equals original
+                console.warn(
+                  "[Translation Service] ⚠️ Skipping cache: Translation equals original (backend may not be translating)",
+                  {
+                    original: originalText.substring(0, 50) + "...",
+                    translation: translation.substring(0, 50) + "...",
+                    index: i,
+                  }
+                );
               }
             }
           }
-          
+
           batch.forEach((item, index) => {
-            item.resolve(translations[index] || item.text);
+            const translation = translations[index] || item.text;
+
+            // Log if individual translation is same as original
+            if (
+              import.meta.env.PROD &&
+              translation === item.text &&
+              batchNormalizedTarget !== batchNormalizedSource
+            ) {
+              console.warn(
+                "[Translation Service] ⚠️ Individual translation equals original:",
+                {
+                  text: item.text.substring(0, 50) + "...",
+                  translation: translation.substring(0, 50) + "...",
+                  index,
+                }
+              );
+            }
+
+            item.resolve(translation);
           });
         } catch (error) {
-          // Suppress 429 errors - they're expected when rate limited
-          if (error?.status !== 429) {
+          // Handle rate limit errors (429) - return original texts but log warning
+          if (error?.status === 429) {
+            if (import.meta.env.PROD) {
+              console.warn(
+                "[Translation Service] Rate limit exceeded for batch, returning original texts:",
+                {
+                  textCount: texts.length,
+                  retryAfter: error?.data?.error?.retryAfter,
+                  hint: "Translation API rate limit exceeded. Translations will be retried automatically.",
+                }
+              );
+            }
+            // Return original texts on rate limit - frontend will retry later
+            batch.forEach((item) => item.resolve(item.text));
+          } else {
             // Enhanced error logging for production
             if (import.meta.env.PROD) {
               console.error("[Translation Service] Batch translation failed:", {
@@ -253,28 +432,25 @@ const processTranslationQueue = async () => {
                 code: error?.code,
                 apiUrl: API_BASE_URL,
                 endpoint: "/translate/batch",
-                requestBody: { 
-                  textCount: texts.length, 
-                  targetLang: batchTargetLang, 
-                  sourceLang: batchSourceLang 
+                requestBody: {
+                  textCount: texts.length,
+                  targetLang: batchTargetLang,
+                  sourceLang: batchSourceLang,
                 },
-                hint: error?.isNetworkError 
-                  ? "Check if backend server is running and VITE_API_URL is set correctly" 
+                hint: error?.isNetworkError
+                  ? "Check if backend server is running and VITE_API_URL is set correctly"
                   : error?.status === 502
                   ? "Backend server may be down or restarting"
                   : "Check backend translation endpoint and Google Cloud Translate configuration",
               });
             }
-            batch.forEach(item => item.reject(error));
-          } else {
-            // Return original texts on rate limit
-            batch.forEach(item => item.resolve(item.text));
+            batch.forEach((item) => item.reject(error));
           }
         }
       }
     } catch (error) {
       // Handle unexpected errors
-      batch.forEach(item => {
+      batch.forEach((item) => {
         if (error?.status !== 429) {
           item.reject(error);
         } else {
@@ -288,21 +464,27 @@ const processTranslationQueue = async () => {
 };
 
 // Queue translation request
-const queueTranslation = (text, targetLang, sourceLang, normalizedTarget, normalizedSource) => {
+const queueTranslation = (
+  text,
+  targetLang,
+  sourceLang,
+  normalizedTarget,
+  normalizedSource
+) => {
   return new Promise((resolve, reject) => {
-    const queueItem = { 
-      text, 
-      targetLang, 
-      sourceLang, 
-      normalizedTarget, 
-      normalizedSource, 
-      resolve, 
+    const queueItem = {
+      text,
+      targetLang,
+      sourceLang,
+      normalizedTarget,
+      normalizedSource,
+      resolve,
       reject,
       queuedAt: Date.now(),
     };
-    
+
     translationQueue.push(queueItem);
-    
+
     if (import.meta.env.PROD) {
       console.log("[Translation Service] Item added to queue:", {
         text: text.substring(0, 30) + "...",
@@ -310,7 +492,7 @@ const queueTranslation = (text, targetLang, sourceLang, normalizedTarget, normal
         willProcessIn: BATCH_WAIT_TIME + "ms",
       });
     }
-    
+
     // Process queue after a short delay to allow batching
     setTimeout(() => {
       if (import.meta.env.PROD) {
@@ -344,7 +526,9 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
 
   if (!text || typeof text !== "string" || !text.trim()) {
     if (import.meta.env.PROD) {
-      console.log("[Translation Service] translateText: Invalid text, returning original");
+      console.log(
+        "[Translation Service] translateText: Invalid text, returning original"
+      );
     }
     return text;
   }
@@ -365,7 +549,11 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
 
   // Check cache first
   try {
-    const cached = await getCachedTranslation(text, normalizedTarget, normalizedSource);
+    const cached = await getCachedTranslation(
+      text,
+      normalizedTarget,
+      normalizedSource
+    );
     if (cached) {
       if (import.meta.env.PROD) {
         console.log("[Translation Service] Cache HIT:", {
@@ -377,10 +565,12 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
           targetLang,
           sourceLang,
         });
-        
+
         // CRITICAL: If cache returns same as original, it's wrong - clear it and retry
         if (cached === text && normalizedTarget !== normalizedSource) {
-          console.warn("[Translation Service] ⚠️ CACHE BUG: Cache returned original text instead of translation! Clearing cache entry and retrying...");
+          console.warn(
+            "[Translation Service] ⚠️ CACHE BUG: Cache returned original text instead of translation! Clearing cache entry and retrying..."
+          );
           // Don't return cached - continue to API call
         } else {
           return cached;
@@ -418,34 +608,49 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
 
     // Use queued translation to prevent rate limiting
     // Caching is handled in the queue processor
-    const translationPromise = queueTranslation(text, targetLang, sourceLang, normalizedTarget, normalizedSource);
-    
+    const translationPromise = queueTranslation(
+      text,
+      targetLang,
+      sourceLang,
+      normalizedTarget,
+      normalizedSource
+    );
+
     if (import.meta.env.PROD) {
-      console.log("[Translation Service] Queue item added, waiting for translation...", {
-        queueLengthAfter: translationQueue.length,
-      });
+      console.log(
+        "[Translation Service] Queue item added, waiting for translation...",
+        {
+          queueLengthAfter: translationQueue.length,
+        }
+      );
     }
-    
+
     const translation = await translationPromise;
 
     if (import.meta.env.PROD) {
       console.log("[Translation Service] Translation received from queue:", {
         original: text.substring(0, 50) + "...",
-        translated: typeof translation === "string" ? translation.substring(0, 50) + "..." : translation,
+        translated:
+          typeof translation === "string"
+            ? translation.substring(0, 50) + "..."
+            : translation,
         changed: translation !== text,
         isSameAsOriginal: translation === text,
       });
-      
+
       // CRITICAL: If translation is same as original, log error
       if (translation === text && normalizedTarget !== normalizedSource) {
-        console.error("[Translation Service] ❌ CRITICAL ERROR: Translation returned original text!", {
-          text: text.substring(0, 50) + "...",
-          targetLang,
-          sourceLang,
-          normalizedTarget,
-          normalizedSource,
-          hint: "API may be returning original text or translation failed silently",
-        });
+        console.error(
+          "[Translation Service] ❌ CRITICAL ERROR: Translation returned original text!",
+          {
+            text: text.substring(0, 50) + "...",
+            targetLang,
+            sourceLang,
+            normalizedTarget,
+            normalizedSource,
+            hint: "API may be returning original text or translation failed silently",
+          }
+        );
       }
     }
 
@@ -464,8 +669,8 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
           text: text.substring(0, 50) + (text.length > 50 ? "..." : ""),
           targetLang,
           sourceLang,
-          hint: error?.isNetworkError 
-            ? "Check if backend server is running and VITE_API_URL is set correctly" 
+          hint: error?.isNetworkError
+            ? "Check if backend server is running and VITE_API_URL is set correctly"
             : error?.status === 502
             ? "Backend server may be down or restarting"
             : "Check backend translation endpoint and Google Cloud Translate configuration",
@@ -508,7 +713,11 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
     }
 
     try {
-      const cached = await getCachedTranslation(text, normalizedTarget, normalizedSource);
+      const cached = await getCachedTranslation(
+        text,
+        normalizedTarget,
+        normalizedSource
+      );
       if (cached) {
         results[i] = cached;
       } else {
@@ -542,23 +751,22 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastTranslationRequestTime;
     if (timeSinceLastRequest < MIN_TRANSLATION_INTERVAL) {
-      await new Promise(resolve => setTimeout(resolve, MIN_TRANSLATION_INTERVAL - timeSinceLastRequest));
+      await new Promise((resolve) =>
+        setTimeout(resolve, MIN_TRANSLATION_INTERVAL - timeSinceLastRequest)
+      );
     }
 
     // Call backend batch translation API
     lastTranslationRequestTime = Date.now();
-    const response = await apiRequest(
-      "/translate/batch",
-      {
-        method: "POST",
-        body: {
-          texts: uncachedTexts,
-          targetLang,
-          sourceLang,
-        },
-        skipAuth: true,
-      }
-    );
+    const response = await apiRequest("/translate/batch", {
+      method: "POST",
+      body: {
+        texts: uncachedTexts,
+        targetLang,
+        sourceLang,
+      },
+      skipAuth: true,
+    });
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
@@ -580,7 +788,12 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
 
       // Cache the translation
       try {
-        await cacheTranslation(originalText, translation, normalizedTarget, normalizedSource);
+        await cacheTranslation(
+          originalText,
+          translation,
+          normalizedTarget,
+          normalizedSource
+        );
       } catch (e) {
         // Cache error, ignore
       }
@@ -601,8 +814,8 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
           textCount: uncachedTexts.length,
           targetLang,
           sourceLang,
-          hint: error?.isNetworkError 
-            ? "Check if backend server is running and VITE_API_URL is set correctly" 
+          hint: error?.isNetworkError
+            ? "Check if backend server is running and VITE_API_URL is set correctly"
             : error?.status === 502
             ? "Backend server may be down or restarting"
             : "Check backend translation endpoint and Google Cloud Translate configuration",
@@ -622,7 +835,12 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
  * @param {string[]} keysToTranslate - Optional array of keys to translate
  * @returns {Promise<Object>} - Translated object
  */
-export const translateObject = async (obj, targetLang, sourceLang = "en", keysToTranslate = null) => {
+export const translateObject = async (
+  obj,
+  targetLang,
+  sourceLang = "en",
+  keysToTranslate = null
+) => {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
     return obj;
   }
@@ -643,7 +861,11 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
             textsToTranslate.push(value);
             textPaths.push(fullPath);
           }
-        } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        } else if (
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
           // Recursively process nested objects
           collectTexts(value, fullPath);
         }
@@ -657,7 +879,9 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
   if (textsToTranslate.length === 0) {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
-      console.log("[Translation Service] translateObject: No texts to translate");
+      console.log(
+        "[Translation Service] translateObject: No texts to translate"
+      );
     }
     return obj;
   }
@@ -673,13 +897,20 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
   }
 
   // Translate all texts in batch
-  const translations = await translateBatch(textsToTranslate, targetLang, sourceLang);
+  const translations = await translateBatch(
+    textsToTranslate,
+    targetLang,
+    sourceLang
+  );
 
   if (import.meta.env.DEV) {
     // eslint-disable-next-line no-console
-    console.log("[Translation Service] translateObject: Batch translation complete", {
-      translationCount: translations.length,
-    });
+    console.log(
+      "[Translation Service] translateObject: Batch translation complete",
+      {
+        translationCount: translations.length,
+      }
+    );
   }
 
   // Reconstruct object with translated values
@@ -705,4 +936,3 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
 
   return translated;
 };
-

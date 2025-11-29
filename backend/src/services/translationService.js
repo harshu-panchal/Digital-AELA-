@@ -1,4 +1,6 @@
-import getTranslateClient, { normalizeLanguageCode } from "../config/googleCloud.js";
+import getTranslateClient, {
+  normalizeLanguageCode,
+} from "../config/googleCloud.js";
 
 // In-memory cache for translations (can be upgraded to Redis in production)
 const translationCache = new Map();
@@ -45,7 +47,11 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   }
 
   // Check cache
-  const cacheKey = getCacheKey(text, normalizedTargetLang, normalizedSourceLang);
+  const cacheKey = getCacheKey(
+    text,
+    normalizedTargetLang,
+    normalizedSourceLang
+  );
   const cached = translationCache.get(cacheKey);
 
   if (cached && cached.expiresAt > Date.now()) {
@@ -56,59 +62,118 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   const translate = getTranslateClient();
   if (!translate) {
     // eslint-disable-next-line no-console
-    console.warn("[Translation] Google Cloud Translate not configured. Returning original text.");
+    console.warn(
+      "[Translation] Google Cloud Translate not configured. Returning original text."
+    );
     return text;
   }
 
-  try {
-    let translation;
-    
-    // If using API key, use REST API directly
-    if (translate._useApiKey && translate._apiKey) {
-      const apiKey = translate._apiKey;
-      const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
-      
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: text,
-          source: normalizedSourceLang,
-          target: normalizedTargetLang,
-          format: "text",
-        }),
-      });
+  // Retry logic for rate limits
+  const MAX_RETRIES = 3;
+  const BASE_DELAY = 1000; // 1 second
+  let lastError = null;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      let translation;
+
+      // If using API key, use REST API directly
+      if (translate._useApiKey && translate._apiKey) {
+        const apiKey = translate._apiKey;
+        const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(
+          apiKey
+        )}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q: text,
+            source: normalizedSourceLang,
+            target: normalizedTargetLang,
+            format: "text",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage =
+            errorData.error?.message ||
+            `HTTP ${response.status}: ${response.statusText}`;
+
+          // Check if it's a rate limit error
+          const isRateLimit =
+            response.status === 429 ||
+            errorMessage.includes("Rate Limit") ||
+            errorMessage.includes("Quota") ||
+            errorMessage.includes("RESOURCE_EXHAUSTED");
+
+          if (isRateLimit && attempt < MAX_RETRIES) {
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = BASE_DELAY * Math.pow(2, attempt);
+            console.warn(
+              `[Translation] Rate limit hit, retrying in ${delay}ms (attempt ${
+                attempt + 1
+              }/${MAX_RETRIES + 1})`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            lastError = new Error(errorMessage);
+            continue; // Retry
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        translation = data.data?.translations?.[0]?.translatedText || text;
+      } else {
+        // Use client library (for service account authentication)
+        [translation] = await translate.translate(text, {
+          from: normalizedSourceLang,
+          to: normalizedTargetLang,
+        });
       }
 
-      const data = await response.json();
-      translation = data.data?.translations?.[0]?.translatedText || text;
-    } else {
-      // Use client library (for service account authentication)
-      [translation] = await translate.translate(text, {
-        from: normalizedSourceLang,
-        to: normalizedTargetLang,
+      // Cache the result
+      translationCache.set(cacheKey, {
+        translation,
+        expiresAt: Date.now() + CACHE_TTL,
       });
+
+      return translation;
+    } catch (error) {
+      lastError = error;
+
+      // Check if it's a rate limit error for client library
+      const isRateLimit =
+        error.message?.includes("Rate Limit") ||
+        error.message?.includes("Quota") ||
+        error.message?.includes("RESOURCE_EXHAUSTED") ||
+        error.code === 8; // Google Cloud gRPC code for RESOURCE_EXHAUSTED
+
+      if (isRateLimit && attempt < MAX_RETRIES) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = BASE_DELAY * Math.pow(2, attempt);
+        console.warn(
+          `[Translation] Rate limit hit, retrying in ${delay}ms (attempt ${
+            attempt + 1
+          }/${MAX_RETRIES + 1})`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue; // Retry
+      }
+
+      // If not rate limit or max retries reached, throw error
+      if (attempt === MAX_RETRIES || !isRateLimit) {
+        throw error;
+      }
     }
-
-    // Cache the result
-    translationCache.set(cacheKey, {
-      translation,
-      expiresAt: Date.now() + CACHE_TTL,
-    });
-
-    return translation;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("[Translation] Error translating text:", error.message);
-    // Return original text on error
-    return text;
   }
+
+  // If we get here, all retries failed
+  throw lastError || new Error("Translation failed after retries");
 };
 
 /**
@@ -145,7 +210,11 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
       continue;
     }
 
-    const cacheKey = getCacheKey(text, normalizedTargetLang, normalizedSourceLang);
+    const cacheKey = getCacheKey(
+      text,
+      normalizedTargetLang,
+      normalizedSourceLang
+    );
     const cached = translationCache.get(cacheKey);
 
     if (cached && cached.expiresAt > Date.now()) {
@@ -165,71 +234,138 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
   const translate = getTranslateClient();
   if (!translate) {
     // eslint-disable-next-line no-console
-    console.warn("[Translation] Google Cloud Translate not configured. Returning original texts.");
+    console.warn(
+      "[Translation] Google Cloud Translate not configured. Returning original texts."
+    );
     return texts;
   }
 
-  try {
-    let translatedArray;
-    
-    // If using API key, use REST API directly
-    if (translate._useApiKey && translate._apiKey) {
-      const apiKey = translate._apiKey;
-      const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
-      
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: uncachedTexts,
-          source: normalizedSourceLang,
-          target: normalizedTargetLang,
-          format: "text",
-        }),
-      });
+  // Retry logic for rate limits
+  const MAX_RETRIES = 3;
+  const BASE_DELAY = 1000; // 1 second
+  let lastError = null;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      let translatedArray;
+
+      // If using API key, use REST API directly
+      if (translate._useApiKey && translate._apiKey) {
+        const apiKey = translate._apiKey;
+        const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(
+          apiKey
+        )}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q: uncachedTexts,
+            source: normalizedSourceLang,
+            target: normalizedTargetLang,
+            format: "text",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage =
+            errorData.error?.message ||
+            `HTTP ${response.status}: ${response.statusText}`;
+
+          // Check if it's a rate limit error
+          const isRateLimit =
+            response.status === 429 ||
+            errorMessage.includes("Rate Limit") ||
+            errorMessage.includes("Quota") ||
+            errorMessage.includes("RESOURCE_EXHAUSTED");
+
+          if (isRateLimit && attempt < MAX_RETRIES) {
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = BASE_DELAY * Math.pow(2, attempt);
+            console.warn(
+              `[Translation] Rate limit hit for batch, retrying in ${delay}ms (attempt ${
+                attempt + 1
+              }/${MAX_RETRIES + 1})`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            lastError = new Error(errorMessage);
+            continue; // Retry
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        translatedArray =
+          data.data?.translations?.map((t) => t.translatedText) ||
+          uncachedTexts;
+      } else {
+        // Use client library (for service account authentication)
+        const [translations] = await translate.translate(uncachedTexts, {
+          from: normalizedSourceLang,
+          to: normalizedTargetLang,
+        });
+        // Google Cloud Translate returns an array or a single string
+        translatedArray = Array.isArray(translations)
+          ? translations
+          : [translations];
       }
 
-      const data = await response.json();
-      translatedArray = data.data?.translations?.map((t) => t.translatedText) || uncachedTexts;
-    } else {
-      // Use client library (for service account authentication)
-      const [translations] = await translate.translate(uncachedTexts, {
-        from: normalizedSourceLang,
-        to: normalizedTargetLang,
-      });
-      // Google Cloud Translate returns an array or a single string
-      translatedArray = Array.isArray(translations) ? translations : [translations];
+      // Update results and cache
+      for (let i = 0; i < uncachedTexts.length; i++) {
+        const originalText = uncachedTexts[i];
+        const translation = translatedArray[i] || originalText;
+        const resultIndex = uncachedIndices[i];
+
+        results[resultIndex] = translation;
+
+        // Cache the result
+        const cacheKey = getCacheKey(
+          originalText,
+          normalizedTargetLang,
+          normalizedSourceLang
+        );
+        translationCache.set(cacheKey, {
+          translation,
+          expiresAt: Date.now() + CACHE_TTL,
+        });
+      }
+
+      return results;
+    } catch (error) {
+      lastError = error;
+
+      // Check if it's a rate limit error for client library
+      const isRateLimit =
+        error.message?.includes("Rate Limit") ||
+        error.message?.includes("Quota") ||
+        error.message?.includes("RESOURCE_EXHAUSTED") ||
+        error.code === 8; // Google Cloud gRPC code for RESOURCE_EXHAUSTED
+
+      if (isRateLimit && attempt < MAX_RETRIES) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = BASE_DELAY * Math.pow(2, attempt);
+        console.warn(
+          `[Translation] Rate limit hit for batch, retrying in ${delay}ms (attempt ${
+            attempt + 1
+          }/${MAX_RETRIES + 1})`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue; // Retry
+      }
+
+      // If not rate limit or max retries reached, throw error
+      if (attempt === MAX_RETRIES || !isRateLimit) {
+        throw error;
+      }
     }
-
-    // Update results and cache
-    for (let i = 0; i < uncachedTexts.length; i++) {
-      const originalText = uncachedTexts[i];
-      const translation = translatedArray[i] || originalText;
-      const resultIndex = uncachedIndices[i];
-
-      results[resultIndex] = translation;
-
-      // Cache the result
-      const cacheKey = getCacheKey(originalText, normalizedTargetLang, normalizedSourceLang);
-      translationCache.set(cacheKey, {
-        translation,
-        expiresAt: Date.now() + CACHE_TTL,
-      });
-    }
-
-    return results;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("[Translation] Error translating batch:", error.message);
-    // Return original texts on error
-    return texts;
   }
+
+  // If we get here, all retries failed
+  throw lastError || new Error("Batch translation failed after retries");
 };
 
 /**
@@ -240,7 +376,12 @@ export const translateBatch = async (texts, targetLang, sourceLang = "en") => {
  * @param {string[]} keysToTranslate - Optional array of keys to translate (if not provided, translates all string values)
  * @returns {Promise<Object>} - Translated object
  */
-export const translateObject = async (obj, targetLang, sourceLang = "en", keysToTranslate = null) => {
+export const translateObject = async (
+  obj,
+  targetLang,
+  sourceLang = "en",
+  keysToTranslate = null
+) => {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
     return obj;
   }
@@ -270,7 +411,11 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
             textsToTranslate.push(value);
             textPaths.push(fullPath);
           }
-        } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        } else if (
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
           // Recursively process nested objects
           collectTexts(value, fullPath);
         }
@@ -286,7 +431,11 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
   }
 
   // Translate all texts in batch
-  const translations = await translateBatch(textsToTranslate, targetLang, sourceLang);
+  const translations = await translateBatch(
+    textsToTranslate,
+    targetLang,
+    sourceLang
+  );
 
   // Reconstruct object with translated values
   const setNestedValue = (target, path, value) => {
@@ -310,4 +459,3 @@ export const translateObject = async (obj, targetLang, sourceLang = "en", keysTo
 
   return translated;
 };
-

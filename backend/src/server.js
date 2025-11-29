@@ -21,18 +21,24 @@ const start = async () => {
     await initializeWorkers();
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.warn("[Server] mediasoup initialization failed, continuing without voice features:", error.message);
+    console.warn(
+      "[Server] mediasoup initialization failed, continuing without voice features:",
+      error.message
+    );
     // eslint-disable-next-line no-console
-    console.warn("[Server] Voice room features will not be available, but the server will continue to run.");
+    console.warn(
+      "[Server] Voice room features will not be available, but the server will continue to run."
+    );
   }
 
   const httpServer = createServer(app);
-  
+
   // Get allowed origins for Socket.IO
   const allowedOrigins = [
     process.env.FRONTEND_URL,
     "https://digitalaela.com",
     "https://www.digitalaela.com",
+    "https://digital-aela.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
@@ -44,13 +50,20 @@ const start = async () => {
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or Postman)
         if (!origin) return callback(null, true);
-        
+
         // Allow if origin is in allowed list or if in development
-        if (allowedOrigins.some(allowed => origin.includes(allowed.replace(/^https?:\/\//, ''))) || process.env.NODE_ENV !== "production") {
+        if (
+          allowedOrigins.some((allowed) =>
+            origin.includes(allowed.replace(/^https?:\/\//, ""))
+          ) ||
+          process.env.NODE_ENV !== "production"
+        ) {
           callback(null, true);
         } else {
           // In production, reject unlisted origins for security
-          console.warn(`[Socket.IO CORS] Blocked connection from unlisted origin: ${origin}`);
+          console.warn(
+            `[Socket.IO CORS] Blocked connection from unlisted origin: ${origin}`
+          );
           callback(new Error(`CORS: Origin ${origin} is not allowed`));
         }
       },
@@ -107,4 +120,3 @@ start().catch((error) => {
   console.error("[Server] Failed to start:", error);
   process.exit(1);
 });
-

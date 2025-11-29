@@ -1,4 +1,8 @@
-import { translateText, translateBatch, translateObject } from "../services/translationService.js";
+import {
+  translateText,
+  translateBatch,
+  translateObject,
+} from "../services/translationService.js";
 
 /**
  * Translate single text
@@ -29,6 +33,13 @@ export const translateSingle = async (req, res) => {
 
     const translation = await translateText(text, targetLang, sourceLang);
 
+    // Check if translation equals original (indicates failure)
+    if (translation === text && targetLang !== sourceLang) {
+      console.warn(
+        "[Translation Controller] Translation equals original - translation may have failed silently"
+      );
+    }
+
     res.json({
       success: true,
       data: {
@@ -41,10 +52,25 @@ export const translateSingle = async (req, res) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("[Translation Controller] Error:", error);
-    res.status(500).json({
+
+    // Check if it's a rate limit error
+    const isRateLimit =
+      error.message?.includes("Rate Limit") ||
+      error.message?.includes("Quota") ||
+      error.message?.includes("RESOURCE_EXHAUSTED");
+
+    const statusCode = isRateLimit ? 429 : 500;
+    const errorCode = isRateLimit ? "RATE_LIMIT_EXCEEDED" : "TRANSLATION_ERROR";
+
+    res.status(statusCode).json({
       error: {
-        code: "TRANSLATION_ERROR",
-        message: error.message || "Failed to translate text",
+        code: errorCode,
+        message:
+          error.message ||
+          (isRateLimit
+            ? "Translation API rate limit exceeded. Please try again later."
+            : "Failed to translate text"),
+        retryAfter: isRateLimit ? 60 : undefined, // Suggest retry after 60 seconds for rate limits
       },
     });
   }
@@ -90,6 +116,14 @@ export const translateBatchController = async (req, res) => {
 
     const translations = await translateBatch(texts, targetLang, sourceLang);
 
+    // Check if all translations equal originals (indicates failure)
+    const allSame = translations.every((trans, idx) => trans === texts[idx]);
+    if (allSame && targetLang !== sourceLang) {
+      console.warn(
+        "[Translation Controller] All translations equal originals - translation may have failed silently"
+      );
+    }
+
     res.json({
       success: true,
       data: {
@@ -103,10 +137,25 @@ export const translateBatchController = async (req, res) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("[Translation Controller] Batch error:", error);
-    res.status(500).json({
+
+    // Check if it's a rate limit error
+    const isRateLimit =
+      error.message?.includes("Rate Limit") ||
+      error.message?.includes("Quota") ||
+      error.message?.includes("RESOURCE_EXHAUSTED");
+
+    const statusCode = isRateLimit ? 429 : 500;
+    const errorCode = isRateLimit ? "RATE_LIMIT_EXCEEDED" : "TRANSLATION_ERROR";
+
+    res.status(statusCode).json({
       error: {
-        code: "TRANSLATION_ERROR",
-        message: error.message || "Failed to translate texts",
+        code: errorCode,
+        message:
+          error.message ||
+          (isRateLimit
+            ? "Translation API rate limit exceeded. Please try again later."
+            : "Failed to translate texts"),
+        retryAfter: isRateLimit ? 60 : undefined, // Suggest retry after 60 seconds for rate limits
       },
     });
   }
@@ -139,7 +188,12 @@ export const translateObjectController = async (req, res) => {
       });
     }
 
-    const translated = await translateObject(object, targetLang, sourceLang, keysToTranslate);
+    const translated = await translateObject(
+      object,
+      targetLang,
+      sourceLang,
+      keysToTranslate
+    );
 
     res.json({
       success: true,
@@ -161,4 +215,3 @@ export const translateObjectController = async (req, res) => {
     });
   }
 };
-

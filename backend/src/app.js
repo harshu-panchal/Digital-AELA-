@@ -45,8 +45,14 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import userRatingRoutes from "./routes/userRatingRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import csrfRoutes from "./routes/csrfRoutes.js";
-import { publicRouter as galleryPublicRouter, adminRouter as galleryAdminRouter } from "./routes/galleryRoutes.js";
-import { publicRouter as testimonialPublicRouter, adminRouter as testimonialAdminRouter } from "./routes/testimonialRoutes.js";
+import {
+  publicRouter as galleryPublicRouter,
+  adminRouter as galleryAdminRouter,
+} from "./routes/galleryRoutes.js";
+import {
+  publicRouter as testimonialPublicRouter,
+  adminRouter as testimonialAdminRouter,
+} from "./routes/testimonialRoutes.js";
 import { authenticate, optionalAuth } from "./middleware/authMiddleware.js";
 import { trackSession } from "./middleware/sessionTracking.js";
 import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
@@ -60,20 +66,24 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, or curl)
     if (!origin) return callback(null, true);
-    
+
     // List of allowed origins
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       "https://digitalaela.com",
       "https://www.digitalaela.com",
+      "https://digital-aela.vercel.app",
       "http://localhost:5173",
       "http://localhost:3000",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:3000",
     ].filter(Boolean); // Remove undefined values
-    
+
     // Allow if origin is in allowed list or if in development
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+    if (
+      allowedOrigins.includes(origin) ||
+      process.env.NODE_ENV !== "production"
+    ) {
       callback(null, true);
     } else {
       // In production, reject unlisted origins for security
@@ -83,7 +93,13 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-Token", "CSRF-Token"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "X-CSRF-Token",
+    "CSRF-Token",
+  ],
   exposedHeaders: ["Content-Range", "X-Content-Range", "X-CSRF-Token"],
 };
 
@@ -246,19 +262,21 @@ app.use(async (err, req, res, next) => {
   console.error("[Error]", JSON.stringify(errorDetails, null, 2));
 
   const status = err.status || 500;
-  
+
   // Ensure CORS headers are set even on error responses
   const origin = req.headers.origin;
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
-  
+
   // Don't expose internal error details in production
-  const errorMessage = isDevelopment 
-    ? (err.message || "Something went wrong")
-    : (status === 500 ? "Internal server error" : (err.message || "Something went wrong"));
-  
+  const errorMessage = isDevelopment
+    ? err.message || "Something went wrong"
+    : status === 500
+    ? "Internal server error"
+    : err.message || "Something went wrong";
+
   res.status(status).json({
     error: {
       code: err.code || "SERVER_ERROR",
@@ -269,4 +287,3 @@ app.use(async (err, req, res, next) => {
 });
 
 export default app;
-
