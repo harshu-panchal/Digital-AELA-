@@ -1,4 +1,28 @@
 import rateLimit from "express-rate-limit";
+import { ipKeyGenerator } from "express-rate-limit";
+
+/* ✅ Global Rate Limiter */
+export const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req)
+});
+
+/* ✅ Auth Limiter */
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => ipKeyGenerator(req)
+});
+
+/* ✅ API Limiter */
+export const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => ipKeyGenerator(req)
+});
 
 /**
  * Rate limiter for login attempts
@@ -16,9 +40,7 @@ export const loginRateLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Use IP address as key
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress || "unknown";
-  },
+  keyGenerator: (req) => ipKeyGenerator(req),
   // Custom handler for rate limit exceeded
   handler: (req, res) => {
     res.status(429).json({
@@ -52,7 +74,7 @@ export const paymentRateLimiter = rateLimit({
     if (userId) {
       return `payment:${userId}`; // Per-user limit
     }
-    return req.ip || req.connection.remoteAddress || "unknown"; // Per-IP fallback
+    return ipKeyGenerator(req); // Per-IP fallback
   },
   handler: (req, res) => {
     res.status(429).json({
@@ -86,7 +108,7 @@ export const apiRateLimiter = rateLimit({
     if (userId) {
       return `api:${userId}`; // Per-user limit
     }
-    return req.ip || req.connection.remoteAddress || "unknown"; // Per-IP fallback
+    return ipKeyGenerator(req); // Per-IP fallback
   },
   handler: (req, res) => {
     res.status(429).json({
@@ -126,7 +148,7 @@ export const strictRateLimiter = rateLimit({
     if (userId) {
       return `strict:${userId}`;
     }
-    return req.ip || req.connection.remoteAddress || "unknown";
+    return ipKeyGenerator(req);
   },
   handler: (req, res) => {
     res.status(429).json({
@@ -160,7 +182,7 @@ export const passwordResetRateLimiter = rateLimit({
     if (email) {
       return `password-reset:${email.toLowerCase().trim()}`;
     }
-    return req.ip || req.connection.remoteAddress || "unknown";
+    return ipKeyGenerator(req);
   },
   handler: (req, res) => {
     res.status(429).json({
@@ -188,9 +210,7 @@ export const registrationRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress || "unknown";
-  },
+  keyGenerator: (req) => ipKeyGenerator(req),
   handler: (req, res) => {
     res.status(429).json({
       error: {
