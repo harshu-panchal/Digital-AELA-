@@ -6,6 +6,7 @@ import Navbar from "../modules/business-management/business-components/Navbar";
 import Footer from "../modules/business-management/business-components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import FloatingDebateButton from "./components/FloatingDebateButton";
+import WebsitePopupForm from "./components/WebsitePopupForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FinancialProtectedRoute from "./components/FinancialProtectedRoute";
 import Home from "../modules/business-management/business-pages/Home";
@@ -800,6 +801,7 @@ export const App = () => {
         (location.pathname === "/" || location.pathname === "/home") && (
           <FloatingDebateButton />
         )}
+      <WebsitePopupForm />
     </>
   );
 };

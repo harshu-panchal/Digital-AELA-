@@ -907,6 +907,7 @@ export const createFormLead = async (req, res, next) => {
       "general-inquiry": "website",
       "request-callback": "website",
       "workshop-enrollment": "website",
+      "website-popup": "website",
     };
 
     // Use mapped source or default to "website" for new form types
@@ -1005,6 +1006,28 @@ export const createFormLead = async (req, res, next) => {
       if (payload.timeframe) descParts.push(`Timeframe: ${payload.timeframe}`);
       if (payload.message) descParts.push(`Message: ${payload.message}`);
       description = descParts.join(" | ");
+    } else if (formId === "website-popup") {
+      // Website popup form fields: firstName, lastName, email, phone, city, country, profession, age, message
+      firstName = payload.firstName?.trim() || "";
+      lastName = payload.lastName?.trim() || "";
+      email = payload.email?.toLowerCase().trim() || "";
+      phone = payload.phone?.trim() || "";
+
+      // Store form-specific fields in customFields
+      if (payload.city) customFields.city = payload.city.trim();
+      if (payload.country) customFields.country = payload.country.trim();
+      if (payload.profession) customFields.profession = payload.profession.trim();
+      if (payload.age) customFields.age = payload.age.trim();
+      if (payload.message) customFields.message = payload.message.trim();
+
+      // Create description
+      const descParts = [];
+      if (payload.city) descParts.push(`City: ${payload.city}`);
+      if (payload.country) descParts.push(`Country: ${payload.country}`);
+      if (payload.profession) descParts.push(`Profession: ${payload.profession}`);
+      if (payload.age) descParts.push(`Age: ${payload.age}`);
+      if (payload.message) descParts.push(`Message: ${payload.message}`);
+      description = descParts.length > 0 ? descParts.join(" | ") : undefined;
     } else {
       // Handle other form types (general-inquiry, request-callback, workshop-enrollment, etc.)
       // Generic extraction for forms with fullName or firstName/lastName
