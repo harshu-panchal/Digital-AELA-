@@ -13,7 +13,20 @@ const BATCH_WAIT_TIME = 100; // Wait 100ms to collect more requests before proce
 // Process translation queue with rate limiting
 const processTranslationQueue = async () => {
   if (isProcessingQueue || translationQueue.length === 0) {
+    if (import.meta.env.PROD && translationQueue.length > 0) {
+      console.log("[Translation Service] Queue processing skipped:", {
+        isProcessingQueue,
+        queueLength: translationQueue.length,
+      });
+    }
     return;
+  }
+
+  if (import.meta.env.PROD) {
+    console.log("[Translation Service] Starting queue processing:", {
+      queueLength: translationQueue.length,
+      apiUrl: API_BASE_URL,
+    });
   }
 
   isProcessingQueue = true;
@@ -51,6 +64,18 @@ const processTranslationQueue = async () => {
       // If single request, use single endpoint
       if (batch.length === 1) {
         const { text, targetLang, sourceLang, normalizedTarget, normalizedSource, resolve, reject } = batch[0];
+        
+        if (import.meta.env.PROD) {
+          console.log("[Translation Service] Making single translation API call:", {
+            endpoint: "/translate",
+            apiUrl: API_BASE_URL,
+            fullUrl: `${API_BASE_URL}/translate`,
+            text: text.substring(0, 50) + "...",
+            targetLang,
+            sourceLang,
+          });
+        }
+
         try {
           const response = await apiRequest(
             "/translate",
@@ -60,18 +85,45 @@ const processTranslationQueue = async () => {
               skipAuth: true,
             }
           );
+          
+          if (import.meta.env.PROD) {
+            console.log("[Translation Service] Single translation API response:", {
+              success: !!response?.data?.translation,
+              hasTranslation: !!response?.data?.translation,
+              responseKeys: response ? Object.keys(response) : [],
+            });
+          }
+
           const translation = response?.data?.translation || text;
           
           // Cache the translation for future use
           if (translation !== text && normalizedTarget && normalizedSource) {
             try {
               await cacheTranslation(text, translation, normalizedTarget, normalizedSource);
+              if (import.meta.env.PROD) {
+                console.log("[Translation Service] Translation cached successfully");
+              }
             } catch (cacheError) {
               // Cache error, ignore but continue
               if (import.meta.env.PROD) {
                 console.warn("[Translation Service] Failed to cache translation:", cacheError.message);
               }
             }
+          } else {
+            if (import.meta.env.PROD) {
+              console.log("[Translation Service] Translation not cached:", {
+                reason: translation === text ? "translation same as original" : "missing normalized language codes",
+                normalizedTarget,
+                normalizedSource,
+              });
+            }
+          }
+          
+          if (import.meta.env.PROD) {
+            console.log("[Translation Service] Resolving single translation:", {
+              original: text.substring(0, 50) + "...",
+              translated: translation.substring(0, 50) + "...",
+            });
           }
           
           resolve(translation);
@@ -106,6 +158,17 @@ const processTranslationQueue = async () => {
         const batchNormalizedTarget = batch[0]?.normalizedTarget;
         const batchNormalizedSource = batch[0]?.normalizedSource;
         
+        if (import.meta.env.PROD) {
+          console.log("[Translation Service] Making batch translation API call:", {
+            endpoint: "/translate/batch",
+            apiUrl: API_BASE_URL,
+            fullUrl: `${API_BASE_URL}/translate/batch`,
+            textCount: texts.length,
+            targetLang: batchTargetLang,
+            sourceLang: batchSourceLang,
+          });
+        }
+        
         try {
           const response = await apiRequest(
             "/translate/batch",
@@ -115,6 +178,16 @@ const processTranslationQueue = async () => {
               skipAuth: true,
             }
           );
+          
+          if (import.meta.env.PROD) {
+            console.log("[Translation Service] Batch translation API response:", {
+              success: !!response?.data?.translations,
+              translationCount: response?.data?.translations?.length,
+              expectedCount: texts.length,
+              responseKeys: response ? Object.keys(response) : [],
+            });
+          }
+
           const translations = response?.data?.translations || texts;
           
           // Cache all translations for future use
@@ -212,7 +285,20 @@ const queueTranslation = (text, targetLang, sourceLang, normalizedTarget, normal
  * @returns {Promise<string>} - Translated text
  */
 export const translateText = async (text, targetLang, sourceLang = "en") => {
+  if (import.meta.env.PROD) {
+    console.log("[Translation Service] translateText called:", {
+      text: text?.substring(0, 50) + (text?.length > 50 ? "..." : ""),
+      targetLang,
+      sourceLang,
+      apiUrl: API_BASE_URL,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   if (!text || typeof text !== "string" || !text.trim()) {
+    if (import.meta.env.PROD) {
+      console.log("[Translation Service] translateText: Invalid text, returning original");
+    }
     return text;
   }
 
@@ -221,20 +307,62 @@ export const translateText = async (text, targetLang, sourceLang = "en") => {
   const normalizedTarget = normalizeForCache(targetLang);
   const normalizedSource = normalizeForCache(sourceLang);
 
+  if (import.meta.env.PROD) {
+    console.log("[Translation Service] Normalized language codes:", {
+      targetLang,
+      normalizedTarget,
+      sourceLang,
+      normalizedSource,
+    });
+  }
+
   // Check cache first
   try {
     const cached = await getCachedTranslation(text, normalizedTarget, normalizedSource);
     if (cached) {
+      if (import.meta.env.PROD) {
+        console.log("[Translation Service] Cache HIT:", {
+          text: text.substring(0, 50) + "...",
+          cached: cached.substring(0, 50) + "...",
+        });
+      }
       return cached;
+    } else {
+      if (import.meta.env.PROD) {
+        console.log("[Translation Service] Cache MISS:", {
+          text: text.substring(0, 50) + "...",
+        });
+      }
     }
   } catch (e) {
+    if (import.meta.env.PROD) {
+      console.warn("[Translation Service] Cache check error:", e.message);
+    }
     // Cache error, continue with API call
   }
 
   try {
+    if (import.meta.env.PROD) {
+      console.log("[Translation Service] Queuing translation request:", {
+        text: text.substring(0, 50) + "...",
+        targetLang,
+        sourceLang,
+        normalizedTarget,
+        normalizedSource,
+      });
+    }
+
     // Use queued translation to prevent rate limiting
     // Caching is handled in the queue processor
     const translation = await queueTranslation(text, targetLang, sourceLang, normalizedTarget, normalizedSource);
+
+    if (import.meta.env.PROD) {
+      console.log("[Translation Service] Translation received:", {
+        original: text.substring(0, 50) + "...",
+        translated: typeof translation === "string" ? translation.substring(0, 50) + "..." : translation,
+        changed: translation !== text,
+      });
+    }
 
     return translation;
   } catch (error) {

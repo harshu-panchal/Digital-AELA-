@@ -123,6 +123,16 @@ export const LanguageProvider = ({ children }) => {
   useEffect(() => {
     // Save language preference to localStorage
     localStorage.setItem("selectedLanguage", language);
+    
+    // Log language state for debugging
+    if (import.meta.env.PROD) {
+      console.log("[LanguageContext] Language state updated:", {
+        language,
+        normalized: normalizeLanguageCode(language),
+        storedInLocalStorage: localStorage.getItem("selectedLanguage"),
+        timestamp: new Date().toISOString(),
+      });
+    }
   }, [language]);
 
   const changeLanguage = useCallback(async (langCode) => {
@@ -132,9 +142,18 @@ export const LanguageProvider = ({ children }) => {
       return;
     }
 
+    // Log language change for debugging
+    if (import.meta.env.PROD) {
+      console.log("[LanguageContext] Language change requested:", {
+        from: language,
+        to: langCode,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     setIsChangingLanguage(true);
     setLanguage(langCode);
-  }, [languages]);
+  }, [languages, language]);
 
   const value = {
     language,

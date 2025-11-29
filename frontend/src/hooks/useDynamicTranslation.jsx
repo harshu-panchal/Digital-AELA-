@@ -24,9 +24,29 @@ export const useDynamicTranslation = (options = {}) => {
   // Translate single text
   const translate = useCallback(
     async (text) => {
+      // Log translation attempt
+      if (import.meta.env.PROD) {
+        console.log("[useDynamicTranslation] translate called:", {
+          text: typeof text === "string" ? text.substring(0, 50) + (text.length > 50 ? "..." : "") : "non-string",
+          language,
+          normalizedLanguage,
+          sourceLang,
+          normalizedSourceLang,
+          autoTranslate,
+          isChangingLanguage,
+        });
+      }
+
       // Skip translation if conditions not met
       // Note: We allow translation even during language change to ensure content updates
       if (!text || !autoTranslate || normalizedLanguage === normalizedSourceLang) {
+        if (import.meta.env.PROD) {
+          console.log("[useDynamicTranslation] Translation skipped:", {
+            reason: !text ? "no text" : !autoTranslate ? "autoTranslate=false" : "language match",
+            normalizedLanguage,
+            normalizedSourceLang,
+          });
+        }
         return text;
       }
 
@@ -34,7 +54,19 @@ export const useDynamicTranslation = (options = {}) => {
       setTranslationError(null);
 
       try {
+        if (import.meta.env.PROD) {
+          console.log("[useDynamicTranslation] Calling translateText service");
+        }
         const translated = await translateText(text, language, sourceLang);
+        
+        if (import.meta.env.PROD) {
+          console.log("[useDynamicTranslation] Translation result:", {
+            original: typeof text === "string" ? text.substring(0, 50) + "..." : text,
+            translated: typeof translated === "string" ? translated.substring(0, 50) + "..." : translated,
+            changed: translated !== text,
+          });
+        }
+        
         return translated;
       } catch (error) {
         setTranslationError(error);
