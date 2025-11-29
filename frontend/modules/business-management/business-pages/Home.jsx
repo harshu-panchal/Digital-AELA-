@@ -721,9 +721,9 @@ const Home = () => {
         badge: "Our Mission",
         title: (
           <>
-            Affordable & Global Education
+            <TranslatedText>Affordable & Global Education</TranslatedText>
             <br />
-            (Har Ghar Shiksha)
+            <TranslatedText>(Har Ghar Shiksha)</TranslatedText>
           </>
         ),
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
