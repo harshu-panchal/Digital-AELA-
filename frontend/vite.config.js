@@ -36,8 +36,14 @@ export default defineConfig({
             }
             
             // Mediasoup and WebRTC related - heavy
-            if (id.includes('mediasoup') || id.includes('socket.io')) {
+            // Keep mediasoup separate to avoid CommonJS/ES module conflicts
+            if (id.includes('mediasoup')) {
               return 'vendor-webrtc';
+            }
+            
+            // Socket.io - separate from mediasoup to avoid conflicts
+            if (id.includes('socket.io')) {
+              return 'vendor-socket';
             }
             
             // TipTap editor - medium sized
@@ -80,14 +86,18 @@ export default defineConfig({
           }
         },
       },
+      external: [],
     },
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
       requireReturnsDefault: 'auto',
+      defaultIsModuleExports: 'auto',
+      esmExternals: true,
     },
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild',
+    target: 'esnext',
   },
   optimizeDeps: {
     include: [
@@ -98,9 +108,16 @@ export default defineConfig({
       'mediasoup-client',
       'socket.io-client'
     ],
-    exclude: [],
     esbuildOptions: {
       target: 'esnext',
+      define: {
+        global: 'globalThis',
+      },
     },
+    force: false,
+  },
+  define: {
+    global: 'globalThis',
+    'process.env': {},
   },
 });
