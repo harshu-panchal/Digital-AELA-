@@ -137,7 +137,16 @@ const RecruiterRegister = () => {
       // Redirect to login page instead of dashboard since account needs approval
       navigate("/login/recruiter", { replace: true });
     } catch (error) {
-      toast.error(error.message || "We couldn't create the account. Please try again.");
+      // Handle specific error cases
+      if (error.status === 409 || error.code === "CONFLICT" || error.message?.includes("already exists")) {
+        toast.error("An account with this email already exists. Please try logging in instead.");
+        // Optionally redirect to login page
+        setTimeout(() => {
+          navigate("/login/recruiter", { replace: true });
+        }, 2000);
+      } else {
+        toast.error(error.message || "We couldn't create the account. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

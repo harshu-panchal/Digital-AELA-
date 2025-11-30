@@ -84,12 +84,20 @@ export default defineConfig({
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
+      requireReturnsDefault: 'auto',
     },
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild',
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom', 
+      'framer-motion',
+      'mediasoup-client',
+      'socket.io-client'
+    ],
     exclude: [],
     esbuildOptions: {
       target: 'esnext',

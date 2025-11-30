@@ -238,6 +238,12 @@ export const registerUser = async (req, res, next) => {
     } catch (emailError) {
       // Log error but don't fail registration
       console.error("Failed to send verification email:", emailError);
+      console.error("Email error details:", {
+        message: emailError.message,
+        code: emailError.code,
+        response: emailError.response,
+        stack: emailError.stack,
+      });
       // In production, you might want to queue this for retry
     }
 

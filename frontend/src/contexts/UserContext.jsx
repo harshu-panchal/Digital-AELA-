@@ -405,7 +405,7 @@ export const UserProvider = ({ children }) => {
           if (
             stats.followers !== undefined &&
             stats.followers !== null &&
-            prev.followers !== stats.followers
+            baseProfile.followers !== stats.followers
           ) {
             updated.followers = stats.followers;
             hasChanges = true;
@@ -413,7 +413,7 @@ export const UserProvider = ({ children }) => {
           if (
             stats.following !== undefined &&
             stats.following !== null &&
-            prev.following !== stats.following
+            baseProfile.following !== stats.following
           ) {
             updated.following = stats.following;
             hasChanges = true;
@@ -421,14 +421,14 @@ export const UserProvider = ({ children }) => {
           if (
             stats.rating !== undefined &&
             stats.rating !== null &&
-            prev.rating !== stats.rating
+            baseProfile.rating !== stats.rating
           ) {
             updated.rating = stats.rating;
             hasChanges = true;
           }
 
-          // Only return new object if there are actual changes
-          return hasChanges ? updated : prev;
+          // Only return new object if there are actual changes, or if prev was null (need to initialize)
+          return hasChanges || !prev ? updated : prev;
         });
 
         // Update ratings with quiz attempts count (totalRatings) - only if changed
@@ -568,9 +568,18 @@ export const UserProvider = ({ children }) => {
         });
       }
     } catch (error) {
+      // Silently handle "Invalid user ID" errors (user might not be fully registered yet)
+      const isInvalidUserId = error.message?.includes("Invalid user ID") || 
+                              error.code === "VALIDATION_ERROR";
+      
+      if (isInvalidUserId) {
+        // User ID format might not match backend expectations yet, silently ignore
+        return;
+      }
+      
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load followers:", error.message);
-      } else if (!isNetworkError(error)) {
+      } else if (!isNetworkError(error) && !error.suppressConsoleError) {
         // eslint-disable-next-line no-console
         console.warn("Failed to refresh followers:", error);
       }
@@ -595,9 +604,18 @@ export const UserProvider = ({ children }) => {
         });
       }
     } catch (error) {
+      // Silently handle "Invalid user ID" errors (user might not be fully registered yet)
+      const isInvalidUserId = error.message?.includes("Invalid user ID") || 
+                              error.code === "VALIDATION_ERROR";
+      
+      if (isInvalidUserId) {
+        // User ID format might not match backend expectations yet, silently ignore
+        return;
+      }
+      
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load following:", error.message);
-      } else if (!isNetworkError(error)) {
+      } else if (!isNetworkError(error) && !error.suppressConsoleError) {
         // eslint-disable-next-line no-console
         console.warn("Failed to refresh following:", error);
       }

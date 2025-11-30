@@ -284,7 +284,19 @@ export const AuthProvider = ({ children }) => {
           return handleBackendAuthSuccess(authResult);
         }
       } catch (backendError) {
-        // If backend auth fails, fall back to mock auth for backward compatibility
+        // Don't fall back to mock auth for specific backend errors
+        // These should be handled by the UI components
+        if (backendError.status === 409 || backendError.code === "CONFLICT") {
+          // Email already exists - don't fall back to mock auth
+          throw new Error("An account with this email already exists. Try signing in instead.");
+        }
+        
+        if (backendError.status === 422 || backendError.code === "VALIDATION_ERROR") {
+          // Validation error - don't fall back to mock auth
+          throw backendError;
+        }
+
+        // For other errors, fall back to mock auth for backward compatibility
         // eslint-disable-next-line no-console
         console.warn("Backend registration failed, falling back to mock auth:", backendError);
         
