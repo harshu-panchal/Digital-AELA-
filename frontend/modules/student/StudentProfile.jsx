@@ -17,6 +17,7 @@ import { useAuth } from "../../src/contexts/AuthContext";
 import { useUser } from "../../src/contexts/UserContext";
 import { fetchStudentProfile, updateStudentProfile, uploadProfileImage } from "../../src/services/api/student";
 import { apiRequest } from "../../src/services/api/baseClient";
+import { getMediaUrl } from "../../src/utils/mediaUrl";
 
 const StudentProfile = () => {
   const { user: authUser, tokens, updateUserMetadata } = useAuth();
@@ -414,7 +415,7 @@ const StudentProfile = () => {
                 <div className="relative group">
                   {(avatarPreview || (avatarUrl && !imageError)) ? (
                     <img
-                      src={avatarPreview || avatarUrl}
+                      src={avatarPreview || getMediaUrl(avatarUrl)}
                       alt={formData.fullName || "Student"}
                       className="h-24 w-24 rounded-full object-cover border-2 border-[#F5D26A]/40"
                       onError={() => setImageError(true)}

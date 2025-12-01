@@ -33,6 +33,7 @@ import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation"
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const MotionLink = motion.create(Link);
 
@@ -1716,7 +1717,7 @@ const Home = () => {
                         <div className="shrink-0 h-40 w-full overflow-hidden">
                           <img
                             src={
-                              course.image ||
+                              getMediaUrl(course.image) ||
                               "https://via.placeholder.com/300x200?text=Course"
                             }
                             alt={course.title}
@@ -2255,7 +2256,7 @@ const Home = () => {
                       <div className="relative h-48 w-full overflow-hidden">
                         <img
                           src={
-                            book.image ||
+                            getMediaUrl(book.image) ||
                             "https://via.placeholder.com/300x400?text=Book"
                           }
                           alt={book.imageAlt || book.title}
@@ -2638,7 +2639,7 @@ const Home = () => {
                     className="flex h-full flex-col">
                     <div className="relative h-56 w-full overflow-hidden shrink-0">
                       <img
-                        src={blog.thumbnail}
+                        src={getMediaUrl(blog.thumbnail)}
                         alt={blog.title}
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -2744,7 +2745,7 @@ const Home = () => {
                   className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-[0_28px_70px_rgba(8,8,8,0.45)]">
                   <div className="relative h-56 w-full overflow-hidden">
                     <img
-                      src={item.image}
+                      src={getMediaUrl(item.image)}
                       alt="AELA community gallery"
                       loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -2855,7 +2856,7 @@ const Home = () => {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
                         <img
-                          src={item.avatar}
+                          src={getMediaUrl(item.avatar) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"}
                           alt={item.name}
                           className="h-full w-full object-cover"
                           loading="lazy"

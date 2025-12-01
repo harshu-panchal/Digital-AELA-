@@ -15,6 +15,7 @@ import {
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { apiRequest } from "../../src/services/api/baseClient";
+import { getMediaUrl } from "../../src/utils/mediaUrl";
 
 const TeacherProfile = () => {
   const { user: authUser, tokens } = useAuth();
@@ -179,7 +180,7 @@ const TeacherProfile = () => {
               <div className="flex items-center gap-6 pb-6 border-b border-white/10">
                 {authUser?.metadata?.avatarUrl && !imageError ? (
                   <img
-                    src={authUser.metadata.avatarUrl}
+                    src={getMediaUrl(authUser.metadata.avatarUrl)}
                     alt={formData.fullName || "Teacher"}
                     className="h-24 w-24 rounded-full object-cover border-2 border-[#F5D26A]/40"
                     onError={() => setImageError(true)}

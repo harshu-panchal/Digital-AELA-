@@ -1,3 +1,5 @@
+import { getMediaUrl } from "../../../../src/utils/mediaUrl";
+
 const TeacherPreview = ({ teacher }) => {
   if (!teacher) return null;
 
@@ -39,7 +41,7 @@ const TeacherPreview = ({ teacher }) => {
       {teacher.profileImage && (
         <div className="overflow-hidden rounded-xl border border-white/10">
           <img
-            src={teacher.profileImage}
+            src={getMediaUrl(teacher.profileImage)}
             alt={teacher.fullName}
             className="h-auto w-full max-h-64 object-cover sm:max-h-80 mx-auto"
           />

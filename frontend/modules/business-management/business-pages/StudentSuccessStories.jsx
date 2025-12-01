@@ -6,6 +6,7 @@ import SEO from "../../../src/components/SEO";
 import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const StudentSuccessStories = () => {
   // Translation hook for option text (can't use TranslatedText component in <option>)
@@ -247,7 +248,7 @@ const StudentSuccessStories = () => {
                   className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
                   <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 shadow-[0_12px_35px_rgba(12,12,12,0.55)]">
                     <img
-                      src={story.avatar}
+                      src={getMediaUrl(story.avatar) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80"}
                       alt={story.name}
                       loading="lazy"
                       className="h-full w-full object-cover"

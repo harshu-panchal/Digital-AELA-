@@ -20,6 +20,7 @@ import {
   deleteTestimonial,
   toggleTestimonialStatus,
 } from "../../../src/services/api/testimonials";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const TestimonialManagement = () => {
   const [testimonials, setTestimonials] = useState([]);
@@ -276,7 +277,7 @@ const TestimonialManagement = () => {
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     {testimonial.avatar && (
                       <img
-                        src={testimonial.avatar}
+                        src={getMediaUrl(testimonial.avatar)}
                         alt={testimonial.name}
                         className="w-12 h-12 rounded-full object-cover border-2 border-[#F5D26A]/50"
                       />
@@ -537,7 +538,7 @@ const TestimonialManagement = () => {
                   {avatarPreview ? (
                     <div className="relative mb-2">
                       <img
-                        src={avatarPreview}
+                        src={avatarPreview.startsWith("data:") ? avatarPreview : getMediaUrl(avatarPreview)}
                         alt="Preview"
                         className="w-24 h-24 rounded-full object-cover border-2 border-[#F5D26A]/50"
                       />

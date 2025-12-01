@@ -30,6 +30,7 @@ import {
 } from "../../../src/services/api/student";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const ProfilePage = () => {
   const { profile, updateProfile, refreshSocialStats, followers, following } =
@@ -632,7 +633,7 @@ const ProfilePage = () => {
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:gap-5">
               <div className="relative rounded-full border-4 border-black/80 p-1 group overflow-hidden">
                 <img
-                  src={avatarPreview || profile?.avatar}
+                  src={avatarPreview || getMediaUrl(profile?.avatar)}
                   alt={profile?.name || "User"}
                   className="h-28 w-28 rounded-full border-4 border-[#D4AF37]/50 object-cover"
                 />

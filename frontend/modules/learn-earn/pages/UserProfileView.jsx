@@ -29,6 +29,7 @@ import { followUser, unfollowUser, fetchFollowing } from "../../../src/services/
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useUser } from "../../../src/contexts/UserContext";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const UserProfileView = () => {
   const { userId } = useParams();
@@ -206,7 +207,7 @@ const UserProfileView = () => {
             <div className="flex-shrink-0">
               {profile?.avatarUrl || stats?.user?.avatarUrl ? (
                 <img
-                  src={profile.avatarUrl || stats.user.avatarUrl}
+                  src={getMediaUrl(profile.avatarUrl || stats.user.avatarUrl)}
                   alt={user.fullName || "User"}
                   className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-[#D4AF37]/30"
                 />

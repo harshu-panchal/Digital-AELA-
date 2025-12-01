@@ -1,3 +1,5 @@
+import { getMediaUrl } from "../../../../src/utils/mediaUrl";
+
 const StudentPreview = ({ student }) => {
   if (!student) return null;
 
@@ -47,7 +49,7 @@ const StudentPreview = ({ student }) => {
       {(student.profileImage || profile.avatarUrl) && (
         <div className="overflow-hidden rounded-xl border border-white/10">
           <img
-            src={student.profileImage || profile.avatarUrl}
+            src={getMediaUrl(student.profileImage || profile.avatarUrl)}
             alt={student.fullName}
             className="h-auto w-full max-h-64 object-cover sm:max-h-80 mx-auto"
           />

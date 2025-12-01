@@ -13,6 +13,7 @@ import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation"
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -394,7 +395,7 @@ const Books = () => {
                     {/* Book Image */}
                     <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
                       <img
-                        src={book.image}
+                        src={getMediaUrl(book.image)}
                         alt={book.imageAlt || `${book.title} cover`}
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"

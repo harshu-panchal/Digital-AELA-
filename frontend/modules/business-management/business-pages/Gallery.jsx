@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion as Motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { getGalleryImages } from "../../../src/services/api/gallery";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const Gallery = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -92,7 +93,7 @@ const Gallery = () => {
               className="group overflow-hidden rounded-2xl border border-white/10 bg-[#060606] shadow-[0_22px_60px_rgba(0,0,0,0.7)]">
               <div className="relative h-40 sm:h-48 md:h-52 w-full overflow-hidden">
                 <img
-                  src={item.image}
+                  src={getMediaUrl(item.image)}
                   alt="AELA community gallery"
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
