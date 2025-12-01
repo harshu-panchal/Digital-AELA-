@@ -1631,8 +1631,6 @@ const Home = () => {
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
               <TranslatedText>Choose from our carefully designed programs tailored to your learning level and goals</TranslatedText>
-                defaultValue: "Choose from our carefully designed programs tailored to your learning level and goals",
-              })}
             </p>
           </motion.div>
 
