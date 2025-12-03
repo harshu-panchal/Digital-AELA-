@@ -1452,6 +1452,7 @@ export const createEbook = async (req, res, next) => {
       categories,
       isPublic = true,
       isFeatured = false,
+      bookType,
     } = req.body;
 
     if (!title) {
@@ -1481,9 +1482,20 @@ export const createEbook = async (req, res, next) => {
       });
     }
 
-    // Handle PDF file upload if provided
+    // Determine book type (default to "ebook" for backward compatibility)
+    const isPhysicalBook = bookType === "physical";
+
+    // Handle PDF file upload if provided (only for e-books)
     let finalDownloadUrl = downloadUrl;
     if (req.file) {
+      if (isPhysicalBook) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "PDF file upload is not allowed for physical books",
+          },
+        });
+      }
       // Save PDF to local storage
       const uploadResult = await uploadPdfToCloudinary(
         req.file.buffer,
@@ -1492,40 +1504,50 @@ export const createEbook = async (req, res, next) => {
       );
       finalDownloadUrl = uploadResult.url;
     } else if (downloadUrl) {
-      // Validate that downloadUrl is a PDF, not an image
-      const urlLower = downloadUrl.toLowerCase();
-      const urlPath = urlLower.split('?')[0].split('#')[0];
-      const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-      const isImageUrl = imageExtensions.some(ext => urlPath.endsWith(ext));
-      const isCoverImagePath = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
-      
-      if (isImageUrl || isCoverImagePath) {
-        return res.status(422).json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Download URL must point to a PDF file, not an image. Please provide a valid PDF URL or upload a PDF file.",
-          },
-        });
-      }
-      
-      // Check if URL ends with .pdf or is a Cloudinary raw resource
-      if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
-        return res.status(422).json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Download URL must point to a PDF file. Please provide a valid PDF URL or upload a PDF file.",
-          },
-        });
+      // Only validate downloadUrl for e-books
+      if (!isPhysicalBook) {
+        // Validate that downloadUrl is a PDF, not an image
+        const urlLower = downloadUrl.toLowerCase();
+        const urlPath = urlLower.split('?')[0].split('#')[0];
+        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+        const isImageUrl = imageExtensions.some(ext => urlPath.endsWith(ext));
+        const isCoverImagePath = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
+        
+        if (isImageUrl || isCoverImagePath) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Download URL must point to a PDF file, not an image. Please provide a valid PDF URL or upload a PDF file.",
+            },
+          });
+        }
+        
+        // Check if URL ends with .pdf or is a Cloudinary raw resource
+        if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
+          return res.status(422).json({
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Download URL must point to a PDF file. Please provide a valid PDF URL or upload a PDF file.",
+            },
+          });
+        }
       }
     }
 
-    if (!finalDownloadUrl) {
+    // Only require PDF/downloadUrl for e-books, not physical books
+    if (!isPhysicalBook && !finalDownloadUrl) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "PDF file or download URL is required",
+          message: "PDF file or download URL is required for e-books",
         },
       });
+    }
+
+    // For physical books, use a placeholder or empty string for downloadUrl
+    // (since the model requires it, we'll use a placeholder that indicates it's a physical book)
+    if (isPhysicalBook && !finalDownloadUrl) {
+      finalDownloadUrl = "physical-book"; // Placeholder to satisfy model requirement
     }
 
     // Check featured book limit (max 4)
@@ -1564,6 +1586,7 @@ export const createEbook = async (req, res, next) => {
         coverImage: coverImage || "",
         previewUrl: previewUrl || "",
         author: "Digital AELA",
+        bookType: bookType || "ebook", // Store book type (ebook or physical)
         tags: tags
           ? Array.isArray(tags)
             ? tags
