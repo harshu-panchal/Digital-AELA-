@@ -1,9 +1,17 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import Course from "../src/models/Course.js";
-import connectDatabase from "../src/config/db.js";
 
-dotenv.config();
+// Get the directory of the current script
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from backend/.env file
+// The script is in backend/scripts/, so go up one level to backend/ for .env
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 /**
  * Migration script to fix malformed image URLs in courses
@@ -21,7 +29,16 @@ dotenv.config();
 const fixMalformedImageUrls = async () => {
   try {
     // Connect to MongoDB
-    await connectDatabase();
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    if (!mongoUri) {
+      console.error("❌ MONGODB_URI not found in .env file");
+      console.error("   Make sure you have a .env file in the backend directory with MONGODB_URI set");
+      process.exit(1);
+    }
+
+    await mongoose.connect(mongoUri, {
+      autoIndex: true,
+    });
     console.log("✅ Connected to MongoDB\n");
 
     // Import URL normalizer
