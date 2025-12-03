@@ -42,6 +42,21 @@ export const getMediaUrl = (url, options = {}) => {
     return finalUrl;
   }
 
+  // Normalize Windows-style paths (backslashes) to forward slashes
+  // This handles paths like "data\photos\courses\..." from Windows file system
+  finalUrl = finalUrl.replace(/\\/g, "/");
+
+  // Handle paths that start with "data/" (Windows file system paths)
+  // Convert "data/photos/..." to "/static/photos/..."
+  if (finalUrl.startsWith("data/")) {
+    finalUrl = finalUrl.replace(/^data\//, "/static/");
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[getMediaUrl] Converted data/ path to /static/ path: "${url}" -> "${finalUrl}"`
+      );
+    }
+  }
+
   // CRITICAL: Fix malformed URLs FIRST - before any other processing
   // Check for malformed URLs like "https://static/..." or "http://static/..." (missing domain)
   // These occur when URLs are incorrectly constructed. "static" is not a valid hostname.
@@ -75,6 +90,27 @@ export const getMediaUrl = (url, options = {}) => {
   // We should normalize them to "/static/..." before processing
   if (finalUrl.startsWith("static/") && !finalUrl.startsWith("/") && !finalUrl.startsWith("http")) {
     finalUrl = `/${finalUrl}`;
+  }
+
+  // CRITICAL: Fix URLs with triple slashes (https:/// or http:///)
+  // These are malformed URLs that browsers normalize incorrectly
+  // Pattern: https:///static/photos/... or http:///static/photos/...
+  if (/^https?:\/\/\//i.test(finalUrl)) {
+    // Extract the path part (everything after "https:///" or "http:///")
+    const path = finalUrl.replace(/^https?:\/\/\//i, "");
+    // Ensure path starts with /static/ prefix
+    finalUrl = path.startsWith("/static/") 
+      ? path 
+      : path.startsWith("/") 
+        ? `/static${path}` 
+        : `/static/${path}`;
+    
+    // Log the fix for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[getMediaUrl] Fixed triple-slash malformed URL: "${url}" -> "${finalUrl}"`
+      );
+    }
   }
 
   // If it's already a full URL (starts with http:// or https://), use as-is
@@ -124,13 +160,39 @@ export const getMediaUrl = (url, options = {}) => {
   // Handle relative URLs (both /static/... and static/... formats)
   let baseUrl = getApiBaseUrlWithoutPath();
   
+  // Extract backend domain from VITE_API_URL if baseUrl is invalid
+  // This handles cases where VITE_API_URL might be malformed
+  const extractBackendDomain = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+      try {
+        // Try to parse the URL to extract the origin
+        const url = new URL(envUrl);
+        return `${url.protocol}//${url.host}`;
+      } catch (e) {
+        // If URL parsing fails, try to extract domain manually
+        const match = envUrl.match(/^(https?:\/\/[^\/]+)/i);
+        if (match) {
+          return match[1];
+        }
+      }
+    }
+    return null;
+  };
+  
   // Validate and fix base URL if it's empty or invalid
   // Check for cases where baseUrl might be just "https://" or "http://" (protocol only)
   if (!baseUrl || baseUrl.trim() === "" || baseUrl === "https://" || baseUrl === "http://" || /^https?:\/\/$/.test(baseUrl)) {
-    // In browser, use window.location.origin as fallback
-    if (typeof window !== "undefined" && window.location) {
-      // For production, if frontend and API are on different domains, we need the API domain
-      // But if we don't have it, use current origin and hope static files are served from same origin
+    // Try to extract backend domain from VITE_API_URL
+    const extractedDomain = extractBackendDomain();
+    if (extractedDomain && extractedDomain !== "https://" && extractedDomain !== "http://") {
+      baseUrl = extractedDomain;
+      console.warn(
+        "[getMediaUrl] ⚠️ Base URL was invalid, extracted backend domain from VITE_API_URL. " +
+        `Using: "${baseUrl}" for path: "${normalizedPath}"`
+      );
+    } else if (typeof window !== "undefined" && window.location) {
+      // Last resort: use window.location.origin (only works if frontend and backend are on same domain)
       baseUrl = window.location.origin;
       console.warn(
         "[getMediaUrl] ⚠️ Base URL is invalid, using window.location.origin as fallback. " +
@@ -152,14 +214,20 @@ export const getMediaUrl = (url, options = {}) => {
   // Additional validation: ensure baseUrl is a valid URL with a domain
   // If baseUrl looks like just a protocol (https:// or http://), it's invalid
   if (baseUrl && /^https?:\/\/$/.test(baseUrl)) {
-    console.error(
-      "[getMediaUrl] ❌ Base URL is just a protocol without domain. " +
-      `baseUrl: "${baseUrl}", path: "${normalizedPath}"`
-    );
-    if (typeof window !== "undefined" && window.location) {
-      baseUrl = window.location.origin;
+    // Try to extract backend domain again
+    const extractedDomain = extractBackendDomain();
+    if (extractedDomain && extractedDomain !== "https://" && extractedDomain !== "http://") {
+      baseUrl = extractedDomain;
     } else {
-      baseUrl = "";
+      console.error(
+        "[getMediaUrl] ❌ Base URL is just a protocol without domain. " +
+        `baseUrl: "${baseUrl}", path: "${normalizedPath}"`
+      );
+      if (typeof window !== "undefined" && window.location) {
+        baseUrl = window.location.origin;
+      } else {
+        baseUrl = "";
+      }
     }
   }
   
@@ -176,7 +244,33 @@ export const getMediaUrl = (url, options = {}) => {
     finalUrl = normalizedPath;
   } else {
     // Construct final URL - if baseUrl is empty, return relative path (browser will resolve it)
-    finalUrl = cleanBaseUrl ? `${cleanBaseUrl}${normalizedPath}` : normalizedPath;
+    // Ensure we don't create malformed URLs like "https:///static/..." which becomes "https://static/..."
+    if (cleanBaseUrl && cleanBaseUrl.endsWith("://")) {
+      console.error(
+        "[getMediaUrl] ❌ Base URL ends with :// (malformed). Returning relative path instead. " +
+        `baseUrl: "${cleanBaseUrl}", path: "${normalizedPath}"`
+      );
+      finalUrl = normalizedPath;
+    } else {
+      finalUrl = cleanBaseUrl ? `${cleanBaseUrl}${normalizedPath}` : normalizedPath;
+    }
+  }
+
+  // Final validation: ensure we never return a malformed URL like "https://static/..." or "https:///static/..."
+  // This is a last safety check to catch any edge cases
+  if (/^https?:\/\/static(\/|$)/i.test(finalUrl) || /^https?:\/\/\//i.test(finalUrl)) {
+    console.error(
+      `[getMediaUrl] ❌ CRITICAL: About to return malformed URL: "${finalUrl}". ` +
+      `Original URL: "${url}". Fixing to relative path.`
+    );
+    // Extract path and return as relative URL
+    // Handle both "https://static/..." and "https:///static/..." patterns
+    const path = finalUrl.replace(/^https?:\/\/\/?static\/?/i, "").replace(/^https?:\/\/\//i, "");
+    finalUrl = path.startsWith("/static/") 
+      ? path 
+      : path.startsWith("/") 
+        ? `/static${path}` 
+        : `/static/${path}`;
   }
 
   // Add cache-busting parameter if requested (for updated images)

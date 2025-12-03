@@ -15,6 +15,7 @@ import {
   HiOutlineTrash,
 } from "react-icons/hi2";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const PostCard = ({
   post,
@@ -71,7 +72,7 @@ const PostCard = ({
           </div>
         )}
         <img
-          src={post.image}
+          src={getMediaUrl(post.image) || "https://via.placeholder.com/400x300?text=Post"}
           alt={post.title}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />

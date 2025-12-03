@@ -56,7 +56,37 @@ if (import.meta.env.PROD && typeof window !== "undefined") {
 
 // Export a function to get the base URL without /api/v1 suffix (for Socket.IO, etc.)
 export const getApiBaseUrlWithoutPath = () => {
-  return API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+  let url = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+  
+  // Validate the URL - ensure it's not just a protocol
+  // If it's malformed (like "https://" or "http://"), try to extract domain from VITE_API_URL
+  if (!url || url.trim() === "" || url === "https://" || url === "http://" || /^https?:\/\/$/.test(url)) {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+      try {
+        // Try to parse the URL to extract the origin
+        const parsedUrl = new URL(envUrl);
+        url = `${parsedUrl.protocol}//${parsedUrl.host}`;
+      } catch (e) {
+        // If URL parsing fails, try to extract domain manually
+        const match = envUrl.match(/^(https?:\/\/[^\/]+)/i);
+        if (match && match[1] && match[1] !== "https://" && match[1] !== "http://") {
+          url = match[1];
+        }
+      }
+    }
+  }
+  
+  // Final validation - if still invalid, return empty string
+  if (!url || url.trim() === "" || url === "https://" || url === "http://" || /^https?:\/\/$/.test(url)) {
+    console.error(
+      "[API Config] ❌ getApiBaseUrlWithoutPath: Invalid base URL. " +
+      `API_BASE_URL: "${API_BASE_URL}", VITE_API_URL: "${import.meta.env.VITE_API_URL || "NOT SET"}"`
+    );
+    return "";
+  }
+  
+  return url;
 };
 
 // API Base URL is configured above

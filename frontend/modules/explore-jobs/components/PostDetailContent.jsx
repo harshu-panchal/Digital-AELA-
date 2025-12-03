@@ -12,6 +12,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const StatPill = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-200">
@@ -70,7 +71,7 @@ const PostDetailContent = ({ post, onApply, hasApplied }) => {
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-[28px] border border-white/10">
         <img
-          src={post.image}
+          src={getMediaUrl(post.image) || "https://via.placeholder.com/800x400?text=Post"}
           alt={post.title}
           className="h-72 w-full object-cover"
         />
