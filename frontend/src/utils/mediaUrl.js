@@ -61,7 +61,25 @@ export const getMediaUrl = (url, options = {}) => {
   }
 
   // Handle relative URLs (both /static/... and static/... formats)
-  const baseUrl = getApiBaseUrlWithoutPath();
+  let baseUrl = getApiBaseUrlWithoutPath();
+  
+  // Validate and fix base URL if it's empty or invalid
+  if (!baseUrl || baseUrl.trim() === "" || baseUrl === "https://" || baseUrl === "http://") {
+    // In browser, use window.location.origin as fallback
+    if (typeof window !== "undefined" && window.location) {
+      baseUrl = window.location.origin;
+    } else {
+      // Fallback for SSR or when window is not available
+      console.error(
+        "[getMediaUrl] ❌ Base URL is empty or invalid. " +
+        "Please set VITE_API_URL environment variable correctly. " +
+        `Current baseUrl: "${baseUrl}"`
+      );
+      // Return the path as-is (relative URL) - browser will resolve it relative to current origin
+      baseUrl = "";
+    }
+  }
+  
   const cleanBaseUrl = baseUrl.replace(/\/$/, "");
   
   // Normalize the path - ensure it starts with /static/
@@ -80,7 +98,8 @@ export const getMediaUrl = (url, options = {}) => {
   }
   // If it already starts with "/static/", use as-is
 
-  finalUrl = `${cleanBaseUrl}${normalizedPath}`;
+  // Construct final URL - if baseUrl is empty, return relative path (browser will resolve it)
+  finalUrl = cleanBaseUrl ? `${cleanBaseUrl}${normalizedPath}` : normalizedPath;
 
   // Add cache-busting parameter if requested (for updated images)
   if (options.cacheBust) {
