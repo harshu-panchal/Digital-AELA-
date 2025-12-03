@@ -1,0 +1,67 @@
+server {
+    server_name api.digitalaela.com;
+
+    # Increase client body size limit for file uploads (50MB)
+    client_max_body_size 50M;
+    
+    # Increase buffer sizes for large requests
+    client_body_buffer_size 128k;
+    
+    # Increase timeouts for file uploads
+    client_body_timeout 60s;
+    client_header_timeout 60s;
+    send_timeout 60s;
+
+    # Custom error handler for 413 with CORS headers
+    error_page 413 @413_error;
+    location @413_error {
+        add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Content-Type' 'application/json' always;
+        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 50MB."}}';
+    }
+
+    # Main proxy location with CORS headers
+    location / {
+        # CORS Headers - MUST include 'always' for error responses
+        add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Range, X-Content-Range, X-CSRF-Token' always;
+
+        proxy_pass http://localhost:5000;   # Your backend port
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Increase proxy timeouts for file uploads
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Don't buffer large requests
+        proxy_request_buffering off;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/api.digitalaela.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/api.digitalaela.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+    if ($host = api.digitalaela.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name api.digitalaela.com;
+    return 404; # managed by Certbot
+}

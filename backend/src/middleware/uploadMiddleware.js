@@ -75,6 +75,15 @@ export const uploadMultiple = (fieldName = "images", maxCount = 5) => {
 
 // Handle upload errors
 export const handleUploadError = (err, req, res, next) => {
+  // Set CORS headers for all error responses
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token");
+  }
+
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
       const isPdf = req.file?.mimetype === "application/pdf";

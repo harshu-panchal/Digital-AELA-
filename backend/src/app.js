@@ -107,30 +107,9 @@ app.use(cors(corsOptions));
 // Increase body parser limits for file uploads
 // Note: For multipart/form-data (file uploads), multer handles parsing
 // But we still need these for other content types
-app.use(express.json({ limit: "10mb" })); // Increased from 1mb to 10mb
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Added for form data
+app.use(express.json({ limit: "50mb" })); // Increased for file uploads
+app.use(express.urlencoded({ extended: true, limit: "50mb" })); // Added for form data
 app.use(morgan("dev"));
-
-// Middleware to catch payload too large errors and set CORS headers
-app.use((err, req, res, next) => {
-  // Handle payload too large errors (413)
-  if (err.status === 413 || err.statusCode === 413 || err.type === "entity.too.large") {
-    const origin = req.headers.origin;
-    if (origin) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Credentials", "true");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token");
-    }
-    return res.status(413).json({
-      error: {
-        code: "PAYLOAD_TOO_LARGE",
-        message: "Request entity too large. Maximum file size is 5MB for images.",
-      },
-    });
-  }
-  next(err);
-});
 
 // Serve static files from data folder
 import { fileURLToPath } from "url";
@@ -327,15 +306,19 @@ app.use(async (err, req, res, next) => {
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token");
   }
 
   // Handle specific error types
   let errorMessage;
   let errorCode = err.code || "SERVER_ERROR";
   
-  if (status === 413 || err.type === "entity.too.large") {
+  if (status === 413 || err.statusCode === 413 || err.type === "entity.too.large" || err.code === "LIMIT_FILE_SIZE") {
     errorCode = "PAYLOAD_TOO_LARGE";
-    errorMessage = "Request entity too large. Maximum file size is 5MB for images.";
+    errorMessage = err.message || "Request entity too large. Maximum file size is 5MB for images.";
+    // Ensure status is 413 for payload too large errors
+    status = 413;
   } else if (status === 500) {
     errorMessage = isDevelopment
       ? err.message || "Internal server error"
