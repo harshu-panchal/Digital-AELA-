@@ -1483,7 +1483,18 @@ export const createEbook = async (req, res, next) => {
     }
 
     // Determine book type (default to "ebook" for backward compatibility)
-    const isPhysicalBook = bookType === "physical";
+    // Handle both string and boolean comparisons, and check req.body directly as fallback
+    const receivedBookType = (bookType || req.body?.bookType || "").toString().trim().toLowerCase();
+    const isPhysicalBook = receivedBookType === "physical" || receivedBookType === "physical-book";
+    
+    // Debug logging (can be removed in production)
+    console.log("[createEbook] Book type check:", {
+      bookType,
+      receivedBookType,
+      isPhysicalBook,
+      hasFile: !!req.file,
+      downloadUrl: downloadUrl ? "provided" : "not provided",
+    });
 
     // Handle PDF file upload if provided (only for e-books)
     let finalDownloadUrl = downloadUrl;
@@ -1535,6 +1546,7 @@ export const createEbook = async (req, res, next) => {
     }
 
     // Only require PDF/downloadUrl for e-books, not physical books
+    // IMPORTANT: This check must come AFTER handling file uploads and downloadUrl validation
     if (!isPhysicalBook && !finalDownloadUrl) {
       return res.status(422).json({
         error: {
