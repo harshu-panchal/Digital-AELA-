@@ -88,8 +88,7 @@ const studentProfileSchema = new mongoose.Schema(
   }
 );
 
-// Index for quick user profile lookup (already unique, but explicit index helps)
-studentProfileSchema.index({ user: 1 });
+// Note: user field already has unique: true which automatically creates an index
 
 const StudentProfile = mongoose.model("StudentProfile", studentProfileSchema);
 

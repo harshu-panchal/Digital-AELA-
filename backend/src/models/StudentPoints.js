@@ -59,7 +59,7 @@ const studentPointsSchema = new mongoose.Schema(
 // Indexes for leaderboard performance
 studentPointsSchema.index({ totalCoins: -1 }); // For coins leaderboard sorting
 studentPointsSchema.index({ streak: -1 }); // For streak leaderboard sorting
-studentPointsSchema.index({ student: 1 }); // For quick user lookup
+// Note: student field already has unique: true which automatically creates an index
 
 const StudentPoints = mongoose.model("StudentPoints", studentPointsSchema);
 
