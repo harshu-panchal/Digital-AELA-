@@ -29,24 +29,60 @@ export const normalizeUrl = (url) => {
 
   let normalizedUrl = url.trim();
 
+  // CRITICAL: Fix malformed URLs FIRST - before any other processing
   // Check for malformed URLs like "https://static/..." or "http://static/..." (missing domain)
-  // Match: https://static, https://static/, https://static/photos, etc.
-  if (/^https?:\/\/static(\/|$)/.test(normalizedUrl)) {
+  // "static" is not a valid hostname - these URLs are malformed and need fixing
+  // Match patterns:
+  // - https://static/photos/...
+  // - http://static/photos/...
+  // - https://static/
+  // - http://static/
+  // - https://static (no trailing slash)
+  // Use case-insensitive matching to catch all variations
+  if (/^https?:\/\/static(\/|$)/i.test(normalizedUrl)) {
     // Extract the path part (everything after "https://static" or "http://static")
-    // This handles both "https://static/photos/..." and "https://static" cases
-    const path = normalizedUrl.replace(/^https?:\/\/static\/?/, "");
-    // Ensure path starts with / if it doesn't already
-    normalizedUrl = path.startsWith("/") ? path : `/${path}`;
+    const path = normalizedUrl.replace(/^https?:\/\/static\/?/i, "");
+    // Ensure path starts with /static/ prefix
+    if (path.startsWith("/static/")) {
+      normalizedUrl = path;
+    } else if (path.startsWith("/")) {
+      normalizedUrl = `/static${path}`;
+    } else if (path) {
+      normalizedUrl = `/static/${path}`;
+    } else {
+      // Empty path after "https://static" - default to /static/
+      normalizedUrl = "/static/";
+    }
+    
+    // Log the fix for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[normalizeUrl] Fixed malformed URL: "${url}" -> "${normalizedUrl}"`
+      );
+    }
   }
 
   // If it's already a valid full URL (with proper domain), return as-is
+  // IMPORTANT: Check this AFTER fixing malformed URLs
   // This regex checks for http:// or https:// followed by a valid domain (not just "static")
-  if (/^https?:\/\/[^\/]+\//.test(normalizedUrl) || /^https?:\/\/[^\/]+$/.test(normalizedUrl)) {
-    // Valid full URL with domain - return as-is
+  // Must have at least one character that's not a slash after the protocol
+  if (/^https?:\/\/[^\/\s]+\//.test(normalizedUrl) || /^https?:\/\/[^\/\s]+$/.test(normalizedUrl)) {
+    // Additional check: ensure it's not still a malformed static URL
+    // (shouldn't happen after fix above, but double-check)
+    if (!/^https?:\/\/static(\/|$)/i.test(normalizedUrl)) {
+      // Valid full URL with domain - return as-is
+      return normalizedUrl;
+    }
+    // If it's still malformed, continue with normalization below
+  }
+
+  // Handle data URLs - return as-is
+  if (normalizedUrl.startsWith("data:")) {
     return normalizedUrl;
   }
 
-  // For relative URLs, ensure they start with / if they don't already
+  // For relative URLs, ensure proper formatting
+  // If it doesn't start with /, add it (unless it's a data URL)
   if (normalizedUrl && !normalizedUrl.startsWith("/") && !normalizedUrl.startsWith("data:")) {
     normalizedUrl = `/${normalizedUrl}`;
   }

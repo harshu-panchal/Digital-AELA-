@@ -1084,6 +1084,13 @@ export const createCourse = async (req, res, next) => {
       }
     }
 
+    // Import URL normalizer
+    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+
+    // Normalize URLs before storing
+    const normalizedThumbnailUrl = normalizeUrl(coverImage || thumbnailUrl || "") || coverImage || thumbnailUrl || "";
+    const normalizedIntroVideoUrl = normalizeUrl(introVideoUrl || "") || introVideoUrl || "";
+
     const course = await Course.create({
       title,
       description,
@@ -1091,7 +1098,7 @@ export const createCourse = async (req, res, next) => {
       duration: duration ? parseFloat(duration) : 0,
       price: Number(price),
       currency: currency || "AED",
-      thumbnailUrl: coverImage || thumbnailUrl || "",
+      thumbnailUrl: normalizedThumbnailUrl,
       status,
       instructor: userId, // Super admin as instructor
       metadata: {
@@ -1103,7 +1110,7 @@ export const createCourse = async (req, res, next) => {
         lessonCount: lessonCount || "",
         learningOutcomes: learningOutcomes || "",
         requirements: requirements || "",
-        introVideoUrl: introVideoUrl || "",
+        introVideoUrl: normalizedIntroVideoUrl,
         syllabus: syllabus || "",
         tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean)) : [],
         isPremium: isPremium === true || isPremium === "true",
@@ -1270,7 +1277,7 @@ export const updateAdminCourse = async (req, res, next) => {
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
     if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
-    if (req.body.brochureUrl !== undefined) course.brochureUrl = req.body.brochureUrl;
+    if (req.body.brochureUrl !== undefined) course.brochureUrl = normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
     if (status !== undefined) course.status = status;
 
     // Update metadata
@@ -1283,7 +1290,7 @@ export const updateAdminCourse = async (req, res, next) => {
     if (lessonCount !== undefined) course.metadata.lessonCount = lessonCount;
     if (learningOutcomes !== undefined) course.metadata.learningOutcomes = learningOutcomes;
     if (requirements !== undefined) course.metadata.requirements = requirements;
-    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = introVideoUrl;
+    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = normalizeUrl(introVideoUrl) || introVideoUrl;
     if (syllabus !== undefined) course.metadata.syllabus = syllabus;
     if (tags !== undefined) {
       course.metadata.tags = Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean);

@@ -2,6 +2,46 @@ import Course from "../models/Course.js";
 import mongoose from "mongoose";
 
 /**
+ * Normalize URLs in course data
+ * Fixes malformed URLs like "https://static/..." to proper "/static/..." format
+ */
+const normalizeCourseUrls = async (course) => {
+  const { normalizeUrl } = await import("../utils/urlNormalizer.js");
+  
+  if (course.thumbnailUrl) {
+    course.thumbnailUrl = normalizeUrl(course.thumbnailUrl) || course.thumbnailUrl;
+  }
+  if (course.brochureUrl) {
+    course.brochureUrl = normalizeUrl(course.brochureUrl) || course.brochureUrl;
+  }
+  if (course.metadata?.introVideoUrl) {
+    course.metadata.introVideoUrl = normalizeUrl(course.metadata.introVideoUrl) || course.metadata.introVideoUrl;
+  }
+  
+  return course;
+};
+
+/**
+ * Normalize URLs in multiple courses
+ */
+const normalizeCoursesUrls = async (courses) => {
+  const { normalizeUrl } = await import("../utils/urlNormalizer.js");
+  
+  return courses.map(course => {
+    if (course.thumbnailUrl) {
+      course.thumbnailUrl = normalizeUrl(course.thumbnailUrl) || course.thumbnailUrl;
+    }
+    if (course.brochureUrl) {
+      course.brochureUrl = normalizeUrl(course.brochureUrl) || course.brochureUrl;
+    }
+    if (course.metadata?.introVideoUrl) {
+      course.metadata.introVideoUrl = normalizeUrl(course.metadata.introVideoUrl) || course.metadata.introVideoUrl;
+    }
+    return course;
+  });
+};
+
+/**
  * Get all published courses (public endpoint)
  * Only returns courses with status "published"
  * Supports query parameter: ?premium=true to get only premium courses
@@ -24,7 +64,10 @@ export const getPublishedCourses = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    return res.status(200).json({ courses });
+    // Normalize URLs in all courses before returning
+    const normalizedCourses = await normalizeCoursesUrls(courses);
+
+    return res.status(200).json({ courses: normalizedCourses });
   } catch (error) {
     return next(error);
   }
@@ -77,7 +120,10 @@ export const getCourseById = async (req, res, next) => {
       });
     }
 
-    return res.status(200).json({ course });
+    // Normalize URLs in course before returning
+    const normalizedCourse = await normalizeCourseUrls(course);
+
+    return res.status(200).json({ course: normalizedCourse });
   } catch (error) {
     return next(error);
   }

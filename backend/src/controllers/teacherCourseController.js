@@ -112,7 +112,7 @@ export const createTeacherCourse = async (req, res, next) => {
         lessonCount: lessonCount || "",
         learningOutcomes: learningOutcomes || "",
         requirements: requirements || "",
-        introVideoUrl: introVideoUrl || "",
+        introVideoUrl: introVideoUrl ? (normalizeUrl(introVideoUrl) || introVideoUrl) : "",
         syllabus: syllabus || "",
         tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim())) : [],
       },
@@ -369,7 +369,7 @@ export const updateTeacherCourse = async (req, res, next) => {
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
     if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
-    if (req.body.brochureUrl !== undefined) course.brochureUrl = req.body.brochureUrl;
+    if (req.body.brochureUrl !== undefined) course.brochureUrl = normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
@@ -381,7 +381,7 @@ export const updateTeacherCourse = async (req, res, next) => {
     if (lessonCount !== undefined) course.metadata.lessonCount = lessonCount;
     if (learningOutcomes !== undefined) course.metadata.learningOutcomes = learningOutcomes;
     if (requirements !== undefined) course.metadata.requirements = requirements;
-    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = introVideoUrl;
+    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = normalizeUrl(introVideoUrl) || introVideoUrl;
     if (syllabus !== undefined) course.metadata.syllabus = syllabus;
     if (tags !== undefined) {
       course.metadata.tags = Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim());
