@@ -27,15 +27,20 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
   // Remove "digital-aela" prefix if present
   let folder = cloudinaryFolder.replace(/^digital-aela\/?/, "");
   
+  // Check for exact matches first (most specific)
+  if (folder === "courses/covers" || folder.startsWith("courses/covers/")) {
+    return "photos/courses";
+  }
+  if (folder === "books/covers" || folder.startsWith("books/covers/")) {
+    return "photos/bookscovers";
+  }
+  
   // Map common folder patterns
   const folderMappings = {
     "profiles": "photos/profiles",
-    "courses/covers": "photos/courses",
-    "books/covers": "photos/bookscovers",
     "gallery": "photos/gallery",
     "testimonials": "photos/testimonials",
     "certificates": "photos/certificates",
-    "courses": "videos/coursesVideos",
     "course-videos": "videos/coursesVideos",
     "join-us": "documents", // Will be handled more specifically
   };
@@ -46,12 +51,6 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
       // Extract additional path info (like course ID)
       const parts = folder.split("/");
       const keyIndex = parts.findIndex(p => p.includes(key.split("/")[0]));
-      
-      if (key === "courses" && parts.length > keyIndex + 1) {
-        // For course videos: digital-aela/courses/{id}/videos -> videos/coursesVideos/{id}/
-        const courseId = parts[keyIndex + 1];
-        return `videos/coursesVideos/${courseId}`;
-      }
       
       if (folder.includes("join-us")) {
         // Handle join-us applications - determine type from folder structure
@@ -72,6 +71,16 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
       
       return value;
     }
+  }
+  
+  // Handle course videos specifically (courses/{id}/videos pattern)
+  if (folder.startsWith("courses/") && folder.includes("/videos")) {
+    const courseIdMatch = folder.match(/courses\/([^\/]+)/);
+    if (courseIdMatch) {
+      const courseId = courseIdMatch[1];
+      return `videos/coursesVideos/${courseId}`;
+    }
+    return "videos/coursesVideos";
   }
 
   // Default mappings based on folder name

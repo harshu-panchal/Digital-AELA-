@@ -10,6 +10,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const CorporateTrainingCourses = () => {
   // WhatsApp integration
@@ -388,7 +389,7 @@ const CorporateTrainingCourses = () => {
                   }}>
                   <div className="h-40 w-full overflow-hidden">
                     <img
-                      src={program.image || "https://via.placeholder.com/300x200?text=Course"}
+                      src={getMediaUrl(program.image) || "https://via.placeholder.com/300x200?text=Course"}
                       alt={program.title}
                       loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -724,7 +725,7 @@ const CorporateTrainingCourses = () => {
                 className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
                 <div className="h-52 w-full overflow-hidden">
                   <img
-                    src={program.image}
+                    src={getMediaUrl(program.image)}
                     alt={program.title}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

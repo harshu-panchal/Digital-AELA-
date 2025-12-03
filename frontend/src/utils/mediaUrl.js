@@ -29,35 +29,66 @@ import { getApiBaseUrlWithoutPath } from "../config/api.js";
  * getMediaUrl(null)
  * // Returns: null
  */
-export const getMediaUrl = (url) => {
+export const getMediaUrl = (url, options = {}) => {
   // Handle null, undefined, or empty strings
   if (!url || typeof url !== "string" || url.trim() === "") {
     return null;
   }
 
-  // If it's already a full URL (starts with http:// or https://), return as-is
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
+  let finalUrl = url.trim();
+
+  // Handle data URLs (from FileReader) - return as-is
+  if (finalUrl.startsWith("data:")) {
+    return finalUrl;
   }
 
-  // If it's a relative /static/ URL, prepend the base URL
-  if (url.startsWith("/static/")) {
-    const baseUrl = getApiBaseUrlWithoutPath();
-    // Remove trailing slash from baseUrl if present, and ensure /static/ path is correct
-    const cleanBaseUrl = baseUrl.replace(/\/$/, "");
-    return `${cleanBaseUrl}${url}`;
+  // Check for malformed URLs like "https://static/..." or "http://static/..." (missing domain)
+  // These should be fixed by extracting the path and reconstructing with proper base URL
+  if (finalUrl.startsWith("https://static/") || finalUrl.startsWith("http://static/")) {
+    // Extract the path part (everything after "https://static" or "http://static")
+    const path = finalUrl.replace(/^https?:\/\/static/, "");
+    finalUrl = path; // Continue processing as a relative URL
   }
 
-  // If it's a relative URL that doesn't start with /static/, 
-  // assume it's meant to be a /static/ URL (for backward compatibility)
-  if (url.startsWith("/")) {
-    const baseUrl = getApiBaseUrlWithoutPath();
-    const cleanBaseUrl = baseUrl.replace(/\/$/, "");
-    return `${cleanBaseUrl}${url}`;
+  // If it's already a full URL (starts with http:// or https://), use as-is
+  if (finalUrl.startsWith("http://") || finalUrl.startsWith("https://")) {
+    // Add cache-busting parameter if requested (for updated images)
+    if (options.cacheBust) {
+      const separator = finalUrl.includes("?") ? "&" : "?";
+      finalUrl = `${finalUrl}${separator}t=${Date.now()}`;
+    }
+    return finalUrl;
   }
 
-  // For any other format, return as-is (might be a data URL or other format)
-  return url;
+  // Handle relative URLs (both /static/... and static/... formats)
+  const baseUrl = getApiBaseUrlWithoutPath();
+  const cleanBaseUrl = baseUrl.replace(/\/$/, "");
+  
+  // Normalize the path - ensure it starts with /static/
+  let normalizedPath = finalUrl;
+  
+  // Handle various URL formats that might be in the database
+  if (normalizedPath.startsWith("static/photos/") || normalizedPath.startsWith("static/")) {
+    // URL like "static/photos/..." - add leading slash
+    normalizedPath = `/${normalizedPath}`;
+  } else if (!normalizedPath.startsWith("/")) {
+    // URL without any slash - assume it's a static file
+    normalizedPath = `/static/${normalizedPath}`;
+  } else if (!normalizedPath.startsWith("/static/")) {
+    // URL starts with "/" but not "/static/" - prepend "/static"
+    normalizedPath = `/static${normalizedPath}`;
+  }
+  // If it already starts with "/static/", use as-is
+
+  finalUrl = `${cleanBaseUrl}${normalizedPath}`;
+
+  // Add cache-busting parameter if requested (for updated images)
+  if (options.cacheBust) {
+    const separator = finalUrl.includes("?") ? "&" : "?";
+    finalUrl = `${finalUrl}${separator}t=${Date.now()}`;
+  }
+
+  return finalUrl;
 };
 
 /**

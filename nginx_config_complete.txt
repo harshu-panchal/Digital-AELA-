@@ -12,7 +12,7 @@ server {
     client_header_timeout 60s;
     send_timeout 60s;
 
-    # Custom error handler for 413 with CORS headers
+    # Custom error handler for 413 - Add CORS headers here since error happens before backend
     error_page 413 @413_error;
     location @413_error {
         add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
@@ -21,15 +21,8 @@ server {
         return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 50MB."}}';
     }
 
-    # Main proxy location with CORS headers
+    # Main proxy location - NO CORS headers here (backend handles it)
     location / {
-        # CORS Headers - MUST include 'always' for error responses
-        add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Expose-Headers' 'Content-Range, X-Content-Range, X-CSRF-Token' always;
-
         proxy_pass http://localhost:5000;   # Your backend port
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;

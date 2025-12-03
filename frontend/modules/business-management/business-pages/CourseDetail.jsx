@@ -19,6 +19,7 @@ import CourseReviews from "../common/CourseReviews";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -660,7 +661,7 @@ const CourseDetail = () => {
               className="relative mx-auto flex max-w-[420px] flex-1 justify-center">
               <div className="absolute inset-0 -translate-y-6 rounded-[32px] bg-gradient-to-br from-[#D4AF37]/30 via-transparent to-[#6A8BFF]/20 blur-2xl" />
               <img
-                src={coverImage || image}
+                src={getMediaUrl(coverImage || image)}
                 alt={title}
                 loading="lazy"
                 className="relative z-10 w-full rounded-[28px] border border-white/10 object-cover shadow-[0_28px_60px_rgba(0,0,0,0.55)]"
@@ -681,10 +682,10 @@ const CourseDetail = () => {
                 </h2>
                 <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-[#D4AF37]/20">
                   <video
-                    src={introVideoUrl}
+                    src={getMediaUrl(introVideoUrl)}
                     controls
                     className="h-full w-full"
-                    poster={coverImage || image}
+                    poster={getMediaUrl(coverImage || image)}
                     preload="metadata">
                     Your browser does not support the video tag.
                   </video>

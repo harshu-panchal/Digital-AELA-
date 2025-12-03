@@ -9,6 +9,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const DigitalMarketingCourses = () => {
   // WhatsApp integration
@@ -280,7 +281,7 @@ const DigitalMarketingCourses = () => {
                 }}>
                 <div className="h-40 w-full overflow-hidden">
                   <img
-                    src={course.image || "https://via.placeholder.com/300x200?text=Course"}
+                    src={getMediaUrl(course.image) || "https://via.placeholder.com/300x200?text=Course"}
                     alt={course.title}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

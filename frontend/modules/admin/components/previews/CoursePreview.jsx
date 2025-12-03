@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaPlay, FaTimes } from "react-icons/fa";
+import { getMediaUrl } from "../../../../src/utils/mediaUrl";
 
 const CoursePreview = ({ course }) => {
   const [previewingVideo, setPreviewingVideo] = useState(null);
@@ -24,7 +25,7 @@ const CoursePreview = ({ course }) => {
         {course.thumbnailUrl && (
           <div className="overflow-hidden rounded-xl border border-white/10">
             <img
-              src={course.thumbnailUrl}
+              src={getMediaUrl(course.thumbnailUrl)}
               alt={course.title}
               className="h-auto w-full max-h-48 object-cover sm:max-h-64"
             />

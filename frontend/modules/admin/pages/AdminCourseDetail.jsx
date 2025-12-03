@@ -12,6 +12,7 @@ import {
   sanitizeUrl,
 } from "../../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import VideoUpload from "../../teacher/VideoUpload";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../../src/services/courseVideos";
 import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../../src/services/api/teacher";
@@ -322,6 +323,30 @@ const AdminCourseDetail = () => {
             }));
           };
           reader.readAsDataURL(file);
+          
+          // Upload image automatically
+          setIsUploadingImage(true);
+          uploadImageToCloudinary(file, "digital-aela/courses/covers")
+            .then((url) => {
+              setFormData((prev) => ({
+                ...prev,
+                coverImage: url,
+                coverImagePreview: url,
+              }));
+              toast.success("Cover image uploaded successfully");
+            })
+            .catch((error) => {
+              toast.error(error.message || "Failed to upload image");
+              setFormData((prev) => ({
+                ...prev,
+                coverImageFile: null,
+                coverImagePreview: prev.coverImage || null,
+              }));
+            })
+            .finally(() => {
+              setIsUploadingImage(false);
+            });
+          return;
         }
       } else if (type === "checkbox") {
         setFormData((prev) => ({ ...prev, [name]: checked }));
@@ -340,7 +365,7 @@ const AdminCourseDetail = () => {
 
     setIsUploadingImage(true);
     try {
-      const imageUrl = await uploadImageToCloudinary(formData.coverImageFile);
+      const imageUrl = await uploadImageToCloudinary(formData.coverImageFile, "digital-aela/courses/covers");
       setFormData((prev) => ({
         ...prev,
         coverImage: imageUrl,
@@ -420,7 +445,26 @@ const AdminCourseDetail = () => {
     try {
       const updated = await updateAdminCourse(courseId, payload);
       setCourse(updated);
+      
+      // Update formData with the updated course data
+      setFormData((prev) => ({
+        ...prev,
+        coverImage: updated.thumbnailUrl || prev.coverImage,
+        coverImagePreview: updated.thumbnailUrl || prev.coverImagePreview,
+      }));
+      
       toast.success("Course updated successfully.");
+      
+      // Reload the course data fresh from backend to ensure all fields are updated
+      const freshCourse = await getAdminCourseById(courseId);
+      if (freshCourse) {
+        setCourse(freshCourse);
+        setFormData((prev) => ({
+          ...prev,
+          coverImage: freshCourse.thumbnailUrl || prev.coverImage,
+          coverImagePreview: freshCourse.thumbnailUrl || prev.coverImagePreview,
+        }));
+      }
     } catch (error) {
       const message =
         (error?.details?.error?.message || error?.message) ??
@@ -796,7 +840,11 @@ const AdminCourseDetail = () => {
                 {formData.coverImagePreview && (
                   <div className="mt-3">
                     <img
-                      src={formData.coverImagePreview}
+                      src={
+                        formData.coverImagePreview.startsWith("data:") 
+                          ? formData.coverImagePreview 
+                          : getMediaUrl(formData.coverImagePreview)
+                      }
                       alt="Cover preview"
                       className="h-32 w-auto rounded-lg object-cover"
                     />

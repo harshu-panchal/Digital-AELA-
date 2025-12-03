@@ -25,6 +25,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
@@ -411,7 +412,7 @@ const JoinBuildAfterLife = () => {
                         onClick={() => handleViewCourse(item)}
                         className="relative h-48 w-full overflow-hidden flex-shrink-0">
                       <img
-                          src={item.image || "https://via.placeholder.com/300x200?text=Course"}
+                          src={getMediaUrl(item.image) || "https://via.placeholder.com/300x200?text=Course"}
                           alt={item.title}
                         loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -510,7 +511,7 @@ const JoinBuildAfterLife = () => {
                       <Link to={`/books/${item.id}`}>
                     <div className="relative h-48 w-full overflow-hidden">
                       <img
-                            src={item.image}
+                            src={getMediaUrl(item.image)}
                             alt={item.imageAlt || `${item.title} cover`}
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
