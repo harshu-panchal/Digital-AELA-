@@ -18,7 +18,7 @@ import {
 import { fetchDashboardData } from "../services/api/learnEarn";
 import { useSocket } from "../hooks/useSocket";
 import { fetchConversations } from "../services/api/messages";
-import { isNetworkError } from "../services/api/baseClient";
+import { isNetworkError, getStoredTokens } from "../services/api/baseClient";
 import { useSmartPolling } from "../hooks/useSmartPolling";
 import { fetchNotifications } from "../services/api/notifications";
 
@@ -379,6 +379,12 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
+    // Check for tokens before making API call
+    const authTokens = tokens || getStoredTokens();
+    if (!authTokens?.accessToken) {
+      return;
+    }
+
     // Prevent duplicate simultaneous calls
     if (isLoadingSocialStatsRef.current) {
       return;
@@ -391,7 +397,7 @@ export const UserProvider = ({ children }) => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
-      // Pass userId to fetchSocialStats so it works even without tokens
+      // Pass userId to fetchSocialStats
       const stats = await fetchSocialStats(authUser.id);
 
       if (stats) {
@@ -555,6 +561,12 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
+    // Check for tokens before making API call
+    const authTokens = tokens || getStoredTokens();
+    if (!authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await fetchFollowers(authUser.id, { pageSize: 20 });
       if (response?.data !== undefined) {
@@ -577,6 +589,11 @@ export const UserProvider = ({ children }) => {
         return;
       }
       
+      // Suppress 401 errors when tokens are missing
+      if (error?.status === 401 || error?.code === "UNAUTHORIZED") {
+        return;
+      }
+      
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load followers:", error.message);
       } else if (!isNetworkError(error) && !error.suppressConsoleError) {
@@ -584,10 +601,16 @@ export const UserProvider = ({ children }) => {
         console.warn("Failed to refresh followers:", error);
       }
     }
-  }, [authUser?.id, arraysEqual]);
+  }, [authUser?.id, tokens, arraysEqual]);
 
   const reloadFollowing = useCallback(async () => {
     if (!authUser?.id) {
+      return;
+    }
+
+    // Check for tokens before making API call
+    const authTokens = tokens || getStoredTokens();
+    if (!authTokens?.accessToken) {
       return;
     }
 
@@ -613,6 +636,11 @@ export const UserProvider = ({ children }) => {
         return;
       }
       
+      // Suppress 401 errors when tokens are missing
+      if (error?.status === 401 || error?.code === "UNAUTHORIZED") {
+        return;
+      }
+      
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load following:", error.message);
       } else if (!isNetworkError(error) && !error.suppressConsoleError) {
@@ -620,7 +648,7 @@ export const UserProvider = ({ children }) => {
         console.warn("Failed to refresh following:", error);
       }
     }
-  }, [authUser?.id, arraysEqual]);
+  }, [authUser?.id, tokens, arraysEqual]);
 
   // Debounce timer for refreshSocialStats
   const refreshSocialStatsTimerRef = useRef(null);

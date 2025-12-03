@@ -21,6 +21,7 @@ import { useSidebarSafe } from "../../../src/contexts/SidebarContext";
 import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import { toast } from "react-toastify";
 import { useSocket } from "../../../src/hooks/useSocket";
+import { getStoredTokens } from "../../../src/services/api/baseClient";
 import { fetchUnreadCount } from "../../../src/services/api/notifications";
 import { fetchPublicSettings } from "../../../src/services/api/publicSettings";
 import NotificationDropdown from "./NotificationDropdown";
@@ -43,7 +44,7 @@ const Navbar = () => {
   const { language, languages, changeLanguage } = useLanguage();
   const currentLanguage = languages[language] || languages["en"];
   const { socialLinks } = useSocialMedia();
-  const { user, logout, getRoleLabel, getRoleHome } = useAuth();
+  const { user, tokens, logout, getRoleLabel, getRoleHome } = useAuth();
   const { socket, isConnected } = useSocket();
 
   // Check if we're on a dashboard route
@@ -87,7 +88,8 @@ const Navbar = () => {
   const MIN_UNREAD_COUNT_INTERVAL = 60000; // Minimum 60 seconds between loads
 
   useEffect(() => {
-    if (user?.id) {
+    const authTokens = tokens || getStoredTokens();
+    if (user?.id && authTokens?.accessToken) {
       const loadCount = async () => {
         // Prevent duplicate concurrent requests
         if (isLoadingUnreadCountRef.current) {
@@ -100,14 +102,20 @@ const Navbar = () => {
           return;
         }
 
+        // Check tokens again before making request
+        const currentTokens = tokens || getStoredTokens();
+        if (!currentTokens?.accessToken) {
+          return;
+        }
+
         try {
           isLoadingUnreadCountRef.current = true;
           const response = await fetchUnreadCount();
           setUnreadNotificationCount(response.unreadCount || 0);
           lastUnreadCountLoadTimeRef.current = Date.now();
         } catch (error) {
-          // Suppress 429 rate limit errors - they're expected
-          if (error?.status !== 429) {
+          // Suppress 401 and 429 errors - they're expected when not authenticated or rate limited
+          if (error?.status !== 429 && error?.status !== 401) {
             // eslint-disable-next-line no-console
             console.error("Failed to load unread count:", error);
           }
@@ -117,10 +125,15 @@ const Navbar = () => {
       };
       loadCount();
       // Refresh every 120 seconds (2 minutes) instead of 30 seconds
-      const interval = setInterval(loadCount, 120000);
+      const interval = setInterval(() => {
+        const currentTokens = tokens || getStoredTokens();
+        if (currentTokens?.accessToken) {
+          loadCount();
+        }
+      }, 120000);
       return () => clearInterval(interval);
     }
-  }, [user?.id]);
+  }, [user?.id, tokens]);
 
   // Listen for notification updates via socket
   useEffect(() => {

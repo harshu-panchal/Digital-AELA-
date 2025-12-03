@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { FaSpinner, FaSync } from "react-icons/fa";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { getStoredTokens } from "../../src/services/api/baseClient";
 import { fetchDashboardData } from "../../src/services/api/superAdmin";
 import { getAllLeads } from "../../src/services/api/crm";
 import { getFinancialDashboard } from "../../src/services/api/expenses";
@@ -45,7 +46,7 @@ const cardVariants = {
 };
 
 const SuperAdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, tokens } = useAuth();
   const [dashboardData, setDashboardData] = useState({
     stats: [],
     approvals: [],
@@ -71,6 +72,17 @@ const SuperAdminDashboard = () => {
 
   // Fetch dashboard data
   const loadDashboardData = async (showRefreshing = false) => {
+    // Check if user is authenticated with tokens
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      if (showRefreshing) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
       if (showRefreshing) {
         setRefreshing(true);
@@ -106,56 +118,102 @@ const SuperAdminDashboard = () => {
 
   // Load CRM stats
   const loadCrmStats = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await getAllLeads({ page: 1, pageSize: 1 });
       setCrmStats(response.stats || null);
     } catch (error) {
-      console.error("Failed to load CRM stats:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load CRM stats:", error);
+      }
     }
   };
 
   // Load Financial Dashboard
   const loadFinancialData = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await getFinancialDashboard();
       setFinancialData(response);
     } catch (error) {
-      console.error("Failed to load financial data:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load financial data:", error);
+      }
     }
   };
 
   // Load Announcement Stats
   const loadAnnouncementStats = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await getAnnouncementStats();
       setAnnouncementStats(response.stats);
     } catch (error) {
-      console.error("Failed to load announcement stats:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load announcement stats:", error);
+      }
     }
   };
 
   // Load Session Stats
   const loadSessionStats = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await getSessionStats();
       setSessionStats(response.stats);
     } catch (error) {
-      console.error("Failed to load session stats:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load session stats:", error);
+      }
     }
   };
 
   // Load Backup Stats
   const loadBackupStats = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     try {
       const response = await getBackupStats();
       setBackupStats(response.stats);
     } catch (error) {
-      console.error("Failed to load backup stats:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load backup stats:", error);
+      }
     }
   };
 
   // Load Assignments
   const loadAssignments = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      setLoadingAssignments(false);
+      return;
+    }
+
     setLoadingAssignments(true);
     try {
       const response = await getTeacherAssignments({ page: 1, pageSize: 5 });
@@ -176,7 +234,10 @@ const SuperAdminDashboard = () => {
         graded: gradedCount,
       });
     } catch (error) {
-      console.error("Failed to load assignments:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load assignments:", error);
+      }
       setAssignments([]);
       setAssignmentStats(null);
     } finally {
@@ -186,6 +247,12 @@ const SuperAdminDashboard = () => {
 
   // Load Students
   const loadStudents = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      setLoadingStudents(false);
+      return;
+    }
+
     setLoadingStudents(true);
     try {
       const response = await fetchTeacherStudents({ page: 1, pageSize: 5 });
@@ -206,7 +273,10 @@ const SuperAdminDashboard = () => {
         completed: completedCount,
       });
     } catch (error) {
-      console.error("Failed to load students:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load students:", error);
+      }
       setStudents([]);
       setStudentStats(null);
     } finally {
@@ -216,20 +286,35 @@ const SuperAdminDashboard = () => {
 
   // Load Doubt Ticket Stats
   const loadDoubtTicketStats = async () => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      setLoadingDoubtTickets(false);
+      return;
+    }
+
     setLoadingDoubtTickets(true);
     try {
       const response = await getDoubtTicketStats();
       setDoubtTicketStats(response.stats || null);
     } catch (error) {
-      console.error("Failed to load doubt ticket stats:", error);
+      // Suppress 401 errors when tokens are missing
+      if (error?.status !== 401 || error?.code !== "UNAUTHORIZED") {
+        console.error("Failed to load doubt ticket stats:", error);
+      }
       setDoubtTicketStats(null);
     } finally {
       setLoadingDoubtTickets(false);
     }
   };
 
-  // Load data on mount
+  // Load data on mount - only when user and tokens are available
   useEffect(() => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      setLoading(false);
+      return;
+    }
+
     loadDashboardData();
     loadCrmStats();
     loadFinancialData();
@@ -241,20 +326,31 @@ const SuperAdminDashboard = () => {
     loadDoubtTicketStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(() => {
-      loadSessionStats();
-      loadBackupStats();
+      const currentTokens = tokens || getStoredTokens();
+      if (currentTokens?.accessToken) {
+        loadSessionStats();
+        loadBackupStats();
+      }
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user, tokens]);
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 30 seconds - only when authenticated
   useEffect(() => {
+    const authTokens = tokens || getStoredTokens();
+    if (!user || !authTokens?.accessToken) {
+      return;
+    }
+
     const interval = setInterval(() => {
-      loadDashboardData(true);
+      const currentTokens = tokens || getStoredTokens();
+      if (currentTokens?.accessToken) {
+        loadDashboardData(true);
+      }
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user, tokens]);
 
   const { headlineStats, approvals, activityFeed, quickActions } =
     useMemo(() => {

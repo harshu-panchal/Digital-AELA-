@@ -356,6 +356,21 @@ const executeRequest = async (
 
   // If 401 and no refresh token or refresh already attempted, clear tokens
   if (!skipAuth && response.status === 401) {
+    // Check if tokens were missing in the first place
+    const hadTokens = tokens?.accessToken;
+    
+    if (!hadTokens) {
+      // If tokens were missing, this is expected - suppress error completely
+      const error = new Error("Access token missing");
+      error.status = response.status;
+      error.code = payload?.error?.code || "UNAUTHORIZED";
+      error.details = payload;
+      error.requiresLogin = true;
+      error.suppressConsoleError = true;
+      throw error;
+    }
+    
+    // If we had tokens but got 401, clear them and notify
     clearStoredTokens();
     notifyAuthUpdate(null);
     
