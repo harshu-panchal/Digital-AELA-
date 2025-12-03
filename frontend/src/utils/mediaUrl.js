@@ -48,7 +48,8 @@ export const getMediaUrl = (url, options = {}) => {
 
   // Handle paths that start with "data/" (Windows file system paths)
   // Convert "data/photos/..." to "/static/photos/..."
-  if (finalUrl.startsWith("data/")) {
+  // BUT: Skip if path already starts with "/static/" to avoid duplication
+  if (finalUrl.startsWith("data/") && !finalUrl.startsWith("/static/")) {
     finalUrl = finalUrl.replace(/^data\//, "/static/");
     if (process.env.NODE_ENV === 'development') {
       console.warn(
@@ -144,18 +145,23 @@ export const getMediaUrl = (url, options = {}) => {
   // This must happen before checking the base URL to handle all path formats correctly
   let normalizedPath = finalUrl;
   
-  // Handle various URL formats that might be in the database
-  if (normalizedPath.startsWith("static/photos/") || normalizedPath.startsWith("static/")) {
+  // CRITICAL: Remove any duplicate /static/static/ patterns first
+  // This prevents URLs like "/static/static/photos/..." from being created
+  normalizedPath = normalizedPath.replace(/^\/static\/static\//, "/static/");
+  
+  // If it already starts with "/static/", use as-is (no further normalization needed)
+  if (normalizedPath.startsWith("/static/")) {
+    // Path is already normalized, skip further processing
+  } else if (normalizedPath.startsWith("static/photos/") || normalizedPath.startsWith("static/")) {
     // URL like "static/photos/..." - add leading slash
     normalizedPath = `/${normalizedPath}`;
   } else if (!normalizedPath.startsWith("/")) {
     // URL without any slash - assume it's a static file
     normalizedPath = `/static/${normalizedPath}`;
-  } else if (!normalizedPath.startsWith("/static/")) {
+  } else {
     // URL starts with "/" but not "/static/" - prepend "/static"
     normalizedPath = `/static${normalizedPath}`;
   }
-  // If it already starts with "/static/", use as-is
 
   // Handle relative URLs (both /static/... and static/... formats)
   let baseUrl = getApiBaseUrlWithoutPath();
@@ -255,6 +261,10 @@ export const getMediaUrl = (url, options = {}) => {
       finalUrl = cleanBaseUrl ? `${cleanBaseUrl}${normalizedPath}` : normalizedPath;
     }
   }
+
+  // CRITICAL: Remove any duplicate /static/static/ patterns in the final URL
+  // This catches cases where base URL might include /static/ or path already had /static/
+  finalUrl = finalUrl.replace(/(https?:\/\/[^\/]+)\/static\/static\//gi, "$1/static/");
 
   // Final validation: ensure we never return a malformed URL like "https://static/..." or "https:///static/..."
   // This is a last safety check to catch any edge cases
