@@ -88,6 +88,9 @@ export const createTeacherCourse = async (req, res, next) => {
       });
     }
 
+    // Import URL normalizer
+    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+
     // Create course with draft status (requires admin approval)
     const course = await Course.create({
       title,
@@ -96,7 +99,7 @@ export const createTeacherCourse = async (req, res, next) => {
       duration: duration ? parseFloat(duration) : 0,
       price: Number(price),
       currency: "AED",
-      thumbnailUrl: coverImage || "",
+      thumbnailUrl: coverImage ? (normalizeUrl(coverImage) || coverImage) : "",
       brochureUrl: "", // Will be set if brochure is uploaded
       status: "draft", // Always draft for teacher-created courses
       instructor: instructorObjectId,
@@ -357,12 +360,15 @@ export const updateTeacherCourse = async (req, res, next) => {
       tags,
     } = req.body;
 
+    // Import URL normalizer
+    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+
     if (title) course.title = title;
     if (description) course.description = description;
     if (category) course.category = category;
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
-    if (coverImage !== undefined) course.thumbnailUrl = coverImage;
+    if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
     if (req.body.brochureUrl !== undefined) course.brochureUrl = req.body.brochureUrl;
 
     // Update metadata

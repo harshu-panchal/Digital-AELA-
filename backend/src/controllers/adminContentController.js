@@ -1261,12 +1261,15 @@ export const updateAdminCourse = async (req, res, next) => {
       isPremium,
     } = req.body;
 
+    // Import URL normalizer
+    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+
     if (title) course.title = title;
     if (description) course.description = description;
     if (category) course.category = category;
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
-    if (coverImage !== undefined) course.thumbnailUrl = coverImage;
+    if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
     if (req.body.brochureUrl !== undefined) course.brochureUrl = req.body.brochureUrl;
     if (status !== undefined) course.status = status;
 

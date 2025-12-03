@@ -44,10 +44,13 @@ export const getMediaUrl = (url, options = {}) => {
 
   // Check for malformed URLs like "https://static/..." or "http://static/..." (missing domain)
   // These should be fixed by extracting the path and reconstructing with proper base URL
-  if (finalUrl.startsWith("https://static/") || finalUrl.startsWith("http://static/")) {
+  // Match: https://static, https://static/, https://static/photos, etc.
+  if (/^https?:\/\/static(\/|$)/.test(finalUrl)) {
     // Extract the path part (everything after "https://static" or "http://static")
-    const path = finalUrl.replace(/^https?:\/\/static/, "");
-    finalUrl = path; // Continue processing as a relative URL
+    // This handles both "https://static/photos/..." and "https://static" cases
+    const path = finalUrl.replace(/^https?:\/\/static\/?/, "");
+    // Ensure path starts with / if it doesn't already
+    finalUrl = path.startsWith("/") ? path : `/${path}`;
   }
 
   // If it's already a full URL (starts with http:// or https://), use as-is
