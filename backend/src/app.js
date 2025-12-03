@@ -104,8 +104,33 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "1mb" }));
+// Increase body parser limits for file uploads
+// Note: For multipart/form-data (file uploads), multer handles parsing
+// But we still need these for other content types
+app.use(express.json({ limit: "10mb" })); // Increased from 1mb to 10mb
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Added for form data
 app.use(morgan("dev"));
+
+// Middleware to catch payload too large errors and set CORS headers
+app.use((err, req, res, next) => {
+  // Handle payload too large errors (413)
+  if (err.status === 413 || err.statusCode === 413 || err.type === "entity.too.large") {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token");
+    }
+    return res.status(413).json({
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Request entity too large. Maximum file size is 5MB for images.",
+      },
+    });
+  }
+  next(err);
+});
 
 // Serve static files from data folder
 import { fileURLToPath } from "url";
@@ -304,16 +329,26 @@ app.use(async (err, req, res, next) => {
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
-  // Don't expose internal error details in production
-  const errorMessage = isDevelopment
-    ? err.message || "Something went wrong"
-    : status === 500
-    ? "Internal server error"
-    : err.message || "Something went wrong";
+  // Handle specific error types
+  let errorMessage;
+  let errorCode = err.code || "SERVER_ERROR";
+  
+  if (status === 413 || err.type === "entity.too.large") {
+    errorCode = "PAYLOAD_TOO_LARGE";
+    errorMessage = "Request entity too large. Maximum file size is 5MB for images.";
+  } else if (status === 500) {
+    errorMessage = isDevelopment
+      ? err.message || "Internal server error"
+      : "Internal server error";
+  } else {
+    errorMessage = isDevelopment
+      ? err.message || "Something went wrong"
+      : err.message || "Something went wrong";
+  }
 
   res.status(status).json({
     error: {
-      code: err.code || "SERVER_ERROR",
+      code: errorCode,
       message: errorMessage,
       ...(isDevelopment && err.stack && { details: err.stack }), // Only in development
     },
