@@ -5,6 +5,7 @@ import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import RecruiterBlog from "../models/RecruiterBlog.js";
 import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
+import { normalizeUrl } from "../utils/urlNormalizer.js";
 
 /**
  * Super Admin: Get Content Management Statistics
@@ -1084,9 +1085,6 @@ export const createCourse = async (req, res, next) => {
       }
     }
 
-    // Import URL normalizer
-    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
-
     // Normalize URLs before storing
     const normalizedThumbnailUrl = normalizeUrl(coverImage || thumbnailUrl || "") || coverImage || thumbnailUrl || "";
     const normalizedIntroVideoUrl = normalizeUrl(introVideoUrl || "") || introVideoUrl || "";
@@ -1267,9 +1265,6 @@ export const updateAdminCourse = async (req, res, next) => {
       status,
       isPremium,
     } = req.body;
-
-    // Import URL normalizer
-    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
 
     if (title) course.title = title;
     if (description) course.description = description;
