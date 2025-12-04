@@ -30,6 +30,28 @@ export const normalizeUrl = (url) => {
   let normalizedUrl = url.trim();
 
   // CRITICAL: Fix malformed URLs FIRST - before any other processing
+  // Handle triple slash pattern (https:/// or http:///) - most malformed
+  if (/^https?:\/\/\//i.test(normalizedUrl)) {
+    // Extract the path part (everything after "https:///" or "http:///")
+    const path = normalizedUrl.replace(/^https?:\/\/\//i, "");
+    // Ensure path starts with /static/ prefix if it contains /static/
+    if (path.includes("/static/")) {
+      // Extract everything from /static/ onwards
+      const staticIndex = path.indexOf("/static/");
+      normalizedUrl = path.substring(staticIndex);
+    } else if (path.startsWith("/")) {
+      normalizedUrl = `/static${path}`;
+    } else {
+      normalizedUrl = `/static/${path}`;
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[normalizeUrl] Fixed triple-slash URL: "${url}" -> "${normalizedUrl}"`
+      );
+    }
+  }
+  
   // Check for malformed URLs like "https://static/..." or "http://static/..." (missing domain)
   // "static" is not a valid hostname - these URLs are malformed and need fixing
   // Match patterns:

@@ -57,8 +57,8 @@ const fixMalformedImageUrls = async () => {
       const updates = {};
       const originalValues = {};
 
-      // Check thumbnailUrl
-      if (course.thumbnailUrl && /^https?:\/\/static(\/|$)/i.test(course.thumbnailUrl)) {
+      // Check thumbnailUrl - handle both https://static/ and https:///static/ patterns
+      if (course.thumbnailUrl && (/^https?:\/\/static(\/|$)/i.test(course.thumbnailUrl) || /^https?:\/\/\/static/i.test(course.thumbnailUrl) || /^https?:\/\/\/\/static/i.test(course.thumbnailUrl))) {
         originalValues.thumbnailUrl = course.thumbnailUrl;
         updates.thumbnailUrl = normalizeUrl(course.thumbnailUrl);
         needsUpdate = true;
@@ -66,8 +66,8 @@ const fixMalformedImageUrls = async () => {
         console.log(`     thumbnailUrl: "${course.thumbnailUrl}" -> "${updates.thumbnailUrl}"`);
       }
 
-      // Check brochureUrl
-      if (course.brochureUrl && /^https?:\/\/static(\/|$)/i.test(course.brochureUrl)) {
+      // Check brochureUrl - handle malformed patterns
+      if (course.brochureUrl && (/^https?:\/\/static(\/|$)/i.test(course.brochureUrl) || /^https?:\/\/\/static/i.test(course.brochureUrl) || /^https?:\/\/\/\/static/i.test(course.brochureUrl))) {
         originalValues.brochureUrl = course.brochureUrl;
         updates.brochureUrl = normalizeUrl(course.brochureUrl);
         needsUpdate = true;
@@ -75,8 +75,8 @@ const fixMalformedImageUrls = async () => {
         console.log(`     brochureUrl: "${course.brochureUrl}" -> "${updates.brochureUrl}"`);
       }
 
-      // Check metadata.introVideoUrl
-      if (course.metadata?.introVideoUrl && /^https?:\/\/static(\/|$)/i.test(course.metadata.introVideoUrl)) {
+      // Check metadata.introVideoUrl - handle malformed patterns
+      if (course.metadata?.introVideoUrl && (/^https?:\/\/static(\/|$)/i.test(course.metadata.introVideoUrl) || /^https?:\/\/\/static/i.test(course.metadata.introVideoUrl) || /^https?:\/\/\/\/static/i.test(course.metadata.introVideoUrl))) {
         originalValues.introVideoUrl = course.metadata.introVideoUrl;
         if (!updates.metadata) {
           updates.metadata = { ...course.metadata };

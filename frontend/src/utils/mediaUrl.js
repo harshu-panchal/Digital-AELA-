@@ -42,6 +42,22 @@ export const getMediaUrl = (url, options = {}) => {
     return finalUrl;
   }
 
+  // CRITICAL: Fix double URLs - when a base URL is already prepended incorrectly
+  // Pattern: https://api.digitalaela.com/static/https:///static/... or similar
+  // Extract just the path part after the last /static/
+  if (/^https?:\/\/[^\/]+\/static\/https?:\/\//i.test(finalUrl)) {
+    const doubleUrlMatch = finalUrl.match(/\/static\/(https?:\/\/.+)$/i);
+    if (doubleUrlMatch) {
+      // Extract the inner URL and process it
+      finalUrl = doubleUrlMatch[1];
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `[getMediaUrl] Fixed double URL: "${url}" -> processing inner URL: "${finalUrl}"`
+        );
+      }
+    }
+  }
+
   // Normalize Windows-style paths (backslashes) to forward slashes
   // This handles paths like "data\photos\courses\..." from Windows file system
   finalUrl = finalUrl.replace(/\\/g, "/");
