@@ -118,7 +118,7 @@ import path from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
-const dataDir = path.resolve(rootDir, "../data");
+const dataDir = path.resolve(rootDir, "../frontend/data");
 
 app.use("/static", express.static(dataDir, {
   setHeaders: (res, filePath) => {

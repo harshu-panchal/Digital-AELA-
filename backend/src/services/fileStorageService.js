@@ -18,7 +18,7 @@ const __dirname = dirname(__filename);
 
 // Get the root directory (two levels up from services)
 const rootDir = path.resolve(__dirname, "../..");
-const dataDir = path.resolve(rootDir, "../data");
+const dataDir = path.resolve(rootDir, "../frontend/data");
 
 /**
  * Map Cloudinary folder paths to local storage paths

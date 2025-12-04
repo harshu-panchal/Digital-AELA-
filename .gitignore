@@ -92,4 +92,7 @@ coverage/
 data/**/*
 !data/**/.gitkeep
 !data/**/
+frontend/data/**/*
+!frontend/data/**/.gitkeep
+!frontend/data/**/
 
