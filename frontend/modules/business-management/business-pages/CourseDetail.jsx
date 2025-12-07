@@ -425,14 +425,40 @@ const CourseDetail = () => {
     }
     
     try {
-      // Fetch the PDF file
-      const response = await fetch(brochureUrl);
-      if (!response.ok) {
-        throw new Error("Failed to fetch brochure");
+      // Convert relative URL to absolute URL using getMediaUrl utility
+      // This ensures the URL points to the correct backend server
+      const absoluteUrl = getMediaUrl(brochureUrl);
+      
+      if (!absoluteUrl) {
+        throw new Error("Invalid brochure URL");
       }
       
-      // Convert response to blob
-      const blob = await response.blob();
+      console.log("[Brochure Download] Fetching from URL:", absoluteUrl);
+      
+      // Fetch the PDF file as arrayBuffer to preserve binary data
+      const response = await fetch(absoluteUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch brochure: ${response.status} ${response.statusText}`);
+      }
+      
+      // Validate Content-Type header to ensure it's a PDF
+      const contentType = response.headers.get("Content-Type");
+      if (contentType && !contentType.includes("application/pdf") && !contentType.includes("application/octet-stream")) {
+        console.warn("[Brochure Download] Unexpected Content-Type:", contentType);
+      }
+      
+      // Convert response to arrayBuffer first to preserve binary data
+      const arrayBuffer = await response.arrayBuffer();
+      
+      if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+        throw new Error("Received empty file");
+      }
+      
+      console.log("[Brochure Download] Received file size:", arrayBuffer.byteLength, "bytes");
+      
+      // Create a blob with explicit PDF MIME type
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       
       // Create a blob URL
       const blobUrl = window.URL.createObjectURL(blob);
@@ -441,18 +467,22 @@ const CourseDetail = () => {
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       
       // Trigger download
       link.click();
       
       // Clean up
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
       
       toast.success("Brochure download started");
     } catch (error) {
-      console.error("Error downloading brochure:", error);
+      console.error("[Brochure Download] Error:", error);
+      console.error("[Brochure Download] Original URL:", brochureUrl);
       toast.error("Failed to download brochure. Please try again.");
     }
   };
