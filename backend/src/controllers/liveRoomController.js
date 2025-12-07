@@ -47,6 +47,7 @@ export const getLiveRooms = async (req, res, next) => {
         listeners: room.listeners || 0,
         startInMinutes,
         scheduledStart: room.scheduledStart,
+        scheduledEnd: room.scheduledEnd,
         actualStart: room.actualStart,
         speakers: room.speakers
           ? room.speakers.map((s) => (typeof s === "object" ? s.fullName : s))
@@ -122,6 +123,7 @@ export const getLiveRoom = async (req, res, next) => {
       listeners: room.listeners || 0,
       startInMinutes,
       scheduledStart: room.scheduledStart,
+      scheduledEnd: room.scheduledEnd,
       actualStart: room.actualStart,
       speakers: room.speakers
         ? room.speakers.map((s) => (typeof s === "object" ? s.fullName : s))
@@ -167,6 +169,7 @@ export const createLiveRoom = async (req, res, next) => {
       topic,
       description,
       scheduledStart,
+      scheduledEnd,
       speakers = [],
       startImmediately = false,
     } = req.body;
@@ -199,7 +202,39 @@ export const createLiveRoom = async (req, res, next) => {
 
     // Determine start time and status
     const now = new Date();
+    
+    // Validate scheduledEnd for debates
+    if (type === "debate") {
+      if (!scheduledEnd) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Debate end time is required",
+          },
+        });
+      }
+
+      const endDate = new Date(scheduledEnd);
+      let startDate;
+      if (startImmediately) {
+        startDate = now;
+      } else if (scheduledStart) {
+        startDate = new Date(scheduledStart);
+      } else {
+        startDate = new Date(now.getTime() + 15 * 60 * 1000);
+      }
+      
+      if (endDate <= startDate) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Debate end time must be after start time",
+          },
+        });
+      }
+    }
     let roomScheduledStart = scheduledStart ? new Date(scheduledStart) : now;
+    let roomScheduledEnd = scheduledEnd ? new Date(scheduledEnd) : undefined;
     let roomStatus = "scheduled";
 
     if (startImmediately) {
@@ -225,6 +260,7 @@ export const createLiveRoom = async (req, res, next) => {
       description,
       speakers: speakerObjectIds,
       scheduledStart: roomScheduledStart,
+      scheduledEnd: roomScheduledEnd,
       status: roomStatus,
       actualStart: roomStatus === "live" ? now : undefined,
     });
@@ -254,6 +290,7 @@ export const createLiveRoom = async (req, res, next) => {
       listeners: populatedRoom.listeners || 0,
       startInMinutes,
       scheduledStart: populatedRoom.scheduledStart,
+      scheduledEnd: populatedRoom.scheduledEnd,
       actualStart: populatedRoom.actualStart,
       speakers: populatedRoom.speakers
         ? populatedRoom.speakers.map((s) => (typeof s === "object" ? s.fullName : s))

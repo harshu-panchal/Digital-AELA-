@@ -6,6 +6,7 @@ import connectDatabase from "./config/db.js";
 import { setupSocketIO } from "./config/socket.js";
 import { setSocketIO } from "./utils/socketEmitter.js";
 import { setupJobExpirationCron } from "./utils/jobExpirationCron.js";
+import { setupDebateExpirationCron } from "./utils/debateExpirationCron.js";
 import { initializeWorkers } from "./services/mediasoupService.js";
 import { initializeHealthMonitoring } from "./utils/systemHealthMonitor.js";
 
@@ -14,6 +15,37 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const start = async () => {
+  // Validate required environment variables in production
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.FRONTEND_URL) {
+      // eslint-disable-next-line no-console
+      console.error(
+        "[Server] ERROR: FRONTEND_URL environment variable is required in production but is not set."
+      );
+      // eslint-disable-next-line no-console
+      console.error(
+        "[Server] Please set FRONTEND_URL to your production frontend URL (e.g., https://digitalaela.com)"
+      );
+      process.exit(1);
+    }
+
+    // Validate that production URLs don't use localhost
+    if (process.env.FRONTEND_URL.includes("localhost")) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[Server] ERROR: FRONTEND_URL cannot use localhost in production. Current value: ${process.env.FRONTEND_URL}`
+      );
+      // eslint-disable-next-line no-console
+      console.error(
+        "[Server] Please set FRONTEND_URL to your production frontend URL (e.g., https://digitalaela.com)"
+      );
+      process.exit(1);
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(`[Server] FRONTEND_URL validated: ${process.env.FRONTEND_URL}`);
+  }
+
   await connectDatabase();
 
   // Initialize mediasoup workers (optional - server will start even if this fails)
@@ -87,6 +119,7 @@ const start = async () => {
 
   // Setup cron jobs
   setupJobExpirationCron();
+  setupDebateExpirationCron();
 
   // Initialize system health monitoring
   initializeHealthMonitoring();

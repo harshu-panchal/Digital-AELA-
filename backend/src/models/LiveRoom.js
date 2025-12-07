@@ -74,6 +74,7 @@ const liveRoomSchema = new mongoose.Schema(
       default: 0,
     },
     scheduledStart: Date,
+    scheduledEnd: Date,
     actualStart: Date,
     actualEnd: Date,
     status: {
@@ -100,7 +101,33 @@ const liveRoomSchema = new mongoose.Schema(
 
 // Index for efficient queries
 liveRoomSchema.index({ status: 1, scheduledStart: 1 });
+liveRoomSchema.index({ status: 1, scheduledEnd: 1 }); // For cron job queries
 liveRoomSchema.index({ host: 1, createdAt: -1 });
+
+// Validation: Ensure scheduledEnd is after scheduledStart for debates
+liveRoomSchema.pre("save", function(next) {
+  if (this.type === "debate" && this.scheduledEnd && this.scheduledStart) {
+    if (new Date(this.scheduledEnd) <= new Date(this.scheduledStart)) {
+      return next(new Error("Debate end time must be after start time"));
+    }
+  }
+  next();
+});
+
+liveRoomSchema.pre("findOneAndUpdate", function(next) {
+  const update = this.getUpdate();
+  if (update.$set) {
+    if (update.$set.type === "debate" || this.getQuery().type === "debate") {
+      const scheduledEnd = update.$set.scheduledEnd ? new Date(update.$set.scheduledEnd) : null;
+      const scheduledStart = update.$set.scheduledStart ? new Date(update.$set.scheduledStart) : null;
+      
+      if (scheduledEnd && scheduledStart && scheduledEnd <= scheduledStart) {
+        return next(new Error("Debate end time must be after start time"));
+      }
+    }
+  }
+  next();
+});
 
 // Cleanup hook: Delete all room messages when room status changes to "ended"
 liveRoomSchema.post("findOneAndUpdate", async function(doc) {

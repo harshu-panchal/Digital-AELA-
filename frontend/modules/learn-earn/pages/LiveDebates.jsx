@@ -178,6 +178,7 @@ const LiveDebates = () => {
     topic: "",
     description: "",
     scheduledStart: "",
+    scheduledEnd: "",
     type: "debate",
     startImmediately: false,
   });
@@ -326,6 +327,30 @@ const LiveDebates = () => {
       return;
     }
 
+    // Validate scheduledEnd is provided
+    if (!formData.scheduledEnd) {
+      toast.error("Debate end time is required");
+      return;
+    }
+
+    // Validate end time is after start time
+    let startTime;
+    if (formData.startImmediately) {
+      startTime = new Date();
+    } else if (formData.scheduledStart) {
+      startTime = new Date(formData.scheduledStart);
+    } else {
+      // Default: 15 minutes from now
+      startTime = new Date();
+      startTime.setMinutes(startTime.getMinutes() + 15);
+    }
+    const endTime = new Date(formData.scheduledEnd);
+    
+    if (endTime <= startTime) {
+      toast.error("Debate end time must be after start time");
+      return;
+    }
+
     setCreating(true);
 
     try {
@@ -347,6 +372,7 @@ const LiveDebates = () => {
         description: formData.description || "",
         type: "debate",
         scheduledStart,
+        scheduledEnd: formData.scheduledEnd,
         startImmediately: formData.startImmediately,
       });
 
@@ -376,6 +402,7 @@ const LiveDebates = () => {
           topic: "",
           description: "",
           scheduledStart: "",
+          scheduledEnd: "",
           type: "debate",
           startImmediately: false,
         });
@@ -617,7 +644,9 @@ const LiveDebates = () => {
                     topic: "",
                     description: "",
                     scheduledStart: "",
+                    scheduledEnd: "",
                     type: "debate",
+                    startImmediately: false,
                   });
                 }}
                 className="rounded-full p-2 text-gray-400 transition hover:bg-white/10 hover:text-white">
@@ -695,7 +724,19 @@ const LiveDebates = () => {
                 <input
                   type="datetime-local"
                   value={formData.scheduledStart}
-                  onChange={(e) => setFormData({ ...formData, scheduledStart: e.target.value })}
+                  onChange={(e) => {
+                    const newStart = e.target.value;
+                    setFormData({ ...formData, scheduledStart: newStart });
+                    // Update min for end time if start time changes
+                    if (formData.scheduledEnd && newStart) {
+                      const startDate = new Date(newStart);
+                      const endDate = new Date(formData.scheduledEnd);
+                      if (endDate <= startDate) {
+                        // Clear end time if it's invalid
+                        setFormData({ ...formData, scheduledStart: newStart, scheduledEnd: "" });
+                      }
+                    }
+                  }}
                   min={new Date().toISOString().slice(0, 16)}
                   className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
                 />
@@ -704,6 +745,29 @@ const LiveDebates = () => {
                 </p>
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-300">
+                  Debate End Time <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduledEnd}
+                  onChange={(e) => setFormData({ ...formData, scheduledEnd: e.target.value })}
+                  min={
+                    formData.startImmediately
+                      ? new Date().toISOString().slice(0, 16)
+                      : formData.scheduledStart
+                        ? new Date(new Date(formData.scheduledStart).getTime() + 60000).toISOString().slice(0, 16)
+                        : new Date(Date.now() + 16 * 60 * 1000).toISOString().slice(0, 16)
+                  }
+                  required
+                  className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  The debate room will be automatically deleted when this time is reached
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -716,6 +780,7 @@ const LiveDebates = () => {
                       topic: "",
                       description: "",
                       scheduledStart: "",
+                      scheduledEnd: "",
                       type: "debate",
                       startImmediately: false,
                     });
@@ -725,7 +790,7 @@ const LiveDebates = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={creating || !formData.title || !formData.topic}
+                  disabled={creating || !formData.title || !formData.topic || !formData.scheduledEnd}
                   className="flex-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-[#D4AF37]/30 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
                   {creating ? (
                     <>

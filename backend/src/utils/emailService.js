@@ -74,12 +74,50 @@ const getEmailFrom = async () => {
 };
 
 /**
+ * Get frontend URL with validation
+ * In production, FRONTEND_URL must be set or an error will be thrown
+ * In development, falls back to localhost if not set
+ */
+const getFrontendUrl = () => {
+  const frontendUrl = process.env.FRONTEND_URL;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!frontendUrl) {
+    if (isProduction) {
+      const errorMessage =
+        "FRONTEND_URL environment variable is required in production but is not set. " +
+        "Please set FRONTEND_URL to your production frontend URL (e.g., https://digitalaela.com)";
+      console.error("[Email Service] ERROR:", errorMessage);
+      throw new Error(errorMessage);
+    } else {
+      // In development, allow localhost fallback but warn
+      console.warn(
+        "[Email Service] WARNING: FRONTEND_URL not set, using localhost fallback. " +
+        "This should only be used in development."
+      );
+      return "http://localhost:5173";
+    }
+  }
+
+  // Validate that production URLs don't use localhost
+  if (isProduction && frontendUrl.includes("localhost")) {
+    const errorMessage =
+      `FRONTEND_URL cannot use localhost in production. Current value: ${frontendUrl}. ` +
+      "Please set FRONTEND_URL to your production frontend URL (e.g., https://digitalaela.com)";
+    console.error("[Email Service] ERROR:", errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  return frontendUrl;
+};
+
+/**
  * Send password reset email
  */
 export const sendPasswordResetEmail = async (email, resetToken, userName) => {
   try {
     const transporter = await createTransporter();
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = getFrontendUrl();
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
     const fromAddress = await getEmailFrom();
 
@@ -225,7 +263,7 @@ export const sendPasswordResetSuccessEmail = async (email, userName) => {
 export const sendVerificationEmail = async (email, verificationToken, userName) => {
   try {
     const transporter = await createTransporter();
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = getFrontendUrl();
     const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
     const fromAddress = await getEmailFrom();
 
