@@ -340,6 +340,91 @@ export const sendVerificationEmail = async (email, verificationToken, userName) 
 };
 
 /**
+ * Send financial password reset email
+ */
+export const sendFinancialPasswordResetEmail = async (email, resetToken, adminName) => {
+  try {
+    const transporter = await createTransporter();
+    const frontendUrl = getFrontendUrl();
+    const resetUrl = `${frontendUrl}/super-admin/settings/financial-password/reset?token=${resetToken}`;
+    const fromAddress = await getEmailFrom();
+
+    const mailOptions = {
+      from: fromAddress,
+      to: email, // This will be info.digitalaela@gmail.com
+      subject: "Financial Password Reset Request - Digital AELA",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Financial Password Reset</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+            <h1 style="color: #2c3e50; margin-bottom: 20px;">Financial Password Reset Request</h1>
+            
+            <p>Hello,</p>
+            
+            <p>A request has been made to ${adminName ? `reset the financial password by ${adminName}` : "reset the financial password"} for your Digital AELA admin account.</p>
+            
+            <p>Click the button below to verify and set a new financial password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                 style="background-color: #D4AF37; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Reset Financial Password
+              </a>
+            </div>
+            
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #D4AF37;">${resetUrl}</p>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+              <strong>Important:</strong> This link will expire in 1 hour for security reasons.
+            </p>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If you didn't request a financial password reset, please ignore this email. Your financial password will remain unchanged.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            
+            <p style="font-size: 12px; color: #999; text-align: center;">
+              © ${new Date().getFullYear()} Digital AELA. All rights reserved.
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Financial Password Reset Request - Digital AELA
+        
+        Hello,
+        
+        A request has been made to ${adminName ? `reset the financial password by ${adminName}` : "reset the financial password"} for your Digital AELA admin account.
+        
+        Click the following link to verify and set a new financial password:
+        ${resetUrl}
+        
+        This link will expire in 1 hour for security reasons.
+        
+        If you didn't request a financial password reset, please ignore this email. Your financial password will remain unchanged.
+        
+        © ${new Date().getFullYear()} Digital AELA. All rights reserved.
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending financial password reset email:", error);
+    throw new Error("Failed to send financial password reset email");
+  }
+};
+
+/**
  * Test email configuration
  */
 export const testEmailConfiguration = async () => {

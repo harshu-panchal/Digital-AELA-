@@ -81,6 +81,9 @@ const AdvancedAnalytics = lazy(() =>
 const SystemSettings = lazy(() =>
   import("../modules/admin/pages/SystemSettings")
 );
+const FinancialPasswordReset = lazy(() =>
+  import("../modules/admin/pages/FinancialPasswordReset")
+);
 const AdminCourseCreate = lazy(() =>
   import("../modules/admin/pages/AdminCourseCreate")
 );
@@ -440,7 +443,10 @@ const RecruiterProfileDetail = lazy(() =>
 
 export const App = () => {
   const location = useLocation();
-  const isAdminLogin = location.pathname === "/admin/login";
+  const isAdminLogin = 
+    location.pathname === "/admin/login" ||
+    location.pathname === "/reset-password" ||
+    location.pathname.startsWith("/super-admin/settings/financial-password/reset");
 
   // Check if current path is a dashboard
   const isDashboard =
@@ -1292,6 +1298,14 @@ export const App = () => {
           element={
             <Suspense fallback={<LoadingFallback />}>
               <ResetPassword />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/super-admin/settings/financial-password/reset"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <FinancialPasswordReset />
             </Suspense>
           }
         />

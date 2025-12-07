@@ -139,6 +139,35 @@ export const setFinancialPassword = async (password) => {
 };
 
 /**
+ * Request Financial Password Reset
+ * POST /api/v1/admin/settings/financial-password/request-reset
+ */
+export const requestFinancialPasswordReset = async () => {
+  return apiRequest("/admin/settings/financial-password/request-reset", {
+    method: "POST",
+  });
+};
+
+/**
+ * Verify Financial Password Reset Token
+ * GET /api/v1/admin/settings/financial-password/verify-token?token=xxx
+ */
+export const verifyFinancialPasswordToken = async (token) => {
+  return apiRequest(`/admin/settings/financial-password/verify-token?token=${encodeURIComponent(token)}`);
+};
+
+/**
+ * Reset Financial Password with Token
+ * POST /api/v1/admin/settings/financial-password/reset
+ */
+export const resetFinancialPasswordWithToken = async (token, newPassword) => {
+  return apiRequest("/admin/settings/financial-password/reset", {
+    method: "POST",
+    body: { token, newPassword },
+  });
+};
+
+/**
  * Get settings by category
  * GET /api/v1/admin/settings/category/:category
  */

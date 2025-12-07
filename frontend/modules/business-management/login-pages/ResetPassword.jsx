@@ -72,7 +72,7 @@ const ResetPassword = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-[#020409] text-white">
+      <div className="fixed inset-0 min-h-screen bg-[#020409] text-white overflow-auto">
         <SEO
           title="Password Reset Successful | Digital AELA"
           description="Your password has been successfully reset"
@@ -82,7 +82,7 @@ const ResetPassword = () => {
 
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.18),transparent_65%)]" />
 
-        <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-20 mt-20">
+        <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -127,7 +127,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#020409] text-white">
+    <div className="fixed inset-0 min-h-screen bg-[#020409] text-white overflow-auto">
       <SEO
         title="Reset Password | Digital AELA"
         description="Reset your Digital AELA account password"
@@ -137,7 +137,7 @@ const ResetPassword = () => {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.18),transparent_65%)]" />
 
-      <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-20 mt-20">
+      <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

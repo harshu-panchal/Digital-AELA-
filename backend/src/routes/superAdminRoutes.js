@@ -23,12 +23,19 @@ import {
   initializeDefaultSettings,
   verifyFinancialPassword,
   setFinancialPassword,
+  requestFinancialPasswordReset,
+  verifyFinancialPasswordToken,
+  resetFinancialPasswordWithToken,
 } from "../controllers/settingsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-// All routes require super-admin role
+// Public routes (no authentication required) - accessed from email links
+router.get("/settings/financial-password/verify-token", verifyFinancialPasswordToken);
+router.post("/settings/financial-password/reset", resetFinancialPasswordWithToken);
+
+// All other routes require super-admin role
 router.use(requireAuth(["super-admin"]));
 
 // Get all dashboard data (recommended - single call)
@@ -59,6 +66,7 @@ router.delete("/settings/:key", deleteSetting);
 router.post("/settings/initialize", initializeDefaultSettings);
 router.post("/settings/financial-password/verify", verifyFinancialPassword);
 router.post("/settings/financial-password/set", setFinancialPassword);
+router.post("/settings/financial-password/request-reset", requestFinancialPasswordReset);
 
 export default router;
 

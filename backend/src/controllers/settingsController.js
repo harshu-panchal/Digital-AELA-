@@ -1,6 +1,9 @@
 import Settings from "../models/Settings.js";
 import { clearSettingsCache } from "../utils/settingsHelper.js";
 import bcrypt from "bcryptjs";
+import FinancialPasswordResetToken from "../models/FinancialPasswordResetToken.js";
+import User from "../models/User.js";
+import { sendFinancialPasswordResetEmail } from "../utils/emailService.js";
 
 /**
  * Get public settings (no authentication required)
@@ -644,6 +647,196 @@ export const setFinancialPassword = async (req, res, next) => {
     return res.json({
       success: true,
       message: "Financial password has been set successfully",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Request Financial Password Reset
+ * POST /api/v1/admin/settings/financial-password/request-reset
+ */
+export const requestFinancialPasswordReset = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can request financial password reset",
+        },
+      });
+    }
+
+    // Get admin user details
+    const adminUser = await User.findById(userId).select("email fullName").lean();
+    if (!adminUser) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Admin user not found",
+        },
+      });
+    }
+
+    // Generate reset token
+    const token = FinancialPasswordResetToken.generateToken();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Delete any existing reset tokens for this user
+    await FinancialPasswordResetToken.deleteMany({ user: userId });
+
+    // Create new reset token
+    await FinancialPasswordResetToken.create({
+      user: userId,
+      token,
+      expiresAt,
+    });
+
+    // Send password reset email to info.digitalaela@gmail.com
+    const recipientEmail = "info.digitalaela@gmail.com";
+    try {
+      await sendFinancialPasswordResetEmail(recipientEmail, token, adminUser.fullName);
+    } catch (emailError) {
+      // Log error but don't fail the request
+      console.error("Failed to send financial password reset email:", emailError);
+      // In production, you might want to queue this for retry
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Financial password reset email has been sent to info.digitalaela@gmail.com",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Verify Financial Password Reset Token
+ * GET /api/v1/admin/settings/financial-password/verify-token?token=xxx
+ */
+export const verifyFinancialPasswordToken = async (req, res, next) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Token is required",
+        },
+      });
+    }
+
+    // Find valid token
+    const resetToken = await FinancialPasswordResetToken.findValidToken(token);
+
+    if (!resetToken) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired reset token. Please request a new financial password reset.",
+        },
+      });
+    }
+
+    return res.json({
+      valid: true,
+      message: "Token is valid",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Reset Financial Password with Token
+ * POST /api/v1/admin/settings/financial-password/reset
+ */
+export const resetFinancialPasswordWithToken = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Token and new password are required",
+        },
+      });
+    }
+
+    // Validate password strength (minimum 6 characters)
+    if (newPassword.length < 6) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Password must be at least 6 characters long",
+        },
+      });
+    }
+
+    // Find valid token
+    const resetToken = await FinancialPasswordResetToken.findValidToken(token);
+
+    if (!resetToken) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired reset token. Please request a new financial password reset.",
+        },
+      });
+    }
+
+    // Hash the new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update or create financial password setting
+    await Settings.findOneAndUpdate(
+      { key: "financial.password" },
+      {
+        value: passwordHash,
+        category: "general",
+        type: "string",
+        label: "Financial Password",
+        description: "Password required to access financial pages (payments, expenses, financial dashboard)",
+        isEncrypted: true,
+        updatedBy: resetToken.user._id,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    // Mark token as used
+    await resetToken.markAsUsed();
+
+    // Delete all other reset tokens for this user
+    await FinancialPasswordResetToken.deleteMany({
+      user: resetToken.user._id,
+      _id: { $ne: resetToken._id },
+    });
+
+    // Clear settings cache
+    clearSettingsCache();
+
+    return res.json({
+      success: true,
+      message: "Financial password has been reset successfully",
     });
   } catch (error) {
     return next(error);

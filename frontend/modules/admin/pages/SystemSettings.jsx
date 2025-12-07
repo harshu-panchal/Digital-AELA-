@@ -12,6 +12,9 @@ import {
   FaWrench,
   FaShareAlt,
   FaSearch,
+  FaLock,
+  FaCheckCircle,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
@@ -20,6 +23,7 @@ import {
   updateSettings,
   updateSetting,
   initializeDefaultSettings,
+  requestFinancialPasswordReset,
 } from "../../../src/services/api/superAdmin";
 
 const SystemSettings = () => {
@@ -29,6 +33,8 @@ const SystemSettings = () => {
   const [settings, setSettings] = useState({});
   const [originalSettings, setOriginalSettings] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [financialPasswordExists, setFinancialPasswordExists] = useState(false);
+  const [requestingReset, setRequestingReset] = useState(false);
 
   const categories = [
     { id: "general", label: "General", icon: FaCog },
@@ -55,6 +61,13 @@ const SystemSettings = () => {
       if (response && response.settings) {
         setSettings(response.settings);
         setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
+        
+        // Check if financial password exists
+        const generalSettings = response.settings.general || [];
+        const financialPasswordSetting = generalSettings.find(
+          (s) => s.key === "financial.password"
+        );
+        setFinancialPasswordExists(!!financialPasswordSetting);
       }
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -179,6 +192,21 @@ const SystemSettings = () => {
       toast.error("Failed to initialize default settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRequestFinancialPasswordReset = async () => {
+    try {
+      setRequestingReset(true);
+      const response = await requestFinancialPasswordReset();
+      if (response && response.success) {
+        toast.success(response.message || "Verification email sent to info.digitalaela@gmail.com");
+      }
+    } catch (error) {
+      console.error("Failed to request financial password reset:", error);
+      toast.error(error.message || "Failed to send verification email");
+    } finally {
+      setRequestingReset(false);
     }
   };
 
@@ -335,6 +363,67 @@ const SystemSettings = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Financial Password Section */}
+        <div className="mb-6">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="rounded-full bg-[#D4AF37]/20 p-3">
+                  <FaLock className="h-6 w-6 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Financial Password
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-400">
+                    {financialPasswordExists
+                      ? "Financial password is configured. You can change it using email verification."
+                      : "No financial password is set. Create one using email verification."}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {financialPasswordExists ? (
+                      <>
+                        <FaCheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-500">Password Set</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaExclamationCircle className="h-4 w-4 text-yellow-500" />
+                        <span className="text-xs text-yellow-500">Not Set</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleRequestFinancialPasswordReset}
+                disabled={requestingReset}
+                className="flex items-center gap-2 rounded-xl bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#F5D26A] disabled:opacity-50">
+                {requestingReset ? (
+                  <>
+                    <FaSpinner className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <FaLock className="h-4 w-4" />
+                    {financialPasswordExists
+                      ? "Change Financial Password"
+                      : "Create Financial Password"}
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="mt-4 rounded-lg bg-black/40 p-4">
+              <p className="text-xs text-gray-400">
+                <strong className="text-gray-300">How it works:</strong> Click the button above to request a verification email. 
+                The email will be sent to <strong className="text-[#D4AF37]">info.digitalaela@gmail.com</strong>. 
+                Click the link in the email to verify and set your new financial password.
+              </p>
             </div>
           </div>
         </div>
