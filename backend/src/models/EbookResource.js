@@ -40,6 +40,11 @@ const ebookResourceSchema = new mongoose.Schema(
   }
 );
 
+// Indexes for efficient queries
+ebookResourceSchema.index({ isPublic: 1, createdAt: -1 }); // For public listings
+ebookResourceSchema.index({ "metadata.isFeatured": 1, createdAt: -1 }); // For featured books
+ebookResourceSchema.index({ createdAt: -1 }); // For analytics
+
 const EbookResource = mongoose.model("EbookResource", ebookResourceSchema);
 
 export default EbookResource;

@@ -10,6 +10,7 @@ import {
 } from "../controllers/blogEnhancementController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { requireFeature } from "../middleware/featureFlagMiddleware.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
 
 const router = Router();
 
@@ -17,9 +18,9 @@ const router = Router();
 router.use(requireFeature("blog"));
 
 // Public routes
-router.get("/", listPublishedBlogs);
-router.get("/search", searchBlogs);
-router.get("/categories", getBlogCategories);
+router.get("/", cacheMiddleware, listPublishedBlogs);
+router.get("/search", cacheMiddleware, searchBlogs);
+router.get("/categories", cacheMiddleware, getBlogCategories);
 router.post("/:blogId/share", shareBlog);
 
 // Authenticated routes

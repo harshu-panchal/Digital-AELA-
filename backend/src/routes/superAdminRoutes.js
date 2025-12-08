@@ -28,6 +28,7 @@ import {
   resetFinancialPasswordWithToken,
 } from "../controllers/settingsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
 
 const router = Router();
 
@@ -39,7 +40,7 @@ router.post("/settings/financial-password/reset", resetFinancialPasswordWithToke
 router.use(requireAuth(["super-admin"]));
 
 // Get all dashboard data (recommended - single call)
-router.get("/dashboard", getDashboardData);
+router.get("/dashboard", cacheMiddleware, getDashboardData);
 
 // System health endpoint
 router.get("/system-health", getSystemHealth);
@@ -50,11 +51,11 @@ router.get("/approvals", getPendingApprovals);
 router.get("/activity", getRecentActivity);
 
 // Advanced Analytics endpoints
-router.get("/analytics/overview", getOverviewAnalytics);
-router.get("/analytics/users", getUserAnalytics);
-router.get("/analytics/courses", getCourseAnalytics);
-router.get("/analytics/revenue", getRevenueAnalytics);
-router.get("/analytics/jobs", getJobAnalytics);
+router.get("/analytics/overview", cacheMiddleware, getOverviewAnalytics);
+router.get("/analytics/users", cacheMiddleware, getUserAnalytics);
+router.get("/analytics/courses", cacheMiddleware, getCourseAnalytics);
+router.get("/analytics/revenue", cacheMiddleware, getRevenueAnalytics);
+router.get("/analytics/jobs", cacheMiddleware, getJobAnalytics);
 
 // System Settings endpoints
 router.get("/settings", getAllSettings);

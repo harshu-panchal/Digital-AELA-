@@ -39,6 +39,11 @@ const lessonCompletionSchema = new mongoose.Schema(
 // Prevent duplicate completions
 lessonCompletionSchema.index({ student: 1, course: 1, lessonId: 1 }, { unique: true });
 
+// Additional indexes for efficient queries
+lessonCompletionSchema.index({ student: 1, completedAt: -1 }); // For student completions
+lessonCompletionSchema.index({ course: 1, completedAt: -1 }); // For course completions
+lessonCompletionSchema.index({ completedAt: -1 }); // For analytics
+
 const LessonCompletion = mongoose.model("LessonCompletion", lessonCompletionSchema);
 
 export default LessonCompletion;

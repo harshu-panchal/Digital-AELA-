@@ -1,6 +1,7 @@
 import Course from "../models/Course.js";
 import mongoose from "mongoose";
 import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
+import { invalidateCourseCache } from "../utils/cacheInvalidator.js";
 
 /**
  * Teacher: Create Course (with draft status)
@@ -158,6 +159,9 @@ export const createTeacherCourse = async (req, res, next) => {
         // Don't fail course creation if notification fails
       }
     }
+
+    // Invalidate course cache
+    await invalidateCourseCache(course._id.toString());
 
     return res.status(201).json({ course: populatedCourse });
   } catch (error) {

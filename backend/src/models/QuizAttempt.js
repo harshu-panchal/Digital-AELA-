@@ -67,9 +67,11 @@ const quizAttemptSchema = new mongoose.Schema(
   }
 );
 
-// Index for quick lookups
+// Indexes for quick lookups
 quizAttemptSchema.index({ student: 1, completedAt: -1 });
 quizAttemptSchema.index({ student: 1, quiz: 1 });
+quizAttemptSchema.index({ createdAt: -1 }); // For analytics
+quizAttemptSchema.index({ quiz: 1, completedAt: -1 }); // For quiz analytics
 
 const QuizAttempt = mongoose.model("QuizAttempt", quizAttemptSchema);
 

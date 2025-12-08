@@ -63,9 +63,11 @@ const ebookReadingProgressSchema = new mongoose.Schema(
 // Prevent duplicate progress records
 ebookReadingProgressSchema.index({ user: 1, ebook: 1 }, { unique: true });
 
-// Index for quick lookups
+// Indexes for quick lookups
 ebookReadingProgressSchema.index({ user: 1, lastReadAt: -1 });
 ebookReadingProgressSchema.index({ ebook: 1, isCompleted: 1 });
+ebookReadingProgressSchema.index({ createdAt: -1 }); // For analytics
+ebookReadingProgressSchema.index({ completedAt: -1 }); // For completed ebooks analytics
 
 const EbookReadingProgress = mongoose.model("EbookReadingProgress", ebookReadingProgressSchema);
 

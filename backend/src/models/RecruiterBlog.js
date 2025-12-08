@@ -75,6 +75,11 @@ const recruiterBlogSchema = new mongoose.Schema(
   }
 );
 
+// Indexes for efficient queries
+recruiterBlogSchema.index({ status: 1, publishedAt: -1 }); // For published blogs
+recruiterBlogSchema.index({ author: 1, status: 1 }); // For author's blogs
+recruiterBlogSchema.index({ createdAt: -1 }); // For analytics
+
 const RecruiterBlog = mongoose.model("RecruiterBlog", recruiterBlogSchema);
 
 export default RecruiterBlog;

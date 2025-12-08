@@ -31,45 +31,50 @@ export const getDashboardStats = async (req, res, next) => {
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Count active learners (students with enrollments or activity in last 30 days)
-    const activeLearners = await User.countDocuments({
-      role: "student",
-      isActive: true,
-    });
-
-    const learnersLastWeek = await User.countDocuments({
-      role: "student",
-      isActive: true,
-      createdAt: { $gte: lastWeek },
-    });
-
-    const learnersLastMonth = await User.countDocuments({
-      role: "student",
-      isActive: true,
-      createdAt: { $gte: lastMonth },
-    });
+    // Parallelize all count queries
+    const [activeLearners, learnersLastWeek, learnersLastMonth] = await Promise.all([
+      User.countDocuments({
+        role: "student",
+        isActive: true,
+      }),
+      User.countDocuments({
+        role: "student",
+        isActive: true,
+        createdAt: { $gte: lastWeek },
+      }),
+      User.countDocuments({
+        role: "student",
+        isActive: true,
+        createdAt: { $gte: lastMonth },
+      }),
+    ]);
 
     const learnersDelta = learnersLastMonth > 0
       ? `+${((learnersLastWeek / learnersLastMonth) * 100).toFixed(1)}% vs last week`
       : `${learnersLastWeek} new this week`;
 
-    // Count verified teachers
-    const verifiedTeachers = await User.countDocuments({
-      role: "teacher",
-      isActive: true,
-    });
-
-    const pendingTeachers = await User.countDocuments({
-      role: "teacher",
-      isActive: false,
-    });
+    // Count verified teachers - parallelize
+    const [verifiedTeachers, pendingTeachers] = await Promise.all([
+      User.countDocuments({
+        role: "teacher",
+        isActive: true,
+      }),
+      User.countDocuments({
+        role: "teacher",
+        isActive: false,
+      }),
+    ]);
 
     // Calculate monthly revenue (from enrollments with paid courses)
+    // Use lean() for better performance since we only need price/currency
     const enrollmentsThisMonth = await Enrollment.find({
       createdAt: { $gte: thisMonthStart },
-    }).populate({
-      path: "course",
-      select: "price currency",
-    });
+    })
+      .populate({
+        path: "course",
+        select: "price currency",
+      })
+      .lean();
 
     let monthlyRevenue = 0;
     const revenueByCurrency = {};
@@ -104,15 +109,16 @@ export const getDashboardStats = async (req, res, next) => {
       ? `+${((enrollmentsThisMonth.length / enrollmentsLastMonth) * 100).toFixed(0)}% vs last month`
       : "New this month";
 
-    // Count open jobs
-    const openJobs = await JobPost.countDocuments({
-      status: "published",
-    });
-
-    const newJobsThisWeek = await JobPost.countDocuments({
-      status: "published",
-      createdAt: { $gte: lastWeek },
-    });
+    // Count open jobs - parallelize
+    const [openJobs, newJobsThisWeek] = await Promise.all([
+      JobPost.countDocuments({
+        status: "published",
+      }),
+      JobPost.countDocuments({
+        status: "published",
+        createdAt: { $gte: lastWeek },
+      }),
+    ]);
 
     const jobsDelta = `${newJobsThisWeek} new this week`;
 

@@ -45,6 +45,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import userRatingRoutes from "./routes/userRatingRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import csrfRoutes from "./routes/csrfRoutes.js";
+import { getHomePageData } from "./controllers/homeController.js";
 import {
   publicRouter as galleryPublicRouter,
   adminRouter as galleryAdminRouter,
@@ -58,6 +59,8 @@ import { trackSession } from "./middleware/sessionTracking.js";
 import { checkMaintenanceMode } from "./middleware/maintenanceMiddleware.js";
 import { generateCsrfToken } from "./middleware/csrfMiddleware.js";
 import { apiRateLimiter } from "./middleware/rateLimiter.js";
+import { cacheMiddleware } from "./middleware/cacheMiddleware.js";
+import { batchHandler } from "./middleware/batchMiddleware.js";
 
 const app = express();
 
@@ -189,6 +192,13 @@ app.use("/api/v1", csrfRoutes);
 
 // Public settings routes (no authentication required)
 app.use("/api/v1/public", publicSettingsRoutes);
+
+// Batch API request endpoint (for batching multiple API calls)
+// Use specific path to avoid any potential conflicts
+app.post("/api/v1/batch", apiRateLimiter, batchHandler);
+
+// Home page data endpoint (batched, no authentication required)
+app.get("/api/v1/home/data", cacheMiddleware, getHomePageData);
 
 // Public gallery routes (no authentication required)
 app.use("/api/v1/gallery", galleryPublicRouter);

@@ -48,7 +48,10 @@ const normalizeCoursesUrls = async (courses) => {
  */
 export const getPublishedCourses = async (req, res, next) => {
   try {
-    const { premium } = req.query;
+    const { premium, page = 1, limit = 20 } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Max 100 per page
+    const skip = (pageNum - 1) * limitNum;
     
     // Build query - always filter for published courses only
     const query = { status: "published" };
@@ -58,16 +61,30 @@ export const getPublishedCourses = async (req, res, next) => {
       query["metadata.isPremium"] = true;
     }
     
-    // Always filter for published courses only - never return draft or archived
-    const courses = await Course.find(query)
-      .populate("instructor", "fullName email")
-      .sort({ createdAt: -1 })
-      .lean();
+    // Fetch courses and total count in parallel
+    const [courses, total] = await Promise.all([
+      Course.find(query)
+        .populate("instructor", "fullName email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Course.countDocuments(query),
+    ]);
 
     // Normalize URLs in all courses before returning
     const normalizedCourses = await normalizeCoursesUrls(courses);
 
-    return res.status(200).json({ courses: normalizedCourses });
+    return res.status(200).json({
+      courses: normalizedCourses,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasMore: skip + courses.length < total,
+      },
+    });
   } catch (error) {
     return next(error);
   }

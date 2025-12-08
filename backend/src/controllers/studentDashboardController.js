@@ -38,13 +38,43 @@ export const getStudentDashboard = async (req, res, next) => {
     }
 
     // Calculate Learning Hours (from lesson completions)
+    // Parallelize all initial data fetches
     let lessonCompletions = [];
+    let activeEnrollments = [];
+    let studentPoints = null;
+    let latestAssessment = null;
+    
     try {
-      lessonCompletions = await LessonCompletion.find({ student: studentObjectId });
+      [lessonCompletions, activeEnrollments, studentPoints, latestAssessment] = await Promise.all([
+        LessonCompletion.find({ student: studentObjectId }).lean().catch(() => []),
+        Enrollment.find({
+          student: studentObjectId,
+          status: "active",
+        })
+          .populate({
+            path: "course",
+            select: "title instructor",
+            populate: {
+              path: "instructor",
+              select: "fullName",
+            },
+          })
+          .sort({ lastAccessedAt: -1, enrolledAt: -1 })
+          .lean()
+          .catch(() => []),
+        StudentPoints.findOne({ student: studentObjectId }).lean().catch(() => null),
+        SpeakingAssessment.findOne({ student: studentObjectId })
+          .sort({ createdAt: -1 })
+          .lean()
+          .catch(() => null),
+      ]);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("Error fetching lesson completions:", error);
+      console.error("Error fetching dashboard data:", error);
       lessonCompletions = [];
+      activeEnrollments = [];
+      studentPoints = null;
+      latestAssessment = null;
     }
     
     const totalLearningHours = lessonCompletions.reduce((total, completion) => {
@@ -61,28 +91,6 @@ export const getStudentDashboard = async (req, res, next) => {
     const hoursThisMonth = thisMonthCompletions.reduce((total, completion) => {
       return total + (completion.duration || 0) / 60;
     }, 0);
-
-    // Get Active Courses
-    let activeEnrollments = [];
-    try {
-      activeEnrollments = await Enrollment.find({
-        student: studentObjectId,
-        status: "active",
-      })
-        .populate({
-          path: "course",
-          select: "title instructor",
-          populate: {
-            path: "instructor",
-            select: "fullName",
-          },
-        })
-        .sort({ lastAccessedAt: -1, enrolledAt: -1 });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching enrollments:", error);
-      activeEnrollments = [];
-    }
 
     const activeCoursesCount = activeEnrollments.length;
 
@@ -110,40 +118,27 @@ export const getStudentDashboard = async (req, res, next) => {
       liveCohortsThisWeek = 0;
     }
 
-    // Get AELA Coins
-    let studentPoints = null;
-    try {
-      studentPoints = await StudentPoints.findOne({ student: studentObjectId });
-      if (!studentPoints) {
-        // Create default points record
-        try {
-          studentPoints = await StudentPoints.create({
-            student: studentObjectId,
-            totalCoins: 0,
-            redeemedCoins: 0,
-            pendingCoins: 0,
-            streak: 0,
-          });
-        } catch (createError) {
-          // eslint-disable-next-line no-console
-          console.error("Error creating student points:", createError);
-          studentPoints = {
-            totalCoins: 0,
-            redeemedCoins: 0,
-            pendingCoins: 0,
-            streak: 0,
-          };
-        }
+    // Create default points record if not found
+    if (!studentPoints) {
+      try {
+        studentPoints = await StudentPoints.create({
+          student: studentObjectId,
+          totalCoins: 0,
+          redeemedCoins: 0,
+          pendingCoins: 0,
+          streak: 0,
+        });
+        studentPoints = studentPoints.toObject(); // Convert to plain object
+      } catch (createError) {
+        // eslint-disable-next-line no-console
+        console.error("Error creating student points:", createError);
+        studentPoints = {
+          totalCoins: 0,
+          redeemedCoins: 0,
+          pendingCoins: 0,
+          streak: 0,
+        };
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching student points:", error);
-      studentPoints = {
-        totalCoins: 0,
-        redeemedCoins: 0,
-        pendingCoins: 0,
-        streak: 0,
-      };
     }
 
     const totalCoins = studentPoints.totalCoins || 0;
@@ -157,17 +152,6 @@ export const getStudentDashboard = async (req, res, next) => {
       totalEarned = studentPoints.transactions
         .filter((txn) => txn.type === "earned" || txn.type === "bonus")
         .reduce((sum, txn) => sum + (txn.amount || 0), 0);
-    }
-
-    // Get Speaking Score (latest assessment)
-    let latestAssessment = null;
-    try {
-      latestAssessment = await SpeakingAssessment.findOne({ student: studentObjectId })
-        .sort({ createdAt: -1 });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching speaking assessment:", error);
-      latestAssessment = null;
     }
 
     const speakingScore = latestAssessment?.score || null;
@@ -204,18 +188,55 @@ export const getStudentDashboard = async (req, res, next) => {
     ];
 
     // Get ongoing courses with progress
-    const ongoingCourses = await Promise.all(
-      activeEnrollments.slice(0, 5).map(async (enrollment) => {
-        const course = enrollment.course;
-        if (!course || !course._id) return null;
+    // Batch fetch all course completions and batches to avoid N+1 queries
+    const courseIds = activeEnrollments
+      .slice(0, 5)
+      .map(e => e.course?._id)
+      .filter(Boolean);
+    
+    const [allCourseCompletions, allBatches] = await Promise.all([
+      courseIds.length > 0
+        ? LessonCompletion.find({
+            student: studentObjectId,
+            course: { $in: courseIds },
+          }).lean()
+        : Promise.resolve([]),
+      courseIds.length > 0
+        ? Batch.find({
+            course: { $in: courseIds },
+            students: studentObjectId,
+            status: { $in: ["active", "upcoming"] },
+            endDate: { $gte: new Date() },
+          })
+            .sort({ startDate: 1 })
+            .lean()
+        : Promise.resolve([]),
+    ]);
+    
+    // Group completions by course
+    const completionsByCourse = allCourseCompletions.reduce((acc, completion) => {
+      const courseId = completion.course.toString();
+      if (!acc[courseId]) acc[courseId] = [];
+      acc[courseId].push(completion);
+      return acc;
+    }, {});
+    
+    // Group batches by course
+    const batchesByCourse = allBatches.reduce((acc, batch) => {
+      const courseId = batch.course.toString();
+      if (!acc[courseId]) acc[courseId] = [];
+      acc[courseId].push(batch);
+      return acc;
+    }, {});
+    
+    const ongoingCourses = activeEnrollments.slice(0, 5).map((enrollment) => {
+      const course = enrollment.course;
+      if (!course || !course._id) return null;
 
-        // Calculate progress from lesson completions
-        const courseCompletions = await LessonCompletion.find({
-          student: studentObjectId,
-          course: course._id,
-        });
-        // This is simplified - you'd need total lessons in course for real progress
-        const progress = enrollment.progress || 0;
+      // Get completions for this course from pre-fetched data
+      const courseCompletions = completionsByCourse[course._id.toString()] || [];
+      // This is simplified - you'd need total lessons in course for real progress
+      const progress = enrollment.progress || 0;
 
         // Get instructor name if available
         let instructorName = "Instructor";
@@ -228,21 +249,13 @@ export const getStudentDashboard = async (req, res, next) => {
           }
         }
 
-        // Get next session from Batch records
+        // Get next session from pre-fetched batches
         let nextSession = "Check schedule";
-        try {
-          const batches = await Batch.find({
-            course: course._id,
-            students: studentObjectId,
-            status: { $in: ["active", "upcoming"] },
-            endDate: { $gte: new Date() },
-          })
-            .sort({ startDate: 1 })
-            .limit(1)
-            .lean();
-
-          if (batches.length > 0) {
-            const batch = batches[0];
+        const batches = batchesByCourse[course._id.toString()] || [];
+        
+        if (batches.length > 0) {
+          // Sort and get the first one (already sorted by startDate)
+          const batch = batches[0];
             const startDate = new Date(batch.startDate);
             const now = new Date();
             const daysUntil = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
@@ -262,10 +275,6 @@ export const getStudentDashboard = async (req, res, next) => {
               nextSession += ` · ${batch.schedule.time.start}`;
             }
           }
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error("Error fetching next session:", error);
-        }
 
         return {
           id: course._id.toString(),
@@ -277,7 +286,7 @@ export const getStudentDashboard = async (req, res, next) => {
           route: `/student/courses/${course._id}`,
         };
       })
-    );
+      .filter(Boolean); // Remove null entries
 
     // Get Learn & Earn progress
     const learnEarnProgress = {
@@ -394,6 +403,7 @@ export const getStudentDashboard = async (req, res, next) => {
         .populate("author", "fullName")
         .sort({ publishedAt: -1, createdAt: -1 })
         .limit(3)
+        .lean()
         .lean();
       
       blogFeed = blogs.map((blog) => {
@@ -695,7 +705,7 @@ export const getDashboardWidgets = async (req, res, next) => {
     const recentEnrollments = await Enrollment.find({
       student: studentObjectId,
       enrolledAt: { $gte: sevenDaysAgo },
-    })
+    }).lean()
       .populate("course", "title")
       .sort({ enrolledAt: -1 })
       .limit(5)
@@ -715,7 +725,7 @@ export const getDashboardWidgets = async (req, res, next) => {
     const recentCompletions = await LessonCompletion.find({
       student: studentObjectId,
       completedAt: { $gte: sevenDaysAgo },
-    })
+    }).lean()
       .populate("course", "title")
       .sort({ completedAt: -1 })
       .limit(5)
@@ -759,7 +769,7 @@ export const getDashboardWidgets = async (req, res, next) => {
       const dayCompletions = await LessonCompletion.find({
         student: studentObjectId,
         completedAt: { $gte: date, $lt: nextDate },
-      });
+      }).lean();
 
       const hours = dayCompletions.reduce((total, completion) => {
         return total + (completion.duration || 0) / 60;
@@ -775,6 +785,7 @@ export const getDashboardWidgets = async (req, res, next) => {
 
     // Learning Goals Widget
     const totalLearningHours = await LessonCompletion.find({ student: studentObjectId })
+      .lean()
       .then((completions) => {
         return completions.reduce((total, completion) => {
           return total + (completion.duration || 0) / 60;
@@ -816,7 +827,7 @@ export const getDashboardWidgets = async (req, res, next) => {
     const recommendations = await Course.find({
       _id: { $nin: enrolledCourseIds },
       status: "published",
-    })
+    }).lean()
       .populate("instructor", "fullName")
       .sort({ createdAt: -1 })
       .limit(3)
@@ -922,7 +933,7 @@ export const getEnhancedProfile = async (req, res, next) => {
     }));
 
     // Get achievements
-    const studentPoints = await StudentPoints.findOne({ student: studentObjectId });
+    const studentPoints = await StudentPoints.findOne({ student: studentObjectId }).lean();
     const achievements = (studentPoints?.badges || []).map((badge) => ({
       id: badge,
       label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -935,6 +946,7 @@ export const getEnhancedProfile = async (req, res, next) => {
       .populate("course", "title")
       .sort({ enrolledAt: -1 })
       .limit(10)
+      .lean()
       .lean();
 
     const timeline = enrollments.map((enrollment) => ({
@@ -950,6 +962,7 @@ export const getEnhancedProfile = async (req, res, next) => {
       .populate("course", "title")
       .sort({ completedAt: -1 })
       .limit(10)
+      .lean()
       .lean();
 
     completions.forEach((completion) => {

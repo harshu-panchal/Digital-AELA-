@@ -3,6 +3,7 @@ import JobPost from "../models/JobPost.js";
 import JobApplication from "../models/JobApplication.js";
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
+import { invalidateJobCache } from "../utils/cacheInvalidator.js";
 
 export const listPublishedJobs = async (req, res, next) => {
   try {
@@ -28,7 +29,8 @@ export const listPublishedJobs = async (req, res, next) => {
         })
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(),
       JobPost.countDocuments(query),
     ]);
 
@@ -55,7 +57,8 @@ export const listMyJobs = async (req, res, next) => {
       JobPost.find({ owner: userId })
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(),
       JobPost.countDocuments({ owner: userId }),
     ]);
 
@@ -177,6 +180,9 @@ export const createJob = async (req, res, next) => {
     }
 
     const job = await JobPost.create(jobData);
+
+    // Invalidate job cache
+    await invalidateJobCache(job._id.toString());
 
     // Create notification for super admin when job needs approval (draft status)
     if (status === "draft") {
@@ -301,6 +307,9 @@ export const updateJob = async (req, res, next) => {
       });
     }
 
+    // Invalidate job cache
+    await invalidateJobCache(jobId);
+
     return res.json(job);
   } catch (error) {
     return next(error);
@@ -318,6 +327,9 @@ export const deleteJob = async (req, res, next) => {
         error: { code: "RESOURCE_NOT_FOUND", message: "Job not found" },
       });
     }
+
+    // Invalidate job cache
+    await invalidateJobCache(jobId);
 
     await JobApplication.deleteMany({ job: jobId });
 

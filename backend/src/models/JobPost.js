@@ -76,7 +76,6 @@ const jobPostSchema = new mongoose.Schema(
     },
     expirationDate: {
       type: Date,
-      index: true,
     },
     expiresInDays: {
       type: Number,
@@ -88,8 +87,11 @@ const jobPostSchema = new mongoose.Schema(
   }
 );
 
-// Index for efficient queries
+// Indexes for efficient queries
 jobPostSchema.index({ status: 1, expirationDate: 1, publishedAt: -1 });
+jobPostSchema.index({ status: 1, createdAt: -1 }); // For job listings
+jobPostSchema.index({ owner: 1, status: 1 }); // For recruiter listings (owner is recruiter)
+jobPostSchema.index({ expirationDate: 1 }); // For expiration queries
 // Note: Text index for full-text search must be created via script
 // Run: npm run create-job-index
 // This creates: { title: "text", description: "text", company: "text", location: "text" }

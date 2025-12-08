@@ -53,6 +53,12 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Indexes for efficient queries
+// Note: email index is automatically created by unique: true, so we don't need to add it again
+userSchema.index({ role: 1, isActive: 1 }); // For role-based queries
+userSchema.index({ createdAt: -1 }); // For sorting by date
+userSchema.index({ role: 1, createdAt: -1 }); // Compound for analytics
+
 const User = mongoose.model("User", userSchema);
 
 export default User;

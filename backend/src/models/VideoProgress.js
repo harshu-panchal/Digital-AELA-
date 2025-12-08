@@ -63,9 +63,11 @@ videoProgressSchema.index(
   { unique: true }
 );
 
-// Index for efficient queries
+// Indexes for efficient queries
 videoProgressSchema.index({ student: 1, course: 1 });
 videoProgressSchema.index({ student: 1, lastWatchedAt: -1 });
+videoProgressSchema.index({ createdAt: -1 }); // For analytics
+videoProgressSchema.index({ completedAt: -1 }); // For completed videos analytics
 
 const VideoProgress = mongoose.model("VideoProgress", videoProgressSchema);
 

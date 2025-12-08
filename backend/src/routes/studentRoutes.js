@@ -14,11 +14,12 @@ import {
   claimDailyBonus,
 } from "../controllers/pointsController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
 
 const router = Router();
 
 // Get student dashboard (authenticated student only)
-router.get("/dashboard", requireAuth(["student"]), getStudentDashboard);
+router.get("/dashboard", requireAuth(["student"]), cacheMiddleware, getStudentDashboard);
 
 // Get enhanced dashboard widgets (authenticated student only)
 router.get("/dashboard/widgets", requireAuth(["student"]), getDashboardWidgets);

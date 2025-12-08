@@ -125,3 +125,28 @@ export const normalizeUrls = (urls) => {
   return urls.map(url => normalizeUrl(url));
 };
 
+/**
+ * Normalize URLs in course objects
+ * 
+ * @param {Array} courses - Array of course objects
+ * @returns {Array} - Array of courses with normalized URLs
+ */
+export const normalizeCoursesUrls = async (courses) => {
+  if (!Array.isArray(courses)) {
+    return [];
+  }
+  
+  return courses.map(course => {
+    if (course.thumbnailUrl) {
+      course.thumbnailUrl = normalizeUrl(course.thumbnailUrl) || course.thumbnailUrl;
+    }
+    if (course.brochureUrl) {
+      course.brochureUrl = normalizeUrl(course.brochureUrl) || course.brochureUrl;
+    }
+    if (course.metadata?.introVideoUrl) {
+      course.metadata.introVideoUrl = normalizeUrl(course.metadata.introVideoUrl) || course.metadata.introVideoUrl;
+    }
+    return course;
+  });
+};
+

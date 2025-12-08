@@ -139,6 +139,11 @@ const quizSchema = new mongoose.Schema(
   }
 );
 
+// Indexes for efficient queries
+quizSchema.index({ status: 1, createdAt: -1 }); // For published quizzes
+quizSchema.index({ category: 1, status: 1 }); // For category filtering
+quizSchema.index({ createdAt: -1 }); // For analytics
+
 const Quiz = mongoose.model("Quiz", quizSchema);
 
 export default Quiz;

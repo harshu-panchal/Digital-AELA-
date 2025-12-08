@@ -8,6 +8,7 @@ import {
 } from "../controllers/jobController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { requireFeature } from "../middleware/featureFlagMiddleware.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
 
 const router = Router();
 
@@ -15,10 +16,10 @@ const router = Router();
 router.use(requireFeature("jobs"));
 
 // Public endpoint - anyone can view published jobs
-router.get("/", listPublishedJobs);
+router.get("/", cacheMiddleware, listPublishedJobs);
 
 // Advanced search endpoint
-router.get("/search", searchJobs);
+router.get("/search", cacheMiddleware, searchJobs);
 
 // Allow any authenticated user (student, teacher, etc.) to apply
 router.post("/:jobId/apply", requireAuth([]), submitApplication);

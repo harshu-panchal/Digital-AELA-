@@ -9,6 +9,7 @@ import { setupJobExpirationCron } from "./utils/jobExpirationCron.js";
 import { setupDebateExpirationCron } from "./utils/debateExpirationCron.js";
 import { initializeWorkers } from "./services/mediasoupService.js";
 import { initializeHealthMonitoring } from "./utils/systemHealthMonitor.js";
+import { getRedisClient, isRedisAvailable } from "./config/redis.js";
 
 dotenv.config();
 
@@ -47,6 +48,19 @@ const start = async () => {
   }
 
   await connectDatabase();
+
+  // Initialize Redis (optional - server will start even if Redis is unavailable)
+  try {
+    const redis = getRedisClient();
+    const redisAvailable = await isRedisAvailable();
+    if (redisAvailable) {
+      console.log("[Redis] Redis initialized and ready");
+    } else {
+      console.warn("[Redis] Redis is not available, caching will be disabled");
+    }
+  } catch (error) {
+    console.warn("[Redis] Redis initialization failed, continuing without cache:", error.message);
+  }
 
   // Initialize mediasoup workers (optional - server will start even if this fails)
   try {
