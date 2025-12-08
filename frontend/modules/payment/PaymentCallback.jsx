@@ -36,7 +36,8 @@ const PaymentCallback = () => {
         const paymentData = await getPaymentDetails(paymentId);
         setPayment(paymentData.payment);
 
-        if (paymentStatus === "paid" || paymentData.payment?.status === "completed") {
+        // Check for success status from URL or payment record
+        if (paymentStatus === "success" || paymentStatus === "paid" || paymentData.payment?.status === "completed") {
           setStatus("success");
           toast.success("Payment successful!");
 

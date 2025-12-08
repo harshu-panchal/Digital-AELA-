@@ -54,14 +54,14 @@ This application uses **mediasoup** as a Selective Forwarding Unit (SFU) for rea
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Client (Browser)                        │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         mediasoup-client (JavaScript SDK)              │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │  │
-│  │  │   Device     │  │  Transport   │  │  Producer/   │ │  │
-│  │  │              │  │  (Send/Recv) │  │  Consumer    │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘ │  │
-│  └──────────────────────────────────────────────────────┘  │
+│                      Client (Browser)                       │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │         mediasoup-client (JavaScript SDK)            │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐│   │
+│  │  │   Device     │  │  Transport   │  │  Producer/   ││   │
+│  │  │              │  │  (Send/Recv) │  │  Consumer    ││   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘│   │
+│  └──────────────────────────────────────────────────────┘   │
 └───────────────────────┬─────────────────────────────────────┘
                         │ WebRTC (DTLS/SRTP)
                         │ Socket.IO (Signaling)
@@ -730,5 +730,6 @@ This implementation provides a robust, scalable voice communication system using
 - ✅ **Platform-Agnostic**: Works with or without mediasoup (graceful degradation)
 
 For questions or issues, refer to the troubleshooting section or check the mediasoup documentation: https://mediasoup.org/
+
 
 

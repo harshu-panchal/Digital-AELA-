@@ -1201,22 +1201,34 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
  */
 export const handleRazorpayCallback = async (req, res, next) => {
   try {
-    // Razorpay payment link redirects with these parameters
-    const { payment_id, payment_link_id, status } = req.query;
+    // Razorpay payment link redirects with these parameters (with razorpay_ prefix)
+    const razorpayPaymentId = req.query.razorpay_payment_id;
+    const razorpayPaymentLinkId = req.query.razorpay_payment_link_id;
+    const razorpayPaymentLinkStatus = req.query.razorpay_payment_link_status;
+    const razorpaySignature = req.query.razorpay_signature;
     // We pass paymentId in the callback URL
     const paymentId = req.query.paymentId;
 
-    // If payment_id is provided, fetch and verify the payment
-    if (payment_id && paymentId) {
+    // Log received parameters for debugging
+    console.log("[Payment] Razorpay callback received:", {
+      paymentId,
+      razorpayPaymentId,
+      razorpayPaymentLinkId,
+      razorpayPaymentLinkStatus,
+      hasSignature: !!razorpaySignature,
+    });
+
+    // If razorpay_payment_id is provided, fetch and verify the payment
+    if (razorpayPaymentId && paymentId) {
       try {
-        const razorpayPayment = await fetchPayment(payment_id);
+        const razorpayPayment = await fetchPayment(razorpayPaymentId);
 
         if (razorpayPayment.status === "captured" || razorpayPayment.status === "authorized") {
           // Update payment status
           const updateData = {
             status: "completed",
-            gatewayTransactionId: payment_id,
-            gatewayPaymentIntentId: razorpayPayment.order_id,
+            gatewayTransactionId: razorpayPaymentId,
+            gatewayPaymentIntentId: razorpayPayment.order_id || razorpayPaymentLinkId,
           };
 
           const payment = await Payment.findById(paymentId).lean();
@@ -1247,23 +1259,41 @@ export const handleRazorpayCallback = async (req, res, next) => {
           }
 
           await Payment.findByIdAndUpdate(paymentId, updateData);
+          console.log("[Payment] Payment updated to completed:", paymentId);
         } else if (razorpayPayment.status === "failed") {
           await Payment.findByIdAndUpdate(paymentId, {
             status: "failed",
             failureReason: razorpayPayment.error_description || "Payment failed",
-            gatewayTransactionId: payment_id,
+            gatewayTransactionId: razorpayPaymentId,
           });
+          console.log("[Payment] Payment marked as failed:", paymentId);
         }
       } catch (fetchError) {
         console.error("[Payment] Error fetching payment from Razorpay:", fetchError);
+        // Continue to redirect even if fetch fails - frontend will verify
       }
+    } else if (razorpayPaymentLinkStatus === "paid" && paymentId) {
+      // If we have payment link status but no payment_id yet, still mark as processing
+      // The webhook or frontend verification will complete it
+      console.log("[Payment] Payment link status is paid, but payment_id not yet available");
     }
 
     // Redirect to frontend callback page with status
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const finalStatus = status === "paid" ? "success" : (status === "failed" ? "failed" : status || "unknown");
-    const redirectUrl = `${frontendUrl}/payment/callback?paymentId=${paymentId || ""}&status=${finalStatus}&payment_id=${payment_id || ""}`;
+    // Map razorpay_payment_link_status to frontend status
+    let finalStatus = "unknown";
+    if (razorpayPaymentLinkStatus === "paid") {
+      finalStatus = "success";
+    } else if (razorpayPaymentLinkStatus === "failed") {
+      finalStatus = "failed";
+    } else if (razorpayPaymentLinkStatus) {
+      // Use the status as-is if it's something else
+      finalStatus = razorpayPaymentLinkStatus === "success" ? "success" : razorpayPaymentLinkStatus;
+    }
     
+    const redirectUrl = `${frontendUrl}/payment/callback?paymentId=${paymentId || ""}&status=${finalStatus}&payment_id=${razorpayPaymentId || ""}`;
+    
+    console.log("[Payment] Redirecting to frontend:", redirectUrl);
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("[Payment] Error handling Razorpay callback:", error);
