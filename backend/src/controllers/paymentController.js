@@ -1291,7 +1291,13 @@ export const handleRazorpayCallback = async (req, res, next) => {
       finalStatus = razorpayPaymentLinkStatus === "success" ? "success" : razorpayPaymentLinkStatus;
     }
     
-    const redirectUrl = `${frontendUrl}/payment/callback?paymentId=${paymentId || ""}&status=${finalStatus}&payment_id=${razorpayPaymentId || ""}`;
+    // Build redirect URL with query parameters
+    const params = new URLSearchParams();
+    if (paymentId) params.append("paymentId", paymentId);
+    params.append("status", finalStatus);
+    if (razorpayPaymentId) params.append("payment_id", razorpayPaymentId);
+    
+    const redirectUrl = `${frontendUrl}/payment/callback?${params.toString()}`;
     
     console.log("[Payment] Redirecting to frontend:", redirectUrl);
     return res.redirect(redirectUrl);

@@ -9,6 +9,7 @@
     "create-admin": "node scripts/createSuperAdmin.js",
     "create-job-index": "node scripts/createJobTextIndex.js",
     "test-translation": "node scripts/testTranslation.js",
+    "test-payment-callback": "node scripts/testPaymentCallback.js",
     "postinstall": "node scripts/build-mediasoup.js"
   },
   "dependencies": {
