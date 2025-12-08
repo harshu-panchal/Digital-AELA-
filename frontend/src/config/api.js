@@ -43,17 +43,6 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// Log API configuration in production for debugging
-if (import.meta.env.PROD && typeof window !== "undefined") {
-  console.log("[API Config] Production API Configuration:", {
-    API_BASE_URL,
-    VITE_API_URL: import.meta.env.VITE_API_URL || "NOT SET",
-    isProduction: import.meta.env.PROD,
-    mode: import.meta.env.MODE,
-    timestamp: new Date().toISOString(),
-  });
-}
-
 // Export a function to get the base URL without /api/v1 suffix (for Socket.IO, etc.)
 export const getApiBaseUrlWithoutPath = () => {
   let url = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
