@@ -42,12 +42,7 @@ router.get("/razorpay/callback", handleRazorpayCallback);
 // Razorpay payment verification (from frontend callback)
 router.post("/razorpay/verify", authenticate, validateCsrfToken, verifyRazorpayPayment);
 
-// Get payment details
-router.get("/:paymentId", authenticate, getPaymentDetails);
-
-// Update payment (state-changing - requires CSRF)
-router.put("/:paymentId", authenticate, validateCsrfToken, updatePayment);
-
+// IMPORTANT: Specific routes with /:paymentId must come BEFORE the catch-all /:paymentId route
 // Process refund (admin only, state-changing - requires CSRF)
 router.post("/:paymentId/refund", authenticate, validateCsrfToken, processRefund);
 
@@ -62,6 +57,12 @@ router.post("/:paymentId/razorpay/payment-link", authenticate, paymentRateLimite
 
 // Verify payment status manually (from Razorpay)
 router.post("/:paymentId/verify-status", authenticate, verifyPaymentStatus);
+
+// Get payment details (catch-all - must be last)
+router.get("/:paymentId", authenticate, getPaymentDetails);
+
+// Update payment (state-changing - requires CSRF)
+router.put("/:paymentId", authenticate, validateCsrfToken, updatePayment);
 
 export default router;
 
