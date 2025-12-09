@@ -19,74 +19,141 @@ const PaymentCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Log all URL parameters received
+      console.log("==========================================");
+      console.log("[Payment Callback Frontend] Received parameters:");
+      console.log("URL Search Params:", {
+        paymentId,
+        paymentStatus,
+        payment_id,
+        errorMessage,
+        allParams: Object.fromEntries(searchParams.entries()),
+      });
+      console.log("==========================================");
+
       if (errorMessage) {
+        console.log("[Payment Callback Frontend] Error message found:", errorMessage);
         setStatus("error");
         setError(errorMessage);
         return;
       }
 
       if (!paymentId) {
+        console.log("[Payment Callback Frontend] No paymentId found");
         setStatus("error");
         setError("Payment ID not found");
         return;
       }
 
       try {
+        console.log("[Payment Callback Frontend] Fetching payment details for:", paymentId);
         // Fetch payment details to check status
         const paymentData = await getPaymentDetails(paymentId);
         setPayment(paymentData.payment);
 
+        console.log("[Payment Callback Frontend] Payment data received:", {
+          paymentId,
+          paymentStatusFromURL: paymentStatus,
+          paymentStatusFromDB: paymentData.payment?.status,
+          paymentData: {
+            id: paymentData.payment?._id,
+            status: paymentData.payment?.status,
+            amount: paymentData.payment?.amount,
+            gatewayTransactionId: paymentData.payment?.gatewayTransactionId,
+            course: paymentData.payment?.course ? "present" : "missing",
+          },
+        });
+
         // Check for success status from URL or payment record
-        if (paymentStatus === "success" || paymentStatus === "paid" || paymentData.payment?.status === "completed") {
+        const isSuccess = paymentStatus === "success" || paymentStatus === "paid" || paymentData.payment?.status === "completed";
+        const isFailed = paymentStatus === "failed" || paymentData.payment?.status === "failed";
+
+        console.log("[Payment Callback Frontend] Status determination:", {
+          isSuccess,
+          isFailed,
+          paymentStatusFromURL: paymentStatus,
+          paymentStatusFromDB: paymentData.payment?.status,
+          conditions: {
+            urlSuccess: paymentStatus === "success",
+            urlPaid: paymentStatus === "paid",
+            dbCompleted: paymentData.payment?.status === "completed",
+            urlFailed: paymentStatus === "failed",
+            dbFailed: paymentData.payment?.status === "failed",
+          },
+        });
+
+        if (isSuccess) {
+          console.log("[Payment Callback Frontend] Setting status to SUCCESS");
           setStatus("success");
           toast.success("Payment successful!");
 
           // Redirect based on payment type
           setTimeout(() => {
             if (paymentData.payment?.course) {
-              navigate(`/courses/${paymentData.payment.course._id || paymentData.payment.course}`);
+              const courseId = paymentData.payment.course._id || paymentData.payment.course;
+              console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
+              navigate(`/courses/${courseId}`);
             } else {
+              console.log("[Payment Callback Frontend] Redirecting to payments page");
               navigate("/student/payments");
             }
           }, 3000);
-        } else if (paymentStatus === "failed" || paymentData.payment?.status === "failed") {
+        } else if (isFailed) {
+          console.log("[Payment Callback Frontend] Setting status to FAILED");
           setStatus("failed");
           toast.error("Payment failed. Please try again.");
         } else {
+          console.log("[Payment Callback Frontend] Setting status to PROCESSING, will check again in 2s");
           setStatus("processing");
           // Wait a bit and check again
           setTimeout(async () => {
             try {
+              console.log("[Payment Callback Frontend] Re-checking payment status after delay");
               const updatedPayment = await getPaymentDetails(paymentId);
+              console.log("[Payment Callback Frontend] Updated payment status:", {
+                status: updatedPayment.payment?.status,
+                gatewayTransactionId: updatedPayment.payment?.gatewayTransactionId,
+              });
+              
               if (updatedPayment.payment?.status === "completed") {
+                console.log("[Payment Callback Frontend] Payment now completed, setting SUCCESS");
                 setStatus("success");
                 setPayment(updatedPayment.payment);
                 toast.success("Payment successful!");
                 setTimeout(() => {
                   if (updatedPayment.payment?.course) {
-                    navigate(`/courses/${updatedPayment.payment.course._id || updatedPayment.payment.course}`);
+                    const courseId = updatedPayment.payment.course._id || updatedPayment.payment.course;
+                    console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
+                    navigate(`/courses/${courseId}`);
                   } else {
+                    console.log("[Payment Callback Frontend] Redirecting to payments page");
                     navigate("/student/payments");
                   }
                 }, 3000);
               } else {
+                console.log("[Payment Callback Frontend] Payment still not completed, setting FAILED");
                 setStatus("failed");
               }
             } catch (err) {
+              console.error("[Payment Callback Frontend] Error re-checking payment:", err);
               setStatus("error");
               setError("Failed to verify payment status");
             }
           }, 2000);
         }
       } catch (err) {
-        console.error("[Payment] Error fetching payment:", err);
+        console.error("[Payment Callback Frontend] Error fetching payment:", {
+          error: err.message,
+          stack: err.stack,
+          paymentId,
+        });
         setStatus("error");
         setError(err.message || "Failed to verify payment");
       }
     };
 
     handleCallback();
-  }, [paymentId, paymentStatus, payment_id, errorMessage, navigate]);
+  }, [paymentId, paymentStatus, payment_id, errorMessage, navigate, searchParams]);
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
