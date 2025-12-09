@@ -13,6 +13,7 @@ import {
   verifyRazorpayPayment,
   handleRazorpayWebhook,
   handleRazorpayCallback,
+  verifyPaymentStatus,
 } from "../controllers/paymentController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { validateCsrfToken } from "../middleware/csrfMiddleware.js";
@@ -58,6 +59,9 @@ router.post("/:paymentId/razorpay/order", authenticate, paymentRateLimiter, vali
 
 // Create Razorpay payment link (redirect-based)
 router.post("/:paymentId/razorpay/payment-link", authenticate, paymentRateLimiter, validateCsrfToken, createRazorpayPaymentLink);
+
+// Verify payment status manually (from Razorpay)
+router.post("/:paymentId/verify-status", authenticate, verifyPaymentStatus);
 
 export default router;
 

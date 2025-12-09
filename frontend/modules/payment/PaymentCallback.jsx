@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
-import { getPaymentDetails } from "../../src/services/api/payments";
+import { getPaymentDetails, verifyPaymentStatus } from "../../src/services/api/payments";
 import SEO from "../../src/components/SEO";
 
 const PaymentCallback = () => {
@@ -118,33 +118,73 @@ const PaymentCallback = () => {
           
           const pollPaymentStatus = async () => {
             if (pollAttempt >= pollIntervals.length) {
-              // After all retries, check one more time before marking as failed
+              // After all retries, try manual verification from Razorpay one last time
               try {
-                console.log("[Payment Callback Frontend] Final check after all retries");
-                const finalPayment = await getPaymentDetails(paymentId);
+                console.log("[Payment Callback Frontend] Final check: Trying manual verification from Razorpay");
+                const verifyResult = await verifyPaymentStatus(paymentId);
                 
-                if (finalPayment.payment?.status === "completed") {
-                  console.log("[Payment Callback Frontend] Payment completed on final check");
+                if (verifyResult.verified && verifyResult.payment?.status === "completed") {
+                  console.log("[Payment Callback Frontend] Payment completed on final verification");
                   setStatus("success");
-                  setPayment(finalPayment.payment);
+                  setPayment(verifyResult.payment);
                   toast.success("Payment successful!");
                   setTimeout(() => {
-                    if (finalPayment.payment?.course) {
-                      const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
+                    if (verifyResult.payment?.course) {
+                      const courseId = verifyResult.payment.course._id || verifyResult.payment.course;
                       navigate(`/courses/${courseId}`);
                     } else {
                       navigate("/student/payments");
                     }
                   }, 3000);
                 } else {
-                  console.log("[Payment Callback Frontend] Payment still not completed after all retries, marking as failed");
-                  setStatus("failed");
-                  toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                  // Fallback to regular check
+                  const finalPayment = await getPaymentDetails(paymentId);
+                  
+                  if (finalPayment.payment?.status === "completed") {
+                    console.log("[Payment Callback Frontend] Payment completed on final check");
+                    setStatus("success");
+                    setPayment(finalPayment.payment);
+                    toast.success("Payment successful!");
+                    setTimeout(() => {
+                      if (finalPayment.payment?.course) {
+                        const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
+                        navigate(`/courses/${courseId}`);
+                      } else {
+                        navigate("/student/payments");
+                      }
+                    }, 3000);
+                  } else {
+                    console.log("[Payment Callback Frontend] Payment still not completed after all retries, marking as failed");
+                    setStatus("failed");
+                    toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                  }
                 }
               } catch (err) {
                 console.error("[Payment Callback Frontend] Error on final check:", err);
-                setStatus("failed");
-                toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                // Try one last regular check
+                try {
+                  const finalPayment = await getPaymentDetails(paymentId);
+                  if (finalPayment.payment?.status === "completed") {
+                    setStatus("success");
+                    setPayment(finalPayment.payment);
+                    toast.success("Payment successful!");
+                    setTimeout(() => {
+                      if (finalPayment.payment?.course) {
+                        const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
+                        navigate(`/courses/${courseId}`);
+                      } else {
+                        navigate("/student/payments");
+                      }
+                    }, 3000);
+                  } else {
+                    setStatus("failed");
+                    toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                  }
+                } catch (finalErr) {
+                  console.error("[Payment Callback Frontend] Error on final fallback check:", finalErr);
+                  setStatus("failed");
+                  toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                }
               }
               return;
             }
@@ -156,7 +196,30 @@ const PaymentCallback = () => {
             
             setTimeout(async () => {
               try {
-                const updatedPayment = await getPaymentDetails(paymentId);
+                // On later attempts (3rd and beyond), also try manual verification from Razorpay
+                let updatedPayment;
+                if (pollAttempt >= 2) {
+                  console.log(`[Payment Callback Frontend] Attempt ${pollAttempt + 1}: Trying manual verification from Razorpay`);
+                  try {
+                    const verifyResult = await verifyPaymentStatus(paymentId);
+                    if (verifyResult.verified && verifyResult.payment) {
+                      updatedPayment = { payment: verifyResult.payment };
+                      console.log("[Payment Callback Frontend] Manual verification successful:", {
+                        status: verifyResult.payment.status,
+                        verified: verifyResult.verified,
+                      });
+                    } else {
+                      // Fallback to regular check
+                      updatedPayment = await getPaymentDetails(paymentId);
+                    }
+                  } catch (verifyErr) {
+                    console.log("[Payment Callback Frontend] Manual verification failed, falling back to regular check:", verifyErr);
+                    updatedPayment = await getPaymentDetails(paymentId);
+                  }
+                } else {
+                  updatedPayment = await getPaymentDetails(paymentId);
+                }
+                
                 console.log("[Payment Callback Frontend] Poll result:", {
                   attempt: pollAttempt + 1,
                   status: updatedPayment.payment?.status,

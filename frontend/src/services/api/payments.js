@@ -135,3 +135,13 @@ export const createRazorpayPaymentLink = async (paymentId, callbackUrl) => {
   });
 };
 
+/**
+ * Verify Payment Status (Manual verification from Razorpay)
+ * POST /api/v1/payments/:paymentId/verify-status
+ */
+export const verifyPaymentStatus = async (paymentId) => {
+  return apiRequest(`/payments/${paymentId}/verify-status`, {
+    method: "POST",
+  });
+};
+
