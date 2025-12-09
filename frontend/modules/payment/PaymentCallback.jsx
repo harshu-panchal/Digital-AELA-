@@ -64,20 +64,24 @@ const PaymentCallback = () => {
           },
         });
 
+        // Normalize status from URL - treat "unknown" as "processing"
+        const normalizedStatus = paymentStatus === "unknown" || !paymentStatus ? "processing" : paymentStatus;
+        
         // Check for success status from URL or payment record
-        const isSuccess = paymentStatus === "success" || paymentStatus === "paid" || paymentData.payment?.status === "completed";
-        const isFailed = paymentStatus === "failed" || paymentData.payment?.status === "failed";
+        const isSuccess = normalizedStatus === "success" || normalizedStatus === "paid" || paymentData.payment?.status === "completed";
+        const isFailed = normalizedStatus === "failed" || paymentData.payment?.status === "failed";
 
         console.log("[Payment Callback Frontend] Status determination:", {
           isSuccess,
           isFailed,
           paymentStatusFromURL: paymentStatus,
+          normalizedStatus,
           paymentStatusFromDB: paymentData.payment?.status,
           conditions: {
-            urlSuccess: paymentStatus === "success",
-            urlPaid: paymentStatus === "paid",
+            urlSuccess: normalizedStatus === "success",
+            urlPaid: normalizedStatus === "paid",
             dbCompleted: paymentData.payment?.status === "completed",
-            urlFailed: paymentStatus === "failed",
+            urlFailed: normalizedStatus === "failed",
             dbFailed: paymentData.payment?.status === "failed",
           },
         });
@@ -103,43 +107,97 @@ const PaymentCallback = () => {
           setStatus("failed");
           toast.error("Payment failed. Please try again.");
         } else {
-          console.log("[Payment Callback Frontend] Setting status to PROCESSING, will check again in 2s");
+          // Payment is processing - implement exponential backoff polling
+          console.log("[Payment Callback Frontend] Setting status to PROCESSING, will poll with exponential backoff");
           setStatus("processing");
-          // Wait a bit and check again
-          setTimeout(async () => {
-            try {
-              console.log("[Payment Callback Frontend] Re-checking payment status after delay");
-              const updatedPayment = await getPaymentDetails(paymentId);
-              console.log("[Payment Callback Frontend] Updated payment status:", {
-                status: updatedPayment.payment?.status,
-                gatewayTransactionId: updatedPayment.payment?.gatewayTransactionId,
-              });
-              
-              if (updatedPayment.payment?.status === "completed") {
-                console.log("[Payment Callback Frontend] Payment now completed, setting SUCCESS");
-                setStatus("success");
-                setPayment(updatedPayment.payment);
-                toast.success("Payment successful!");
-                setTimeout(() => {
-                  if (updatedPayment.payment?.course) {
-                    const courseId = updatedPayment.payment.course._id || updatedPayment.payment.course;
-                    console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
-                    navigate(`/courses/${courseId}`);
-                  } else {
-                    console.log("[Payment Callback Frontend] Redirecting to payments page");
-                    navigate("/student/payments");
-                  }
-                }, 3000);
-              } else {
-                console.log("[Payment Callback Frontend] Payment still not completed, setting FAILED");
+          
+          // Exponential backoff intervals: 2s, 5s, 10s, 20s, 30s (total ~67 seconds)
+          const pollIntervals = [2000, 5000, 10000, 20000, 30000];
+          let pollAttempt = 0;
+          let totalWaitTime = 0;
+          
+          const pollPaymentStatus = async () => {
+            if (pollAttempt >= pollIntervals.length) {
+              // After all retries, check one more time before marking as failed
+              try {
+                console.log("[Payment Callback Frontend] Final check after all retries");
+                const finalPayment = await getPaymentDetails(paymentId);
+                
+                if (finalPayment.payment?.status === "completed") {
+                  console.log("[Payment Callback Frontend] Payment completed on final check");
+                  setStatus("success");
+                  setPayment(finalPayment.payment);
+                  toast.success("Payment successful!");
+                  setTimeout(() => {
+                    if (finalPayment.payment?.course) {
+                      const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
+                      navigate(`/courses/${courseId}`);
+                    } else {
+                      navigate("/student/payments");
+                    }
+                  }, 3000);
+                } else {
+                  console.log("[Payment Callback Frontend] Payment still not completed after all retries, marking as failed");
+                  setStatus("failed");
+                  toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                }
+              } catch (err) {
+                console.error("[Payment Callback Frontend] Error on final check:", err);
                 setStatus("failed");
+                toast.error("Payment verification timed out. Please check your payment status in the payments page.");
               }
-            } catch (err) {
-              console.error("[Payment Callback Frontend] Error re-checking payment:", err);
-              setStatus("error");
-              setError("Failed to verify payment status");
+              return;
             }
-          }, 2000);
+            
+            const delay = pollIntervals[pollAttempt];
+            totalWaitTime += delay;
+            
+            console.log(`[Payment Callback Frontend] Polling attempt ${pollAttempt + 1}/${pollIntervals.length} after ${delay}ms (total: ${totalWaitTime}ms)`);
+            
+            setTimeout(async () => {
+              try {
+                const updatedPayment = await getPaymentDetails(paymentId);
+                console.log("[Payment Callback Frontend] Poll result:", {
+                  attempt: pollAttempt + 1,
+                  status: updatedPayment.payment?.status,
+                  gatewayTransactionId: updatedPayment.payment?.gatewayTransactionId,
+                });
+                
+                if (updatedPayment.payment?.status === "completed") {
+                  console.log("[Payment Callback Frontend] Payment now completed, setting SUCCESS");
+                  setStatus("success");
+                  setPayment(updatedPayment.payment);
+                  toast.success("Payment successful!");
+                  setTimeout(() => {
+                    if (updatedPayment.payment?.course) {
+                      const courseId = updatedPayment.payment.course._id || updatedPayment.payment.course;
+                      console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
+                      navigate(`/courses/${courseId}`);
+                    } else {
+                      console.log("[Payment Callback Frontend] Redirecting to payments page");
+                      navigate("/student/payments");
+                    }
+                  }, 3000);
+                } else if (updatedPayment.payment?.status === "failed") {
+                  console.log("[Payment Callback Frontend] Payment marked as failed");
+                  setStatus("failed");
+                  toast.error("Payment failed. Please try again.");
+                } else {
+                  // Still processing, continue polling
+                  pollAttempt++;
+                  pollPaymentStatus();
+                }
+              } catch (err) {
+                console.error(`[Payment Callback Frontend] Error on poll attempt ${pollAttempt + 1}:`, err);
+                // Continue polling even on error (might be temporary network issue)
+                pollAttempt++;
+                pollPaymentStatus();
+              }
+            }, delay);
+          };
+          
+          // Start polling
+          pollPaymentStatus();
         }
       } catch (err) {
         console.error("[Payment Callback Frontend] Error fetching payment:", {
@@ -173,6 +231,21 @@ const PaymentCallback = () => {
               </h2>
               <p className="text-gray-400">
                 Please wait while we verify your payment.
+              </p>
+            </>
+          )}
+
+          {status === "processing" && (
+            <>
+              <FaSpinner className="w-16 h-16 text-[#D4AF37] animate-spin mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2 font-display">
+                Verifying Payment...
+              </h2>
+              <p className="text-gray-400">
+                Your payment is being verified. This may take a few moments.
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                Please do not close this page.
               </p>
             </>
           )}

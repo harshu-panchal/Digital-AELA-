@@ -1427,11 +1427,78 @@ export const handleRazorpayCallback = async (req, res, next) => {
                     console.error("[Payment] Error fetching payment from payment link:", paymentFetchError);
                   }
                 } else if (paymentLink.status === "paid") {
-                  // Payment link is paid but no payments array (shouldn't happen, but handle it)
-                  console.log("[Payment] Payment link is paid but no payments found");
+                  // Payment link is paid but no payments array yet (timing issue)
+                  // Try to retry fetching after a short delay
+                  console.log("[Payment] Payment link is paid but no payments found yet, will retry");
+                  
+                  // Retry fetching payment link after 1 second
+                  try {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const retryPaymentLink = await fetchPaymentLink(currentPayment.gatewayPaymentIntentId);
+                    
+                    if (retryPaymentLink.payments && retryPaymentLink.payments.length > 0) {
+                      const firstPayment = retryPaymentLink.payments[0];
+                      const razorpayPaymentIdFromLink = firstPayment.id;
+                      
+                      console.log("[Payment] Retry successful, fetching payment details:", razorpayPaymentIdFromLink);
+                      
+                      const paymentFromRazorpay = await fetchPayment(razorpayPaymentIdFromLink);
+                      
+                      if (paymentFromRazorpay.status === "captured" || paymentFromRazorpay.status === "authorized") {
+                        const updateData = {
+                          status: "completed",
+                          gatewayTransactionId: razorpayPaymentIdFromLink,
+                          gatewayPaymentIntentId: retryPaymentLink.id,
+                        };
+                        
+                        const payment = await Payment.findById(paymentId).lean();
+                        
+                        if (payment && payment.course && !payment.metadata?.enrollmentCreated) {
+                          try {
+                            const existingEnrollment = await Enrollment.findOne({
+                              student: payment.user,
+                              course: payment.course,
+                            }).lean();
+                            
+                            if (!existingEnrollment) {
+                              console.log("[Payment] Creating enrollment for course:", payment.course);
+                              await Enrollment.create({
+                                student: payment.user,
+                                course: payment.course,
+                                status: "active",
+                                enrolledAt: new Date(),
+                              });
+                              updateData.metadata = {
+                                ...payment.metadata,
+                                enrollmentCreated: true,
+                                enrollmentCreatedAt: new Date(),
+                              };
+                              console.log("[Payment] Enrollment created successfully");
+                            }
+                          } catch (enrollmentError) {
+                            console.error("[Payment] Error creating enrollment:", enrollmentError);
+                          }
+                        }
+                        
+                        await Payment.findByIdAndUpdate(paymentId, updateData);
+                        paymentUpdatedToCompleted = true;
+                        razorpayPaymentId = razorpayPaymentIdFromLink;
+                        console.log("[Payment] Payment updated to completed from retry");
+                      }
+                    } else {
+                      console.log("[Payment] Retry still shows no payments, payment link may still be processing");
+                    }
+                  } catch (retryError) {
+                    console.error("[Payment] Error during retry:", retryError);
+                  }
                 }
               } catch (linkFetchError) {
                 console.error("[Payment] Error fetching payment link:", linkFetchError);
+                // If we have payment link status from URL but fetch failed, still mark as processing
+                // The webhook or frontend polling will complete it
+                if (razorpayPaymentLinkStatus === "paid") {
+                  console.log("[Payment] Payment link fetch failed but URL status is paid, will mark as processing");
+                }
               }
             }
           } else {
@@ -1442,10 +1509,10 @@ export const handleRazorpayCallback = async (req, res, next) => {
         }
       }
       
-      if (razorpayPaymentLinkStatus === "paid" && paymentId) {
+      if (razorpayPaymentLinkStatus === "paid" && paymentId && !paymentUpdatedToCompleted) {
         // If we have payment link status but no payment_id yet, still mark as processing
         // The webhook or frontend verification will complete it
-        console.log("[Payment] Payment link status is paid, but payment_id not yet available");
+        console.log("[Payment] Payment link status is paid, but payment_id not yet available - will mark as processing");
       }
     }
 
@@ -1453,7 +1520,7 @@ export const handleRazorpayCallback = async (req, res, next) => {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     // Map razorpay_payment_link_status to frontend status
     // Priority: 1. Payment API status (if we fetched and updated), 2. Payment link status, 3. Default
-    let finalStatus = "unknown";
+    let finalStatus = "processing"; // Default to processing instead of unknown
     
     console.log("[Payment] Determining final redirect status:", {
       paymentUpdatedToCompleted,
@@ -1471,8 +1538,10 @@ export const handleRazorpayCallback = async (req, res, next) => {
       finalStatus = "failed";
       console.log("[Payment] Status determined: FAILED (payment updated to failed)");
     } else if (razorpayPaymentLinkStatus === "paid") {
-      finalStatus = "success";
-      console.log("[Payment] Status determined: SUCCESS (payment link status is paid)");
+      // If payment link is paid but we couldn't update yet, mark as processing
+      // Frontend will poll and webhook will eventually update it
+      finalStatus = "processing";
+      console.log("[Payment] Status determined: PROCESSING (payment link is paid but not yet updated in DB)");
     } else if (razorpayPaymentLinkStatus === "failed") {
       finalStatus = "failed";
       console.log("[Payment] Status determined: FAILED (payment link status is failed)");
@@ -1486,7 +1555,9 @@ export const handleRazorpayCallback = async (req, res, next) => {
       finalStatus = "processing";
       console.log("[Payment] Status determined: PROCESSING (has payment_id but couldn't fetch)");
     } else {
-      console.log("[Payment] Status determined: UNKNOWN (no status indicators found)");
+      // Default to processing instead of unknown - frontend will poll
+      finalStatus = "processing";
+      console.log("[Payment] Status determined: PROCESSING (no status indicators found, will poll)");
     }
     
     // Build redirect URL with query parameters
