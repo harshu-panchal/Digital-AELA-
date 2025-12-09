@@ -272,6 +272,32 @@ export const fetchPayment = async (paymentId) => {
 };
 
 /**
+ * Fetch payment link details from Razorpay
+ * @param {string} paymentLinkId - Razorpay payment link ID
+ * @returns {Promise<Object>} Payment link details
+ */
+export const fetchPaymentLink = async (paymentLinkId) => {
+  try {
+    if (!paymentLinkId) {
+      throw new Error("Payment link ID is required");
+    }
+
+    const razorpay = await initializeRazorpay();
+    const paymentLink = await razorpay.paymentLink.fetch(paymentLinkId);
+
+    console.log(`[Payment Gateway] Payment link fetched: ${paymentLinkId}, status: ${paymentLink.status}`);
+
+    return paymentLink;
+  } catch (error) {
+    console.error("[Payment Gateway] Error fetching payment link:", error);
+    if (error.statusCode === 404) {
+      throw new Error(`Payment link not found: ${paymentLinkId}`);
+    }
+    throw new Error(`Failed to fetch payment link: ${error.message}`);
+  }
+};
+
+/**
  * Verify payment signature (for order-based payments if needed)
  * @param {string} orderId - Razorpay order ID
  * @param {string} paymentId - Razorpay payment ID
