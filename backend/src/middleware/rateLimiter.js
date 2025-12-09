@@ -55,15 +55,16 @@ export const loginRateLimiter = rateLimit({
 
 /**
  * Rate limiter for payment attempts
- * Limits: 10 attempts per hour per IP/user
+ * Limits: 30 attempts per 15 minutes per IP/user
+ * More lenient to allow for retries and legitimate payment flows
  */
 export const paymentRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Limit each IP/user to 10 payment attempts per hour
+  windowMs: 15 * 60 * 1000, // 15 minutes (shorter window for better UX)
+  max: 30, // Limit each IP/user to 30 payment attempts per 15 minutes
   message: {
     error: {
       code: "TOO_MANY_REQUESTS",
-      message: "Too many payment attempts. Please try again after 1 hour.",
+      message: "Too many payment attempts. Please try again after a few minutes.",
     },
   },
   standardHeaders: true,
@@ -77,11 +78,13 @@ export const paymentRateLimiter = rateLimit({
     return ipKeyGenerator(req); // Per-IP fallback
   },
   handler: (req, res) => {
+    const retryAfterSeconds = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+    const retryAfterMinutes = Math.ceil(retryAfterSeconds / 60);
     res.status(429).json({
       error: {
         code: "TOO_MANY_REQUESTS",
-        message: "Too many payment attempts. Please try again after 1 hour.",
-        retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
+        message: `Too many payment attempts. Please try again in ${retryAfterMinutes} minute${retryAfterMinutes !== 1 ? 's' : ''}.`,
+        retryAfter: retryAfterSeconds,
       },
     });
   },
