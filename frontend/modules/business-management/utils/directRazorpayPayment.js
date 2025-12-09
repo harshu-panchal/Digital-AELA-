@@ -57,7 +57,12 @@ export const redirectToRazorpay = async (options) => {
     const paymentId = paymentResponse.payment._id;
 
     // Step 2: Create Razorpay Payment Link
-    const callbackUrl = `${window.location.origin}/payment/callback?paymentId=${paymentId}`;
+    // For localhost, don't pass callback URL - let backend use its default backend callback endpoint
+    // Razorpay can't redirect to localhost URLs, so backend callback endpoint is used instead
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const callbackUrl = isLocalhost 
+      ? null // Let backend set the default callback URL (backend callback endpoint)
+      : `${window.location.origin}/payment/callback?paymentId=${paymentId}`;
     const linkResponse = await createRazorpayPaymentLink(paymentId, callbackUrl);
 
     if (!linkResponse?.paymentLink?.short_url && !linkResponse?.paymentLink?.url) {
