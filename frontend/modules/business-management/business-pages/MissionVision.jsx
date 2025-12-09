@@ -86,16 +86,10 @@ const MissionVision = () => {
 
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 text-center">
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
             className="mb-4">
             <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
               <TranslatedText>Our Purpose</TranslatedText>
@@ -103,17 +97,11 @@ const MissionVision = () => {
           </motion.div>
 
           <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
             <TranslatedText>Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Mission & Vision</TranslatedText></span>
           </motion.h1>
 
           <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
             className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto mb-6 leading-relaxed">
             <TranslatedText>
               At Digital AELA, we are driven by a clear mission and an inspiring
@@ -128,10 +116,6 @@ const MissionVision = () => {
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg mb-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="text-4xl">🎯</div>
@@ -153,10 +137,6 @@ const MissionVision = () => {
 
           {/* Vision Section */}
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg">
             <div className="flex items-center gap-3 mb-4">
               <div className="text-4xl">👁️</div>
@@ -184,10 +164,6 @@ const MissionVision = () => {
       <section className="py-10 bg-black relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <div className="mb-4">
               <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
@@ -206,15 +182,6 @@ const MissionVision = () => {
             {coreValues.map((value, index) => (
               <motion.div
                 key={value.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.1,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -8, scale: 1.02 }}
                 className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
                 <div className="text-3xl mb-3">{value.icon}</div>
                 <h3 className="text-lg md:text-xl font-bold text-white mb-2 font-display">
@@ -233,10 +200,6 @@ const MissionVision = () => {
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <div className="mb-4">
               <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
@@ -249,10 +212,6 @@ const MissionVision = () => {
           </motion.div>
 
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg">
             <p className="text-base md:text-lg text-gray-300 leading-relaxed mb-4">
               <TranslatedText>
@@ -289,10 +248,6 @@ const MissionVision = () => {
       <section className="py-10 bg-black relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg">
             <h2 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
               <TranslatedText>Join Us on This Journey</TranslatedText>
@@ -306,9 +261,6 @@ const MissionVision = () => {
               </TranslatedText>
             </p>
             <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"

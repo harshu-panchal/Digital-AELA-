@@ -9,10 +9,6 @@ const ContactInfoPanel = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, ease: "easeOut", delay: 0.1 }}
       className="bg-[#0b0b0b] border border-[#D4AF37]/20 rounded-2xl p-5 md:p-6 shadow-[0_0_20px_rgba(212,175,55,0.06)] space-y-5">
       <div className="space-y-2">
         <h3 className="text-lg font-bold text-white font-display">{title}</h3>

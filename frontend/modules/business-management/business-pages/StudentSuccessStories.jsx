@@ -174,16 +174,10 @@ const StudentSuccessStories = () => {
 
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 text-center">
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
             className="mb-4">
             <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
               <TranslatedText>They Believed. They Achieved.</TranslatedText>
@@ -191,18 +185,12 @@ const StudentSuccessStories = () => {
           </motion.div>
 
           <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
             <TranslatedText>Celebrating Our</TranslatedText>{" "}
             <span className="text-[#D4AF37]"><TranslatedText>Students' Journey</TranslatedText></span>
           </motion.h1>
 
           <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
             className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto mb-6 leading-relaxed">
             <TranslatedText>At Digital AELA, success is not measured in numbers alone, but in the courage of every student who chose to believe in themselves. From beginners who couldn't speak a word of English to professionals now leading teams abroad — every story here is living proof that your future is secure when you learn with AELA.</TranslatedText>
           </motion.p>
@@ -213,10 +201,6 @@ const StudentSuccessStories = () => {
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Real Stories,</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Real Success</TranslatedText></span>
@@ -236,15 +220,6 @@ const StudentSuccessStories = () => {
               successStories.map((story, index) => (
                 <motion.div
                   key={story.id}
-                  initial={{ y: 50, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: index * 0.1,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -8, scale: 1.02 }}
                   className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
                   <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D4AF37]/70 shadow-[0_12px_35px_rgba(12,12,12,0.55)]">
                     <img
@@ -274,10 +249,6 @@ const StudentSuccessStories = () => {
       <section className="py-10 bg-black relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>What Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Students Say</TranslatedText></span>{" "}
@@ -289,15 +260,6 @@ const StudentSuccessStories = () => {
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={testimonial.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.1,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -8, scale: 1.02 }}
                 className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
@@ -322,10 +284,6 @@ const StudentSuccessStories = () => {
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our Results</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Speak</TranslatedText></span> <TranslatedText>For Themselves</TranslatedText>
@@ -336,15 +294,6 @@ const StudentSuccessStories = () => {
             {statistics.map((stat, index) => (
               <motion.div
                 key={stat.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.1,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ scale: 1.05 }}
                 className="bg-[#1a1a1a] rounded-xl p-5 md:p-6 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 text-center">
                 <div className="text-3xl md:text-4xl font-bold text-[#D4AF37] mb-2 font-display">
                   {stat.value}
@@ -362,10 +311,6 @@ const StudentSuccessStories = () => {
       <section className="py-10 bg-black relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg text-center">
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed italic">
               <TranslatedText>Education is not about passing exams; it's about passing limits. At Digital AELA, we don't create learners — we create achievers.</TranslatedText>
@@ -378,10 +323,6 @@ const StudentSuccessStories = () => {
       <section className="py-10 bg-[#141414] relative">
         <div className="max-w-4xl mx-auto px-4 md:px-8">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Start Your</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Success Story</TranslatedText></span>{" "}
@@ -390,10 +331,6 @@ const StudentSuccessStories = () => {
           </motion.div>
 
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20 shadow-lg">
             {formSubmitted ? (
               <div className="text-center py-6">
@@ -498,9 +435,6 @@ const StudentSuccessStories = () => {
                   </select>
                 </div>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
                   type="submit"
                   className="w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200">
                   <TranslatedText>Enroll Now – Begin Your Journey</TranslatedText>

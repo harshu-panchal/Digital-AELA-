@@ -34,12 +34,6 @@ const PostCard = ({
 
   return (
     <motion.article
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 12 }}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.18 }}
       className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-b from-[#0c0c0c] via-[#050505] to-[#030303] text-white shadow-[0_18px_50px_rgba(0,0,0,0.45)]">
       <button
         type="button"

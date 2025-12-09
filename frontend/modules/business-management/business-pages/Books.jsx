@@ -306,43 +306,23 @@ const Books = () => {
 
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
             <TranslatedText>Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Book Store</TranslatedText></span>
           </motion.h1>
           <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
             className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
             <TranslatedText>Discover expert-authored books on English Grammar, Vocabulary, Self Help, and more. Available in physical and e-book formats.</TranslatedText>
           </motion.p>
 
           {/* Search Bar */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
             className="max-w-2xl mx-auto">
             <div className="relative">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -364,10 +344,6 @@ const Books = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results Count */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
             <p className="text-gray-300 text-sm">
               {filteredBooks.length} <TranslatedText>book{filteredBooks.length !== 1 ? "s" : ""} found</TranslatedText>
@@ -381,15 +357,6 @@ const Books = () => {
               {filteredBooks.map((book, index) => (
                 <motion.div
                   key={book.id}
-                  initial={{ y: 50, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -8, scale: 1.02 }}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
                   <Link to={`/books/${book.id}`} className="flex flex-col h-full">
                     {/* Book Image */}
@@ -398,7 +365,7 @@ const Books = () => {
                         src={getMediaUrl(book.image)}
                         alt={book.imageAlt || `${book.title} cover`}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                       {/* Format Badge */}
@@ -481,8 +448,6 @@ const Books = () => {
 
                       <div className="flex-shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -538,8 +503,6 @@ const Books = () => {
             </div>
           ) : (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
               className="text-center py-20">
               <div className="text-6xl mb-4">📚</div>
               <h3 className="text-2xl font-bold text-white mb-2 font-display">

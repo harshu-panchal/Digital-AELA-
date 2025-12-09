@@ -48,9 +48,6 @@ const Gallery = () => {
 
       <section className="layout-container pb-16">
         <Motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
           className="mb-10 text-center">
           <p className="text-[#D4AF37] text-xs sm:text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
             • AELA GALLERY •
@@ -75,28 +72,17 @@ const Gallery = () => {
           </div>
         ) : (
           <Motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
             {galleryItems.map((item, index) => (
             <Motion.figure
               key={item.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.35,
-                delay: index * 0.05,
-                ease: "easeOut",
-              }}
-              whileHover={{ y: -6, scale: 1.01 }}
               className="group overflow-hidden rounded-2xl border border-white/10 bg-[#060606] shadow-[0_22px_60px_rgba(0,0,0,0.7)]">
               <div className="relative h-40 sm:h-48 md:h-52 w-full overflow-hidden">
                 <img
                   src={getMediaUrl(item.image)}
                   alt="AELA community gallery"
                   loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
               </div>

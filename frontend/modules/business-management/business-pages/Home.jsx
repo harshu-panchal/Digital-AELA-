@@ -795,16 +795,16 @@ const Home = () => {
   const getPrimaryCtaClasses = (label) => {
     switch (label) {
       case "Start Learning":
-        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105";
       default:
-        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105";
     }
   };
 
   const getSecondaryCtaClasses = (label) => {
     switch (label) {
       case "Start Learning":
-        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105";
+        return "inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105";
       case "Explore the Free Library":
         return "inline-flex items-center justify-center rounded-full border border-blue-400/70 bg-blue-500/20 px-6 py-3 text-sm font-semibold text-blue-100 shadow-[0_10px_30px_rgba(59,130,246,0.35)] transition hover:bg-blue-500/30 hover:border-blue-300";
       case "Apply for Partnership":
@@ -1082,9 +1082,6 @@ const Home = () => {
       />
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative min-h-screen flex items-center pt-[160px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
         onMouseEnter={() => setIsHeroPaused(true)}
         onMouseLeave={() => setIsHeroPaused(false)}>
@@ -1092,18 +1089,12 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "ambition-action" && (
           <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 0.8, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0">
               <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#F5D26A_0%,rgba(245,210,106,0.1)_55%,transparent_100%)] blur-[140px]" />
               <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-[#F5D26A]/20 bg-[#F5D26A]/12 blur-[120px] mix-blend-screen" />
               <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-[#FFE28A]/25 bg-[#FFE28A]/10 blur-[140px] mix-blend-screen" />
             </motion.div>
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F5D26A]/35 bg-[radial-gradient(circle,#F5D26A/18_0%,rgba(245,210,106,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
@@ -1112,17 +1103,11 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "gift-future" && (
           <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 0.85, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0">
               <div className="absolute top-14 right-[18%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#4ADE80_0%,rgba(74,222,128,0.08)_60%,transparent_100%)] blur-[160px]" />
               <div className="absolute bottom-[18%] left-[14%] h-96 w-96 rounded-full border border-[#6EE7B7]/25 bg-[#6EE7B7]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
             <motion.div
-              initial={{ opacity: 0.2, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#6EE7B7]/30 bg-[radial-gradient(circle,#6EE7B7/18_0%,rgba(110,231,183,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
@@ -1131,17 +1116,11 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "read-grow" && (
           <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 0.85, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0">
               <div className="absolute top-[18%] left-[18%] h-100 w-100 rounded-full bg-[radial-gradient(circle,#F472B6_0%,rgba(244,114,182,0.08)_60%,transparent_100%)] blur-[150px]" />
               <div className="absolute bottom-[22%] right-[18%] h-96 w-96 rounded-full border border-[#FB7185]/25 bg-[#FB7185]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
             <motion.div
-              initial={{ opacity: 0.2, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F472B6]/25 bg-[radial-gradient(circle,#F472B6/16_0%,rgba(244,114,182,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
@@ -1150,17 +1129,11 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "learn-earn" && (
           <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 0.85, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0">
               <div className="absolute top-12 left-[20%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#7AB8FF_0%,rgba(122,184,255,0.1)_60%,transparent_100%)] blur-[150px]" />
               <div className="absolute top-1/2 -translate-y-1/2 right-[14%] h-96 w-96 rounded-full border border-[#7C9BFF]/25 bg-[#7C9BFF]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
             <motion.div
-              initial={{ opacity: 0.2, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#7AB8FF]/30 bg-[radial-gradient(circle,#7AB8FF/20_0%,rgba(122,184,255,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
@@ -1169,33 +1142,21 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "learn-earn-opportunity" && (
           <>
             <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 0.8, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0">
               <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#FFFFFF_0%,rgba(255,255,255,0.1)_55%,transparent_100%)] blur-[140px]" />
               <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-white/20 bg-white/12 blur-[120px] mix-blend-screen" />
               <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-white/25 bg-white/10 blur-[140px] mix-blend-screen" />
             </motion.div>
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-white/35 bg-[radial-gradient(circle,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
           className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10 blur-[220px]"
         />
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
           className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]"
         />
 
@@ -1203,24 +1164,18 @@ const Home = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={heroSlides[activeHeroSlide].id}
-              initial={{ opacity: 0, x: 120 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -120 }}
-              transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
               className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
               <div className="order-2 text-left lg:order-1">
                 <motion.span
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
                   className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
                   <TranslatedText>{heroSlides[activeHeroSlide].badge}</TranslatedText>
                 </motion.span>
 
                 <motion.h1
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
                   className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-[2.8rem] font-display"
                   style={{
                     textShadow: getNeonTextShadow(
@@ -1235,30 +1190,19 @@ const Home = () => {
                 </motion.h1>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.18, ease: "easeOut" }}
                   className="mt-3 text-lg font-semibold text-[#F5D26A]">
                   <TranslatedText>{heroSlides[activeHeroSlide].highlight}</TranslatedText>
                 </motion.p>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.26, ease: "easeOut" }}
                   className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
                   <TranslatedText>{heroSlides[activeHeroSlide].description}</TranslatedText>
                 </motion.p>
 
                 <motion.div
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.34, ease: "easeOut" }}
                   className="mt-8 flex flex-col gap-3 sm:flex-row">
                   {heroSlides[activeHeroSlide].primaryCta && (
                     <MotionLink
-                      whileHover={{ scale: 1.04, y: -2 }}
-                      whileTap={{ scale: 0.96 }}
                       to={heroSlides[activeHeroSlide].primaryLink}
                       className={getPrimaryCtaClasses(
                         heroSlides[activeHeroSlide].primaryCta
@@ -1268,8 +1212,6 @@ const Home = () => {
                   )}
                   {heroSlides[activeHeroSlide].secondaryCta && (
                     <MotionLink
-                      whileHover={{ scale: 1.04, y: -2 }}
-                      whileTap={{ scale: 0.96 }}
                       to={heroSlides[activeHeroSlide].secondaryLink}
                       className={getSecondaryCtaClasses(
                         heroSlides[activeHeroSlide].secondaryCta
@@ -1281,12 +1223,8 @@ const Home = () => {
               </div>
 
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
                 className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
-                <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+                <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-2xl">
                   <div className="relative aspect-video w-full">
                     <img
                       src={heroSlides[activeHeroSlide].image}
@@ -1304,8 +1242,6 @@ const Home = () => {
           <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() =>
                   setActiveHeroSlide(
                     (prev) => (prev - 1 + heroSlides.length) % heroSlides.length
@@ -1315,8 +1251,6 @@ const Home = () => {
                 <FaArrowLeft className="h-4 w-4" />
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() =>
                   setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length)
                 }
@@ -1346,10 +1280,6 @@ const Home = () => {
       {/* Futuristic Stats Section */}
       <motion.div
         ref={ribbonRef}
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative w-full py-12 md:py-16 lg:py-5 overflow-hidden -mt-8 md:-mt-12">
         {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-linear-to-br from-[#0a0a0a] via-[#1a0f2e] to-[#0a0a0a]">
@@ -1373,10 +1303,6 @@ const Home = () => {
         <div className="relative z-10 layout-container">
           {/* Heading */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="text-center mb-5 md:mb-8">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-display tracking-tight">
               <TranslatedText>Achievements</TranslatedText>
@@ -1394,35 +1320,14 @@ const Home = () => {
               return (
                 <motion.div
                   key={`${stat.label}-${stat.value}`}
-                  initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                  whileInView={{ scale: 1, opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: 0.1 + index * 0.1,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
                   className="group relative">
                   {/* Glassmorphism Card */}
                   <div className="relative h-full rounded-xl border border-[#D4AF37]/20 bg-linear-to-br from-white/5 to-white/2 backdrop-blur-xl p-4 md:p-5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_12px_48px_rgba(212,175,55,0.2)]">
-                    {/* Animated Glow Effect */}
-                    <div className="absolute inset-0 bg-linear-to-br from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                    {/* Corner Accents */}
-                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#D4AF37]/30 rounded-tl-xl"></div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#D4AF37]/30 rounded-br-xl"></div>
-
                     {/* Content */}
                     <div className="relative z-10 flex flex-col items-center justify-center text-center">
-                      {/* Animated Number */}
+                      {/* Number */}
                       <motion.div
-                        className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none"
-                        style={{
-                          textShadow: "0 0 20px rgba(212,175,55,0.3)",
-                          backgroundSize: "200% 200%",
-                          animation: "gradient-shift 3s ease infinite",
-                        }}>
+                        className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none">
                         {`${formattedValue}${stat.suffix ?? ""}`}
                       </motion.div>
 
@@ -1431,41 +1336,20 @@ const Home = () => {
                         <TranslatedText>{stat.label}</TranslatedText>
                       </div>
                     </div>
-
-                    {/* Holographic Shine Effect */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                    </div>
                   </div>
                 </motion.div>
               );
             })}
           </div>
         </div>
-
-        {/* CSS Animation for Gradient */}
-        <style>{`
-          @keyframes gradient-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-          }
-        `}</style>
       </motion.div>
 
       {/* 5 Step Learning Strategy Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-16 md:py-20 bg-black overflow-hidden">
         <div className="layout-container">
           {/* Title Area */}
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
               <TranslatedText>Digital AELA –</TranslatedText>{" "}
@@ -1480,10 +1364,6 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Step 1: Book a Free Demo Class */}
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
@@ -1505,10 +1385,6 @@ const Home = () => {
 
             {/* Step 2: Enroll in the Right Course */}
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.2 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
@@ -1530,10 +1406,6 @@ const Home = () => {
 
             {/* Step 3: Get Trained (Online + Books) */}
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.3 }}
               className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
@@ -1559,10 +1431,6 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl w-full">
               {/* Step 4: Get Certified */}
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.4 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
@@ -1584,10 +1452,6 @@ const Home = () => {
 
               {/* Step 5: Placement & Abroad Opportunities */}
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.5 }}
                 className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
@@ -1613,18 +1477,10 @@ const Home = () => {
 
       {/* Courses Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         id="courses"
         className="pt-8 pb-12 bg-black">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our Premium</TranslatedText>{" "}
@@ -1693,15 +1549,6 @@ const Home = () => {
                           "clamp(280px, calc((100vw - 4rem) / 3 - 1.5rem), 400px)",
                       }}>
                       <motion.div
-                        initial={{ y: 50, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{
-                          duration: 0.25,
-                          delay: (index % homeCourses.length) * 0.05,
-                          ease: [0.25, 0.1, 0.25, 1],
-                        }}
-                        whileHover={{ y: -6 }}
                         className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_10px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full min-h-[500px]"
                         role="button"
                         tabIndex={0}
@@ -1800,8 +1647,6 @@ const Home = () => {
                               </span>
                             </div>
                             <motion.button
-                              whileHover={{ scale: 1.02, y: -2 }}
-                              whileTap={{ scale: 0.98 }}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleViewCourseDetail(course, "home-featured");
@@ -1811,8 +1656,6 @@ const Home = () => {
                             </motion.button>
                             <div className="grid gap-3 sm:grid-cols-2">
                               <motion.button
-                                whileHover={{ scale: 1.03, y: -2 }}
-                                whileTap={{ scale: 0.97 }}
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   
@@ -1856,16 +1699,9 @@ const Home = () => {
 
           {/* See All Courses Button */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
             className="flex justify-center">
             <Link to="/courses/english-language">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Explore All Courses</TranslatedText>
               </motion.button>
@@ -1876,23 +1712,13 @@ const Home = () => {
 
       {/* About Founder Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.8 }}
         className="py-12 bg-black">
         <div className="layout-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Founder's Image */}
             <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
               className="order-2 lg:order-2">
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="relative">
                 <img
                   src={founderImage}
@@ -1904,10 +1730,6 @@ const Home = () => {
 
             {/* Right Side - Text Content */}
             <motion.div
-              initial={{ x: 50, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
               className="order-1 lg:order-1">
               {/* "About Our Founder" Badge */}
               <div className="mb-4">
@@ -1932,10 +1754,6 @@ const Home = () => {
 
               {/* Statistics Section */}
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.25, ease: "easeOut" }}
                 className="flex flex-wrap gap-8 mt-8">
                 {[
                   { number: "15+", label: "Years Experience" },
@@ -1944,17 +1762,6 @@ const Home = () => {
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
-                    initial={{ scale: 0, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.3,
-                      delay: 0.3 + index * 0.05,
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                    }}
-                    whileHover={{ scale: 1.1 }}
                     className="flex flex-col">
                     <span className="text-4xl md:text-5xl font-bold text-[#D4AF37] mb-2 font-display">
                       {stat.number}
@@ -1968,14 +1775,8 @@ const Home = () => {
 
               {/* Know More Button */}
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
                 className="mt-8">
                 <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate("/about/founder")}
                   className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                   <TranslatedText>Know More</TranslatedText>
@@ -2000,18 +1801,10 @@ const Home = () => {
 
       {/* Lead Magnets Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         id="lead-magnets"
         className="py-12 bg-[#141414]">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Start Your</TranslatedText>{" "}
@@ -2025,15 +1818,6 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {/* Free Demo Class Card */}
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              whileInView={{ y: 0, opacity: 1, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.05,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Play Icon */}
               <div className="shrink-0 flex justify-center mb-6">
@@ -2059,9 +1843,6 @@ const Home = () => {
 
               {/* Button */}
               <MotionLink
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 to="/contact/book-demo"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Book Your Class</TranslatedText>
@@ -2070,15 +1851,6 @@ const Home = () => {
 
             {/* Free English Guide Card */}
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              whileInView={{ y: 0, opacity: 1, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.08,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Download Icon */}
               <div className="shrink-0 flex justify-center mb-6">
@@ -2110,9 +1882,6 @@ const Home = () => {
 
               {/* Button */}
               <MotionLink
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 to="/free-library"
                 className="block w-full bg-[#1a1a1a] text-[#D4AF37] py-3 rounded-lg font-bold text-center border-2 border-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
                 <TranslatedText>Download Now</TranslatedText>
@@ -2121,15 +1890,6 @@ const Home = () => {
 
             {/* Gift a Future Card */}
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              whileInView={{ y: 0, opacity: 1, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.25,
-                delay: 0.11,
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              whileHover={{ y: -5, scale: 1.02 }}
               className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Gift Icon */}
               <div className="shrink-0 flex justify-center mb-6">
@@ -2161,9 +1921,6 @@ const Home = () => {
 
               {/* Button */}
               <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 href="/join-us/afterlife"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Gift Now</TranslatedText>
@@ -2175,25 +1932,13 @@ const Home = () => {
 
       {/* Premium Books Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-12 bg-[#1a1a1a]">
         <div className="layout-container">
           {/* Header */}
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             {/* Small Title */}
             <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
               <TranslatedText>• OUR RESOURCES •</TranslatedText>
             </motion.p>
@@ -2239,15 +1984,6 @@ const Home = () => {
                 return (
                   <motion.div
                     key={book.id}
-                    initial={{ y: 50, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{
-                      duration: 0.25,
-                      delay: 0.1 + index * 0.05,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                    whileHover={{ y: -8, scale: 1.02 }}
                     className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
                     <Link
                       to={`/books/${book.id}`}
@@ -2261,7 +1997,7 @@ const Home = () => {
                           }
                           alt={book.imageAlt || book.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                         {/* Format Badge */}
@@ -2339,8 +2075,6 @@ const Home = () => {
                         {/* Actions */}
                         <div className="shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -2412,16 +2146,9 @@ const Home = () => {
 
           {/* View All Books Button */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
             className="flex justify-center">
             <Link to="/books">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
                 <TranslatedText>View All Books</TranslatedText>
                 <svg
@@ -2453,16 +2180,8 @@ const Home = () => {
       <section className="py-20 bg-[#141414]">
         <div className="layout-container">
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="why-choose-section-content">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Why Choose</TranslatedText>{" "}
@@ -2478,15 +2197,6 @@ const Home = () => {
             {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -8, scale: 1.03 }}
                 className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
                 {/* Icon */}
                 <div className="shrink-0 flex justify-center mb-4">
@@ -2522,16 +2232,8 @@ const Home = () => {
         <div className="layout-container">
           <div className="watch-stories-section-content">
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="md:opacity-100">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center mb-12 md:opacity-100">
             <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
               <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
@@ -2550,16 +2252,7 @@ const Home = () => {
             {storyVideos.map((video, index) => (
               <motion.article
                 key={video.id}
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6, scale: 1.01 }}
-                className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_20px_50px_rgba(8,8,8,0.45)]">
+                className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl">
                 <div className="relative w-full overflow-hidden bg-black aspect-video md:aspect-9/16">
                   <iframe
                     src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1&showinfo=0`}
@@ -2594,17 +2287,9 @@ const Home = () => {
 
       {topBlogs.length > 0 && (
         <motion.section
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
           className="py-12 bg-[#090909]">
           <div className="layout-container">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• BLOGS •</TranslatedText>
@@ -2622,18 +2307,7 @@ const Home = () => {
               {topBlogs.map((blog, index) => (
                 <motion.article
                   key={`${blog.id}-${blog.publishedAt || index}`}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  animate={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: Math.min(index * 0.05, 0.3),
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
-                  style={{ opacity: 1 }}
-                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-[0_24px_60px_rgba(8,8,8,0.45)] transition-all duration-300">
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl transition-all duration-300">
                   <Link
                     to={`/blogs/${blog.id}`}
                     className="flex h-full flex-col">
@@ -2701,17 +2375,9 @@ const Home = () => {
 
       {galleryItems.length > 0 && (
         <motion.section
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
           className="py-12 bg-[#080808]">
           <div className="layout-container">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• AELA GALLERY •</TranslatedText>
@@ -2733,16 +2399,7 @@ const Home = () => {
               {galleryItems.slice(0, 6).map((item, index) => (
                 <motion.figure
                   key={item.id}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: index * 0.04,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
-                  className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-[0_28px_70px_rgba(8,8,8,0.45)]">
+                  className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-xl">
                   <div className="relative h-56 w-full overflow-hidden">
                     <img
                       src={getMediaUrl(item.image)}
@@ -2758,10 +2415,8 @@ const Home = () => {
 
             <div className="mt-10 flex justify-center">
               <MotionLink
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.96 }}
                 to="/gallery"
-                className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-[0_15px_40px_rgba(245,210,106,0.32)] transition hover:brightness-105">
+                className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105">
                 <TranslatedText>Get Certified with Digital AELA → Enroll Now</TranslatedText>
               </MotionLink>
             </div>
@@ -2771,17 +2426,9 @@ const Home = () => {
 
       {/* Testimonials Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-12 bg-[#141414]">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Student</TranslatedText>{" "}
@@ -2796,8 +2443,6 @@ const Home = () => {
           <div className="relative">
             {/* Side Arrows */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9 }}
               onClick={prevTestimonial}
               className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
               <svg
@@ -2814,8 +2459,6 @@ const Home = () => {
               </svg>
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9 }}
               onClick={nextTestimonial}
               className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
               <svg
@@ -2833,10 +2476,6 @@ const Home = () => {
             </motion.button>
 
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
               className="grid gap-6 md:grid-cols-3">
               {loadingTestimonials ? (
                 <div className="col-span-3 text-center py-12 text-gray-400">
@@ -2850,7 +2489,6 @@ const Home = () => {
                 visibleTestimonials.map((item) => (
                 <motion.article
                   key={item.id}
-                  whileHover={{ y: -6, scale: 1.01 }}
                   className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
                   <div className="shrink-0 flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -2939,10 +2577,6 @@ const Home = () => {
 
       {/* FAQ Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
         id="faq"
         className="relative overflow-hidden py-12 bg-black">
         <div className="pointer-events-none absolute inset-0">
@@ -2969,10 +2603,6 @@ const Home = () => {
               return (
                 <motion.div
                   key={item.question}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.2, delay: index * 0.035 }}
                   className="rounded-2xl border border-[#D4AF37]/15 bg-[#111]/80 shadow-[0_16px_36px_rgba(0,0,0,0.22)] overflow-hidden">
                   <button
                     type="button"
@@ -3001,24 +2631,14 @@ const Home = () => {
                       </svg>
                     </span>
                   </button>
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
+                  {isOpen && (
                       <motion.div
-                        initial="collapsed"
-                        animate="open"
-                        exit="collapsed"
-                        variants={{
-                          open: { height: "auto", opacity: 1 },
-                          collapsed: { height: 0, opacity: 0 },
-                        }}
-                        transition={{ duration: 0.16, ease: "easeOut" }}
                         className="px-5 pb-4 overflow-hidden">
                         <div className="text-xs md:text-sm leading-relaxed text-gray-300">
                           {item.answer}
                         </div>
                       </motion.div>
                     )}
-                  </AnimatePresence>
                 </motion.div>
               );
             })}

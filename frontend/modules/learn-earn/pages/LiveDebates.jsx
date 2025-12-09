@@ -91,10 +91,6 @@ const DebateCard = ({ room, onVote, onDelete, socket, isConnected, isVoting, cur
 
   return (
     <Motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.28 }}
       className="space-y-4 rounded-3xl border border-[#D4AF37]/20 bg-[#101010] p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1">
@@ -575,9 +571,6 @@ const LiveDebates = () => {
             return (
               <Motion.div
                 key={room.id}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28 }}
                 className="rounded-3xl border border-white/5 bg-[#101010] p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -625,8 +618,6 @@ const LiveDebates = () => {
       {showCreateModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
           <Motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <div>

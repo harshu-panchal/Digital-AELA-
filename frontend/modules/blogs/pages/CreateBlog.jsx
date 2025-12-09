@@ -97,7 +97,7 @@ const CreateBlog = () => {
       const { default: confetti } = await import("canvas-confetti");
 
       confetti({
-        particleCount: 160,
+        particleCount: 50,
         spread: 65,
         origin: { y: 0.6 },
       });

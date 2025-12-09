@@ -249,9 +249,6 @@ const CorporateTrainingCourses = () => {
       />
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative overflow-hidden bg-black pt-[120px] pb-20 md:pt-[140px] md:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-[12%] h-104 w-104 rounded-full bg-[#D4AF37]/18 blur-[180px]" />
@@ -260,42 +257,24 @@ const CorporateTrainingCourses = () => {
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-6 text-left">
             <motion.span
-              initial={{ y: -14, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               <TranslatedText>Corporate Training Excellence</TranslatedText>
             </motion.span>
             <motion.h1
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
               <TranslatedText>Empower Your Team with</TranslatedText>
             </motion.h1>
             <motion.h2
-              initial={{ y: 22, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
               className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               <TranslatedText>Professional English</TranslatedText>
             </motion.h2>
             <motion.p
-              initial={{ y: 18, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
               <TranslatedText>Transform your workforce with professional English training programs including Public Speaking, Communication & Accent Training, Leadership Skills, and Host/Anchor Training. Available across South Asia and Gulf regions.</TranslatedText>
             </motion.p>
             <motion.div
-              initial={{ y: 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="flex flex-col gap-4 sm:flex-row">
               <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -303,9 +282,6 @@ const CorporateTrainingCourses = () => {
                 <TranslatedText>Request a Demo</TranslatedText>
               </motion.a>
               <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 href="#programs"
                 className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
                 <TranslatedText>View Corporate Programs</TranslatedText>
@@ -313,9 +289,6 @@ const CorporateTrainingCourses = () => {
             </motion.div>
           </div>
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, rotate: 2 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative mx-auto flex-1 max-w-[420px]">
             <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-linear-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
             <img
@@ -331,17 +304,9 @@ const CorporateTrainingCourses = () => {
       {/* Training Programs Section */}
       <motion.section
         id="programs"
-        initial={{ opacity: 1 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-black">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 0, opacity: 1 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our Training</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Programs</TranslatedText></span>
@@ -368,15 +333,6 @@ const CorporateTrainingCourses = () => {
                 .map((program, index) => (
                 <motion.div
                   key={program.slug}
-                  initial={{ y: 40, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -6 }}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
                   role="button"
                   tabIndex={0}
@@ -462,8 +418,6 @@ const CorporateTrainingCourses = () => {
                         </span>
                       </div>
                       <motion.button
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
                         onClick={(event) => {
                           event.stopPropagation();
                           handleViewCourse(program);
@@ -473,8 +427,6 @@ const CorporateTrainingCourses = () => {
                       </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <motion.button
-                          whileHover={{ scale: 1.03, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
                           onClick={(event) => {
                             event.stopPropagation();
                             handleBuyCourse(program);
@@ -510,17 +462,9 @@ const CorporateTrainingCourses = () => {
 
       {/* Why Choose Corporate Training Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-[#141414]">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Why Choose</TranslatedText> <span className="text-[#D4AF37]">Digital AELA</span>?
@@ -535,15 +479,6 @@ const CorporateTrainingCourses = () => {
             {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit.id}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -8, scale: 1.03 }}
                 className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300">
                 {/* Icon */}
                 <div className="flex justify-center mb-4">
@@ -567,19 +502,11 @@ const CorporateTrainingCourses = () => {
 
       {/* Training Methodology Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-[#141414]">
         <div className="layout-container">
           <div className="auto-grid-sm lg:grid-cols-2 lg:gap-12 items-center">
             {/* Left Side - Content */}
-            <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}>
+            <motion.div>
               {/* Badge */}
               <div className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-white px-4 py-2 rounded-lg text-sm font-semibold font-display">
@@ -623,13 +550,6 @@ const CorporateTrainingCourses = () => {
                 ].map((item, index) => (
                   <motion.div
                     key={index}
-                    initial={{ x: -20, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.3,
-                      delay: 0.2 + index * 0.1,
-                    }}
                     className="flex gap-4">
                     <div className="shrink-0 w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
                       <svg
@@ -660,10 +580,6 @@ const CorporateTrainingCourses = () => {
 
             {/* Right Side - Visual/Stats */}
             <motion.div
-              initial={{ x: 50, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 { number: "500+", label: "Companies Trained" },
@@ -673,17 +589,6 @@ const CorporateTrainingCourses = () => {
               ].map((stat, index) => (
                 <motion.div
                   key={index}
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{
-                    duration: 0.3,
-                    delay: 0.3 + index * 0.1,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 20,
-                  }}
-                  whileHover={{ scale: 1.1 }}
                   className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20 text-center">
                   <span className="text-3xl md:text-4xl font-bold text-[#D4AF37] mb-2 block font-display">
                     {stat.number}
@@ -700,10 +605,6 @@ const CorporateTrainingCourses = () => {
 
       {/* Custom Training Request Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="py-20 bg-[#0b0b0b]">
         <div className="layout-container">
           {corporateTrainingCourses
@@ -713,15 +614,6 @@ const CorporateTrainingCourses = () => {
             .map((program, index) => (
               <motion.div
                 key={program.slug}
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6 }}
                 className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
                 <div className="h-52 w-full overflow-hidden">
                   <img
@@ -765,9 +657,6 @@ const CorporateTrainingCourses = () => {
 
                   <div className="flex justify-center">
                     <motion.a
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -786,15 +675,8 @@ const CorporateTrainingCourses = () => {
           )}
 
           <motion.div
-            initial={{ y: 0, opacity: 1 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
             className="flex justify-center">
             <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"

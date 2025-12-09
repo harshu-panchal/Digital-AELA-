@@ -149,9 +149,6 @@ const EnglishLanguageCourses = () => {
       />
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative overflow-hidden bg-black pt-[120px] pb-20 md:pt-[140px] md:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-[10%] h-104 w-104 rounded-full bg-[#D4AF37]/15 blur-[180px]" />
@@ -160,42 +157,24 @@ const EnglishLanguageCourses = () => {
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-6 text-left">
             <motion.span
-              initial={{ y: -14, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               <TranslatedText>English Language Mastery</TranslatedText>
             </motion.span>
             <motion.h1
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
               <TranslatedText>Master English</TranslatedText>
             </motion.h1>
             <motion.h2
-              initial={{ y: 22, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
               className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               <TranslatedText>From Basics to Fluency</TranslatedText>
             </motion.h2>
             <motion.p
-              initial={{ y: 18, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
               <TranslatedText>Comprehensive English language courses from beginner to advanced levels. Learn grammar, vocabulary, speaking, and writing skills with expert guidance and personalized support.</TranslatedText>
             </motion.p>
             <motion.div
-              initial={{ y: 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="flex flex-col gap-4 sm:flex-row">
               <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -203,9 +182,6 @@ const EnglishLanguageCourses = () => {
                 <TranslatedText>Enroll Now</TranslatedText>
               </motion.a>
               <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 href="#courses"
                 className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 px-8 py-3 text-sm font-bold text-[#D4AF37] transition-colors duration-200 hover:bg-[#D4AF37] hover:text-black sm:text-base">
                 <TranslatedText>View Courses</TranslatedText>
@@ -213,9 +189,6 @@ const EnglishLanguageCourses = () => {
             </motion.div>
           </div>
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, rotate: 2 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative mx-auto flex-1 max-w-[420px]">
             <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-gradient-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
             <img
@@ -232,10 +205,6 @@ const EnglishLanguageCourses = () => {
       <section id="courses" className="py-20 bg-[#141414] relative">
         <div className="layout-container">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our English Language</TranslatedText>{" "}
@@ -259,15 +228,6 @@ const EnglishLanguageCourses = () => {
               {englishCourses.map((course, index) => (
               <motion.div
                 key={course.slug}
-                initial={{ y: 40, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{
-                  duration: 0.25,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                whileHover={{ y: -6 }}
                 className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
                 role="button"
                 tabIndex={0}
@@ -353,8 +313,6 @@ const EnglishLanguageCourses = () => {
                         </span>
                       </div>
                       <motion.button
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
                         onClick={(event) => {
                           event.stopPropagation();
                           handleViewCourse(course);
@@ -364,8 +322,6 @@ const EnglishLanguageCourses = () => {
                       </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
                       <motion.button
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.97 }}
                         onClick={(event) => {
                           event.stopPropagation();
                           handleBuyCourse(course);
@@ -399,15 +355,8 @@ const EnglishLanguageCourses = () => {
 
           {/* CTA Button */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
             className="flex justify-center">
             <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"

@@ -3,17 +3,6 @@ import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import TranslatedText from "../../../src/components/TranslatedText";
 
-const shimmerVariants = {
-  animate: {
-    backgroundPosition: ["0% 50%", "100% 50%"],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      ease: "easeInOut",
-    },
-  },
-};
-
 const BlogSearchBar = ({
   placeholder = "Search blogs, tags or authors", // Placeholder
   onSubmit,
@@ -41,13 +30,7 @@ const BlogSearchBar = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="w-full">
-      <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[#090909]/90 px-4 py-3 text-white shadow-[0_12px_45px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-        <Motion.span
-          variants={shimmerVariants}
-          animate="animate"
-          className="hidden h-16 w-16 rounded-full bg-gradient-to-r from-[#D4AF37]/30 via-transparent to-[#D4AF37]/30 blur-3xl lg:block"
-        />
-
+      <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[#090909]/90 px-4 py-3 text-white shadow-[0_12px_45px_rgba(0,0,0,0.45)] backdrop-blur-sm">
         <HiOutlineMagnifyingGlass className="h-5 w-5 flex-shrink-0 text-[#D4AF37]" />
 
         <input

@@ -29,7 +29,7 @@ const FloatingDebateButton = () => {
       </div>
 
       {/* Microphone Icon Button */}
-      <div className="relative flex h-18 w-18 items-center justify-center rounded-full bg-gradient-to-br from-[#D4AF37] to-[#E5C158] shadow-lg shadow-[#D4AF37]/40 transition-all duration-300 hover:shadow-[#D4AF37]/60 overflow-hidden animate-float">
+      <div className="relative flex h-18 w-18 items-center justify-center rounded-full bg-gradient-to-br from-[#D4AF37] to-[#E5C158] shadow-lg shadow-[#D4AF37]/40 transition-all duration-300 hover:shadow-[#D4AF37]/60 overflow-hidden">
         <img
           src={microphoneIcon}
           alt="Microphone"

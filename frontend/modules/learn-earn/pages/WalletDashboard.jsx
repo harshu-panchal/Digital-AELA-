@@ -196,14 +196,11 @@ const WalletDashboard = () => {
   return (
     <div className="relative space-y-8">
       {showConfetti && viewport.width > 0 && (
-        <Confetti width={viewport.width} height={viewport.height} recycle={false} numberOfPieces={260} gravity={0.35} />
+        <Confetti width={viewport.width} height={viewport.height} recycle={false} numberOfPieces={50} gravity={0.35} />
       )}
 
       <section className="grid gap-6">
         <Motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
           className="rounded-3xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1f1f1f] via-[#0d0d0d] to-black p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -235,10 +232,6 @@ const WalletDashboard = () => {
 
       <section className="grid gap-6">
         <Motion.div
-          initial={{ opacity: 0, x: 24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.3 }}
           className="rounded-3xl border border-white/5 bg-[#0f0f0f] p-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs uppercase tracking-[0.3em] text-[#D4AF37]/70"><TranslatedText>Redeem coins</TranslatedText></p>
@@ -289,10 +282,6 @@ const WalletDashboard = () => {
                   return (
                     <Motion.div
                       key={reward._id}
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.25 }}
                       className="rounded-2xl border border-white/5 bg-[#111] p-4 text-sm text-gray-300">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">

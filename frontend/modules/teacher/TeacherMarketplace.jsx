@@ -147,20 +147,11 @@ const TeacherMarketplace = () => {
 
       {/* Header */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
           className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
           className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
@@ -172,16 +163,10 @@ const TeacherMarketplace = () => {
           </Link>
 
           <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight">
             Teacher <span className="text-[#D4AF37]">Marketplace</span>
           </motion.h1>
           <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
             className="text-base text-gray-300 max-w-2xl mb-8">
             Discover premium courses, e-books, and quiz packs from top mentors.
             Enhance your teaching resources and grow your impact.
@@ -189,9 +174,6 @@ const TeacherMarketplace = () => {
 
           {/* Search and Filters */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
             className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -226,10 +208,6 @@ const TeacherMarketplace = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results Count */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="mb-8">
             <p className="text-gray-300 text-sm">
               {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
@@ -251,15 +229,6 @@ const TeacherMarketplace = () => {
               {filteredItems.map((item, index) => (
                 <motion.div
                   key={item.id}
-                  initial={{ y: 50, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.25,
-                    delay: index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                  whileHover={{ y: -8, scale: 1.02 }}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
                   {/* Item Image */}
                   <div className="relative h-48 w-full overflow-hidden">
@@ -322,8 +291,6 @@ const TeacherMarketplace = () => {
             </div>
           ) : !loading ? (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
               className="text-center py-20">
               <div className="text-6xl mb-4">🛒</div>
               <h3 className="text-2xl font-bold text-white mb-2 font-display">

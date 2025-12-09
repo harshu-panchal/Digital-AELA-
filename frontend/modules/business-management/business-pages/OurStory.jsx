@@ -97,23 +97,14 @@ const OurStory = () => {
 
       {/* Hero Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Side - Text Content */}
             <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
               className="text-center lg:text-left">
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
                 className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
                   <TranslatedText>Discover the Journey</TranslatedText>
@@ -121,18 +112,12 @@ const OurStory = () => {
               </motion.div>
 
               <motion.h1
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
                 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
                 <TranslatedText>A Story of One Teacher,</TranslatedText>{" "}
                 <span className="text-[#D4AF37]"><TranslatedText>Thousands of Futures</TranslatedText></span>
               </motion.h1>
 
               <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
                 className="text-base md:text-lg text-gray-300 mb-6 leading-relaxed">
                 <TranslatedText>From a single boy with a vision to an academy that empowers thousands, Digital AELA is more than an institution — it is hope, hard work, and a promise fulfilled. Every class, every book, every branch, and every success story carries the same message:</TranslatedText>{" "}
                 <i className="text-[#D4AF37]">
@@ -141,14 +126,8 @@ const OurStory = () => {
               </motion.p>
 
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
                 className="flex justify-center lg:justify-start">
                 <motion.a
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -172,13 +151,8 @@ const OurStory = () => {
 
             {/* Right Side - Founder's Image */}
             <motion.div
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
               className="flex justify-center lg:justify-end">
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="relative">
                 <img
                   src={founderImage2}
@@ -196,10 +170,6 @@ const OurStory = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Section Title */}
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
             className="text-center mb-12 md:mb-16">
             <div className="mb-4">
               <span className="inline-block border-2 border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded-lg text-xs md:text-sm font-semibold font-display uppercase tracking-wide">
@@ -220,14 +190,6 @@ const OurStory = () => {
               {storySections.map((section, index) => (
                 <motion.div
                   key={section.id}
-                  initial={{ y: 50, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: index * 0.1,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
                   className="relative flex flex-col lg:flex-row gap-8 md:gap-12 items-start">
                   {/* Timeline Dot */}
                   <div className="hidden md:flex absolute left-0 top-0 w-16 h-16 items-center justify-center">
@@ -265,10 +227,6 @@ const OurStory = () => {
       <section className="py-12 bg-black relative">
         <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
             className="bg-[#1a1a1a] rounded-xl p-8 md:p-12 border border-[#D4AF37]/20 shadow-lg">
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed">
               <TranslatedText>Today, Digital AELA connects learners from India, Pakistan, Bangladesh, Nepal, and the Gulf, carrying the same torch:</TranslatedText>{" "}
