@@ -156,12 +156,17 @@ const PaymentCallback = () => {
                   } else {
                     console.log("[Payment Callback Frontend] Payment still not completed after all retries, marking as failed");
                     setStatus("failed");
-                    toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                    toast.error("Payment verification is taking longer than expected. The payment may still be processing. Please check your payment status in a few moments.");
                   }
                 }
               } catch (err) {
-                console.error("[Payment Callback Frontend] Error on final check:", err);
-                // Try one last regular check
+                // Handle 404 gracefully - endpoint might not be deployed yet
+                if (err.message?.includes('404') || err.message?.includes('Not Found')) {
+                  console.log("[Payment Callback Frontend] Verify-status endpoint not available (404) on final check, using regular check instead");
+                } else {
+                  console.error("[Payment Callback Frontend] Error on final check:", err);
+                }
+                // Always try one last regular check
                 try {
                   const finalPayment = await getPaymentDetails(paymentId);
                   if (finalPayment.payment?.status === "completed") {
@@ -178,7 +183,7 @@ const PaymentCallback = () => {
                     }, 3000);
                   } else {
                     setStatus("failed");
-                    toast.error("Payment verification timed out. Please check your payment status in the payments page.");
+                    toast.error("Payment verification is taking longer than expected. Your payment may still be processing - please check the payments page in a few moments or contact support if the issue persists.");
                   }
                 } catch (finalErr) {
                   console.error("[Payment Callback Frontend] Error on final fallback check:", finalErr);
@@ -213,7 +218,13 @@ const PaymentCallback = () => {
                       updatedPayment = await getPaymentDetails(paymentId);
                     }
                   } catch (verifyErr) {
-                    console.log("[Payment Callback Frontend] Manual verification failed, falling back to regular check:", verifyErr);
+                    // Handle 404 gracefully - endpoint might not be deployed yet
+                    if (verifyErr.message?.includes('404') || verifyErr.message?.includes('Not Found')) {
+                      console.log("[Payment Callback Frontend] Verify-status endpoint not available (404), using regular check instead");
+                    } else {
+                      console.log("[Payment Callback Frontend] Manual verification failed, falling back to regular check:", verifyErr.message);
+                    }
+                    // Always fallback to regular check
                     updatedPayment = await getPaymentDetails(paymentId);
                   }
                 } else {
