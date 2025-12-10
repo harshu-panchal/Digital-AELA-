@@ -2219,6 +2219,7 @@ export const verifyPaymentStatus = async (req, res, next) => {
           paymentLinkId: paymentLink.id,
           status: paymentLink.status,
           paymentsCount: paymentLink.payments?.length || 0,
+          payments: paymentLink.payments?.map(p => ({ id: p.id, status: p.status })) || [],
         });
 
         // If payment link is paid, check for payments
@@ -2300,11 +2301,55 @@ export const verifyPaymentStatus = async (req, res, next) => {
             // or return current status gracefully
           }
         } else if (paymentLink.status === "paid") {
-          // Payment link is paid but no payments array yet
+          // Payment link is paid - mark as completed even if payments array is empty
+          // The webhook will eventually populate the gatewayTransactionId
+          console.log("[Payment Verify] Payment link is paid, marking payment as completed");
+          
+          const updateData = {
+            status: "completed",
+          };
+
+          const paymentDoc = await Payment.findById(paymentId).lean();
+
+          // Create enrollment if payment is for a course
+          if (paymentDoc && paymentDoc.course && !paymentDoc.metadata?.enrollmentCreated) {
+            try {
+              const existingEnrollment = await Enrollment.findOne({
+                student: paymentDoc.user,
+                course: paymentDoc.course,
+              }).lean();
+
+              if (!existingEnrollment) {
+                console.log("[Payment Verify] Creating enrollment for course:", paymentDoc.course);
+                await Enrollment.create({
+                  student: paymentDoc.user,
+                  course: paymentDoc.course,
+                  status: "active",
+                  enrolledAt: new Date(),
+                });
+                updateData.metadata = {
+                  ...paymentDoc.metadata,
+                  enrollmentCreated: true,
+                  enrollmentCreatedAt: new Date(),
+                };
+                console.log("[Payment Verify] Enrollment created successfully");
+              }
+            } catch (enrollmentError) {
+              console.error("[Payment Verify] Error creating enrollment:", enrollmentError);
+            }
+          }
+
+          await Payment.findByIdAndUpdate(paymentId, updateData);
+
+          const updatedPayment = await Payment.findById(paymentId)
+            .populate("user", "fullName email")
+            .populate("course", "title thumbnailUrl price")
+            .lean();
+
           return res.json({
-            payment: await Payment.findById(paymentId).lean(),
-            verified: false,
-            message: "Payment link is paid but payment details are not yet available. Please try again in a few moments.",
+            payment: updatedPayment,
+            verified: true,
+            message: "Payment verified and updated to completed based on payment link status",
           });
         } else if (paymentLink.status === "cancelled" || paymentLink.status === "expired") {
           await Payment.findByIdAndUpdate(paymentId, {

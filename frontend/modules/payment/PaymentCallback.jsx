@@ -123,19 +123,31 @@ const PaymentCallback = () => {
                 console.log("[Payment Callback Frontend] Final check: Trying manual verification from Razorpay");
                 const verifyResult = await verifyPaymentStatus(paymentId);
                 
-                if (verifyResult.verified && verifyResult.payment?.status === "completed") {
-                  console.log("[Payment Callback Frontend] Payment completed on final verification");
-                  setStatus("success");
-                  setPayment(verifyResult.payment);
-                  toast.success("Payment successful!");
-                  setTimeout(() => {
-                    if (verifyResult.payment?.course) {
-                      const courseId = verifyResult.payment.course._id || verifyResult.payment.course;
-                      navigate(`/courses/${courseId}`);
-                    } else {
+                // If verification was successful, trust the result
+                if (verifyResult.verified) {
+                  if (verifyResult.payment?.status === "completed") {
+                    console.log("[Payment Callback Frontend] Payment completed on final verification");
+                    setStatus("success");
+                    setPayment(verifyResult.payment);
+                    toast.success("Payment successful!");
+                    setTimeout(() => {
+                      if (verifyResult.payment?.course) {
+                        const courseId = verifyResult.payment.course._id || verifyResult.payment.course;
+                        navigate(`/courses/${courseId}`);
+                      } else {
+                        navigate("/student/payments");
+                      }
+                    }, 3000);
+                  } else {
+                    // Verified but status is not completed - show processing message
+                    console.log("[Payment Callback Frontend] Payment verified but status is:", verifyResult.payment?.status);
+                    setStatus("processing");
+                    setPayment(verifyResult.payment);
+                    toast.info("Payment is being processed. Please check back in a few moments.");
+                    setTimeout(() => {
                       navigate("/student/payments");
-                    }
-                  }, 3000);
+                    }, 5000);
+                  }
                 } else {
                   // Fallback to regular check
                   const finalPayment = await getPaymentDetails(paymentId);
@@ -153,10 +165,19 @@ const PaymentCallback = () => {
                         navigate("/student/payments");
                       }
                     }, 3000);
-                  } else {
-                    console.log("[Payment Callback Frontend] Payment still not completed after all retries, marking as failed");
+                  } else if (finalPayment.payment?.status === "failed") {
+                    console.log("[Payment Callback Frontend] Payment marked as failed");
                     setStatus("failed");
-                    toast.error("Payment verification is taking longer than expected. The payment may still be processing. Please check your payment status in a few moments.");
+                    toast.error("Payment failed. Please try again or contact support.");
+                  } else {
+                    // Still processing - don't mark as failed, show processing message
+                    console.log("[Payment Callback Frontend] Payment still processing after all retries");
+                    setStatus("processing");
+                    setPayment(finalPayment.payment);
+                    toast.info("Payment verification is taking longer than expected. Your payment may still be processing. Please check your payment status in a few moments.");
+                    setTimeout(() => {
+                      navigate("/student/payments");
+                    }, 5000);
                   }
                 }
               } catch (err) {
@@ -181,9 +202,17 @@ const PaymentCallback = () => {
                         navigate("/student/payments");
                       }
                     }, 3000);
-                  } else {
+                  } else if (finalPayment.payment?.status === "failed") {
                     setStatus("failed");
-                    toast.error("Payment verification is taking longer than expected. Your payment may still be processing - please check the payments page in a few moments or contact support if the issue persists.");
+                    toast.error("Payment failed. Please try again or contact support.");
+                  } else {
+                    // Still processing - don't mark as failed
+                    setStatus("processing");
+                    setPayment(finalPayment.payment);
+                    toast.info("Payment verification is taking longer than expected. Your payment may still be processing. Please check your payment status in a few moments.");
+                    setTimeout(() => {
+                      navigate("/student/payments");
+                    }, 5000);
                   }
                 } catch (finalErr) {
                   console.error("[Payment Callback Frontend] Error on final fallback check:", finalErr);
