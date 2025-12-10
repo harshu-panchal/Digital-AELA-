@@ -2179,6 +2179,15 @@ export const verifyPaymentStatus = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
+    if (!userObjectId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
     if (payment.user.toString() !== userObjectId.toString()) {
       return res.status(403).json({
         error: {
@@ -2287,12 +2296,8 @@ export const verifyPaymentStatus = async (req, res, next) => {
             }
           } catch (paymentFetchError) {
             console.error("[Payment Verify] Error fetching payment from Razorpay:", paymentFetchError);
-            return res.status(500).json({
-              error: {
-                code: "VERIFICATION_ERROR",
-                message: "Failed to fetch payment details from Razorpay",
-              },
-            });
+            // Don't return 500 - allow fallthrough to try other verification methods
+            // or return current status gracefully
           }
         } else if (paymentLink.status === "paid") {
           // Payment link is paid but no payments array yet
@@ -2315,12 +2320,8 @@ export const verifyPaymentStatus = async (req, res, next) => {
         }
       } catch (linkFetchError) {
         console.error("[Payment Verify] Error fetching payment link:", linkFetchError);
-        return res.status(500).json({
-          error: {
-            code: "VERIFICATION_ERROR",
-            message: "Failed to fetch payment link from Razorpay",
-          },
-        });
+        // Don't return 500 - allow fallthrough to try other verification methods
+        // or return current status gracefully
       }
     }
 
@@ -2358,12 +2359,19 @@ export const verifyPaymentStatus = async (req, res, next) => {
         }
       } catch (paymentFetchError) {
         console.error("[Payment Verify] Error fetching payment:", paymentFetchError);
+        // Log the error but continue to return current status
       }
     }
 
     // Return current status if we can't verify
+    // Fetch fresh payment data to ensure we return the latest status
+    const currentPayment = await Payment.findById(paymentId)
+      .populate("user", "fullName email")
+      .populate("course", "title thumbnailUrl price")
+      .lean();
+
     return res.json({
-      payment: await Payment.findById(paymentId).lean(),
+      payment: currentPayment,
       verified: false,
       message: "Could not verify payment status. Payment may still be processing.",
     });
