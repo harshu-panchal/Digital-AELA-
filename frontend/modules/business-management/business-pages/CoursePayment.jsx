@@ -54,6 +54,16 @@ const CoursePayment = () => {
   const initialQuantity =
     Number(stateCourse.quantity ?? query.get("quantity")) || 1;
 
+  const currency = stateCourse.currency ?? query.get("currency") ?? "AED";
+
+  // Use dynamic currency formatting
+  const formatCurrency = (value, currencyCode) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currencyCode || "AED",
+      maximumFractionDigits: 0,
+    }).format(value);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -82,7 +92,7 @@ const CoursePayment = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (isProcessing || totalAmount <= 0) {
       return;
     }
@@ -94,7 +104,7 @@ const CoursePayment = () => {
       const paymentResponse = await createPayment({
         courseId: courseId || null,
         amount: totalAmount,
-        currency: "INR", // Razorpay primarily uses INR
+        currency: currency, // Use dynamic currency
         description: `Payment for ${title} - Quantity: ${quantity}`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
@@ -229,7 +239,7 @@ const CoursePayment = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Course Fee</span>
                     <span className="text-white font-semibold">
-                      {formatCurrency(basePrice)}
+                      {formatCurrency(basePrice, currency)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -239,7 +249,7 @@ const CoursePayment = () => {
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      {formatCurrency(totalAmount)}
+                      {formatCurrency(totalAmount, currency)}
                     </span>
                   </div>
                 </div>
@@ -395,7 +405,7 @@ const CoursePayment = () => {
                         Processing...
                       </>
                     ) : (
-                      `Pay ${formatCurrency(totalAmount)}`
+                      `Pay ${formatCurrency(totalAmount, currency)}`
                     )}
                   </motion.button>
 

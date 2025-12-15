@@ -57,7 +57,7 @@ const Home = () => {
   const [loadingGallery, setLoadingGallery] = useState(true);
   const [testimonials, setTestimonials] = useState([]);
   const [loadingTestimonials, setLoadingTestimonials] = useState(true);
-  
+
   // Translation hooks
   const { language } = useLanguage();
   const { translateObject } = useDynamicTranslation();
@@ -168,12 +168,13 @@ const Home = () => {
               course.image ||
               course.coverImage ||
               "",
+            rawPrice: course.price, // Store original numeric price for payment logic
             price:
               course.price === 0
                 ? "Free"
                 : course.price
-                ? `AED ${course.price}`
-                : "On Request",
+                  ? `AED ${course.price}`
+                  : "On Request",
             duration: course.duration
               ? `${course.duration} hours`
               : course.metadata?.duration || "",
@@ -235,8 +236,8 @@ const Home = () => {
           .map((book) => {
             const price =
               book.metadata?.price !== undefined &&
-              book.metadata.price !== null &&
-              book.metadata.price !== ""
+                book.metadata.price !== null &&
+                book.metadata.price !== ""
                 ? Number(book.metadata.price)
                 : 0;
             const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
@@ -246,6 +247,7 @@ const Home = () => {
               title: book.title || "Untitled Book",
               author: book.metadata?.author || "Digital AELA",
               price: price,
+              rawPrice: price, // Store original numeric price
               originalPrice: originalPrice,
               rating: 4.5, // Default rating
               reviews: 0,
@@ -463,8 +465,8 @@ const Home = () => {
   // Helper function to check if course is free
   const isFreeCourse = (course) => {
     if (!course) return false;
-    const price = course.price;
-    
+    const price = course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
+
     // Check various formats
     if (price === 0 || price === "Free" || price === "free") return true;
     if (typeof price === 'string') {
@@ -473,7 +475,7 @@ const Home = () => {
       if (isNaN(numericPrice) || numericPrice === 0) return true;
     }
     if (typeof price === 'number' && price === 0) return true;
-    
+
     return false;
   };
 
@@ -490,18 +492,28 @@ const Home = () => {
       ...course,
       ...extra,
     };
-    
-    // Extract price
-    const priceValue = typeof course.price === 'number' ? course.price : 
-                      (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
-                      (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
-                      parseFloat(course.price) || 0;
+
+    // Extract price - prioritize rawPrice
+    let priceValue = 0;
+
+    if (course.rawPrice !== undefined && course.rawPrice !== null) {
+      priceValue = parseFloat(course.rawPrice) || 0;
+    } else if (typeof course.price === 'number') {
+      priceValue = course.price;
+    } else if (typeof course.price === 'string') {
+      if (course.price.toLowerCase().includes('free')) {
+        priceValue = 0;
+      } else {
+        // Strip non-numeric characters (except dot) to handle strings like "AED 100"
+        priceValue = parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0;
+      }
+    }
 
     // Redirect directly to Razorpay
-      await redirectToRazorpay({
-        courseId: course._id || course.id || null,
-        amount: priceValue,
-        currency: "AED",
+    await redirectToRazorpay({
+      courseId: course._id || course.id || null,
+      amount: priceValue,
+      currency: "AED",
       description: `Payment for ${course.title || "course"}`,
       userName: user?.fullName || "",
       userEmail: user?.email || "",
@@ -568,7 +580,7 @@ const Home = () => {
         title: "24/7 Support for Every Learner",
         seoKeyword: "24/7 online learning support South Asia Gulf",
         description:
-            "Education ka safar raat-din nahi dekhta, aur hum bhi nahi. With round-the-clock student support, you are never alone in your journey. Whether you are in India, Pakistan, Bangladesh, Nepal, or the Gulf countries, help is always one click away.",
+          "Education ka safar raat-din nahi dekhta, aur hum bhi nahi. With round-the-clock student support, you are never alone in your journey. Whether you are in India, Pakistan, Bangladesh, Nepal, or the Gulf countries, help is always one click away.",
         icon: "clock",
       },
       {
@@ -576,7 +588,7 @@ const Home = () => {
         title: "Live + Recorded Classes for Flexibility",
         seoKeyword: "live and recorded online classes India Pakistan Gulf",
         description:
-            "We understand every learner has a different routine. That's why Digital AELA offers live interactive sessions plus recorded lessons. You can learn in real-time with mentors or revise at your own pace — anytime, anywhere.",
+          "We understand every learner has a different routine. That's why Digital AELA offers live interactive sessions plus recorded lessons. You can learn in real-time with mentors or revise at your own pace — anytime, anywhere.",
         icon: "video",
       },
       {
@@ -584,7 +596,7 @@ const Home = () => {
         title: "100% Placement Assistance",
         seoKeyword: "job placement training India Pakistan Bangladesh Nepal Gulf",
         description:
-            "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
+          "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
         icon: "briefcase",
       },
       {
@@ -592,7 +604,7 @@ const Home = () => {
         title: "Expert Trainers & Mentors",
         seoKeyword: "expert online trainers South Asia Gulf",
         description:
-            "Our trainers are not just teachers, they are industry professionals who know what works in the real world. They bring practical knowledge, global experience, and personal mentorship that transforms learners into professionals.",
+          "Our trainers are not just teachers, they are industry professionals who know what works in the real world. They bring practical knowledge, global experience, and personal mentorship that transforms learners into professionals.",
         icon: "teacher",
       },
       {
@@ -600,7 +612,7 @@ const Home = () => {
         title: "Equal Opportunity for All",
         seoKeyword: "equal opportunity education learning to earning platform",
         description:
-            "At Digital AELA, we believe education should be free of age, degree, and gender discrimination. Whether you are a student, homemaker, working professional, or retired individual — we provide equal opportunities to learn, grow, and earn.",
+          "At Digital AELA, we believe education should be free of age, degree, and gender discrimination. Whether you are a student, homemaker, working professional, or retired individual — we provide equal opportunities to learn, grow, and earn.",
         icon: "handshake",
       },
       {
@@ -609,7 +621,7 @@ const Home = () => {
         seoKeyword:
           "affordable online courses India Pakistan Bangladesh Nepal Gulf",
         description:
-            "High-quality education should not be limited to the rich. Digital AELA ensures affordable learning solutions so that anyone from South Asia to the Gulf can access top-class training and career opportunities.",
+          "High-quality education should not be limited to the rich. Digital AELA ensures affordable learning solutions so that anyone from South Asia to the Gulf can access top-class training and career opportunities.",
         icon: "globe",
       },
     ],
@@ -729,7 +741,7 @@ const Home = () => {
         ),
         highlight: "India . Pakistan . Bangladesh . Nepal . UAE . Saudi Arabia",
         description:
-            "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
+          "Digital AELA is committed to providing quality education to learners across South Asia and the Middle East. Our mission is to make learning affordable, accessible, and life-changing for every student-regardless of their background or country.",
         primaryCta: null, // Removed "Start Your Journey"
         primaryLink: "/join-us/afterlife",
         secondaryCta: "Start Learning",
@@ -742,7 +754,7 @@ const Home = () => {
         title: "A Free Digital Library for All Learners",
         highlight: "Unlimited Books Free Access Anytime, Anywhere",
         description:
-            "Digital AELA offers an open online library where anyone can read thousands of books for free. We believe knowledge should be available to everyone-without barriers, limits, or cost.",
+          "Digital AELA offers an open online library where anyone can read thousands of books for free. We believe knowledge should be available to everyone-without barriers, limits, or cost.",
         primaryCta: null,
         primaryLink: "/free-library",
         secondaryCta: "Explore the Free Library",
@@ -755,7 +767,7 @@ const Home = () => {
         title: "Create a Lasting Impact Through Education",
         highlight: "Donate a Course Gift a Book Support a Student",
         description:
-            "The most meaningful donation is the one that transforms lives for generations. By gifting a book or sponsoring a course through Digital AELA, you help someone learn today and empower many more in the future. Your contribution becomes a legacy that continues to benefit long after you.",
+          "The most meaningful donation is the one that transforms lives for generations. By gifting a book or sponsoring a course through Digital AELA, you help someone learn today and empower many more in the future. Your contribution becomes a legacy that continues to benefit long after you.",
         primaryCta: null,
         primaryLink: "/gift/payment?type=anyone",
         secondaryCta: "Donate Education",
@@ -768,7 +780,7 @@ const Home = () => {
         title: "Partner With Digital AELA",
         highlight: "Collaboration Franchise Global Partnerships",
         description:
-            "We welcome individuals and institutions who want to expand education and create global impact. Whether you want to collaborate, become a franchise partner, or build a joint project-Digital AELA is ready to work with you.",
+          "We welcome individuals and institutions who want to expand education and create global impact. Whether you want to collaborate, become a franchise partner, or build a joint project-Digital AELA is ready to work with you.",
         primaryCta: null,
         primaryLink: "/contact",
         secondaryCta: "Apply for Partnership",
@@ -781,7 +793,7 @@ const Home = () => {
         title: "Learn New Skills and Earn from Anywhere",
         highlight: "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
         description:
-            "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
+          "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
         primaryCta: "Start Learning",
         primaryLink: "/courses/english-language",
         secondaryCta: "Start Earning",
@@ -1265,11 +1277,10 @@ const Home = () => {
                   key={slide.id}
                   type="button"
                   onClick={() => setActiveHeroSlide(index)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    index === activeHeroSlide
-                      ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
-                      : "w-6 bg-white/25 hover:bg-white/45"
-                  }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${index === activeHeroSlide
+                    ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                    : "w-6 bg-white/25 hover:bg-white/45"
+                    }`}
                 />
               ))}
             </div>
@@ -1658,7 +1669,7 @@ const Home = () => {
                               <motion.button
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  
+
                                   // Check if course is free
                                   if (isFreeCourse(course)) {
                                     // Free course - navigate to course detail page for enrollment
@@ -1971,10 +1982,10 @@ const Home = () => {
                 const discountPercent =
                   book.originalPrice > 0
                     ? Math.round(
-                        ((book.originalPrice - book.price) /
-                          book.originalPrice) *
-                          100
-                      )
+                      ((book.originalPrice - book.price) /
+                        book.originalPrice) *
+                      100
+                    )
                     : 0;
                 const displayPrice =
                   book.price > 0 ? `AED ${book.price}` : "Free";
@@ -2042,11 +2053,10 @@ const Home = () => {
                             {[...Array(5)].map((_, i) => (
                               <FaStar
                                 key={i}
-                                className={`w-3 h-3 ${
-                                  i < Math.floor(book.rating || 4.5)
-                                    ? "text-[#D4AF37] fill-current"
-                                    : "text-gray-600"
-                                }`}
+                                className={`w-3 h-3 ${i < Math.floor(book.rating || 4.5)
+                                  ? "text-[#D4AF37] fill-current"
+                                  : "text-gray-600"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -2096,14 +2106,14 @@ const Home = () => {
                                   navigate("/login/student");
                                   return;
                                 }
-                                
+
                                 // Validate price
                                 const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
                                 if (!bookPrice || bookPrice <= 0) {
                                   toast.error("This book price is not available. Please contact support.");
                                   return;
                                 }
-                                
+
                                 redirectToRazorpay({
                                   bookId: book.id,
                                   amount: bookPrice,
@@ -2121,6 +2131,7 @@ const Home = () => {
                           </motion.button>
                           {book.price > 0 && (
                             <GiftButton
+                              course={book} // Pass the book object
                               className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                               size="sm">
                               Gift
@@ -2181,40 +2192,40 @@ const Home = () => {
         <div className="layout-container">
           <motion.div
             className="why-choose-section-content">
-          <motion.div
-            className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              <TranslatedText>Why Choose</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>?
-            </h2>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
-            </p>
-          </motion.div>
+            <motion.div
+              className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
+                <TranslatedText>Why Choose</TranslatedText>{" "}
+                <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>?
+              </h2>
+              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
+              </p>
+            </motion.div>
 
-          {/* Benefits Grid */}
-          <div className="auto-grid-md lg:grid-cols-3 mb-16">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.id}
-                className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
-                {/* Icon */}
-                <div className="shrink-0 flex justify-center mb-4">
-                  {renderIcon(benefit.icon)}
-                </div>
+            {/* Benefits Grid */}
+            <div className="auto-grid-md lg:grid-cols-3 mb-16">
+              {benefits.map((benefit, index) => (
+                <motion.div
+                  key={benefit.id}
+                  className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+                  {/* Icon */}
+                  <div className="shrink-0 flex justify-center mb-4">
+                    {renderIcon(benefit.icon)}
+                  </div>
 
-                {/* Title */}
-                <h3 className="shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
-                  <TranslatedText>{benefit.title}</TranslatedText>
-                </h3>
+                  {/* Title */}
+                  <h3 className="shrink-0 text-xl md:text-2xl font-bold text-white mb-3 font-display">
+                    <TranslatedText>{benefit.title}</TranslatedText>
+                  </h3>
 
-                {/* Description */}
-                <p className="flex-1 text-gray-300 leading-relaxed">
-                  <TranslatedText>{benefit.description}</TranslatedText>
-                </p>
-              </motion.div>
-            ))}
-          </div>
+                  {/* Description */}
+                  <p className="flex-1 text-gray-300 leading-relaxed">
+                    <TranslatedText>{benefit.description}</TranslatedText>
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -2233,53 +2244,53 @@ const Home = () => {
           <div className="watch-stories-section-content">
             <motion.div
               className="md:opacity-100">
-            <motion.div
-              className="text-center mb-12 md:opacity-100">
-            <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
-              <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
-            </p>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-              <TranslatedText>Step Inside the</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>{" "}
-              <TranslatedText>Experience</TranslatedText>
-            </h2>
-            <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              <TranslatedText>Hear from our learners, mentors, and community as they share milestones, transformations, and the heart behind the Afterlife movement.</TranslatedText>
-            </p>
-          </motion.div>
+              <motion.div
+                className="text-center mb-12 md:opacity-100">
+                <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
+                  <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
+                </p>
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
+                  <TranslatedText>Step Inside the</TranslatedText>{" "}
+                  <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>{" "}
+                  <TranslatedText>Experience</TranslatedText>
+                </h2>
+                <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                  <TranslatedText>Hear from our learners, mentors, and community as they share milestones, transformations, and the heart behind the Afterlife movement.</TranslatedText>
+                </p>
+              </motion.div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {storyVideos.map((video, index) => (
-              <motion.article
-                key={video.id}
-                className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl">
-                <div className="relative w-full overflow-hidden bg-black aspect-video md:aspect-9/16">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1&showinfo=0`}
-                    title={video.title}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="absolute inset-0 h-full w-full border-0"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
-                </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-white mb-2 font-display line-clamp-2">
-                    {video.title}
-                  </h3>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 hover:text-[#FFE28A]">
-                    <TranslatedText>Watch on YouTube</TranslatedText>
-                    <FaArrowRight className="h-4 w-4" />
-                  </a>
-                </div>
-              </motion.article>
-            ))}
-          </div>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                {storyVideos.map((video, index) => (
+                  <motion.article
+                    key={video.id}
+                    className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl">
+                    <div className="relative w-full overflow-hidden bg-black aspect-video md:aspect-9/16">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1&showinfo=0`}
+                        title={video.title}
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 h-full w-full border-0"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-lg font-semibold text-white mb-2 font-display line-clamp-2">
+                        {video.title}
+                      </h3>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#F5D26A] transition-colors duration-200 hover:text-[#FFE28A]">
+                        <TranslatedText>Watch on YouTube</TranslatedText>
+                        <FaArrowRight className="h-4 w-4" />
+                      </a>
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
             </motion.div>
           </div>
         </div>
@@ -2487,49 +2498,49 @@ const Home = () => {
                 </div>
               ) : (
                 visibleTestimonials.map((item) => (
-                <motion.article
-                  key={item.id}
-                  className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
-                  <div className="shrink-0 flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
-                        <img
-                          src={getMediaUrl(item.avatar) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
+                  <motion.article
+                    key={item.id}
+                    className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
+                    <div className="shrink-0 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
+                          <img
+                            src={getMediaUrl(item.avatar) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"}
+                            alt={item.name}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {item.role}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {item.role}
-                        </p>
-                      </div>
+                      <span className="shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
+                        <TranslatedText>Verified</TranslatedText>
+                      </span>
                     </div>
-                    <span className="shrink-0 rounded-full border border-white/25 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-300">
-                      <TranslatedText>Verified</TranslatedText>
-                    </span>
-                  </div>
 
-                  <div className="shrink-0 mt-3 flex items-center gap-1">
-                    {[...Array(item.rating)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className="h-4 w-4 text-[#F5D26A]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
+                    <div className="shrink-0 mt-3 flex items-center gap-1">
+                      {[...Array(item.rating)].map((_, i) => (
+                        <svg
+                          key={i}
+                          className="h-4 w-4 text-[#F5D26A]"
+                          fill="currentColor"
+                          viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
 
-                  <p className="flex-1 mt-4 text-sm text-gray-200 leading-relaxed">
-                    "{item.text}"
-                  </p>
-                </motion.article>
+                    <p className="flex-1 mt-4 text-sm text-gray-200 leading-relaxed">
+                      "{item.text}"
+                    </p>
+                  </motion.article>
                 ))
               )}
             </motion.div>
@@ -2612,11 +2623,10 @@ const Home = () => {
                       {index + 1}. {item.question}
                     </span>
                     <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${
-                        isOpen
-                          ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
-                          : "bg-transparent text-[#D4AF37]"
-                      }`}>
+                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
+                        ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                        : "bg-transparent text-[#D4AF37]"
+                        }`}>
                       <svg
                         className="w-3 h-3"
                         fill="none"
@@ -2632,13 +2642,13 @@ const Home = () => {
                     </span>
                   </button>
                   {isOpen && (
-                      <motion.div
-                        className="px-5 pb-4 overflow-hidden">
-                        <div className="text-xs md:text-sm leading-relaxed text-gray-300">
-                          {item.answer}
-                        </div>
-                      </motion.div>
-                    )}
+                    <motion.div
+                      className="px-5 pb-4 overflow-hidden">
+                      <div className="text-xs md:text-sm leading-relaxed text-gray-300">
+                        {item.answer}
+                      </div>
+                    </motion.div>
+                  )}
                 </motion.div>
               );
             })}

@@ -26,7 +26,10 @@ const GiftPayment = () => {
     message: query.get("message") || "",
   };
 
-  const initialAmount = Number(query.get("amount")) || 5000;
+  const initialAmount = Number(query.get("amount")) || 0;
+  const initialCurrency = query.get("currency") || "AED";
+  const itemName = query.get("itemName") || "contribution";
+
   const initialQuantity = Number(query.get("quantity")) || 1;
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
@@ -35,6 +38,7 @@ const GiftPayment = () => {
     email: nearOneDetails.email || "",
     phone: nearOneDetails.phone || "",
     amount: initialAmount,
+    currency: initialCurrency, // Add currency to state
     message: nearOneDetails.message || "",
     paymentMethod: "card",
     quantity: initialQuantity,
@@ -45,6 +49,11 @@ const GiftPayment = () => {
     formData.quantity && formData.quantity > 0 ? formData.quantity : 1;
   const totalAmount = giftAmount * quantity;
 
+  // Helper for display currency symbol
+  const getCurrencySymbol = (curr) => {
+    return curr === "AED" ? "AED " : "₹";
+  };
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({
@@ -53,14 +62,14 @@ const GiftPayment = () => {
         name === "amount"
           ? Number(value) || 0
           : name === "quantity"
-          ? Math.max(1, parseInt(value, 10) || 1)
-          : value,
+            ? Math.max(1, parseInt(value, 10) || 1)
+            : value,
     }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (isProcessing || totalAmount <= 0) {
       return;
     }
@@ -71,8 +80,8 @@ const GiftPayment = () => {
       // Step 1: Create payment record
       const paymentResponse = await createPayment({
         amount: totalAmount,
-        currency: "INR", // Razorpay primarily uses INR
-        description: `Gift payment - ${type === "near" ? `For ${nearOneDetails.fullName || "recipient"}` : "Open contribution"}`,
+        currency: formData.currency, // Use dynamic currency
+        description: `Gift payment ${itemName ? `- ${itemName}` : ""} - ${type === "near" ? `For ${nearOneDetails.fullName || "recipient"}` : "Open contribution"}`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
       });
@@ -195,17 +204,17 @@ const GiftPayment = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Gift Amount</span>
                     <span className="text-white font-semibold">
-                      ₹{giftAmount}
+                      {getCurrencySymbol(formData.currency)}{giftAmount}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Processing Fee</span>
-                    <span className="text-white font-semibold">₹0</span>
+                    <span className="text-white font-semibold">0</span>
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      ₹{totalAmount}
+                      {getCurrencySymbol(formData.currency)}{totalAmount}
                     </span>
                   </div>
                 </div>
@@ -273,7 +282,7 @@ const GiftPayment = () => {
                       </div>
                       <div>
                         <label className="block text-sm text-gray-300 mb-2">
-                          Gift Amount (₹) *
+                          Gift Amount ({getCurrencySymbol(formData.currency).trim()}) *
                         </label>
                         <input
                           type="number"
@@ -373,7 +382,7 @@ const GiftPayment = () => {
                         Processing...
                       </>
                     ) : (
-                      `Gift ₹${totalAmount} Securely`
+                      `Gift ${getCurrencySymbol(formData.currency)}${totalAmount} Securely`
                     )}
                   </motion.button>
 

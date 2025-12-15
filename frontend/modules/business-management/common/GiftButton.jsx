@@ -19,6 +19,7 @@ const GiftButton = ({
   paymentPath = "/gift/payment",
   label = "Gift",
   size = "sm",
+  course = null, // Accept course/book object
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState("choice");
@@ -35,6 +36,42 @@ const GiftButton = ({
     if (event.nativeEvent && typeof event.nativeEvent.stopImmediatePropagation === "function") {
       event.nativeEvent.stopImmediatePropagation();
     }
+  };
+
+  const getPriceAndCurrency = () => {
+    if (!course) return { amount: 5000, currency: "INR" };
+
+    let price = 0;
+    // Check rawPrice first (numeric)
+    if (course.rawPrice !== undefined && course.rawPrice !== null) {
+      price = parseFloat(course.rawPrice) || 0;
+    }
+    // Check direct numeric price
+    else if (typeof course.price === 'number') {
+      price = course.price;
+    }
+    // Parse string price
+    else if (typeof course.price === 'string') {
+      if (course.price.toLowerCase().includes('free')) {
+        price = 0;
+      } else {
+        price = parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0;
+      }
+    }
+
+    // Default to a fallback if extraction fails, but prefer passing 0 to let user set it if logical
+    // But for "Buy" equivalent, we want the item price. 
+    // If it's 0 (Free), maybe gifting isn't relevant? Or maybe it's a donation?
+    // User complaint implies they want the item price.
+
+    return {
+      amount: price > 0 ? price : 5000, // Fallback to 5000 only if really 0/invalid? 
+      // Actually if it's a specific book, 0 is wrong. 
+      // But if I can't read it, 5000 is also confusing.
+      // Let's trust the extraction and fallback to course price or 0.
+      amount: price,
+      currency: "AED" // Default to AED for courses/books as per user request
+    };
   };
 
   const sizeClasses = useMemo(() => {
@@ -68,7 +105,19 @@ const GiftButton = ({
 
   const handleGiftAnyone = (event) => {
     trapEvent(event);
-    const params = new URLSearchParams({ type: "anyone" });
+
+    const { amount, currency } = getPriceAndCurrency();
+
+    const params = new URLSearchParams({
+      type: "anyone",
+      amount: amount.toString(),
+      currency: currency
+    });
+
+    if (course && (course.title || course.name)) {
+      params.set("itemName", course.title || course.name);
+    }
+
     window.location.href = `${paymentPath}?${params.toString()}`;
     setIsOpen(false);
     setStep("choice");
@@ -112,11 +161,19 @@ const GiftButton = ({
       return;
     }
 
+    const { amount, currency } = getPriceAndCurrency();
+
     const params = new URLSearchParams({
       type: "near",
       userId: formData.userId.trim(),
       fullName: formData.fullName.trim(),
+      amount: amount.toString(),
+      currency: currency
     });
+
+    if (course && (course.title || course.name)) {
+      params.set("itemName", course.title || course.name);
+    }
 
     if (formData.email.trim()) {
       params.set("email", formData.email.trim());

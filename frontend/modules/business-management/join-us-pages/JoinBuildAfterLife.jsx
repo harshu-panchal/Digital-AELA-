@@ -48,7 +48,7 @@ const JoinBuildAfterLife = () => {
       try {
         setLoading(true);
         const response = await fetchPublishedCourses();
-        
+
         if (!response || !response.courses) {
           console.warn("No courses data received from API");
           setAfterLifeCourses([]);
@@ -69,6 +69,7 @@ const JoinBuildAfterLife = () => {
             longDescription: course.longDescription || course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || "",
             coverImage: course.coverImage || course.thumbnailUrl || course.thumbnail || course.image || "",
+            rawPrice: course.price, // Store original numeric price
             price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
             priceLabel: course.priceLabel || (course.price ? `AED ${course.price}` : "On Request"),
             discountPrice: course.discountPrice || course.metadata?.discountPrice || null,
@@ -88,9 +89,9 @@ const JoinBuildAfterLife = () => {
             instructor: course.instructor?.fullName || course.instructorName || "Digital AELA",
             type: "course",
           }));
-        
+
         setAfterLifeCourses(publishedCourses);
-        
+
         if (publishedCourses.length === 0) {
           console.info("No published courses available");
         }
@@ -112,7 +113,7 @@ const JoinBuildAfterLife = () => {
         setLoadingBooks(true);
         // Fetch all approved books (increase pageSize to get all)
         const response = await fetchEbooks({ page: 1, pageSize: 500 });
-        
+
         if (!response || !response.data) {
           console.warn("No books data received from API");
           setAfterLifeBooks([]);
@@ -123,31 +124,32 @@ const JoinBuildAfterLife = () => {
         const booksFromApi = (response.data || [])
           .filter((ebook) => ebook.isPublic === true) // Extra safety check
           .map((ebook) => {
-            const price = ebook.metadata?.price !== undefined && 
-                        ebook.metadata.price !== null && 
-                        ebook.metadata.price !== "" 
-                        ? Number(ebook.metadata.price) 
-                        : 0;
-            
-          return {
-            id: ebook._id,
+            const price = ebook.metadata?.price !== undefined &&
+              ebook.metadata.price !== null &&
+              ebook.metadata.price !== ""
+              ? Number(ebook.metadata.price)
+              : 0;
+
+            return {
+              id: ebook._id,
               title: ebook.title || "Untitled Book",
               author: ebook.metadata?.author || ebook.author || "Digital AELA",
-            price: price,
-            originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
+              rawPrice: price, // Store original numeric price
+              price: price,
+              originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
               rating: 4.5, // Default rating
-            reviews: 0,
+              reviews: 0,
               category: ebook.categories?.[0] || ebook.category || "General",
-            badge: "E-Book",
+              badge: "E-Book",
               image: ebook.metadata?.coverImage || ebook.coverImage || bookAdvancedEnglishImg,
               imageAlt: `${ebook.title || "Book"} cover`,
               description: ebook.description || "",
               type: "book",
-          };
-        });
-        
+            };
+          });
+
         setAfterLifeBooks(booksFromApi);
-        
+
         if (booksFromApi.length === 0) {
           console.info("No approved books available");
         }
@@ -183,23 +185,23 @@ const JoinBuildAfterLife = () => {
   // Helper function to check if course is free
   const isFreeCourse = (course) => {
     if (!course) return false;
-    const price = course.price;
-    
+    const price = course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
+
     // Check various formats
     // 1. Direct numeric check
     if (price === 0 || (typeof price === 'number' && price === 0)) return true;
-    
+
     // 2. String checks (after transformation, price becomes "Free" or "AED ${price}")
     if (typeof price === 'string') {
       const lowerPrice = price.toLowerCase();
       if (lowerPrice === 'free' || lowerPrice.includes('free')) return true;
-      
+
       // Extract numeric value from strings like "AED 100" or "On Request"
       if (lowerPrice === 'on request') return false; // "On Request" means price not set, not free
       const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
       if (isNaN(numericPrice) || numericPrice === 0) return true;
     }
-    
+
     return false;
   };
 
@@ -207,13 +209,13 @@ const JoinBuildAfterLife = () => {
   const isFreeBook = (book) => {
     if (!book) return false;
     const price = book.price;
-    
+
     // Check various formats
     if (price === 0 || price === null || price === undefined) return true;
     if (price === "Free" || price === "free") return true;
     if (typeof price === 'number' && price === 0) return true;
     if (typeof price === 'string' && price.toLowerCase().includes('free')) return true;
-    
+
     return false;
   };
 
@@ -230,18 +232,30 @@ const JoinBuildAfterLife = () => {
       category: "Build Your Afterlife",
       origin: "join-build-afterlife",
     };
-    
+
     // Check if course is free
     if (isFreeCourse(course)) {
       // Free course - navigate to course detail page for enrollment
       handleViewCourse(course);
     } else {
       // Paid course - redirect directly to Razorpay
-      const priceValue = typeof course.price === 'number' ? course.price : 
-                        (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
-                        (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
-                        parseFloat(course.price) || 0;
-      
+
+      // Extract price - prioritize rawPrice
+      let priceValue = 0;
+
+      if (course.rawPrice !== undefined && course.rawPrice !== null) {
+        priceValue = parseFloat(course.rawPrice) || 0;
+      } else if (typeof course.price === 'number') {
+        priceValue = course.price;
+      } else if (typeof course.price === 'string') {
+        if (course.price.toLowerCase().includes('free')) {
+          priceValue = 0;
+        } else {
+          // Strip non-numeric characters (except dot) to handle strings like "AED 100"
+          priceValue = parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0;
+        }
+      }
+
       await redirectToRazorpay({
         courseId: course._id || course.id || null,
         amount: priceValue,
@@ -305,17 +319,17 @@ const JoinBuildAfterLife = () => {
           className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
-              <motion.h1
+          <motion.h1
             className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
             <TranslatedText>Build Your</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Afterlife</TranslatedText></span>
-              </motion.h1>
+          </motion.h1>
           <motion.p
             className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
             <TranslatedText>Craft lifelong learning hubs powered by Digital AELA courses & books. Explore every course track and book collection in one immersive space.</TranslatedText>
           </motion.p>
 
           {/* Search and Filters */}
-              <motion.div
+          <motion.div
             className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -332,17 +346,16 @@ const JoinBuildAfterLife = () => {
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200 capitalize ${
-                    selectedType === type
-                      ? "bg-[#D4AF37] text-black"
-                      : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
-                  }`}>
+                  className={`px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200 capitalize ${selectedType === type
+                    ? "bg-[#D4AF37] text-black"
+                    : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
+                    }`}>
                   {type === "all" ? <TranslatedText>All</TranslatedText> : type === "course" ? <TranslatedText>Courses</TranslatedText> : <TranslatedText>Books</TranslatedText>}
                 </button>
               ))}
             </div>
           </motion.div>
-          </div>
+        </div>
       </motion.section>
 
       {/* Items Grid */}
@@ -371,19 +384,19 @@ const JoinBuildAfterLife = () => {
               {filteredItems.map((item, index) => {
                 if (item.type === "course") {
                   const highlights = item.features ?? item.highlights ?? [];
-                return (
-                  <motion.div
+                  return (
+                    <motion.div
                       key={item.id || item.slug}
                       className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col">
                       <div
                         onClick={() => handleViewCourse(item)}
                         className="relative h-48 w-full overflow-hidden flex-shrink-0">
-                      <img
+                        <img
                           src={getMediaUrl(item.image) || "https://via.placeholder.com/300x200?text=Course"}
                           alt={item.title}
-                        loading="lazy"
+                          loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                      />
+                        />
                         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                         <div className="absolute top-2 left-2">
                           <span className="bg-[#D4AF37] text-black px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
@@ -453,142 +466,142 @@ const JoinBuildAfterLife = () => {
                             </GiftButton>
                           </div>
                         </div>
-                    </div>
-                  </motion.div>
-                );
+                      </div>
+                    </motion.div>
+                  );
                 } else {
                   // Book item
                   return (
-                <motion.div
+                    <motion.div
                       key={item.id}
                       className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer">
                       <Link to={`/books/${item.id}`}>
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <img
+                        <div className="relative h-48 w-full overflow-hidden">
+                          <img
                             src={getMediaUrl(item.image)}
                             alt={item.imageAlt || `${item.title} cover`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          />
                           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
-                      <div className="absolute top-2 right-2">
-                        <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                          <div className="absolute top-2 right-2">
+                            <span className="bg-[#D4AF37] text-black px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                               {item.badge === "E-Book" ? (
-                            <FaDownload className="w-2.5 h-2.5" />
-                          ) : (
-                            <FaBook className="w-2.5 h-2.5" />
-                          )}
+                                <FaDownload className="w-2.5 h-2.5" />
+                              ) : (
+                                <FaBook className="w-2.5 h-2.5" />
+                              )}
                               {item.badge}
-                        </span>
-                      </div>
+                            </span>
+                          </div>
                           {item.originalPrice > item.price && (
-                        <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
                               {Math.round(
                                 ((item.originalPrice - item.price) / item.originalPrice) * 100
                               )}
                               % OFF
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    <div className="p-4">
-                      <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
+                        <div className="p-4">
+                          <span className="text-[10px] text-[#D4AF37] font-semibold uppercase tracking-wide">
                             {item.category}
-                      </span>
+                          </span>
 
-                      <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
+                          <h3 className="text-base font-bold text-white mb-1.5 font-display group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-2 mt-1">
                             <TranslatedText>{item.title}</TranslatedText>
-                      </h3>
+                          </h3>
 
                           <p className="text-xs text-gray-400 mb-2"><TranslatedText>by</TranslatedText> {item.author}</p>
 
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <FaStar
-                              key={i}
-                              className={`w-3 h-3 ${
-                                    i < Math.floor(item.rating || 4.5)
-                                  ? "text-[#D4AF37] fill-current"
-                                  : "text-gray-600"
-                              }`}
-                            />
-                          ))}
-                        </div>
+                          <div className="flex items-center gap-1.5 mb-3">
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <FaStar
+                                  key={i}
+                                  className={`w-3 h-3 ${i < Math.floor(item.rating || 4.5)
+                                    ? "text-[#D4AF37] fill-current"
+                                    : "text-gray-600"
+                                    }`}
+                                />
+                              ))}
+                            </div>
                             <span className="text-xs text-gray-300">
                               {(item.rating || 4.5).toFixed(1)}
                             </span>
                             <span className="text-[10px] text-gray-500">
                               ({item.reviews || 0})
                             </span>
-                      </div>
+                          </div>
 
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-lg font-bold text-[#D4AF37] font-display">
-                              {item.price > 0 ? `₹${item.price}` : <TranslatedText>Free</TranslatedText>}
-                        </span>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-lg font-bold text-[#D4AF37] font-display">
+                              {item.price > 0 ? `AED ${item.price}` : <TranslatedText>Free</TranslatedText>}
+                            </span>
                             {item.originalPrice > item.price && (
-                          <span className="text-xs text-gray-500 line-through">
-                                ₹{item.originalPrice}
-                          </span>
-                        )}
-                      </div>
+                              <span className="text-xs text-gray-500 line-through">
+                                AED {item.originalPrice}
+                              </span>
+                            )}
+                          </div>
 
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        <motion.button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // Check if book is free
-                            if (isFreeBook(item)) {
-                              const isEbook = item.badge === "E-Book" || item.format === "ebook";
-                              
-                              if (isEbook) {
-                                // Free ebook - redirect to free library reader
-                                navigate(`/free-library/ebook/${item.id}/read`);
-                              } else {
-                                // Free physical book - redirect to book detail page
-                                navigate(`/books/${item.id}`);
-                              }
-                            } else {
-                              // Paid book - redirect directly to Razorpay
-                              if (!isAuthenticated) {
-                                toast.info("Please log in to purchase this book");
-                                navigate("/login/student");
-                                return;
-                              }
-                              // Validate price
-                              const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-                              if (!itemPrice || itemPrice <= 0) {
-                                toast.error("This book price is not available. Please contact support.");
-                                return;
-                              }
-                              
-                              redirectToRazorpay({
-                                bookId: item.id,
-                                amount: itemPrice,
-                                currency: "AED",
-                                description: `Payment for ${item.title || "book"}`,
-                                userName: user?.fullName || "",
-                                userEmail: user?.email || "",
-                                userPhone: user?.phone || "",
-                                quantity: 1,
-                              });
-                            }
-                          }}
-                          className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          {isFreeBook(item) ? <TranslatedText>Get Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
-                        </motion.button>
-                        <GiftButton
-                          className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                          size="sm">
-                          Gift
-                        </GiftButton>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <motion.button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                // Check if book is free
+                                if (isFreeBook(item)) {
+                                  const isEbook = item.badge === "E-Book" || item.format === "ebook";
+
+                                  if (isEbook) {
+                                    // Free ebook - redirect to free library reader
+                                    navigate(`/free-library/ebook/${item.id}/read`);
+                                  } else {
+                                    // Free physical book - redirect to book detail page
+                                    navigate(`/books/${item.id}`);
+                                  }
+                                } else {
+                                  // Paid book - redirect directly to Razorpay
+                                  if (!isAuthenticated) {
+                                    toast.info("Please log in to purchase this book");
+                                    navigate("/login/student");
+                                    return;
+                                  }
+                                  // Validate price
+                                  const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+                                  if (!itemPrice || itemPrice <= 0) {
+                                    toast.error("This book price is not available. Please contact support.");
+                                    return;
+                                  }
+
+                                  redirectToRazorpay({
+                                    bookId: item.id,
+                                    amount: itemPrice,
+                                    currency: "AED",
+                                    description: `Payment for ${item.title || "book"}`,
+                                    userName: user?.fullName || "",
+                                    userEmail: user?.email || "",
+                                    userPhone: user?.phone || "",
+                                    quantity: 1,
+                                  });
+                                }
+                              }}
+                              className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
+                              {isFreeBook(item) ? <TranslatedText>Get Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
+                            </motion.button>
+                            <GiftButton
+                              course={item}
+                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                              size="sm">
+                              Gift
+                            </GiftButton>
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
                   );
                 }
               })}
@@ -627,8 +640,8 @@ const JoinBuildAfterLife = () => {
               )}
             </motion.div>
           ) : null}
-          </div>
-        </section>
+        </div>
+      </section>
     </div>
   );
 };

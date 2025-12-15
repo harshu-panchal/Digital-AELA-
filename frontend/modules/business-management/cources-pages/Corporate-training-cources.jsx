@@ -29,7 +29,7 @@ const CorporateTrainingCourses = () => {
       try {
         setLoading(true);
         const response = await fetchPublishedCourses();
-        
+
         if (!response || !response.courses) {
           console.warn("No courses data received from API");
           setCorporateTrainingCourses([]);
@@ -49,13 +49,16 @@ const CorporateTrainingCourses = () => {
             title: course.title || "Untitled Course",
             description: course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || course.coverImage || "",
+            rawPrice: typeof course.price === 'string'
+              ? parseFloat(course.price.replace(/[^0-9.]/g, ''))
+              : course.price, // Store original numeric price, handling string formats
             price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
             duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
             format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
             features: course.metadata?.tags || course.tags || [],
             isCustom: false, // Backend courses are not custom by default
           }));
-        
+
         setCorporateTrainingCourses(filteredCourses);
       } catch (error) {
         console.error("Failed to load courses:", error);
@@ -84,14 +87,18 @@ const CorporateTrainingCourses = () => {
     }
 
     const payload = augmentCourse(program);
-    
+
     // Check if course is free
-    const priceValue = typeof program.price === 'number' ? program.price : 
-                      (typeof program.price === 'string' && program.price.toLowerCase() === 'free') ? 0 :
-                      (typeof program.price === 'string' && program.price.includes('Free')) ? 0 :
-                      parseFloat(program.price) || 0;
+    // Prioritize rawPrice lookup
+    const priceValue = (program.rawPrice !== undefined && program.rawPrice !== null)
+      ? (parseFloat(program.rawPrice) || 0)
+      : (typeof program.price === 'number' ? program.price :
+        (typeof program.price === 'string' && program.price.toLowerCase() === 'free') ? 0 :
+          (typeof program.price === 'string' && program.price.includes('Free')) ? 0 :
+            parseFloat(program.price) || 0);
+
     const isFreeCourse = priceValue === 0 || program.price === 0 || program.price === "Free";
-    
+
     if (isFreeCourse) {
       // Free course - navigate to course detail page for enrollment
       if (program._id) {
@@ -331,122 +338,123 @@ const CorporateTrainingCourses = () => {
               {corporateTrainingCourses
                 .filter((program) => !program.isCustom)
                 .map((program, index) => (
-                <motion.div
-                  key={program.slug}
-                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleViewCourse(program)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      handleViewCourse(program);
-                    }
-                  }}>
-                  <div className="h-40 w-full overflow-hidden">
-                    <img
-                      src={getMediaUrl(program.image) || "https://via.placeholder.com/300x200?text=Course"}
-                      alt={program.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                    <div className="flex-shrink-0 mb-4">
-                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
-                        <TranslatedText>{program.title}</TranslatedText>
-                      </h3>
-                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
-                        <TranslatedText>{program.description}</TranslatedText>
-                      </p>
+                  <motion.div
+                    key={program.slug}
+                    className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleViewCourse(program)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleViewCourse(program);
+                      }
+                    }}>
+                    <div className="h-40 w-full overflow-hidden">
+                      <img
+                        src={getMediaUrl(program.image) || "https://via.placeholder.com/300x200?text=Course"}
+                        alt={program.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     </div>
-
-                    <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {program.duration}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
-                        {program.format}
-                      </span>
-                    </div>
-
-                    {program.features && program.features.length > 0 && (
-                      <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
-                        <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
-                          <TranslatedText>Key Highlights</TranslatedText>
+                    <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
+                      <div className="flex-shrink-0 mb-4">
+                        <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
+                          <TranslatedText>{program.title}</TranslatedText>
+                        </h3>
+                        <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
+                          <TranslatedText>{program.description}</TranslatedText>
                         </p>
-                        <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                          {program.features.slice(0, 3).map((feature, idx) => (
-                            <li key={idx} className="flex items-center gap-2">
-                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                              <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
-                            </li>
-                          ))}
-                        </ul>
                       </div>
-                    )}
 
-                    <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
-                      <div className="flex items-center justify-between text-sm text-gray-300">
-                        <span><TranslatedText>Program Fee</TranslatedText></span>
-                        <span className="text-lg font-semibold text-[#F5D26A]">
-                          {program.price || <TranslatedText>On Request</TranslatedText>}
+                      <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {program.duration}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"
+                            />
+                          </svg>
+                          {program.format}
                         </span>
                       </div>
-                      <motion.button
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleViewCourse(program);
-                        }}
-                        className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
-                        <TranslatedText>See Full Course</TranslatedText>
-                      </motion.button>
-                      <div className="grid gap-3 sm:grid-cols-2">
+
+                      {program.features && program.features.length > 0 && (
+                        <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
+                          <p className="mb-3 text-[#D4AF37]/80 text-[11px] uppercase tracking-[0.25em]">
+                            <TranslatedText>Key Highlights</TranslatedText>
+                          </p>
+                          <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                            {program.features.slice(0, 3).map((feature, idx) => (
+                              <li key={idx} className="flex items-center gap-2">
+                                <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
+                                <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
+                        <div className="flex items-center justify-between text-sm text-gray-300">
+                          <span><TranslatedText>Program Fee</TranslatedText></span>
+                          <span className="text-lg font-semibold text-[#F5D26A]">
+                            {program.price || <TranslatedText>On Request</TranslatedText>}
+                          </span>
+                        </div>
                         <motion.button
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleBuyCourse(program);
+                            handleViewCourse(program);
                           }}
-                          className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                          <TranslatedText>Buy Now</TranslatedText>
+                          className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
+                          <TranslatedText>See Full Course</TranslatedText>
                         </motion.button>
-                        <div
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}>
-                          <GiftButton
-                            className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                            size="sm">
-                            Gift
-                          </GiftButton>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <motion.button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleBuyCourse(program);
+                            }}
+                            className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
+                            <TranslatedText>Buy Now</TranslatedText>
+                          </motion.button>
+                          <div
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}>
+                            <GiftButton
+                              course={program} // Pass program to GiftButton
+                              className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                              size="sm">
+                              Gift
+                            </GiftButton>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
                 ))}
             </div>
           )}
@@ -610,63 +618,63 @@ const CorporateTrainingCourses = () => {
           {corporateTrainingCourses
             .filter((program) => program.isCustom)
             .length > 0 && corporateTrainingCourses
-            .filter((program) => program.isCustom)
-            .map((program, index) => (
-              <motion.div
-                key={program.slug}
-                className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
-                <div className="h-52 w-full overflow-hidden">
-                  <img
-                    src={getMediaUrl(program.image)}
-                    alt={program.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-8 md:p-10 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-6">
-                  <div className="max-w-4xl mx-auto text-center space-y-4">
-                    <h3 className="text-2xl md:text-3xl font-semibold text-[#D4AF37] font-display group-hover:text-[#E5C158] transition-colors duration-300">
-                      <TranslatedText>{program.title}</TranslatedText>
-                    </h3>
-                    <p className="text-gray-300 leading-relaxed text-sm md:text-base">
-                      <TranslatedText>{program.description}</TranslatedText>
-                    </p>
+              .filter((program) => program.isCustom)
+              .map((program, index) => (
+                <motion.div
+                  key={program.slug}
+                  className="bg-[#0a0a0a] rounded-2xl overflow-hidden border-2 border-[#D4AF37] hover:shadow-[0_0_16px_rgba(212,175,55,0.22)] transition-all duration-300 group mb-12">
+                  <div className="h-52 w-full overflow-hidden">
+                    <img
+                      src={getMediaUrl(program.image)}
+                      alt={program.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
+                  <div className="p-8 md:p-10 bg-linear-to-b from-[#141414] to-[#0a0a0a] space-y-6">
+                    <div className="max-w-4xl mx-auto text-center space-y-4">
+                      <h3 className="text-2xl md:text-3xl font-semibold text-[#D4AF37] font-display group-hover:text-[#E5C158] transition-colors duration-300">
+                        <TranslatedText>{program.title}</TranslatedText>
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed text-sm md:text-base">
+                        <TranslatedText>{program.description}</TranslatedText>
+                      </p>
+                    </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                    {program.features.map((feature) => (
-                      <div
-                        key={feature}
-                        className="flex items-center gap-2 text-xs md:text-sm text-gray-300">
-                        <svg
-                          className="w-4 h-4 text-[#D4AF37] shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span><TranslatedText>{feature}</TranslatedText></span>
-                      </div>
-                    ))}
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                      {program.features.map((feature) => (
+                        <div
+                          key={feature}
+                          className="flex items-center gap-2 text-xs md:text-sm text-gray-300">
+                          <svg
+                            className="w-4 h-4 text-[#D4AF37] shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span><TranslatedText>{feature}</TranslatedText></span>
+                        </div>
+                      ))}
+                    </div>
 
-                  <div className="flex justify-center">
-                    <motion.a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-10 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
-                      Request Custom Training Program
-                    </motion.a>
+                    <div className="flex justify-center">
+                      <motion.a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-linear-to-r from-[#D4AF37] to-[#E5C158] text-black px-10 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-[#D4AF37]/50">
+                        Request Custom Training Program
+                      </motion.a>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
 
           {corporateTrainingCourses.filter((program) => program.isCustom).length === 0 && (
             <div className="text-center py-12">

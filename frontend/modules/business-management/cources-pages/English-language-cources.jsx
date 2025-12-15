@@ -28,7 +28,7 @@ const EnglishLanguageCourses = () => {
       try {
         setLoading(true);
         const response = await fetchPublishedCourses();
-        
+
         if (!response || !response.courses) {
           console.warn("No courses data received from API");
           setEnglishCourses([]);
@@ -48,12 +48,13 @@ const EnglishLanguageCourses = () => {
             title: course.title || "Untitled Course", // Dynamic content from API
             description: course.description || course.metadata?.subtitle || course.subtitle || "",
             image: course.thumbnailUrl || course.thumbnail || course.image || course.coverImage || "",
+            rawPrice: course.price, // Store original numeric price
             price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request", // Price formatting
             duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
             format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
             features: course.metadata?.tags || course.tags || [],
           }));
-        
+
         setEnglishCourses(filteredCourses);
       } catch (error) {
         console.error("Failed to load courses:", error);
@@ -82,14 +83,18 @@ const EnglishLanguageCourses = () => {
     }
 
     const payload = augmentCourse(course);
-    
+
     // Check if course is free
-    const priceValue = typeof course.price === 'number' ? course.price : 
-                      (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
-                      (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
-                      parseFloat(course.price) || 0;
+    // Prioritize rawPrice lookup
+    const priceValue = (course.rawPrice !== undefined && course.rawPrice !== null)
+      ? (parseFloat(course.rawPrice) || 0)
+      : (typeof course.price === 'number' ? course.price :
+        (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
+          (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
+            parseFloat(course.price) || 0);
+
     const isFreeCourse = priceValue === 0 || course.price === 0 || course.price === "Free";
-    
+
     if (isFreeCourse) {
       // Free course - navigate to course detail page for enrollment
       if (course._id) {
@@ -226,84 +231,84 @@ const EnglishLanguageCourses = () => {
           {!loading && englishCourses.length > 0 && (
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-12">
               {englishCourses.map((course, index) => (
-              <motion.div
-                key={course.slug}
-                className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleViewCourse(course)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleViewCourse(course);
-                  }
-                }}>
-                <div className="h-40 w-full overflow-hidden">
-                  <img
-                    src={getMediaUrl(course.image) || "https://via.placeholder.com/300x200?text=Course"}
-                    alt={course.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
-                  <div className="flex-shrink-0 mb-4">
-                    <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
-                      <TranslatedText>{course.title}</TranslatedText>
-                    </h3>
-                    <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
-                      <TranslatedText>{course.description}</TranslatedText>
-                    </p>
+                <motion.div
+                  key={course.slug}
+                  className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_12px_rgba(212,175,55,0.18)] transition-all duration-300 group cursor-pointer flex flex-col h-full"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleViewCourse(course)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleViewCourse(course);
+                    }
+                  }}>
+                  <div className="h-40 w-full overflow-hidden">
+                    <img
+                      src={getMediaUrl(course.image) || "https://via.placeholder.com/300x200?text=Course"}
+                      alt={course.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-
-                  <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {course.duration}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                      {course.format}
-                    </span>
-                  </div>
-
-                  {course.features && course.features.length > 0 && (
-                    <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
-                      <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
-                        <TranslatedText>Key Highlights</TranslatedText>
+                  <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">
+                    <div className="flex-shrink-0 mb-4">
+                      <h3 className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-2 font-display leading-tight group-hover:text-[#E5C158] transition-colors duration-300 line-clamp-2">
+                        <TranslatedText>{course.title}</TranslatedText>
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed text-xs md:text-sm line-clamp-2">
+                        <TranslatedText>{course.description}</TranslatedText>
                       </p>
-                            <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                        {course.features.slice(0, 3).map((feature, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                            <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  )}
+
+                    <div className="flex-shrink-0 flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-4">
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {course.duration}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-[#D4AF37] flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                        {course.format}
+                      </span>
+                    </div>
+
+                    {course.features && course.features.length > 0 && (
+                      <div className="flex-shrink-0 border-t border-[#D4AF37]/15 pt-4 mb-4">
+                        <p className="mb-3 text-[#D4AF37]/80 text-xs uppercase tracking-[0.25em]">
+                          <TranslatedText>Key Highlights</TranslatedText>
+                        </p>
+                        <ul className="space-y-2 text-xs md:text-sm text-gray-300">
+                          {course.features.slice(0, 3).map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
+                              <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
                       <div className="flex items-center justify-between text-sm text-gray-300">
@@ -321,27 +326,28 @@ const EnglishLanguageCourses = () => {
                         <TranslatedText>See Full Course</TranslatedText>
                       </motion.button>
                       <div className="grid gap-3 sm:grid-cols-2">
-                      <motion.button
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleBuyCourse(course);
-                        }}
+                        <motion.button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleBuyCourse(course);
+                          }}
                           className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                           <TranslatedText>Buy Now</TranslatedText>
                         </motion.button>
-                      <div
-                        onClick={(event) => event.stopPropagation()}
-                        onKeyDown={(event) => event.stopPropagation()}>
-                        <GiftButton
-                          className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
-                          size="sm">
-                          Gift
-                        </GiftButton>
+                        <div
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}>
+                          <GiftButton
+                            course={course} // Pass course to GiftButton
+                            className="inline-flex w-full items-center justify-center rounded-full border border-[#F5D26A]/60 px-4 text-xs md:text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
+                            size="sm">
+                            Gift
+                          </GiftButton>
+                        </div>
                       </div>
-                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
               ))}
             </div>
           )}

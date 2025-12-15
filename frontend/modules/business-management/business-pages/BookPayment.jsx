@@ -39,6 +39,7 @@ const BookPayment = () => {
             title: ebook.title,
             author: ebook.metadata?.author || "Digital AELA",
             price: price,
+            currency: "AED", // Default to AED
             format: "ebook", // All books from API are ebooks
             image: ebook.metadata?.coverImage || bookGrammarImg,
           };
@@ -61,7 +62,7 @@ const BookPayment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (isProcessing || !book || book.price <= 0) {
       return;
     }
@@ -72,7 +73,7 @@ const BookPayment = () => {
       // Step 1: Create payment record
       const paymentResponse = await createPayment({
         amount: book.price,
-        currency: "INR", // Razorpay primarily uses INR
+        currency: book.currency || "AED",
         description: `Payment for ${book.title} by ${book.author}`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
@@ -195,7 +196,7 @@ const BookPayment = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-400">Subtotal</span>
                     <span className="text-white font-semibold">
-                      ₹{book.price}
+                      {book.currency || "AED"} {book.price}
                     </span>
                   </div>
                   {book.format === "physical" && (
@@ -207,7 +208,7 @@ const BookPayment = () => {
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      ₹{book.price}
+                      {book.currency || "AED"} {book.price}
                     </span>
                   </div>
                 </div>
@@ -401,7 +402,7 @@ const BookPayment = () => {
                         Processing...
                       </>
                     ) : (
-                      `Pay ₹${book.price} - Complete Purchase`
+                      `Pay ${book.currency || "AED"} ${book.price} - Complete Purchase`
                     )}
                   </motion.button>
 

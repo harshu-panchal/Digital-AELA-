@@ -23,115 +23,115 @@ import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 
 // Fallback static books for when API fails
 const staticBooks = [
-    {
-      id: 1,
-      title: "Advanced English Grammar",
-      author: "Dr. Sarah Johnson",
-      price: 499,
-      originalPrice: 699,
-      image: bookGrammarImg,
-      imageAlt: "Advanced English Grammar cover",
-      rating: 4.8,
-      reviews: 125,
-      format: "physical", // "physical" or "ebook"
-      description:
-        "Comprehensive guide to advanced English grammar with practical examples and exercises.",
-      category: "Grammar",
-      pages: 350,
-      language: "English",
-      isbn: "978-1234567890",
-    },
-    {
-      id: 2,
-      title: "Vocabulary Builder Pro",
-      author: "Prof. Michael Chen",
-      price: 299,
-      originalPrice: 399,
-      image: bookVocabularyImg,
-      imageAlt: "Vocabulary Builder Pro cover",
-      rating: 4.6,
-      reviews: 89,
-      format: "ebook",
-      description:
-        "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
-      category: "Vocabulary",
-      pages: 280,
-      language: "English",
-      isbn: "978-1234567891",
-    },
-    {
-      id: 3,
-      title: "Self Help: Confidence Building",
-      author: "Dr. Priya Sharma",
-      price: 399,
-      originalPrice: 599,
-      image: bookConfidenceBuildingImg,
-      imageAlt: "Self Help Confidence Building cover",
-      rating: 4.9,
-      reviews: 203,
-      format: "physical",
-      description:
-        "Transform your life with proven confidence-building techniques and strategies.",
-      category: "Self Help",
-      pages: 320,
-      language: "English",
-      isbn: "978-1234567892",
-    },
-    {
-      id: 4,
-      title: "English Sentence Structures",
-      author: "Dr. Robert Williams",
-      price: 349,
-      originalPrice: 499,
-      image: bookSentenceStructureImg,
-      imageAlt: "English Sentence Structures cover",
-      rating: 4.7,
-      reviews: 156,
-      format: "ebook",
-      description:
-        "Master English sentence structures with detailed explanations and practice exercises.",
-      category: "Structures",
-      pages: 240,
-      language: "English",
-      isbn: "978-1234567893",
-    },
-    {
-      id: 5,
-      title: "Business English Essentials",
-      author: "Dr. Sarah Johnson",
-      price: 449,
-      originalPrice: 649,
-      image: bookAdvancedEnglishImg,
-      imageAlt: "Business English Essentials cover",
-      rating: 4.8,
-      reviews: 178,
-      format: "physical",
-      description:
-        "Essential business English for professionals working in international environments.",
-      category: "Grammar",
-      pages: 380,
-      language: "English",
-      isbn: "978-1234567894",
-    },
-    {
-      id: 6,
-      title: "IELTS Vocabulary Master",
-      author: "Prof. Michael Chen",
-      price: 379,
-      originalPrice: 549,
-      image: bookIELTSVocabularyImg,
-      imageAlt: "IELTS Vocabulary Master cover",
-      rating: 4.9,
-      reviews: 267,
-      format: "ebook",
-      description:
-        "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
-      category: "Vocabulary",
-      pages: 420,
-      language: "English",
-      isbn: "978-1234567895",
-    },
-  ];
+  {
+    id: 1,
+    title: "Advanced English Grammar",
+    author: "Dr. Sarah Johnson",
+    price: 499,
+    originalPrice: 699,
+    image: bookGrammarImg,
+    imageAlt: "Advanced English Grammar cover",
+    rating: 4.8,
+    reviews: 125,
+    format: "physical", // "physical" or "ebook"
+    description:
+      "Comprehensive guide to advanced English grammar with practical examples and exercises.",
+    category: "Grammar",
+    pages: 350,
+    language: "English",
+    isbn: "978-1234567890",
+  },
+  {
+    id: 2,
+    title: "Vocabulary Builder Pro",
+    author: "Prof. Michael Chen",
+    price: 299,
+    originalPrice: 399,
+    image: bookVocabularyImg,
+    imageAlt: "Vocabulary Builder Pro cover",
+    rating: 4.6,
+    reviews: 89,
+    format: "ebook",
+    description:
+      "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
+    category: "Vocabulary",
+    pages: 280,
+    language: "English",
+    isbn: "978-1234567891",
+  },
+  {
+    id: 3,
+    title: "Self Help: Confidence Building",
+    author: "Dr. Priya Sharma",
+    price: 399,
+    originalPrice: 599,
+    image: bookConfidenceBuildingImg,
+    imageAlt: "Self Help Confidence Building cover",
+    rating: 4.9,
+    reviews: 203,
+    format: "physical",
+    description:
+      "Transform your life with proven confidence-building techniques and strategies.",
+    category: "Self Help",
+    pages: 320,
+    language: "English",
+    isbn: "978-1234567892",
+  },
+  {
+    id: 4,
+    title: "English Sentence Structures",
+    author: "Dr. Robert Williams",
+    price: 349,
+    originalPrice: 499,
+    image: bookSentenceStructureImg,
+    imageAlt: "English Sentence Structures cover",
+    rating: 4.7,
+    reviews: 156,
+    format: "ebook",
+    description:
+      "Master English sentence structures with detailed explanations and practice exercises.",
+    category: "Structures",
+    pages: 240,
+    language: "English",
+    isbn: "978-1234567893",
+  },
+  {
+    id: 5,
+    title: "Business English Essentials",
+    author: "Dr. Sarah Johnson",
+    price: 449,
+    originalPrice: 649,
+    image: bookAdvancedEnglishImg,
+    imageAlt: "Business English Essentials cover",
+    rating: 4.8,
+    reviews: 178,
+    format: "physical",
+    description:
+      "Essential business English for professionals working in international environments.",
+    category: "Grammar",
+    pages: 380,
+    language: "English",
+    isbn: "978-1234567894",
+  },
+  {
+    id: 6,
+    title: "IELTS Vocabulary Master",
+    author: "Prof. Michael Chen",
+    price: 379,
+    originalPrice: 549,
+    image: bookIELTSVocabularyImg,
+    imageAlt: "IELTS Vocabulary Master cover",
+    rating: 4.9,
+    reviews: 267,
+    format: "ebook",
+    description:
+      "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
+    category: "Vocabulary",
+    pages: 420,
+    language: "English",
+    isbn: "978-1234567895",
+  },
+];
 
 const BOOKS_STORAGE_KEY = "aela.books.cache";
 const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
@@ -157,7 +157,7 @@ const Books = () => {
     return [];
   });
   const [loading, setLoading] = useState(true);
-  
+
   // Translation hooks
   const { language } = useLanguage();
   const { translateObject } = useDynamicTranslation();
@@ -179,6 +179,7 @@ const Books = () => {
             title: ebook.title,
             author: ebook.metadata?.author || "Digital AELA", // This will be the teacher's name
             price: price,
+            rawPrice: price, // Store original numeric price
             originalPrice: price > 0 ? Math.round(price * 1.4) : 0,
             image: ebook.metadata?.coverImage || bookGrammarImg,
             imageAlt: `${ebook.title} cover`,
@@ -202,14 +203,14 @@ const Books = () => {
         }
       } catch (error) {
         const isNetworkError = error?.isNetworkError || error?.code === "CONNECTION_ERROR" || error?.status === 0;
-        
+
         // Log errors appropriately
         if (isNetworkError && !isDevelopment) {
           console.error("[Books] Failed to connect to API:", error.message);
         } else if (!isNetworkError) {
           console.error("Failed to load books:", error);
         }
-        
+
         // Try to use cached data first
         try {
           const cached = sessionStorage.getItem(BOOKS_STORAGE_KEY);
@@ -224,7 +225,7 @@ const Books = () => {
         } catch (e) {
           // Ignore storage errors
         }
-        
+
         // Show empty state on error - no dummy data
         setBooks([]);
         toast.error("Failed to load books. Please check your connection and try again.");
@@ -388,7 +389,7 @@ const Books = () => {
                           {Math.round(
                             ((book.originalPrice - book.price) /
                               book.originalPrice) *
-                              100
+                            100
                           )}
                           % <TranslatedText>OFF</TranslatedText>
                         </div>
@@ -418,11 +419,10 @@ const Books = () => {
                           {[...Array(5)].map((_, i) => (
                             <FaStar
                               key={i}
-                              className={`w-3 h-3 ${
-                                i < Math.floor(book.rating)
-                                  ? "text-[#D4AF37] fill-current"
-                                  : "text-gray-600"
-                              }`}
+                              className={`w-3 h-3 ${i < Math.floor(book.rating)
+                                ? "text-[#D4AF37] fill-current"
+                                : "text-gray-600"
+                                }`}
                             />
                           ))}
                         </div>
@@ -437,11 +437,11 @@ const Books = () => {
                       {/* Price */}
                       <div className="flex-shrink-0 flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
-                          {book.price > 0 ? `₹${book.price}` : <TranslatedText>Free</TranslatedText>}
+                          {book.price > 0 ? `AED ${book.price}` : <TranslatedText>Free</TranslatedText>}
                         </span>
                         {book.originalPrice > book.price && (
                           <span className="text-xs text-gray-500 line-through">
-                            ₹{book.originalPrice}
+                            AED {book.originalPrice}
                           </span>
                         )}
                       </div>
@@ -453,7 +453,7 @@ const Books = () => {
                             e.stopPropagation();
                             const isFreeBook = book.price === 0 || book.price === "Free" || book.price === null;
                             const isEbook = book.format === "ebook" || book.badge === "E-Book";
-                            
+
                             if (isFreeBook && isEbook) {
                               // Free ebook - redirect to free library reader
                               navigate(`/free-library/ebook/${book.id}/read`);
@@ -474,7 +474,7 @@ const Books = () => {
                                 toast.error("This book price is not available. Please contact support."); // Toast message
                                 return;
                               }
-                              
+
                               redirectToRazorpay({
                                 bookId: book.id,
                                 amount: bookPrice,
@@ -491,6 +491,7 @@ const Books = () => {
                           {book.price > 0 ? <TranslatedText>Buy Now</TranslatedText> : <TranslatedText>Get Free</TranslatedText>}
                         </motion.button>
                         <GiftButton
+                          course={book} // Pass the book object
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
                           size="sm">
                           Gift

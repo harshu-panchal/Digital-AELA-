@@ -66,7 +66,7 @@ const PaymentCallback = () => {
 
         // Normalize status from URL - treat "unknown" as "processing"
         const normalizedStatus = paymentStatus === "unknown" || !paymentStatus ? "processing" : paymentStatus;
-        
+
         // Check for success status from URL or payment record
         const isSuccess = normalizedStatus === "success" || normalizedStatus === "paid" || paymentData.payment?.status === "completed";
         const isFailed = normalizedStatus === "failed" || paymentData.payment?.status === "failed";
@@ -110,19 +110,19 @@ const PaymentCallback = () => {
           // Payment is processing - implement exponential backoff polling
           console.log("[Payment Callback Frontend] Setting status to PROCESSING, will poll with exponential backoff");
           setStatus("processing");
-          
+
           // Exponential backoff intervals: 2s, 5s, 10s, 20s, 30s (total ~67 seconds)
           const pollIntervals = [2000, 5000, 10000, 20000, 30000];
           let pollAttempt = 0;
           let totalWaitTime = 0;
-          
+
           const pollPaymentStatus = async () => {
             if (pollAttempt >= pollIntervals.length) {
               // After all retries, try manual verification from Razorpay one last time
               try {
                 console.log("[Payment Callback Frontend] Final check: Trying manual verification from Razorpay");
                 const verifyResult = await verifyPaymentStatus(paymentId);
-                
+
                 // If verification was successful, trust the result
                 if (verifyResult.verified) {
                   if (verifyResult.payment?.status === "completed") {
@@ -151,7 +151,7 @@ const PaymentCallback = () => {
                 } else {
                   // Fallback to regular check
                   const finalPayment = await getPaymentDetails(paymentId);
-                  
+
                   if (finalPayment.payment?.status === "completed") {
                     console.log("[Payment Callback Frontend] Payment completed on final check");
                     setStatus("success");
@@ -222,12 +222,12 @@ const PaymentCallback = () => {
               }
               return;
             }
-            
+
             const delay = pollIntervals[pollAttempt];
             totalWaitTime += delay;
-            
+
             console.log(`[Payment Callback Frontend] Polling attempt ${pollAttempt + 1}/${pollIntervals.length} after ${delay}ms (total: ${totalWaitTime}ms)`);
-            
+
             setTimeout(async () => {
               try {
                 // On later attempts (3rd and beyond), also try manual verification from Razorpay
@@ -259,13 +259,13 @@ const PaymentCallback = () => {
                 } else {
                   updatedPayment = await getPaymentDetails(paymentId);
                 }
-                
+
                 console.log("[Payment Callback Frontend] Poll result:", {
                   attempt: pollAttempt + 1,
                   status: updatedPayment.payment?.status,
                   gatewayTransactionId: updatedPayment.payment?.gatewayTransactionId,
                 });
-                
+
                 if (updatedPayment.payment?.status === "completed") {
                   console.log("[Payment Callback Frontend] Payment now completed, setting SUCCESS");
                   setStatus("success");
@@ -298,7 +298,7 @@ const PaymentCallback = () => {
               }
             }, delay);
           };
-          
+
           // Start polling
           pollPaymentStatus();
         }
@@ -362,7 +362,7 @@ const PaymentCallback = () => {
               {payment && (
                 <div className="mt-4 space-y-2">
                   <p className="text-gray-300">
-                    Amount: ₹{payment.amount} {payment.currency}
+                    Amount: {payment.amount} {payment.currency}
                   </p>
                   {payment.course && (
                     <p className="text-gray-300">

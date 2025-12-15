@@ -32,51 +32,56 @@ const fallbackSummary =
 
 // Helper function to normalize course data from backend
 const normalizeCourseData = (backendCourse) => {
-    if (!backendCourse) return null;
-    
-    // Extract course from response if it's wrapped
-    const courseData = backendCourse.course || backendCourse;
-    
-    // Extract metadata fields
-    const metadata = courseData.metadata || {};
-    
-    // Merge all fields, prioritizing direct fields over metadata
-    return {
-      ...courseData,
-      // Basic fields
-      title: courseData.title || "",
-      description: courseData.description || metadata.subtitle || metadata.description || "",
-      longDescription: courseData.longDescription || courseData.description || metadata.longDescription || metadata.subtitle || "",
-      category: courseData.category || metadata.category || "General",
-      difficulty: courseData.difficulty || metadata.difficulty || "",
-      language: courseData.language || metadata.language || "",
-      duration: courseData.duration ? `${courseData.duration} hours` : metadata.duration || "",
-      price: courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request",
-      priceLabel: courseData.priceLabel || (courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request"),
-      // Preserve original numeric price for payment processing
-      originalPrice: typeof courseData.price === 'number' ? courseData.price : (courseData.price ? parseFloat(courseData.price) : null),
-      discountPrice: courseData.discountPrice || metadata.discountPrice || null,
-      format: courseData.format || metadata.deliveryMode || courseData.deliveryMode || "",
-      deliveryMode: courseData.deliveryMode || metadata.deliveryMode || "",
-      // Media fields
-      image: courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.thumbnailUrl || "",
-      coverImage: courseData.coverImage || courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.coverImage || "",
-      introVideoUrl: courseData.introVideoUrl || metadata.introVideoUrl || "",
-      brochureUrl: courseData.brochureUrl || metadata.brochureUrl || "",
-      // Content fields
-      learningOutcomes: courseData.learningOutcomes || metadata.learningOutcomes || "",
-      requirements: courseData.requirements || metadata.requirements || "",
-      syllabus: courseData.syllabus || metadata.syllabus || "",
-      detailedSyllabus: courseData.detailedSyllabus || metadata.detailedSyllabus || null,
-      // Feature fields
-      features: courseData.features || metadata.tags || courseData.tags || [],
-      highlights: courseData.highlights || metadata.tags || courseData.tags || [],
-      tags: courseData.tags || metadata.tags || [],
-      // Other fields
-      lessonCount: courseData.lessonCount || metadata.lessonCount || null,
-      subtitle: courseData.subtitle || metadata.subtitle || "",
-      instructor: courseData.instructor?.fullName || courseData.instructorName || "Digital AELA",
-    };
+  if (!backendCourse) return null;
+
+  // Extract course from response if it's wrapped
+  const courseData = backendCourse.course || backendCourse;
+
+  // Extract metadata fields
+  const metadata = courseData.metadata || {};
+
+  // Merge all fields, prioritizing direct fields over metadata
+  return {
+    ...courseData,
+    // Basic fields
+    title: courseData.title || "",
+    description: courseData.description || metadata.subtitle || metadata.description || "",
+    longDescription: courseData.longDescription || courseData.description || metadata.longDescription || metadata.subtitle || "",
+    category: courseData.category || metadata.category || "General",
+    difficulty: courseData.difficulty || metadata.difficulty || "",
+    language: courseData.language || metadata.language || "",
+    duration: courseData.duration ? `${courseData.duration} hours` : metadata.duration || "",
+    price: courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request",
+    priceLabel: courseData.priceLabel || (courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request"),
+    // Preserve original numeric price for payment processing
+    rawPrice: courseData.rawPrice !== undefined && courseData.rawPrice !== null
+      ? courseData.rawPrice // Use existing rawPrice if available
+      : typeof courseData.price === 'string'
+        ? parseFloat(courseData.price.replace(/[^0-9.]/g, ''))
+        : courseData.price, // Store original numeric price for GiftButton
+    originalPrice: typeof courseData.price === 'number' ? courseData.price : (courseData.price ? parseFloat(courseData.price) : null),
+    discountPrice: courseData.discountPrice || metadata.discountPrice || null,
+    format: courseData.format || metadata.deliveryMode || courseData.deliveryMode || "",
+    deliveryMode: courseData.deliveryMode || metadata.deliveryMode || "",
+    // Media fields
+    image: courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.thumbnailUrl || "",
+    coverImage: courseData.coverImage || courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.coverImage || "",
+    introVideoUrl: courseData.introVideoUrl || metadata.introVideoUrl || "",
+    brochureUrl: courseData.brochureUrl || metadata.brochureUrl || "",
+    // Content fields
+    learningOutcomes: courseData.learningOutcomes || metadata.learningOutcomes || "",
+    requirements: courseData.requirements || metadata.requirements || "",
+    syllabus: courseData.syllabus || metadata.syllabus || "",
+    detailedSyllabus: courseData.detailedSyllabus || metadata.detailedSyllabus || null,
+    // Feature fields
+    features: courseData.features || metadata.tags || courseData.tags || [],
+    highlights: courseData.highlights || metadata.tags || courseData.tags || [],
+    tags: courseData.tags || metadata.tags || [],
+    // Other fields
+    lessonCount: courseData.lessonCount || metadata.lessonCount || null,
+    subtitle: courseData.subtitle || metadata.subtitle || "",
+    instructor: courseData.instructor?.fullName || courseData.instructorName || "Digital AELA",
+  };
 };
 
 const CourseDetail = () => {
@@ -98,7 +103,7 @@ const CourseDetail = () => {
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isLoadingCourse, setIsLoadingCourse] = useState(true);
-  
+
   // Translation hooks
   const { language } = useLanguage();
   const { translateObject } = useDynamicTranslation();
@@ -133,9 +138,9 @@ const CourseDetail = () => {
             const backendCourse = normalizeCourseData(response);
             // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
             const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
-            setCourse({ 
-              ...catalogCourse, 
-              ...stateCourse, 
+            setCourse({
+              ...catalogCourse,
+              ...stateCourse,
               ...backendCourse,
               // Preserve detailedSyllabus from catalog if backend doesn't provide it
               detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
@@ -316,7 +321,7 @@ const CourseDetail = () => {
   const priceDisplay = priceLabel || price || "On Request";
   const originalPrice = course.originalPrice; // Preserved numeric price from backend
   let priceValue = 0;
-  
+
   // First try to use the preserved original numeric price
   if (typeof originalPrice === 'number' && originalPrice > 0) {
     priceValue = originalPrice;
@@ -327,7 +332,7 @@ const CourseDetail = () => {
     // Last resort: extract from display string
     priceValue = extractNumericPrice(priceDisplay);
   }
-  
+
   const isFreeCourse = priceValue === 0 || originalPrice === 0 || (typeof originalPrice === 'number' && originalPrice === 0);
   const categoryPath = categoryPaths[category] ?? "/courses";
   const summaryText = longDescription || description || fallbackSummary;
@@ -368,7 +373,7 @@ const CourseDetail = () => {
           toast.error("This course price is not available. Please contact support.");
           return;
         }
-        
+
         await redirectToRazorpay({
           courseId: course._id,
           amount: priceValue,
@@ -387,14 +392,14 @@ const CourseDetail = () => {
         toast.info("This free course requires backend setup. Please contact support.");
         return;
       }
-      
+
       // Paid catalog course - redirect directly to Razorpay
       // Validate price before proceeding
       if (!priceValue || priceValue <= 0) {
         toast.error("This course price is not available. Please contact support.");
         return;
       }
-      
+
       await redirectToRazorpay({
         amount: priceValue,
         currency: "AED",
@@ -418,67 +423,67 @@ const CourseDetail = () => {
 
   const handleDownloadBrochure = async () => {
     const brochureUrl = course.brochureUrl || course.metadata?.brochureUrl;
-    
+
     if (!brochureUrl) {
       toast.info("Brochure not available for this course");
       return;
     }
-    
+
     try {
       // Convert relative URL to absolute URL using getMediaUrl utility
       // This ensures the URL points to the correct backend server
       const absoluteUrl = getMediaUrl(brochureUrl);
-      
+
       if (!absoluteUrl) {
         throw new Error("Invalid brochure URL");
       }
-      
+
       console.log("[Brochure Download] Fetching from URL:", absoluteUrl);
-      
+
       // Fetch the PDF file as arrayBuffer to preserve binary data
       const response = await fetch(absoluteUrl);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch brochure: ${response.status} ${response.statusText}`);
       }
-      
+
       // Validate Content-Type header to ensure it's a PDF
       const contentType = response.headers.get("Content-Type");
       if (contentType && !contentType.includes("application/pdf") && !contentType.includes("application/octet-stream")) {
         console.warn("[Brochure Download] Unexpected Content-Type:", contentType);
       }
-      
+
       // Convert response to arrayBuffer first to preserve binary data
       const arrayBuffer = await response.arrayBuffer();
-      
+
       if (!arrayBuffer || arrayBuffer.byteLength === 0) {
         throw new Error("Received empty file");
       }
-      
+
       console.log("[Brochure Download] Received file size:", arrayBuffer.byteLength, "bytes");
-      
+
       // Create a blob with explicit PDF MIME type
       const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      
+
       // Create a blob URL
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // Create download link
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
       link.style.display = 'none';
       document.body.appendChild(link);
-      
+
       // Trigger download
       link.click();
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       }, 100);
-      
+
       toast.success("Brochure download started");
     } catch (error) {
       console.error("[Brochure Download] Error:", error);
@@ -644,10 +649,10 @@ const CourseDetail = () => {
                   {isEnrolling
                     ? "Enrolling..."
                     : isFreeCourse
-                    ? "Enroll for Free"
-                    : priceValue > 0
-                    ? "Enroll Now"
-                    : "Connect for Pricing"}
+                      ? "Enroll for Free"
+                      : priceValue > 0
+                        ? "Enroll Now"
+                        : "Connect for Pricing"}
                 </motion.button>
               )}
               {(course.brochureUrl || course.metadata?.brochureUrl) && (
@@ -665,6 +670,7 @@ const CourseDetail = () => {
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}>
                   <GiftButton
+                    course={course}
                     className="inline-flex items-center justify-center rounded-full border border-[#F5D26A]/60 px-6 py-3 text-sm font-semibold text-[#F5D26A] hover:bg-[#D4AF37] hover:text-black"
                     size="md"
                     paymentPath="/gift/payment">

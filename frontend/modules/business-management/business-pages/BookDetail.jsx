@@ -30,175 +30,175 @@ import {
 
 // Fallback static books data
 const staticBooksData = [
-      {
-        id: 1,
-        title: "Advanced English Grammar",
-        author: "Dr. Sarah Johnson",
-        price: 499,
-        originalPrice: 699,
-        image: bookGrammarImg,
-        imageAlt: "Advanced English Grammar cover",
-        rating: 4.8,
-        reviews: 125,
-        format: "physical",
-        description:
-          "Comprehensive guide to advanced English grammar with practical examples and exercises. This book covers all aspects of English grammar from basic to advanced levels, making it perfect for students, teachers, and professionals who want to master the English language.",
-        fullDescription:
-          "Advanced English Grammar is a comprehensive resource designed for learners who want to deepen their understanding of English grammar. The book covers complex grammatical structures, sentence patterns, and usage rules with clear explanations and practical examples. Each chapter includes exercises to reinforce learning and help readers apply the concepts in real-world situations. Whether you're preparing for exams, improving your writing skills, or teaching English, this book provides the tools you need to excel.",
-        category: "Grammar",
-        pages: 350,
-        language: "English",
-        isbn: "978-1234567890",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "Comprehensive grammar coverage",
-          "Practical examples and exercises",
-          "Suitable for all levels",
-          "Expert-authored content",
-        ],
-      },
-      {
-        id: 2,
-        title: "Vocabulary Builder Pro",
-        author: "Prof. Michael Chen",
-        price: 299,
-        originalPrice: 399,
-        image: bookVocabularyImg,
-        imageAlt: "Vocabulary Builder Pro cover",
-        rating: 4.6,
-        reviews: 89,
-        format: "ebook",
-        description:
-          "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
-        fullDescription:
-          "Vocabulary Builder Pro is an essential resource for anyone looking to expand their English vocabulary. This e-book contains over 5000 carefully selected words and phrases commonly used in professional and academic settings. Each entry includes definitions, example sentences, synonyms, and usage tips. The book is organized by themes and difficulty levels, making it easy to find and learn relevant vocabulary for your needs.",
-        category: "Vocabulary",
-        pages: 280,
-        language: "English",
-        isbn: "978-1234567891",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "5000+ essential words",
-          "Professional communication focus",
-          "Digital format for easy access",
-          "Interactive learning exercises",
-        ],
-      },
-      {
-        id: 3,
-        title: "Self Help: Confidence Building",
-        author: "Dr. Priya Sharma",
-        price: 399,
-        originalPrice: 599,
-        image: bookConfidenceBuildingImg,
-        imageAlt: "Self Help Confidence Building cover",
-        rating: 4.9,
-        reviews: 203,
-        format: "physical",
-        description:
-          "Transform your life with proven confidence-building techniques and strategies.",
-        fullDescription:
-          "Self Help: Confidence Building is a transformative guide that helps readers develop unshakeable self-confidence. Written by renowned psychologist Dr. Priya Sharma, this book combines scientific research with practical strategies to help you overcome self-doubt, build self-esteem, and achieve your goals. The book includes exercises, real-life examples, and step-by-step techniques that you can apply immediately to start building confidence in all areas of your life.",
-        category: "Self Help",
-        pages: 320,
-        language: "English",
-        isbn: "978-1234567892",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "Proven confidence-building techniques",
-          "Practical exercises and strategies",
-          "Real-life examples",
-          "Expert psychological insights",
-        ],
-      },
-      {
-        id: 4,
-        title: "English Sentence Structures",
-        author: "Dr. Robert Williams",
-        price: 349,
-        originalPrice: 499,
-        image: bookSentenceStructureImg,
-        imageAlt: "English Sentence Structures cover",
-        rating: 4.7,
-        reviews: 156,
-        format: "ebook",
-        description:
-          "Master English sentence structures with detailed explanations and practice exercises.",
-        fullDescription:
-          "English Sentence Structures is a comprehensive guide to understanding and mastering English sentence construction. This e-book covers all types of sentence structures, from simple to complex, with detailed explanations and numerous examples. Each chapter focuses on a specific aspect of sentence structure, including clauses, phrases, modifiers, and punctuation. The book includes practice exercises to help readers apply what they've learned and improve their writing skills.",
-        category: "Structures",
-        pages: 240,
-        language: "English",
-        isbn: "978-1234567893",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "Complete sentence structure guide",
-          "Detailed explanations",
-          "Practice exercises included",
-          "Digital format with search functionality",
-        ],
-      },
-      {
-        id: 5,
-        title: "Business English Essentials",
-        author: "Dr. Sarah Johnson",
-        price: 449,
-        originalPrice: 649,
-        image: bookAdvancedEnglishImg,
-        imageAlt: "Business English Essentials cover",
-        rating: 4.8,
-        reviews: 178,
-        format: "physical",
-        description:
-          "Essential business English for professionals working in international environments.",
-        fullDescription:
-          "Business English Essentials is designed for professionals who need to communicate effectively in international business settings. This comprehensive guide covers business vocabulary, email writing, presentations, negotiations, and cross-cultural communication. The book includes real-world examples, templates, and exercises to help you master business English and advance your career.",
-        category: "Grammar",
-        pages: 380,
-        language: "English",
-        isbn: "978-1234567894",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "Business communication focus",
-          "Real-world examples",
-          "Email and presentation templates",
-          "Cross-cultural communication tips",
-        ],
-      },
-      {
-        id: 6,
-        title: "IELTS Vocabulary Master",
-        author: "Prof. Michael Chen",
-        price: 379,
-        originalPrice: 549,
-        image: bookIELTSVocabularyImg,
-        imageAlt: "IELTS Vocabulary Master cover",
-        rating: 4.9,
-        reviews: 267,
-        format: "ebook",
-        description:
-          "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
-        fullDescription:
-          "IELTS Vocabulary Master is the ultimate resource for IELTS test takers. This e-book contains over 4000 words and phrases commonly tested in the IELTS exam, organized by topics and difficulty levels. Each entry includes definitions, example sentences, collocations, and pronunciation guides. The book also includes practice tests and strategies to help you maximize your vocabulary score on the IELTS exam.",
-        category: "Vocabulary",
-        pages: 420,
-        language: "English",
-        isbn: "978-1234567895",
-        publisher: "Digital AELA Publications",
-        publishedDate: "2024",
-        features: [
-          "4000+ IELTS-specific words",
-          "Topic-based organization",
-          "Practice tests included",
-          "Exam strategies and tips",
-        ],
-      },
-    ];
+  {
+    id: 1,
+    title: "Advanced English Grammar",
+    author: "Dr. Sarah Johnson",
+    price: 499,
+    originalPrice: 699,
+    image: bookGrammarImg,
+    imageAlt: "Advanced English Grammar cover",
+    rating: 4.8,
+    reviews: 125,
+    format: "physical",
+    description:
+      "Comprehensive guide to advanced English grammar with practical examples and exercises. This book covers all aspects of English grammar from basic to advanced levels, making it perfect for students, teachers, and professionals who want to master the English language.",
+    fullDescription:
+      "Advanced English Grammar is a comprehensive resource designed for learners who want to deepen their understanding of English grammar. The book covers complex grammatical structures, sentence patterns, and usage rules with clear explanations and practical examples. Each chapter includes exercises to reinforce learning and help readers apply the concepts in real-world situations. Whether you're preparing for exams, improving your writing skills, or teaching English, this book provides the tools you need to excel.",
+    category: "Grammar",
+    pages: 350,
+    language: "English",
+    isbn: "978-1234567890",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "Comprehensive grammar coverage",
+      "Practical examples and exercises",
+      "Suitable for all levels",
+      "Expert-authored content",
+    ],
+  },
+  {
+    id: 2,
+    title: "Vocabulary Builder Pro",
+    author: "Prof. Michael Chen",
+    price: 299,
+    originalPrice: 399,
+    image: bookVocabularyImg,
+    imageAlt: "Vocabulary Builder Pro cover",
+    rating: 4.6,
+    reviews: 89,
+    format: "ebook",
+    description:
+      "Expand your vocabulary with 5000+ essential words and phrases for professional communication.",
+    fullDescription:
+      "Vocabulary Builder Pro is an essential resource for anyone looking to expand their English vocabulary. This e-book contains over 5000 carefully selected words and phrases commonly used in professional and academic settings. Each entry includes definitions, example sentences, synonyms, and usage tips. The book is organized by themes and difficulty levels, making it easy to find and learn relevant vocabulary for your needs.",
+    category: "Vocabulary",
+    pages: 280,
+    language: "English",
+    isbn: "978-1234567891",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "5000+ essential words",
+      "Professional communication focus",
+      "Digital format for easy access",
+      "Interactive learning exercises",
+    ],
+  },
+  {
+    id: 3,
+    title: "Self Help: Confidence Building",
+    author: "Dr. Priya Sharma",
+    price: 399,
+    originalPrice: 599,
+    image: bookConfidenceBuildingImg,
+    imageAlt: "Self Help Confidence Building cover",
+    rating: 4.9,
+    reviews: 203,
+    format: "physical",
+    description:
+      "Transform your life with proven confidence-building techniques and strategies.",
+    fullDescription:
+      "Self Help: Confidence Building is a transformative guide that helps readers develop unshakeable self-confidence. Written by renowned psychologist Dr. Priya Sharma, this book combines scientific research with practical strategies to help you overcome self-doubt, build self-esteem, and achieve your goals. The book includes exercises, real-life examples, and step-by-step techniques that you can apply immediately to start building confidence in all areas of your life.",
+    category: "Self Help",
+    pages: 320,
+    language: "English",
+    isbn: "978-1234567892",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "Proven confidence-building techniques",
+      "Practical exercises and strategies",
+      "Real-life examples",
+      "Expert psychological insights",
+    ],
+  },
+  {
+    id: 4,
+    title: "English Sentence Structures",
+    author: "Dr. Robert Williams",
+    price: 349,
+    originalPrice: 499,
+    image: bookSentenceStructureImg,
+    imageAlt: "English Sentence Structures cover",
+    rating: 4.7,
+    reviews: 156,
+    format: "ebook",
+    description:
+      "Master English sentence structures with detailed explanations and practice exercises.",
+    fullDescription:
+      "English Sentence Structures is a comprehensive guide to understanding and mastering English sentence construction. This e-book covers all types of sentence structures, from simple to complex, with detailed explanations and numerous examples. Each chapter focuses on a specific aspect of sentence structure, including clauses, phrases, modifiers, and punctuation. The book includes practice exercises to help readers apply what they've learned and improve their writing skills.",
+    category: "Structures",
+    pages: 240,
+    language: "English",
+    isbn: "978-1234567893",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "Complete sentence structure guide",
+      "Detailed explanations",
+      "Practice exercises included",
+      "Digital format with search functionality",
+    ],
+  },
+  {
+    id: 5,
+    title: "Business English Essentials",
+    author: "Dr. Sarah Johnson",
+    price: 449,
+    originalPrice: 649,
+    image: bookAdvancedEnglishImg,
+    imageAlt: "Business English Essentials cover",
+    rating: 4.8,
+    reviews: 178,
+    format: "physical",
+    description:
+      "Essential business English for professionals working in international environments.",
+    fullDescription:
+      "Business English Essentials is designed for professionals who need to communicate effectively in international business settings. This comprehensive guide covers business vocabulary, email writing, presentations, negotiations, and cross-cultural communication. The book includes real-world examples, templates, and exercises to help you master business English and advance your career.",
+    category: "Grammar",
+    pages: 380,
+    language: "English",
+    isbn: "978-1234567894",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "Business communication focus",
+      "Real-world examples",
+      "Email and presentation templates",
+      "Cross-cultural communication tips",
+    ],
+  },
+  {
+    id: 6,
+    title: "IELTS Vocabulary Master",
+    author: "Prof. Michael Chen",
+    price: 379,
+    originalPrice: 549,
+    image: bookIELTSVocabularyImg,
+    imageAlt: "IELTS Vocabulary Master cover",
+    rating: 4.9,
+    reviews: 267,
+    format: "ebook",
+    description:
+      "Comprehensive vocabulary guide specifically designed for IELTS exam preparation.",
+    fullDescription:
+      "IELTS Vocabulary Master is the ultimate resource for IELTS test takers. This e-book contains over 4000 words and phrases commonly tested in the IELTS exam, organized by topics and difficulty levels. Each entry includes definitions, example sentences, collocations, and pronunciation guides. The book also includes practice tests and strategies to help you maximize your vocabulary score on the IELTS exam.",
+    category: "Vocabulary",
+    pages: 420,
+    language: "English",
+    isbn: "978-1234567895",
+    publisher: "Digital AELA Publications",
+    publishedDate: "2024",
+    features: [
+      "4000+ IELTS-specific words",
+      "Topic-based organization",
+      "Practice tests included",
+      "Exam strategies and tips",
+    ],
+  },
+];
 
 const BookDetail = () => {
   const { id } = useParams();
@@ -223,7 +223,7 @@ const BookDetail = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Try to fetch from API first
         try {
           const ebook = await fetchEbookById(id);
@@ -234,6 +234,7 @@ const BookDetail = () => {
               title: ebook.title,
               author: ebook.metadata?.author || "Digital AELA", // Teacher's name
               price: ebook.metadata?.price || 0,
+              rawPrice: ebook.metadata?.price || 0, // Store original numeric price for GiftButton
               originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
               image: ebook.metadata?.coverImage || bookGrammarImg,
               imageAlt: `${ebook.title} cover`,
@@ -255,7 +256,7 @@ const BookDetail = () => {
               ],
             };
             setBook(transformedBook);
-            
+
             // Load reading progress if authenticated
             if (isAuthenticated) {
               try {
@@ -268,7 +269,7 @@ const BookDetail = () => {
                 // Progress not found is okay
               }
             }
-            
+
             // Load ratings
             try {
               const ratingsData = await fetchEbookRatings(id);
@@ -283,7 +284,7 @@ const BookDetail = () => {
             } catch (err) {
               // Ratings not found is okay
             }
-            
+
             setLoading(false);
             return;
           }
@@ -346,11 +347,9 @@ const BookDetail = () => {
       <SEO
         title={`${book.title} by ${book.author} | Digital AELA Book Store`}
         description={book.description}
-        keywords={`${book.title}, ${book.author}, ${
-          book.category
-        } book, English learning, ${
-          book.format === "ebook" ? "e-book" : "physical book"
-        }, Digital AELA`}
+        keywords={`${book.title}, ${book.author}, ${book.category
+          } book, English learning, ${book.format === "ebook" ? "e-book" : "physical book"
+          }, Digital AELA`}
         url={`https://digitalaela.com/books/${book.id}`}
       />
 
@@ -408,7 +407,7 @@ const BookDetail = () => {
                   <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">
                     {Math.round(
                       ((book.originalPrice - book.price) / book.originalPrice) *
-                        100
+                      100
                     )}
                     % <TranslatedText>OFF</TranslatedText>
                   </div>
@@ -440,11 +439,10 @@ const BookDetail = () => {
                   {[...Array(5)].map((_, i) => (
                     <FaStar
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(book.rating)
-                          ? "text-[#D4AF37] fill-current"
-                          : "text-gray-600"
-                      }`}
+                      className={`w-5 h-5 ${i < Math.floor(book.rating)
+                        ? "text-[#D4AF37] fill-current"
+                        : "text-gray-600"
+                        }`}
                     />
                   ))}
                 </div>
@@ -501,15 +499,15 @@ const BookDetail = () => {
                   return (
                     <>
                       <span className="text-4xl font-bold text-[#D4AF37] font-display">
-                        ₹{book.price}
+                        AED {book.price}
                       </span>
                       {book.originalPrice > book.price && (
                         <>
                           <span className="text-xl text-gray-500 line-through">
-                            ₹{book.originalPrice}
+                            AED {book.originalPrice}
                           </span>
                           <span className="text-sm text-[#D4AF37] font-semibold">
-                            <TranslatedText>Save</TranslatedText> ₹{Math.round(book.originalPrice - book.price)}
+                            <TranslatedText>Save</TranslatedText> AED {Math.round(book.originalPrice - book.price)}
                           </span>
                         </>
                       )}
@@ -535,10 +533,10 @@ const BookDetail = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {book.pages && book.pages > 0 && (
-                  <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>Pages:</TranslatedText></span>
-                    <p className="text-white font-semibold">{book.pages}</p>
-                  </div>
+                    <div>
+                      <span className="text-sm text-gray-400"><TranslatedText>Pages:</TranslatedText></span>
+                      <p className="text-white font-semibold">{book.pages}</p>
+                    </div>
                   )}
                   <div>
                     <span className="text-sm text-gray-400"><TranslatedText>Language:</TranslatedText></span>
@@ -593,7 +591,7 @@ const BookDetail = () => {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
                 {(() => {
                   const isFreeBook = book.price === 0 || book.price === "Free" || (book.format === "ebook" && book.price === 0);
-                  
+
                   if (isFreeBook && book.format === "ebook") {
                     // Free ebook - allow direct access to reading
                     return (
@@ -632,14 +630,14 @@ const BookDetail = () => {
                               navigate("/login/student");
                               return;
                             }
-                            
+
                             // Validate price
                             const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
                             if (!bookPrice || bookPrice <= 0) {
                               toast.error("This book price is not available. Please contact support."); // Toast message
                               return;
                             }
-                            
+
                             await redirectToRazorpay({
                               bookId: book.id || book._id,
                               amount: bookPrice,
@@ -652,9 +650,10 @@ const BookDetail = () => {
                             });
                           }}
                           className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                          <TranslatedText>Buy Now</TranslatedText> - ₹{book.price}
+                          <TranslatedText>Buy Now</TranslatedText> - AED {book.price}
                         </motion.button>
                         <GiftButton
+                          course={book}
                           className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black"
                           size="lg">
                           <TranslatedText>Gift</TranslatedText>
@@ -738,7 +737,7 @@ const BookDetail = () => {
         <section className="py-8 bg-[#141414]">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
             <h2 className="text-2xl font-bold text-white mb-6 font-display"><TranslatedText>Ratings & Reviews</TranslatedText></h2>
-            
+
             {/* Rating Statistics */}
             {ratings.statistics && (
               <div className="bg-[#1a1a1a] rounded-xl p-6 mb-6 border border-[#D4AF37]/20">
@@ -751,11 +750,10 @@ const BookDetail = () => {
                       {[...Array(5)].map((_, i) => (
                         <FaStar
                           key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(ratings.statistics.averageRating)
-                              ? "text-[#D4AF37] fill-current"
-                              : "text-gray-600"
-                          }`}
+                          className={`w-4 h-4 ${i < Math.floor(ratings.statistics.averageRating)
+                            ? "text-[#D4AF37] fill-current"
+                            : "text-gray-600"
+                            }`}
                         />
                       ))}
                     </div>
@@ -796,9 +794,8 @@ const BookDetail = () => {
                         {[...Array(5)].map((_, i) => (
                           <FaStar
                             key={i}
-                            className={`w-3 h-3 ${
-                              i < rating.rating ? "text-[#D4AF37] fill-current" : "text-gray-600"
-                            }`}
+                            className={`w-3 h-3 ${i < rating.rating ? "text-[#D4AF37] fill-current" : "text-gray-600"
+                              }`}
                           />
                         ))}
                       </div>
@@ -832,9 +829,8 @@ const BookDetail = () => {
                   onClick={() => setRatingValue(i + 1)}
                   className="focus:outline-none">
                   <FaStar
-                    className={`w-8 h-8 ${
-                      i < ratingValue ? "text-[#D4AF37] fill-current" : "text-gray-600"
-                    }`}
+                    className={`w-8 h-8 ${i < ratingValue ? "text-[#D4AF37] fill-current" : "text-gray-600"
+                      }`}
                   />
                 </button>
               ))}
