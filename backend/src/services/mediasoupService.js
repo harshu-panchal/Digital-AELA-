@@ -26,7 +26,7 @@ const mediasoupConfig = {
       ? parseInt(process.env.MEDIASOUP_RTC_MAX_PORT, 10)
       : 49999,
   },
-  // Router settings
+  // Router settings - Optimized for voice
   routerOptions: {
     mediaCodecs: [
       {
@@ -34,6 +34,18 @@ const mediasoupConfig = {
         mimeType: "audio/opus",
         clockRate: 48000,
         channels: 2,
+        parameters: {
+          // Optimize for voice (not music)
+          useinbandfec: 1, // Forward error correction for packet loss
+          usedtx: 1, // Discontinuous transmission (silence suppression)
+          maxaveragebitrate: 40000, // 40 kbps (good quality for voice, saves bandwidth)
+          maxplaybackrate: 48000,
+          ptime: 20, // 20ms packet time (lower latency)
+          minptime: 10,
+          maxptime: 60,
+          stereo: 0, // Mono for voice (saves bandwidth)
+          "sprop-stereo": 0,
+        },
       },
     ],
   },
@@ -64,6 +76,14 @@ export async function initializeWorkers() {
         const worker = await mediasoup.createWorker({
           ...mediasoupConfig.workerSettings,
         });
+
+        // Initialize worker load tracking
+        worker.appData = {
+          rooms: 0,
+          transports: 0,
+          producers: 0,
+          consumers: 0,
+        };
 
         worker.on("died", () => {
           // eslint-disable-next-line no-console
@@ -136,15 +156,39 @@ export function isMediasoupAvailable() {
 }
 
 /**
- * Get next available worker (round-robin)
+ * Get worker load metrics
+ */
+function getWorkerLoad(worker) {
+  return {
+    rooms: worker.appData.rooms || 0,
+    transports: worker.appData.transports || 0,
+    producers: worker.appData.producers || 0,
+    consumers: worker.appData.consumers || 0,
+    totalLoad: (worker.appData.transports || 0) + (worker.appData.producers || 0) * 2,
+  };
+}
+
+/**
+ * Get next available worker (intelligent load balancing)
  */
 function getNextWorker() {
   if (!mediasoupAvailable || workers.length === 0) {
     throw new Error("mediasoup workers are not available");
   }
-  const worker = workers[nextWorkerIndex];
-  nextWorkerIndex = (nextWorkerIndex + 1) % workers.length;
-  return worker;
+
+  // Find worker with lowest load
+  let bestWorker = workers[0];
+  let lowestLoad = getWorkerLoad(bestWorker).totalLoad;
+
+  for (const worker of workers) {
+    const load = getWorkerLoad(worker).totalLoad;
+    if (load < lowestLoad) {
+      lowestLoad = load;
+      bestWorker = worker;
+    }
+  }
+
+  return bestWorker;
 }
 
 /**
@@ -161,6 +205,12 @@ export async function getOrCreateRouter(roomId) {
 
   const worker = getNextWorker();
   const router = await worker.createRouter(mediasoupConfig.routerOptions);
+
+  // Track router in worker load
+  worker.appData.rooms = (worker.appData.rooms || 0) + 1;
+
+  // Store worker reference in router for cleanup
+  router.appData = { worker };
 
   routers.set(roomId, router);
   // eslint-disable-next-line no-console
@@ -182,6 +232,12 @@ export function getRouter(roomId) {
 export async function deleteRouter(roomId) {
   const router = routers.get(roomId);
   if (router) {
+    // Decrement worker room count
+    const worker = router.appData?.worker;
+    if (worker && worker.appData) {
+      worker.appData.rooms = Math.max(0, (worker.appData.rooms || 0) - 1);
+    }
+
     router.close();
     routers.delete(roomId);
     // eslint-disable-next-line no-console
@@ -416,7 +472,7 @@ export function closeTransport(socketId) {
   if (transportData) {
     // eslint-disable-next-line no-console
     console.log(`[mediasoup] Closing transport for socket ${socketId}`);
-    
+
     // Close all consumers first
     transportData.consumers.forEach((consumer, producerId) => {
       try {
@@ -455,7 +511,7 @@ export function closeTransport(socketId) {
       }
       transportData.sendTransport = null;
     }
-    
+
     if (transportData.recvTransport) {
       try {
         transportData.recvTransport.close();

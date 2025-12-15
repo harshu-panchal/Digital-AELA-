@@ -128,16 +128,16 @@ export const createTeacherCourse = async (req, res, next) => {
       try {
         const User = (await import("../models/User.js")).default;
         const { createBulkNotifications } = await import("../utils/notificationHelper.js");
-        
+
         // Get all super-admin users
         const superAdmins = await User.find({ role: "super-admin", isActive: true })
           .select("_id")
           .lean();
-        
+
         if (superAdmins.length > 0) {
           const adminIds = superAdmins.map((admin) => admin._id);
           const instructorName = populatedCourse.instructor?.fullName || "A teacher";
-          
+
           await createBulkNotifications(
             adminIds,
             "New Course Pending Approval",
@@ -208,8 +208,8 @@ export const getTeacherCourses = async (req, res, next) => {
     }
 
     // Super-admin can see all courses, teachers only see their own
-    const courseQuery = userRole === "super-admin" 
-      ? {} 
+    const courseQuery = userRole === "super-admin"
+      ? {}
       : { instructor: instructorObjectId };
 
     const courses = await Course.find(courseQuery)
@@ -367,13 +367,24 @@ export const updateTeacherCourse = async (req, res, next) => {
     // Import URL normalizer
     const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
 
+    // Safe URL normalization wrapper - prevents course update from failing if normalization errors
+    const safeNormalizeUrl = (url) => {
+      try {
+        const normalized = normalizeUrl(url);
+        return normalized || url;
+      } catch (error) {
+        console.error("[Course Update] URL normalization error:", error);
+        return url; // Return original URL if normalization fails
+      }
+    };
+
     if (title) course.title = title;
     if (description) course.description = description;
     if (category) course.category = category;
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
-    if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
-    if (req.body.brochureUrl !== undefined) course.brochureUrl = normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
+    if (coverImage !== undefined) course.thumbnailUrl = safeNormalizeUrl(coverImage);
+    if (req.body.brochureUrl !== undefined) course.brochureUrl = safeNormalizeUrl(req.body.brochureUrl);
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
@@ -385,13 +396,16 @@ export const updateTeacherCourse = async (req, res, next) => {
     if (lessonCount !== undefined) course.metadata.lessonCount = lessonCount;
     if (learningOutcomes !== undefined) course.metadata.learningOutcomes = learningOutcomes;
     if (requirements !== undefined) course.metadata.requirements = requirements;
-    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = normalizeUrl(introVideoUrl) || introVideoUrl;
+    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = safeNormalizeUrl(introVideoUrl);
     if (syllabus !== undefined) course.metadata.syllabus = syllabus;
     if (tags !== undefined) {
       course.metadata.tags = Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim());
     }
 
     await course.save();
+
+    // Invalidate course cache to ensure updates reflect immediately
+    await invalidateCourseCache(course._id.toString());
 
     const populatedCourse = await Course.findById(course._id)
       .populate("instructor", "fullName email")

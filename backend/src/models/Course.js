@@ -54,6 +54,7 @@ courseSchema.index({ status: 1, "metadata.isPremium": 1 }); // For home page que
 courseSchema.index({ instructor: 1, status: 1 }); // For teacher course listings
 courseSchema.index({ category: 1, status: 1 }); // For category filtering
 courseSchema.index({ createdAt: -1 }); // For sorting
+courseSchema.index({ price: 1, status: 1 }); // For price-based filtering and sorting
 
 const Course = mongoose.model("Course", courseSchema);
 

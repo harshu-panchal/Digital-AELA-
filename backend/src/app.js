@@ -1,6 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import compression from "compression";
 import authRoutes from "./routes/authRoutes.js";
 import recruiterRoutes from "./routes/recruiterRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
@@ -107,6 +108,21 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Compression middleware - compress all responses
+app.use(compression({
+  filter: (req, res) => {
+    // Don't compress if client doesn't support it
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression filter function
+    return compression.filter(req, res);
+  },
+  level: 6, // Balance between compression ratio and CPU usage (1-9, 6 is good default)
+  threshold: 1024, // Only compress responses larger than 1KB
+}));
+
 // Increase body parser limits for file uploads
 // Note: For multipart/form-data (file uploads), multer handles parsing
 // But we still need these for other content types
@@ -323,7 +339,7 @@ app.use(async (err, req, res, next) => {
   // Handle specific error types
   let errorMessage;
   let errorCode = err.code || "SERVER_ERROR";
-  
+
   if (status === 413 || err.statusCode === 413 || err.type === "entity.too.large" || err.code === "LIMIT_FILE_SIZE") {
     errorCode = "PAYLOAD_TOO_LARGE";
     errorMessage = err.message || "Request entity too large. Maximum file size is 5MB for images.";

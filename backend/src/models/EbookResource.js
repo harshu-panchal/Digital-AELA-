@@ -44,6 +44,7 @@ const ebookResourceSchema = new mongoose.Schema(
 ebookResourceSchema.index({ isPublic: 1, createdAt: -1 }); // For public listings
 ebookResourceSchema.index({ "metadata.isFeatured": 1, createdAt: -1 }); // For featured books
 ebookResourceSchema.index({ createdAt: -1 }); // For analytics
+ebookResourceSchema.index({ categories: 1, isPublic: 1 }); // For category filtering
 
 const EbookResource = mongoose.model("EbookResource", ebookResourceSchema);
 
