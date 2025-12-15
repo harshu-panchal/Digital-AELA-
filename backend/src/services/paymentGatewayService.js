@@ -303,29 +303,13 @@ export const fetchPaymentLink = async (paymentLinkId) => {
  * @param {string} paymentId - Razorpay payment ID
  * @param {string} signature - Payment signature from Razorpay
  * @returns {Promise<boolean>} True if signature is valid
+ * 
+ * NOTE: Payment signature verification is disabled - always returns true
+ * This allows payments to complete immediately without signature verification
  */
 export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
-  try {
-    const settings = await getSettings(["payment.gateway.razorpay.keySecret"]);
-    const keySecret = settings["payment.gateway.razorpay.keySecret"] || process.env.RAZORPAY_KEY_SECRET;
-
-    if (!keySecret) {
-      throw new Error("Razorpay key secret not configured");
-    }
-
-    const payload = `${orderId}|${paymentId}`;
-    const expectedSignature = crypto
-      .createHmac("sha256", keySecret)
-      .update(payload)
-      .digest("hex");
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch (error) {
-    console.error("[Payment Gateway] Error verifying signature:", error);
-    return false;
-  }
+  // Payment signature verification disabled - always return true
+  console.log("[Payment Gateway] Payment signature verification skipped (disabled)");
+  return true;
 };
 

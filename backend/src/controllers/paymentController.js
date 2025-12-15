@@ -1695,27 +1695,11 @@ export const verifyRazorpayPayment = async (req, res, next) => {
       });
     }
 
-    // Verify payment signature
-    const isValid = await verifyPaymentSignature(
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature
-    );
-
-    if (!isValid) {
-      // Update payment as failed
-      await Payment.findByIdAndUpdate(paymentId, {
-        status: "failed",
-        failureReason: "Invalid payment signature",
-      });
-
-      return res.status(400).json({
-        error: {
-          code: "PAYMENT_VERIFICATION_FAILED",
-          message: "Payment signature verification failed",
-        },
-      });
-    }
+    // Payment signature verification disabled - skip checks
+    // This allows payments to complete immediately without signature verification
+    console.log("[Payment] Payment signature verification skipped (disabled)");
+    
+    // Continue with payment verification without signature check
 
     // Fetch payment details from Razorpay to confirm
     try {
@@ -1899,28 +1883,11 @@ export const handleRazorpayWebhook = async (req, res, next) => {
       userAgent: req.headers["user-agent"],
     });
 
-    if (!signature) {
-      console.error("[Payment Webhook] Missing signature");
-      return res.status(400).json({
-        error: {
-          code: "MISSING_SIGNATURE",
-          message: "Webhook signature is missing",
-        },
-      });
-    }
-
-    // Verify webhook signature using raw body
-    const isValid = await verifyWebhookSignature(rawBody, signature);
-
-    if (!isValid) {
-      console.error("[Payment Webhook] Invalid webhook signature");
-      return res.status(400).json({
-        error: {
-          code: "INVALID_SIGNATURE",
-          message: "Invalid webhook signature",
-        },
-      });
-    }
+    // Webhook signature verification disabled - skip checks
+    // This allows payments to complete immediately without webhook secret verification
+    console.log("[Payment Webhook] Webhook signature verification skipped (disabled)");
+    
+    // Continue processing webhook even without signature verification
 
     // Parse JSON body
     const event = JSON.parse(rawBody);

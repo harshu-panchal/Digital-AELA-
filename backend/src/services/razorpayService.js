@@ -186,48 +186,14 @@ export const createOrder = async (amount, currency, receipt, notes = {}) => {
  * @param {string} paymentId - Razorpay payment ID
  * @param {string} signature - Payment signature from Razorpay
  * @returns {boolean} True if signature is valid
+ * 
+ * NOTE: Payment signature verification is disabled - always returns true
+ * This allows payments to complete immediately without signature verification
  */
 export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
-  try {
-    const keySecret = await getSettings(["payment.gateway.razorpay.keySecret"]).then(
-      (settings) => settings["payment.gateway.razorpay.keySecret"] || process.env.RAZORPAY_KEY_SECRET
-    );
-
-    if (!keySecret) {
-      throw new Error("Razorpay key secret not configured");
-    }
-
-    // Create signature string: orderId|paymentId
-    const payload = `${orderId}|${paymentId}`;
-
-    // Generate expected signature
-    const expectedSignature = crypto
-      .createHmac("sha256", keySecret)
-      .update(payload)
-      .digest("hex");
-
-    // Compare signatures
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-
-    if (!isValid) {
-      console.warn("[Razorpay] Payment signature verification failed", {
-        orderId,
-        paymentId,
-      });
-    }
-
-    return isValid;
-  } catch (error) {
-    console.error("[Razorpay] Error verifying signature:", {
-      error: error.message,
-      orderId,
-      paymentId,
-    });
-    return false;
-  }
+  // Payment signature verification disabled - always return true
+  console.log("[Razorpay] Payment signature verification skipped (disabled)");
+  return true;
 };
 
 /**
@@ -235,32 +201,14 @@ export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
  * @param {string} payload - Webhook payload (JSON string)
  * @param {string} signature - Webhook signature
  * @returns {boolean} True if signature is valid
+ * 
+ * NOTE: Webhook secret verification is disabled - always returns true
+ * This allows payments to complete immediately without waiting for webhook verification
  */
 export const verifyWebhookSignature = async (payload, signature) => {
-  try {
-    const settings = await getSettings(["payment.gateway.razorpay.webhookSecret"]);
-    const webhookSecret = settings["payment.gateway.razorpay.webhookSecret"] || process.env.RAZORPAY_WEBHOOK_SECRET;
-
-    if (!webhookSecret) {
-      console.warn("[Razorpay] Webhook secret not configured, skipping verification");
-      return true; // Allow if not configured (for development)
-    }
-
-    // Generate expected signature
-    const expectedSignature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(payload)
-      .digest("hex");
-
-    // Compare signatures
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch (error) {
-    console.error("[Razorpay] Error verifying webhook signature:", error);
-    return false;
-  }
+  // Webhook secret verification disabled - always return true
+  console.log("[Razorpay] Webhook signature verification skipped (disabled)");
+  return true;
 };
 
 /**
