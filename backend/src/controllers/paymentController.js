@@ -9,7 +9,6 @@ import {
   createOrder,
   createPaymentLink,
   verifyPaymentSignature,
-  verifyWebhookSignature,
   fetchPayment,
   getRazorpayKeyId,
   isRazorpayEnabled,
@@ -1114,11 +1113,29 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     // For Razorpay, we need to use the backend callback endpoint which then redirects to frontend
     const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    
+
+    // Validate production URLs
+    if (process.env.NODE_ENV === 'production' || !backendUrl.includes('localhost')) {
+      if (!backendUrl || backendUrl.includes('localhost') || backendUrl === 'http://localhost:5000') {
+        console.error("[Payment] ❌ CRITICAL: BACKEND_URL not set correctly in production!");
+        console.error("[Payment] Current BACKEND_URL:", backendUrl);
+        console.error("[Payment] This will cause callback URL whitelisting issues in Razorpay");
+        console.error("[Payment] FIX: Set BACKEND_URL to your production backend URL");
+        console.error("[Payment] Example: BACKEND_URL=https://api.digitalaela.com");
+      }
+      if (!frontendUrl || frontendUrl.includes('localhost') || frontendUrl === 'http://localhost:5173') {
+        console.error("[Payment] ❌ WARNING: FRONTEND_URL not set correctly in production!");
+        console.error("[Payment] Current FRONTEND_URL:", frontendUrl);
+        console.error("[Payment] This may cause redirect issues after payment");
+        console.error("[Payment] FIX: Set FRONTEND_URL to your production frontend URL");
+        console.error("[Payment] Example: FRONTEND_URL=https://digitalaela.com");
+      }
+    }
+
     // Use backend callback endpoint (Razorpay can reach this, then we redirect to frontend)
     const defaultCallbackUrl = `${backendUrl}/api/v1/payments/razorpay/callback?paymentId=${paymentId}`;
     const finalCallbackUrl = callbackUrl || defaultCallbackUrl;
-    
+
     console.log("[Payment] Using callback URL:", finalCallbackUrl);
 
     // Create payment link
@@ -1222,6 +1239,19 @@ export const handleRazorpayCallback = async (req, res, next) => {
       razorpaySignature: razorpaySignature ? "present" : "missing",
       allQueryKeys: Object.keys(req.query),
     });
+
+    // CRITICAL: Check for missing razorpay_payment_id - this indicates callback URL not whitelisted
+    if (!razorpayPaymentId) {
+      console.error("[Payment] ❌ CRITICAL: razorpay_payment_id is missing from callback!");
+      console.error("[Payment] This usually means the callback URL is not whitelisted in Razorpay dashboard");
+      console.error("[Payment] Users will be redirected to 'about:blank' instead of the callback page");
+      console.error("[Payment] FIX: Add this URL to 'Allowed Redirect URLs' in Razorpay Dashboard:");
+      const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+      console.error(`[Payment] URL to whitelist: ${backendUrl}/api/v1/payments/razorpay/callback`);
+    } else {
+      console.log("[Payment] ✅ razorpay_payment_id received - callback URL is properly whitelisted");
+    }
+
     console.log("==========================================");
 
     // Track payment status update to determine redirect status
@@ -1584,7 +1614,7 @@ export const handleRazorpayCallback = async (req, res, next) => {
       console.log("[Payment] Status determined: FAILED (payment updated to failed)");
     } else if (razorpayPaymentLinkStatus === "paid") {
       // If payment link is paid but we couldn't update yet, mark as processing
-      // Frontend will poll and webhook will eventually update it
+      // Frontend will call verify-razorpay-callback immediately with payment_id to complete it
       finalStatus = "processing";
       console.log("[Payment] Status determined: PROCESSING (payment link is paid but not yet updated in DB)");
     } else if (razorpayPaymentLinkStatus === "failed") {
@@ -1864,244 +1894,7 @@ export const verifyRazorpayPayment = async (req, res, next) => {
     }
 };
 
-/**
- * Handle Razorpay Webhook
- * POST /api/v1/payments/razorpay/webhook
- */
-export const handleRazorpayWebhook = async (req, res, next) => {
-  try {
-    const signature = req.headers["x-razorpay-signature"];
-    
-    // Get raw body as string (req.body is Buffer when using express.raw())
-    const rawBody = req.body.toString("utf8");
-
-    console.log("==========================================");
-    console.log("[Payment Webhook] Webhook received");
-    console.log("Headers:", {
-      signature: signature ? "present" : "missing",
-      contentType: req.headers["content-type"],
-      userAgent: req.headers["user-agent"],
-    });
-
-    // Webhook signature verification disabled - skip checks
-    // This allows payments to complete immediately without webhook secret verification
-    console.log("[Payment Webhook] Webhook signature verification skipped (disabled)");
-    
-    // Continue processing webhook even without signature verification
-
-    // Parse JSON body
-    const event = JSON.parse(rawBody);
-    
-    console.log("[Payment Webhook] Event received:", {
-      event: event.event,
-      eventId: event.id,
-      createdAt: event.created_at,
-      payloadKeys: Object.keys(event.payload || {}),
-    });
-
-    // Handle different event types
-    if (event.event === "payment.captured" || event.event === "payment.authorized") {
-      const razorpayPayment = event.payload.payment.entity;
-      const razorpayOrderId = razorpayPayment.order_id;
-
-      console.log("[Payment Webhook] Processing payment.captured/authorized:", {
-        razorpayPaymentId: razorpayPayment.id,
-        razorpayOrderId,
-        status: razorpayPayment.status,
-        method: razorpayPayment.method,
-        amount: razorpayPayment.amount,
-        currency: razorpayPayment.currency,
-      });
-
-      // Find payment by order ID
-      const payment = await Payment.findOne({
-        gatewayPaymentIntentId: razorpayOrderId,
-      }).lean();
-
-      if (payment) {
-        console.log("[Payment Webhook] Found payment in DB:", {
-          paymentId: payment._id,
-          currentStatus: payment.status,
-          hasCourse: !!payment.course,
-          enrollmentCreated: payment.metadata?.enrollmentCreated,
-        });
-
-        const updateData = {
-          status: "completed",
-          gatewayTransactionId: razorpayPayment.id,
-        };
-
-        // Create enrollment if payment is for a course
-        if (payment.course && !payment.metadata?.enrollmentCreated) {
-          try {
-            const existingEnrollment = await Enrollment.findOne({
-              student: payment.user,
-              course: payment.course,
-            }).lean();
-
-            if (!existingEnrollment) {
-              console.log("[Payment Webhook] Creating enrollment");
-              await Enrollment.create({
-                student: payment.user,
-                course: payment.course,
-                status: "active",
-                enrolledAt: new Date(),
-              });
-              updateData.metadata = {
-                ...payment.metadata,
-                enrollmentCreated: true,
-                enrollmentCreatedAt: new Date(),
-              };
-              console.log("[Payment Webhook] Enrollment created");
-            } else {
-              console.log("[Payment Webhook] Enrollment already exists");
-            }
-          } catch (enrollmentError) {
-            console.error("[Payment Webhook] Error creating enrollment:", enrollmentError);
-          }
-        }
-
-        await Payment.findByIdAndUpdate(payment._id, updateData);
-        
-        // Verify update
-        const updatedPayment = await Payment.findById(payment._id).lean();
-        console.log("[Payment Webhook] Payment updated successfully:", {
-          paymentId: payment._id,
-          newStatus: updatedPayment?.status,
-          gatewayTransactionId: updatedPayment?.gatewayTransactionId,
-          enrollmentCreated: updatedPayment?.metadata?.enrollmentCreated,
-        });
-      } else {
-        console.log("[Payment Webhook] Payment not found in DB for order ID:", razorpayOrderId);
-      }
-    } else if (event.event === "payment_link.paid") {
-      // Handle payment link paid event (for payment links)
-      const paymentLink = event.payload.payment_link.entity;
-      const paymentLinkId = paymentLink.id;
-      const payments = paymentLink.payments || [];
-
-      console.log("[Payment Webhook] Processing payment_link.paid:", {
-        paymentLinkId,
-        paymentLinkStatus: paymentLink.status,
-        paymentsCount: payments.length,
-        payments: payments.map(p => ({ id: p.id, status: p.status })),
-      });
-
-      // Find payment by payment link ID (stored in gatewayPaymentIntentId)
-      const payment = await Payment.findOne({
-        gatewayPaymentIntentId: paymentLinkId,
-      }).lean();
-
-      if (payment) {
-        console.log("[Payment Webhook] Found payment in DB:", {
-          paymentId: payment._id,
-          currentStatus: payment.status,
-          hasCourse: !!payment.course,
-          enrollmentCreated: payment.metadata?.enrollmentCreated,
-        });
-
-        // Get the payment ID from the payment link (usually the first payment)
-        const razorpayPaymentId = payments.length > 0 ? payments[0].id : null;
-
-        const updateData = {
-          status: "completed",
-        };
-
-        if (razorpayPaymentId) {
-          updateData.gatewayTransactionId = razorpayPaymentId;
-        }
-
-        // Create enrollment if payment is for a course
-        if (payment.course && !payment.metadata?.enrollmentCreated) {
-          try {
-            const existingEnrollment = await Enrollment.findOne({
-              student: payment.user,
-              course: payment.course,
-            }).lean();
-
-            if (!existingEnrollment) {
-              console.log("[Payment Webhook] Creating enrollment");
-              await Enrollment.create({
-                student: payment.user,
-                course: payment.course,
-                status: "active",
-                enrolledAt: new Date(),
-              });
-              updateData.metadata = {
-                ...payment.metadata,
-                enrollmentCreated: true,
-                enrollmentCreatedAt: new Date(),
-              };
-              console.log("[Payment Webhook] Enrollment created");
-            } else {
-              console.log("[Payment Webhook] Enrollment already exists");
-            }
-          } catch (enrollmentError) {
-            console.error("[Payment Webhook] Error creating enrollment:", enrollmentError);
-          }
-        }
-
-        await Payment.findByIdAndUpdate(payment._id, updateData);
-        
-        // Verify update
-        const updatedPayment = await Payment.findById(payment._id).lean();
-        console.log("[Payment Webhook] Payment updated successfully:", {
-          paymentId: payment._id,
-          newStatus: updatedPayment?.status,
-          gatewayTransactionId: updatedPayment?.gatewayTransactionId,
-          enrollmentCreated: updatedPayment?.metadata?.enrollmentCreated,
-        });
-      } else {
-        console.log("[Payment Webhook] Payment not found in DB for payment link ID:", paymentLinkId);
-      }
-    } else if (event.event === "payment.failed") {
-      const razorpayPayment = event.payload.payment.entity;
-      const razorpayOrderId = razorpayPayment.order_id;
-
-      console.log("[Payment Webhook] Processing payment.failed:", {
-        razorpayPaymentId: razorpayPayment.id,
-        razorpayOrderId,
-        errorDescription: razorpayPayment.error_description,
-      });
-
-      const payment = await Payment.findOne({
-        gatewayPaymentIntentId: razorpayOrderId,
-      }).lean();
-
-      if (payment) {
-        await Payment.findByIdAndUpdate(payment._id, {
-          status: "failed",
-          failureReason: razorpayPayment.error_description || "Payment failed",
-          gatewayTransactionId: razorpayPayment.id,
-        });
-        console.log("[Payment Webhook] Payment marked as failed:", payment._id);
-      } else {
-        console.log("[Payment Webhook] Payment not found in DB for order ID:", razorpayOrderId);
-      }
-    } else {
-      console.log("[Payment Webhook] Unhandled event type:", event.event);
-    }
-
-    console.log("[Payment Webhook] Webhook processing completed");
-    console.log("==========================================");
-
-    // Always return 200 to acknowledge webhook receipt
-    return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error("[Payment] Error handling Razorpay webhook:", {
-      error: error.message,
-      stack: error.stack,
-      event: event?.event,
-    });
-    // Still return 200 to prevent Razorpay from retrying excessively
-    // Log the error for manual investigation
-    return res.status(200).json({ 
-      received: true, 
-      error: "Internal error",
-      message: "Webhook received but processing failed. Check server logs.",
-    });
-  }
-};
+// Webhook handling removed - using callback-based verification only
 
 /**
  * Manually verify payment status from Razorpay

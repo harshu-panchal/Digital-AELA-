@@ -11,7 +11,6 @@ import {
   createRazorpayOrder,
   createRazorpayPaymentLink,
   verifyRazorpayPayment,
-  handleRazorpayWebhook,
   handleRazorpayCallback,
   verifyPaymentStatus,
 } from "../controllers/paymentController.js";
@@ -34,8 +33,7 @@ router.get("/pending", authenticate, getPendingPayments);
 // Get teacher earnings
 router.get("/earnings", authenticate, getTeacherEarnings);
 
-// Razorpay webhook (no authentication, signature verification only)
-router.post("/razorpay/webhook", express.raw({ type: "application/json" }), handleRazorpayWebhook);
+// Webhooks removed - using callback-based verification only
 
 // Razorpay payment callback (redirect-based, no authentication)
 router.get("/razorpay/callback", handleRazorpayCallback);

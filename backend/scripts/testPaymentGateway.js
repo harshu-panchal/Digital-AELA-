@@ -233,6 +233,13 @@ const testPaymentGateway = async () => {
       log.info("2. Use Razorpay test cards for testing (e.g., 4111 1111 1111 1111)");
       log.info("3. The callback URL must be whitelisted in Razorpay dashboard for production");
       log.info("4. For localhost testing, use backend callback URL");
+  log.info("");
+  log.info("🔴 PRODUCTION TROUBLESHOOTING:");
+  log.info("If payments work on localhost but not production:");
+  log.info("1. Check callback URL is whitelisted in Razorpay Dashboard");
+  log.info("2. Verify webhook URL is correct and active");
+  log.info("3. Check BACKEND_URL and FRONTEND_URL environment variables");
+  log.info("4. Look for 'CRITICAL: razorpay_payment_id is missing' in backend logs");
 
     } catch (linkError) {
       log.error(`Failed to create payment link: ${linkError.message}`);
