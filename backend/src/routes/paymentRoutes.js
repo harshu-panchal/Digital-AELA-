@@ -15,6 +15,7 @@ import {
   handleRazorpayCallback,
   verifyPaymentStatus,
 } from "../controllers/paymentController.js";
+import { verifyRazorpayCallback } from "../controllers/paymentCallbackVerify.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { validateCsrfToken } from "../middleware/csrfMiddleware.js";
 import { paymentRateLimiter } from "../middleware/rateLimiter.js";
@@ -57,6 +58,9 @@ router.post("/:paymentId/razorpay/payment-link", authenticate, paymentRateLimite
 
 // Verify payment status manually (from Razorpay)
 router.post("/:paymentId/verify-status", authenticate, verifyPaymentStatus);
+
+// Immediate payment verification from callback (NEW - fixes timeout issue)
+router.post("/:paymentId/verify-razorpay-callback", authenticate, verifyRazorpayCallback);
 
 // Get payment details (catch-all - must be last)
 router.get("/:paymentId", authenticate, getPaymentDetails);

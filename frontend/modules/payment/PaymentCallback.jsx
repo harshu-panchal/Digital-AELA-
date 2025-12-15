@@ -86,6 +86,44 @@ const PaymentCallback = () => {
           },
         });
 
+        // CRITICAL FIX: If payment_id is present in URL, trigger immediate verification
+        // This happens when Razorpay redirects back after successful payment
+        if (payment_id && !isSuccess && !isFailed) {
+          console.log("[Payment Callback Frontend] payment_id found in URL, triggering immediate verification:", payment_id);
+          try {
+            // Import the verification function
+            const { default: apiClient } = await import("../../src/services/api/baseClient");
+
+            // Call backend to verify payment immediately
+            const verifyResponse = await apiClient.post(`/payments/${paymentId}/verify-razorpay-callback`, {
+              razorpay_payment_id: payment_id,
+            });
+
+            console.log("[Payment Callback Frontend] Immediate verification response:", verifyResponse);
+
+            if (verifyResponse.data?.payment?.status === "completed") {
+              console.log("[Payment Callback Frontend] Payment verified and completed immediately!");
+              setStatus("success");
+              setPayment(verifyResponse.data.payment);
+              toast.success("Payment successful!");
+
+              setTimeout(() => {
+                if (verifyResponse.data.payment?.course) {
+                  const courseId = verifyResponse.data.payment.course._id || verifyResponse.data.payment.course;
+                  navigate(`/courses/${courseId}`);
+                } else {
+                  navigate("/student/payments");
+                }
+              }, 3000);
+              return; // Exit early - payment verified
+            }
+          } catch (verifyError) {
+            console.error("[Payment Callback Frontend] Immediate verification failed:", verifyError);
+            // Continue with normal flow if immediate verification fails
+          }
+        }
+
+
         if (isSuccess) {
           console.log("[Payment Callback Frontend] Setting status to SUCCESS");
           setStatus("success");
