@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { validateContactForm, sanitizeUrl, safeString } from "../../../../src/utils/registrationHelpers";
+import {
+  validateContactForm,
+  sanitizeUrl,
+  safeString,
+} from "../../../../src/utils/registrationHelpers";
 import { toast } from "react-toastify";
 import { checkFormSubmission } from "../../../../src/services/api/crm";
 import { useAuth } from "../../../../src/contexts/AuthContext";
@@ -39,7 +43,7 @@ const ContactForm = ({
   useEffect(() => {
     const checkIfSubmitted = async () => {
       setIsCheckingSubmission(true);
-      
+
       if (!formId) {
         setIsCheckingSubmission(false);
         return;
@@ -55,7 +59,7 @@ const ContactForm = ({
       // Check backend API by userId only
       try {
         const result = await checkFormSubmission(formId, user.id);
-        
+
         if (result?.submitted) {
           setIsAlreadySubmitted(true);
         } else {
@@ -89,7 +93,7 @@ const ContactForm = ({
 
     const normalizedData = fields.reduce((acc, field) => {
       const rawValue = formData[field.name];
-      
+
       // Handle file inputs separately - pass File object directly
       if (field.type === "file") {
         if (rawValue instanceof File) {
@@ -99,14 +103,18 @@ const ContactForm = ({
         }
         return acc;
       }
-      
+
       const value = safeString(rawValue);
       if (!value) {
         acc[field.name] = "";
         return acc;
       }
 
-      if (field.type === "url" || field.name.toLowerCase().includes("link") || field.name.toLowerCase().includes("website")) {
+      if (
+        field.type === "url" ||
+        field.name.toLowerCase().includes("link") ||
+        field.name.toLowerCase().includes("website")
+      ) {
         acc[field.name] = sanitizeUrl(value);
       } else {
         acc[field.name] = value;
@@ -118,7 +126,7 @@ const ContactForm = ({
     if (formId && user?.id) {
       try {
         const checkResult = await checkFormSubmission(formId, user.id);
-        
+
         if (checkResult?.submitted) {
           setIsAlreadySubmitted(true);
           // Form will be hidden, so no need for toast
@@ -130,7 +138,7 @@ const ContactForm = ({
       }
     }
 
-      setIsSubmitting(true);
+    setIsSubmitting(true);
     try {
       if (onSubmit) {
         await Promise.resolve(onSubmit(normalizedData));
@@ -151,7 +159,10 @@ const ContactForm = ({
       }
 
       const message =
-        (error && typeof error === "object" && "message" in error && error.message) ||
+        (error &&
+          typeof error === "object" &&
+          "message" in error &&
+          error.message) ||
         errorMessage;
       toast.error(message, { toastId: "contact-form-error-generic" });
     } finally {
@@ -180,7 +191,8 @@ const ContactForm = ({
           Thank You!
         </h3>
         <p className="text-sm md:text-base text-gray-300 leading-relaxed max-w-md mx-auto">
-          {pendingMessage || "You have already submitted this form. Our team will review it and get back to you soon."}
+          {pendingMessage ||
+            "You have already submitted this form. Our team will review it and get back to you soon."}
         </p>
       </motion.div>
     );
@@ -285,7 +297,9 @@ const ContactForm = ({
                 <input
                   id={name}
                   name={name}
-                  type={type}
+                  type={
+                    field.skipPhoneValidation && type === "tel" ? "text" : type
+                  }
                   value={formData[name] || ""}
                   onChange={handleChange}
                   placeholder={placeholder}

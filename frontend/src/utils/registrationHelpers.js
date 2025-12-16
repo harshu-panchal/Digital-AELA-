@@ -27,12 +27,8 @@ export const isValidPhone = (phone) => {
   
   // Check that the value only contains valid phone characters
   // Allowed: digits (0-9), spaces, plus sign (+), dashes (-), parentheses (), dots (.), slashes (/)
-  // Pattern explanation: 
-  // - \d or 0-9 for digits
-  // - \s for whitespace
-  // - +()/. are literal characters (no escaping needed in character class)
-  // - - (dash) placed at the end to avoid being interpreted as a range
-  const validPhonePattern = /^[\d\s+()./-]+$/;
+  // Pattern: dash placed at end to avoid escaping, all other characters are standard
+  const validPhonePattern = /^[\d\s+()./\-]+$/;
   if (!validPhonePattern.test(value)) {
     return false;
   }
@@ -169,14 +165,18 @@ export const validateContactForm = (fields, data) => {
       return;
     }
 
-    if (
-      (type === "tel" ||
-        name.toLowerCase().includes("phone") ||
-        name.toLowerCase().includes("contact")) &&
-      !isValidPhone(value)
-    ) {
-      issues.push("Please enter a valid contact number.");
-      return;
+    // Phone validation - skip if explicitly disabled
+    // Only validate as phone field if type is "tel" or name contains "phone"
+    // Removed generic "contact" check to avoid false positives like "contactPerson"
+    const isPhoneField =
+      type === "tel" ||
+      name.toLowerCase().includes("phone");
+    
+    if (isPhoneField && field.skipPhoneValidation !== true) {
+      if (!isValidPhone(value)) {
+        issues.push("Please enter a valid contact number.");
+        return;
+      }
     }
 
     if (

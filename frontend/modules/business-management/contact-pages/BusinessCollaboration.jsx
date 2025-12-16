@@ -7,18 +7,20 @@ import { submitContactLead } from "../../../src/services/contactSubmission";
 import TranslatedText from "../../../src/components/TranslatedText";
 
 const BusinessCollaboration = () => {
-  const fields = [
+  const formFields = [
     {
       name: "companyName",
       label: "Company Name",
       type: "text",
       placeholder: "Organisation name",
+      required: true,
     },
     {
       name: "contactPerson",
       label: "Primary Contact Person",
       type: "text",
       placeholder: "Full name",
+      required: true,
     },
     {
       name: "email",
@@ -26,6 +28,7 @@ const BusinessCollaboration = () => {
       type: "email",
       placeholder: "name@company.com",
       autoComplete: "email",
+      required: true,
     },
     {
       name: "phone",
@@ -33,6 +36,8 @@ const BusinessCollaboration = () => {
       type: "tel",
       placeholder: "+971 50 000 0000",
       autoComplete: "tel",
+      required: true,
+      skipPhoneValidation: true,
     },
     {
       name: "companyWebsite",
@@ -46,6 +51,7 @@ const BusinessCollaboration = () => {
       label: "Industry",
       type: "text",
       placeholder: "E.g. Hospitality, Aviation, EdTech, Retail",
+      required: true,
     },
     {
       name: "teamSize",
@@ -58,6 +64,7 @@ const BusinessCollaboration = () => {
         "201 - 500 employees",
         "500+ employees",
       ],
+      required: true,
     },
     {
       name: "collaborationType",
@@ -72,12 +79,14 @@ const BusinessCollaboration = () => {
         "Other (describe below)",
       ],
       fullWidth: true,
+      required: true,
     },
     {
       name: "location",
       label: "Office Location",
       type: "text",
       placeholder: "City, Country",
+      required: true,
     },
     {
       name: "timeline",
@@ -89,6 +98,7 @@ const BusinessCollaboration = () => {
         "6 - 12 weeks",
         "3 months +",
       ],
+      required: true,
     },
     {
       name: "message",
@@ -98,13 +108,46 @@ const BusinessCollaboration = () => {
         "Describe your objectives, target audience, budget range, and any KPIs we should align with.",
       rows: 6,
       fullWidth: true,
+      required: true,
     },
   ];
 
-  const handleSubmit = useCallback(
-    (payload) => submitContactLead("business-collaboration", payload),
-    []
-  );
+  const handleFormSubmit = useCallback((formData) => {
+    return submitContactLead("business-collaboration", formData);
+  }, []);
+
+  const featureCards = [
+    {
+      icon: "🤝",
+      title: <TranslatedText>End-to-End Delivery</TranslatedText>,
+      description: (
+        <TranslatedText>
+          From needs analysis to facilitation, assessments, and reporting — our
+          team manages every stage of the engagement.
+        </TranslatedText>
+      ),
+    },
+    {
+      icon: "🌍",
+      title: <TranslatedText>Regional Expertise</TranslatedText>,
+      description: (
+        <TranslatedText>
+          Experience delivering projects across UAE, India, Saudi Arabia, Qatar,
+          Bahrain, and remote-first organisations.
+        </TranslatedText>
+      ),
+    },
+    {
+      icon: "📈",
+      title: <TranslatedText>Measurable Outcomes</TranslatedText>,
+      description: (
+        <TranslatedText>
+          Define KPIs across language proficiency, sales enablement, customer
+          experience, and placement success. We report on each milestone.
+        </TranslatedText>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -117,18 +160,48 @@ const BusinessCollaboration = () => {
 
       <ContactPageLayout
         badge={<TranslatedText>Strategic Partnerships</TranslatedText>}
-        title={<TranslatedText>Request a Business Collaboration</TranslatedText>}
-        subtitle={<TranslatedText>Empower your teams with customised training, placements, and digital solutions</TranslatedText>}
-        description={<TranslatedText>Collaborate with Digital AELA for executive coaching, workforce development, or co-branded learning programmes. We co-create solutions that meet measurable business outcomes.</TranslatedText>}>
+        title={
+          <TranslatedText>Request a Business Collaboration</TranslatedText>
+        }
+        subtitle={
+          <TranslatedText>
+            Empower your teams with customised training, placements, and digital
+            solutions
+          </TranslatedText>
+        }
+        description={
+          <TranslatedText>
+            Collaborate with Digital AELA for executive coaching, workforce
+            development, or co-branded learning programmes. We co-create
+            solutions that meet measurable business outcomes.
+          </TranslatedText>
+        }>
         <div className="max-w-4xl mx-auto">
           <ContactForm
-            fields={fields}
-            submitLabel={<TranslatedText>Submit Collaboration Request</TranslatedText>}
-            successMessage={<TranslatedText>Thank you! Our partnerships team will reach out with the next steps within one business day.</TranslatedText>}
-            disclaimer={<TranslatedText>We sign NDAs upon request. Your project details are kept confidential and viewed only by senior partnership managers.</TranslatedText>}
-            onSubmit={handleSubmit}
+            fields={formFields}
+            submitLabel={
+              <TranslatedText>Submit Collaboration Request</TranslatedText>
+            }
+            successMessage={
+              <TranslatedText>
+                Thank you! Our partnerships team will reach out with the next
+                steps within one business day.
+              </TranslatedText>
+            }
+            disclaimer={
+              <TranslatedText>
+                We sign NDAs upon request. Your project details are kept
+                confidential and viewed only by senior partnership managers.
+              </TranslatedText>
+            }
+            onSubmit={handleFormSubmit}
             formId="business-collaboration"
-            pendingMessage={<TranslatedText>Your collaboration request is pending approval. Our partnerships team will review it and get back to you within one business day.</TranslatedText>}
+            pendingMessage={
+              <TranslatedText>
+                Your collaboration request is pending approval. Our partnerships
+                team will review it and get back to you within one business day.
+              </TranslatedText>
+            }
           />
         </div>
 
@@ -138,23 +211,7 @@ const BusinessCollaboration = () => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.45, delay: 0.15, ease: "easeOut" }}
           className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            {
-              icon: "🤝",
-              title: <TranslatedText>End-to-End Delivery</TranslatedText>,
-              description: <TranslatedText>From needs analysis to facilitation, assessments, and reporting — our team manages every stage of the engagement.</TranslatedText>,
-            },
-            {
-              icon: "🌍",
-              title: <TranslatedText>Regional Expertise</TranslatedText>,
-              description: <TranslatedText>Experience delivering projects across UAE, India, Saudi Arabia, Qatar, Bahrain, and remote-first organisations.</TranslatedText>,
-            },
-            {
-              icon: "📈",
-              title: <TranslatedText>Measurable Outcomes</TranslatedText>,
-              description: <TranslatedText>Define KPIs across language proficiency, sales enablement, customer experience, and placement success. We report on each milestone.</TranslatedText>,
-            },
-          ].map((card, index) => (
+          {featureCards.map((card, index) => (
             <div
               key={index}
               className="bg-[#0b0b0b] border border-[#D4AF37]/15 rounded-2xl px-5 py-6 space-y-3">
