@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 
 /**
  * LazyImage Component
@@ -83,14 +82,5 @@ export function LazyImage({
         </div>
     );
 }
-
-LazyImage.propTypes = {
-    src: PropTypes.string.isRequired,
-    alt: PropTypes.string.isRequired,
-    className: PropTypes.string,
-    fallbackSrc: PropTypes.string,
-    onLoad: PropTypes.func,
-    onError: PropTypes.func,
-};
 
 export default LazyImage;
