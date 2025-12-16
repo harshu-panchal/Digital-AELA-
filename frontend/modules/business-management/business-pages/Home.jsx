@@ -443,14 +443,14 @@ const Home = () => {
 
   // Auto-scroll courses section
   useEffect(() => {
-    if (!courseRibbonRef.current || isCourseRibbonPaused) return;
+    if (!courseRibbonRef.current || isCourseRibbonPaused || isScrolling) return;
 
     const scrollContainer = courseRibbonRef.current;
     const scrollSpeed = 1; // pixels per frame
     let animationFrameId;
 
     const autoScroll = () => {
-      if (scrollContainer && !isCourseRibbonPaused) {
+      if (scrollContainer && !isCourseRibbonPaused && !isScrolling) {
         scrollContainer.scrollLeft += scrollSpeed;
         // Reset to beginning when reaching the end (one-third of total width for seamless loop)
         if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 3) {
@@ -467,7 +467,7 @@ const Home = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isCourseRibbonPaused]);
+  }, [isCourseRibbonPaused, isScrolling]);
 
   // Helper function to check if course is free
   const isFreeCourse = (course) => {
@@ -841,12 +841,12 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (heroSlides.length <= 1 || isHeroPaused) return undefined;
+    if (heroSlides.length <= 1 || isHeroPaused || isScrolling) return undefined;
     const timer = setInterval(() => {
       setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length);
     }, 6500);
     return () => clearInterval(timer);
-  }, [heroSlides.length, isHeroPaused]);
+  }, [heroSlides.length, isHeroPaused, isScrolling]);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -876,7 +876,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (!ribbonInView) return;
+    if (!ribbonInView || isScrolling) return;
 
     const duration = 2000;
     const startTime = performance.now();
@@ -885,6 +885,11 @@ const Home = () => {
     const throttleInterval = 16; // Update max once per frame (~60fps)
 
     const animate = (currentTime) => {
+      if (isScrolling) {
+        cancelAnimationFrame(animationFrameId);
+        return;
+      }
+
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
@@ -919,7 +924,7 @@ const Home = () => {
 
     animationFrameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [ribbonInView, ribbonStats]);
+  }, [ribbonInView, ribbonStats, isScrolling]);
 
   // WhatsApp integration
   const whatsappNumber = "+971502270625";
@@ -1023,21 +1028,40 @@ const Home = () => {
     },
   ];
 
-  // Scroll detection for pausing animations
+  // Scroll detection for pausing animations - optimized with RAF throttling
   useEffect(() => {
+    let rafId = null;
+    let lastScrollTime = 0;
+    const throttleDelay = 16; // ~60fps
+
     const handleScroll = () => {
-      setIsScrolling(true);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      const now = performance.now();
+
+      if (now - lastScrollTime >= throttleDelay) {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+
+        rafId = requestAnimationFrame(() => {
+          setIsScrolling(true);
+          lastScrollTime = now;
+
+          if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+          }
+          scrollTimeoutRef.current = setTimeout(() => {
+            setIsScrolling(false);
+          }, 150); // Resume after 150ms of no scrolling
+        });
       }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 150); // Resume after 150ms of no scrolling
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
@@ -1181,62 +1205,62 @@ const Home = () => {
         {heroSlides[activeHeroSlide].id === "ambition-action" && (
           <>
             <motion.div className="pointer-events-none absolute inset-0">
-              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#F5D26A_0%,rgba(245,210,106,0.1)_55%,transparent_100%)] blur-[140px]" />
-              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-[#F5D26A]/20 bg-[#F5D26A]/12 blur-[120px] mix-blend-screen" />
-              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-[#FFE28A]/25 bg-[#FFE28A]/10 blur-[140px] mix-blend-screen" />
+              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#F5D26A_0%,rgba(245,210,106,0.1)_55%,transparent_100%)]" />
+              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-[#F5D26A]/20 bg-[#F5D26A]/12 mix-blend-screen" />
+              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-[#FFE28A]/25 bg-[#FFE28A]/10 mix-blend-screen" />
             </motion.div>
             <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
-              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F5D26A]/35 bg-[radial-gradient(circle,#F5D26A/18_0%,rgba(245,210,106,0.05)_35%,transparent_75%)] blur-[90px]" />
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F5D26A]/35 bg-[radial-gradient(circle,#F5D26A/18_0%,rgba(245,210,106,0.05)_35%,transparent_75%)]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "gift-future" && (
           <>
             <motion.div className="pointer-events-none absolute inset-0">
-              <div className="absolute top-14 right-[18%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#4ADE80_0%,rgba(74,222,128,0.08)_60%,transparent_100%)] blur-[160px]" />
-              <div className="absolute bottom-[18%] left-[14%] h-96 w-96 rounded-full border border-[#6EE7B7]/25 bg-[#6EE7B7]/12 blur-[160px] mix-blend-screen" />
+              <div className="absolute top-14 right-[18%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#4ADE80_0%,rgba(74,222,128,0.08)_60%,transparent_100%)]" />
+              <div className="absolute bottom-[18%] left-[14%] h-96 w-96 rounded-full border border-[#6EE7B7]/25 bg-[#6EE7B7]/12 mix-blend-screen" />
             </motion.div>
             <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
-              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#6EE7B7]/30 bg-[radial-gradient(circle,#6EE7B7/18_0%,rgba(110,231,183,0.05)_35%,transparent_75%)] blur-[90px]" />
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#6EE7B7]/30 bg-[radial-gradient(circle,#6EE7B7/18_0%,rgba(110,231,183,0.05)_35%,transparent_75%)]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "read-grow" && (
           <>
             <motion.div className="pointer-events-none absolute inset-0">
-              <div className="absolute top-[18%] left-[18%] h-100 w-100 rounded-full bg-[radial-gradient(circle,#F472B6_0%,rgba(244,114,182,0.08)_60%,transparent_100%)] blur-[150px]" />
-              <div className="absolute bottom-[22%] right-[18%] h-96 w-96 rounded-full border border-[#FB7185]/25 bg-[#FB7185]/12 blur-[160px] mix-blend-screen" />
+              <div className="absolute top-[18%] left-[18%] h-100 w-100 rounded-full bg-[radial-gradient(circle,#F472B6_0%,rgba(244,114,182,0.08)_60%,transparent_100%)]" />
+              <div className="absolute bottom-[22%] right-[18%] h-96 w-96 rounded-full border border-[#FB7185]/25 bg-[#FB7185]/12 mix-blend-screen" />
             </motion.div>
             <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
-              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F472B6]/25 bg-[radial-gradient(circle,#F472B6/16_0%,rgba(244,114,182,0.05)_35%,transparent_75%)] blur-[90px]" />
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F472B6]/25 bg-[radial-gradient(circle,#F472B6/16_0%,rgba(244,114,182,0.05)_35%,transparent_75%)]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "learn-earn" && (
           <>
             <motion.div className="pointer-events-none absolute inset-0">
-              <div className="absolute top-12 left-[20%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#7AB8FF_0%,rgba(122,184,255,0.1)_60%,transparent_100%)] blur-[150px]" />
-              <div className="absolute top-1/2 -translate-y-1/2 right-[14%] h-96 w-96 rounded-full border border-[#7C9BFF]/25 bg-[#7C9BFF]/12 blur-[160px] mix-blend-screen" />
+              <div className="absolute top-12 left-[20%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#7AB8FF_0%,rgba(122,184,255,0.1)_60%,transparent_100%)]" />
+              <div className="absolute top-1/2 -translate-y-1/2 right-[14%] h-96 w-96 rounded-full border border-[#7C9BFF]/25 bg-[#7C9BFF]/12 mix-blend-screen" />
             </motion.div>
             <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
-              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#7AB8FF]/30 bg-[radial-gradient(circle,#7AB8FF/20_0%,rgba(122,184,255,0.05)_35%,transparent_75%)] blur-[90px]" />
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#7AB8FF]/30 bg-[radial-gradient(circle,#7AB8FF/20_0%,rgba(122,184,255,0.05)_35%,transparent_75%)]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "learn-earn-opportunity" && (
           <>
             <motion.div className="pointer-events-none absolute inset-0">
-              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#FFFFFF_0%,rgba(255,255,255,0.1)_55%,transparent_100%)] blur-[140px]" />
-              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-white/20 bg-white/12 blur-[120px] mix-blend-screen" />
-              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-white/25 bg-white/10 blur-[140px] mix-blend-screen" />
+              <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#FFFFFF_0%,rgba(255,255,255,0.1)_55%,transparent_100%)]" />
+              <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-white/20 bg-white/12 mix-blend-screen" />
+              <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-white/25 bg-white/10 mix-blend-screen" />
             </motion.div>
             <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
-              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-white/35 bg-[radial-gradient(circle,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.05)_35%,transparent_75%)] blur-[90px]" />
+              <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-white/35 bg-[radial-gradient(circle,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.05)_35%,transparent_75%)]" />
             </motion.div>
           </>
         )}
-        <motion.div className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10 blur-[220px]" />
-        <motion.div className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]" />
+        <motion.div className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10" />
+        <motion.div className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80" />
 
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12">
           <AnimatePresence mode="wait">
@@ -1248,13 +1272,13 @@ const Home = () => {
               transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
               className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
               <div className="order-2 text-left lg:order-1">
-                <motion.span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
+                <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
                   <TranslatedText>
                     {heroSlides[activeHeroSlide].badge}
                   </TranslatedText>
-                </motion.span>
+                </span>
 
-                <motion.h1
+                <h1
                   className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-[2.8rem] font-display"
                   style={{
                     textShadow: getNeonTextShadow(
@@ -1268,21 +1292,21 @@ const Home = () => {
                   ) : (
                     heroSlides[activeHeroSlide].title
                   )}
-                </motion.h1>
+                </h1>
 
-                <motion.p className="mt-3 text-lg font-semibold text-[#F5D26A]">
+                <p className="mt-3 text-lg font-semibold text-[#F5D26A]">
                   <TranslatedText>
                     {heroSlides[activeHeroSlide].highlight}
                   </TranslatedText>
-                </motion.p>
+                </p>
 
-                <motion.p className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
+                <p className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
                   <TranslatedText>
                     {heroSlides[activeHeroSlide].description}
                   </TranslatedText>
-                </motion.p>
+                </p>
 
-                <motion.div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   {heroSlides[activeHeroSlide].primaryCta && (
                     <MotionLink
                       to={heroSlides[activeHeroSlide].primaryLink}
@@ -1305,10 +1329,10 @@ const Home = () => {
                       </TranslatedText>
                     </MotionLink>
                   )}
-                </motion.div>
+                </div>
               </div>
 
-              <motion.div className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
+              <div className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
                 <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-2xl">
                   <div className="relative aspect-video w-full">
                     <img
@@ -1320,13 +1344,13 @@ const Home = () => {
                     <div className="absolute inset-0 bg-linear-to-tr from-black/50 via-black/0 to-transparent" />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </AnimatePresence>
 
           <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <motion.button
+              <button
                 onClick={() =>
                   setActiveHeroSlide(
                     (prev) => (prev - 1 + heroSlides.length) % heroSlides.length
@@ -1334,14 +1358,14 @@ const Home = () => {
                 }
                 className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 p-2 text-white transition hover:border-white/40 hover:bg-white/10">
                 <FaArrowLeft className="h-4 w-4" />
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 onClick={() =>
                   setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length)
                 }
                 className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/20 p-2 text-[#F5D26A] transition hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/30">
                 <FaArrowRight className="h-4 w-4" />
-              </motion.button>
+              </button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -1363,7 +1387,7 @@ const Home = () => {
       </motion.section>
 
       {/* Futuristic Stats Section */}
-      <motion.div
+      <div
         ref={ribbonRef}
         className="relative w-full py-12 md:py-16 lg:py-5 overflow-hidden -mt-8 md:-mt-12">
         {/* Animated Background Gradient */}
@@ -1425,13 +1449,13 @@ const Home = () => {
             })}
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* 5 Step Learning Strategy Section */}
-      <motion.section className="py-16 md:py-20 bg-black overflow-hidden">
+      <section className="py-16 md:py-20 bg-black overflow-hidden">
         <div className="layout-container">
           {/* Title Area */}
-          <motion.div className="text-center mb-12">
+          <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
               <TranslatedText>Digital AELA –</TranslatedText>{" "}
               <span className="text-[#D4AF37]">
@@ -1443,12 +1467,12 @@ const Home = () => {
                 Learn → Practice → Get Certified → Grow Your Career
               </TranslatedText>
             </p>
-          </motion.div>
+          </div>
 
           {/* Steps Grid - First 3 Steps */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Step 1: Book a Free Demo Class */}
-            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
                   <FaCalendarCheck className="w-8 h-8 text-white" />
@@ -1471,10 +1495,10 @@ const Home = () => {
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 <TranslatedText>Book Demo →</TranslatedText>
               </Link>
-            </motion.div>
+            </div>
 
             {/* Step 2: Enroll in the Right Course */}
-            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
                   <FaCheckCircle className="w-8 h-8 text-white" />
@@ -1497,10 +1521,10 @@ const Home = () => {
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#10B981] hover:bg-[#059669] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 <TranslatedText>Enroll Now →</TranslatedText>
               </Link>
-            </motion.div>
+            </div>
 
             {/* Step 3: Get Trained (Online + Books) */}
-            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
                   <FaPlayCircle className="w-8 h-8 text-white" />
@@ -1524,14 +1548,14 @@ const Home = () => {
                 className="inline-flex items-center justify-center w-full rounded-lg bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                 <TranslatedText>Start Learning →</TranslatedText>
               </Link>
-            </motion.div>
+            </div>
           </div>
 
           {/* Centered Steps 4 & 5 */}
           <div className="flex justify-center items-center mt-12 md:mt-16">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl w-full">
               {/* Step 4: Get Certified */}
-              <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
                     <FaCertificate className="w-8 h-8 text-black" />
@@ -1553,10 +1577,10 @@ const Home = () => {
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#D4AF37] hover:bg-[#B8941F] text-black font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                   <TranslatedText>Get Certified →</TranslatedText>
                 </Link>
-              </motion.div>
+              </div>
 
               {/* Step 5: Placement & Abroad Opportunities */}
-              <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
+              <div className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
                     <FaGlobe className="w-8 h-8 text-white" />
@@ -1580,16 +1604,16 @@ const Home = () => {
                   className="inline-flex items-center justify-center w-full rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-3 transition-colors duration-300 mt-auto">
                   <TranslatedText>Explore Opportunities →</TranslatedText>
                 </Link>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Courses Section */}
-      <motion.section id="courses" className="pt-8 pb-12 bg-black">
+      <section id="courses" className="pt-8 pb-12 bg-black">
         <div className="layout-container">
-          <motion.div className="text-center mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our Premium</TranslatedText>{" "}
               <span className="text-[#D4AF37]">
@@ -1602,7 +1626,7 @@ const Home = () => {
                 learning level and goals
               </TranslatedText>
             </p>
-          </motion.div>
+          </div>
 
           {/* Courses Infinite Scrolling Ribbon */}
           <div
@@ -1767,16 +1791,16 @@ const Home = () => {
                                 {course.price}
                               </span>
                             </div>
-                            <motion.button
+                            <button
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleViewCourseDetail(course, "home-featured");
                               }}
                               className="w-full inline-flex items-center justify-center rounded-full border border-[#D4AF37]/60 bg-transparent px-4 py-2.5 text-xs md:text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300">
                               <TranslatedText>See Full Course</TranslatedText>
-                            </motion.button>
+                            </button>
                             <div className="grid gap-3 sm:grid-cols-2">
-                              <motion.button
+                              <button
                                 onClick={(event) => {
                                   event.stopPropagation();
 
@@ -1802,7 +1826,7 @@ const Home = () => {
                                 ) : (
                                   <TranslatedText>Buy Now</TranslatedText>
                                 )}
-                              </motion.button>
+                              </button>
                               <div
                                 onClick={(event) => event.stopPropagation()}
                                 onKeyDown={(event) => event.stopPropagation()}>
@@ -1826,34 +1850,34 @@ const Home = () => {
           </div>
 
           {/* See All Courses Button */}
-          <motion.div className="flex justify-center">
+          <div className="flex justify-center">
             <Link to="/courses/english-language">
-              <motion.button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+              <button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Explore All Courses</TranslatedText>
-              </motion.button>
+              </button>
             </Link>
-          </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* About Founder Section */}
-      <motion.section className="py-12 bg-black">
+      <section className="py-12 bg-black">
         <div className="layout-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Founder's Image */}
-            <motion.div className="order-2 lg:order-2">
-              <motion.div className="relative">
+            <div className="order-2 lg:order-2">
+              <div className="relative">
                 <img
                   src={founderImage}
                   alt="Digital AELA Founder - Expert English Language Trainer and Education Professional"
                   className="w-full h-auto rounded-2xl object-cover"
                   loading="lazy"
                 />
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
             {/* Right Side - Text Content */}
-            <motion.div className="order-1 lg:order-1">
+            <div className="order-1 lg:order-1">
               {/* "About Our Founder" Badge */}
               <div className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-white px-4 py-2 rounded-lg text-sm font-semibold font-display">
@@ -1888,26 +1912,26 @@ const Home = () => {
               </p>
 
               {/* Statistics Section */}
-              <motion.div className="flex flex-wrap gap-8 mt-8">
+              <div className="flex flex-wrap gap-8 mt-8">
                 {[
                   { number: "15+", label: "Years Experience" },
                   { number: "5000+", label: "Students Trained" },
                   { number: "98%", label: "Success Rate" },
                 ].map((stat, index) => (
-                  <motion.div key={index} className="flex flex-col">
+                  <div key={index} className="flex flex-col">
                     <span className="text-4xl md:text-5xl font-bold text-[#D4AF37] mb-2 font-display">
                       {stat.number}
                     </span>
                     <p className="text-sm text-white font-normal">
                       <TranslatedText>{stat.label}</TranslatedText>
                     </p>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
 
               {/* Know More Button */}
-              <motion.div className="mt-8">
-                <motion.button
+              <div className="mt-8">
+                <button
                   onClick={() => navigate("/about/founder")}
                   className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
                   <TranslatedText>Know More</TranslatedText>
@@ -1923,17 +1947,17 @@ const Home = () => {
                       d="M17 8l4 4m0 0l-4 4m4-4H3"
                     />
                   </svg>
-                </motion.button>
-              </motion.div>
-            </motion.div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Lead Magnets Section */}
-      <motion.section id="lead-magnets" className="py-12 bg-[#141414]">
+      <section id="lead-magnets" className="py-12 bg-[#141414]">
         <div className="layout-container">
-          <motion.div className="text-center mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Start Your</TranslatedText>{" "}
               <span className="text-[#D4AF37]">
@@ -1946,11 +1970,11 @@ const Home = () => {
                 offers
               </TranslatedText>
             </p>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {/* Free Demo Class Card */}
-            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Play Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -1982,10 +2006,10 @@ const Home = () => {
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Book Your Class</TranslatedText>
               </MotionLink>
-            </motion.div>
+            </div>
 
             {/* Free English Guide Card */}
-            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Download Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -2023,10 +2047,10 @@ const Home = () => {
                 className="block w-full bg-[#1a1a1a] text-[#D4AF37] py-3 rounded-lg font-bold text-center border-2 border-[#D4AF37] hover:bg-[#524723] transition-colors duration-200">
                 <TranslatedText>Download Now</TranslatedText>
               </MotionLink>
-            </motion.div>
+            </div>
 
             {/* Gift a Future Card */}
-            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Gift Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -2059,25 +2083,25 @@ const Home = () => {
               </p>
 
               {/* Button */}
-              <motion.a
+              <a
                 href="/join-us/afterlife"
                 className="block w-full bg-[#D4AF37] text-black py-3 rounded-lg font-bold text-center hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Gift Now</TranslatedText>
-              </motion.a>
-            </motion.div>
+              </a>
+            </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Premium Books Section */}
-      <motion.section className="py-12 bg-[#1a1a1a]">
+      <section className="py-12 bg-[#1a1a1a]">
         <div className="layout-container">
           {/* Header */}
-          <motion.div className="text-center mb-16">
+          <div className="text-center mb-16">
             {/* Small Title */}
-            <motion.p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
+            <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
               <TranslatedText>• OUR RESOURCES •</TranslatedText>
-            </motion.p>
+            </p>
 
             {/* Main Title */}
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display tracking-tight leading-none">
@@ -2094,7 +2118,7 @@ const Home = () => {
                 linguists to accelerate your English learning journey
               </TranslatedText>
             </p>
-          </motion.div>
+          </div>
 
           {/* Loading State */}
           {loadingBooks && (
@@ -2126,7 +2150,7 @@ const Home = () => {
                   book.originalPrice > 0 ? `AED ${book.originalPrice}` : "";
 
                 return (
-                  <motion.div
+                  <div
                     key={book.id}
                     className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
                     <Link
@@ -2218,7 +2242,7 @@ const Home = () => {
 
                         {/* Actions */}
                         <div className="shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          <motion.button
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -2271,7 +2295,7 @@ const Home = () => {
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                             {book.price > 0 ? "Buy Now" : "Get Free"}
-                          </motion.button>
+                          </button>
                           {book.price > 0 && (
                             <GiftButton
                               course={book} // Pass the book object
@@ -2283,7 +2307,7 @@ const Home = () => {
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
@@ -2299,9 +2323,9 @@ const Home = () => {
           )}
 
           {/* View All Books Button */}
-          <motion.div className="flex justify-center">
+          <div className="flex justify-center">
             <Link to="/books">
-              <motion.button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
+              <button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
                 <TranslatedText>View All Books</TranslatedText>
                 <svg
                   className="w-5 h-5"
@@ -2315,11 +2339,11 @@ const Home = () => {
                     d="M9 5l7 7-7 7"
                   />
                 </svg>
-              </motion.button>
+              </button>
             </Link>
-          </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Why Choose Digital AELA Section */}
       <style>{`
@@ -2331,8 +2355,8 @@ const Home = () => {
       `}</style>
       <section className="py-20 bg-[#141414]">
         <div className="layout-container">
-          <motion.div className="why-choose-section-content">
-            <motion.div className="text-center mb-16">
+          <div className="why-choose-section-content">
+            <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
                 <TranslatedText>Why Choose</TranslatedText>{" "}
                 <span className="text-[#D4AF37]">
@@ -2346,12 +2370,12 @@ const Home = () => {
                   creates income, and income that creates freedom
                 </TranslatedText>
               </p>
-            </motion.div>
+            </div>
 
             {/* Benefits Grid */}
             <div className="auto-grid-md lg:grid-cols-3 mb-16">
               {benefits.map((benefit, index) => (
-                <motion.div
+                <div
                   key={benefit.id}
                   className="bg-[#1a1a1a] rounded-xl p-8 border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
                   {/* Icon */}
@@ -2368,10 +2392,10 @@ const Home = () => {
                   <p className="flex-1 text-gray-300 leading-relaxed">
                     <TranslatedText>{benefit.description}</TranslatedText>
                   </p>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -2387,8 +2411,8 @@ const Home = () => {
       <section className="py-12 bg-black">
         <div className="layout-container">
           <div className="watch-stories-section-content">
-            <motion.div className="md:opacity-100">
-              <motion.div className="text-center mb-12 md:opacity-100">
+            <div className="md:opacity-100">
+              <div className="text-center mb-12 md:opacity-100">
                 <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                   <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
                 </p>
@@ -2406,11 +2430,11 @@ const Home = () => {
                     Afterlife movement.
                   </TranslatedText>
                 </p>
-              </motion.div>
+              </div>
 
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                 {storyVideos.map((video, index) => (
-                  <motion.article
+                  <article
                     key={video.id}
                     className="overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl">
                     <div className="relative w-full overflow-hidden bg-black aspect-video md:aspect-9/16">
@@ -2437,18 +2461,18 @@ const Home = () => {
                         <FaArrowRight className="h-4 w-4" />
                       </a>
                     </div>
-                  </motion.article>
+                  </article>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
       {topBlogs.length > 0 && (
-        <motion.section className="py-12 bg-[#090909]">
+        <section className="py-12 bg-[#090909]">
           <div className="layout-container">
-            <motion.div className="text-center mb-12">
+            <div className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• BLOGS •</TranslatedText>
               </p>
@@ -2465,11 +2489,11 @@ const Home = () => {
                   Afterlife movement.
                 </TranslatedText>
               </p>
-            </motion.div>
+            </div>
 
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {topBlogs.map((blog, index) => (
-                <motion.article
+                <article
                   key={`${blog.id}-${blog.publishedAt || index}`}
                   className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#050505] shadow-xl transition-all duration-300">
                   <Link
@@ -2522,7 +2546,7 @@ const Home = () => {
                       </span>
                     </div>
                   </Link>
-                </motion.article>
+                </article>
               ))}
             </div>
 
@@ -2535,13 +2559,13 @@ const Home = () => {
               </Link>
             </div>
           </div>
-        </motion.section>
+        </section>
       )}
 
       {galleryItems.length > 0 && (
-        <motion.section className="py-12 bg-[#080808]">
+        <section className="py-12 bg-[#080808]">
           <div className="layout-container">
-            <motion.div className="text-center mb-12">
+            <div className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• AELA GALLERY •</TranslatedText>
               </p>
@@ -2565,11 +2589,11 @@ const Home = () => {
                   Aaj se aapka English journey bhi start ho sakta hai.
                 </TranslatedText>
               </p>
-            </motion.div>
+            </div>
 
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {galleryItems.slice(0, 6).map((item, index) => (
-                <motion.figure
+                <figure
                   key={item.id}
                   className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-xl">
                   <div className="relative h-56 w-full overflow-hidden">
@@ -2581,27 +2605,27 @@ const Home = () => {
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                   </div>
-                </motion.figure>
+                </figure>
               ))}
             </div>
 
             <div className="mt-10 flex justify-center">
-              <MotionLink
+              <Link
                 to="/gallery"
                 className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105">
                 <TranslatedText>
                   Get Certified with Digital AELA → Enroll Now
                 </TranslatedText>
-              </MotionLink>
+              </Link>
             </div>
           </div>
-        </motion.section>
+        </section>
       )}
 
       {/* Testimonials Section */}
-      <motion.section className="py-12 bg-[#141414]">
+      <section className="py-12 bg-[#141414]">
         <div className="layout-container">
-          <motion.div className="text-center mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Student</TranslatedText>{" "}
               <span className="text-[#D4AF37]">
@@ -2613,12 +2637,12 @@ const Home = () => {
                 Success stories from our amazing students
               </TranslatedText>
             </p>
-          </motion.div>
+          </div>
 
           {/* Testimonial Cards Row */}
           <div className="relative">
             {/* Side Arrows */}
-            <motion.button
+            <button
               onClick={prevTestimonial}
               className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
               <svg
@@ -2633,8 +2657,8 @@ const Home = () => {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-            </motion.button>
-            <motion.button
+            </button>
+            <button
               onClick={nextTestimonial}
               className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/70 bg-black/70 text-[#D4AF37] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#2a2413] transition">
               <svg
@@ -2649,9 +2673,9 @@ const Home = () => {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-            </motion.button>
+            </button>
 
-            <motion.div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-3">
               {loadingTestimonials ? (
                 <div className="col-span-3 text-center py-12 text-gray-400">
                   <TranslatedText>Loading testimonials...</TranslatedText>
@@ -2710,7 +2734,7 @@ const Home = () => {
                   </article>
                 ))
               )}
-            </motion.div>
+            </div>
 
             {/* Mobile arrows below */}
             <div className="mt-6 flex justify-center gap-4 md:hidden">
@@ -2751,16 +2775,14 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* FAQ Section */}
-      <motion.section
-        id="faq"
-        className="relative overflow-hidden py-12 bg-black">
+      <section id="faq" className="relative overflow-hidden py-12 bg-black">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#D4AF37]/22 blur-[180px]" />
-          <div className="absolute bottom-[-18%] right-1/5 h-80 w-80 rounded-full bg-[#F97316]/18 blur-[170px]" />
-          <div className="absolute top-1/3 right-1/3 h-60 w-60 rounded-full border border-[#FDBA74]/20 bg-[#FDBA74]/10 blur-[150px] mix-blend-screen" />
+          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#D4AF37]/22" />
+          <div className="absolute bottom-[-18%] right-1/5 h-80 w-80 rounded-full bg-[#F97316]/18" />
+          <div className="absolute top-1/3 right-1/3 h-60 w-60 rounded-full border border-[#FDBA74]/20 bg-[#FDBA74]/10 mix-blend-screen" />
         </div>
         <div className="layout-container">
           <div className="text-center mb-9">
@@ -2784,7 +2806,7 @@ const Home = () => {
             {faqItems.map((item, index) => {
               const isOpen = activeFaq === index;
               return (
-                <motion.div
+                <div
                   key={item.question}
                   className="rounded-2xl border border-[#D4AF37]/15 bg-[#111]/80 shadow-[0_16px_36px_rgba(0,0,0,0.22)] overflow-hidden">
                   <button
@@ -2815,18 +2837,18 @@ const Home = () => {
                     </span>
                   </button>
                   {isOpen && (
-                    <motion.div className="px-5 pb-4 overflow-hidden">
+                    <div className="px-5 pb-4 overflow-hidden">
                       <div className="text-xs md:text-sm leading-relaxed text-gray-300">
                         {item.answer}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>
         </div>
-      </motion.section>
+      </section>
     </div>
   );
 };
