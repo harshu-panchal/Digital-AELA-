@@ -13,6 +13,7 @@ import {
   verifyRazorpayPayment,
   handleRazorpayCallback,
   verifyPaymentStatus,
+  testCallbackUrl,
 } from "../controllers/paymentController.js";
 import { verifyRazorpayCallback } from "../controllers/paymentCallbackVerify.js";
 import { authenticate } from "../middleware/authMiddleware.js";
@@ -37,6 +38,9 @@ router.get("/earnings", authenticate, getTeacherEarnings);
 
 // Razorpay payment callback (redirect-based, no authentication)
 router.get("/razorpay/callback", handleRazorpayCallback);
+
+// Test callback URL configuration
+router.get("/test-callback", testCallbackUrl);
 
 // Razorpay payment verification (from frontend callback)
 router.post("/razorpay/verify", authenticate, validateCsrfToken, verifyRazorpayPayment);

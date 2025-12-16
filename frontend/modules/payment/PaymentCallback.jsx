@@ -88,13 +88,16 @@ const PaymentCallback = () => {
 
         // CRITICAL FIX: If payment_id is present in URL, trigger immediate verification
         // This happens when Razorpay redirects back after successful payment
+        console.log("[Payment Callback Frontend] Checking for payment_id:", { payment_id, isSuccess, isFailed });
+
         if (payment_id && !isSuccess && !isFailed) {
-          console.log("[Payment Callback Frontend] payment_id found in URL, triggering immediate verification:", payment_id);
+          console.log("[Payment Callback Frontend] ✅ payment_id found in URL, triggering immediate verification:", payment_id);
           try {
             // Import the verification function
             const { default: apiClient } = await import("../../src/services/api/baseClient");
 
             // Call backend to verify payment immediately
+            console.log("[Payment Callback Frontend] Calling verify-razorpay-callback endpoint...");
             const verifyResponse = await apiClient.post(`/payments/${paymentId}/verify-razorpay-callback`, {
               razorpay_payment_id: payment_id,
             });
@@ -102,7 +105,7 @@ const PaymentCallback = () => {
             console.log("[Payment Callback Frontend] Immediate verification response:", verifyResponse);
 
             if (verifyResponse.data?.payment?.status === "completed") {
-              console.log("[Payment Callback Frontend] Payment verified and completed immediately!");
+              console.log("[Payment Callback Frontend] ✅ Payment verified and completed immediately!");
               setStatus("success");
               setPayment(verifyResponse.data.payment);
               toast.success("Payment successful!");
@@ -116,11 +119,21 @@ const PaymentCallback = () => {
                 }
               }, 3000);
               return; // Exit early - payment verified
+            } else {
+              console.log("[Payment Callback Frontend] ⚠️ Payment verification returned status:", verifyResponse.data?.payment?.status);
             }
           } catch (verifyError) {
-            console.error("[Payment Callback Frontend] Immediate verification failed:", verifyError);
+            console.error("[Payment Callback Frontend] ❌ Immediate verification failed:", verifyError);
+            console.error("[Payment Callback Frontend] Error details:", {
+              message: verifyError.message,
+              status: verifyError.response?.status,
+              data: verifyError.response?.data
+            });
             // Continue with normal flow if immediate verification fails
           }
+        } else {
+          console.log("[Payment Callback Frontend] ❌ No payment_id in URL, will use polling instead");
+          console.log("[Payment Callback Frontend] This usually means callback URL is not whitelisted in Razorpay Dashboard");
         }
 
 

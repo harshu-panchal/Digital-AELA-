@@ -75,12 +75,27 @@ const LearnEarnLayout = () => {
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Provide safe defaults to prevent errors during initial load
-  const safeProfile = profile || { id: "", name: "", avatar: "" };
-  const safeTotals = totals || { current: 0, earned: 0, redeemed: 0 };
-  const safeNotifications = notifications || [];
-  const safeLiveDebates = liveDebates || [];
-  const safeOpenRooms = openRooms || [];
+  // Provide safe defaults to prevent errors during initial load - reactive to prevent undefined errors
+  const safeProfile = useMemo(() =>
+    profile || { id: "", name: "", avatar: "" },
+    [profile]
+  );
+  const safeTotals = useMemo(() =>
+    totals || { current: 0, earned: 0, redeemed: 0 },
+    [totals]
+  );
+  const safeNotifications = useMemo(() =>
+    notifications || [],
+    [notifications]
+  );
+  const safeLiveDebates = useMemo(() =>
+    liveDebates || [],
+    [liveDebates]
+  );
+  const safeOpenRooms = useMemo(() =>
+    openRooms || [],
+    [openRooms]
+  );
 
   const handleCopyUserId = async () => {
     if (!safeProfile.id) return;

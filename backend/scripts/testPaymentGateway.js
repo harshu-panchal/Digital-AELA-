@@ -234,12 +234,17 @@ const testPaymentGateway = async () => {
       log.info("3. The callback URL must be whitelisted in Razorpay dashboard for production");
       log.info("4. For localhost testing, use backend callback URL");
   log.info("");
-  log.info("🔴 PRODUCTION TROUBLESHOOTING:");
+  log.info("🔴 PRODUCTION TROUBLESHOOTING (NO WEBHOOKS):");
   log.info("If payments work on localhost but not production:");
-  log.info("1. Check callback URL is whitelisted in Razorpay Dashboard");
-  log.info("2. Verify webhook URL is correct and active");
-  log.info("3. Check BACKEND_URL and FRONTEND_URL environment variables");
-  log.info("4. Look for 'CRITICAL: razorpay_payment_id is missing' in backend logs");
+  log.info("1. ✅ Check callback URL is whitelisted in Razorpay Dashboard");
+  log.info("2. ✅ Check BACKEND_URL and FRONTEND_URL environment variables");
+  log.info("3. ✅ Look for 'CRITICAL: razorpay_payment_id is missing' in backend logs");
+  log.info("4. ✅ Test callback URL: GET /api/v1/payments/test-callback");
+  log.info("5. ✅ Check frontend logs for 'No payment_id in URL, will use polling'");
+  log.info("");
+  log.info("🚨 MOST COMMON FIX:");
+  log.info("Run: curl https://your-backend.com/api/v1/payments/test-callback");
+  log.info("Whitelist the returned 'callbackUrl' in Razorpay Dashboard");
 
     } catch (linkError) {
       log.error(`Failed to create payment link: ${linkError.message}`);

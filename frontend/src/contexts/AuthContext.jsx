@@ -11,6 +11,8 @@ import {
   registerAuthUpdateHandler,
 } from "../services/api/baseClient";
 import { updateRecruiterProfile } from "../services/api/recruiter.js";
+import { isTokenExpired, getTokenExpiration } from "../utils/jwt.js";
+import { refreshRecruiterSession } from "../services/api/auth.js";
 
 const AuthContext = createContext(null);
 
@@ -368,6 +370,37 @@ export const AuthProvider = ({ children }) => {
       });
     }
   }, [user, tokens, logout]);
+
+  // Proactive token refresh - refresh tokens 5 minutes before expiration
+  useEffect(() => {
+    if (!tokens?.accessToken || !tokens?.refreshToken) {
+      return;
+    }
+
+    const refreshTokensProactively = async () => {
+      try {
+        // Check if token is expired or about to expire (within 5 minutes)
+        if (isTokenExpired(tokens.accessToken, 5)) {
+          const refreshedTokens = await refreshRecruiterSession(tokens.refreshToken);
+          handleBackendAuthSuccess(refreshedTokens);
+        }
+      } catch (error) {
+        console.warn("Failed to refresh tokens proactively:", error);
+        // If refresh fails, logout the user
+        logout().catch(() => {});
+      }
+    };
+
+    // Set up timer to check token expiration every minute
+    const checkInterval = setInterval(() => {
+      refreshTokensProactively();
+    }, 60000); // Check every minute
+
+    // Also check immediately when tokens change
+    refreshTokensProactively();
+
+    return () => clearInterval(checkInterval);
+  }, [tokens, handleBackendAuthSuccess, logout]);
 
   const updateUserMetadata = useCallback(
     async (updates) => {

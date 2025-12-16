@@ -1137,6 +1137,12 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     const finalCallbackUrl = callbackUrl || defaultCallbackUrl;
 
     console.log("[Payment] Using callback URL:", finalCallbackUrl);
+    console.log("[Payment] Backend URL:", backendUrl);
+    console.log("[Payment] Frontend URL:", frontendUrl);
+    console.log("[Payment] Payment ID:", paymentId);
+    console.log("[Payment] 🚨 CRITICAL: Ensure this callback URL is whitelisted in Razorpay Dashboard:");
+    console.log(`[Payment] 🚨 WHITELIST URL: ${backendUrl}/api/v1/payments/razorpay/callback`);
+    console.log("[Payment] 🚨 Go to Razorpay Dashboard → Settings → Payment Links → Allowed Redirect URLs");
 
     // Create payment link
     const receipt = payment._id.toString();
@@ -1248,6 +1254,8 @@ export const handleRazorpayCallback = async (req, res, next) => {
       console.error("[Payment] FIX: Add this URL to 'Allowed Redirect URLs' in Razorpay Dashboard:");
       const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
       console.error(`[Payment] URL to whitelist: ${backendUrl}/api/v1/payments/razorpay/callback`);
+      console.error("[Payment] Current query params received:", JSON.stringify(req.query, null, 2));
+      console.error("[Payment] If you see this message, the callback URL whitelisting is NOT working!");
     } else {
       console.log("[Payment] ✅ razorpay_payment_id received - callback URL is properly whitelisted");
     }
@@ -1895,6 +1903,35 @@ export const verifyRazorpayPayment = async (req, res, next) => {
 };
 
 // Webhook handling removed - using callback-based verification only
+
+/**
+ * Test callback URL accessibility
+ * GET /api/v1/payments/test-callback
+ */
+export const testCallbackUrl = async (req, res, next) => {
+  try {
+    const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    const testUrl = `${backendUrl}/api/v1/payments/razorpay/callback?paymentId=test123`;
+
+    return res.json({
+      message: "Callback URL test endpoint",
+      backendUrl,
+      frontendUrl,
+      callbackUrl: testUrl,
+      instructions: [
+        "1. Copy the callbackUrl above",
+        "2. Go to Razorpay Dashboard → Settings → Payment Links",
+        "3. Add it to 'Allowed Redirect URLs'",
+        "4. Test a payment - you should see razorpay_payment_id in the callback logs"
+      ]
+    });
+  } catch (error) {
+    console.error("[Payment] Error in test callback:", error);
+    return next(error);
+  }
+};
 
 /**
  * Manually verify payment status from Razorpay
