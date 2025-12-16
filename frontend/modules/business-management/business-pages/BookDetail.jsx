@@ -17,6 +17,7 @@ import bookVocabularyImg from "../../../src/assets/images/books/vocabulary.png";
 import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import LazyImage from "../../../src/components/LazyImage";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import {
   fetchEbookById,
@@ -381,11 +382,11 @@ const BookDetail = () => {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="lg:sticky lg:top-24 lg:self-start">
               <div className="relative overflow-hidden rounded-xl border border-[#D4AF37]/20 shadow-[0_30px_120px_rgba(10,10,10,0.55)]">
-                <img
+                <LazyImage
                   src={getMediaUrl(book.image) || "https://via.placeholder.com/400x600?text=Book"}
                   alt={book.imageAlt || `${book.title} cover`}
-                  loading="lazy"
                   className="h-full w-full object-cover"
+                  fallbackSrc="https://via.placeholder.com/400x600?text=Book"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
                 {/* Format Badge */}

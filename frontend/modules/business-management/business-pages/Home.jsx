@@ -34,6 +34,7 @@ import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import LazyImage from "../../../src/components/LazyImage";
 
 const MotionLink = motion.create(Link);
 
@@ -1282,7 +1283,7 @@ const Home = () => {
                       src={heroSlides[activeHeroSlide].image}
                       alt={heroSlides[activeHeroSlide].title}
                       className="h-full w-full object-cover"
-                      loading="lazy"
+                      loading={activeHeroSlide === 0 ? "eager" : "lazy"}
                     />
                     <div className="absolute inset-0 bg-linear-to-tr from-black/50 via-black/0 to-transparent" />
                   </div>
@@ -1644,14 +1645,14 @@ const Home = () => {
                           }
                         }}>
                         <div className="shrink-0 h-40 w-full overflow-hidden">
-                          <img
+                          <LazyImage
                             src={
                               getMediaUrl(course.image) ||
                               "https://via.placeholder.com/300x200?text=Course"
                             }
                             alt={course.title}
-                            loading="lazy"
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            fallbackSrc="https://via.placeholder.com/300x200?text=Course"
                           />
                         </div>
                         <div className="flex flex-1 flex-col p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] min-h-0">
@@ -1814,6 +1815,7 @@ const Home = () => {
                   src={founderImage}
                   alt="Digital AELA Founder - Expert English Language Trainer and Education Professional"
                   className="w-full h-auto rounded-2xl object-cover"
+                  loading="lazy"
                 />
               </motion.div>
             </motion.div>
@@ -1840,7 +1842,8 @@ const Home = () => {
                 <TranslatedText>
                   With over 15 years of experience in English language
                   education, our founder has dedicated their career to helping
-                  students achieve fluency and confidence. Specializing in public speaking and corporate training, we understand that
+                  students achieve fluency and confidence. Specializing in
+                  public speaking and corporate training, we understand that
                   confidence in English opens doors to unlimited opportunities.
                 </TranslatedText>
               </p>
@@ -2099,14 +2102,14 @@ const Home = () => {
                       className="flex flex-col h-full">
                       {/* Book Image */}
                       <div className="relative h-48 w-full overflow-hidden">
-                        <img
+                        <LazyImage
                           src={
                             getMediaUrl(book.image) ||
                             "https://via.placeholder.com/300x400?text=Book"
                           }
                           alt={book.imageAlt || book.title}
-                          loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                          fallbackSrc="https://via.placeholder.com/300x400?text=Book"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                         {/* Format Badge */}
@@ -2441,11 +2444,11 @@ const Home = () => {
                     to={`/blogs/${blog.id}`}
                     className="flex h-full flex-col">
                     <div className="relative h-56 w-full overflow-hidden shrink-0">
-                      <img
+                      <LazyImage
                         src={getMediaUrl(blog.thumbnail)}
                         alt={blog.title}
-                        loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        fallbackSrc="https://via.placeholder.com/400x300?text=Blog"
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
                       <span className="absolute top-3 left-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#F5D26A]">
@@ -2538,11 +2541,11 @@ const Home = () => {
                   key={item.id}
                   className="group overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#060606] shadow-xl">
                   <div className="relative h-56 w-full overflow-hidden">
-                    <img
+                    <LazyImage
                       src={getMediaUrl(item.image)}
                       alt="AELA community gallery"
-                      loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      fallbackSrc="https://via.placeholder.com/400x300?text=Gallery"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                   </div>

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { getFreeEbooks } from "../../../src/services/ebooks";
 import LeadCaptureModal from "./LeadCaptureModal";
 import TranslatedText from "../../../src/components/TranslatedText";
+import LazyImage from "../../../src/components/LazyImage";
 
 const FreeLibrary = () => {
   const navigate = useNavigate();
@@ -94,14 +95,11 @@ const FreeLibrary = () => {
                   onClick={() => handleOpenReader(book._id || book.id)}
                   className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-white/8 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:border-[#F5D26A]/60 hover:bg-white/8">
                   <div className="relative h-64 w-full overflow-hidden">
-                    <img
+                    <LazyImage
                       src={book.metadata?.coverImage || book.coverImage || "/placeholder-book.png"}
                       alt={book.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.src = "/placeholder-book.png";
-                      }}
+                      fallbackSrc="/placeholder-book.png"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-[#04060F]/70 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="absolute top-4 left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#F5D26A] backdrop-blur">

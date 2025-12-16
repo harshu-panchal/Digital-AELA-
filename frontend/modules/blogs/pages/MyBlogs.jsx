@@ -7,6 +7,7 @@ import SEO from "../../../src/components/SEO";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import { useUser } from "../../../src/contexts/UserContext";
 import TranslatedText from "../../../src/components/TranslatedText";
+import LazyImage from "../../../src/components/LazyImage";
 
 const tabs = [
   { label: <TranslatedText>Published</TranslatedText>, id: "published" },
@@ -120,10 +121,11 @@ const MyBlogs = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-[#080808]/80 p-6 shadow-[0_28px_75px_rgba(0,0,0,0.55)] md:flex-row md:items-center">
-                <img
+                <LazyImage
                   src={blog.thumbnail || "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80"}
                   alt={blog.title}
                   className="h-28 w-full rounded-2xl object-cover md:h-24 md:w-48"
+                  fallbackSrc="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80"
                 />
                 <div className="flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">

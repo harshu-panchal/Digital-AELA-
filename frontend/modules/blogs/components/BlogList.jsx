@@ -9,6 +9,7 @@ import {
 import { FaRegEye } from "react-icons/fa6";
 import { useBlogs } from "../../../src/contexts/BlogContext";
 import TranslatedText from "../../../src/components/TranslatedText";
+import LazyImage from "../../../src/components/LazyImage";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -139,11 +140,11 @@ const BlogList = ({
               onClick={() => registerView(blog.id)}
               className="flex h-full flex-col">
               <div className="relative h-48 w-full overflow-hidden">
-                <img
+                <LazyImage
                   src={blog.thumbnail}
                   alt={blog.title}
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  loading="lazy"
+                  fallbackSrc="https://via.placeholder.com/400x300?text=Blog"
                 />
                 <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
                   <TranslatedText>{blog.category}</TranslatedText>
@@ -152,10 +153,11 @@ const BlogList = ({
 
               <div className="flex flex-1 flex-col gap-4 p-6">
                 <div className="flex-shrink-0 flex items-center gap-3">
-                  <img
+                  <LazyImage
                     src={blog.author.avatar}
                     alt={blog.author.name}
                     className="h-10 w-10 rounded-full border border-[#D4AF37]/40 object-cover flex-shrink-0"
+                    fallbackSrc="https://via.placeholder.com/40x40?text=Avatar"
                   />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white truncate">

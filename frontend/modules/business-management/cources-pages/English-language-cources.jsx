@@ -10,6 +10,7 @@ import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import LazyImage from "../../../src/components/LazyImage";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -244,11 +245,11 @@ const EnglishLanguageCourses = () => {
                     }
                   }}>
                   <div className="h-40 w-full overflow-hidden">
-                    <img
+                    <LazyImage
                       src={getMediaUrl(course.image) || "https://via.placeholder.com/300x200?text=Course"}
                       alt={course.title}
-                      loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      fallbackSrc="https://via.placeholder.com/300x200?text=Course"
                     />
                   </div>
                   <div className="p-6 bg-linear-to-b from-[#141414] to-[#0a0a0a] flex flex-col h-full">

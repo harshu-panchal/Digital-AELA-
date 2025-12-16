@@ -423,6 +423,7 @@ const Navbar = () => {
               src={logo}
               alt="logo"
               className="h-10 w-auto md:h-[80px] object-contain"
+              loading="eager"
               style={{
                 maxHeight: "80px",
                 width: "auto",

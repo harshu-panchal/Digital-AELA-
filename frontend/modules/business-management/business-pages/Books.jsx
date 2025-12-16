@@ -14,6 +14,7 @@ import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import LazyImage from "../../../src/components/LazyImage";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
@@ -362,11 +363,11 @@ const Books = () => {
                   <Link to={`/books/${book.id}`} className="flex flex-col h-full">
                     {/* Book Image */}
                     <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
-                      <img
+                      <LazyImage
                         src={getMediaUrl(book.image)}
                         alt={book.imageAlt || `${book.title} cover`}
-                        loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                        fallbackSrc="https://via.placeholder.com/300x400?text=Book"
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent" />
                       {/* Format Badge */}

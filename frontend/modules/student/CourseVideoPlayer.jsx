@@ -207,6 +207,7 @@ const CourseVideoPlayer = () => {
               controls
               className="h-full w-full"
               poster={video.thumbnailUrl}
+              preload="none"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleVideoLoaded}>
               Your browser does not support the video tag.

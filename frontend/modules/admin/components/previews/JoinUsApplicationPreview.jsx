@@ -82,7 +82,8 @@ const JoinUsApplicationPreview = ({ application }) => {
             <video
               src={attachment.url}
               controls
-              className="h-auto w-full rounded-lg border border-white/10">
+              className="h-auto w-full rounded-lg border border-white/10"
+              preload="none">
               Your browser does not support the video tag.
             </video>
             <a

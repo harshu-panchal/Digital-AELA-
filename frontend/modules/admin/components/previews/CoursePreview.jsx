@@ -184,7 +184,7 @@ const CoursePreview = ({ course }) => {
                 autoPlay
                 className="h-full w-full"
                 poster={previewingVideo.thumbnailUrl}
-                preload="metadata">
+                preload="none">
                 Your browser does not support the video tag.
               </video>
             </div>

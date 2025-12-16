@@ -3,6 +3,7 @@ import { motion as Motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import { getGalleryImages } from "../../../src/services/api/gallery";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import LazyImage from "../../../src/components/LazyImage";
 
 const Gallery = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -78,11 +79,11 @@ const Gallery = () => {
               key={item.id}
               className="group overflow-hidden rounded-2xl border border-white/10 bg-[#060606] shadow-[0_22px_60px_rgba(0,0,0,0.7)]">
               <div className="relative h-40 sm:h-48 md:h-52 w-full overflow-hidden">
-                <img
+                <LazyImage
                   src={getMediaUrl(item.image)}
                   alt="AELA community gallery"
-                  loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                  fallbackSrc="https://via.placeholder.com/400x300?text=Gallery"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
               </div>

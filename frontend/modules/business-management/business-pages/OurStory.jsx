@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import TranslatedText from "../../../src/components/TranslatedText";
+import LazyImage from "../../../src/components/LazyImage";
 import founderImage2 from "../../../src/assets/Founder2.png";
 
 const OurStory = () => {
@@ -158,6 +159,7 @@ const OurStory = () => {
                   src={founderImage2}
                   alt="Digital AELA Founder - Imran Sir - Visionary Leader and Education Professional"
                   className="w-full max-w-sm h-auto rounded-2xl object-cover scale-90"
+                  loading="eager"
                 />
               </motion.div>
             </motion.div>
@@ -208,11 +210,11 @@ const OurStory = () => {
 
                   {/* Image */}
                   <div className="flex-shrink-0 w-full lg:w-80 h-64 md:h-80 rounded-xl border border-[#D4AF37]/20 shadow-lg hover:border-[#D4AF37]/50 transition-all duration-300 overflow-hidden relative">
-                    <img
+                    <LazyImage
                       src={section.imageSrc}
                       alt={section.imageAlt}
-                      loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                      fallbackSrc="https://via.placeholder.com/400x300?text=Story"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                   </div>

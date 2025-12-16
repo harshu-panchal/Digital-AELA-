@@ -6,6 +6,7 @@ import {
   validateJoinUsForm,
   safeString,
 } from "../../../../src/utils/registrationHelpers";
+import LazyImage from "../../../../src/components/LazyImage";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -116,11 +117,11 @@ const JoinUsFormLayout = ({
           className="space-y-6">
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_24px_80px_rgba(15,23,42,0.35)] backdrop-blur-3xl supports-[backdrop-filter]:bg-white/8">
             <div className="absolute inset-0 bg-gradient-to-br from-[#111827]/60 via-transparent to-[#02050b]/80" />
-            <img
+            <LazyImage
               src={image}
               alt={imageAlt}
               className="h-72 w-full object-cover sm:h-80 lg:h-[22rem]"
-              loading="lazy"
+              fallbackSrc="https://via.placeholder.com/600x400?text=Join+Us"
             />
           </div>
         </motion.div>
