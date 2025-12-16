@@ -155,19 +155,24 @@ const Navbar = () => {
       const shouldShow = currentScrollY < 40;
       setShowSubNav(shouldShow);
 
+      // Check if we're on mobile (screen width < 768px)
+      const isMobile = window.innerWidth < 768;
+
       // Bottom navbar should move only 1px up when scrolling
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         // Scrolling down - move bottom navbar up by 1px only
         setNavbarOffset(1);
-        // Logo should move up 45px when scrolling down
-        setLogoOffset(1);
+        // Logo should move up 45px when scrolling down (only on desktop)
+        if (!isMobile) {
+          setLogoOffset(1);
+        }
       } else if (currentScrollY < lastScrollY) {
         // Scrolling up - move bottom navbar back down
         setNavbarOffset(0);
       }
 
-      // Logo should only come back down when scrolling to top
-      if (currentScrollY <= 100) {
+      // Logo should only come back down when scrolling to top (only on desktop)
+      if (currentScrollY <= 100 || isMobile) {
         setLogoOffset(0);
       }
 
@@ -178,9 +183,21 @@ const Navbar = () => {
       }
     };
 
+    const handleResize = () => {
+      // Reset logo offset on mobile when window is resized
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        setLogoOffset(0);
+      }
+    };
+
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [lastScrollY]);
 
   const baseNavItems = [
