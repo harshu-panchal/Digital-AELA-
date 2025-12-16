@@ -111,7 +111,7 @@ const CreateBlog = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <SEO
         title={<TranslatedText>Create Blog | AELA Learn & Earn</TranslatedText>}
         description={<TranslatedText>Publish your Digital AELA story, add tags, preview rich content and share your insights with the community.</TranslatedText>}

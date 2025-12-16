@@ -211,7 +211,7 @@ const BlogDetails = () => {
 
   if (!blog) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+      <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
         <SEO
           title={<TranslatedText>Blog not found | Digital AELA</TranslatedText>}
           description={<TranslatedText>The blog you are looking for may have been unpublished or moved. Discover other inspiring stories from the Digital AELA community.</TranslatedText>}
@@ -258,7 +258,7 @@ const BlogDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <SEO
         title={`${displayBlog.title} | AELA Blogs`}
         description={displayBlog.excerpt}

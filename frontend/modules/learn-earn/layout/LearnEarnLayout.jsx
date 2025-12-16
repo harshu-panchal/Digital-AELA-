@@ -178,11 +178,11 @@ const LearnEarnLayout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] md:pt-[104px] text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <div className="mx-auto flex w-full max-w-[1440px] flex-col lg:flex-row">
         {/* Desktop Sidebar - Fixed */}
-        <aside 
-          className="hidden fixed top-[124px] md:top-[104px] z-20 w-[250px] h-[calc(100vh-124px)] md:h-[calc(100vh-104px)] border-r border-white/5 bg-black/60 backdrop-blur-xl lg:block"
+        <aside
+          className="hidden fixed top-[94px] md:top-[104px] z-20 w-[250px] h-[calc(100vh-94px)] md:h-[calc(100vh-104px)] border-r border-white/5 bg-black/60 backdrop-blur-xl lg:block"
           style={{
             left: 'max(0px, calc((100vw - 1440px) / 2))'
           }}>
@@ -276,7 +276,7 @@ const LearnEarnLayout = () => {
         {/* Content Area */}
         <div className="flex-1 lg:pl-[250px]">
           {/* Top Navigation */}
-          <header className="sticky top-[124px] md:top-[104px] z-30 border-b border-white/5 bg-black/80 backdrop-blur-xl">
+          <header className="sticky top-[94px] md:top-[104px] z-30 border-b border-white/5 bg-black/80 backdrop-blur-xl">
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

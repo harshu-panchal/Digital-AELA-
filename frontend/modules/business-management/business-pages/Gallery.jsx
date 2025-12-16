@@ -38,7 +38,7 @@ const Gallery = () => {
     loadGalleryImages();
   }, []);
   return (
-    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <SEO
         title="AELA Gallery - Community & Partners"
         description="Browse the AELA gallery and see highlights from workshops, events, community celebrations, and partner collaborations."

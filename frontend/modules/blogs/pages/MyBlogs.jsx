@@ -53,7 +53,7 @@ const MyBlogs = () => {
   const currentBlogs = getTabData();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <SEO
         title={<TranslatedText>My Blogs Dashboard | AELA</TranslatedText>}
         description={<TranslatedText>Track published, draft and review blogs, monitor views, likes, and comments in your personal creator hub.</TranslatedText>}

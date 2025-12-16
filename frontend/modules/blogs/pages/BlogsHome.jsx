@@ -60,7 +60,7 @@ const BlogsHome = () => {
   }, [refreshBlogs]);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[124px] text-white">
+    <div className="min-h-screen bg-linear-to-b from-black via-[#050505] to-black pt-[94px] md:pt-[104px] text-white">
       <SEO
         title={<TranslatedText>AELA Blogs - Learn & Earn Stories</TranslatedText>}
         description={metaDescription}
