@@ -528,38 +528,214 @@ export const App = () => {
               </Suspense>
             </ProtectedRoute>
           }>
-          <Route index element={<SuperAdminDashboard />} />
-          <Route path="users/:role" element={<UserManagement />} />
-          <Route path="users/id/:userId" element={<UserDetail />} />
-          <Route path="approvals/:type" element={<ApprovalPage />} />
-          <Route path="reviews/moderate" element={<ReviewModeration />} />
-          <Route path="live-rooms/moderate" element={<LiveRoomModeration />} />
-          <Route path="analytics" element={<AdvancedAnalytics />} />
-          <Route path="settings" element={<SystemSettings />} />
-          <Route path="system-health" element={<SystemHealth />} />
-          <Route path="create/course" element={<AdminCourseCreate />} />
-          <Route path="courses/:courseId" element={<AdminCourseDetail />} />
-          <Route path="create/book" element={<AdminBookCreate />} />
-          <Route path="create/blog" element={<AdminBlogCreate />} />
-          <Route path="content-management" element={<ContentManagement />} />
-          <Route path="gallery-management" element={<GalleryManagement />} />
-          <Route path="testimonials" element={<TestimonialManagement />} />
+          <Route
+            index
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading dashboard..." />}>
+                <SuperAdminDashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="users/:role"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading users..." />}>
+                <UserManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="users/id/:userId"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading user details..." />
+                }>
+                <UserDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="approvals/:type"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading approvals..." />}>
+                <ApprovalPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reviews/moderate"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading reviews..." />}>
+                <ReviewModeration />
+              </Suspense>
+            }
+          />
+          <Route
+            path="live-rooms/moderate"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading live rooms..." />}>
+                <LiveRoomModeration />
+              </Suspense>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading analytics..." />}>
+                <AdvancedAnalytics />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading settings..." />}>
+                <SystemSettings />
+              </Suspense>
+            }
+          />
+          <Route
+            path="system-health"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading system health..." />
+                }>
+                <SystemHealth />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/course"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading course creator..." />
+                }>
+                <AdminCourseCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses/:courseId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading course..." />}>
+                <AdminCourseDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/book"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading book creator..." />
+                }>
+                <AdminBookCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/blog"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading blog creator..." />
+                }>
+                <AdminBlogCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="content-management"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading content management..." />
+                }>
+                <ContentManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="gallery-management"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading gallery..." />}>
+                <GalleryManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="testimonials"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading testimonials..." />
+                }>
+                <TestimonialManagement />
+              </Suspense>
+            }
+          />
           <Route
             path="payments"
             element={
               <FinancialProtectedRoute>
-                <PaymentManagement />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading payments..." />}>
+                  <PaymentManagement />
+                </Suspense>
               </FinancialProtectedRoute>
             }
           />
-          <Route path="certificates" element={<CertificateManagement />} />
-          <Route path="crm/leads" element={<LeadManagement />} />
-          <Route path="crm/leads/:leadId" element={<LeadDetail />} />
+          <Route
+            path="certificates"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading certificates..." />
+                }>
+                <CertificateManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="crm/leads"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading leads..." />}>
+                <LeadManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="crm/leads/:leadId"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading lead details..." />
+                }>
+                <LeadDetail />
+              </Suspense>
+            }
+          />
           <Route
             path="expenses"
             element={
               <FinancialProtectedRoute>
-                <ExpenseManagement />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading expenses..." />}>
+                  <ExpenseManagement />
+                </Suspense>
               </FinancialProtectedRoute>
             }
           />
@@ -567,43 +743,147 @@ export const App = () => {
             path="financial-dashboard"
             element={
               <FinancialProtectedRoute>
-                <FinancialDashboard />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading financial dashboard..." />
+                  }>
+                  <FinancialDashboard />
+                </Suspense>
               </FinancialProtectedRoute>
             }
           />
-          <Route path="announcements" element={<AnnouncementManagement />} />
+          <Route
+            path="announcements"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcements..." />
+                }>
+                <AnnouncementManagement />
+              </Suspense>
+            }
+          />
           <Route
             path="announcements/create"
-            element={<AdminAnnouncementCreate />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcement creator..." />
+                }>
+                <AdminAnnouncementCreate />
+              </Suspense>
+            }
           />
           <Route
             path="announcements/:announcementId"
-            element={<AdminAnnouncementDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcement..." />
+                }>
+                <AdminAnnouncementDetail />
+              </Suspense>
+            }
           />
-          <Route path="active-sessions" element={<ActiveSessions />} />
-          <Route path="backups" element={<BackupManagement />} />
-          <Route path="rewards" element={<RewardManagement />} />
+          <Route
+            path="active-sessions"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading active sessions..." />
+                }>
+                <ActiveSessions />
+              </Suspense>
+            }
+          />
+          <Route
+            path="backups"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading backups..." />}>
+                <BackupManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="rewards"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading rewards..." />}>
+                <RewardManagement />
+              </Suspense>
+            }
+          />
           <Route
             path="redemption-requests"
-            element={<RedemptionRequestsManagement />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading redemption requests..." />
+                }>
+                <RedemptionRequestsManagement />
+              </Suspense>
+            }
           />
-          <Route path="assignments" element={<AdminAssignmentList />} />
+          <Route
+            path="assignments"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignments..." />}>
+                <AdminAssignmentList />
+              </Suspense>
+            }
+          />
           <Route
             path="assignments/create"
-            element={<AdminAssignmentCreate />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading assignment creator..." />
+                }>
+                <AdminAssignmentCreate />
+              </Suspense>
+            }
           />
           <Route
             path="assignments/:assignmentId"
-            element={<AdminAssignmentDetail />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignment..." />}>
+                <AdminAssignmentDetail />
+              </Suspense>
+            }
           />
-          <Route path="students" element={<AdminStudentManagement />} />
+          <Route
+            path="students"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading students..." />}>
+                <AdminStudentManagement />
+              </Suspense>
+            }
+          />
           <Route
             path="doubt-tickets"
-            element={<AdminDoubtTicketManagement />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt tickets..." />
+                }>
+                <AdminDoubtTicketManagement />
+              </Suspense>
+            }
           />
           <Route
             path="doubt-tickets/:ticketId"
-            element={<AdminDoubtTicketDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt ticket..." />
+                }>
+                <AdminDoubtTicketDetail />
+              </Suspense>
+            }
           />
         </Route>
         <Route
@@ -627,43 +907,255 @@ export const App = () => {
               </Suspense>
             }
           />
-          <Route path="courses" element={<CourseList />} />
-          <Route path="courses/new" element={<CourseCreate />} />
-          <Route path="courses/:courseId" element={<TeacherCourseDetail />} />
+          <Route
+            path="courses"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading courses..." />}>
+                <CourseList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses/new"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading course creator..." />
+                }>
+                <CourseCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses/:courseId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading course..." />}>
+                <TeacherCourseDetail />
+              </Suspense>
+            }
+          />
           <Route
             path="courses/:courseId/students"
-            element={<StudentManagement />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading students..." />}>
+                <StudentManagement />
+              </Suspense>
+            }
           />
-          <Route path="ebooks" element={<EbookList />} />
-          <Route path="ebooks/upload" element={<EbookUpload />} />
-          <Route path="ebooks/:ebookId" element={<EbookDetail />} />
-          <Route path="quizzes" element={<QuizList />} />
-          <Route path="quizzes/new" element={<QuizCreate />} />
-          <Route path="quizzes/:quizId" element={<QuizDetail />} />
-          <Route path="quizzes/:quizId/analytics" element={<QuizAnalytics />} />
-          <Route path="assignments" element={<AssignmentList />} />
-          <Route path="assignments/create" element={<AssignmentCreate />} />
+          <Route
+            path="ebooks"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading ebooks..." />}>
+                <EbookList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="ebooks/upload"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading ebook upload..." />
+                }>
+                <EbookUpload />
+              </Suspense>
+            }
+          />
+          <Route
+            path="ebooks/:ebookId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading ebook..." />}>
+                <EbookDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quizzes"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading quizzes..." />}>
+                <QuizList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quizzes/new"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading quiz creator..." />
+                }>
+                <QuizCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quizzes/:quizId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading quiz..." />}>
+                <QuizDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quizzes/:quizId/analytics"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading quiz analytics..." />
+                }>
+                <QuizAnalytics />
+              </Suspense>
+            }
+          />
+          <Route
+            path="assignments"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignments..." />}>
+                <AssignmentList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="assignments/create"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading assignment creator..." />
+                }>
+                <AssignmentCreate />
+              </Suspense>
+            }
+          />
           <Route
             path="assignments/:assignmentId"
-            element={<AssignmentDetail />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignment..." />}>
+                <AssignmentDetail />
+              </Suspense>
+            }
           />
-          <Route path="students" element={<StudentManagement />} />
-          <Route path="analytics" element={<TeacherAnalytics />} />
-          <Route path="earnings" element={<TeacherEarnings />} />
-          <Route path="doubt-tickets" element={<DoubtTicketInbox />} />
+          <Route
+            path="students"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading students..." />}>
+                <StudentManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading analytics..." />}>
+                <TeacherAnalytics />
+              </Suspense>
+            }
+          />
+          <Route
+            path="earnings"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading earnings..." />}>
+                <TeacherEarnings />
+              </Suspense>
+            }
+          />
+          <Route
+            path="doubt-tickets"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt tickets..." />
+                }>
+                <DoubtTicketInbox />
+              </Suspense>
+            }
+          />
           <Route
             path="doubt-tickets/:ticketId"
-            element={<TeacherDoubtTicketDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt ticket..." />
+                }>
+                <TeacherDoubtTicketDetail />
+              </Suspense>
+            }
           />
-          <Route path="announcements" element={<AnnouncementList />} />
-          <Route path="announcements/create" element={<AnnouncementCreate />} />
+          <Route
+            path="announcements"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcements..." />
+                }>
+                <AnnouncementList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="announcements/create"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcement creator..." />
+                }>
+                <AnnouncementCreate />
+              </Suspense>
+            }
+          />
           <Route
             path="announcements/:announcementId"
-            element={<AnnouncementDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcement..." />
+                }>
+                <AnnouncementDetail />
+              </Suspense>
+            }
           />
-          <Route path="payout-requests" element={<PayoutRequests />} />
-          <Route path="payment-slips" element={<PaymentSlips />} />
-          <Route path="profile" element={<TeacherProfile />} />
+          <Route
+            path="payout-requests"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading payout requests..." />
+                }>
+                <PayoutRequests />
+              </Suspense>
+            }
+          />
+          <Route
+            path="payment-slips"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading payment slips..." />
+                }>
+                <PaymentSlips />
+              </Suspense>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading profile..." />}>
+                <TeacherProfile />
+              </Suspense>
+            }
+          />
         </Route>
         <Route
           path="/student/*"
@@ -677,31 +1169,168 @@ export const App = () => {
               </Suspense>
             </ProtectedRoute>
           }>
-          <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="courses" element={<EnrolledCourses />} />
-          <Route path="courses/:courseId" element={<EnrolledCourses />} />
-          <Route path="points/history" element={<PointsHistory />} />
-          <Route path="applications" element={<ApplicationHistory />} />
-          <Route path="assignments" element={<StudentAssignmentList />} />
+          <Route
+            path="dashboard"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading dashboard..." />}>
+                <StudentDashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading courses..." />}>
+                <EnrolledCourses />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses/:courseId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading course..." />}>
+                <EnrolledCourses />
+              </Suspense>
+            }
+          />
+          <Route
+            path="points/history"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading points history..." />
+                }>
+                <PointsHistory />
+              </Suspense>
+            }
+          />
+          <Route
+            path="applications"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading applications..." />
+                }>
+                <ApplicationHistory />
+              </Suspense>
+            }
+          />
+          <Route
+            path="assignments"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignments..." />}>
+                <StudentAssignmentList />
+              </Suspense>
+            }
+          />
           <Route
             path="assignments/:assignmentId"
-            element={<StudentAssignmentDetail />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading assignment..." />}>
+                <StudentAssignmentDetail />
+              </Suspense>
+            }
           />
-          <Route path="payments" element={<PaymentHistory />} />
-          <Route path="certificates" element={<CertificateList />} />
-          <Route path="doubt-tickets" element={<DoubtTicketList />} />
-          <Route path="doubt-tickets/create" element={<DoubtTicketCreate />} />
+          <Route
+            path="payments"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading payments..." />}>
+                <PaymentHistory />
+              </Suspense>
+            }
+          />
+          <Route
+            path="certificates"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading certificates..." />
+                }>
+                <CertificateList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="doubt-tickets"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt tickets..." />
+                }>
+                <DoubtTicketList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="doubt-tickets/create"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt ticket creator..." />
+                }>
+                <DoubtTicketCreate />
+              </Suspense>
+            }
+          />
           <Route
             path="doubt-tickets/:ticketId"
-            element={<DoubtTicketDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading doubt ticket..." />
+                }>
+                <DoubtTicketDetail />
+              </Suspense>
+            }
           />
-          <Route path="announcements" element={<StudentAnnouncementList />} />
+          <Route
+            path="announcements"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcements..." />
+                }>
+                <StudentAnnouncementList />
+              </Suspense>
+            }
+          />
           <Route
             path="announcements/:announcementId"
-            element={<StudentAnnouncementDetail />}
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading announcement..." />
+                }>
+                <StudentAnnouncementDetail />
+              </Suspense>
+            }
           />
-          <Route path="batch" element={<BatchInformation />} />
-          <Route path="profile" element={<StudentProfile />} />
+          <Route
+            path="batch"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading batch information..." />
+                }>
+                <BatchInformation />
+              </Suspense>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading profile..." />}>
+                <StudentProfile />
+              </Suspense>
+            }
+          />
         </Route>
         <Route
           path="/courses/videos/:videoId"
@@ -725,12 +1354,35 @@ export const App = () => {
           }
           key="learn-earn">
           {/* Public routes - accessible without login */}
-          <Route path="live-debate-room" element={<LiveDebates />} />
+          <Route
+            path="live-debate-room"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading live debates..." />
+                }>
+                <LiveDebates />
+              </Suspense>
+            }
+          />
           <Route
             path="live-debate-room/voice-room/:roomId"
-            element={<VoiceRoom />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading voice room..." />}>
+                <VoiceRoom />
+              </Suspense>
+            }
           />
-          <Route path="activities" element={<ActivitiesHub />} />
+          <Route
+            path="activities"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading activities..." />}>
+                <ActivitiesHub />
+              </Suspense>
+            }
+          />
 
           {/* Protected routes - require login (show login prompt instead of redirecting) */}
           <Route
@@ -745,7 +1397,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <DashboardOverview />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading dashboard..." />}>
+                  <DashboardOverview />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -761,7 +1416,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <DashboardOverview />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading dashboard..." />}>
+                  <DashboardOverview />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -777,7 +1435,12 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <NotificationCenter />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading notifications..." />
+                  }>
+                  <NotificationCenter />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -793,7 +1456,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <ProfilePage />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading profile..." />}>
+                  <ProfilePage />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -809,16 +1475,50 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <ChatCentre />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading chat..." />}>
+                  <ChatCentre />
+                </Suspense>
               </ProtectedRoute>
             }
           />
-          <Route path="find-learners" element={<FindLearners />} />
-          <Route path="user/:userId" element={<UserProfileView />} />
-          <Route path="quiz/:quizId" element={<QuizPlay />} />
+          <Route
+            path="find-learners"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading learners..." />}>
+                <FindLearners />
+              </Suspense>
+            }
+          />
+          <Route
+            path="user/:userId"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading user profile..." />
+                }>
+                <UserProfileView />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quiz/:quizId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading quiz..." />}>
+                <QuizPlay />
+              </Suspense>
+            }
+          />
           <Route
             path="quiz/:quizId/leaderboard"
-            element={<QuizLeaderboard />}
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading leaderboard..." />}>
+                <QuizLeaderboard />
+              </Suspense>
+            }
           />
           <Route
             path="wallet"
@@ -832,7 +1532,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <WalletDashboard />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading wallet..." />}>
+                  <WalletDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -848,7 +1551,12 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <RedemptionHistory />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading redemption history..." />
+                  }>
+                  <RedemptionHistory />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -864,7 +1572,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <RatingsReviews />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading ratings..." />}>
+                  <RatingsReviews />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -880,7 +1591,12 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <FullLeaderboard />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading leaderboard..." />
+                  }>
+                  <FullLeaderboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -888,7 +1604,12 @@ export const App = () => {
             path="admin"
             element={
               <ProtectedRoute roles={["super-admin"]}>
-                <AdminControl />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading admin control..." />
+                  }>
+                  <AdminControl />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -1302,7 +2023,15 @@ export const App = () => {
               </Suspense>
             </ExploreJobsProvider>
           }>
-          <Route index element={<ExploreFeed />} />
+          <Route
+            index
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading jobs feed..." />}>
+                <ExploreFeed />
+              </Suspense>
+            }
+          />
           <Route
             path="seeker-dashboard"
             element={
@@ -1314,7 +2043,12 @@ export const App = () => {
                   "teacher",
                   "super-admin",
                 ]}>
-                <SeekerDashboard />
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading seeker dashboard..." />
+                  }>
+                  <SeekerDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -1330,7 +2064,10 @@ export const App = () => {
                   "freelancer",
                   "super-admin",
                 ]}>
-                <ExplorePostDetailPage />
+                <Suspense
+                  fallback={<LoadingFallback message="Loading job post..." />}>
+                  <ExplorePostDetailPage />
+                </Suspense>
               </ProtectedRoute>
             }
           />
