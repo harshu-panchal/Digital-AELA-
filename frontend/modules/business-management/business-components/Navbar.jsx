@@ -590,7 +590,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
+                          className="absolute right-0 top-full z-65 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
                           {Object.entries(languages).map(
                             ([code, option], index) => (
                               <motion.button
@@ -748,7 +748,7 @@ const Navbar = () => {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.2, ease: "easeOut" }}
-                              className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
+                              className="absolute top-full left-0 mt-2 min-w-[230px] overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_18px_60px_rgba(212,175,55,0.2)]">
                               {item.dropdown.map((dropdownItem, dropIndex) => {
                                 if (dropdownItem.disabled) {
                                   return (
@@ -939,7 +939,7 @@ const Navbar = () => {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 shadow-[0_25px_80px_rgba(212,175,55,0.2)]">
+              className="lg:hidden mt-4 overflow-hidden rounded-3xl border border-[#D4AF37]/30 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(212,175,55,0.2)]">
               <div className="flex max-h-[calc(100vh-160px)] flex-col gap-2 overflow-y-auto px-2 pr-1 sm:px-4 sm:pr-2">
                 {/* Speaking Club Live Indicator for Mobile */}
                 <div className="flex items-center gap-2">

@@ -206,7 +206,7 @@ const WebsitePopupForm = () => {
           >
             <div className="bg-gradient-to-br from-[#0a0e1a] via-[#1a1f2e] to-[#0a0e1a] border border-[#F5D26A]/20 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-[#F5D26A]/10 to-transparent border-b border-[#F5D26A]/20 px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-gradient-to-r from-[#F5D26A]/10 to-transparent border-b border-[#F5D26A]/20 px-6 py-4 flex items-center justify-between backdrop-blur-sm">
                 <div>
                   <h2 className="text-xl font-bold text-[#F5D26A]">Get in Touch</h2>
                   <p className="text-sm text-gray-400 mt-1">We'd love to hear from you!</p>
