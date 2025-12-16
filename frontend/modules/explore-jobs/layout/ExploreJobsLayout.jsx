@@ -22,7 +22,7 @@ const ExploreJobsLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black pt-[20vh] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#040404] to-black pt-[100px] md:pt-[20vh] text-white">
       <div className="mx-auto flex w-full max-w-[1600px]">
         <ExploreJobsSidebar onCreatePost={handleCreatePost} />
 

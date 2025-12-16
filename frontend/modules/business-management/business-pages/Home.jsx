@@ -173,8 +173,8 @@ const Home = () => {
               course.price === 0
                 ? "Free"
                 : course.price
-                  ? `AED ${course.price}`
-                  : "On Request",
+                ? `AED ${course.price}`
+                : "On Request",
             duration: course.duration
               ? `${course.duration} hours`
               : course.metadata?.duration || "",
@@ -236,8 +236,8 @@ const Home = () => {
           .map((book) => {
             const price =
               book.metadata?.price !== undefined &&
-                book.metadata.price !== null &&
-                book.metadata.price !== ""
+              book.metadata.price !== null &&
+              book.metadata.price !== ""
                 ? Number(book.metadata.price)
                 : 0;
             const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
@@ -390,7 +390,11 @@ const Home = () => {
           featuredBooks.map(async (book) => {
             try {
               const translated = await translateObject(
-                { title: book.title, description: book.description, author: book.author },
+                {
+                  title: book.title,
+                  description: book.description,
+                  author: book.author,
+                },
                 ["title", "description", "author"]
               );
               return {
@@ -465,16 +469,17 @@ const Home = () => {
   // Helper function to check if course is free
   const isFreeCourse = (course) => {
     if (!course) return false;
-    const price = course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
+    const price =
+      course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
 
     // Check various formats
     if (price === 0 || price === "Free" || price === "free") return true;
-    if (typeof price === 'string') {
-      if (price.toLowerCase().includes('free')) return true;
-      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+    if (typeof price === "string") {
+      if (price.toLowerCase().includes("free")) return true;
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
       if (isNaN(numericPrice) || numericPrice === 0) return true;
     }
-    if (typeof price === 'number' && price === 0) return true;
+    if (typeof price === "number" && price === 0) return true;
 
     return false;
   };
@@ -498,14 +503,14 @@ const Home = () => {
 
     if (course.rawPrice !== undefined && course.rawPrice !== null) {
       priceValue = parseFloat(course.rawPrice) || 0;
-    } else if (typeof course.price === 'number') {
+    } else if (typeof course.price === "number") {
       priceValue = course.price;
-    } else if (typeof course.price === 'string') {
-      if (course.price.toLowerCase().includes('free')) {
+    } else if (typeof course.price === "string") {
+      if (course.price.toLowerCase().includes("free")) {
         priceValue = 0;
       } else {
         // Strip non-numeric characters (except dot) to handle strings like "AED 100"
-        priceValue = parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0;
+        priceValue = parseFloat(course.price.replace(/[^0-9.]/g, "")) || 0;
       }
     }
 
@@ -594,7 +599,8 @@ const Home = () => {
       {
         id: 3,
         title: "100% Placement Assistance",
-        seoKeyword: "job placement training India Pakistan Bangladesh Nepal Gulf",
+        seoKeyword:
+          "job placement training India Pakistan Bangladesh Nepal Gulf",
         description:
           "Our commitment doesn't end with teaching. Digital AELA provides resume building, interview preparation, job portal access, and recruiter connections to ensure that you don't just learn, but you also earn.",
         icon: "briefcase",
@@ -791,7 +797,8 @@ const Home = () => {
         id: "learn-earn-opportunity",
         badge: "Learn & Earn Opportunity – For Everyone",
         title: "Learn New Skills and Earn from Anywhere",
-        highlight: "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
+        highlight:
+          "No Age Limit No Religion or Caste Bar 100% Free Opportunity",
         description:
           "Digital AELA Dubai provides a unique platform where anyone can learn valuable skills and earn money at the same time. This opportunity is open to everyone-students, professionals, homemakers, beginners, and anyone who wants to grow. No restrictions. No boundaries. Just one mission: Learn and Earn together-completely free.",
         primaryCta: "Start Learning",
@@ -942,14 +949,18 @@ const Home = () => {
         const response = await getTestimonialsBySection("home");
         if (response && response.testimonials) {
           // Map API response to match existing structure
-          const mappedTestimonials = response.testimonials.map((testimonial, index) => ({
-            id: testimonial._id || index + 1,
-            name: testimonial.name,
-            role: testimonial.role,
-            avatar: testimonial.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80",
-            text: testimonial.text,
-            rating: testimonial.rating || 5,
-          }));
+          const mappedTestimonials = response.testimonials.map(
+            (testimonial, index) => ({
+              id: testimonial._id || index + 1,
+              name: testimonial.name,
+              role: testimonial.role,
+              avatar:
+                testimonial.avatar ||
+                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80",
+              text: testimonial.text,
+              rating: testimonial.rating || 5,
+            })
+          );
           setTestimonials(mappedTestimonials);
         }
       } catch (error) {
@@ -1017,7 +1028,13 @@ const Home = () => {
         question: "What courses does Digital AELA offer?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>We offer comprehensive English language courses including Beginner, Intermediate, Advanced, Spoken English, IELTS & TOEFL preparation, Corporate Training, and Teacher Training programs. All courses are designed to be practical, career-focused, and accessible to learners across South Asia and the Gulf.</TranslatedText>
+            <TranslatedText>
+              We offer comprehensive English language courses including
+              Beginner, Intermediate, Advanced, Spoken English, IELTS & TOEFL
+              preparation, Corporate Training, and Teacher Training programs.
+              All courses are designed to be practical, career-focused, and
+              accessible to learners across South Asia and the Gulf.
+            </TranslatedText>
           </p>
         ),
       },
@@ -1025,15 +1042,26 @@ const Home = () => {
         question: "How does the Learn & Earn program work?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Our Learn & Earn platform allows you to earn points (AELA Coins) by completing quizzes, participating in activities, and engaging with the community. These coins can be redeemed for rewards, courses, or cash. It's our way of making learning rewarding while you build valuable skills.</TranslatedText>
+            <TranslatedText>
+              Our Learn & Earn platform allows you to earn points (AELA Coins)
+              by completing quizzes, participating in activities, and engaging
+              with the community. These coins can be redeemed for rewards,
+              courses, or cash. It's our way of making learning rewarding while
+              you build valuable skills.
+            </TranslatedText>
           </p>
         ),
       },
       {
-        question: "What certification will I receive after completing a course?",
+        question:
+          "What certification will I receive after completing a course?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Upon successful completion, you receive an internationally recognized ISO Certified certificate that boosts your credibility for job applications, interviews, and career advancement.</TranslatedText>
+            <TranslatedText>
+              Upon successful completion, you receive an internationally
+              recognized ISO Certified certificate that boosts your credibility
+              for job applications, interviews, and career advancement.
+            </TranslatedText>
           </p>
         ),
       },
@@ -1041,7 +1069,11 @@ const Home = () => {
         question: "What is the Job Portal and how does it work?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Our Job Portal links learners with top recruiters. Upload your resume, browse curated openings, apply instantly, and receive dedicated placement support.</TranslatedText>
+            <TranslatedText>
+              Our Job Portal links learners with top recruiters. Upload your
+              resume, browse curated openings, apply instantly, and receive
+              dedicated placement support.
+            </TranslatedText>
           </p>
         ),
       },
@@ -1049,7 +1081,10 @@ const Home = () => {
         question: "Do you offer demo classes before enrollment?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Absolutely. Join our free demo sessions to experience the teaching style, curriculum, and trainer interaction before you commit.</TranslatedText>
+            <TranslatedText>
+              Absolutely. Join our free demo sessions to experience the teaching
+              style, curriculum, and trainer interaction before you commit.
+            </TranslatedText>
           </p>
         ),
       },
@@ -1058,7 +1093,12 @@ const Home = () => {
         answer: (
           <div className="text-gray-300 leading-relaxed space-y-3">
             <p>
-              <TranslatedText>We combine practical learning with career outcomes. Alongside expert-led training, you benefit from: Job assistance through our talent portal, Interview preparation & mock tests, Personalised study plans, Courses delivered in Hindi & English</TranslatedText>
+              <TranslatedText>
+                We combine practical learning with career outcomes. Alongside
+                expert-led training, you benefit from: Job assistance through
+                our talent portal, Interview preparation & mock tests,
+                Personalised study plans, Courses delivered in Hindi & English
+              </TranslatedText>
             </p>
           </div>
         ),
@@ -1067,7 +1107,11 @@ const Home = () => {
         question: "How can I buy your English learning books?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Explore the Books section on our website to order titles covering grammar, vocabulary, and English structures. They are also available on Amazon, Flipkart, or directly from the institute.</TranslatedText>
+            <TranslatedText>
+              Explore the Books section on our website to order titles covering
+              grammar, vocabulary, and English structures. They are also
+              available on Amazon, Flipkart, or directly from the institute.
+            </TranslatedText>
           </p>
         ),
       },
@@ -1075,14 +1119,17 @@ const Home = () => {
         question: "Do you provide career counselling services?",
         answer: (
           <p className="text-gray-300 leading-relaxed text-xs md:text-sm">
-            <TranslatedText>Yes, our experts conduct one-on-one counselling sessions to help you select the right course, elevate your interview skills, and map a clear career roadmap.</TranslatedText>
+            <TranslatedText>
+              Yes, our experts conduct one-on-one counselling sessions to help
+              you select the right course, elevate your interview skills, and
+              map a clear career roadmap.
+            </TranslatedText>
           </p>
         ),
       },
     ],
     [language]
   );
-
 
   return (
     <div className="min-h-screen bg-black">
@@ -1094,83 +1141,69 @@ const Home = () => {
       />
       {/* Hero Section */}
       <motion.section
-        className="relative min-h-screen flex items-center pt-[130px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
+        className="relative min-h-screen flex items-center pt-[110px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
         onMouseEnter={() => setIsHeroPaused(true)}
         onMouseLeave={() => setIsHeroPaused(false)}>
         <div className="absolute inset-0 bg-black" />
         {heroSlides[activeHeroSlide].id === "ambition-action" && (
           <>
-            <motion.div
-              className="pointer-events-none absolute inset-0">
+            <motion.div className="pointer-events-none absolute inset-0">
               <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#F5D26A_0%,rgba(245,210,106,0.1)_55%,transparent_100%)] blur-[140px]" />
               <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-[#F5D26A]/20 bg-[#F5D26A]/12 blur-[120px] mix-blend-screen" />
               <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-[#FFE28A]/25 bg-[#FFE28A]/10 blur-[140px] mix-blend-screen" />
             </motion.div>
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+            <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F5D26A]/35 bg-[radial-gradient(circle,#F5D26A/18_0%,rgba(245,210,106,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "gift-future" && (
           <>
-            <motion.div
-              className="pointer-events-none absolute inset-0">
+            <motion.div className="pointer-events-none absolute inset-0">
               <div className="absolute top-14 right-[18%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#4ADE80_0%,rgba(74,222,128,0.08)_60%,transparent_100%)] blur-[160px]" />
               <div className="absolute bottom-[18%] left-[14%] h-96 w-96 rounded-full border border-[#6EE7B7]/25 bg-[#6EE7B7]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+            <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#6EE7B7]/30 bg-[radial-gradient(circle,#6EE7B7/18_0%,rgba(110,231,183,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "read-grow" && (
           <>
-            <motion.div
-              className="pointer-events-none absolute inset-0">
+            <motion.div className="pointer-events-none absolute inset-0">
               <div className="absolute top-[18%] left-[18%] h-100 w-100 rounded-full bg-[radial-gradient(circle,#F472B6_0%,rgba(244,114,182,0.08)_60%,transparent_100%)] blur-[150px]" />
               <div className="absolute bottom-[22%] right-[18%] h-96 w-96 rounded-full border border-[#FB7185]/25 bg-[#FB7185]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+            <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#F472B6]/25 bg-[radial-gradient(circle,#F472B6/16_0%,rgba(244,114,182,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "learn-earn" && (
           <>
-            <motion.div
-              className="pointer-events-none absolute inset-0">
+            <motion.div className="pointer-events-none absolute inset-0">
               <div className="absolute top-12 left-[20%] h-104 w-104 rounded-full bg-[radial-gradient(circle,#7AB8FF_0%,rgba(122,184,255,0.1)_60%,transparent_100%)] blur-[150px]" />
               <div className="absolute top-1/2 -translate-y-1/2 right-[14%] h-96 w-96 rounded-full border border-[#7C9BFF]/25 bg-[#7C9BFF]/12 blur-[160px] mix-blend-screen" />
             </motion.div>
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+            <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-[#7AB8FF]/30 bg-[radial-gradient(circle,#7AB8FF/20_0%,rgba(122,184,255,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
         {heroSlides[activeHeroSlide].id === "learn-earn-opportunity" && (
           <>
-            <motion.div
-              className="pointer-events-none absolute inset-0">
+            <motion.div className="pointer-events-none absolute inset-0">
               <div className="absolute top-10 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,#FFFFFF_0%,rgba(255,255,255,0.1)_55%,transparent_100%)] blur-[140px]" />
               <div className="absolute top-1/3 left-[8%] h-80 w-80 rounded-full border border-white/20 bg-white/12 blur-[120px] mix-blend-screen" />
               <div className="absolute bottom-1/4 right-[12%] h-72 w-72 rounded-full border border-white/25 bg-white/10 blur-[140px] mix-blend-screen" />
             </motion.div>
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
+            <motion.div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
               <div className="mx-auto h-[420px] w-[420px] max-w-[80vw] rounded-[160px] border border-white/35 bg-[radial-gradient(circle,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.05)_35%,transparent_75%)] blur-[90px]" />
             </motion.div>
           </>
         )}
-        <motion.div
-          className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10 blur-[220px]"
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]"
-        />
+        <motion.div className="absolute top-0 right-0 h-104 w-104 -translate-y-1/4 translate-x-1/3 rounded-full bg-[#D4AF37]/10 blur-[220px]" />
+        <motion.div className="absolute bottom-0 left-0 h-104 w-104 translate-y-1/3 -translate-x-1/2 rounded-full bg-[#0B1533]/80 blur-[200px]" />
 
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12">
           <AnimatePresence mode="wait">
@@ -1182,9 +1215,10 @@ const Home = () => {
               transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
               className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
               <div className="order-2 text-left lg:order-1">
-                <motion.span
-                  className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
-                  <TranslatedText>{heroSlides[activeHeroSlide].badge}</TranslatedText>
+                <motion.span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-[#D4AF37]">
+                  <TranslatedText>
+                    {heroSlides[activeHeroSlide].badge}
+                  </TranslatedText>
                 </motion.span>
 
                 <motion.h1
@@ -1195,31 +1229,36 @@ const Home = () => {
                     ),
                   }}>
                   {typeof heroSlides[activeHeroSlide].title === "string" ? (
-                    <TranslatedText>{heroSlides[activeHeroSlide].title}</TranslatedText>
+                    <TranslatedText>
+                      {heroSlides[activeHeroSlide].title}
+                    </TranslatedText>
                   ) : (
                     heroSlides[activeHeroSlide].title
                   )}
                 </motion.h1>
 
-                <motion.p
-                  className="mt-3 text-lg font-semibold text-[#F5D26A]">
-                  <TranslatedText>{heroSlides[activeHeroSlide].highlight}</TranslatedText>
+                <motion.p className="mt-3 text-lg font-semibold text-[#F5D26A]">
+                  <TranslatedText>
+                    {heroSlides[activeHeroSlide].highlight}
+                  </TranslatedText>
                 </motion.p>
 
-                <motion.p
-                  className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
-                  <TranslatedText>{heroSlides[activeHeroSlide].description}</TranslatedText>
+                <motion.p className="mt-4 max-w-xl text-base text-slate-200/85 md:text-lg">
+                  <TranslatedText>
+                    {heroSlides[activeHeroSlide].description}
+                  </TranslatedText>
                 </motion.p>
 
-                <motion.div
-                  className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <motion.div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   {heroSlides[activeHeroSlide].primaryCta && (
                     <MotionLink
                       to={heroSlides[activeHeroSlide].primaryLink}
                       className={getPrimaryCtaClasses(
                         heroSlides[activeHeroSlide].primaryCta
                       )}>
-                      <TranslatedText>{heroSlides[activeHeroSlide].primaryCta}</TranslatedText>
+                      <TranslatedText>
+                        {heroSlides[activeHeroSlide].primaryCta}
+                      </TranslatedText>
                     </MotionLink>
                   )}
                   {heroSlides[activeHeroSlide].secondaryCta && (
@@ -1228,14 +1267,15 @@ const Home = () => {
                       className={getSecondaryCtaClasses(
                         heroSlides[activeHeroSlide].secondaryCta
                       )}>
-                      <TranslatedText>{heroSlides[activeHeroSlide].secondaryCta}</TranslatedText>
+                      <TranslatedText>
+                        {heroSlides[activeHeroSlide].secondaryCta}
+                      </TranslatedText>
                     </MotionLink>
                   )}
                 </motion.div>
               </div>
 
-              <motion.div
-                className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
+              <motion.div className="order-1 flex items-center justify-center lg:order-2 lg:translate-x-[30px]">
                 <div className="relative w-full max-w-[640px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/60 shadow-2xl">
                   <div className="relative aspect-video w-full">
                     <img
@@ -1277,10 +1317,11 @@ const Home = () => {
                   key={slide.id}
                   type="button"
                   onClick={() => setActiveHeroSlide(index)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${index === activeHeroSlide
-                    ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
-                    : "w-6 bg-white/25 hover:bg-white/45"
-                    }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    index === activeHeroSlide
+                      ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                      : "w-6 bg-white/25 hover:bg-white/45"
+                  }`}
                 />
               ))}
             </div>
@@ -1313,8 +1354,7 @@ const Home = () => {
         {/* Content Container */}
         <div className="relative z-10 layout-container">
           {/* Heading */}
-          <motion.div
-            className="text-center mb-5 md:mb-8">
+          <motion.div className="text-center mb-5 md:mb-8">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-display tracking-tight">
               <TranslatedText>Achievements</TranslatedText>
             </h2>
@@ -1337,8 +1377,7 @@ const Home = () => {
                     {/* Content */}
                     <div className="relative z-10 flex flex-col items-center justify-center text-center">
                       {/* Number */}
-                      <motion.div
-                        className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none">
+                      <motion.div className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none">
                         {`${formattedValue}${stat.suffix ?? ""}`}
                       </motion.div>
 
@@ -1356,36 +1395,43 @@ const Home = () => {
       </motion.div>
 
       {/* 5 Step Learning Strategy Section */}
-      <motion.section
-        className="py-16 md:py-20 bg-black overflow-hidden">
+      <motion.section className="py-16 md:py-20 bg-black overflow-hidden">
         <div className="layout-container">
           {/* Title Area */}
-          <motion.div
-            className="text-center mb-12">
+          <motion.div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
               <TranslatedText>Digital AELA –</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>5 Step Learning Strategy</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>5 Step Learning Strategy</TranslatedText>
+              </span>
             </h2>
             <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Learn → Practice → Get Certified → Grow Your Career</TranslatedText>
+              <TranslatedText>
+                Learn → Practice → Get Certified → Grow Your Career
+              </TranslatedText>
             </p>
           </motion.div>
 
           {/* Steps Grid - First 3 Steps */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Step 1: Book a Free Demo Class */}
-            <motion.div
-              className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#3B82F6]/20 p-6 md:p-8 hover:border-[#3B82F6] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#3B82F6] flex items-center justify-center shrink-0">
                   <FaCalendarCheck className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  <TranslatedText>Step 1: Book a Free Demo Class</TranslatedText>
+                  <TranslatedText>
+                    Step 1: Book a Free Demo Class
+                  </TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                <TranslatedText>Assess your current proficiency level, interact with our expert trainers, and experience a comprehensive course demonstration to understand our teaching methodology.</TranslatedText>
+                <TranslatedText>
+                  Assess your current proficiency level, interact with our
+                  expert trainers, and experience a comprehensive course
+                  demonstration to understand our teaching methodology.
+                </TranslatedText>
               </p>
               <Link
                 to="/contact/book-demo"
@@ -1395,18 +1441,23 @@ const Home = () => {
             </motion.div>
 
             {/* Step 2: Enroll in the Right Course */}
-            <motion.div
-              className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#10B981]/20 p-6 md:p-8 hover:border-[#10B981] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#10B981] flex items-center justify-center shrink-0">
                   <FaCheckCircle className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  <TranslatedText>Step 2: Enroll in the Right Course</TranslatedText>
+                  <TranslatedText>
+                    Step 2: Enroll in the Right Course
+                  </TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                <TranslatedText>Choose from our Beginner, Intermediate, or Spoken English programs - select the course that best aligns with your learning objectives and career goals.</TranslatedText>
+                <TranslatedText>
+                  Choose from our Beginner, Intermediate, or Spoken English
+                  programs - select the course that best aligns with your
+                  learning objectives and career goals.
+                </TranslatedText>
               </p>
               <Link
                 to="/courses/english-language"
@@ -1416,18 +1467,24 @@ const Home = () => {
             </motion.div>
 
             {/* Step 3: Get Trained (Online + Books) */}
-            <motion.div
-              className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#F59E0B]/20 p-6 md:p-8 hover:border-[#F59E0B] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 flex flex-col h-full">
               <div className="shrink-0 flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl bg-[#F59E0B] flex items-center justify-center shrink-0">
                   <FaPlayCircle className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                  <TranslatedText>Step 3: Get Trained (Online + Books)</TranslatedText>
+                  <TranslatedText>
+                    Step 3: Get Trained (Online + Books)
+                  </TranslatedText>
                 </h3>
               </div>
               <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                <TranslatedText>Access 40+ comprehensive video lessons, receive 3 professionally printed books, participate in interactive live Q&A sessions, and join practice groups to enhance your daily learning experience.</TranslatedText>
+                <TranslatedText>
+                  Access 40+ comprehensive video lessons, receive 3
+                  professionally printed books, participate in interactive live
+                  Q&A sessions, and join practice groups to enhance your daily
+                  learning experience.
+                </TranslatedText>
               </p>
               <Link
                 to="/books"
@@ -1441,8 +1498,7 @@ const Home = () => {
           <div className="flex justify-center items-center mt-12 md:mt-16">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl w-full">
               {/* Step 4: Get Certified */}
-              <motion.div
-                className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
+              <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#D4AF37]/20 p-6 md:p-8 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#D4AF37] flex items-center justify-center shrink-0">
                     <FaCertificate className="w-8 h-8 text-black" />
@@ -1452,7 +1508,12 @@ const Home = () => {
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  <TranslatedText>Complete your comprehensive course curriculum, successfully pass the final assessment, and earn an internationally recognized certificate that validates your English language proficiency.</TranslatedText>
+                  <TranslatedText>
+                    Complete your comprehensive course curriculum, successfully
+                    pass the final assessment, and earn an internationally
+                    recognized certificate that validates your English language
+                    proficiency.
+                  </TranslatedText>
                 </p>
                 <Link
                   to="/gallery"
@@ -1462,18 +1523,24 @@ const Home = () => {
               </motion.div>
 
               {/* Step 5: Placement & Abroad Opportunities */}
-              <motion.div
-                className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
+              <motion.div className="bg-[#0a0a0a] rounded-2xl border border-[#F97316]/20 p-6 md:p-8 hover:border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-all duration-300 flex flex-col h-full">
                 <div className="shrink-0 flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl bg-[#F97316] flex items-center justify-center shrink-0">
                     <FaGlobe className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white font-display">
-                    <TranslatedText>Step 5: Placement & Abroad Opportunities</TranslatedText>
+                    <TranslatedText>
+                      Step 5: Placement & Abroad Opportunities
+                    </TranslatedText>
                   </h3>
                 </div>
                 <p className="flex-1 text-gray-300 text-sm md:text-base leading-relaxed mb-6">
-                  <TranslatedText>Join advanced training batches, receive specialized communication training and comprehensive interview preparation support - prepare yourself for rewarding opportunities in Gulf countries and global markets.</TranslatedText>
+                  <TranslatedText>
+                    Join advanced training batches, receive specialized
+                    communication training and comprehensive interview
+                    preparation support - prepare yourself for rewarding
+                    opportunities in Gulf countries and global markets.
+                  </TranslatedText>
                 </p>
                 <Link
                   to="/explore-jobs"
@@ -1487,18 +1554,20 @@ const Home = () => {
       </motion.section>
 
       {/* Courses Section */}
-      <motion.section
-        id="courses"
-        className="pt-8 pb-12 bg-black">
+      <motion.section id="courses" className="pt-8 pb-12 bg-black">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our Premium</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Courses</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Courses</TranslatedText>
+              </span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Choose from our carefully designed programs tailored to your learning level and goals</TranslatedText>
+              <TranslatedText>
+                Choose from our carefully designed programs tailored to your
+                learning level and goals
+              </TranslatedText>
             </p>
           </motion.div>
 
@@ -1542,7 +1611,9 @@ const Home = () => {
               ) : homeCourses.length === 0 ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-gray-300 text-lg">
-                    <TranslatedText>No premium courses available yet.</TranslatedText>
+                    <TranslatedText>
+                      No premium courses available yet.
+                    </TranslatedText>
                   </div>
                 </div>
               ) : (
@@ -1607,7 +1678,9 @@ const Home = () => {
                                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                               </svg>
-                              {course.duration || <TranslatedText>N/A</TranslatedText>}
+                              {course.duration || (
+                                <TranslatedText>N/A</TranslatedText>
+                              )}
                             </span>
                             <span className="flex items-center gap-2">
                               <svg
@@ -1622,7 +1695,9 @@ const Home = () => {
                                   d="M17 8l4 4m0 0l-4 4m4-4H3"
                                 />
                               </svg>
-                              {course.format || <TranslatedText>Online</TranslatedText>}
+                              {course.format || (
+                                <TranslatedText>Online</TranslatedText>
+                              )}
                             </span>
                           </div>
 
@@ -1652,7 +1727,9 @@ const Home = () => {
 
                           <div className="shrink-0 flex flex-col gap-3 mt-auto pt-2">
                             <div className="flex items-center justify-between text-sm text-gray-300">
-                              <span><TranslatedText>Course Fee</TranslatedText></span>
+                              <span>
+                                <TranslatedText>Course Fee</TranslatedText>
+                              </span>
                               <span className="text-lg font-semibold text-[#F5D26A]">
                                 {course.price}
                               </span>
@@ -1673,7 +1750,10 @@ const Home = () => {
                                   // Check if course is free
                                   if (isFreeCourse(course)) {
                                     // Free course - navigate to course detail page for enrollment
-                                    handleViewCourseDetail(course, "home-featured");
+                                    handleViewCourseDetail(
+                                      course,
+                                      "home-featured"
+                                    );
                                   } else {
                                     // Paid course - go to payment flow
                                     redirectToCoursePayment(course, {
@@ -1684,7 +1764,11 @@ const Home = () => {
                                   }
                                 }}
                                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-4 py-2 text-xs md:text-sm font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
-                                {isFreeCourse(course) ? <TranslatedText>Enroll Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
+                                {isFreeCourse(course) ? (
+                                  <TranslatedText>Enroll Free</TranslatedText>
+                                ) : (
+                                  <TranslatedText>Buy Now</TranslatedText>
+                                )}
                               </motion.button>
                               <div
                                 onClick={(event) => event.stopPropagation()}
@@ -1709,11 +1793,9 @@ const Home = () => {
           </div>
 
           {/* See All Courses Button */}
-          <motion.div
-            className="flex justify-center">
+          <motion.div className="flex justify-center">
             <Link to="/courses/english-language">
-              <motion.button
-                className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
+              <motion.button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                 <TranslatedText>Explore All Courses</TranslatedText>
               </motion.button>
             </Link>
@@ -1722,15 +1804,12 @@ const Home = () => {
       </motion.section>
 
       {/* About Founder Section */}
-      <motion.section
-        className="py-12 bg-black">
+      <motion.section className="py-12 bg-black">
         <div className="layout-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Founder's Image */}
-            <motion.div
-              className="order-2 lg:order-2">
-              <motion.div
-                className="relative">
+            <motion.div className="order-2 lg:order-2">
+              <motion.div className="relative">
                 <img
                   src={founderImage}
                   alt="Digital AELA Founder - Expert English Language Trainer and Education Professional"
@@ -1740,8 +1819,7 @@ const Home = () => {
             </motion.div>
 
             {/* Right Side - Text Content */}
-            <motion.div
-              className="order-1 lg:order-1">
+            <motion.div className="order-1 lg:order-1">
               {/* "About Our Founder" Badge */}
               <div className="mb-4">
                 <span className="inline-block border-2 border-[#D4AF37] text-white px-4 py-2 rounded-lg text-sm font-semibold font-display">
@@ -1752,28 +1830,37 @@ const Home = () => {
               {/* Main Heading */}
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-display tracking-tight leading-none">
                 <TranslatedText>Meet Our</TranslatedText>{" "}
-                <span className="text-[#D4AF37]"><TranslatedText>Visionary Leader</TranslatedText></span>
+                <span className="text-[#D4AF37]">
+                  <TranslatedText>Visionary Leader</TranslatedText>
+                </span>
               </h2>
 
               {/* Descriptive Paragraph */}
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                <TranslatedText>With over 15 years of experience in English language education, our founder has dedicated their career to helping students achieve fluency and confidence. Specializing in IELTS preparation and corporate training, we understand that confidence in English opens doors to unlimited opportunities.</TranslatedText>
+                <TranslatedText>
+                  With over 15 years of experience in English language
+                  education, our founder has dedicated their career to helping
+                  students achieve fluency and confidence. Specializing in IELTS
+                  preparation and corporate training, we understand that
+                  confidence in English opens doors to unlimited opportunities.
+                </TranslatedText>
               </p>
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                <TranslatedText>Our innovative teaching methodology combines personalized approach with proven techniques, helping thousands of students achieve their dreams.</TranslatedText>
+                <TranslatedText>
+                  Our innovative teaching methodology combines personalized
+                  approach with proven techniques, helping thousands of students
+                  achieve their dreams.
+                </TranslatedText>
               </p>
 
               {/* Statistics Section */}
-              <motion.div
-                className="flex flex-wrap gap-8 mt-8">
+              <motion.div className="flex flex-wrap gap-8 mt-8">
                 {[
                   { number: "15+", label: "Years Experience" },
                   { number: "5000+", label: "Students Trained" },
                   { number: "98%", label: "Success Rate" },
                 ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    className="flex flex-col">
+                  <motion.div key={index} className="flex flex-col">
                     <span className="text-4xl md:text-5xl font-bold text-[#D4AF37] mb-2 font-display">
                       {stat.number}
                     </span>
@@ -1785,8 +1872,7 @@ const Home = () => {
               </motion.div>
 
               {/* Know More Button */}
-              <motion.div
-                className="mt-8">
+              <motion.div className="mt-8">
                 <motion.button
                   onClick={() => navigate("/about/founder")}
                   className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_10px_30px_rgba(245,210,106,0.35)] transition hover:brightness-110">
@@ -1811,25 +1897,26 @@ const Home = () => {
       </motion.section>
 
       {/* Lead Magnets Section */}
-      <motion.section
-        id="lead-magnets"
-        className="py-12 bg-[#141414]">
+      <motion.section id="lead-magnets" className="py-12 bg-[#141414]">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Start Your</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Journey Free</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Journey Free</TranslatedText>
+              </span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Experience premium English learning with our exclusive free offers</TranslatedText>
+              <TranslatedText>
+                Experience premium English learning with our exclusive free
+                offers
+              </TranslatedText>
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {/* Free Demo Class Card */}
-            <motion.div
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Play Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -1849,7 +1936,10 @@ const Home = () => {
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                <TranslatedText>Join our interactive demo class and experience our teaching methodology firsthand.</TranslatedText>
+                <TranslatedText>
+                  Join our interactive demo class and experience our teaching
+                  methodology firsthand.
+                </TranslatedText>
               </p>
 
               {/* Button */}
@@ -1861,8 +1951,7 @@ const Home = () => {
             </motion.div>
 
             {/* Free English Guide Card */}
-            <motion.div
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Download Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -1888,7 +1977,10 @@ const Home = () => {
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                <TranslatedText>Download our comprehensive English learning guide with tips, tricks, and study resources.</TranslatedText>
+                <TranslatedText>
+                  Download our comprehensive English learning guide with tips,
+                  tricks, and study resources.
+                </TranslatedText>
               </p>
 
               {/* Button */}
@@ -1900,8 +1992,7 @@ const Home = () => {
             </motion.div>
 
             {/* Gift a Future Card */}
-            <motion.div
-              className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
+            <motion.div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#D4AF37] text-center hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 flex flex-col h-full">
               {/* Gift Icon */}
               <div className="shrink-0 flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-[#3f3820] flex items-center justify-center">
@@ -1927,7 +2018,10 @@ const Home = () => {
 
               {/* Description */}
               <p className="flex-1 text-gray-300 mb-6 leading-relaxed">
-                <TranslatedText>Sponsor a classroom, dedicate scholarships, and help transform lives through education.</TranslatedText>
+                <TranslatedText>
+                  Sponsor a classroom, dedicate scholarships, and help transform
+                  lives through education.
+                </TranslatedText>
               </p>
 
               {/* Button */}
@@ -1942,27 +2036,29 @@ const Home = () => {
       </motion.section>
 
       {/* Premium Books Section */}
-      <motion.section
-        className="py-12 bg-[#1a1a1a]">
+      <motion.section className="py-12 bg-[#1a1a1a]">
         <div className="layout-container">
           {/* Header */}
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             {/* Small Title */}
-            <motion.p
-              className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
+            <motion.p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-wider mb-4 font-display">
               <TranslatedText>• OUR RESOURCES •</TranslatedText>
             </motion.p>
 
             {/* Main Title */}
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Master English with Our</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Premium Books</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Premium Books</TranslatedText>
+              </span>
             </h2>
 
             {/* Subtitle */}
             <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              <TranslatedText>Carefully curated learning materials designed by expert linguists to accelerate your English learning journey</TranslatedText>
+              <TranslatedText>
+                Carefully curated learning materials designed by expert
+                linguists to accelerate your English learning journey
+              </TranslatedText>
             </p>
           </motion.div>
 
@@ -1978,14 +2074,17 @@ const Home = () => {
           {/* Books Grid */}
           {!loadingBooks && featuredBooks.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {(translatedBooks.length > 0 ? translatedBooks : featuredBooks).map((book, index) => {
+              {(translatedBooks.length > 0
+                ? translatedBooks
+                : featuredBooks
+              ).map((book, index) => {
                 const discountPercent =
                   book.originalPrice > 0
                     ? Math.round(
-                      ((book.originalPrice - book.price) /
-                        book.originalPrice) *
-                      100
-                    )
+                        ((book.originalPrice - book.price) /
+                          book.originalPrice) *
+                          100
+                      )
                     : 0;
                 const displayPrice =
                   book.price > 0 ? `AED ${book.price}` : "Free";
@@ -2053,10 +2152,11 @@ const Home = () => {
                             {[...Array(5)].map((_, i) => (
                               <FaStar
                                 key={i}
-                                className={`w-3 h-3 ${i < Math.floor(book.rating || 4.5)
-                                  ? "text-[#D4AF37] fill-current"
-                                  : "text-gray-600"
-                                  }`}
+                                className={`w-3 h-3 ${
+                                  i < Math.floor(book.rating || 4.5)
+                                    ? "text-[#D4AF37] fill-current"
+                                    : "text-gray-600"
+                                }`}
                               />
                             ))}
                           </div>
@@ -2089,7 +2189,9 @@ const Home = () => {
                               e.preventDefault();
                               e.stopPropagation();
                               const isFreeBook =
-                                book.price === 0 || book.price === "Free" || book.price === null;
+                                book.price === 0 ||
+                                book.price === "Free" ||
+                                book.price === null;
                               const isEbook =
                                 book.badge === "E-Book" ||
                                 book.format === "ebook";
@@ -2108,9 +2210,14 @@ const Home = () => {
                                 }
 
                                 // Validate price
-                                const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                                const bookPrice =
+                                  typeof book.price === "number"
+                                    ? book.price
+                                    : parseFloat(book.price) || 0;
                                 if (!bookPrice || bookPrice <= 0) {
-                                  toast.error("This book price is not available. Please contact support.");
+                                  toast.error(
+                                    "This book price is not available. Please contact support."
+                                  );
                                   return;
                                 }
 
@@ -2118,7 +2225,9 @@ const Home = () => {
                                   bookId: book.id,
                                   amount: bookPrice,
                                   currency: "AED",
-                                  description: `Payment for ${book.title || "book"}`,
+                                  description: `Payment for ${
+                                    book.title || "book"
+                                  }`,
                                   userName: user?.fullName || "",
                                   userEmail: user?.email || "",
                                   userPhone: user?.phone || "",
@@ -2156,11 +2265,9 @@ const Home = () => {
           )}
 
           {/* View All Books Button */}
-          <motion.div
-            className="flex justify-center">
+          <motion.div className="flex justify-center">
             <Link to="/books">
-              <motion.button
-                className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
+              <motion.button className="bg-[#D4AF37] text-black px-8 py-3 rounded-lg font-bold text-base md:text-lg hover:bg-[#E5C158] transition-colors duration-200 flex items-center gap-2">
                 <TranslatedText>View All Books</TranslatedText>
                 <svg
                   className="w-5 h-5"
@@ -2190,16 +2297,20 @@ const Home = () => {
       `}</style>
       <section className="py-20 bg-[#141414]">
         <div className="layout-container">
-          <motion.div
-            className="why-choose-section-content">
-            <motion.div
-              className="text-center mb-16">
+          <motion.div className="why-choose-section-content">
+            <motion.div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
                 <TranslatedText>Why Choose</TranslatedText>{" "}
-                <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>?
+                <span className="text-[#D4AF37]">
+                  <TranslatedText>Digital AELA</TranslatedText>
+                </span>
+                ?
               </h2>
               <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
+                <TranslatedText>
+                  Your partner in building a strong future with knowledge that
+                  creates income, and income that creates freedom
+                </TranslatedText>
               </p>
             </motion.div>
 
@@ -2242,20 +2353,24 @@ const Home = () => {
       <section className="py-12 bg-black">
         <div className="layout-container">
           <div className="watch-stories-section-content">
-            <motion.div
-              className="md:opacity-100">
-              <motion.div
-                className="text-center mb-12 md:opacity-100">
+            <motion.div className="md:opacity-100">
+              <motion.div className="text-center mb-12 md:opacity-100">
                 <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                   <TranslatedText>• WATCH OUR STORIES •</TranslatedText>
                 </p>
                 <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
                   <TranslatedText>Step Inside the</TranslatedText>{" "}
-                  <span className="text-[#D4AF37]"><TranslatedText>Digital AELA</TranslatedText></span>{" "}
+                  <span className="text-[#D4AF37]">
+                    <TranslatedText>Digital AELA</TranslatedText>
+                  </span>{" "}
                   <TranslatedText>Experience</TranslatedText>
                 </h2>
                 <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                  <TranslatedText>Hear from our learners, mentors, and community as they share milestones, transformations, and the heart behind the Afterlife movement.</TranslatedText>
+                  <TranslatedText>
+                    Hear from our learners, mentors, and community as they share
+                    milestones, transformations, and the heart behind the
+                    Afterlife movement.
+                  </TranslatedText>
                 </p>
               </motion.div>
 
@@ -2297,20 +2412,24 @@ const Home = () => {
       </section>
 
       {topBlogs.length > 0 && (
-        <motion.section
-          className="py-12 bg-[#090909]">
+        <motion.section className="py-12 bg-[#090909]">
           <div className="layout-container">
-            <motion.div
-              className="text-center mb-12">
+            <motion.div className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• BLOGS •</TranslatedText>
               </p>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
                 <TranslatedText>Latest Stories from the</TranslatedText>{" "}
-                <span className="text-[#D4AF37]"><TranslatedText>AELA Community</TranslatedText></span>
+                <span className="text-[#D4AF37]">
+                  <TranslatedText>AELA Community</TranslatedText>
+                </span>
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                <TranslatedText>Quick reads curated by our mentors and learners. Dive into frameworks, wins, and behind-the-scenes playbooks powering the Afterlife movement.</TranslatedText>
+                <TranslatedText>
+                  Quick reads curated by our mentors and learners. Dive into
+                  frameworks, wins, and behind-the-scenes playbooks powering the
+                  Afterlife movement.
+                </TranslatedText>
               </p>
             </motion.div>
 
@@ -2334,7 +2453,8 @@ const Home = () => {
                         {blog.category}
                       </span>
                       <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-xs font-semibold text-white/90">
-                        {blog.readTime} <TranslatedText>min read</TranslatedText>
+                        {blog.readTime}{" "}
+                        <TranslatedText>min read</TranslatedText>
                       </span>
                     </div>
                     <div className="flex flex-1 flex-col p-6">
@@ -2385,24 +2505,31 @@ const Home = () => {
       )}
 
       {galleryItems.length > 0 && (
-        <motion.section
-          className="py-12 bg-[#080808]">
+        <motion.section className="py-12 bg-[#080808]">
           <div className="layout-container">
-            <motion.div
-              className="text-center mb-12">
+            <motion.div className="text-center mb-12">
               <p className="text-[#D4AF37] text-sm md:text-base font-semibold uppercase tracking-[0.35em] mb-3 font-display">
                 <TranslatedText>• AELA GALLERY •</TranslatedText>
               </p>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-tight">
-                <TranslatedText>From Hesitation to Certification —</TranslatedText>{" "}
+                <TranslatedText>
+                  From Hesitation to Certification —
+                </TranslatedText>{" "}
                 <span className="text-[#D4AF37]">
-                  <TranslatedText>Their Journey, Your Inspiration</TranslatedText>
+                  <TranslatedText>
+                    Their Journey, Your Inspiration
+                  </TranslatedText>
                 </span>
               </h2>
               <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                <TranslatedText>Certificate ke saath real learning, real confidence aur real speaking skills.</TranslatedText>
+                <TranslatedText>
+                  Certificate ke saath real learning, real confidence aur real
+                  speaking skills.
+                </TranslatedText>
                 <br />
-                <TranslatedText>Aaj se aapka English journey bhi start ho sakta hai.</TranslatedText>
+                <TranslatedText>
+                  Aaj se aapka English journey bhi start ho sakta hai.
+                </TranslatedText>
               </p>
             </motion.div>
 
@@ -2428,7 +2555,9 @@ const Home = () => {
               <MotionLink
                 to="/gallery"
                 className="inline-flex w-full max-w-lg items-center justify-center rounded-full bg-linear-to-r from-[#D4AF37] to-[#E5C158] px-8 py-3 text-sm font-semibold text-black shadow-lg transition hover:brightness-105">
-                <TranslatedText>Get Certified with Digital AELA → Enroll Now</TranslatedText>
+                <TranslatedText>
+                  Get Certified with Digital AELA → Enroll Now
+                </TranslatedText>
               </MotionLink>
             </div>
           </div>
@@ -2436,17 +2565,19 @@ const Home = () => {
       )}
 
       {/* Testimonials Section */}
-      <motion.section
-        className="py-12 bg-[#141414]">
+      <motion.section className="py-12 bg-[#141414]">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Student</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Testimonials</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Testimonials</TranslatedText>
+              </span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Success stories from our amazing students</TranslatedText>
+              <TranslatedText>
+                Success stories from our amazing students
+              </TranslatedText>
             </p>
           </motion.div>
 
@@ -2486,8 +2617,7 @@ const Home = () => {
               </svg>
             </motion.button>
 
-            <motion.div
-              className="grid gap-6 md:grid-cols-3">
+            <motion.div className="grid gap-6 md:grid-cols-3">
               {loadingTestimonials ? (
                 <div className="col-span-3 text-center py-12 text-gray-400">
                   <TranslatedText>Loading testimonials...</TranslatedText>
@@ -2505,7 +2635,10 @@ const Home = () => {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
                           <img
-                            src={getMediaUrl(item.avatar) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"}
+                            src={
+                              getMediaUrl(item.avatar) ||
+                              "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80"
+                            }
                             alt={item.name}
                             className="h-full w-full object-cover"
                             loading="lazy"
@@ -2601,10 +2734,15 @@ const Home = () => {
               <TranslatedText>Frequently Asked Questions</TranslatedText>
             </p>
             <h2 className="text-xl md:text-3xl font-bold text-white mt-3 font-display">
-              <TranslatedText>Answers designed for curious learners</TranslatedText>
+              <TranslatedText>
+                Answers designed for curious learners
+              </TranslatedText>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto mt-3 text-xs md:text-sm">
-              <TranslatedText>Everything you need to know about Digital AELA courses, support, and the career outcomes we help you unlock.</TranslatedText>
+              <TranslatedText>
+                Everything you need to know about Digital AELA courses, support,
+                and the career outcomes we help you unlock.
+              </TranslatedText>
             </p>
           </div>
 
@@ -2623,10 +2761,11 @@ const Home = () => {
                       {index + 1}. {item.question}
                     </span>
                     <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
-                        ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
-                        : "bg-transparent text-[#D4AF37]"
-                        }`}>
+                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${
+                        isOpen
+                          ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                          : "bg-transparent text-[#D4AF37]"
+                      }`}>
                       <svg
                         className="w-3 h-3"
                         fill="none"
@@ -2642,8 +2781,7 @@ const Home = () => {
                     </span>
                   </button>
                   {isOpen && (
-                    <motion.div
-                      className="px-5 pb-4 overflow-hidden">
+                    <motion.div className="px-5 pb-4 overflow-hidden">
                       <div className="text-xs md:text-sm leading-relaxed text-gray-300">
                         {item.answer}
                       </div>
