@@ -358,7 +358,7 @@ const BookDetail = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
+        className="relative pt-[110px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <Link

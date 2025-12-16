@@ -307,7 +307,7 @@ const Books = () => {
 
       {/* Hero Section */}
       <motion.section
-        className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
+        className="relative pt-[110px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <motion.div
           className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>

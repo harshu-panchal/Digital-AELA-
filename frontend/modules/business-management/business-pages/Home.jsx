@@ -1094,7 +1094,7 @@ const Home = () => {
       />
       {/* Hero Section */}
       <motion.section
-        className="relative min-h-screen flex items-center pt-[160px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
+        className="relative min-h-screen flex items-center pt-[130px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"
         onMouseEnter={() => setIsHeroPaused(true)}
         onMouseLeave={() => setIsHeroPaused(false)}>
         <div className="absolute inset-0 bg-black" />

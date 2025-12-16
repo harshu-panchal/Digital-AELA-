@@ -154,7 +154,7 @@ const EnglishLanguageCourses = () => {
       />
       {/* Hero Section */}
       <motion.section
-        className="relative overflow-hidden bg-black pt-[120px] pb-20 md:pt-[140px] md:pb-28">
+        className="relative overflow-hidden bg-black pt-[90px] pb-20 md:pt-[140px] md:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-[10%] h-104 w-104 rounded-full bg-[#D4AF37]/15 blur-[180px]" />
           <div className="absolute bottom-[-25%] right-[12%] h-112 w-md rounded-full bg-[#6A8BFF]/12 blur-[200px]" />

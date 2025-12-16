@@ -4,7 +4,7 @@ const ContactPageLayout = ({ badge, title, subtitle, description, children }) =>
   return (
     <div className="min-h-screen bg-black">
       <motion.section
-        className="relative pt-[140px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
+        className="relative pt-[110px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
         <motion.div
           className="absolute top-[-120px] right-[-120px] w-[320px] h-[320px] md:w-[420px] md:h-[420px] bg-[#D4AF37]/10 rounded-full blur-xl"
