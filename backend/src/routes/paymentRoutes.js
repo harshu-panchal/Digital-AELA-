@@ -14,6 +14,7 @@ import {
   handleRazorpayCallback,
   verifyPaymentStatus,
   testCallbackUrl,
+  handleRazorpayWebhook,
 } from "../controllers/paymentController.js";
 import { verifyRazorpayCallback } from "../controllers/paymentCallbackVerify.js";
 import { authenticate } from "../middleware/authMiddleware.js";
@@ -34,9 +35,11 @@ router.get("/pending", authenticate, getPendingPayments);
 // Get teacher earnings
 router.get("/earnings", authenticate, getTeacherEarnings);
 
-// Webhooks removed - using callback-based verification only
+// Razorpay webhook (FINAL payment confirmation - no authentication, signature verified)
+// Use raw body parser for webhook signature verification
+router.post("/razorpay/webhook", express.raw({ type: "application/json" }), handleRazorpayWebhook);
 
-// Razorpay payment callback (redirect-based, no authentication)
+// Razorpay payment callback (UX redirect only - no authentication)
 router.get("/razorpay/callback", handleRazorpayCallback);
 
 // Test callback URL configuration

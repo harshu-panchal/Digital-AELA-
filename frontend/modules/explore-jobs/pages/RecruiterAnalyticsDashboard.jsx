@@ -16,31 +16,7 @@ import { toast } from "react-toastify";
 import {
   fetchRecruiterAnalyticsDashboard,
 } from "../../../src/services/api/recruiter.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { LazyLine, LazyBar, LazyDoughnut } from "../../../src/components/LazyChart";
 
 const RecruiterAnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -320,7 +296,7 @@ const RecruiterAnalyticsDashboard = () => {
           >
             <h3 className="text-xl font-semibold text-white mb-4">Application Trend</h3>
             <div className="h-64">
-              <Line data={trendChartData} options={chartOptions} />
+              <LazyLine data={trendChartData} options={chartOptions} />
             </div>
           </motion.div>
 
@@ -332,7 +308,7 @@ const RecruiterAnalyticsDashboard = () => {
           >
             <h3 className="text-xl font-semibold text-white mb-4">Status Breakdown</h3>
             <div className="h-64">
-              <Doughnut data={statusChartData} options={chartOptions} />
+              <LazyDoughnut data={statusChartData} options={chartOptions} />
             </div>
             <div className="grid grid-cols-2 gap-2 mt-4">
               {Object.entries(statusBreakdown).map(([key, value]) => (

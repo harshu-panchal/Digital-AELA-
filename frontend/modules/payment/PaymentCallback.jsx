@@ -19,15 +19,13 @@ const PaymentCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Log all URL parameters received
       console.log("==========================================");
-      console.log("[Payment Callback Frontend] Received parameters:");
+      console.log("[Payment Callback Frontend] Received parameters (UX redirect only)");
       console.log("URL Search Params:", {
         paymentId,
         paymentStatus,
         payment_id,
         errorMessage,
-        allParams: Object.fromEntries(searchParams.entries()),
       });
       console.log("==========================================");
 
@@ -46,289 +44,72 @@ const PaymentCallback = () => {
       }
 
       try {
-        console.log("[Payment Callback Frontend] Fetching payment details for:", paymentId);
-        // Fetch payment details to check status
+        // Fetch payment details to show current status
+        // Webhook will update payment status in the background
         const paymentData = await getPaymentDetails(paymentId);
         setPayment(paymentData.payment);
 
-        console.log("[Payment Callback Frontend] Payment data received:", {
-          paymentId,
-          paymentStatusFromURL: paymentStatus,
-          paymentStatusFromDB: paymentData.payment?.status,
-          paymentData: {
-            id: paymentData.payment?._id,
-            status: paymentData.payment?.status,
-            amount: paymentData.payment?.amount,
-            gatewayTransactionId: paymentData.payment?.gatewayTransactionId,
-            course: paymentData.payment?.course ? "present" : "missing",
-          },
-        });
+        const currentStatus = paymentData.payment?.status;
 
-        // Normalize status from URL - treat "unknown" as "processing"
-        const normalizedStatus = paymentStatus === "unknown" || !paymentStatus ? "processing" : paymentStatus;
+        console.log("[Payment Callback Frontend] Payment status from DB:", currentStatus);
 
-        // Check for success status from URL or payment record
-        const isSuccess = normalizedStatus === "success" || normalizedStatus === "paid" || paymentData.payment?.status === "completed";
-        const isFailed = normalizedStatus === "failed" || paymentData.payment?.status === "failed";
-
-        console.log("[Payment Callback Frontend] Status determination:", {
-          isSuccess,
-          isFailed,
-          paymentStatusFromURL: paymentStatus,
-          normalizedStatus,
-          paymentStatusFromDB: paymentData.payment?.status,
-          conditions: {
-            urlSuccess: normalizedStatus === "success",
-            urlPaid: normalizedStatus === "paid",
-            dbCompleted: paymentData.payment?.status === "completed",
-            urlFailed: normalizedStatus === "failed",
-            dbFailed: paymentData.payment?.status === "failed",
-          },
-        });
-
-        // CRITICAL FIX: If payment_id is present in URL, trigger immediate verification
-        // This happens when Razorpay redirects back after successful payment
-        console.log("[Payment Callback Frontend] Checking for payment_id:", { payment_id, isSuccess, isFailed });
-
-        if (payment_id && !isSuccess && !isFailed) {
-          console.log("[Payment Callback Frontend] ✅ payment_id found in URL, triggering immediate verification:", payment_id);
-          try {
-            // Import the verification function
-            const { default: apiClient } = await import("../../src/services/api/baseClient");
-
-            // Call backend to verify payment immediately
-            console.log("[Payment Callback Frontend] Calling verify-razorpay-callback endpoint...");
-            const verifyResponse = await apiClient.post(`/payments/${paymentId}/verify-razorpay-callback`, {
-              razorpay_payment_id: payment_id,
-            });
-
-            console.log("[Payment Callback Frontend] Immediate verification response:", verifyResponse);
-
-            if (verifyResponse.data?.payment?.status === "completed") {
-              console.log("[Payment Callback Frontend] ✅ Payment verified and completed immediately!");
-              setStatus("success");
-              setPayment(verifyResponse.data.payment);
-              toast.success("Payment successful!");
-
-              setTimeout(() => {
-                if (verifyResponse.data.payment?.course) {
-                  const courseId = verifyResponse.data.payment.course._id || verifyResponse.data.payment.course;
-                  navigate(`/courses/${courseId}`);
-                } else {
-                  navigate("/student/payments");
-                }
-              }, 3000);
-              return; // Exit early - payment verified
-            } else {
-              console.log("[Payment Callback Frontend] ⚠️ Payment verification returned status:", verifyResponse.data?.payment?.status);
-            }
-          } catch (verifyError) {
-            console.error("[Payment Callback Frontend] ❌ Immediate verification failed:", verifyError);
-            console.error("[Payment Callback Frontend] Error details:", {
-              message: verifyError.message,
-              status: verifyError.response?.status,
-              data: verifyError.response?.data
-            });
-            // Continue with normal flow if immediate verification fails
-          }
-        } else {
-          console.log("[Payment Callback Frontend] ❌ No payment_id in URL, will use polling instead");
-          console.log("[Payment Callback Frontend] This usually means callback URL is not whitelisted in Razorpay Dashboard");
-        }
-
-
-        if (isSuccess) {
-          console.log("[Payment Callback Frontend] Setting status to SUCCESS");
+        // Check payment status - webhook should update it
+        if (currentStatus === "completed") {
           setStatus("success");
           toast.success("Payment successful!");
-
-          // Redirect based on payment type
           setTimeout(() => {
             if (paymentData.payment?.course) {
               const courseId = paymentData.payment.course._id || paymentData.payment.course;
-              console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
               navigate(`/courses/${courseId}`);
             } else {
-              console.log("[Payment Callback Frontend] Redirecting to payments page");
               navigate("/student/payments");
             }
           }, 3000);
-        } else if (isFailed) {
-          console.log("[Payment Callback Frontend] Setting status to FAILED");
+        } else if (currentStatus === "failed") {
           setStatus("failed");
           toast.error("Payment failed. Please try again.");
         } else {
-          // Payment is processing - implement exponential backoff polling
-          console.log("[Payment Callback Frontend] Setting status to PROCESSING, will poll with exponential backoff");
+          // Payment is processing - wait for webhook to update status
           setStatus("processing");
-
-          // Exponential backoff intervals: 2s, 5s, 10s, 20s, 30s (total ~67 seconds)
+          
+          // Poll payment status (webhook should update it within a few seconds)
+          // Poll with intervals: 2s, 5s, 10s, 20s, 30s (total ~67 seconds)
           const pollIntervals = [2000, 5000, 10000, 20000, 30000];
           let pollAttempt = 0;
-          let totalWaitTime = 0;
 
           const pollPaymentStatus = async () => {
             if (pollAttempt >= pollIntervals.length) {
-              // After all retries, try manual verification from Razorpay one last time
-              try {
-                console.log("[Payment Callback Frontend] Final check: Trying manual verification from Razorpay");
-                const verifyResult = await verifyPaymentStatus(paymentId);
-
-                // If verification was successful, trust the result
-                if (verifyResult.verified) {
-                  if (verifyResult.payment?.status === "completed") {
-                    console.log("[Payment Callback Frontend] Payment completed on final verification");
-                    setStatus("success");
-                    setPayment(verifyResult.payment);
-                    toast.success("Payment successful!");
-                    setTimeout(() => {
-                      if (verifyResult.payment?.course) {
-                        const courseId = verifyResult.payment.course._id || verifyResult.payment.course;
-                        navigate(`/courses/${courseId}`);
-                      } else {
-                        navigate("/student/payments");
-                      }
-                    }, 3000);
-                  } else {
-                    // Verified but status is not completed - show processing message
-                    console.log("[Payment Callback Frontend] Payment verified but status is:", verifyResult.payment?.status);
-                    setStatus("processing");
-                    setPayment(verifyResult.payment);
-                    toast.info("Payment is being processed. Please check back in a few moments.");
-                    setTimeout(() => {
-                      navigate("/student/payments");
-                    }, 5000);
-                  }
-                } else {
-                  // Fallback to regular check
-                  const finalPayment = await getPaymentDetails(paymentId);
-
-                  if (finalPayment.payment?.status === "completed") {
-                    console.log("[Payment Callback Frontend] Payment completed on final check");
-                    setStatus("success");
-                    setPayment(finalPayment.payment);
-                    toast.success("Payment successful!");
-                    setTimeout(() => {
-                      if (finalPayment.payment?.course) {
-                        const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
-                        navigate(`/courses/${courseId}`);
-                      } else {
-                        navigate("/student/payments");
-                      }
-                    }, 3000);
-                  } else if (finalPayment.payment?.status === "failed") {
-                    console.log("[Payment Callback Frontend] Payment marked as failed");
-                    setStatus("failed");
-                    toast.error("Payment failed. Please try again or contact support.");
-                  } else {
-                    // Still processing - don't mark as failed, show processing message
-                    console.log("[Payment Callback Frontend] Payment still processing after all retries");
-                    setStatus("processing");
-                    setPayment(finalPayment.payment);
-                    toast.info("Payment verification is taking longer than expected. Your payment may still be processing. Please check your payment status in a few moments.");
-                    setTimeout(() => {
-                      navigate("/student/payments");
-                    }, 5000);
-                  }
-                }
-              } catch (err) {
-                // Handle 404 gracefully - endpoint might not be deployed yet
-                if (err.message?.includes('404') || err.message?.includes('Not Found')) {
-                  console.log("[Payment Callback Frontend] Verify-status endpoint not available (404) on final check, using regular check instead");
-                } else {
-                  console.error("[Payment Callback Frontend] Error on final check:", err);
-                }
-                // Always try one last regular check
-                try {
-                  const finalPayment = await getPaymentDetails(paymentId);
-                  if (finalPayment.payment?.status === "completed") {
-                    setStatus("success");
-                    setPayment(finalPayment.payment);
-                    toast.success("Payment successful!");
-                    setTimeout(() => {
-                      if (finalPayment.payment?.course) {
-                        const courseId = finalPayment.payment.course._id || finalPayment.payment.course;
-                        navigate(`/courses/${courseId}`);
-                      } else {
-                        navigate("/student/payments");
-                      }
-                    }, 3000);
-                  } else if (finalPayment.payment?.status === "failed") {
-                    setStatus("failed");
-                    toast.error("Payment failed. Please try again or contact support.");
-                  } else {
-                    // Still processing - don't mark as failed
-                    setStatus("processing");
-                    setPayment(finalPayment.payment);
-                    toast.info("Payment verification is taking longer than expected. Your payment may still be processing. Please check your payment status in a few moments.");
-                    setTimeout(() => {
-                      navigate("/student/payments");
-                    }, 5000);
-                  }
-                } catch (finalErr) {
-                  console.error("[Payment Callback Frontend] Error on final fallback check:", finalErr);
-                  setStatus("failed");
-                  toast.error("Payment verification timed out. Please check your payment status in the payments page.");
-                }
-              }
+              // After all retries, show processing message and redirect
+              console.log("[Payment Callback Frontend] Webhook may be delayed, redirecting to payments page");
+              toast.info("Payment is being processed. Please check your payment status in a few moments.");
+              setTimeout(() => {
+                navigate("/student/payments");
+              }, 3000);
               return;
             }
 
             const delay = pollIntervals[pollAttempt];
-            totalWaitTime += delay;
-
-            console.log(`[Payment Callback Frontend] Polling attempt ${pollAttempt + 1}/${pollIntervals.length} after ${delay}ms (total: ${totalWaitTime}ms)`);
+            console.log(`[Payment Callback Frontend] Polling attempt ${pollAttempt + 1}/${pollIntervals.length} after ${delay}ms (waiting for webhook)`);
 
             setTimeout(async () => {
               try {
-                // On later attempts (3rd and beyond), also try manual verification from Razorpay
-                let updatedPayment;
-                if (pollAttempt >= 2) {
-                  console.log(`[Payment Callback Frontend] Attempt ${pollAttempt + 1}: Trying manual verification from Razorpay`);
-                  try {
-                    const verifyResult = await verifyPaymentStatus(paymentId);
-                    if (verifyResult.verified && verifyResult.payment) {
-                      updatedPayment = { payment: verifyResult.payment };
-                      console.log("[Payment Callback Frontend] Manual verification successful:", {
-                        status: verifyResult.payment.status,
-                        verified: verifyResult.verified,
-                      });
-                    } else {
-                      // Fallback to regular check
-                      updatedPayment = await getPaymentDetails(paymentId);
-                    }
-                  } catch (verifyErr) {
-                    // Handle 404 gracefully - endpoint might not be deployed yet
-                    if (verifyErr.message?.includes('404') || verifyErr.message?.includes('Not Found')) {
-                      console.log("[Payment Callback Frontend] Verify-status endpoint not available (404), using regular check instead");
-                    } else {
-                      console.log("[Payment Callback Frontend] Manual verification failed, falling back to regular check:", verifyErr.message);
-                    }
-                    // Always fallback to regular check
-                    updatedPayment = await getPaymentDetails(paymentId);
-                  }
-                } else {
-                  updatedPayment = await getPaymentDetails(paymentId);
-                }
+                const updatedPayment = await getPaymentDetails(paymentId);
 
                 console.log("[Payment Callback Frontend] Poll result:", {
                   attempt: pollAttempt + 1,
                   status: updatedPayment.payment?.status,
-                  gatewayTransactionId: updatedPayment.payment?.gatewayTransactionId,
                 });
 
                 if (updatedPayment.payment?.status === "completed") {
-                  console.log("[Payment Callback Frontend] Payment now completed, setting SUCCESS");
+                  console.log("[Payment Callback Frontend] ✅ Payment completed (webhook processed)");
                   setStatus("success");
                   setPayment(updatedPayment.payment);
                   toast.success("Payment successful!");
                   setTimeout(() => {
                     if (updatedPayment.payment?.course) {
                       const courseId = updatedPayment.payment.course._id || updatedPayment.payment.course;
-                      console.log("[Payment Callback Frontend] Redirecting to course:", courseId);
                       navigate(`/courses/${courseId}`);
                     } else {
-                      console.log("[Payment Callback Frontend] Redirecting to payments page");
                       navigate("/student/payments");
                     }
                   }, 3000);
@@ -337,13 +118,13 @@ const PaymentCallback = () => {
                   setStatus("failed");
                   toast.error("Payment failed. Please try again.");
                 } else {
-                  // Still processing, continue polling
+                  // Still processing, continue polling (webhook may be delayed)
                   pollAttempt++;
                   pollPaymentStatus();
                 }
               } catch (err) {
                 console.error(`[Payment Callback Frontend] Error on poll attempt ${pollAttempt + 1}:`, err);
-                // Continue polling even on error (might be temporary network issue)
+                // Continue polling even on error
                 pollAttempt++;
                 pollPaymentStatus();
               }
@@ -360,7 +141,7 @@ const PaymentCallback = () => {
           paymentId,
         });
         setStatus("error");
-        setError(err.message || "Failed to verify payment");
+        setError(err.message || "Failed to fetch payment details");
       }
     };
 

@@ -1,9 +1,7 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Navbar from "../modules/business-management/business-components/Navbar";
-import Footer from "../modules/business-management/business-components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import FloatingDebateButton from "./components/FloatingDebateButton";
 import WebsitePopupForm from "./components/WebsitePopupForm";
@@ -12,9 +10,17 @@ import FinancialProtectedRoute from "./components/FinancialProtectedRoute";
 import LoadingFallback from "./components/LoadingFallback";
 import { ExploreJobsProvider } from "../modules/explore-jobs/context/ExploreJobsContext";
 
-// Keep Home and AdminLogin as static imports for fast initial load
-import Home from "../modules/business-management/business-pages/Home";
-import AdminLogin from "../modules/admin/AdminLogin";
+// Lazy load Home, AdminLogin, Navbar, and Footer for better performance
+const Home = lazy(() =>
+  import("../modules/business-management/business-pages/Home")
+);
+const AdminLogin = lazy(() => import("../modules/admin/AdminLogin"));
+const Navbar = lazy(() =>
+  import("../modules/business-management/business-components/Navbar")
+);
+const Footer = lazy(() =>
+  import("../modules/business-management/business-components/Footer")
+);
 
 // Lazy load all route components
 const LearnEarnLayout = lazy(() =>
@@ -443,10 +449,12 @@ const RecruiterProfileDetail = lazy(() =>
 
 export const App = () => {
   const location = useLocation();
-  const isAdminLogin = 
+  const isAdminLogin =
     location.pathname === "/admin/login" ||
     location.pathname === "/reset-password" ||
-    location.pathname.startsWith("/super-admin/settings/financial-password/reset");
+    location.pathname.startsWith(
+      "/super-admin/settings/financial-password/reset"
+    );
 
   // Check if current path is a dashboard
   const isDashboard =
@@ -459,15 +467,57 @@ export const App = () => {
     location.pathname.startsWith("/recruiter/analytics") ||
     location.pathname.startsWith("/explore-jobs");
 
+  // Preload critical routes for better performance
+  useEffect(() => {
+    // Preload Home on initial load
+    if (location.pathname === "/" || location.pathname === "/home") {
+      import("../modules/business-management/business-pages/Home");
+    }
+    // Preload login pages when user might navigate there
+    if (
+      location.pathname.includes("/login") ||
+      location.pathname.includes("/register")
+    ) {
+      import("../modules/business-management/business-components/Navbar");
+    }
+  }, [location.pathname]);
+
   return (
     <>
       <ScrollToTop />
       <ToastContainer position="top-right" autoClose={3200} theme="dark" />
-      {!isAdminLogin && <Navbar />}
+      {!isAdminLogin && (
+        <Suspense fallback={<div className="h-20 bg-[#020409]" />}>
+          <Navbar />
+        </Suspense>
+      )}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/"
+          element={
+            <Suspense
+              fallback={<LoadingFallback message="Loading home page..." />}>
+              <Home />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <Suspense
+              fallback={<LoadingFallback message="Loading home page..." />}>
+              <Home />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/login"
+          element={
+            <Suspense fallback={<LoadingFallback message="Loading login..." />}>
+              <AdminLogin />
+            </Suspense>
+          }
+        />
         <Route
           path="/super-admin/*"
           element={
@@ -1382,7 +1432,11 @@ export const App = () => {
           }
         />
       </Routes>
-      {!isAdminLogin && !isDashboard && <Footer />}
+      {!isAdminLogin && !isDashboard && (
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      )}
       {!isAdminLogin &&
         (location.pathname === "/" || location.pathname === "/home") && (
           <FloatingDebateButton />

@@ -199,16 +199,54 @@ export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
 /**
  * Verify webhook signature
  * @param {string} payload - Webhook payload (JSON string)
- * @param {string} signature - Webhook signature
+ * @param {string} signature - Webhook signature from X-Razorpay-Signature header
  * @returns {boolean} True if signature is valid
- * 
- * NOTE: Webhook secret verification is disabled - always returns true
- * This allows payments to complete immediately without waiting for webhook verification
  */
 export const verifyWebhookSignature = async (payload, signature) => {
-  // Webhook secret verification disabled - always return true
-  console.log("[Razorpay] Webhook signature verification skipped (disabled)");
-  return true;
+  try {
+    if (!signature) {
+      console.error("[Razorpay] Webhook signature missing");
+      return false;
+    }
+
+    // Get webhook secret from settings or environment
+    const settings = await getSettings(["payment.gateway.razorpay.webhookSecret"]);
+    const webhookSecret = settings["payment.gateway.razorpay.webhookSecret"] || process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.warn("[Razorpay] Webhook secret not configured - signature verification skipped");
+      // In development, allow webhooks without secret if not configured
+      if (process.env.NODE_ENV === "development") {
+        return true;
+      }
+      return false;
+    }
+
+    // Razorpay uses HMAC SHA256 for webhook signatures
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(payload)
+      .digest("hex");
+
+    // Razorpay sends signature in format: signature=expectedSignature
+    const receivedSignature = signature.replace("signature=", "");
+
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature),
+      Buffer.from(receivedSignature)
+    );
+
+    if (!isValid) {
+      console.error("[Razorpay] Webhook signature verification failed");
+      return false;
+    }
+
+    console.log("[Razorpay] Webhook signature verified successfully");
+    return true;
+  } catch (error) {
+    console.error("[Razorpay] Error verifying webhook signature:", error);
+    return false;
+  }
 };
 
 /**

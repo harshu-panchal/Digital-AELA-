@@ -20,7 +20,7 @@ import {
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "../../../src/config/api.js";
 
-// Import styles
+// Import styles - CSS is already lazy loaded since this component is lazy loaded at route level
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import "@react-pdf-viewer/page-navigation/lib/styles/index.css";

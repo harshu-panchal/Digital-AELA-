@@ -5,25 +5,13 @@ import Confetti from "react-confetti";
 import { toast } from "react-toastify";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 import { FaCoins } from "react-icons/fa";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
 import { useUser } from "../../../src/contexts/UserContext";
 import { usePoints } from "../../../src/contexts/PointsContext";
 import { getRewards } from "../../../src/services/api/rewards";
 import { createRedemptionRequest } from "../../../src/services/api/redemptionRequests";
 import { claimDailyBonus, fetchStudentPoints } from "../../../src/services/api/points";
 import TranslatedText from "../../../src/components/TranslatedText";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
+import { LazyLine } from "../../../src/components/LazyChart";
 
 const WalletDashboard = () => {
   const { transactions, recordTransaction, totals } = useUser();
@@ -224,7 +212,7 @@ const WalletDashboard = () => {
             </button>
           </div>
           <div className="mt-6">
-            <Line data={chartData} options={chartOptions} height={210} />
+            <LazyLine data={chartData} options={chartOptions} height={210} />
           </div>
         </Motion.div>
 

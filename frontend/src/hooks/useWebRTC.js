@@ -1,6 +1,27 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import * as mediasoupClient from "mediasoup-client";
 import { toast } from "react-toastify";
+
+// Lazy load mediasoup-client to reduce initial bundle size
+let mediasoupClient = null;
+let mediasoupLoading = false;
+const loadMediasoup = async () => {
+  if (mediasoupClient) return mediasoupClient;
+  if (mediasoupLoading) {
+    // Wait for existing load
+    while (mediasoupLoading) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return mediasoupClient;
+  }
+  
+  mediasoupLoading = true;
+  try {
+    mediasoupClient = await import("mediasoup-client");
+  } finally {
+    mediasoupLoading = false;
+  }
+  return mediasoupClient;
+};
 
 export const useWebRTC = (socket, roomId, userId, role) => {
   const [localStream, setLocalStream] = useState(null);
@@ -75,9 +96,12 @@ export const useWebRTC = (socket, roomId, userId, role) => {
           return deviceRef.current;
         }
 
+        // Lazy load mediasoup if not already loaded
+        const mediasoup = await loadMediasoup();
+
         // eslint-disable-next-line no-console
         console.log("[WebRTC] Initializing mediasoup device...");
-        const device = new mediasoupClient.Device();
+        const device = new mediasoup.Device();
         await withTimeout(
           device.load({ routerRtpCapabilities: rtpCapabilities }),
           15000,

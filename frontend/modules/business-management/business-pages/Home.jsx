@@ -1840,8 +1840,7 @@ const Home = () => {
                 <TranslatedText>
                   With over 15 years of experience in English language
                   education, our founder has dedicated their career to helping
-                  students achieve fluency and confidence. Specializing in IELTS
-                  preparation and corporate training, we understand that
+                  students achieve fluency and confidence. Specializing in public speaking and corporate training, we understand that
                   confidence in English opens doors to unlimited opportunities.
                 </TranslatedText>
               </p>

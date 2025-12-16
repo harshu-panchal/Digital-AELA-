@@ -3,38 +3,13 @@ import { motion } from "framer-motion";
 import { FaSpinner, FaDownload, FaChartLine, FaUsers, FaGraduationCap, FaDollarSign, FaBriefcase } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
-import {
   fetchOverviewAnalytics,
   fetchUserAnalytics,
   fetchCourseAnalytics,
   fetchRevenueAnalytics,
   fetchJobAnalytics,
 } from "../../../src/services/api/superAdmin";
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { LazyLine, LazyBar, LazyPie, LazyDoughnut } from "../../../src/components/LazyChart";
 
 const AdvancedAnalytics = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -401,7 +376,7 @@ const UsersTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">User Growth</h3>
           <div className="h-64">
-            <Line
+            <LazyLine
               data={userGrowthData}
               options={{
                 responsive: true,
@@ -424,7 +399,7 @@ const UsersTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">User Roles Distribution</h3>
           <div className="h-64">
-            <Doughnut
+            <LazyDoughnut
               data={rolesData}
               options={{
                 responsive: true,
@@ -534,7 +509,7 @@ const CoursesTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">Course Creation Growth</h3>
           <div className="h-64">
-            <Line
+            <LazyLine
               data={courseGrowthData}
               options={{
                 responsive: true,
@@ -557,7 +532,7 @@ const CoursesTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">Enrollment Status</h3>
           <div className="h-64">
-            <Doughnut
+            <LazyDoughnut
               data={enrollmentStatusData}
               options={{
                 responsive: true,
@@ -701,7 +676,7 @@ const RevenueTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">Revenue Trend</h3>
           <div className="h-64">
-            <Line
+            <LazyLine
               data={revenueTrendData}
               options={{
                 responsive: true,
@@ -825,7 +800,7 @@ const JobsTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">Job Posting Growth</h3>
           <div className="h-64">
-            <Line
+            <LazyLine
               data={jobGrowthData}
               options={{
                 responsive: true,
@@ -848,7 +823,7 @@ const JobsTab = ({ data }) => {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h3 className="mb-4 text-lg font-semibold text-white">Applications by Stage</h3>
           <div className="h-64">
-            <Bar
+            <LazyBar
               data={applicationStageData}
               options={{
                 responsive: true,

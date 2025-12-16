@@ -84,7 +84,19 @@ export default defineConfig({
           if (id.includes('/modules/recruiter/')) {
             return 'recruiter';
           }
+          
+          // Additional optimizations for lazy-loaded components
+          if (id.includes('/src/components/LazyChart')) {
+            return 'lazy-charts';
+          }
+          if (id.includes('/src/components/LazyTipTap')) {
+            return 'lazy-editor';
+          }
         },
+        // Optimize chunk names for better caching
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       },
       external: [],
     },
@@ -98,6 +110,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild',
     target: 'esnext',
+    sourcemap: false, // Disable sourcemaps in production for smaller bundles
   },
   optimizeDeps: {
     include: [

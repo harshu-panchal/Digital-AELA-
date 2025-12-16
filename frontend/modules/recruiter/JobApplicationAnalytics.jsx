@@ -10,7 +10,7 @@ import {
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import { fetchJobApplicationAnalytics, fetchRecruiterJobs } from "../../src/services/api/recruiter.js";
-import { Line, Bar } from "react-chartjs-2";
+import { LazyLine, LazyBar } from "../../src/components/LazyChart";
 
 const JobApplicationAnalytics = () => {
   const { jobId } = useParams();
@@ -221,13 +221,13 @@ const JobApplicationAnalytics = () => {
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <h3 className="text-xl font-semibold text-white mb-4">Application Trend</h3>
             <div className="h-64">
-              <Line data={trendChartData} options={chartOptions} />
+              <LazyLine data={trendChartData} options={chartOptions} />
             </div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <h3 className="text-xl font-semibold text-white mb-4">Status Breakdown</h3>
             <div className="h-64">
-              <Bar data={statusChartData} options={chartOptions} />
+              <LazyBar data={statusChartData} options={chartOptions} />
             </div>
           </div>
         </div>

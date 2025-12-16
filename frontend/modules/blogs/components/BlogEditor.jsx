@@ -1,11 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion as Motion } from "framer-motion";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import TranslatedText from "../../../src/components/TranslatedText";
+
+// Lazy load TipTap to reduce initial bundle size
+let TipTapModules = null;
+let TipTapLoading = false;
+const loadTipTap = async () => {
+  if (TipTapModules) return TipTapModules;
+  if (TipTapLoading) {
+    // Wait for existing load
+    while (TipTapLoading) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return TipTapModules;
+  }
+  
+  TipTapLoading = true;
+  try {
+    const [
+      { useEditor, EditorContent },
+      { default: StarterKit },
+      { default: Placeholder },
+      { default: Underline },
+      { default: Link },
+    ] = await Promise.all([
+      import("@tiptap/react"),
+      import("@tiptap/starter-kit"),
+      import("@tiptap/extension-placeholder"),
+      import("@tiptap/extension-underline"),
+      import("@tiptap/extension-link"),
+    ]);
+    
+    TipTapModules = { useEditor, EditorContent, StarterKit, Placeholder, Underline, Link };
+  } finally {
+    TipTapLoading = false;
+  }
+  return TipTapModules;
+};
 
 const toolbarButtonStyles =
   "rounded-lg border border-white/10 bg-[#111]/80 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37] disabled:cursor-not-allowed disabled:border-white/5 disabled:text-gray-500";
@@ -15,20 +46,30 @@ const BlogEditor = ({
   onChange,
   placeholder = "Start crafting your AELA story...",
 }) => {
-  const editor = useEditor({
+  const [tipTapModules, setTipTapModules] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadTipTap().then((modules) => {
+      setTipTapModules(modules);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const editor = tipTapModules?.useEditor({
     extensions: [
-      StarterKit.configure({
+      tipTapModules?.StarterKit.configure({
         heading: {
           levels: [1, 2, 3, 4],
         },
       }),
-      Underline,
-      Link.configure({
+      tipTapModules?.Underline,
+      tipTapModules?.Link.configure({
         openOnClick: false,
         HTMLAttributes: { class: "text-[#F5D26A] underline" },
       }),
-      Placeholder.configure({ placeholder }),
-    ],
+      tipTapModules?.Placeholder.configure({ placeholder }),
+    ].filter(Boolean),
     content: value,
     editable: true,
     onUpdate: ({ editor: tiptap }) => {
@@ -257,10 +298,16 @@ const BlogEditor = ({
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-[#050505]/90 p-4 text-sm text-gray-100 md:p-6">
-          <EditorContent
-            editor={editor}
-            className="prose prose-invert max-w-none [&_.ProseMirror]:outline-none [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-white [&_p]:text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0"
-          />
+          {isLoading || !tipTapModules ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#F5D26A]"></div>
+            </div>
+          ) : (
+            <tipTapModules.EditorContent
+              editor={editor}
+              className="prose prose-invert max-w-none [&_.ProseMirror]:outline-none [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-white [&_p]:text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0"
+            />
+          )}
         </div>
       </div>
     </Motion.div>

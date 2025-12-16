@@ -8,7 +8,7 @@ import {
 } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import { fetchHiringStatistics } from "../../../src/services/api/recruiter.js";
-import { Bar } from "react-chartjs-2";
+import { LazyBar } from "../../../src/components/LazyChart";
 
 const HiringStatistics = () => {
   const [loading, setLoading] = useState(true);
@@ -172,13 +172,13 @@ const HiringStatistics = () => {
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <h3 className="text-xl font-semibold text-white mb-4">Hiring by Month</h3>
             <div className="h-64">
-              <Bar data={monthChartData} options={chartOptions} />
+              <LazyBar data={monthChartData} options={chartOptions} />
             </div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/80 p-6">
             <h3 className="text-xl font-semibold text-white mb-4">Time to Hire Distribution</h3>
             <div className="h-64">
-              <Bar data={distributionChartData} options={chartOptions} />
+              <LazyBar data={distributionChartData} options={chartOptions} />
             </div>
           </div>
         </div>
