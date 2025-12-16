@@ -44,7 +44,9 @@ const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [activeFaq, setActiveFaq] = useState(0);
   const [isCourseRibbonPaused, setIsCourseRibbonPaused] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const courseRibbonRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
   const { trendingBlogs, refreshBlogs } = useBlogs();
   const topBlogs = trendingBlogs.slice(0, 3);
   const navigate = useNavigate();
@@ -879,25 +881,32 @@ const Home = () => {
     const duration = 2000;
     const startTime = performance.now();
     let animationFrameId = 0;
+    let lastUpdateTime = 0;
+    const throttleInterval = 16; // Update max once per frame (~60fps)
 
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      setRibbonCounts(
-        ribbonStats.map((stat) => {
-          const target = stat.value;
-          if (stat.decimals) {
-            const current = target * progress;
-            return Number(current.toFixed(stat.decimals));
-          }
-          return Math.round(target * progress);
-        })
-      );
+      // Throttle updates to reduce re-renders
+      if (currentTime - lastUpdateTime >= throttleInterval || progress >= 1) {
+        setRibbonCounts(
+          ribbonStats.map((stat) => {
+            const target = stat.value;
+            if (stat.decimals) {
+              const current = target * progress;
+              return Number(current.toFixed(stat.decimals));
+            }
+            return Math.round(target * progress);
+          })
+        );
+        lastUpdateTime = currentTime;
+      }
 
       if (progress < 1) {
         animationFrameId = requestAnimationFrame(animate);
       } else {
+        // Final update to ensure exact values
         setRibbonCounts(
           ribbonStats.map((stat) =>
             stat.decimals
@@ -1014,14 +1023,37 @@ const Home = () => {
     },
   ];
 
-  // Auto-slide testimonials every 3 seconds
+  // Scroll detection for pausing animations
   useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolling(true);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 150); // Resume after 150ms of no scrolling
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-slide testimonials every 3 seconds (paused during scroll)
+  useEffect(() => {
+    if (testimonials.length === 0 || isScrolling) return;
+
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [testimonials.length]);
+  }, [testimonials.length, isScrolling]);
 
   const faqItems = useMemo(
     () => [
@@ -1373,14 +1405,14 @@ const Home = () => {
                 <motion.div
                   key={`${stat.label}-${stat.value}`}
                   className="group relative">
-                  {/* Glassmorphism Card */}
-                  <div className="relative h-full rounded-xl border border-[#D4AF37]/20 bg-linear-to-br from-white/5 to-white/2 backdrop-blur-xl p-4 md:p-5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_12px_48px_rgba(212,175,55,0.2)]">
+                  {/* Glassmorphism Card - Optimized CSS */}
+                  <div className="relative h-full rounded-xl border border-[#D4AF37]/20 bg-linear-to-br from-white/5 to-white/2 p-4 md:p-5 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:border-[#D4AF37]/40 group-hover:shadow-[0_12px_48px_rgba(212,175,55,0.2)]">
                     {/* Content */}
                     <div className="relative z-10 flex flex-col items-center justify-center text-center">
                       {/* Number */}
-                      <motion.div className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none">
+                      <div className="text-transparent bg-clip-text bg-linear-to-br from-[#D4AF37] via-[#F5D26A] to-[#D4AF37] font-bold text-lg md:text-xl lg:text-2xl xl:text-2xl font-display mb-1.5 md:mb-2 leading-none">
                         {`${formattedValue}${stat.suffix ?? ""}`}
-                      </motion.div>
+                      </div>
 
                       {/* Label */}
                       <div className="text-slate-300 text-[10px] md:text-xs font-medium leading-tight px-2">
@@ -2630,9 +2662,9 @@ const Home = () => {
                 </div>
               ) : (
                 visibleTestimonials.map((item) => (
-                  <motion.article
+                  <article
                     key={item.id}
-                    className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
+                    className="flex flex-col h-full rounded-3xl border border-white/12 bg-[#101010] px-6 py-5 shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
                     <div className="shrink-0 flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/40">
@@ -2675,7 +2707,7 @@ const Home = () => {
                     <p className="flex-1 mt-4 text-sm text-gray-200 leading-relaxed">
                       "{item.text}"
                     </p>
-                  </motion.article>
+                  </article>
                 ))
               )}
             </motion.div>
