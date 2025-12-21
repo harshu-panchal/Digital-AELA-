@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { FaUser, FaEnvelope, FaPhone, FaArrowRight } from "react-icons/fa";
+import { createFormLead } from "../../../src/services/api/crm";
 
 const LeadCaptureBar = () => {
     const [formData, setFormData] = useState({
@@ -28,16 +29,29 @@ const LeadCaptureBar = () => {
 
         setIsSubmitting(true);
         try {
-            // Mock API call - in a real app, this would send data to the backend
-            // await submitLead(formData);
+            // Split name into first and last name
+            const nameParts = formData.name.trim().split(/\s+/);
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(" ");
 
-            // Artificial delay to simulate network request
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const payload = {
+                formId: "lead-capture-bar",
+                firstName: firstName,
+                lastName: lastName,
+                email: formData.email,
+                phone: formData.phone,
+                source: "website", // Mapped in backend to 'website'
+                message: "Submitted via footer lead capture bar"
+            };
+
+            await createFormLead(payload);
 
             toast.success("Thank you! We will contact you soon.");
             setFormData({ name: "", email: "", phone: "" });
         } catch (error) {
-            toast.error("Something went wrong. Please try again.");
+            console.error("[LeadCapture] Error:", error);
+            const message = error.message || "Something went wrong. Please try again.";
+            toast.error(message);
         } finally {
             setIsSubmitting(false);
         }
