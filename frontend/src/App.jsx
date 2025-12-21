@@ -21,6 +21,9 @@ const Navbar = lazy(() =>
 const Footer = lazy(() =>
   import("../modules/business-management/business-components/Footer")
 );
+const LeadCaptureBar = lazy(() =>
+  import("../modules/business-management/business-components/LeadCaptureBar")
+);
 
 // Lazy load all route components
 const LearnEarnLayout = lazy(() =>
@@ -2196,6 +2199,7 @@ export const App = () => {
       </Routes>
       {!isAdminLogin && !isDashboard && (
         <Suspense fallback={null}>
+          <LeadCaptureBar />
           <Footer />
         </Suspense>
       )}
