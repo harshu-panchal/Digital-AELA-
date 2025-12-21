@@ -411,12 +411,6 @@ const CorporateTrainingCourses = () => {
                       )}
 
                       <div className="flex-shrink-0 flex flex-col gap-3 mt-auto">
-                        <div className="flex items-center justify-between text-sm text-gray-300">
-                          <span><TranslatedText>Program Fee</TranslatedText></span>
-                          <span className="text-lg font-semibold text-[#F5D26A]">
-                            {program.price || <TranslatedText>On Request</TranslatedText>}
-                          </span>
-                        </div>
                         <motion.button
                           onClick={(event) => {
                             event.stopPropagation();

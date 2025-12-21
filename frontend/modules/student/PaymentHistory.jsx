@@ -53,42 +53,8 @@ const PaymentHistory = () => {
     }
   };
 
-  const handleDownloadInvoice = async (paymentId) => {
-    try {
-      const response = await getInvoice(paymentId);
-      if (response.invoiceUrl) {
-        window.open(response.invoiceUrl, "_blank");
-      } else {
-        // Generate invoice data for display/download
-        const invoiceData = response.invoice;
-        const invoiceText = `
-INVOICE
-Invoice Number: ${invoiceData.invoiceNumber}
-Date: ${new Date(invoiceData.date).toLocaleDateString()}
-
-Customer:
-${invoiceData.user.name}
-${invoiceData.user.email}
-
-${invoiceData.course ? `Course: ${invoiceData.course.title}` : ""}
-
-Amount: ${invoiceData.payment.currency} ${invoiceData.payment.amount}
-Payment Method: ${invoiceData.payment.paymentMethod}
-Status: ${invoiceData.payment.status}
-        `;
-        
-        const blob = new Blob([invoiceText], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice-${invoiceData.invoiceNumber}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("Invoice downloaded");
-      }
-    } catch (error) {
-      toast.error(error.message || "Failed to download invoice");
-    }
+  const handleDownloadInvoice = (paymentId) => {
+    navigate(`/student/payments/${paymentId}/invoice`);
   };
 
   const formatDate = (dateString) => {
@@ -203,57 +169,57 @@ Status: ${invoiceData.payment.status}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-white">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
+                  <div className="flex-1 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                      <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">
                         {payment.course?.title || payment.description || "Payment"}
                       </h3>
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getStatusColor(
+                        className={`w-fit px-3 py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider border flex items-center gap-1.5 ${getStatusColor(
                           payment.status
                         )}`}>
                         {getStatusIcon(payment.status)}
                         {payment.status}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 mb-4">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-400 mb-4">
                       <div className="flex items-center gap-2">
-                        <HiOutlineCalendar className="h-4 w-4" />
+                        <HiOutlineCalendar className="h-4 w-4 text-sky-400" />
                         <span>{formatDate(payment.createdAt)}</span>
                       </div>
                       {payment.invoiceNumber && (
                         <div className="flex items-center gap-2">
-                          <HiOutlineDocumentText className="h-4 w-4" />
-                          <span>Invoice: {payment.invoiceNumber}</span>
+                          <HiOutlineDocumentText className="h-4 w-4 text-sky-400" />
+                          <span>{payment.invoiceNumber}</span>
                         </div>
                       )}
                       {payment.gatewayTransactionId && (
-                        <div>
-                          <span className="text-slate-500">Transaction ID:</span>{" "}
-                          <span className="text-white">{payment.gatewayTransactionId}</span>
+                        <div className="flex items-center gap-2 overflow-hidden max-w-full">
+                          <span className="text-slate-500 whitespace-nowrap">ID:</span>
+                          <span className="text-slate-300 font-mono text-[10px] sm:text-xs truncate">{payment.gatewayTransactionId}</span>
                         </div>
                       )}
                     </div>
                     {payment.refundAmount > 0 && (
-                      <div className="mt-2 text-sm">
-                        <span className="text-slate-400">Refunded: </span>
-                        <span className="text-blue-400 font-semibold">
+                      <div className="mt-2 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10 text-sm">
+                        <span className="text-slate-400 font-medium">Refunded: </span>
+                        <span className="text-blue-400 font-black ml-1">
                           {payment.currency} {payment.refundAmount.toFixed(2)}
                         </span>
                         {payment.refundReason && (
-                          <span className="text-slate-500 ml-2">({payment.refundReason})</span>
+                          <p className="text-slate-500 text-xs mt-1 italic">Reason: {payment.refundReason}</p>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className="ml-6 text-right">
-                    <div className="mb-2">
-                      <p className="text-2xl font-semibold text-white">
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <div className="sm:text-right">
+                      <p className="text-2xl sm:text-3xl font-black text-white">
                         {payment.currency} {payment.amount.toFixed(2)}
                       </p>
                       {payment.refundAmount > 0 && (
-                        <p className="text-sm text-slate-400 line-through">
+                        <p className="text-sm text-slate-500 line-through font-medium">
                           {payment.currency} {payment.amount.toFixed(2)}
                         </p>
                       )}
@@ -261,9 +227,9 @@ Status: ${invoiceData.payment.status}
                     {payment.status === "completed" && (
                       <button
                         onClick={() => handleDownloadInvoice(payment._id)}
-                        className="mt-3 px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold hover:from-sky-600 hover:to-sky-700 transition flex items-center gap-2">
-                        <HiOutlineDocumentText className="h-4 w-4" />
-                        Download Invoice
+                        className="sm:mt-4 px-5 py-2.5 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 text-white text-xs sm:text-sm font-black uppercase tracking-wider hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-300 flex items-center gap-2 group active:scale-95">
+                        <HiOutlineDocumentText className="h-4 w-4 group-hover:rotate-6 transition-transform" />
+                        <span>Invoice</span>
                       </button>
                     )}
                   </div>

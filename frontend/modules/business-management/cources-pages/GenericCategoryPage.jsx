@@ -163,7 +163,7 @@ const GenericCategoryPage = () => {
 
                                     <div className="mt-auto pt-6 flex flex-col gap-4">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-2xl font-bold text-[#F5D26A]">{course.price}</span>
+                                            {/* <span className="text-2xl font-bold text-[#F5D26A]">{course.price}</span> */}
                                             <span className="text-xs text-slate-500 uppercase tracking-widest">{course.duration}</span>
                                         </div>
 

@@ -247,6 +247,7 @@ const StudentAssignmentDetail = lazy(() =>
   import("../modules/student/AssignmentDetail")
 );
 const PaymentHistory = lazy(() => import("../modules/student/PaymentHistory"));
+const DownloadInvoice = lazy(() => import("../modules/student/DownloadInvoice"));
 const DoubtTicketList = lazy(() =>
   import("../modules/student/DoubtTicketList")
 );
@@ -1262,6 +1263,15 @@ export const App = () => {
               <Suspense
                 fallback={<LoadingFallback message="Loading payments..." />}>
                 <PaymentHistory />
+              </Suspense>
+            }
+          />
+          <Route
+            path="payments/:paymentId/invoice"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading invoice..." />}>
+                <DownloadInvoice />
               </Suspense>
             }
           />
