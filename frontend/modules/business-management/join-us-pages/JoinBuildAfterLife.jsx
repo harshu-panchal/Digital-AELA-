@@ -23,6 +23,10 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import {
+  redirectToCustomCoursePayment,
+  redirectToCustomBookPayment
+} from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
@@ -220,13 +224,6 @@ const JoinBuildAfterLife = () => {
   };
 
   const handleBuyCourse = async (course) => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast.info("Please log in to enroll in this course");
-      navigate("/login/student");
-      return;
-    }
-
     const payload = {
       ...course,
       category: "Build Your Afterlife",
@@ -238,34 +235,8 @@ const JoinBuildAfterLife = () => {
       // Free course - navigate to course detail page for enrollment
       handleViewCourse(course);
     } else {
-      // Paid course - redirect directly to Razorpay
-
-      // Extract price - prioritize rawPrice
-      let priceValue = 0;
-
-      if (course.rawPrice !== undefined && course.rawPrice !== null) {
-        priceValue = parseFloat(course.rawPrice) || 0;
-      } else if (typeof course.price === 'number') {
-        priceValue = course.price;
-      } else if (typeof course.price === 'string') {
-        if (course.price.toLowerCase().includes('free')) {
-          priceValue = 0;
-        } else {
-          // Strip non-numeric characters (except dot) to handle strings like "AED 100"
-          priceValue = parseFloat(course.price.replace(/[^0-9.]/g, '')) || 0;
-        }
-      }
-
-      await redirectToRazorpay({
-        courseId: course._id || course.id || null,
-        amount: priceValue,
-        currency: "AED",
-        description: `Payment for ${course.title || "course"}`,
-        userName: user?.fullName || "",
-        userEmail: user?.email || "",
-        userPhone: user?.phone || "",
-        quantity: 1,
-      });
+      // Use custom redirection utility instead of direct Razorpay redirect
+      redirectToCustomCoursePayment(payload);
     }
   };
 
@@ -577,16 +548,8 @@ const JoinBuildAfterLife = () => {
                                     return;
                                   }
 
-                                  redirectToRazorpay({
-                                    bookId: item.id,
-                                    amount: itemPrice,
-                                    currency: "AED",
-                                    description: `Payment for ${item.title || "book"}`,
-                                    userName: user?.fullName || "",
-                                    userEmail: user?.email || "",
-                                    userPhone: user?.phone || "",
-                                    quantity: 1,
-                                  });
+                                  // Redirect to custom payment confirmation flow
+                                  redirectToCustomBookPayment(item);
                                 }
                               }}
                               className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">

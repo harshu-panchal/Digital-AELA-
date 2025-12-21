@@ -8,6 +8,7 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { redirectToCustomCoursePayment } from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
@@ -115,17 +116,8 @@ const CorporateTrainingCourses = () => {
         handleViewCourse(program);
       }
     } else {
-      // Paid course - redirect directly to Razorpay
-      await redirectToRazorpay({
-        courseId: program._id || program.id || null,
-        amount: priceValue,
-        currency: "AED",
-        description: `Payment for ${program.title || "course"}`,
-        userName: user?.fullName || "",
-        userEmail: user?.email || "",
-        userPhone: user?.phone || "",
-        quantity: 1,
-      });
+      // Paid course - redirect to custom payment page first
+      redirectToCustomCoursePayment(program);
     }
   };
 

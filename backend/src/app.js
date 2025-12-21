@@ -45,6 +45,7 @@ import joinUsApplicationRoutes from "./routes/joinUsApplicationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import userRatingRoutes from "./routes/userRatingRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import csrfRoutes from "./routes/csrfRoutes.js";
 import { getHomePageData } from "./controllers/homeController.js";
 import {
@@ -300,6 +301,7 @@ app.use("/api/v1/rewards", rewardRoutes);
 app.use("/api/v1/redemption-requests", redemptionRequestRoutes);
 app.use("/api/v1/translate", translationRoutes);
 app.use("/api/v1/join-us", joinUsApplicationRoutes);
+app.use("/api/v1/categories", categoryRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use(async (err, req, res, next) => {

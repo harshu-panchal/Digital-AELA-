@@ -9,6 +9,7 @@ import GiftButton from "../common/GiftButton";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { redirectToCustomBookPayment } from "../utils/customPaymentRedirect";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
@@ -463,12 +464,8 @@ const Books = () => {
                               toast.info("Free physical books require contact for delivery. Please visit the book detail page."); // Toast message
                               navigate(`/books/${book.id}`);
                             } else {
-                              // Paid book - redirect directly to Razorpay
-                              if (!isAuthenticated) {
-                                toast.info("Please log in to purchase this book"); // Toast message
-                                navigate("/login/student");
-                                return;
-                              }
+                              // Paid book - redirect directly to Custom Payment confirmation
+                              // Redundant auth check removed here - handled in CustomPaymentCheck
                               // Validate price
                               const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
                               if (!bookPrice || bookPrice <= 0) {
@@ -476,16 +473,8 @@ const Books = () => {
                                 return;
                               }
 
-                              redirectToRazorpay({
-                                bookId: book.id,
-                                amount: bookPrice,
-                                currency: "AED",
-                                description: `Payment for ${book.title || "book"}`,
-                                userName: user?.fullName || "",
-                                userEmail: user?.email || "",
-                                userPhone: user?.phone || "",
-                                quantity: 1,
-                              });
+                              // Redirect to custom payment confirmation flow
+                              redirectToCustomBookPayment(book);
                             }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">

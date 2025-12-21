@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "../../../src/config/api.js";
+import { getMediaUrl } from "../../../src/utils/mediaUrl";
 
 // Import styles - CSS is already lazy loaded since this component is lazy loaded at route level
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -84,56 +85,50 @@ const PDFEbookReader = () => {
         const data = await response.json();
         setEbookData(data);
 
+        const processedPdfUrl = getMediaUrl(data.downloadUrl);
+        setPdfUrl(processedPdfUrl);
+
         if (!data.downloadUrl) {
           throw new Error("PDF URL not found in ebook data");
         }
 
-        // Validate PDF URL
+        // Validate PDF URL (use the processed absolute URL)
         try {
-          const pdfTestResponse = await fetch(data.downloadUrl, {
+          const checkUrl = processedPdfUrl || data.downloadUrl;
+          const urlLower = checkUrl.toLowerCase();
+          const urlPath = urlLower.split("?")[0].split("#")[0];
+          const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+          const hasImageExtension = imageExtensions.some((ext) => urlPath.endsWith(ext));
+          const isCoverImage = urlLower.includes("/books/covers/") || urlLower.includes("/covers/") || urlLower.includes("/bookscovers/");
+
+          if (hasImageExtension || isCoverImage) {
+            const errorMessage = isCoverImage
+              ? "Invalid PDF URL: This ebook's download URL points to an image file instead of the PDF. Please contact support."
+              : "Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file.";
+            setError(errorMessage);
+            toast.error(errorMessage);
+            setLoading(false);
+            return;
+          }
+
+          const pdfTestResponse = await fetch(checkUrl, {
             method: "HEAD",
           });
           const contentType = pdfTestResponse.headers.get("content-type");
           if (contentType) {
             const contentTypeLower = contentType.toLowerCase();
-            if (
-              contentTypeLower.includes("image/") &&
-              !contentTypeLower.includes("pdf")
-            ) {
-              const urlLower = data.downloadUrl.toLowerCase();
-              const urlPath = urlLower.split("?")[0].split("#")[0];
-              const imageExtensions = [
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".gif",
-                ".webp",
-              ];
-              const hasImageExtension = imageExtensions.some((ext) =>
-                urlPath.endsWith(ext)
-              );
-              const isCoverImage =
-                urlLower.includes("/books/covers/") ||
-                urlLower.includes("/covers/");
-
-              if (hasImageExtension || isCoverImage) {
-                const errorMessage = isCoverImage
-                  ? "Invalid PDF URL: The ebook's download URL points to a cover image file instead of the PDF file. Please contact the administrator to fix this."
-                  : "Invalid PDF URL: The ebook appears to have an image URL instead of a PDF file.";
-                setError(errorMessage);
-                toast.error(
-                  isCoverImage
-                    ? "This ebook's download URL points to a cover image instead of the PDF file. Please contact the administrator to fix this."
-                    : "The ebook URL points to an image file instead of a PDF."
-                );
-              }
+            if (contentTypeLower.includes("image/") && !contentTypeLower.includes("pdf")) {
+              setError("Invalid PDF URL: The server returned an image instead of a PDF.");
+              toast.error("The ebook URL points to an image file instead of a PDF.");
+              setLoading(false);
+              return;
             }
           }
         } catch (testError) {
           console.warn("Could not verify PDF URL:", testError.message);
         }
 
-        setPdfUrl(data.downloadUrl);
+        // URL already set above with processed value
       } catch (err) {
         console.error("Error fetching ebook:", err);
         setError(err.message || "Failed to load ebook");
@@ -305,9 +300,8 @@ const PDFEbookReader = () => {
 
       // Trigger page turn animation
       if (viewerContainerRef.current) {
-        viewerContainerRef.current.style.transform = `perspective(1000px) rotateY(${
-          swipeDirection * -15
-        }deg)`;
+        viewerContainerRef.current.style.transform = `perspective(1000px) rotateY(${swipeDirection * -15
+          }deg)`;
         viewerContainerRef.current.style.transition = "transform 0.4s ease-out";
       }
 
@@ -570,9 +564,8 @@ const PDFEbookReader = () => {
                       width: "100%",
                       maxWidth: "100%",
                       boxShadow: isPageTurning
-                        ? `0 ${
-                            direction > 0 ? "-" : ""
-                          }25px 50px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(245, 210, 106, 0.1)`
+                        ? `0 ${direction > 0 ? "-" : ""
+                        }25px 50px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(245, 210, 106, 0.1)`
                         : "0 15px 35px rgba(0, 0, 0, 0.25), 0 5px 15px rgba(0, 0, 0, 0.15)",
                       transition:
                         "box-shadow 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",

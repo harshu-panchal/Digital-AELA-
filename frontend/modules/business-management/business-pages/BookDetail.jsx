@@ -19,6 +19,7 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { redirectToCustomBookPayment } from "../utils/customPaymentRedirect";
 import {
   fetchEbookById,
   fetchEbookProgress,
@@ -626,12 +627,6 @@ const BookDetail = () => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={async () => {
-                            if (!user) {
-                              toast.info("Please log in to purchase this book"); // Toast message
-                              navigate("/login/student");
-                              return;
-                            }
-
                             // Validate price
                             const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
                             if (!bookPrice || bookPrice <= 0) {
@@ -639,16 +634,7 @@ const BookDetail = () => {
                               return;
                             }
 
-                            await redirectToRazorpay({
-                              bookId: book.id || book._id,
-                              amount: bookPrice,
-                              currency: "AED",
-                              description: `Payment for ${book.title || "book"} by ${book.author || "Digital AELA"}`,
-                              userName: user?.fullName || "",
-                              userEmail: user?.email || "",
-                              userPhone: user?.phone || "",
-                              quantity: 1,
-                            });
+                            redirectToCustomBookPayment(book);
                           }}
                           className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                           <TranslatedText>Buy Now</TranslatedText> - AED {book.price}

@@ -109,7 +109,8 @@ const GiftButton = ({
     const { amount, currency } = getPriceAndCurrency();
 
     const params = new URLSearchParams({
-      type: "anyone",
+      type: "gift",
+      giftType: "anyone",
       amount: amount.toString(),
       currency: currency
     });
@@ -118,7 +119,8 @@ const GiftButton = ({
       params.set("itemName", course.title || course.name);
     }
 
-    window.location.href = `${paymentPath}?${params.toString()}`;
+    // Redirect to custom payment page first
+    window.location.href = `/payment/confirm?${params.toString()}`;
     setIsOpen(false);
     setStep("choice");
     setErrors({});
@@ -164,7 +166,8 @@ const GiftButton = ({
     const { amount, currency } = getPriceAndCurrency();
 
     const params = new URLSearchParams({
-      type: "near",
+      type: "gift",
+      giftType: "near",
       userId: formData.userId.trim(),
       fullName: formData.fullName.trim(),
       amount: amount.toString(),
@@ -191,7 +194,8 @@ const GiftButton = ({
       params.set("message", formData.message.trim());
     }
 
-    window.location.href = `${paymentPath}?${params.toString()}`;
+    // Redirect to custom payment page first
+    window.location.href = `/payment/confirm?${params.toString()}`;
     handleClose();
   };
 

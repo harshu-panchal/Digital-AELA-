@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { createCourse } from "../../../src/services/api/adminContent";
 import { getPremiumCourseCount } from "../../../src/services/api/courses";
+import { fetchCategories } from "../../../src/services/api/categories";
 import {
   safeString,
   sanitizeUrl,
@@ -35,12 +36,12 @@ const initialFormState = {
   isPremium: false,
 };
 
-const categories = [
+/* const categories = [
   "English Language",
   "Digital Marketing",
   "Corporate Training",
   "Other",
-];
+]; */
 
 const AdminCourseCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
@@ -48,6 +49,7 @@ const AdminCourseCreate = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [premiumCount, setPremiumCount] = useState(0);
   const [maxPremium, setMaxPremium] = useState(6);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
   // Fetch premium course count on mount
@@ -64,6 +66,22 @@ const AdminCourseCreate = () => {
       }
     };
     fetchPremiumCount();
+
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        if (data && data.length > 0) {
+          setCategories(data.map((c) => c.name));
+        } else {
+          // Fallback if no categories in DB
+          setCategories(["English Language", "Digital Marketing", "Corporate Training", "Other"]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        setCategories(["English Language", "Digital Marketing", "Corporate Training", "Other"]);
+      }
+    };
+    loadCategories();
   }, []);
 
   const priceHelper = useMemo(
@@ -79,7 +97,7 @@ const AdminCourseCreate = () => {
       const { name, value, type, checked, files } = event.target;
       if (type === "file" && files && files[0]) {
         const file = files[0];
-        
+
         // Handle cover image upload
         if (name === "coverImageFile") {
           // Validate image file
@@ -92,7 +110,7 @@ const AdminCourseCreate = () => {
             toast.error("Image file size must be less than 5MB");
             return;
           }
-          
+
           // Create preview
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -103,7 +121,7 @@ const AdminCourseCreate = () => {
             }));
           };
           reader.readAsDataURL(file);
-          
+
           // Upload image
           setIsUploadingImage(true);
           uploadImageToCloudinary(file, "digital-aela/courses/covers")
@@ -127,7 +145,7 @@ const AdminCourseCreate = () => {
             });
           return;
         }
-        
+
         // Handle PDF brochure file
         if (name === "brochureFile") {
           // Validate PDF file
@@ -737,11 +755,10 @@ const AdminCourseCreate = () => {
               </label>
 
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
-                  premiumCount >= maxPremium && !formData.isPremium
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${premiumCount >= maxPremium && !formData.isPremium
                     ? "opacity-60"
                     : ""
-                }`}>
+                  }`}>
                 <input
                   type="checkbox"
                   name="isPremium"

@@ -8,6 +8,7 @@ import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { buildCoursePaymentLink, extractNumericPrice } from "../utils/paymentLinks";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { redirectToCustomCoursePayment } from "../utils/customPaymentRedirect";
 import { getCourseBySlug } from "../data/courseCatalog";
 import {
   enrollInCourse,
@@ -338,18 +339,18 @@ const CourseDetail = () => {
   const summaryText = longDescription || description || fallbackSummary;
 
   const handleEnroll = async () => {
-    // If user is not logged in, redirect to login
-    if (!isAuthenticated) {
-      toast.info("Please log in to enroll in this course");
-      navigate("/login/student", {
-        state: { from: location.pathname },
-      });
-      return;
-    }
-
     // If course has _id, check if it's free or paid
     if (course._id) {
       if (isFreeCourse) {
+        // Free course - check authentication for enrollment
+        if (!isAuthenticated) {
+          toast.info("Please log in to enroll in this course");
+          navigate("/login/student", {
+            state: { from: location.pathname },
+          });
+          return;
+        }
+
         // Free course - use API enrollment
         setIsEnrolling(true);
         try {
@@ -367,23 +368,14 @@ const CourseDetail = () => {
           setIsEnrolling(false);
         }
       } else {
-        // Paid course - redirect directly to Razorpay
+        // Paid course - redirect to custom payment confirmation page (guest-friendly)
         // Validate price before proceeding
         if (!priceValue || priceValue <= 0) {
           toast.error("This course price is not available. Please contact support.");
           return;
         }
 
-        await redirectToRazorpay({
-          courseId: course._id,
-          amount: priceValue,
-          currency: "AED",
-          description: `Payment for ${title || course.title || "course"}`,
-          userName: user?.fullName || "",
-          userEmail: user?.email || "",
-          userPhone: user?.phone || "",
-          quantity: 1,
-        });
+        redirectToCustomCoursePayment(course);
       }
     } else {
       // For catalog courses without _id, check if it's free
@@ -393,22 +385,14 @@ const CourseDetail = () => {
         return;
       }
 
-      // Paid catalog course - redirect directly to Razorpay
+      // Paid catalog course - redirect to custom payment confirmation page (guest-friendly)
       // Validate price before proceeding
       if (!priceValue || priceValue <= 0) {
         toast.error("This course price is not available. Please contact support.");
         return;
       }
 
-      await redirectToRazorpay({
-        amount: priceValue,
-        currency: "AED",
-        description: `Payment for ${title || "course"}`,
-        userName: user?.fullName || "",
-        userEmail: user?.email || "",
-        userPhone: user?.phone || "",
-        quantity: 1,
-      });
+      redirectToCustomCoursePayment(course);
     }
   };
 

@@ -25,6 +25,10 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import {
+  redirectToCustomCoursePayment,
+  redirectToCustomBookPayment
+} from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getGalleryImages } from "../../../src/services/api/gallery";
@@ -176,8 +180,8 @@ const Home = () => {
               course.price === 0
                 ? "Free"
                 : course.price
-                ? `AED ${course.price}`
-                : "On Request",
+                  ? `AED ${course.price}`
+                  : "On Request",
             duration: course.duration
               ? `${course.duration} hours`
               : course.metadata?.duration || "",
@@ -239,8 +243,8 @@ const Home = () => {
           .map((book) => {
             const price =
               book.metadata?.price !== undefined &&
-              book.metadata.price !== null &&
-              book.metadata.price !== ""
+                book.metadata.price !== null &&
+                book.metadata.price !== ""
                 ? Number(book.metadata.price)
                 : 0;
             const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
@@ -488,46 +492,13 @@ const Home = () => {
   };
 
   const redirectToCoursePayment = async (course, extra = {}) => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      navigate("/login/student", {
-        state: { from: location.pathname },
-      });
-      return;
-    }
-
     const payload = {
       ...course,
       ...extra,
     };
 
-    // Extract price - prioritize rawPrice
-    let priceValue = 0;
-
-    if (course.rawPrice !== undefined && course.rawPrice !== null) {
-      priceValue = parseFloat(course.rawPrice) || 0;
-    } else if (typeof course.price === "number") {
-      priceValue = course.price;
-    } else if (typeof course.price === "string") {
-      if (course.price.toLowerCase().includes("free")) {
-        priceValue = 0;
-      } else {
-        // Strip non-numeric characters (except dot) to handle strings like "AED 100"
-        priceValue = parseFloat(course.price.replace(/[^0-9.]/g, "")) || 0;
-      }
-    }
-
-    // Redirect directly to Razorpay
-    await redirectToRazorpay({
-      courseId: course._id || course.id || null,
-      amount: priceValue,
-      currency: "AED",
-      description: `Payment for ${course.title || "course"}`,
-      userName: user?.fullName || "",
-      userEmail: user?.email || "",
-      userPhone: user?.phone || "",
-      quantity: 1,
-    });
+    // Use custom redirection utility instead of direct Razorpay redirect
+    redirectToCustomCoursePayment(payload);
   };
 
   // Manual scroll functions for courses section
@@ -1350,11 +1321,10 @@ const Home = () => {
                   key={slide.id}
                   type="button"
                   onClick={() => setActiveHeroSlide(index)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    index === activeHeroSlide
-                      ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
-                      : "w-6 bg-white/25 hover:bg-white/45"
-                  }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${index === activeHeroSlide
+                    ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                    : "w-6 bg-white/25 hover:bg-white/45"
+                    }`}
                 />
               ))}
             </div>
@@ -2115,10 +2085,10 @@ const Home = () => {
                 const discountPercent =
                   book.originalPrice > 0
                     ? Math.round(
-                        ((book.originalPrice - book.price) /
-                          book.originalPrice) *
-                          100
-                      )
+                      ((book.originalPrice - book.price) /
+                        book.originalPrice) *
+                      100
+                    )
                     : 0;
                 const displayPrice =
                   book.price > 0 ? `AED ${book.price}` : "Free";
@@ -2186,11 +2156,10 @@ const Home = () => {
                             {[...Array(5)].map((_, i) => (
                               <FaStar
                                 key={i}
-                                className={`w-3 h-3 ${
-                                  i < Math.floor(book.rating || 4.5)
-                                    ? "text-[#D4AF37] fill-current"
-                                    : "text-gray-600"
-                                }`}
+                                className={`w-3 h-3 ${i < Math.floor(book.rating || 4.5)
+                                  ? "text-[#D4AF37] fill-current"
+                                  : "text-gray-600"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -2238,10 +2207,7 @@ const Home = () => {
                                 navigate(`/books/${book.id}`);
                               } else {
                                 // Paid book - go to payment page
-                                if (!isAuthenticated) {
-                                  navigate("/login/student");
-                                  return;
-                                }
+                                // Redundant auth check removed here - will be handled in CustomPaymentCheck
 
                                 // Validate price
                                 const bookPrice =
@@ -2255,18 +2221,8 @@ const Home = () => {
                                   return;
                                 }
 
-                                redirectToRazorpay({
-                                  bookId: book.id,
-                                  amount: bookPrice,
-                                  currency: "AED",
-                                  description: `Payment for ${
-                                    book.title || "book"
-                                  }`,
-                                  userName: user?.fullName || "",
-                                  userEmail: user?.email || "",
-                                  userPhone: user?.phone || "",
-                                  quantity: 1,
-                                });
+                                // Redirect to custom payment confirmation flow
+                                redirectToCustomBookPayment(book);
                               }
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
@@ -2795,11 +2751,10 @@ const Home = () => {
                       {index + 1}. {item.question}
                     </span>
                     <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${
-                        isOpen
-                          ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
-                          : "bg-transparent text-[#D4AF37]"
-                      }`}>
+                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
+                        ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                        : "bg-transparent text-[#D4AF37]"
+                        }`}>
                       <svg
                         className="w-3 h-3"
                         fill="none"

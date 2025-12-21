@@ -7,6 +7,7 @@ import GiftButton from "../common/GiftButton";
 import { buildCoursePaymentLink } from "../utils/paymentLinks";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
+import { redirectToCustomCoursePayment } from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
@@ -74,15 +75,7 @@ const EnglishLanguageCourses = () => {
     category: "English Language",
     origin: "english-courses",
   });
-
   const handleBuyCourse = async (course) => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast.info("Please log in to enroll in this course"); // Toast message - can stay in English for now
-      navigate("/login/student");
-      return;
-    }
-
     const payload = augmentCourse(course);
 
     // Check if course is free
@@ -111,17 +104,8 @@ const EnglishLanguageCourses = () => {
         handleViewCourse(course);
       }
     } else {
-      // Paid course - redirect directly to Razorpay
-      await redirectToRazorpay({
-        courseId: course._id || course.id || null,
-        amount: priceValue,
-        currency: "AED",
-        description: `Payment for ${course.title || "course"}`,
-        userName: user?.fullName || "",
-        userEmail: user?.email || "",
-        userPhone: user?.phone || "",
-        quantity: 1,
-      });
+      // Paid course - redirect to custom payment page first
+      redirectToCustomCoursePayment(course);
     }
   };
 

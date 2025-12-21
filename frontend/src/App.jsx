@@ -96,6 +96,9 @@ const AdminCourseCreate = lazy(() =>
 const AdminCourseDetail = lazy(() =>
   import("../modules/admin/pages/AdminCourseDetail")
 );
+const AdminCategoryManagement = lazy(() =>
+  import("../modules/admin/pages/AdminCategoryManagement")
+);
 const AdminBookCreate = lazy(() =>
   import("../modules/admin/pages/AdminBookCreate")
 );
@@ -322,6 +325,9 @@ const RefundCancellationPolicy = lazy(() =>
 );
 const TermsConditions = lazy(() =>
   import("../modules/business-management/business-pages/TermsConditions")
+);
+const CustomPaymentCheck = lazy(() =>
+  import("../modules/business-management/business-pages/CustomPaymentCheck")
 );
 const CoursePayment = lazy(() =>
   import("../modules/business-management/business-pages/CoursePayment")
@@ -630,6 +636,17 @@ export const App = () => {
               <Suspense
                 fallback={<LoadingFallback message="Loading course..." />}>
                 <AdminCourseDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="categories"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading category management..." />
+                }>
+                <AdminCategoryManagement />
               </Suspense>
             }
           />
@@ -2165,6 +2182,14 @@ export const App = () => {
           element={
             <Suspense fallback={<LoadingFallback />}>
               <BranchOwnerRegister />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/payment/confirm"
+          element={
+            <Suspense fallback={<LoadingFallback message="Loading payment details..." />}>
+              <CustomPaymentCheck />
             </Suspense>
           }
         />

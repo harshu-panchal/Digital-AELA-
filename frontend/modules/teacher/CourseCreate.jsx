@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { createTeacherCourse } from "../../src/services/teacherCourses";
+import { fetchCategories } from "../../src/services/api/categories";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
 
@@ -30,22 +31,42 @@ const initialFormState = {
   publishImmediately: false,
 };
 
-const categories = [
-  "Public Speaking",
-  "IELTS & Test Prep",
-  "Corporate Communication",
-  "Leadership & Soft Skills",
-  "Digital Marketing",
-  "Career Development",
-  "Learn & Earn Challenges",
-  "Other",
-];
-
 const CourseCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [categories, setCategories] = useState([
+    "English Language",
+    "Digital Marketing",
+    "Corporate Training",
+    "Public Speaking",
+    "IELTS & Test Prep",
+    "Corporate Communication",
+    "Leadership & Soft Skills",
+    "Career Development",
+    "Learn & Earn Challenges",
+    "Other",
+  ]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        if (data && data.length > 0) {
+          const fetchedNames = data.map((c) => c.name);
+          // Combine defaults with fetched, removing duplicates
+          setCategories((prev) => {
+            const combined = [...new Set([...prev, ...fetchedNames])];
+            return combined;
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const priceHelper = useMemo(
     () => ({
@@ -59,7 +80,7 @@ const CourseCreate = () => {
     const { name, value, type, checked, files } = event.target;
     if (type === "file" && files && files[0]) {
       const file = files[0];
-      
+
       // Handle cover image upload
       if (name === "coverImageFile") {
         // Validate image file
@@ -72,7 +93,7 @@ const CourseCreate = () => {
           toast.error("Image file size must be less than 5MB");
           return;
         }
-        
+
         // Create preview
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -83,7 +104,7 @@ const CourseCreate = () => {
           }));
         };
         reader.readAsDataURL(file);
-        
+
         // Upload image
         setIsUploadingImage(true);
         uploadImageToCloudinary(file, "digital-aela/courses/covers")
@@ -107,7 +128,7 @@ const CourseCreate = () => {
           });
         return;
       }
-      
+
       // Handle PDF brochure file
       if (name === "brochureFile") {
         // Validate PDF file
@@ -184,7 +205,7 @@ const CourseCreate = () => {
     setIsSubmitting(true);
     try {
       const created = await createTeacherCourse(payload);
-      
+
       // Upload brochure if provided
       if (formData.brochureFile) {
         try {
@@ -198,7 +219,7 @@ const CourseCreate = () => {
       } else {
         toast.success("Course submitted for approval. It will be reviewed by admin before being published.");
       }
-      
+
       setFormData(initialFormState);
       navigate(`/teacher/courses/${created.id}`, { replace: true });
     } catch (error) {
@@ -602,5 +623,5 @@ const CourseCreate = () => {
   );
 };
 
-export default CourseCreate; 
+export default CourseCreate;
 

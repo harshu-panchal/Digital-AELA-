@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../src/components/SEO";
 import { createTeacherEbook } from "../../src/services/teacherEbooks";
+import { fetchCategories } from "../../src/services/api/categories";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
 
@@ -32,22 +33,42 @@ const initialFormState = {
   bookType: "ebook",
 };
 
-const categories = [
-  "Public Speaking",
-  "IELTS & Test Prep",
-  "Corporate Communication",
-  "Leadership & Soft Skills",
-  "Digital Marketing",
-  "Career Development",
-  "Learn & Earn",
-  "Other",
-];
-
 const EbookUpload = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [categories, setCategories] = useState([
+    "English Language",
+    "Digital Marketing",
+    "Corporate Training",
+    "Public Speaking",
+    "IELTS & Test Prep",
+    "Corporate Communication",
+    "Leadership & Soft Skills",
+    "Career Development",
+    "Learn & Earn",
+    "Other",
+  ]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        if (data && data.length > 0) {
+          const fetchedNames = data.map((c) => c.name);
+          // Combine defaults with fetched, removing duplicates
+          setCategories((prev) => {
+            const combined = [...new Set([...prev, ...fetchedNames])];
+            return combined;
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const priceHelper = useMemo(
     () => ({
@@ -58,7 +79,7 @@ const EbookUpload = () => {
 
   const handleInputChange = (event) => {
     const { name, value, files } = event.target;
-    
+
     if (name === "coverImageFile" && files && files[0]) {
       const file = files[0];
       // Validate image file
@@ -71,7 +92,7 @@ const EbookUpload = () => {
         toast.error("Image file size must be less than 5MB");
         return;
       }
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -82,7 +103,7 @@ const EbookUpload = () => {
         }));
       };
       reader.readAsDataURL(file);
-      
+
       // Upload image
       setIsUploadingImage(true);
       uploadImageToCloudinary(file, "digital-aela/books/covers")
@@ -106,7 +127,7 @@ const EbookUpload = () => {
         });
       return;
     }
-    
+
     if (name === "file") {
       const file = files?.[0];
       setFormData((prev) => ({
@@ -115,7 +136,7 @@ const EbookUpload = () => {
       }));
       return;
     }
-    
+
     // Clear file when switching from ebook to physical book
     if (name === "bookType" && value === "physical") {
       setFormData((prev) => ({
@@ -123,7 +144,7 @@ const EbookUpload = () => {
         file: null,
       }));
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,

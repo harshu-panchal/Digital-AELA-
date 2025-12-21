@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { useSocket } from "../../../src/hooks/useSocket";
 import { fetchUnreadCount } from "../../../src/services/api/notifications";
 import { fetchPublicSettings } from "../../../src/services/api/publicSettings";
+import { fetchCategories } from "../../../src/services/api/categories";
 import NotificationDropdown from "./NotificationDropdown";
 import TranslatedText from "../../../src/components/TranslatedText";
 import logo from "../../../src/assets/MainLogo.png";
@@ -64,7 +65,7 @@ const Navbar = () => {
           const generalSettings = response.settings.general;
           const emailSetting = generalSettings.find((s) => s.key === "site.contact.email");
           const phoneSetting = generalSettings.find((s) => s.key === "site.contact.phone");
-          
+
           if (emailSetting?.value) {
             setContactEmail(emailSetting.value);
           }
@@ -200,6 +201,23 @@ const Navbar = () => {
     };
   }, [lastScrollY]);
 
+  const [dynamicCategories, setDynamicCategories] = useState([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await fetchCategories();
+        if (Array.isArray(categories)) {
+          setDynamicCategories(categories);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load nav categories:", error);
+      }
+    };
+    loadCategories();
+  }, []);
+
   const baseNavItems = [
     {
       label: "Home",
@@ -221,6 +239,10 @@ const Navbar = () => {
           label: "Corporate Training",
           path: "/courses/corporate-training",
         },
+        ...dynamicCategories.map(cat => ({
+          label: cat.name,
+          path: `/courses/cat/${cat.slug}`
+        }))
       ],
     },
     {
@@ -237,12 +259,12 @@ const Navbar = () => {
         },
         ...(socialLinks.youtube
           ? [
-              {
-                label: "YouTube",
-                external: true,
-                href: socialLinks.youtube,
-              },
-            ]
+            {
+              label: "YouTube",
+              external: true,
+              href: socialLinks.youtube,
+            },
+          ]
           : []),
         {
           label: "Free Library",
@@ -328,10 +350,10 @@ const Navbar = () => {
       setActiveDropdown(null);
       setMobileMenuOpen(false);
       // Navigate to home page after logout
-      if (window.location.pathname.startsWith("/super-admin") || 
-          window.location.pathname.startsWith("/teacher") ||
-          window.location.pathname.startsWith("/student") ||
-          window.location.pathname.startsWith("/recruiter")) {
+      if (window.location.pathname.startsWith("/super-admin") ||
+        window.location.pathname.startsWith("/teacher") ||
+        window.location.pathname.startsWith("/student") ||
+        window.location.pathname.startsWith("/recruiter")) {
         window.location.href = "/";
       }
       toast.info("You've been signed out.", { toastId: "navbar-logout" });
@@ -409,11 +431,10 @@ const Navbar = () => {
           duration: 0.3,
           ease: [0.25, 0.1, 0.25, 1],
         }}
-        className={`absolute top-2 z-[70] pointer-events-auto ${
-          isDashboardRoute
-            ? "left-1/2 -translate-x-1/2 md:left-4 lg:left-[132px]"
-            : "left-4 md:left-[132px]"
-        } md:top-[43px]`}>
+        className={`absolute top-2 z-[70] pointer-events-auto ${isDashboardRoute
+          ? "left-1/2 -translate-x-1/2 md:left-4 lg:left-[132px]"
+          : "left-4 md:left-[132px]"
+          } md:top-[43px]`}>
         <Link to="/" className="block">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
@@ -568,9 +589,8 @@ const Navbar = () => {
                         <span>{currentLanguage?.label}</span>
                       </span>
                       <svg
-                        className={`h-3 w-3 transition-transform duration-200 ${
-                          languageDropdownOpen ? "rotate-180" : ""
-                        }`}
+                        className={`h-3 w-3 transition-transform duration-200 ${languageDropdownOpen ? "rotate-180" : ""
+                          }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -609,11 +629,10 @@ const Navbar = () => {
                                   backgroundColor: "rgba(212,175,55,0.08)",
                                   x: 5,
                                 }}
-                                className={`w-full border-b border-[#D4AF37]/20 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
-                                  language === code
-                                    ? "bg-[#D4AF37]/20 text-[#FFE28A]"
-                                    : "text-[#F5D26A] hover:bg-[#D4AF37]/10 hover:text-[#FFE28A]"
-                                }`}>
+                                className={`w-full border-b border-[#D4AF37]/20 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${language === code
+                                  ? "bg-[#D4AF37]/20 text-[#FFE28A]"
+                                  : "text-[#F5D26A] hover:bg-[#D4AF37]/10 hover:text-[#FFE28A]"
+                                  }`}>
                                 <span className="flex items-center gap-2.5">
                                   <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5">
                                     {option.flagSrc ? (
@@ -1093,11 +1112,10 @@ const Navbar = () => {
                           changeLanguage(code);
                           setMobileMenuOpen(false);
                         }}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${
-                          language === code
-                            ? "bg-[#D4AF37] text-[#0a0a0a] border-[#D4AF37]"
-                            : "bg-[#D4AF37]/10 text-[#F5D26A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
-                        }`}>
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${language === code
+                          ? "bg-[#D4AF37] text-[#0a0a0a] border-[#D4AF37]"
+                          : "bg-[#D4AF37]/10 text-[#F5D26A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
+                          }`}>
                         <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[#D4AF37]/40 bg-white/10">
                           {option.flagSrc ? (
                             <img
