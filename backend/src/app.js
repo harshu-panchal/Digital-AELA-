@@ -39,7 +39,7 @@ import backupRoutes from "./routes/backupRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js";
 import rewardRoutes from "./routes/rewardRoutes.js";
 import redemptionRequestRoutes from "./routes/redemptionRequestRoutes.js";
-import translationRoutes from "./routes/translationRoutes.js";
+// import translationRoutes from "./routes/translationRoutes.js";
 import publicSettingsRoutes from "./routes/publicSettingsRoutes.js";
 import joinUsApplicationRoutes from "./routes/joinUsApplicationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
@@ -299,7 +299,7 @@ app.use("/api/v1/backups", backupRoutes);
 app.use("/api/v1/batches", batchRoutes);
 app.use("/api/v1/rewards", rewardRoutes);
 app.use("/api/v1/redemption-requests", redemptionRequestRoutes);
-app.use("/api/v1/translate", translationRoutes);
+// Translation routes disabled
 app.use("/api/v1/join-us", joinUsApplicationRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 

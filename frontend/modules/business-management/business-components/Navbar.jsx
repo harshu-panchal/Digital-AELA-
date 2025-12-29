@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,7 +21,6 @@ import {
   FaMicrophone,
   FaBell,
 } from "react-icons/fa";
-import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { useSidebarSafe } from "../../../src/contexts/SidebarContext";
 import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
@@ -28,6 +33,15 @@ import NotificationDropdown from "./NotificationDropdown";
 import TranslatedText from "../../../src/components/TranslatedText";
 import logo from "../../../src/assets/MainLogo.png";
 
+// Stubbed language hook since translation is disabled
+const useLanguage = () => ({
+  language: "en",
+  languages: {
+    en: { label: "English", flag: "🇬🇧", flagSrc: "", flagAlt: "British flag" },
+  },
+  changeLanguage: () => {},
+});
+
 const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,7 +51,8 @@ const Navbar = () => {
   const [navbarOffset, setNavbarOffset] = useState(0);
   const [logoOffset, setLogoOffset] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] =
+    useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [contactEmail, setContactEmail] = useState("info@digitalaela.com");
   const [contactPhone, setContactPhone] = useState("+971 502270625");
@@ -63,8 +78,12 @@ const Navbar = () => {
         const response = await fetchPublicSettings({ category: "general" });
         if (response?.settings?.general) {
           const generalSettings = response.settings.general;
-          const emailSetting = generalSettings.find((s) => s.key === "site.contact.email");
-          const phoneSetting = generalSettings.find((s) => s.key === "site.contact.phone");
+          const emailSetting = generalSettings.find(
+            (s) => s.key === "site.contact.email"
+          );
+          const phoneSetting = generalSettings.find(
+            (s) => s.key === "site.contact.phone"
+          );
 
           if (emailSetting?.value) {
             setContactEmail(emailSetting.value);
@@ -97,7 +116,10 @@ const Navbar = () => {
 
         // Prevent requests too close together (rate limiting protection)
         const now = Date.now();
-        if (now - lastUnreadCountLoadTimeRef.current < MIN_UNREAD_COUNT_INTERVAL) {
+        if (
+          now - lastUnreadCountLoadTimeRef.current <
+          MIN_UNREAD_COUNT_INTERVAL
+        ) {
           return;
         }
 
@@ -239,10 +261,10 @@ const Navbar = () => {
           label: "Corporate Training",
           path: "/courses/corporate-training",
         },
-        ...dynamicCategories.map(cat => ({
+        ...dynamicCategories.map((cat) => ({
           label: cat.name,
-          path: `/courses/cat/${cat.slug}`
-        }))
+          path: `/courses/cat/${cat.slug}`,
+        })),
       ],
     },
     {
@@ -259,12 +281,12 @@ const Navbar = () => {
         },
         ...(socialLinks.youtube
           ? [
-            {
-              label: "YouTube",
-              external: true,
-              href: socialLinks.youtube,
-            },
-          ]
+              {
+                label: "YouTube",
+                external: true,
+                href: socialLinks.youtube,
+              },
+            ]
           : []),
         {
           label: "Free Library",
@@ -350,10 +372,12 @@ const Navbar = () => {
       setActiveDropdown(null);
       setMobileMenuOpen(false);
       // Navigate to home page after logout
-      if (window.location.pathname.startsWith("/super-admin") ||
+      if (
+        window.location.pathname.startsWith("/super-admin") ||
         window.location.pathname.startsWith("/teacher") ||
         window.location.pathname.startsWith("/student") ||
-        window.location.pathname.startsWith("/recruiter")) {
+        window.location.pathname.startsWith("/recruiter")
+      ) {
         window.location.href = "/";
       }
       toast.info("You've been signed out.", { toastId: "navbar-logout" });
@@ -431,10 +455,11 @@ const Navbar = () => {
           duration: 0.3,
           ease: [0.25, 0.1, 0.25, 1],
         }}
-        className={`absolute top-2 z-[70] pointer-events-auto ${isDashboardRoute
-          ? "left-1/2 -translate-x-1/2 md:left-4 lg:left-[132px]"
-          : "left-4 md:left-[132px]"
-          } md:top-[43px]`}>
+        className={`absolute top-2 z-[70] pointer-events-auto ${
+          isDashboardRoute
+            ? "left-1/2 -translate-x-1/2 md:left-4 lg:left-[132px]"
+            : "left-4 md:left-[132px]"
+        } md:top-[43px]`}>
         <Link to="/" className="block">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -3, 3, -3, 0] }}
@@ -503,7 +528,10 @@ const Navbar = () => {
                       <FaFacebookF className="h-3.5 w-3.5" />
                     </a>
                     <a
-                      href={`https://wa.me/${contactPhone.replace(/[\s+]/g, "")}`}
+                      href={`https://wa.me/${contactPhone.replace(
+                        /[\s+]/g,
+                        ""
+                      )}`}
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 transition-all duration-300 hover:border-green-500/70 hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.6)]">
@@ -548,9 +576,7 @@ const Navbar = () => {
                       delay: 0.2,
                       ease: [0.25, 0.1, 0.25, 1],
                     }}
-                    className="relative"
-                    onMouseEnter={() => setLanguageDropdownOpen(true)}
-                    onMouseLeave={() => setLanguageDropdownOpen(false)}>
+                    className="hidden">
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
@@ -589,8 +615,9 @@ const Navbar = () => {
                         <span>{currentLanguage?.label}</span>
                       </span>
                       <svg
-                        className={`h-3 w-3 transition-transform duration-200 ${languageDropdownOpen ? "rotate-180" : ""
-                          }`}
+                        className={`h-3 w-3 transition-transform duration-200 ${
+                          languageDropdownOpen ? "rotate-180" : ""
+                        }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -629,10 +656,11 @@ const Navbar = () => {
                                   backgroundColor: "rgba(212,175,55,0.08)",
                                   x: 5,
                                 }}
-                                className={`w-full border-b border-[#D4AF37]/20 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${language === code
-                                  ? "bg-[#D4AF37]/20 text-[#FFE28A]"
-                                  : "text-[#F5D26A] hover:bg-[#D4AF37]/10 hover:text-[#FFE28A]"
-                                  }`}>
+                                className={`w-full border-b border-[#D4AF37]/20 px-4 py-2.5 text-left text-base font-semibold transition-colors duration-200 last:border-b-0 ${
+                                  language === code
+                                    ? "bg-[#D4AF37]/20 text-[#FFE28A]"
+                                    : "text-[#F5D26A] hover:bg-[#D4AF37]/10 hover:text-[#FFE28A]"
+                                }`}>
                                 <span className="flex items-center gap-2.5">
                                   <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5">
                                     {option.flagSrc ? (
@@ -702,7 +730,8 @@ const Navbar = () => {
               {navItems.map((item, index) => {
                 const isLastItem = index === navItems.length - 1;
                 return (
-                  <React.Fragment key={item.path || item.href || `nav-item-${index}`}>
+                  <React.Fragment
+                    key={item.path || item.href || `nav-item-${index}`}>
                     <div
                       className="relative"
                       onMouseEnter={() => handleMouseEnter(index)}
@@ -774,7 +803,9 @@ const Navbar = () => {
                                     <div
                                       key={dropdownItem.label}
                                       className="border-b border-white/10 px-4 py-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-[#FFE28A]/70 last:border-b-0">
-                                      <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                      <TranslatedText>
+                                        {dropdownItem.label}
+                                      </TranslatedText>
                                     </div>
                                   );
                                 }
@@ -801,7 +832,9 @@ const Navbar = () => {
                                           x: 5,
                                         }}
                                         className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                        <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                        <TranslatedText>
+                                          {dropdownItem.label}
+                                        </TranslatedText>
                                       </motion.div>
                                     </button>
                                   );
@@ -828,7 +861,9 @@ const Navbar = () => {
                                           x: 5,
                                         }}
                                         className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                        <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                        <TranslatedText>
+                                          {dropdownItem.label}
+                                        </TranslatedText>
                                       </motion.div>
                                     </a>
                                   );
@@ -852,7 +887,9 @@ const Navbar = () => {
                                         x: 5,
                                       }}
                                       className="border-b border-white/10 px-4 py-3 text-sm font-medium text-[#F5D26A] transition-colors duration-200 last:border-b-0 hover:bg-white/10 hover:text-[#FFE28A]">
-                                      <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                      <TranslatedText>
+                                        {dropdownItem.label}
+                                      </TranslatedText>
                                     </motion.div>
                                   </Link>
                                 );
@@ -884,13 +921,19 @@ const Navbar = () => {
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                            onClick={() =>
+                              setNotificationDropdownOpen(
+                                !notificationDropdownOpen
+                              )
+                            }
                             className="relative flex items-center justify-center p-2 rounded-full text-[#F5D26A] hover:text-[#FFE28A] hover:bg-white/10 transition-all duration-300 group"
                             aria-label="Notifications">
                             <FaBell className="h-4 w-4 transition-colors" />
                             {unreadNotificationCount > 0 && (
                               <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white">
-                                {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                                {unreadNotificationCount > 9
+                                  ? "9+"
+                                  : unreadNotificationCount}
                               </span>
                             )}
                           </button>
@@ -988,7 +1031,8 @@ const Navbar = () => {
                   </button>
                 </div>
                 {navItems.map((item, index) => (
-                  <div key={item.path || item.href || `mobile-nav-item-${index}`}>
+                  <div
+                    key={item.path || item.href || `mobile-nav-item-${index}`}>
                     {item.dropdown ? (
                       <span className="text-[#B8831A] font-semibold text-base tracking-wide hover:text-[#8A6611] transition-colors duration-300 font-accent relative group block py-2 cursor-pointer">
                         <motion.span
@@ -1050,7 +1094,9 @@ const Navbar = () => {
                               <span
                                 key={dropdownItem.label}
                                 className="block text-[#FFE28A]/70 text-[11px] sm:text-xs uppercase tracking-wide py-1">
-                                <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                <TranslatedText>
+                                  {dropdownItem.label}
+                                </TranslatedText>
                               </span>
                             );
                           }
@@ -1065,7 +1111,9 @@ const Navbar = () => {
                                   setMobileMenuOpen(false);
                                 }}
                                 className="block text-left text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1 w-full">
-                                <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                <TranslatedText>
+                                  {dropdownItem.label}
+                                </TranslatedText>
                               </button>
                             );
                           }
@@ -1079,7 +1127,9 @@ const Navbar = () => {
                                 rel="noopener noreferrer"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                                <TranslatedText>{dropdownItem.label}</TranslatedText>
+                                <TranslatedText>
+                                  {dropdownItem.label}
+                                </TranslatedText>
                               </a>
                             );
                           }
@@ -1090,7 +1140,9 @@ const Navbar = () => {
                               to={dropdownItem.path}
                               onClick={() => setMobileMenuOpen(false)}
                               className="block text-[#F5D26A] text-sm hover:text-[#FFE28A] transition-colors duration-200 py-1">
-                              <TranslatedText>{dropdownItem.label}</TranslatedText>
+                              <TranslatedText>
+                                {dropdownItem.label}
+                              </TranslatedText>
                             </Link>
                           );
                         })}
@@ -1112,10 +1164,11 @@ const Navbar = () => {
                           changeLanguage(code);
                           setMobileMenuOpen(false);
                         }}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${language === code
-                          ? "bg-[#D4AF37] text-[#0a0a0a] border-[#D4AF37]"
-                          : "bg-[#D4AF37]/10 text-[#F5D26A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
-                          }`}>
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${
+                          language === code
+                            ? "bg-[#D4AF37] text-[#0a0a0a] border-[#D4AF37]"
+                            : "bg-[#D4AF37]/10 text-[#F5D26A] border-[#D4AF37]/40 hover:border-[#D4AF37]/70"
+                        }`}>
                         <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[#D4AF37]/40 bg-white/10">
                           {option.flagSrc ? (
                             <img

@@ -87,15 +87,11 @@ export const LanguageProvider = ({ children }) => {
     },
   };
 
-  const getInitialLanguage = () => {
-    const stored = localStorage.getItem("selectedLanguage");
-    if (stored && Object.prototype.hasOwnProperty.call(languages, stored)) {
-      return stored;
-    }
-    return "en";
-  };
+  // Translation feature disabled – always use English
+  const getInitialLanguage = () => "en";
 
-  const [language, setLanguage] = useState(getInitialLanguage);
+  // Always English
+  const [language] = useState("en");
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
 
   // Update document direction and language for RTL / LTR layouts
@@ -125,7 +121,9 @@ export const LanguageProvider = ({ children }) => {
     localStorage.setItem("selectedLanguage", language);
   }, [language]);
 
-  const changeLanguage = useCallback(async (langCode) => {
+  // Translation disabled: changeLanguage is a no-op to maintain API
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const changeLanguage = useCallback(async () => {
     if (!Object.prototype.hasOwnProperty.call(languages, langCode)) {
       // Only warn in development
       if (!import.meta.env.PROD) {
