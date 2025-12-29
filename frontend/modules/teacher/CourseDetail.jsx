@@ -20,7 +20,10 @@ import {
 import { getTeacherQuizzes, createTeacherQuiz } from "../../src/services/teacherQuizzes";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import VideoUpload from "./VideoUpload";
+import ModuleUpload from "./ModuleUpload";
+import ModuleList from "./ModuleList";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../src/services/courseVideos";
+import { getCourseModules } from "../../src/services/courseModules";
 import { FaVideo, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
 import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../src/services/api/teacher";
 import { generateCertificate } from "../../src/services/api/certificates";
@@ -102,6 +105,8 @@ const CourseDetail = () => {
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [issuingCertificateFor, setIssuingCertificateFor] = useState(null);
   const [markingCompleteFor, setMarkingCompleteFor] = useState(null);
+  const [modules, setModules] = useState([]);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
 
   const fetchVideos = async () => {
     if (!courseId) return;
@@ -169,6 +174,27 @@ const CourseDetail = () => {
     });
   };
 
+  const fetchModules = async () => {
+    if (!courseId) return;
+    setIsLoadingModules(true);
+    try {
+      const response = await getCourseModules(courseId);
+      setModules(response.modules || []);
+    } catch (error) {
+      console.error("Failed to fetch modules:", error);
+      // Don't show error toast if course doesn't exist yet
+      if (error.status !== 404) {
+        toast.error("Failed to load course modules");
+      }
+    } finally {
+      setIsLoadingModules(false);
+    }
+  };
+
+  const handleModuleUploaded = () => {
+    fetchModules();
+  };
+
   useEffect(() => {
     const loadCourse = async () => {
       try {
@@ -194,6 +220,7 @@ const CourseDetail = () => {
           tags: Array.isArray(existing.tags) ? existing.tags.join(", ") : safeString(existing.tags),
         });
         fetchVideos();
+        fetchModules();
         fetchEnrolledStudents();
       } catch (error) {
         console.error("Failed to load course:", error);
@@ -1625,6 +1652,43 @@ const CourseDetail = () => {
                         </div>
                       ))}
                     </div>
+                  )}
+                </div>
+              </div>
+            </motion.section>
+
+            <motion.section
+              variants={sectionVariants}
+              initial="hidden"
+              animate="show"
+              className="rounded-3xl border border-white/10 bg-[#0A0E1C]/90 p-6">
+              <header className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Course Modules</h2>
+                  <p className="text-xs text-slate-400">
+                    Create modules with multiple files (PDF, images, audio, documents, videos). Students can access modules after enrollment.
+                  </p>
+                </div>
+              </header>
+
+              <div className="mt-6 space-y-6">
+                <ModuleUpload
+                  courseId={courseId}
+                  onModuleUploaded={handleModuleUploaded}
+                />
+
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-white">Created Modules</h3>
+                  {isLoadingModules ? (
+                    <div className="flex items-center justify-center py-8">
+                      <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
+                    </div>
+                  ) : (
+                    <ModuleList
+                      modules={modules}
+                      courseId={courseId}
+                      onModuleUpdated={handleModuleUploaded}
+                    />
                   )}
                 </div>
               </div>

@@ -91,9 +91,9 @@ const AdminBookCreate = () => {
           toast.error("Please upload an image file");
           return;
         }
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          toast.error("Image file size must be less than 5MB");
+        // Validate file size (1GB)
+        if (file.size > 1024 * 1024 * 1024) {
+          toast.error("Image file size must be less than 1GB");
           return;
         }
         
@@ -485,7 +485,7 @@ const AdminBookCreate = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Optional: Upload a cover image for your e-book (max 5MB).
+                  Optional: Upload a cover image for your e-book (max 1GB).
                 </p>
               </div>
 
@@ -585,7 +585,7 @@ const AdminBookCreate = () => {
                   </div>
                 ) : (
                   <p className="text-xs text-slate-400">
-                    Upload a PDF up to 25 MB.
+                    Upload a PDF up to 1GB.
                   </p>
                 )}
               </label>

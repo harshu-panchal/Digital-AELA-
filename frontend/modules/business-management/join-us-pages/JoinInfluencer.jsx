@@ -185,7 +185,7 @@ const JoinInfluencer = () => {
           type: "file",
           accept: "image/png,image/jpeg,image/webp",
           help:
-            "Upload a recent profile image (PNG/JPG/WebP, up to 5 MB).",
+            "Upload a recent profile image (PNG/JPG/WebP, up to 1GB).",
           required: true,
         },
         {

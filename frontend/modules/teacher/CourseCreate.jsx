@@ -88,9 +88,9 @@ const CourseCreate = () => {
           toast.error("Please upload an image file");
           return;
         }
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          toast.error("Image file size must be less than 5MB");
+        // Validate file size (1GB)
+        if (file.size > 1024 * 1024 * 1024) {
+          toast.error("Image file size must be less than 1GB");
           return;
         }
 
@@ -136,9 +136,9 @@ const CourseCreate = () => {
           toast.error("Please upload a PDF file");
           return;
         }
-        // Validate file size (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          toast.error("PDF file size must be less than 10MB");
+        // Validate file size (1GB)
+        if (file.size > 1024 * 1024 * 1024) {
+          toast.error("PDF file size must be less than 1GB");
           return;
         }
         setFormData((prev) => ({
@@ -521,7 +521,7 @@ const CourseCreate = () => {
                     </div>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400">Upload a 16:9 cover image (max 5MB). Recommended: 1920x1080px.</p>
+                <p className="text-[11px] text-slate-400">Upload a 16:9 cover image (max 1GB). Recommended: 1920x1080px.</p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
@@ -583,7 +583,7 @@ const CourseCreate = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Upload a PDF brochure for your course. Maximum file size: 10MB. Any user can download this without enrolling.
+                  Upload a PDF brochure for your course. Maximum file size: 1GB. Any user can download this without enrolling.
                   {formData.brochureFile && (
                     <span className="block mt-1 text-[#F5D26A]">Selected: {formData.brochureFile.name}</span>
                   )}

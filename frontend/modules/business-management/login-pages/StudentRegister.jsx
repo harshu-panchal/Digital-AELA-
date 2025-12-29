@@ -52,9 +52,9 @@ const StudentRegister = () => {
         toast.error("Please select an image file.");
         return;
       }
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB.");
+      // Validate file size (1GB max)
+      if (file.size > 1024 * 1024 * 1024) {
+        toast.error("Image size must be less than 1GB.");
         return;
       }
       // Create preview
@@ -271,7 +271,7 @@ const StudentRegister = () => {
                     className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#F5D26A] file:text-black hover:file:bg-[#FFE28A] transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   />
                   <p className="mt-1 text-xs text-slate-400">
-                    JPG, PNG, or GIF. Max 5MB.
+                    JPG, PNG, or GIF. Max 1GB.
                   </p>
                 </div>
               </div>

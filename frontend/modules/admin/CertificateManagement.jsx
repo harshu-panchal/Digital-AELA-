@@ -139,9 +139,9 @@ const CertificateManagement = () => {
         toast.error("Please upload an image file");
         return;
       }
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image file size must be less than 5MB");
+      // Validate file size (1GB)
+      if (file.size > 1024 * 1024 * 1024) {
+        toast.error("Image file size must be less than 1GB");
         return;
       }
       
@@ -472,7 +472,7 @@ const CertificateManagement = () => {
                     </div>
                   )}
                   <p className="mt-1 text-xs text-slate-500">
-                    Upload a custom certificate image (JPG, PNG, max 5MB). Students will be able to download this image.
+                    Upload a custom certificate image (JPG, PNG, max 1GB). Students will be able to download this image.
                   </p>
                 </div>
                 <div className="flex gap-3 pt-4">

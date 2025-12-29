@@ -42,8 +42,8 @@ server {
     ssl_certificate /path/to/your/certificate.crt;
     ssl_certificate_key /path/to/your/private.key;
 
-    # Increase client body size limit for file uploads (50MB)
-    client_max_body_size 50M;
+    # Increase client body size limit for file uploads (1GB)
+    client_max_body_size 1G;
     
     # Increase buffer sizes for large requests
     client_body_buffer_size 128k;
@@ -83,7 +83,7 @@ server {
         add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Content-Type' 'application/json' always;
-        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 50MB."}}';
+        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 1GB."}}';
     }
 
     # Proxy settings
@@ -128,7 +128,7 @@ If you're using Apache, edit your VirtualHost configuration file (usually in `/e
     SSLCertificateFile /path/to/your/certificate.crt
     SSLCertificateKeyFile /path/to/your/private.key
     
-    # Increase request body size limit for file uploads (50MB)
+    # Increase request body size limit for file uploads (1GB)
     LimitRequestBody 52428800
     
     # CORS Headers - MUST be set for all responses including errors
@@ -197,9 +197,9 @@ VITE_API_URL=https://api.digitalaela.com/api/v1
 
 After applying the configuration:
 
-1. **Test file upload** - Try uploading a gallery image (under 5MB)
+1. **Test file upload** - Try uploading a gallery image (under 1GB)
 2. **Check CORS headers** - Use browser DevTools Network tab to verify CORS headers are present
-3. **Test error handling** - Try uploading a file larger than 50MB and verify you get a proper error response with CORS headers
+3. **Test error handling** - Try uploading a file larger than 1GB and verify you get a proper error response with CORS headers
 
 ### Quick Test Commands
 

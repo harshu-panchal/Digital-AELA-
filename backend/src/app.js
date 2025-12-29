@@ -25,6 +25,7 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import courseVideoRoutes from "./routes/courseVideoRoutes.js";
+import courseModuleRoutes from "./routes/courseModuleRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -127,8 +128,8 @@ app.use(compression({
 // Increase body parser limits for file uploads
 // Note: For multipart/form-data (file uploads), multer handles parsing
 // But we still need these for other content types
-app.use(express.json({ limit: "50mb" })); // Increased for file uploads
-app.use(express.urlencoded({ extended: true, limit: "50mb" })); // Added for form data
+app.use(express.json({ limit: "1gb" })); // Increased for file uploads
+app.use(express.urlencoded({ extended: true, limit: "1gb" })); // Added for form data
 app.use(morgan("dev"));
 
 // Serve static files from data folder
@@ -285,6 +286,7 @@ app.use("/api/v1/teachers", teacherRoutes);
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1", courseVideoRoutes);
+app.use("/api/v1", courseModuleRoutes);
 app.use("/api/v1", reviewRoutes);
 app.use("/api/v1", assignmentRoutes);
 app.use("/api/v1/payments", paymentRoutes);
@@ -344,7 +346,7 @@ app.use(async (err, req, res, next) => {
 
   if (status === 413 || err.statusCode === 413 || err.type === "entity.too.large" || err.code === "LIMIT_FILE_SIZE") {
     errorCode = "PAYLOAD_TOO_LARGE";
-    errorMessage = err.message || "Request entity too large. Maximum file size is 5MB for images.";
+    errorMessage = err.message || "Request entity too large. Maximum file size is 1GB.";
     // Ensure status is 413 for payload too large errors
     status = 413;
   } else if (status === 500) {

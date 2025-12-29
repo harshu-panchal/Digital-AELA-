@@ -572,9 +572,9 @@ const ProfilePage = () => {
         return;
       }
 
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB.");
+      // Validate file size (1GB max)
+      if (file.size > 1024 * 1024 * 1024) {
+        toast.error("Image size must be less than 1GB.");
         return;
       }
 

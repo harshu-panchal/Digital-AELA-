@@ -14,7 +14,10 @@ import {
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import VideoUpload from "../../teacher/VideoUpload";
+import ModuleUpload from "../../teacher/ModuleUpload";
+import ModuleList from "../../teacher/ModuleList";
 import { getCourseVideos, deleteVideo, updateVideo } from "../../../src/services/courseVideos";
+import { getCourseModules } from "../../../src/services/courseModules";
 import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../../src/services/api/teacher";
 import { generateCertificate } from "../../../src/services/api/certificates";
 
@@ -47,6 +50,8 @@ const AdminCourseDetail = () => {
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [markingCompleteFor, setMarkingCompleteFor] = useState(null);
   const [issuingCertificateFor, setIssuingCertificateFor] = useState(null);
+  const [modules, setModules] = useState([]);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
@@ -154,6 +159,26 @@ const AdminCourseDetail = () => {
     });
   }, []);
 
+  const fetchModules = useCallback(async () => {
+    if (!courseId) return;
+    setIsLoadingModules(true);
+    try {
+      const response = await getCourseModules(courseId);
+      setModules(response.modules || []);
+    } catch (error) {
+      console.error("Failed to fetch modules:", error);
+      if (error.status !== 404) {
+        toast.error("Failed to load course modules");
+      }
+    } finally {
+      setIsLoadingModules(false);
+    }
+  }, [courseId]);
+
+  const handleModuleUploaded = useCallback(() => {
+    fetchModules();
+  }, [fetchModules]);
+
   const fetchEnrolledStudents = useCallback(async () => {
     if (!courseId) return;
     setIsLoadingStudents(true);
@@ -211,6 +236,7 @@ const AdminCourseDetail = () => {
           isPremium: existing.metadata?.isPremium || false,
         });
         fetchVideos();
+        fetchModules();
         fetchEnrolledStudents();
       } catch (error) {
         console.error("Failed to load course:", error);
@@ -307,9 +333,9 @@ const AdminCourseDetail = () => {
             toast.error("Please upload an image file");
             return;
           }
-          // Validate file size (5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            toast.error("Image file size must be less than 5MB");
+          // Validate file size (1GB)
+          if (file.size > 1024 * 1024 * 1024) {
+            toast.error("Image file size must be less than 1GB");
             return;
           }
           
@@ -1122,6 +1148,42 @@ const AdminCourseDetail = () => {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            </div>
+          </motion.section>
+
+          {/* Course Modules Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut", delay: 0.15 }}
+            className="mt-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
+            <header className="mb-6">
+              <h2 className="text-lg font-semibold text-white">Course Modules</h2>
+              <p className="mt-1 text-xs text-slate-400">
+                Create modules with multiple files (PDF, images, audio, documents, videos). Students can access modules after enrollment.
+              </p>
+            </header>
+
+            <div className="space-y-6">
+              <ModuleUpload
+                courseId={courseId}
+                onModuleUploaded={handleModuleUploaded}
+              />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-white">Created Modules</h3>
+                {isLoadingModules ? (
+                  <div className="flex items-center justify-center py-8">
+                    <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
+                  </div>
+                ) : (
+                  <ModuleList
+                    modules={modules}
+                    courseId={courseId}
+                    onModuleUpdated={handleModuleUploaded}
+                  />
                 )}
               </div>
             </div>

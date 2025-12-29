@@ -14,7 +14,7 @@ const loadTipTap = async () => {
     }
     return TipTapModules;
   }
-  
+
   TipTapLoading = true;
   try {
     const [
@@ -30,8 +30,15 @@ const loadTipTap = async () => {
       import("@tiptap/extension-underline"),
       import("@tiptap/extension-link"),
     ]);
-    
-    TipTapModules = { useEditor, EditorContent, StarterKit, Placeholder, Underline, Link };
+
+    TipTapModules = {
+      useEditor,
+      EditorContent,
+      StarterKit,
+      Placeholder,
+      Underline,
+      Link,
+    };
   } finally {
     TipTapLoading = false;
   }
@@ -41,22 +48,13 @@ const loadTipTap = async () => {
 const toolbarButtonStyles =
   "rounded-lg border border-white/10 bg-[#111]/80 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37] disabled:cursor-not-allowed disabled:border-white/5 disabled:text-gray-500";
 
-const BlogEditor = ({
+const InnerBlogEditor = ({
   value,
   onChange,
   placeholder = "Start crafting your AELA story...",
+  tipTapModules,
 }) => {
-  const [tipTapModules, setTipTapModules] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadTipTap().then((modules) => {
-      setTipTapModules(modules);
-      setIsLoading(false);
-    });
-  }, []);
-
-  const editor = tipTapModules?.useEditor({
+  const editor = tipTapModules.useEditor({
     extensions: [
       tipTapModules?.StarterKit.configure({
         heading: {
@@ -91,6 +89,7 @@ const BlogEditor = ({
 
   useEffect(
     () => () => {
+      // editor can be undefined during cleanup if not initialized yet
       editor?.destroy();
     },
     [editor]
@@ -147,7 +146,10 @@ const BlogEditor = ({
           <TranslatedText>Blog Editor</TranslatedText>
         </h3>
         <p className="mt-1 text-xs text-gray-400">
-          <TranslatedText>Format your ideas with headers, highlights, embeds and more. Autosave will use your draft state.</TranslatedText>
+          <TranslatedText>
+            Format your ideas with headers, highlights, embeds and more.
+            Autosave will use your draft state.
+          </TranslatedText>
         </p>
       </div>
 
@@ -179,9 +181,9 @@ const BlogEditor = ({
             <button
               type="button"
               onClick={() => toggle("toggleBold")}
-                className={`${toolbarButtonStyles} ${
-                  isActive("bold") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
-                }`}>
+              className={`${toolbarButtonStyles} ${
+                isActive("bold") ? "border-[#D4AF37]/60 text-[#F5D26A]" : ""
+              }`}>
               <TranslatedText>Bold</TranslatedText>
             </button>
             <button
@@ -298,15 +300,15 @@ const BlogEditor = ({
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-[#050505]/90 p-4 text-sm text-gray-100 md:p-6">
-          {isLoading || !tipTapModules ? (
+          {!editor ? (
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#F5D26A]"></div>
             </div>
           ) : (
             <tipTapModules.EditorContent
-            editor={editor}
-            className="prose prose-invert max-w-none [&_.ProseMirror]:outline-none [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-white [&_p]:text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0"
-          />
+              editor={editor}
+              className="prose prose-invert max-w-none [&_.ProseMirror]:outline-none [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-white [&_p]:text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-2 [&_li]:text-gray-300 [&_li]:my-1.5 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#D4AF37]/40 [&_blockquote]:pl-4 [&_blockquote]:pr-4 [&_blockquote]:my-4 [&_blockquote]:text-[#F5D26A] [&_blockquote]:italic [&_blockquote]:bg-[#0a0a0a]/50 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_blockquote_p]:my-0"
+            />
           )}
         </div>
       </div>
@@ -314,4 +316,24 @@ const BlogEditor = ({
   );
 };
 
-export default BlogEditor;
+export default function BlogEditor(props) {
+  const [modules, setModules] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTipTap().then((m) => {
+      setModules(m);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading || !modules) {
+    return (
+      <div className="flex items-center justify-center h-32 w-full rounded-xl border border-white/10 bg-black/40">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#F5D26A]" />
+      </div>
+    );
+  }
+
+  return <InnerBlogEditor {...props} tipTapModules={modules} />;
+}

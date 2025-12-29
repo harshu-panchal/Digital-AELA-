@@ -122,10 +122,10 @@ const JoinAsTeacher = () => {
         },
         {
           name: "resume",
-          label: "Attach Resume (PDF, under 10MB)",
+          label: "Attach Resume (PDF, under 1GB)",
           type: "file",
           accept: ".pdf,.doc,.docx",
-          help: "Upload your latest resume (max file size 10 MB).",
+          help: "Upload your latest resume (max file size 1GB).",
           required: true,
         },
         {

@@ -1,8 +1,8 @@
 server {
     server_name api.digitalaela.com;
 
-    # Increase client body size limit for file uploads (50MB)
-    client_max_body_size 50M;
+    # Increase client body size limit for file uploads (1GB)
+    client_max_body_size 1G;
     
     # Increase buffer sizes for large requests
     client_body_buffer_size 128k;
@@ -18,7 +18,7 @@ server {
         add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Content-Type' 'application/json' always;
-        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 50MB."}}';
+        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 1GB."}}';
     }
 
     # Main proxy location - NO CORS headers here (backend handles it)

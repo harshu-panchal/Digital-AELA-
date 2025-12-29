@@ -105,9 +105,9 @@ const AdminCourseCreate = () => {
             toast.error("Please upload an image file");
             return;
           }
-          // Validate file size (5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            toast.error("Image file size must be less than 5MB");
+          // Validate file size (1GB)
+          if (file.size > 1024 * 1024 * 1024) {
+            toast.error("Image file size must be less than 1GB");
             return;
           }
 
@@ -153,9 +153,9 @@ const AdminCourseCreate = () => {
             toast.error("Please upload a PDF file");
             return;
           }
-          // Validate file size (10MB)
-          if (file.size > 10 * 1024 * 1024) {
-            toast.error("PDF file size must be less than 10MB");
+          // Validate file size (1GB)
+          if (file.size > 1024 * 1024 * 1024) {
+            toast.error("PDF file size must be less than 1GB");
             return;
           }
           setFormData((prev) => ({
@@ -653,7 +653,7 @@ const AdminCourseCreate = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Upload a 16:9 cover image (max 5MB). Recommended: 1920x1080px.
+                  Upload a 16:9 cover image (max 1GB). Recommended: 1920x1080px.
                 </p>
               </div>
 
@@ -728,7 +728,7 @@ const AdminCourseCreate = () => {
                 />
                 <p className="text-[11px] text-slate-400">
                   Upload a PDF brochure for your course. Maximum file size:
-                  10MB. Any user can download this without enrolling.
+                  1GB. Any user can download this without enrolling.
                   {formData.brochureFile && (
                     <span className="block mt-1 text-[#F5D26A]">
                       Selected: {formData.brochureFile.name}

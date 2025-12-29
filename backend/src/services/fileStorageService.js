@@ -43,6 +43,8 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
     "certificates": "photos/certificates",
     "course-videos": "videos/coursesVideos",
     "join-us": "documents", // Will be handled more specifically
+    "audio": "audio",
+    "documents": "documents",
   };
 
   // Check for specific mappings
@@ -148,6 +150,18 @@ const getExtensionFromMimeType = (mimetype) => {
     "application/pdf": "pdf",
     "application/msword": "doc",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/wav": "wav",
+    "audio/wave": "wav",
+    "audio/x-wav": "wav",
+    "audio/ogg": "ogg",
+    "audio/mp4": "m4a",
+    "audio/x-m4a": "m4a",
   };
   return mimeMap[mimetype] || "bin";
 };
@@ -382,6 +396,184 @@ export const savePdfToLocal = async (buffer, folder = "digital-aela/course-broch
     };
   } catch (error) {
     console.error("[FileStorage] Error saving PDF:", error);
+    throw error;
+  }
+};
+
+/**
+ * Save document to local storage (PDF, Word, Excel, PowerPoint)
+ */
+export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documents", originalName = null, mimetype = null) => {
+  try {
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      throw new Error("Invalid buffer provided");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("Buffer is empty");
+    }
+
+    // Determine format from mimetype or original name
+    let format = "bin";
+    if (mimetype) {
+      format = getExtensionFromMimeType(mimetype);
+    } else if (originalName) {
+      format = path.extname(originalName).slice(1).toLowerCase();
+    }
+
+    // Map folder to local path
+    let localFolder = mapFolderToLocalPath(folder);
+    
+    // Handle specific document types
+    if (folder.includes("module")) {
+      // Extract course ID and module ID if present (digital-aela/courses/{courseId}/modules/{moduleId})
+      const moduleMatch = folder.match(/courses\/([^\/]+)\/modules\/([^\/]+)/);
+      if (moduleMatch) {
+        const [, courseId, moduleId] = moduleMatch;
+        localFolder = `documents/courses/${courseId}/modules/${moduleId}`;
+      } else {
+        localFolder = "documents/modules";
+      }
+    } else if (folder.includes("document")) {
+      localFolder = "documents";
+    } else {
+      localFolder = "documents";
+    }
+
+    const fullPath = path.join(dataDir, localFolder);
+
+    // Ensure directory exists
+    await fs.mkdir(fullPath, { recursive: true });
+
+    // Generate filename
+    const filename = generateFilename(originalName, format);
+    const filePath = path.join(fullPath, filename);
+
+    // Write file to disk
+    await fs.writeFile(filePath, buffer);
+
+    // Generate URL
+    const url = `/static/${localFolder}/${filename}`;
+    const relativePath = `${localFolder}/${filename}`;
+
+    return {
+      filePath: relativePath,
+      url,
+      format,
+      bytes: buffer.length,
+      public_id: relativePath.replace(/\//g, "-"),
+    };
+  } catch (error) {
+    console.error("[FileStorage] Error saving document:", error);
+    throw error;
+  }
+};
+
+/**
+ * Save audio file to local storage
+ */
+export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", originalName = null, mimetype = null) => {
+  try {
+    // Validate buffer
+    if (!buffer || !Buffer.isBuffer(buffer)) {
+      throw new Error("Invalid buffer provided");
+    }
+
+    if (buffer.length === 0) {
+      throw new Error("Buffer is empty");
+    }
+
+    // Determine format from mimetype or original name
+    let format = "mp3";
+    if (mimetype) {
+      format = getExtensionFromMimeType(mimetype);
+    } else if (originalName) {
+      const ext = path.extname(originalName).slice(1).toLowerCase();
+      if (["mp3", "wav", "ogg", "m4a", "aac"].includes(ext)) {
+        format = ext;
+      }
+    }
+
+    // Map folder to local path
+    let localFolder = mapFolderToLocalPath(folder);
+    
+    // Handle module audio files
+    if (folder.includes("module")) {
+      const moduleMatch = folder.match(/courses\/([^\/]+)\/modules\/([^\/]+)/);
+      if (moduleMatch) {
+        const [, courseId, moduleId] = moduleMatch;
+        localFolder = `audio/courses/${courseId}/modules/${moduleId}`;
+      } else {
+        localFolder = "audio/modules";
+      }
+    } else if (folder.includes("audio")) {
+      localFolder = "audio";
+    } else {
+      localFolder = "audio";
+    }
+
+    const fullPath = path.join(dataDir, localFolder);
+
+    // Ensure directory exists
+    await fs.mkdir(fullPath, { recursive: true });
+
+    // Generate filename
+    const filename = generateFilename(originalName, format);
+    const filePath = path.join(fullPath, filename);
+
+    // Write file to disk
+    await fs.writeFile(filePath, buffer);
+
+    // Generate URL
+    const url = `/static/${localFolder}/${filename}`;
+    const relativePath = `${localFolder}/${filename}`;
+
+    return {
+      filePath: relativePath,
+      url,
+      format,
+      bytes: buffer.length,
+      public_id: relativePath.replace(/\//g, "-"),
+    };
+  } catch (error) {
+    console.error("[FileStorage] Error saving audio:", error);
+    throw error;
+  }
+};
+
+/**
+ * Save generic file to local storage (handles multiple types)
+ */
+export const saveFileToLocal = async (buffer, folder = "digital-aela/files", originalName = null, mimetype = null) => {
+  try {
+    if (!mimetype) {
+      throw new Error("MIME type is required");
+    }
+
+    // Route to appropriate handler based on MIME type
+    if (mimetype.startsWith("image/")) {
+      return await saveImageToLocal(buffer, folder, originalName);
+    } else if (mimetype.startsWith("video/")) {
+      return await saveVideoToLocal(buffer, folder, originalName);
+    } else if (mimetype.startsWith("audio/")) {
+      return await saveAudioToLocal(buffer, folder, originalName, mimetype);
+    } else if (
+      mimetype === "application/pdf" ||
+      mimetype.includes("msword") ||
+      mimetype.includes("wordprocessingml") ||
+      mimetype.includes("spreadsheetml") ||
+      mimetype.includes("presentationml") ||
+      mimetype.includes("excel") ||
+      mimetype.includes("powerpoint")
+    ) {
+      return await saveDocumentToLocal(buffer, folder, originalName, mimetype);
+    } else {
+      // Default to document handler for unknown types
+      return await saveDocumentToLocal(buffer, folder, originalName, mimetype);
+    }
+  } catch (error) {
+    console.error("[FileStorage] Error saving file:", error);
     throw error;
   }
 };

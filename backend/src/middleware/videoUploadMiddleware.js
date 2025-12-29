@@ -31,7 +31,7 @@ export const videoUpload = multer({
   storage: storage,
   fileFilter: videoFileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit for videos
+    fileSize: 1024 * 1024 * 1024, // 1GB limit for videos
   },
 });
 
@@ -61,7 +61,7 @@ export const handleVideoUploadError = (err, req, res, next) => {
       return res.status(400).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: "Video file size exceeds the limit of 500MB",
+          message: "Video file size exceeds the limit of 1GB",
         },
       });
     }

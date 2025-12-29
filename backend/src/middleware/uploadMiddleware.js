@@ -35,7 +35,7 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 1024 * 1024 * 1024, // 1GB limit
   },
 });
 
@@ -49,7 +49,7 @@ export const pdfUpload = multer({
   storage: storage,
   fileFilter: pdfFileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for PDFs
+    fileSize: 1024 * 1024 * 1024, // 1GB limit for PDFs
   },
 });
 
@@ -86,13 +86,10 @@ export const handleUploadError = (err, req, res, next) => {
 
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      const isPdf = req.file?.mimetype === "application/pdf";
       return res.status(400).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: isPdf 
-            ? "File size exceeds the limit of 10MB" 
-            : "File size exceeds the limit of 5MB",
+          message: "File size exceeds the limit of 1GB",
         },
       });
     }

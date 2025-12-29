@@ -87,9 +87,9 @@ const EbookUpload = () => {
         toast.error("Please upload an image file");
         return;
       }
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image file size must be less than 5MB");
+      // Validate file size (1GB)
+      if (file.size > 1024 * 1024 * 1024) {
+        toast.error("Image file size must be less than 1GB");
         return;
       }
 
@@ -179,9 +179,9 @@ const EbookUpload = () => {
         return;
       }
 
-      // Validate file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("PDF file size must be less than 10MB");
+      // Validate file size (1GB limit)
+      if (file.size > 1024 * 1024 * 1024) {
+        toast.error("PDF file size must be less than 1GB");
         return;
       }
     }
@@ -431,7 +431,7 @@ const EbookUpload = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Optional: Upload a cover image for your e-book (max 5MB).
+                  Optional: Upload a cover image for your e-book (max 1GB).
                 </p>
               </div>
 
@@ -498,12 +498,12 @@ const EbookUpload = () => {
                       ({Math.round(formData.file.size / 1024)} KB)
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400">Upload a PDF up to 25 MB.</p>
+                    <p className="text-xs text-slate-400">Upload a PDF up to 1GB.</p>
                   )}
                 </label>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                  The PDF will be saved when you submit the form. Maximum file size: 10MB.
+                  The PDF will be saved when you submit the form. Maximum file size: 1GB.
                 </div>
               </section>
             )}
