@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from "react";
 
 /**
  * LazyVideo Component
- * 
+ *
  * A component that lazy loads video content using Intersection Observer.
  * The video source is only loaded when it enters the viewport, improving
  * initial page load performance.
- * 
+ *
  * @param {string} src - Video source URL
  * @param {string} poster - Poster image URL (shown before video loads)
  * @param {boolean} controls - Show video controls
@@ -97,8 +97,7 @@ export function LazyVideo({
           className={className}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          {...props}
-        >
+          {...props}>
           Your browser does not support the video tag.
         </video>
       ) : (
@@ -110,8 +109,7 @@ export function LazyVideo({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}
-        >
+          }}>
           {poster ? (
             <img
               src={poster}
@@ -125,8 +123,7 @@ export function LazyVideo({
                 className="h-12 w-12"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+                viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -144,7 +141,9 @@ export function LazyVideo({
           )}
           {!isInViewport && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-sm text-gray-400">Video will load when visible</div>
+              <div className="text-sm text-gray-400">
+                Video will load when visible
+              </div>
             </div>
           )}
         </div>
@@ -154,4 +153,3 @@ export function LazyVideo({
 }
 
 export default LazyVideo;
-

@@ -67,7 +67,7 @@ export const uploadCourseVideo = async (req, res, next) => {
 
     // Save video to local storage
     const uploadResult = await uploadVideoToCloudinary(
-      req.file.buffer,
+      req.file.path, // Pass path instead of buffer
       `digital-aela/courses/${courseId}/videos`,
       req.file.originalname
     );

@@ -1,8 +1,21 @@
 import multer from "multer";
 import { saveFileToLocal } from "../services/fileStorageService.js";
+import os from "os";
+import path from "path";
 
-// Memory storage for multer
-const storage = multer.memoryStorage();
+// Disk storage for multer (temp directory)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, os.tmpdir());
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
 
 // File filter for module files (PDF, images, audio, Word, Excel, PowerPoint, video)
 const moduleFileFilter = (req, file, cb) => {
@@ -50,23 +63,23 @@ const moduleFileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer for module files (1GB limit per file)
+// Configure multer for module files (Unlimited size)
 export const moduleFileUpload = multer({
   storage: storage,
   fileFilter: moduleFileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 1024, // 1GB limit per file
+    files: 20, // Max number of files
   },
 });
 
 // Helper function to save file to local storage
 export const uploadModuleFileToLocal = async (
-  buffer,
+  fileInput,
   folder = "digital-aela/courses/modules",
   originalName = null,
   mimetype = null
 ) => {
-  return await saveFileToLocal(buffer, folder, originalName, mimetype);
+  return await saveFileToLocal(fileInput, folder, originalName, mimetype);
 };
 
 // Multiple files upload middleware for modules
@@ -81,8 +94,14 @@ export const handleModuleUploadError = (err, req, res, next) => {
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, CSRF-Token"
+    );
   }
 
   if (err instanceof multer.MulterError) {
@@ -90,7 +109,7 @@ export const handleModuleUploadError = (err, req, res, next) => {
       return res.status(400).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: "File size exceeds the limit of 1GB",
+          message: "File size exceeds the limit",
         },
       });
     }
@@ -115,4 +134,3 @@ export const handleModuleUploadError = (err, req, res, next) => {
 
   return next(err);
 };
-

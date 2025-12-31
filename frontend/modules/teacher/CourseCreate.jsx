@@ -88,11 +88,6 @@ const CourseCreate = () => {
           toast.error("Please upload an image file");
           return;
         }
-        // Validate file size (1GB)
-        if (file.size > 1024 * 1024 * 1024) {
-          toast.error("Image file size must be less than 1GB");
-          return;
-        }
 
         // Create preview
         const reader = new FileReader();
@@ -136,11 +131,6 @@ const CourseCreate = () => {
           toast.error("Please upload a PDF file");
           return;
         }
-        // Validate file size (1GB)
-        if (file.size > 1024 * 1024 * 1024) {
-          toast.error("PDF file size must be less than 1GB");
-          return;
-        }
         setFormData((prev) => ({
           ...prev,
           [name]: file,
@@ -173,8 +163,15 @@ const CourseCreate = () => {
     }
 
     // Allow price to be 0 for free courses
-    if (trimmedPrice === "" || trimmedPrice === null || trimmedPrice === undefined || Number.isNaN(Number(trimmedPrice))) {
-      toast.error("Please enter a valid course price in AED (use 0 for free courses).");
+    if (
+      trimmedPrice === "" ||
+      trimmedPrice === null ||
+      trimmedPrice === undefined ||
+      Number.isNaN(Number(trimmedPrice))
+    ) {
+      toast.error(
+        "Please enter a valid course price in AED (use 0 for free courses)."
+      );
       return;
     }
 
@@ -184,7 +181,9 @@ const CourseCreate = () => {
       category: formData.category || "Uncategorised",
       difficulty: formData.difficulty,
       price: Number(trimmedPrice),
-      discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
+      discountPrice: formData.discountPrice
+        ? Number(formData.discountPrice)
+        : null,
       language: formData.language,
       deliveryMode: formData.deliveryMode,
       duration: safeString(formData.duration),
@@ -193,7 +192,9 @@ const CourseCreate = () => {
       learningOutcomes: safeString(formData.learningOutcomes),
       requirements: safeString(formData.requirements),
       coverImage: sanitizeUrl(formData.coverImage),
-      introVideoUrl: formData.introVideoUrl ? sanitizeUrl(formData.introVideoUrl) : "",
+      introVideoUrl: formData.introVideoUrl
+        ? sanitizeUrl(formData.introVideoUrl)
+        : "",
       syllabus: safeString(formData.syllabus),
       tags: safeString(formData.tags)
         .split(",")
@@ -209,21 +210,29 @@ const CourseCreate = () => {
       // Upload brochure if provided
       if (formData.brochureFile) {
         try {
-          const { uploadCourseBrochure } = await import("../../src/services/teacherCourses");
+          const { uploadCourseBrochure } = await import(
+            "../../src/services/teacherCourses"
+          );
           await uploadCourseBrochure(created.id, formData.brochureFile);
           toast.success("Course and brochure uploaded successfully!");
         } catch (brochureError) {
           console.error("Failed to upload brochure:", brochureError);
-          toast.warning("Course saved but brochure upload failed. You can upload it later.");
+          toast.warning(
+            "Course saved but brochure upload failed. You can upload it later."
+          );
         }
       } else {
-        toast.success("Course submitted for approval. It will be reviewed by admin before being published.");
+        toast.success(
+          "Course submitted for approval. It will be reviewed by admin before being published."
+        );
       }
 
       setFormData(initialFormState);
       navigate(`/teacher/courses/${created.id}`, { replace: true });
     } catch (error) {
-      const message = (error?.details?.error?.message || error?.message) ?? "We couldn't save your course. Please try again.";
+      const message =
+        (error?.details?.error?.message || error?.message) ??
+        "We couldn't save your course. Please try again.";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -246,9 +255,12 @@ const CourseCreate = () => {
             <span className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/30 bg-[#F5D26A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
               Course Builder
             </span>
-            <h1 className="text-2xl font-semibold md:text-3xl">Create a new course</h1>
+            <h1 className="text-2xl font-semibold md:text-3xl">
+              Create a new course
+            </h1>
             <p className="text-sm text-slate-300/80 md:max-w-2xl">
-              Add your course details, outcomes, and media. You can save as draft and enrich the curriculum later.
+              Add your course details, outcomes, and media. You can save as
+              draft and enrich the curriculum later.
             </p>
           </header>
 
@@ -260,7 +272,9 @@ const CourseCreate = () => {
             className="space-y-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
             <section className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
-                <label htmlFor="title" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="title"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Course title*
                 </label>
                 <input
@@ -275,7 +289,9 @@ const CourseCreate = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="subtitle" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="subtitle"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Subtitle
                 </label>
                 <input
@@ -290,7 +306,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="category" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="category"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Category*
                 </label>
                 <select
@@ -300,10 +318,15 @@ const CourseCreate = () => {
                   onChange={handleChange}
                   required
                   className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                  style={{ backgroundColor: '#0a0d19' }}>
-                  <option value="" style={{ backgroundColor: '#0a0d19' }}>Select category</option>
+                  style={{ backgroundColor: "#0a0d19" }}>
+                  <option value="" style={{ backgroundColor: "#0a0d19" }}>
+                    Select category
+                  </option>
                   {categories.map((option) => (
-                    <option key={option} value={option} style={{ backgroundColor: '#0a0d19' }}>
+                    <option
+                      key={option}
+                      value={option}
+                      style={{ backgroundColor: "#0a0d19" }}>
                       {option}
                     </option>
                   ))}
@@ -312,7 +335,9 @@ const CourseCreate = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label htmlFor="difficulty" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="difficulty"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Difficulty
                   </label>
                   <select
@@ -321,14 +346,28 @@ const CourseCreate = () => {
                     value={formData.difficulty}
                     onChange={handleChange}
                     className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                    style={{ backgroundColor: '#0a0d19' }}>
-                    <option value="Beginner" style={{ backgroundColor: '#0a0d19' }}>Beginner</option>
-                    <option value="Intermediate" style={{ backgroundColor: '#0a0d19' }}>Intermediate</option>
-                    <option value="Advanced" style={{ backgroundColor: '#0a0d19' }}>Advanced</option>
+                    style={{ backgroundColor: "#0a0d19" }}>
+                    <option
+                      value="Beginner"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Beginner
+                    </option>
+                    <option
+                      value="Intermediate"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Intermediate
+                    </option>
+                    <option
+                      value="Advanced"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Advanced
+                    </option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="language" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="language"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Language
                   </label>
                   <select
@@ -337,18 +376,38 @@ const CourseCreate = () => {
                     value={formData.language}
                     onChange={handleChange}
                     className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                    style={{ backgroundColor: '#0a0d19' }}>
-                    <option value="English" style={{ backgroundColor: '#0a0d19' }}>English</option>
-                    <option value="Arabic" style={{ backgroundColor: '#0a0d19' }}>Arabic</option>
-                    <option value="Hindi" style={{ backgroundColor: '#0a0d19' }}>Hindi</option>
-                    <option value="Urdu" style={{ backgroundColor: '#0a0d19' }}>Urdu</option>
-                    <option value="Other" style={{ backgroundColor: '#0a0d19' }}>Other</option>
+                    style={{ backgroundColor: "#0a0d19" }}>
+                    <option
+                      value="English"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      English
+                    </option>
+                    <option
+                      value="Arabic"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Arabic
+                    </option>
+                    <option
+                      value="Hindi"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Hindi
+                    </option>
+                    <option value="Urdu" style={{ backgroundColor: "#0a0d19" }}>
+                      Urdu
+                    </option>
+                    <option
+                      value="Other"
+                      style={{ backgroundColor: "#0a0d19" }}>
+                      Other
+                    </option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="description" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="description"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Course description*
                 </label>
                 <textarea
@@ -364,7 +423,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="learningOutcomes" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="learningOutcomes"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Learning outcomes
                 </label>
                 <textarea
@@ -379,7 +440,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="requirements" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="requirements"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Requirements
                 </label>
                 <textarea
@@ -395,7 +458,9 @@ const CourseCreate = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label htmlFor="price" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="price"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Price (AED)*
                   </label>
                   <input
@@ -410,10 +475,14 @@ const CourseCreate = () => {
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                     required
                   />
-                  <p className="text-[11px] text-slate-400">{priceHelper.price}</p>
+                  <p className="text-[11px] text-slate-400">
+                    {priceHelper.price}
+                  </p>
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="discountPrice" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="discountPrice"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Discount price
                   </label>
                   <input
@@ -427,13 +496,17 @@ const CourseCreate = () => {
                     placeholder="749"
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                   />
-                  <p className="text-[11px] text-slate-400">{priceHelper.discount}</p>
+                  <p className="text-[11px] text-slate-400">
+                    {priceHelper.discount}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label htmlFor="duration" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="duration"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Duration
                   </label>
                   <input
@@ -447,7 +520,9 @@ const CourseCreate = () => {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="lessonCount" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  <label
+                    htmlFor="lessonCount"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                     Lessons
                   </label>
                   <input
@@ -463,7 +538,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="deliveryMode" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="deliveryMode"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Delivery mode
                 </label>
                 <select
@@ -472,16 +549,32 @@ const CourseCreate = () => {
                   value={formData.deliveryMode}
                   onChange={handleChange}
                   className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                  style={{ backgroundColor: '#0a0d19' }}>
-                  <option value="Live cohort" style={{ backgroundColor: '#0a0d19' }}>Live cohort</option>
-                  <option value="Self-paced video" style={{ backgroundColor: '#0a0d19' }}>Self-paced video</option>
-                  <option value="Hybrid" style={{ backgroundColor: '#0a0d19' }}>Hybrid</option>
-                  <option value="Learn & Earn challenge" style={{ backgroundColor: '#0a0d19' }}>Learn & Earn challenge</option>
+                  style={{ backgroundColor: "#0a0d19" }}>
+                  <option
+                    value="Live cohort"
+                    style={{ backgroundColor: "#0a0d19" }}>
+                    Live cohort
+                  </option>
+                  <option
+                    value="Self-paced video"
+                    style={{ backgroundColor: "#0a0d19" }}>
+                    Self-paced video
+                  </option>
+                  <option value="Hybrid" style={{ backgroundColor: "#0a0d19" }}>
+                    Hybrid
+                  </option>
+                  <option
+                    value="Learn & Earn challenge"
+                    style={{ backgroundColor: "#0a0d19" }}>
+                    Learn & Earn challenge
+                  </option>
                 </select>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="coverImageFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="coverImageFile"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Cover Image
                 </label>
                 <div className="space-y-3">
@@ -495,7 +588,9 @@ const CourseCreate = () => {
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {isUploadingImage && (
-                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                    <p className="text-[11px] text-[#F5D26A]">
+                      Uploading image...
+                    </p>
                   )}
                   {formData.coverImagePreview && (
                     <div className="relative w-full max-w-md">
@@ -514,18 +609,21 @@ const CourseCreate = () => {
                             coverImage: "",
                           }));
                         }}
-                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
-                      >
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs">
                         Remove
                       </button>
                     </div>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400">Upload a 16:9 cover image (max 1GB). Recommended: 1920x1080px.</p>
+                <p className="text-[11px] text-slate-400">
+                  Upload a 16:9 cover image (max 1GB). Recommended: 1920x1080px.
+                </p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="introVideoUrl" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="introVideoUrl"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Intro video URL
                 </label>
                 <input
@@ -540,7 +638,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="syllabus" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="syllabus"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Syllabus outline
                 </label>
                 <textarea
@@ -555,7 +655,9 @@ const CourseCreate = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="tags" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="tags"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Tags (comma separated)
                 </label>
                 <input
@@ -567,11 +669,16 @@ const CourseCreate = () => {
                   placeholder="public speaking, confidence, corporate"
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
-                <p className="text-[11px] text-slate-400">Separate tags with commas. Helps students and mentors discover your course.</p>
+                <p className="text-[11px] text-slate-400">
+                  Separate tags with commas. Helps students and mentors discover
+                  your course.
+                </p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="brochureFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="brochureFile"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Course Brochure PDF (Optional)
                 </label>
                 <input
@@ -583,9 +690,12 @@ const CourseCreate = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Upload a PDF brochure for your course. Maximum file size: 1GB. Any user can download this without enrolling.
+                  Upload a PDF brochure for your course. Maximum file size: 1GB.
+                  Any user can download this without enrolling.
                   {formData.brochureFile && (
-                    <span className="block mt-1 text-[#F5D26A]">Selected: {formData.brochureFile.name}</span>
+                    <span className="block mt-1 text-[#F5D26A]">
+                      Selected: {formData.brochureFile.name}
+                    </span>
                   )}
                 </p>
               </div>
@@ -600,13 +710,19 @@ const CourseCreate = () => {
                 />
                 <span>
                   Publish immediately after approval
-                  <p className="text-xs text-slate-400">Uncheck to keep the course as draft until you publish manually.</p>
+                  <p className="text-xs text-slate-400">
+                    Uncheck to keep the course as draft until you publish
+                    manually.
+                  </p>
                 </span>
               </label>
             </section>
 
             <footer className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">You can enrich the curriculum with lessons, quizzes, and resources after saving.</p>
+              <p className="text-xs text-slate-400">
+                You can enrich the curriculum with lessons, quizzes, and
+                resources after saving.
+              </p>
               <motion.button
                 whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
                 whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
@@ -624,4 +740,3 @@ const CourseCreate = () => {
 };
 
 export default CourseCreate;
-

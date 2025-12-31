@@ -87,11 +87,6 @@ const EbookUpload = () => {
         toast.error("Please upload an image file");
         return;
       }
-      // Validate file size (1GB)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error("Image file size must be less than 1GB");
-        return;
-      }
 
       // Create preview
       const reader = new FileReader();
@@ -178,12 +173,6 @@ const EbookUpload = () => {
         toast.error("Only PDF uploads are supported.");
         return;
       }
-
-      // Validate file size (1GB limit)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error("PDF file size must be less than 1GB");
-        return;
-      }
     }
 
     if (!formData.pages || formData.pages <= 0) {
@@ -212,11 +201,18 @@ const EbookUpload = () => {
       // Upload PDF file along with metadata only for e-books
       const pdfFile = formData.bookType === "ebook" ? formData.file : null;
       const created = await createTeacherEbook(payload, pdfFile);
-      toast.success("E-book submitted for approval. It will be reviewed by admin before being published.");
+      toast.success(
+        "E-book submitted for approval. It will be reviewed by admin before being published."
+      );
       setFormData(initialFormState);
-      navigate("/teacher/dashboard", { replace: true, state: { highlightEbooks: true, ebookId: created.id } });
+      navigate("/teacher/dashboard", {
+        replace: true,
+        state: { highlightEbooks: true, ebookId: created.id },
+      });
     } catch (error) {
-      const message = (error?.details?.error?.message || error?.message) ?? "Unable to save e-book. Please try again.";
+      const message =
+        (error?.details?.error?.message || error?.message) ??
+        "Unable to save e-book. Please try again.";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -239,9 +235,13 @@ const EbookUpload = () => {
             <span className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/30 bg-[#F5D26A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]">
               E-book Publisher
             </span>
-            <h1 className="text-2xl font-semibold md:text-3xl">Upload a new e-book</h1>
+            <h1 className="text-2xl font-semibold md:text-3xl">
+              Upload a new e-book
+            </h1>
             <p className="text-sm text-slate-300/80 md:max-w-2xl">
-              Fill in the details, attach your PDF, and save as draft. Publishing is enabled once reviews and backend storage are in place.
+              Fill in the details, attach your PDF, and save as draft.
+              Publishing is enabled once reviews and backend storage are in
+              place.
             </p>
           </header>
 
@@ -253,7 +253,9 @@ const EbookUpload = () => {
             className="space-y-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
             <section className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
-                <label htmlFor="title" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="title"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Title*
                 </label>
                 <input
@@ -269,7 +271,9 @@ const EbookUpload = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="subtitle" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="subtitle"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Subtitle
                 </label>
                 <input
@@ -312,12 +316,15 @@ const EbookUpload = () => {
                   </label>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Select whether this is an e-book (requires PDF upload) or a physical book (no PDF needed).
+                  Select whether this is an e-book (requires PDF upload) or a
+                  physical book (no PDF needed).
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="category" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="category"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Category
                 </label>
                 <select
@@ -326,10 +333,15 @@ const EbookUpload = () => {
                   value={formData.category}
                   onChange={handleInputChange}
                   className="w-full appearance-none rounded-xl border border-white/15 bg-[#0a0d19] px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                  style={{ backgroundColor: '#0a0d19' }}>
-                  <option value="" style={{ backgroundColor: '#0a0d19' }}>Select a category</option>
+                  style={{ backgroundColor: "#0a0d19" }}>
+                  <option value="" style={{ backgroundColor: "#0a0d19" }}>
+                    Select a category
+                  </option>
                   {categories.map((option) => (
-                    <option key={option} value={option} style={{ backgroundColor: '#0a0d19' }}>
+                    <option
+                      key={option}
+                      value={option}
+                      style={{ backgroundColor: "#0a0d19" }}>
                       {option}
                     </option>
                   ))}
@@ -337,7 +349,9 @@ const EbookUpload = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="price" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="price"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Price (AED)
                 </label>
                 <input
@@ -351,11 +365,15 @@ const EbookUpload = () => {
                   placeholder="149"
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
-                <p className="text-[11px] text-slate-400">{priceHelper.price}</p>
+                <p className="text-[11px] text-slate-400">
+                  {priceHelper.price}
+                </p>
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="pages" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="pages"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Number of Pages*
                 </label>
                 <input
@@ -370,11 +388,15 @@ const EbookUpload = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                   required
                 />
-                <p className="text-[11px] text-slate-400">Enter the total number of pages in the e-book</p>
+                <p className="text-[11px] text-slate-400">
+                  Enter the total number of pages in the e-book
+                </p>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="description" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="description"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Description*
                 </label>
                 <textarea
@@ -390,7 +412,9 @@ const EbookUpload = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="coverImageFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="coverImageFile"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Cover Image
                 </label>
                 <div className="space-y-3">
@@ -404,7 +428,9 @@ const EbookUpload = () => {
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {isUploadingImage && (
-                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                    <p className="text-[11px] text-[#F5D26A]">
+                      Uploading image...
+                    </p>
                   )}
                   {formData.coverImagePreview && (
                     <div className="relative w-full max-w-md">
@@ -423,8 +449,7 @@ const EbookUpload = () => {
                             coverImage: "",
                           }));
                         }}
-                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
-                      >
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs">
                         Remove
                       </button>
                     </div>
@@ -436,7 +461,9 @@ const EbookUpload = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="previewUrl" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="previewUrl"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Preview link
                 </label>
                 <input
@@ -454,7 +481,9 @@ const EbookUpload = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="tags" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label
+                  htmlFor="tags"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Tags
                 </label>
                 <input
@@ -467,7 +496,8 @@ const EbookUpload = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Separate tags with commas. Helps learners discover your e-book.
+                  Separate tags with commas. Helps learners discover your
+                  e-book.
                 </p>
               </div>
             </section>
@@ -475,9 +505,12 @@ const EbookUpload = () => {
             {formData.bookType === "ebook" && (
               <section className="space-y-4">
                 <header>
-                  <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    Attach PDF
+                  </h2>
                   <p className="text-xs text-slate-400">
-                    Upload the final PDF file. It will be automatically saved when you submit the form.
+                    Upload the final PDF file. It will be automatically saved
+                    when you submit the form.
                   </p>
                 </header>
 
@@ -494,16 +527,22 @@ const EbookUpload = () => {
                   />
                   {formData.file ? (
                     <div className="text-xs text-slate-300">
-                      Selected: <span className="font-semibold text-white">{formData.file.name}</span>{" "}
+                      Selected:{" "}
+                      <span className="font-semibold text-white">
+                        {formData.file.name}
+                      </span>{" "}
                       ({Math.round(formData.file.size / 1024)} KB)
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400">Upload a PDF up to 1GB.</p>
+                    <p className="text-xs text-slate-400">
+                      Upload a PDF up to 1GB.
+                    </p>
                   )}
                 </label>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                  The PDF will be saved when you submit the form. Maximum file size: 1GB.
+                  The PDF will be saved when you submit the form. Maximum file
+                  size: 1GB.
                 </div>
               </section>
             )}
@@ -511,15 +550,21 @@ const EbookUpload = () => {
             {formData.bookType === "physical" && (
               <section className="space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                  <p className="font-semibold text-[#F5D26A] mb-1">Physical Book Selected</p>
-                  <p>No PDF upload is required for physical books. The book will be available for physical purchase or distribution.</p>
+                  <p className="font-semibold text-[#F5D26A] mb-1">
+                    Physical Book Selected
+                  </p>
+                  <p>
+                    No PDF upload is required for physical books. The book will
+                    be available for physical purchase or distribution.
+                  </p>
                 </div>
               </section>
             )}
 
             <footer className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-400">
-                Save as draft for now—publishing will be available once backend approvals are connected.
+                Save as draft for now—publishing will be available once backend
+                approvals are connected.
               </p>
               <motion.button
                 whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
@@ -538,4 +583,3 @@ const EbookUpload = () => {
 };
 
 export default EbookUpload;
-

@@ -91,11 +91,6 @@ const AdminBookCreate = () => {
           toast.error("Please upload an image file");
           return;
         }
-        // Validate file size (1GB)
-        if (file.size > 1024 * 1024 * 1024) {
-          toast.error("Image file size must be less than 1GB");
-          return;
-        }
         
         // Create preview
         const reader = new FileReader();

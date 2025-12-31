@@ -43,12 +43,6 @@ const GalleryManagement = () => {
       return;
     }
 
-    // Validate file size (1GB)
-    if (file.size > 1024 * 1024 * 1024) {
-      toast.error("Image size must be less than 1GB");
-      return;
-    }
-
     try {
       setUploading(true);
       const response = await uploadGalleryImage(file);
@@ -174,7 +168,7 @@ const GalleryManagement = () => {
                     Click to upload or drag and drop
                   </p>
                   <p className="text-gray-400 text-xs sm:text-sm mt-1">
-                    PNG, JPG, GIF up to 1GB
+                    PNG, JPG, GIF
                   </p>
                 </div>
               </>
@@ -256,4 +250,3 @@ const GalleryManagement = () => {
 };
 
 export default GalleryManagement;
-

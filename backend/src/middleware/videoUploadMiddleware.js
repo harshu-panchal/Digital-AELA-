@@ -58,10 +58,10 @@ export const uploadMultipleVideos = (fieldName = "videos", maxCount = 10) => {
 export const handleVideoUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
+      return res.status(413).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: "Video file size exceeds the limit of 1GB",
+          message: "Video file size exceeds the limit",
         },
       });
     }
@@ -86,4 +86,3 @@ export const handleVideoUploadError = (err, req, res, next) => {
 
   return next(err);
 };
-

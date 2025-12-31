@@ -4,10 +4,7 @@ import { motion } from "framer-motion";
 import { createModule } from "../../src/services/courseModules";
 import { FaUpload, FaTimes, FaSpinner, FaFile } from "react-icons/fa";
 
-const ModuleUpload = ({
-  courseId,
-  onModuleUploaded,
-}) => {
+const ModuleUpload = ({ courseId, onModuleUploaded }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -48,24 +45,18 @@ const ModuleUpload = ({
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    
+
     if (files.length === 0) return;
 
     // Validate files
     const validFiles = [];
     for (const file of files) {
-      // Validate file size (1GB)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error(`${file.name} exceeds 1GB limit`);
-        continue;
-      }
-      
       // Validate file type
       if (!allowedFileTypes.includes(file.type)) {
         toast.error(`${file.name} has invalid file type`);
         continue;
       }
-      
+
       validFiles.push(file);
     }
 
@@ -80,7 +71,8 @@ const ModuleUpload = ({
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    if (bytes < 1024 * 1024 * 1024)
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
   };
 
@@ -89,15 +81,18 @@ const ModuleUpload = ({
     if (mimeType.startsWith("video/")) return "🎥";
     if (mimeType.startsWith("audio/")) return "🎵";
     if (mimeType.includes("pdf")) return "📄";
-    if (mimeType.includes("word") || mimeType.includes("wordprocessingml")) return "📝";
-    if (mimeType.includes("excel") || mimeType.includes("spreadsheetml")) return "📊";
-    if (mimeType.includes("powerpoint") || mimeType.includes("presentationml")) return "📊";
+    if (mimeType.includes("word") || mimeType.includes("wordprocessingml"))
+      return "📝";
+    if (mimeType.includes("excel") || mimeType.includes("spreadsheetml"))
+      return "📊";
+    if (mimeType.includes("powerpoint") || mimeType.includes("presentationml"))
+      return "📊";
     return "📎";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       toast.error("Please enter a module title");
       return;
@@ -186,7 +181,8 @@ const ModuleUpload = ({
             className="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#D4AF37] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black hover:file:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-50"
           />
           <p className="mt-2 text-xs text-slate-400">
-            Supported: PDF, Images, Audio (MP3, WAV, OGG), Documents (Word, Excel, PowerPoint), Videos (MP4, MOV, AVI, WebM). Max 1GB per file.
+            Supported: PDF, Images, Audio (MP3, WAV, OGG), Documents (Word,
+            Excel, PowerPoint), Videos (MP4, MOV, AVI, WebM). Unlimited size.
           </p>
         </div>
 
@@ -201,10 +197,14 @@ const ModuleUpload = ({
                   key={index}
                   className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-lg">{getFileTypeIcon(file.type)}</span>
+                    <span className="text-lg">
+                      {getFileTypeIcon(file.type)}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white truncate">{file.name}</p>
-                      <p className="text-xs text-slate-400">{formatFileSize(file.size)}</p>
+                      <p className="text-xs text-slate-400">
+                        {formatFileSize(file.size)}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -242,4 +242,3 @@ const ModuleUpload = ({
 };
 
 export default ModuleUpload;
-

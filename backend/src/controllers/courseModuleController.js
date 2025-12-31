@@ -70,7 +70,7 @@ export const createModule = async (req, res, next) => {
       for (const file of req.files) {
         try {
           const uploadResult = await uploadModuleFileToLocal(
-            file.buffer,
+            file.path,
             `digital-aela/courses/${courseId}/modules`,
             file.originalname,
             file.mimetype
@@ -156,10 +156,17 @@ export const getCourseModules = async (req, res, next) => {
       // Check if student is enrolled (allow active, completed, and paused statuses)
       const enrollmentQueries = [
         { student: userId, course: courseId, status: { $ne: "dropped" } },
-        { student: String(userId), course: String(courseId), status: { $ne: "dropped" } },
+        {
+          student: String(userId),
+          course: String(courseId),
+          status: { $ne: "dropped" },
+        },
       ];
 
-      if (mongoose.Types.ObjectId.isValid(courseId) && mongoose.Types.ObjectId.isValid(userId)) {
+      if (
+        mongoose.Types.ObjectId.isValid(courseId) &&
+        mongoose.Types.ObjectId.isValid(userId)
+      ) {
         enrollmentQueries.push({
           student: new mongoose.Types.ObjectId(userId),
           course: new mongoose.Types.ObjectId(courseId),
@@ -234,10 +241,7 @@ export const getModule = async (req, res, next) => {
     let hasAccess = false;
     const course = module.course;
 
-    if (
-      userRole === "teacher" &&
-      course.instructor.toString() === userId
-    ) {
+    if (userRole === "teacher" && course.instructor.toString() === userId) {
       hasAccess = true;
     } else if (userRole === "super-admin") {
       hasAccess = true;
@@ -246,10 +250,17 @@ export const getModule = async (req, res, next) => {
       const courseIdValue = course._id || course;
       const enrollmentQueries = [
         { student: userId, course: courseIdValue, status: { $ne: "dropped" } },
-        { student: String(userId), course: String(courseIdValue), status: { $ne: "dropped" } },
+        {
+          student: String(userId),
+          course: String(courseIdValue),
+          status: { $ne: "dropped" },
+        },
       ];
 
-      if (mongoose.Types.ObjectId.isValid(courseIdValue) && mongoose.Types.ObjectId.isValid(userId)) {
+      if (
+        mongoose.Types.ObjectId.isValid(courseIdValue) &&
+        mongoose.Types.ObjectId.isValid(userId)
+      ) {
         enrollmentQueries.push({
           student: new mongoose.Types.ObjectId(userId),
           course: new mongoose.Types.ObjectId(courseIdValue),
@@ -311,7 +322,10 @@ export const updateModule = async (req, res, next) => {
       });
     }
 
-    const module = await CourseModule.findById(moduleId).populate("course", "instructor");
+    const module = await CourseModule.findById(moduleId).populate(
+      "course",
+      "instructor"
+    );
     if (!module) {
       return res.status(404).json({
         error: {
@@ -322,7 +336,10 @@ export const updateModule = async (req, res, next) => {
     }
 
     // Verify ownership
-    if (userRole === "teacher" && module.course.instructor.toString() !== userId) {
+    if (
+      userRole === "teacher" &&
+      module.course.instructor.toString() !== userId
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -393,7 +410,10 @@ export const deleteModule = async (req, res, next) => {
       });
     }
 
-    const module = await CourseModule.findById(moduleId).populate("course", "instructor");
+    const module = await CourseModule.findById(moduleId).populate(
+      "course",
+      "instructor"
+    );
     if (!module) {
       return res.status(404).json({
         error: {
@@ -404,7 +424,10 @@ export const deleteModule = async (req, res, next) => {
     }
 
     // Verify ownership
-    if (userRole === "teacher" && module.course.instructor.toString() !== userId) {
+    if (
+      userRole === "teacher" &&
+      module.course.instructor.toString() !== userId
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -462,7 +485,10 @@ export const addFilesToModule = async (req, res, next) => {
       });
     }
 
-    const module = await CourseModule.findById(moduleId).populate("course", "instructor");
+    const module = await CourseModule.findById(moduleId).populate(
+      "course",
+      "instructor"
+    );
     if (!module) {
       return res.status(404).json({
         error: {
@@ -473,7 +499,10 @@ export const addFilesToModule = async (req, res, next) => {
     }
 
     // Verify ownership
-    if (userRole === "teacher" && module.course.instructor.toString() !== userId) {
+    if (
+      userRole === "teacher" &&
+      module.course.instructor.toString() !== userId
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -498,7 +527,7 @@ export const addFilesToModule = async (req, res, next) => {
     for (const file of req.files) {
       try {
         const uploadResult = await uploadModuleFileToLocal(
-          file.buffer,
+          file.path,
           `digital-aela/courses/${courseId}/modules/${moduleId}`,
           file.originalname,
           file.mimetype
@@ -560,7 +589,8 @@ export const removeFileFromModule = async (req, res, next) => {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "Only teachers and super admins can remove files from modules",
+          message:
+            "Only teachers and super admins can remove files from modules",
         },
       });
     }
@@ -584,7 +614,10 @@ export const removeFileFromModule = async (req, res, next) => {
       });
     }
 
-    const module = await CourseModule.findById(moduleId).populate("course", "instructor");
+    const module = await CourseModule.findById(moduleId).populate(
+      "course",
+      "instructor"
+    );
     if (!module) {
       return res.status(404).json({
         error: {
@@ -595,11 +628,15 @@ export const removeFileFromModule = async (req, res, next) => {
     }
 
     // Verify ownership
-    if (userRole === "teacher" && module.course.instructor.toString() !== userId) {
+    if (
+      userRole === "teacher" &&
+      module.course.instructor.toString() !== userId
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
-          message: "You can only remove files from modules for your own courses",
+          message:
+            "You can only remove files from modules for your own courses",
         },
       });
     }
@@ -638,4 +675,3 @@ export const removeFileFromModule = async (req, res, next) => {
     return next(error);
   }
 };
-

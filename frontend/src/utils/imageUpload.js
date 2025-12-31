@@ -21,12 +21,6 @@ export const uploadImageToCloudinary = async (file, folder = "digital-aela") => 
     throw new Error("Invalid file type. Only image files are allowed.");
   }
 
-  // Validate file size (1GB limit)
-  const maxSize = 1024 * 1024 * 1024; // 1GB
-  if (file.size > maxSize) {
-    throw new Error("File size exceeds the limit of 1GB");
-  }
-
   // Create FormData
   const formData = new FormData();
   formData.append("image", file);

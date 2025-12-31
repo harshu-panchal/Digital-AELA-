@@ -40,11 +40,6 @@ const BranchOwnerRegister = () => {
         toast.error("Please select an image file.");
         return;
       }
-      // Validate file size (1GB max)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error("Image size must be less than 1GB.");
-        return;
-      }
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -83,7 +78,11 @@ const BranchOwnerRegister = () => {
       return;
     }
 
-    const passwordError = validatePasswordPair(password, confirmPassword, MIN_PASSWORD_LENGTH);
+    const passwordError = validatePasswordPair(
+      password,
+      confirmPassword,
+      MIN_PASSWORD_LENGTH
+    );
     if (passwordError) {
       toast.error(passwordError);
       return;
@@ -119,7 +118,10 @@ const BranchOwnerRegister = () => {
       setFormData(createInitialFormState());
       navigate(getRoleHome(newUser.role), { replace: true });
     } catch (error) {
-      toast.error(error.message || "We couldn't submit your application. Please try again.");
+      toast.error(
+        error.message ||
+          "We couldn't submit your application. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -150,15 +152,20 @@ const BranchOwnerRegister = () => {
               className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#F5D26A]">
               Launch a Branch
             </motion.span>
-            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Start Your Digital AELA Centre</h1>
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">
+              Start Your Digital AELA Centre
+            </h1>
             <p className="text-sm text-slate-300/80">
-              Share your details to begin the partnership process. Our expansion team will design a launch roadmap with you.
+              Share your details to begin the partnership process. Our expansion
+              team will design a launch roadmap with you.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Full Name</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Full Name
+              </span>
               <input
                 type="text"
                 name="fullName"
@@ -171,7 +178,9 @@ const BranchOwnerRegister = () => {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-100">Email</span>
+              <span className="text-sm font-semibold text-slate-100">
+                Email
+              </span>
               <input
                 type="email"
                 name="email"
@@ -185,7 +194,9 @@ const BranchOwnerRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Contact Number</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Contact Number
+                </span>
                 <input
                   type="tel"
                   name="phone"
@@ -197,7 +208,9 @@ const BranchOwnerRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Region / City</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Region / City
+                </span>
                 <input
                   type="text"
                   name="region"
@@ -213,7 +226,8 @@ const BranchOwnerRegister = () => {
             {/* Profile Image Upload */}
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-slate-100">
-                Profile Photo <span className="text-xs text-slate-400">(Optional)</span>
+                Profile Photo{" "}
+                <span className="text-xs text-slate-400">(Optional)</span>
               </span>
               <div className="flex items-center gap-4">
                 {formData.profileImagePreview ? (
@@ -236,7 +250,7 @@ const BranchOwnerRegister = () => {
                     className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#F5D26A] file:text-black hover:file:bg-[#FFE28A] transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
                   />
                   <p className="mt-1 text-xs text-slate-400">
-                    JPG, PNG, or GIF. Max 1GB.
+                    JPG, PNG, or GIF.
                   </p>
                 </div>
               </div>
@@ -244,7 +258,9 @@ const BranchOwnerRegister = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Password
+                </span>
                 <input
                   type="password"
                   name="password"
@@ -256,7 +272,9 @@ const BranchOwnerRegister = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-100">Confirm Password</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  Confirm Password
+                </span>
                 <input
                   type="password"
                   name="confirmPassword"

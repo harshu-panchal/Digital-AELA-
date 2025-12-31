@@ -262,12 +262,6 @@ const StudentProfile = () => {
       return;
     }
 
-    // Validate file size (1GB max)
-    if (file.size > 1024 * 1024 * 1024) {
-      toast.error("Image size must be less than 1GB.");
-      return;
-    }
-
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -701,4 +695,3 @@ const StudentProfile = () => {
 };
 
 export default StudentProfile;
-

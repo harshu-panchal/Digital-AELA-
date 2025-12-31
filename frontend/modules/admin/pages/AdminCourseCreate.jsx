@@ -74,11 +74,21 @@ const AdminCourseCreate = () => {
           setCategories(data.map((c) => c.name));
         } else {
           // Fallback if no categories in DB
-          setCategories(["English Language", "Digital Marketing", "Corporate Training", "Other"]);
+          setCategories([
+            "English Language",
+            "Digital Marketing",
+            "Corporate Training",
+            "Other",
+          ]);
         }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
-        setCategories(["English Language", "Digital Marketing", "Corporate Training", "Other"]);
+        setCategories([
+          "English Language",
+          "Digital Marketing",
+          "Corporate Training",
+          "Other",
+        ]);
       }
     };
     loadCategories();
@@ -103,11 +113,6 @@ const AdminCourseCreate = () => {
           // Validate image file
           if (!file.type.startsWith("image/")) {
             toast.error("Please upload an image file");
-            return;
-          }
-          // Validate file size (1GB)
-          if (file.size > 1024 * 1024 * 1024) {
-            toast.error("Image file size must be less than 1GB");
             return;
           }
 
@@ -151,11 +156,6 @@ const AdminCourseCreate = () => {
           // Validate PDF file
           if (file.type !== "application/pdf") {
             toast.error("Please upload a PDF file");
-            return;
-          }
-          // Validate file size (1GB)
-          if (file.size > 1024 * 1024 * 1024) {
-            toast.error("PDF file size must be less than 1GB");
             return;
           }
           setFormData((prev) => ({
@@ -252,8 +252,13 @@ const AdminCourseCreate = () => {
       // Upload brochure if provided
       if (formData.brochureFile) {
         try {
-          const { uploadAdminCourseBrochure } = await import("../../../src/services/api/adminContent");
-          await uploadAdminCourseBrochure(created.course._id, formData.brochureFile);
+          const { uploadAdminCourseBrochure } = await import(
+            "../../../src/services/api/adminContent"
+          );
+          await uploadAdminCourseBrochure(
+            created.course._id,
+            formData.brochureFile
+          );
           toast.success("Course and brochure uploaded successfully!");
         } catch (brochureError) {
           console.error("Failed to upload brochure:", brochureError);
@@ -626,7 +631,9 @@ const AdminCourseCreate = () => {
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {isUploadingImage && (
-                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                    <p className="text-[11px] text-[#F5D26A]">
+                      Uploading image...
+                    </p>
                   )}
                   {formData.coverImagePreview && (
                     <div className="relative w-full max-w-md">
@@ -645,8 +652,7 @@ const AdminCourseCreate = () => {
                             coverImage: "",
                           }));
                         }}
-                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
-                      >
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs">
                         Remove
                       </button>
                     </div>
@@ -727,8 +733,8 @@ const AdminCourseCreate = () => {
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Upload a PDF brochure for your course. Maximum file size:
-                  1GB. Any user can download this without enrolling.
+                  Upload a PDF brochure for your course. Maximum file size: 1GB.
+                  Any user can download this without enrolling.
                   {formData.brochureFile && (
                     <span className="block mt-1 text-[#F5D26A]">
                       Selected: {formData.brochureFile.name}
@@ -755,10 +761,11 @@ const AdminCourseCreate = () => {
               </label>
 
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${premiumCount >= maxPremium && !formData.isPremium
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
+                  premiumCount >= maxPremium && !formData.isPremium
                     ? "opacity-60"
                     : ""
-                  }`}>
+                }`}>
                 <input
                   type="checkbox"
                   name="isPremium"

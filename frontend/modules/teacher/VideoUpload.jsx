@@ -23,11 +23,6 @@ const VideoUpload = ({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (1GB)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error("Video file size must be less than 1GB");
-        return;
-      }
       // Validate file type
       const allowedTypes = [
         "video/mp4",

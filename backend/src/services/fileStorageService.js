@@ -26,7 +26,7 @@ const dataDir = path.resolve(rootDir, "../frontend/data");
 const mapFolderToLocalPath = (cloudinaryFolder) => {
   // Remove "digital-aela" prefix if present
   let folder = cloudinaryFolder.replace(/^digital-aela\/?/, "");
-  
+
   // Check for exact matches first (most specific)
   if (folder === "courses/covers" || folder.startsWith("courses/covers/")) {
     return "photos/courses";
@@ -34,17 +34,17 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
   if (folder === "books/covers" || folder.startsWith("books/covers/")) {
     return "photos/bookscovers";
   }
-  
+
   // Map common folder patterns
   const folderMappings = {
-    "profiles": "photos/profiles",
-    "gallery": "photos/gallery",
-    "testimonials": "photos/testimonials",
-    "certificates": "photos/certificates",
+    profiles: "photos/profiles",
+    gallery: "photos/gallery",
+    testimonials: "photos/testimonials",
+    certificates: "photos/certificates",
     "course-videos": "videos/coursesVideos",
     "join-us": "documents", // Will be handled more specifically
-    "audio": "audio",
-    "documents": "documents",
+    audio: "audio",
+    documents: "documents",
   };
 
   // Check for specific mappings
@@ -52,8 +52,8 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
     if (folder.includes(key)) {
       // Extract additional path info (like course ID)
       const parts = folder.split("/");
-      const keyIndex = parts.findIndex(p => p.includes(key.split("/")[0]));
-      
+      const keyIndex = parts.findIndex((p) => p.includes(key.split("/")[0]));
+
       if (folder.includes("join-us")) {
         // Handle join-us applications - determine type from folder structure
         const joinUsMatch = folder.match(/join-us\/([^\/]+)\/(.+)/);
@@ -62,7 +62,11 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
           // Determine if it's image, video, or document
           if (fieldName.includes("video") || fieldName.includes("Video")) {
             return `videos/formVideos/${applicationType}`;
-          } else if (fieldName.includes("pdf") || fieldName.includes("document") || fieldName.includes("resume")) {
+          } else if (
+            fieldName.includes("pdf") ||
+            fieldName.includes("document") ||
+            fieldName.includes("resume")
+          ) {
             return `PDFs/documents/${applicationType}`;
           } else {
             return `photos/profiles`; // Default for images in join-us
@@ -70,11 +74,11 @@ const mapFolderToLocalPath = (cloudinaryFolder) => {
         }
         return `PDFs/documents`;
       }
-      
+
       return value;
     }
   }
-  
+
   // Handle course videos specifically (courses/{id}/videos pattern)
   if (folder.startsWith("courses/") && folder.includes("/videos")) {
     const courseIdMatch = folder.match(/courses\/([^\/]+)/);
@@ -149,11 +153,13 @@ const getExtensionFromMimeType = (mimetype) => {
     "video/webm": "webm",
     "application/pdf": "pdf",
     "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
     "application/vnd.ms-excel": "xls",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/vnd.ms-powerpoint": "ppt",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      "pptx",
     "audio/mpeg": "mp3",
     "audio/mp3": "mp3",
     "audio/wav": "wav",
@@ -169,15 +175,27 @@ const getExtensionFromMimeType = (mimetype) => {
 /**
  * Save image to local storage
  */
-export const saveImageToLocal = async (buffer, folder = "digital-aela", originalName = null) => {
+export const saveImageToLocal = async (
+  fileInput,
+  folder = "digital-aela",
+  originalName = null
+) => {
   try {
-    // Validate buffer
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      throw new Error("Invalid buffer provided");
-    }
+    let fileSize = 0;
 
-    if (buffer.length === 0) {
-      throw new Error("Buffer is empty");
+    // Validate input
+    if (Buffer.isBuffer(fileInput)) {
+      if (fileInput.length === 0) throw new Error("Buffer is empty");
+      fileSize = fileInput.length;
+    } else if (typeof fileInput === "string") {
+      try {
+        const stats = await fs.stat(fileInput);
+        fileSize = stats.size;
+      } catch (err) {
+        throw new Error(`File not found at path: ${fileInput}`);
+      }
+    } else {
+      throw new Error("Invalid input: must be a buffer or file path");
     }
 
     // Map folder to local path
@@ -195,35 +213,19 @@ export const saveImageToLocal = async (buffer, folder = "digital-aela", original
 
     if (sharp) {
       try {
-        const imageMetadata = await sharp(buffer).metadata();
+        // If fileInput is a path, sharp can read from it directly
+        const imageMetadata = await sharp(fileInput).metadata();
         format = imageMetadata.format || "jpg";
         width = imageMetadata.width;
         height = imageMetadata.height;
-        metadata = {
-          format,
-          width,
-          height,
-          size: buffer.length,
-        };
-      } catch (sharpError) {
-        // If sharp fails, use defaults
-        format = getExtensionFromMimeType("image/jpeg");
-        metadata = {
-          format,
-          width: null,
-          height: null,
-          size: buffer.length,
-        };
+      } catch (e) {
+        console.warn(
+          "[FileStorage] Sharp metadata extraction failed:",
+          e.message
+        );
       }
-    } else {
-      // Sharp not available, use defaults
-      format = getExtensionFromMimeType("image/jpeg");
-      metadata = {
-        format,
-        width: null,
-        height: null,
-        size: buffer.length,
-      };
+    } else if (originalName) {
+      format = path.extname(originalName).slice(1).toLowerCase() || "jpg";
     }
 
     // Generate filename
@@ -231,7 +233,16 @@ export const saveImageToLocal = async (buffer, folder = "digital-aela", original
     const filePath = path.join(fullPath, filename);
 
     // Write file to disk
-    await fs.writeFile(filePath, buffer);
+    if (Buffer.isBuffer(fileInput)) {
+      await fs.writeFile(filePath, fileInput);
+    } else {
+      await fs.copyFile(fileInput, filePath);
+      try {
+        await fs.unlink(fileInput);
+      } catch (err) {
+        console.warn("[FileStorage] Failed to delete temp file:", err);
+      }
+    }
 
     // Generate URL
     const url = `/static/${localFolder}/${filename}`;
@@ -240,11 +251,10 @@ export const saveImageToLocal = async (buffer, folder = "digital-aela", original
     return {
       filePath: relativePath,
       url,
-      format: metadata.format,
-      width: metadata.width,
-      height: metadata.height,
-      bytes: buffer.length,
-      // Keep public_id for backward compatibility (using relative path)
+      format,
+      width,
+      height,
+      bytes: fileSize,
       public_id: relativePath.replace(/\//g, "-"),
     };
   } catch (error) {
@@ -256,20 +266,33 @@ export const saveImageToLocal = async (buffer, folder = "digital-aela", original
 /**
  * Save video to local storage
  */
-export const saveVideoToLocal = async (buffer, folder = "digital-aela/course-videos", originalName = null) => {
+export const saveVideoToLocal = async (
+  fileInput,
+  folder = "digital-aela/course-videos",
+  originalName = null
+) => {
   try {
-    // Validate buffer
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      throw new Error("Invalid buffer provided");
-    }
+    let fileSize = 0;
 
-    if (buffer.length === 0) {
-      throw new Error("Buffer is empty");
+    // Validate input (buffer or file path)
+    if (Buffer.isBuffer(fileInput)) {
+      if (fileInput.length === 0) throw new Error("Buffer is empty");
+      fileSize = fileInput.length;
+    } else if (typeof fileInput === "string") {
+      // Check if file exists
+      try {
+        const stats = await fs.stat(fileInput);
+        fileSize = stats.size;
+      } catch (err) {
+        throw new Error(`File not found at path: ${fileInput}`);
+      }
+    } else {
+      throw new Error("Invalid input: must be a buffer or file path");
     }
 
     // Map folder to local path
     let localFolder = mapFolderToLocalPath(folder);
-    
+
     // Extract course ID from folder if present (digital-aela/courses/{id}/videos)
     const courseIdMatch = folder.match(/courses\/([^\/]+)/);
     if (courseIdMatch) {
@@ -296,7 +319,19 @@ export const saveVideoToLocal = async (buffer, folder = "digital-aela/course-vid
     const filePath = path.join(fullPath, filename);
 
     // Write file to disk
-    await fs.writeFile(filePath, buffer);
+    if (Buffer.isBuffer(fileInput)) {
+      await fs.writeFile(filePath, fileInput);
+    } else {
+      // If it's a file path (from multer diskStorage), move/copy it
+      // Using copyFile + unlink instead of rename to handle cross-device moves if temp is on different partition
+      await fs.copyFile(fileInput, filePath);
+      // Clean up temp file
+      try {
+        await fs.unlink(fileInput);
+      } catch (err) {
+        console.warn("[FileStorage] Failed to delete temp file:", err);
+      }
+    }
 
     // Generate URL
     const url = `/static/${localFolder}/${filename}`;
@@ -309,7 +344,7 @@ export const saveVideoToLocal = async (buffer, folder = "digital-aela/course-vid
       duration: null, // Video duration would require ffmpeg/ffprobe
       width: null,
       height: null,
-      bytes: buffer.length,
+      bytes: fileSize,
       // Keep public_id for backward compatibility
       public_id: relativePath.replace(/\//g, "-"),
     };
@@ -322,7 +357,11 @@ export const saveVideoToLocal = async (buffer, folder = "digital-aela/course-vid
 /**
  * Save PDF to local storage
  */
-export const savePdfToLocal = async (buffer, folder = "digital-aela/course-brochures", originalName = null) => {
+export const savePdfToLocal = async (
+  buffer,
+  folder = "digital-aela/course-brochures",
+  originalName = null
+) => {
   try {
     // Validate buffer
     if (!buffer || !Buffer.isBuffer(buffer)) {
@@ -335,7 +374,7 @@ export const savePdfToLocal = async (buffer, folder = "digital-aela/course-broch
 
     // Map folder to local path
     let localFolder = mapFolderToLocalPath(folder);
-    
+
     // Handle specific PDF types
     if (folder.includes("invoice")) {
       // Extract payment ID if present (digital-aela/invoices/{paymentId})
@@ -403,15 +442,29 @@ export const savePdfToLocal = async (buffer, folder = "digital-aela/course-broch
 /**
  * Save document to local storage (PDF, Word, Excel, PowerPoint)
  */
-export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documents", originalName = null, mimetype = null) => {
+export const saveDocumentToLocal = async (
+  fileInput,
+  folder = "digital-aela/documents",
+  originalName = null,
+  mimetype = null
+) => {
   try {
-    // Validate buffer
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      throw new Error("Invalid buffer provided");
-    }
+    let fileSize = 0;
 
-    if (buffer.length === 0) {
-      throw new Error("Buffer is empty");
+    // Validate input (buffer or file path)
+    if (Buffer.isBuffer(fileInput)) {
+      if (fileInput.length === 0) throw new Error("Buffer is empty");
+      fileSize = fileInput.length;
+    } else if (typeof fileInput === "string") {
+      // Check if file exists
+      try {
+        const stats = await fs.stat(fileInput);
+        fileSize = stats.size;
+      } catch (err) {
+        throw new Error(`File not found at path: ${fileInput}`);
+      }
+    } else {
+      throw new Error("Invalid input: must be a buffer or file path");
     }
 
     // Determine format from mimetype or original name
@@ -424,7 +477,7 @@ export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documen
 
     // Map folder to local path
     let localFolder = mapFolderToLocalPath(folder);
-    
+
     // Handle specific document types
     if (folder.includes("module")) {
       // Extract course ID and module ID if present (digital-aela/courses/{courseId}/modules/{moduleId})
@@ -451,7 +504,18 @@ export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documen
     const filePath = path.join(fullPath, filename);
 
     // Write file to disk
-    await fs.writeFile(filePath, buffer);
+    if (Buffer.isBuffer(fileInput)) {
+      await fs.writeFile(filePath, fileInput);
+    } else {
+      // If it's a file path (from multer diskStorage), move/copy it
+      await fs.copyFile(fileInput, filePath);
+      // Clean up temp file
+      try {
+        await fs.unlink(fileInput);
+      } catch (err) {
+        console.warn("[FileStorage] Failed to delete temp file:", err);
+      }
+    }
 
     // Generate URL
     const url = `/static/${localFolder}/${filename}`;
@@ -461,7 +525,7 @@ export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documen
       filePath: relativePath,
       url,
       format,
-      bytes: buffer.length,
+      bytes: fileSize,
       public_id: relativePath.replace(/\//g, "-"),
     };
   } catch (error) {
@@ -473,15 +537,29 @@ export const saveDocumentToLocal = async (buffer, folder = "digital-aela/documen
 /**
  * Save audio file to local storage
  */
-export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", originalName = null, mimetype = null) => {
+export const saveAudioToLocal = async (
+  fileInput,
+  folder = "digital-aela/audio",
+  originalName = null,
+  mimetype = null
+) => {
   try {
-    // Validate buffer
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      throw new Error("Invalid buffer provided");
-    }
+    let fileSize = 0;
 
-    if (buffer.length === 0) {
-      throw new Error("Buffer is empty");
+    // Validate input (buffer or file path)
+    if (Buffer.isBuffer(fileInput)) {
+      if (fileInput.length === 0) throw new Error("Buffer is empty");
+      fileSize = fileInput.length;
+    } else if (typeof fileInput === "string") {
+      // Check if file exists
+      try {
+        const stats = await fs.stat(fileInput);
+        fileSize = stats.size;
+      } catch (err) {
+        throw new Error(`File not found at path: ${fileInput}`);
+      }
+    } else {
+      throw new Error("Invalid input: must be a buffer or file path");
     }
 
     // Determine format from mimetype or original name
@@ -497,7 +575,7 @@ export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", or
 
     // Map folder to local path
     let localFolder = mapFolderToLocalPath(folder);
-    
+
     // Handle module audio files
     if (folder.includes("module")) {
       const moduleMatch = folder.match(/courses\/([^\/]+)\/modules\/([^\/]+)/);
@@ -523,7 +601,18 @@ export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", or
     const filePath = path.join(fullPath, filename);
 
     // Write file to disk
-    await fs.writeFile(filePath, buffer);
+    if (Buffer.isBuffer(fileInput)) {
+      await fs.writeFile(filePath, fileInput);
+    } else {
+      // If it's a file path (from multer diskStorage), move/copy it
+      await fs.copyFile(fileInput, filePath);
+      // Clean up temp file
+      try {
+        await fs.unlink(fileInput);
+      } catch (err) {
+        console.warn("[FileStorage] Failed to delete temp file:", err);
+      }
+    }
 
     // Generate URL
     const url = `/static/${localFolder}/${filename}`;
@@ -533,7 +622,7 @@ export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", or
       filePath: relativePath,
       url,
       format,
-      bytes: buffer.length,
+      bytes: fileSize,
       public_id: relativePath.replace(/\//g, "-"),
     };
   } catch (error) {
@@ -545,7 +634,12 @@ export const saveAudioToLocal = async (buffer, folder = "digital-aela/audio", or
 /**
  * Save generic file to local storage (handles multiple types)
  */
-export const saveFileToLocal = async (buffer, folder = "digital-aela/files", originalName = null, mimetype = null) => {
+export const saveFileToLocal = async (
+  fileInput,
+  folder = "digital-aela/files",
+  originalName = null,
+  mimetype = null
+) => {
   try {
     if (!mimetype) {
       throw new Error("MIME type is required");
@@ -553,11 +647,11 @@ export const saveFileToLocal = async (buffer, folder = "digital-aela/files", ori
 
     // Route to appropriate handler based on MIME type
     if (mimetype.startsWith("image/")) {
-      return await saveImageToLocal(buffer, folder, originalName);
+      return await saveImageToLocal(fileInput, folder, originalName);
     } else if (mimetype.startsWith("video/")) {
-      return await saveVideoToLocal(buffer, folder, originalName);
+      return await saveVideoToLocal(fileInput, folder, originalName);
     } else if (mimetype.startsWith("audio/")) {
-      return await saveAudioToLocal(buffer, folder, originalName, mimetype);
+      return await saveAudioToLocal(fileInput, folder, originalName, mimetype);
     } else if (
       mimetype === "application/pdf" ||
       mimetype.includes("msword") ||
@@ -567,10 +661,20 @@ export const saveFileToLocal = async (buffer, folder = "digital-aela/files", ori
       mimetype.includes("excel") ||
       mimetype.includes("powerpoint")
     ) {
-      return await saveDocumentToLocal(buffer, folder, originalName, mimetype);
+      return await saveDocumentToLocal(
+        fileInput,
+        folder,
+        originalName,
+        mimetype
+      );
     } else {
       // Default to document handler for unknown types
-      return await saveDocumentToLocal(buffer, folder, originalName, mimetype);
+      return await saveDocumentToLocal(
+        fileInput,
+        folder,
+        originalName,
+        mimetype
+      );
     }
   } catch (error) {
     console.error("[FileStorage] Error saving file:", error);
@@ -585,7 +689,7 @@ export const deleteFileFromLocal = async (filePathOrUrl) => {
   try {
     // Handle both URL format (/static/...) and file path format
     let relativePath = filePathOrUrl;
-    
+
     if (filePathOrUrl.startsWith("/static/")) {
       relativePath = filePathOrUrl.replace("/static/", "");
     } else if (filePathOrUrl.includes("static/")) {
@@ -618,7 +722,7 @@ export const deleteFileFromLocal = async (filePathOrUrl) => {
 export const getFileInfo = async (filePathOrUrl) => {
   try {
     let relativePath = filePathOrUrl;
-    
+
     if (filePathOrUrl.startsWith("/static/")) {
       relativePath = filePathOrUrl.replace("/static/", "");
     }
@@ -639,4 +743,3 @@ export const getFileInfo = async (filePathOrUrl) => {
     };
   }
 };
-

@@ -52,11 +52,6 @@ const StudentRegister = () => {
         toast.error("Please select an image file.");
         return;
       }
-      // Validate file size (1GB max)
-      if (file.size > 1024 * 1024 * 1024) {
-        toast.error("Image size must be less than 1GB.");
-        return;
-      }
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -158,14 +153,22 @@ const StudentRegister = () => {
         profile: profilePayload,
         profileImage: formData.profileImage,
       });
-      toast.success("Your student account has been created successfully! Please check your email to verify your account. Your account is also pending approval from the administrator. You will receive an email notification once your account is approved and you can login.");
+      toast.success(
+        "Your student account has been created successfully! Please check your email to verify your account. Your account is also pending approval from the administrator. You will receive an email notification once your account is approved and you can login."
+      );
       setFormData(createInitialFormState());
       // Redirect to login page instead of dashboard since account needs approval
       navigate("/login/student", { replace: true });
     } catch (error) {
       // Handle specific error cases
-      if (error.status === 409 || error.code === "CONFLICT" || error.message?.includes("already exists")) {
-        toast.error("An account with this email already exists. Please try logging in instead.");
+      if (
+        error.status === 409 ||
+        error.code === "CONFLICT" ||
+        error.message?.includes("already exists")
+      ) {
+        toast.error(
+          "An account with this email already exists. Please try logging in instead."
+        );
         setTimeout(() => {
           navigate("/login/student", { replace: true });
         }, 2000);
@@ -248,7 +251,8 @@ const StudentRegister = () => {
             {/* Profile Image Upload */}
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-slate-100">
-                Profile Photo <span className="text-xs text-slate-400">(Optional)</span>
+                Profile Photo{" "}
+                <span className="text-xs text-slate-400">(Optional)</span>
               </span>
               <div className="flex items-center gap-4">
                 {formData.profileImagePreview ? (
@@ -271,7 +275,7 @@ const StudentRegister = () => {
                     className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#F5D26A] file:text-black hover:file:bg-[#FFE28A] transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   />
                   <p className="mt-1 text-xs text-slate-400">
-                    JPG, PNG, or GIF. Max 1GB.
+                    JPG, PNG, or GIF.
                   </p>
                 </div>
               </div>
@@ -319,11 +323,21 @@ const StudentRegister = () => {
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>Select your age group</option>
-                  <option value="13-17" style={{ backgroundColor: "#000000" }}>13 – 17</option>
-                  <option value="18-24" style={{ backgroundColor: "#000000" }}>18 – 24</option>
-                  <option value="25-34" style={{ backgroundColor: "#000000" }}>25 – 34</option>
-                  <option value="35+" style={{ backgroundColor: "#000000" }}>35+</option>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    Select your age group
+                  </option>
+                  <option value="13-17" style={{ backgroundColor: "#000000" }}>
+                    13 – 17
+                  </option>
+                  <option value="18-24" style={{ backgroundColor: "#000000" }}>
+                    18 – 24
+                  </option>
+                  <option value="25-34" style={{ backgroundColor: "#000000" }}>
+                    25 – 34
+                  </option>
+                  <option value="35+" style={{ backgroundColor: "#000000" }}>
+                    35+
+                  </option>
                 </select>
               </label>
               <label className="block space-y-2">
@@ -336,13 +350,29 @@ const StudentRegister = () => {
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>Tell us about you</option>
-                  <option value="school-student" style={{ backgroundColor: "#000000" }}>School Student</option>
-                  <option value="college-graduate" style={{ backgroundColor: "#000000" }}>College / University</option>
-                  <option value="working-professional" style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    Tell us about you
+                  </option>
+                  <option
+                    value="school-student"
+                    style={{ backgroundColor: "#000000" }}>
+                    School Student
+                  </option>
+                  <option
+                    value="college-graduate"
+                    style={{ backgroundColor: "#000000" }}>
+                    College / University
+                  </option>
+                  <option
+                    value="working-professional"
+                    style={{ backgroundColor: "#000000" }}>
                     Working Professional
                   </option>
-                  <option value="career-switcher" style={{ backgroundColor: "#000000" }}>Career Switcher</option>
+                  <option
+                    value="career-switcher"
+                    style={{ backgroundColor: "#000000" }}>
+                    Career Switcher
+                  </option>
                 </select>
               </label>
             </div>
@@ -358,17 +388,27 @@ const StudentRegister = () => {
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>Select a program</option>
-                  <option value="english-language" style={{ backgroundColor: "#000000" }}>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    Select a program
+                  </option>
+                  <option
+                    value="english-language"
+                    style={{ backgroundColor: "#000000" }}>
                     English Language Labs
                   </option>
-                  <option value="digital-marketing" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="digital-marketing"
+                    style={{ backgroundColor: "#000000" }}>
                     Digital Marketing Cohort
                   </option>
-                  <option value="corporate-training" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="corporate-training"
+                    style={{ backgroundColor: "#000000" }}>
                     Corporate Training Tracks
                   </option>
-                  <option value="career-counselling" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="career-counselling"
+                    style={{ backgroundColor: "#000000" }}>
                     Career Counselling + Placement
                   </option>
                 </select>
@@ -383,12 +423,30 @@ const StudentRegister = () => {
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30 backdrop-blur"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>Choose an option</option>
-                  <option value="social-media" style={{ backgroundColor: "#000000" }}>Instagram / Facebook</option>
-                  <option value="youtube" style={{ backgroundColor: "#000000" }}>YouTube</option>
-                  <option value="referral" style={{ backgroundColor: "#000000" }}>Friend / Alumni</option>
-                  <option value="event" style={{ backgroundColor: "#000000" }}>Workshop / Event</option>
-                  <option value="search" style={{ backgroundColor: "#000000" }}>Google Search</option>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    Choose an option
+                  </option>
+                  <option
+                    value="social-media"
+                    style={{ backgroundColor: "#000000" }}>
+                    Instagram / Facebook
+                  </option>
+                  <option
+                    value="youtube"
+                    style={{ backgroundColor: "#000000" }}>
+                    YouTube
+                  </option>
+                  <option
+                    value="referral"
+                    style={{ backgroundColor: "#000000" }}>
+                    Friend / Alumni
+                  </option>
+                  <option value="event" style={{ backgroundColor: "#000000" }}>
+                    Workshop / Event
+                  </option>
+                  <option value="search" style={{ backgroundColor: "#000000" }}>
+                    Google Search
+                  </option>
                 </select>
               </label>
             </div>
