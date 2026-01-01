@@ -346,7 +346,14 @@ app.use(async (err, req, res, next) => {
 
   if (status === 413 || err.statusCode === 413 || err.type === "entity.too.large" || err.code === "LIMIT_FILE_SIZE") {
     errorCode = "PAYLOAD_TOO_LARGE";
-    errorMessage = err.message || "Request entity too large. Maximum file size is 10GB.";
+    // Check if the error is from the backend Multer or Express limit
+    const isBackendLimit = err.code === "LIMIT_FILE_SIZE" || err.type === "entity.too.large";
+
+    if (isBackendLimit) {
+      errorMessage = "File size exceeds the backend limit (10GB). Please check if your file is truly larger than 10GB.";
+    } else {
+      errorMessage = "Request entity too large. This error is likely coming from your web server or proxy (Nginx, Apache, or Cloudflare) rather than the backend application. Please check 'client_max_body_size' in Nginx or 'LimitRequestBody' in Apache.";
+    }
     // Ensure status is 413 for payload too large errors
     status = 413;
   } else if (status === 500) {
