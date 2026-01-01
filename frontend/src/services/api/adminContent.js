@@ -56,29 +56,12 @@ export const updateAdminCourse = async (courseId, updates) => {
  * Supports both FormData (with PDF file) and JSON payload
  */
 export const createEbook = async (payload, isFormData = false) => {
-  const { getStoredTokens } = await import("./baseClient");
-  const tokens = getStoredTokens();
-
-  if (!tokens?.accessToken) {
-    throw new Error("Authentication required");
-  }
-
   if (isFormData) {
-    // Use FormData for file upload
-    const response = await fetch(`${API_BASE_URL}/admin/ebooks`, {
+    // Use FormData for file upload via apiRequest for consistent timeout and CSRF handling
+    return apiRequest("/admin/ebooks", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${tokens.accessToken}`,
-        // Don't set Content-Type header - browser will set it with boundary for FormData
-      },
       body: payload, // payload is already FormData
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error?.message || "Failed to create ebook");
-    }
-    return data;
   } else {
     // Use regular JSON API request
     return apiRequest("/admin/ebooks", {

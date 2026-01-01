@@ -26,32 +26,14 @@ export const createStudentProfile = (payload) =>
   });
 
 export const uploadProfileImage = async (file) => {
-  const tokens = getStoredTokens();
-  if (!tokens?.accessToken) {
-    throw new Error("Authentication required");
-  }
-
   const formData = new FormData();
   formData.append("image", file);
   formData.append("folder", `digital-aela/profiles/student`);
 
-  const response = await fetch(`${API_BASE_URL}/upload/single`, {
+  const payload = await apiRequest("/upload/single", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${tokens.accessToken}`,
-    },
     body: formData,
   });
-
-  const payload = await response.json();
-
-  if (!response.ok) {
-    const message = payload?.error?.message ?? `Upload failed with status ${response.status}`;
-    const error = new Error(message);
-    error.status = response.status;
-    error.code = payload?.error?.code;
-    throw error;
-  }
 
   return payload.data?.url || payload.url;
 };

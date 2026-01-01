@@ -1,16 +1,16 @@
 server {
     server_name api.digitalaela.com;
 
-    # Increase client body size limit for file uploads (1GB)
-    client_max_body_size 1G;
+    # Increase client body size limit for file uploads (2GB to support large modules)
+    client_max_body_size 2G;
     
     # Increase buffer sizes for large requests
-    client_body_buffer_size 128k;
+    client_body_buffer_size 1M;
     
-    # Increase timeouts for file uploads
-    client_body_timeout 60s;
-    client_header_timeout 60s;
-    send_timeout 60s;
+    # Increase timeouts for file uploads (set to 1 hour for large files)
+    client_body_timeout 3600s;
+    client_header_timeout 3600s;
+    send_timeout 3600s;
 
     # Custom error handler for 413 - Add CORS headers here since error happens before backend
     error_page 413 @413_error;
@@ -18,7 +18,7 @@ server {
         add_header 'Access-Control-Allow-Origin' 'https://digitalaela.com' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Content-Type' 'application/json' always;
-        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 1GB."}}';
+        return 413 '{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request entity too large. Maximum file size is 2GB."}}';
     }
 
     # Main proxy location - NO CORS headers here (backend handles it)
@@ -33,10 +33,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
         
-        # Increase proxy timeouts for file uploads
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        # Increase proxy timeouts for file uploads (set to 1 hour)
+        proxy_connect_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_read_timeout 3600s;
         
         # Don't buffer large requests
         proxy_request_buffering off;

@@ -128,8 +128,8 @@ app.use(compression({
 // Increase body parser limits for file uploads
 // Note: For multipart/form-data (file uploads), multer handles parsing
 // But we still need these for other content types
-app.use(express.json({ limit: "1gb" })); // Increased for file uploads
-app.use(express.urlencoded({ extended: true, limit: "1gb" })); // Added for form data
+app.use(express.json({ limit: "10gb" })); // Increased for large video uploads
+app.use(express.urlencoded({ extended: true, limit: "10gb" })); // Added for form data
 app.use(morgan("dev"));
 
 // Serve static files from data folder
@@ -346,7 +346,7 @@ app.use(async (err, req, res, next) => {
 
   if (status === 413 || err.statusCode === 413 || err.type === "entity.too.large" || err.code === "LIMIT_FILE_SIZE") {
     errorCode = "PAYLOAD_TOO_LARGE";
-    errorMessage = err.message || "Request entity too large. Maximum file size is 1GB.";
+    errorMessage = err.message || "Request entity too large. Maximum file size is 10GB.";
     // Ensure status is 413 for payload too large errors
     status = 413;
   } else if (status === 500) {

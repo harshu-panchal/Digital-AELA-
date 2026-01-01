@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "../config/api.js";
 import { checkFormSubmission } from "./api/crm";
-import { getStoredTokens } from "./api/baseClient";
+import { getStoredTokens, apiRequest } from "./api/baseClient";
 
 // Email-based localStorage checks removed - now using userId only
 
@@ -24,7 +24,9 @@ export const submitJoinUsLead = async (program, payload, userId = null) => {
     try {
       const checkResult = await checkFormSubmission(program, userId);
       if (checkResult?.submitted) {
-        throw new Error("You have already submitted this application. Our team will review it and get in touch soon.");
+        throw new Error(
+          "You have already submitted this application. Our team will review it and get in touch soon."
+        );
       }
     } catch (error) {
       // If it's our duplicate error, rethrow it
@@ -38,7 +40,7 @@ export const submitJoinUsLead = async (program, payload, userId = null) => {
 
   // Create FormData for multipart/form-data submission
   const formData = new FormData();
-  
+
   // Add application type
   formData.append("applicationType", program);
 
@@ -46,12 +48,12 @@ export const submitJoinUsLead = async (program, payload, userId = null) => {
   const fileFields = ["resume", "videoIntro", "profileImage"];
   Object.keys(payload).forEach((key) => {
     const value = payload[key];
-    
+
     // Skip file fields - they will be added separately
     if (fileFields.includes(key)) {
       return;
     }
-    
+
     // Add non-file fields
     if (value !== null && value !== undefined && value !== "") {
       formData.append(key, value);
@@ -66,37 +68,19 @@ export const submitJoinUsLead = async (program, payload, userId = null) => {
     }
   }
 
-  // Submit to backend API (include auth token if available)
-  const tokens = getStoredTokens();
-  const headers = {};
-  if (tokens?.accessToken) {
-    headers.Authorization = `Bearer ${tokens.accessToken}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}/join-us/submit`, {
+  // Submit to backend API via apiRequest for consistent timeout and CSRF handling
+  const response = await apiRequest("/join-us/submit", {
     method: "POST",
-    headers,
     body: formData,
-    // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
 
-  const result = await response.json();
-
-  if (!response.ok) {
-      // Handle duplicate submission error
-      if (response.status === 409 || result?.error?.code === "DUPLICATE_SUBMISSION") {
-        throw new Error(result?.error?.message || "You have already submitted this application. Our team will review it and get in touch soon.");
-      }
-    const errorMessage = result?.error?.message || "Failed to submit application";
-    throw new Error(errorMessage);
-  }
-
-  return result;
+  return response;
 };
 
 // Keep this for backward compatibility if needed elsewhere
 export const getJoinUsSubmissions = () => {
-  console.warn("getJoinUsSubmissions is deprecated. Applications are now stored in the database.");
+  console.warn(
+    "getJoinUsSubmissions is deprecated. Applications are now stored in the database."
+  );
   return [];
 };
-

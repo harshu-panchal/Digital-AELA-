@@ -36,16 +36,7 @@ export const getTeacherEbookById = async (ebookId) => {
  * Create a new ebook (teacher only - creates with isPublic: false)
  * Supports both FormData (with PDF file) and JSON payload
  */
-import { API_BASE_URL } from "../config/api.js";
-
 export const createTeacherEbook = async (payload, pdfFile = null) => {
-  const { getStoredTokens } = await import("./api/baseClient");
-  const tokens = getStoredTokens();
-
-  if (!tokens?.accessToken) {
-    throw new Error("Authentication required");
-  }
-
   let response;
   if (pdfFile) {
     console.log("📤 Preparing to upload PDF:", {
@@ -53,7 +44,7 @@ export const createTeacherEbook = async (payload, pdfFile = null) => {
       type: pdfFile.type,
       size: pdfFile.size,
     });
-    // Use FormData for file upload
+    // Use FormData for file upload via apiRequest for consistent timeout and CSRF handling
     const formData = new FormData();
     
     // Append PDF file
@@ -70,20 +61,10 @@ export const createTeacherEbook = async (payload, pdfFile = null) => {
       }
     });
 
-    const res = await fetch(`${API_BASE_URL}/teacher/ebooks`, {
+    response = await apiRequest("/teacher/ebooks", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${tokens.accessToken}`,
-        // Don't set Content-Type header - browser will set it with boundary for FormData
-      },
       body: formData,
     });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.error?.message || "Failed to create ebook");
-    }
-    response = data;
   } else {
     // Use regular JSON API request
     response = await apiRequest("/teacher/ebooks", {

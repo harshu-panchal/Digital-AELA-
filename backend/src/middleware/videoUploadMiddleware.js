@@ -2,7 +2,23 @@ import multer from "multer";
 import { saveVideoToLocal } from "../services/fileStorageService.js";
 
 // Memory storage for multer
-const storage = multer.memoryStorage();
+import os from "os";
+import path from "path";
+
+// Disk storage for multer (temp directory)
+// Memory storage is unsafe for large videos as it crashes the VPS RAM
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, os.tmpdir());
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
 
 // File filter for videos
 const videoFileFilter = (req, file, cb) => {
@@ -31,7 +47,7 @@ export const videoUpload = multer({
   storage: storage,
   fileFilter: videoFileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 1024, // 1GB limit for videos
+    fileSize: 10 * 1024 * 1024 * 1024, // 10GB limit for videos
   },
 });
 
@@ -61,7 +77,7 @@ export const handleVideoUploadError = (err, req, res, next) => {
       return res.status(413).json({
         error: {
           code: "FILE_TOO_LARGE",
-          message: "Video file size exceeds the limit",
+          message: "Video file size exceeds the limit of 10GB",
         },
       });
     }

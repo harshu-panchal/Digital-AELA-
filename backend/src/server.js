@@ -138,12 +138,17 @@ const start = async () => {
   // Initialize system health monitoring
   initializeHealthMonitoring();
 
-  httpServer.listen(PORT, () => {
+  const server = httpServer.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`[Server] Listening on port ${PORT}`);
     // eslint-disable-next-line no-console
     console.log(`[Socket.IO] Server initialized`);
   });
+
+  // Increase server timeout to 1 hour (3600000ms) for large file uploads
+  server.timeout = 3600000;
+  server.keepAliveTimeout = 65000; // Slightly higher than Nginx's default 60s
+  server.headersTimeout = 66000; // Slightly higher than keepAliveTimeout
 };
 
 // Handle unhandled promise rejections

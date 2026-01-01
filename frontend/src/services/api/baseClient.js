@@ -3,7 +3,8 @@ import { API_BASE_URL } from "../../config/api.js";
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
 const CSRF_TOKEN_STORAGE_KEY = "aela.csrf.token";
 
-const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+const isDevelopment =
+  import.meta.env.DEV || import.meta.env.MODE === "development";
 
 const loadTokens = () => {
   if (typeof window === "undefined") return null;
@@ -115,7 +116,9 @@ const refreshTokensIfNeeded = async (currentTokens) => {
 
   if (!refreshPromise) {
     refreshPromise = import("./auth")
-      .then(({ refreshRecruiterSession }) => refreshRecruiterSession(currentTokens.refreshToken))
+      .then(({ refreshRecruiterSession }) =>
+        refreshRecruiterSession(currentTokens.refreshToken)
+      )
       .then((result) => {
         notifyAuthUpdate(result);
         return result;
@@ -143,7 +146,8 @@ const requestCache = new Map();
 const CACHE_TTL = 5000; // 5 seconds - same request within 5 seconds returns cached promise
 
 const getRequestKey = (endpoint, method, body) => {
-  const bodyStr = body instanceof FormData ? 'FormData' : (body ? JSON.stringify(body) : '');
+  const bodyStr =
+    body instanceof FormData ? "FormData" : body ? JSON.stringify(body) : "";
   return `${method}:${endpoint}:${bodyStr}`;
 };
 
@@ -169,13 +173,22 @@ const processQueue = async () => {
 
 const executeRequest = async (
   endpoint,
-  { method = "GET", body, headers = {}, skipAuth = false, _retry = false, _retryCount = 0 } = {}
+  {
+    method = "GET",
+    body,
+    headers = {},
+    skipAuth = false,
+    timeout,
+    _retry = false,
+    _retryCount = 0,
+  } = {}
 ) => {
   const tokens = loadTokens();
-  
+
   // Check if body is FormData
-  const isFormData = body instanceof FormData;
-  
+  const isFormData =
+    body instanceof FormData || (body && typeof body.append === "function");
+
   // Build headers - don't set Content-Type for FormData (browser will set it with boundary)
   const finalHeaders = {
     ...(!isFormData && { "Content-Type": "application/json" }),
@@ -184,17 +197,17 @@ const executeRequest = async (
 
   if (!skipAuth && tokens?.accessToken) {
     finalHeaders.Authorization = `Bearer ${tokens.accessToken}`;
-    
+
     // Add CSRF token for state-changing operations
     const stateChangingMethods = ["POST", "PUT", "PATCH", "DELETE"];
     if (stateChangingMethods.includes(method.toUpperCase())) {
       let csrfToken = loadCsrfToken();
-      
+
       // If no CSRF token, try to fetch it
       if (!csrfToken) {
         csrfToken = await fetchCsrfToken();
       }
-      
+
       if (csrfToken) {
         finalHeaders["X-CSRF-Token"] = csrfToken;
       }
@@ -202,10 +215,17 @@ const executeRequest = async (
   }
 
   // Prepare body - use FormData as-is, or stringify JSON
-  const requestBody = isFormData ? body : (body ? JSON.stringify(body) : undefined);
+  const requestBody = isFormData
+    ? body
+    : body
+    ? JSON.stringify(body)
+    : undefined;
 
-  // Create timeout controller for fetch request (30 seconds timeout)
-  const timeoutMs = 30000; // 30 seconds
+  // Create timeout controller for fetch request
+  // Default to 30 seconds, but use 1 hour (3600s) for FormData/large uploads, or custom timeout if provided
+  const defaultTimeout = isFormData ? 3600000 : 30000;
+  const timeoutMs = timeout || defaultTimeout;
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -220,11 +240,13 @@ const executeRequest = async (
     clearTimeout(timeoutId);
   } catch (networkError) {
     clearTimeout(timeoutId);
-    
+
     // Check if it's an abort error (timeout)
-    if (networkError.name === 'AbortError' || controller.signal.aborted) {
+    if (networkError.name === "AbortError" || controller.signal.aborted) {
       const timeoutError = new Error(
-        `Request timeout: The server took too long to respond (${timeoutMs / 1000} seconds). Please check your connection and try again.`
+        `Request timeout: The server took too long to respond (${
+          timeoutMs / 1000
+        } seconds). Please check your connection and try again.`
       );
       timeoutError.status = 0;
       timeoutError.code = "REQUEST_TIMEOUT";
@@ -237,7 +259,7 @@ const executeRequest = async (
       networkError.message?.includes("NetworkError") ||
       networkError.message?.includes("CORS") ||
       networkError.name === "TypeError";
-    
+
     if (isConnectionError) {
       const connectionError = new Error(
         `Unable to connect to server. The backend server may be down or unreachable.`
@@ -245,8 +267,9 @@ const executeRequest = async (
       connectionError.status = 0;
       connectionError.code = "CONNECTION_ERROR";
       connectionError.isNetworkError = true;
-      connectionError.isCorsError = networkError.message?.includes("CORS") || false;
-      
+      connectionError.isCorsError =
+        networkError.message?.includes("CORS") || false;
+
       // Log connection errors in production to help debug API issues
       if (!isDevelopment) {
         console.error("[API] Connection error:", {
@@ -255,10 +278,10 @@ const executeRequest = async (
           apiUrl: API_BASE_URL,
           error: networkError.message,
           isCors: connectionError.isCorsError,
-          hint: "Check if VITE_API_URL is set correctly in production environment"
+          hint: "Check if VITE_API_URL is set correctly in production environment",
         });
       }
-      
+
       throw connectionError;
     }
     throw networkError;
@@ -272,17 +295,17 @@ const executeRequest = async (
     badGatewayError.status = 502;
     badGatewayError.code = "BAD_GATEWAY";
     badGatewayError.isNetworkError = true;
-    
+
     // Log 502 errors in production
     if (!isDevelopment) {
       console.error("[API] Bad Gateway (502):", {
         endpoint,
         method,
         apiUrl: API_BASE_URL,
-        hint: "Backend server may be down or restarting"
+        hint: "Backend server may be down or restarting",
       });
     }
-    
+
     throw badGatewayError;
   }
 
@@ -299,12 +322,16 @@ const executeRequest = async (
     if (csrfToken) {
       storeCsrfToken(csrfToken);
     }
-    
+
     return payload;
   }
 
   // Handle CSRF token errors
-  if (response.status === 403 && (payload?.error?.code === "CSRF_TOKEN_MISSING" || payload?.error?.code === "CSRF_TOKEN_INVALID")) {
+  if (
+    response.status === 403 &&
+    (payload?.error?.code === "CSRF_TOKEN_MISSING" ||
+      payload?.error?.code === "CSRF_TOKEN_INVALID")
+  ) {
     // Try to fetch new CSRF token and retry once
     if (!_retry) {
       clearCsrfToken();
@@ -338,14 +365,15 @@ const executeRequest = async (
       clearStoredTokens();
       clearCsrfToken();
       notifyAuthUpdate(null);
-      
+
       const message =
         payload?.error?.message ??
         error.message ??
         `Request to ${endpoint} failed with status ${response.status}. Please log in again.`;
       const unauthorizedError = new Error(message);
       unauthorizedError.status = response.status;
-      unauthorizedError.code = payload?.error?.code ?? error.code ?? "UNAUTHORIZED";
+      unauthorizedError.code =
+        payload?.error?.code ?? error.code ?? "UNAUTHORIZED";
       unauthorizedError.details = payload ?? error.details;
       unauthorizedError.requiresLogin = true;
       // Suppress console errors for expected 401s (token expired, user logged out)
@@ -358,10 +386,11 @@ const executeRequest = async (
   if (!skipAuth && response.status === 401) {
     clearStoredTokens();
     notifyAuthUpdate(null);
-    
+
     // Mark as suppressible error for expected 401s
     const message =
-      payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`;
+      payload?.error?.message ??
+      `Request to ${endpoint} failed with status ${response.status}`;
     const error = new Error(message);
     error.status = response.status;
     error.code = payload?.error?.code;
@@ -375,17 +404,17 @@ const executeRequest = async (
   if (response.status === 429) {
     const retryAfter = payload?.error?.retryAfter || payload?.retryAfter || 60; // Default 60 seconds
     const maxRetries = 3;
-    
+
     if (_retryCount < maxRetries) {
       // Exponential backoff: wait longer for each retry
       const backoffDelay = Math.min(
         retryAfter * 1000 * Math.pow(2, _retryCount),
         300000 // Max 5 minutes
       );
-      
+
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
-      
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+
       // Retry the request
       return executeRequest(endpoint, {
         method,
@@ -400,60 +429,65 @@ const executeRequest = async (
   }
 
   const message =
-    payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`;
+    payload?.error?.message ??
+    `Request to ${endpoint} failed with status ${response.status}`;
   const error = new Error(message);
   error.status = response.status;
   error.code = payload?.error?.code;
   error.details = payload;
-  
+
   // Mark validation errors as suppressible (non-critical) if they're 400 errors
-  const isValidationError = response.status === 400 && (
-    error.code === "VALIDATION_ERROR" || 
-    message.includes("Invalid user ID") ||
-    message.includes("Invalid")
-  );
-  
+  const isValidationError =
+    response.status === 400 &&
+    (error.code === "VALIDATION_ERROR" ||
+      message.includes("Invalid user ID") ||
+      message.includes("Invalid"));
+
   // Mark duplicate submission errors (409) as suppressible - they're expected
-  const isDuplicateError = response.status === 409 && (
-    error.code === "DUPLICATE_SUBMISSION" ||
-    message.includes("already submitted") ||
-    message.includes("already submitted this form")
-  );
-  
+  const isDuplicateError =
+    response.status === 409 &&
+    (error.code === "DUPLICATE_SUBMISSION" ||
+      message.includes("already submitted") ||
+      message.includes("already submitted this form"));
+
   // Mark 429 rate limit errors as suppressible - they're expected when rate limited
   const isRateLimitError = response.status === 429;
-  
-  error.suppressConsoleError = isValidationError || isDuplicateError || isRateLimitError;
-  
+
+  error.suppressConsoleError =
+    isValidationError || isDuplicateError || isRateLimitError;
+
   // Log non-401, non-429 errors in production (401s and 429s are expected)
   // Completely suppress validation errors, duplicate submission errors, and rate limit errors
-  if (!isDevelopment && response.status !== 401 && response.status !== 429 && !isValidationError && !isDuplicateError) {
+  if (
+    !isDevelopment &&
+    response.status !== 401 &&
+    response.status !== 429 &&
+    !isValidationError &&
+    !isDuplicateError
+  ) {
     console.error("[API] Request failed:", {
       endpoint,
       method,
       status: response.status,
       code: error.code,
       message: error.message,
-      apiUrl: API_BASE_URL
+      apiUrl: API_BASE_URL,
     });
   }
   // Validation errors, duplicate submission errors, and rate limit errors are completely suppressed - no console output
-  
+
   throw error;
 };
 
-export const apiRequest = async (
-  endpoint,
-  options = {}
-) => {
+export const apiRequest = async (endpoint, options = {}) => {
   const { method = "GET", body } = options;
-  
+
   // Check for duplicate request (deduplication)
   // Only deduplicate GET requests to avoid issues with POST/PUT/DELETE
   if (method === "GET") {
     const requestKey = getRequestKey(endpoint, method, body);
     const cached = requestCache.get(requestKey);
-    
+
     if (cached) {
       const { promise, timestamp } = cached;
       // If cache is still valid (within TTL), return the same promise
@@ -465,7 +499,7 @@ export const apiRequest = async (
       }
     }
   }
-  
+
   // Create the request promise
   const requestPromise = (async () => {
     // Queue request if we're at max concurrent requests
@@ -475,7 +509,7 @@ export const apiRequest = async (
         processQueue();
       });
     }
-    
+
     // Execute immediately if under limit
     activeRequests++;
     try {
@@ -487,7 +521,7 @@ export const apiRequest = async (
       setTimeout(processQueue, 0);
     }
   })();
-  
+
   // Cache GET requests for deduplication
   if (method === "GET") {
     const requestKey = getRequestKey(endpoint, method, body);
@@ -495,13 +529,13 @@ export const apiRequest = async (
       promise: requestPromise,
       timestamp: Date.now(),
     });
-    
+
     // Clean up cache after TTL
     setTimeout(() => {
       requestCache.delete(requestKey);
     }, CACHE_TTL);
   }
-  
+
   return requestPromise;
 };
 
@@ -528,4 +562,3 @@ export const apiBaseConfig = {
   API_BASE_URL,
   TOKEN_STORAGE_KEY,
 };
-

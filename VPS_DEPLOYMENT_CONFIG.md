@@ -98,14 +98,21 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
         
-        # Increase proxy timeouts for file uploads
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        # Increase proxy timeouts for file uploads (set to 1 hour for large files)
+        proxy_connect_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_read_timeout 3600s;
         
         # Don't buffer large requests
         proxy_request_buffering off;
     }
+    
+    # Global settings for large uploads (put these in server block)
+    client_max_body_size 2G;
+    client_body_buffer_size 1M;
+    client_body_timeout 3600s;
+    client_header_timeout 3600s;
+    send_timeout 3600s;
 }
 ```
 
