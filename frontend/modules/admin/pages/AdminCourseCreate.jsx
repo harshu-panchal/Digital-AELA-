@@ -11,6 +11,7 @@ import {
   sanitizeUrl,
 } from "../../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
+import UploadProgress from "../../../src/components/UploadProgress";
 
 const initialFormState = {
   title: "",
@@ -50,6 +51,10 @@ const AdminCourseCreate = () => {
   const [premiumCount, setPremiumCount] = useState(0);
   const [maxPremium, setMaxPremium] = useState(6);
   const [categories, setCategories] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadingFileName, setUploadingFileName] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
 
   // Fetch premium course count on mount
@@ -129,7 +134,14 @@ const AdminCourseCreate = () => {
 
           // Upload image
           setIsUploadingImage(true);
-          uploadImageToCloudinary(file, "digital-aela/courses/covers")
+          setIsUploading(true);
+          setUploadProgress(0);
+          setUploadError(null);
+          setUploadingFileName(file.name);
+
+          uploadImageToCloudinary(file, "digital-aela/courses/covers", (progress) => {
+            setUploadProgress(progress);
+          })
             .then((url) => {
               setFormData((prev) => ({
                 ...prev,
@@ -138,7 +150,9 @@ const AdminCourseCreate = () => {
               toast.success("Cover image uploaded successfully");
             })
             .catch((error) => {
-              toast.error(error.message || "Failed to upload image");
+              const msg = error.message || "Failed to upload image";
+              setUploadError(msg);
+              toast.error(msg);
               setFormData((prev) => ({
                 ...prev,
                 coverImageFile: null,
@@ -147,6 +161,11 @@ const AdminCourseCreate = () => {
             })
             .finally(() => {
               setIsUploadingImage(false);
+              setTimeout(() => {
+                setIsUploading(false);
+                setUploadProgress(0);
+                setUploadError(null);
+              }, 1500);
             });
           return;
         }
@@ -252,19 +271,33 @@ const AdminCourseCreate = () => {
       // Upload brochure if provided
       if (formData.brochureFile) {
         try {
-          const { uploadAdminCourseBrochure } = await import(
-            "../../../src/services/api/adminContent"
-          );
+          setIsUploading(true);
+          setUploadProgress(0);
+          setUploadError(null);
+          setUploadingFileName(formData.brochureFile.name);
+
           await uploadAdminCourseBrochure(
             created.course._id,
-            formData.brochureFile
+            formData.brochureFile,
+            (progress) => {
+              setUploadProgress(progress);
+            }
           );
           toast.success("Course and brochure uploaded successfully!");
         } catch (brochureError) {
           console.error("Failed to upload brochure:", brochureError);
+          const msg =
+            brochureError.message || "Course saved but brochure upload failed.";
+          setUploadError(msg);
           toast.warning(
             "Course saved but brochure upload failed. You can upload it later."
           );
+        } finally {
+          setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+            setUploadError(null);
+          }, 1500);
         }
       } else {
         toast.success("Course created successfully.");
@@ -761,11 +794,10 @@ const AdminCourseCreate = () => {
               </label>
 
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
-                  premiumCount >= maxPremium && !formData.isPremium
-                    ? "opacity-60"
-                    : ""
-                }`}>
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${premiumCount >= maxPremium && !formData.isPremium
+                  ? "opacity-60"
+                  : ""
+                  }`}>
                 <input
                   type="checkbox"
                   name="isPremium"
@@ -814,6 +846,13 @@ const AdminCourseCreate = () => {
           </motion.form>
         </section>
       </main>
+
+      <UploadProgress
+        isUploading={isUploading}
+        progress={uploadProgress}
+        fileName={uploadingFileName}
+        error={uploadError}
+      />
     </div>
   );
 };

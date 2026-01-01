@@ -32,7 +32,7 @@ export const getAdminGalleryImages = async (page = 1, pageSize = 50) => {
 /**
  * Upload gallery image
  */
-export const uploadGalleryImage = async (file) => {
+export const uploadGalleryImage = async (file, onProgress) => {
   try {
     const formData = new FormData();
     formData.append("image", file);
@@ -40,6 +40,7 @@ export const uploadGalleryImage = async (file) => {
     const response = await apiRequest("/admin/gallery", {
       method: "POST",
       body: formData,
+      onUploadProgress: onProgress,
     });
     return response;
   } catch (error) {

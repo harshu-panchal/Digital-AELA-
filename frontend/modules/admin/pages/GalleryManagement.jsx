@@ -7,6 +7,7 @@ import {
   uploadGalleryImage,
   deleteGalleryImage,
 } from "../../../src/services/api/gallery";
+import UploadProgress from "../../../src/components/UploadProgress";
 
 const GalleryManagement = () => {
   const [images, setImages] = useState([]);
@@ -15,6 +16,9 @@ const GalleryManagement = () => {
   const [deletingId, setDeletingId] = useState(null);
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadingFileName, setUploadingFileName] = useState("");
 
   useEffect(() => {
     fetchImages();
@@ -45,16 +49,28 @@ const GalleryManagement = () => {
 
     try {
       setUploading(true);
-      const response = await uploadGalleryImage(file);
+      setUploadProgress(0);
+      setUploadError(null);
+      setUploadingFileName(file.name);
+
+      const response = await uploadGalleryImage(file, (progress) => {
+        setUploadProgress(progress);
+      });
       toast.success("Image uploaded successfully");
       await fetchImages(); // Refresh the list
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error(
-        error?.message || "Failed to upload image. Please try again."
-      );
+      const msg = error?.message || "Failed to upload image. Please try again.";
+      setUploadError(msg);
+      toast.error(msg);
     } finally {
-      setUploading(false);
+      // Delay hiding progress bar
+      setTimeout(() => {
+        setUploading(false);
+        setUploadProgress(0);
+        setUploadError(null);
+      }, 1500);
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -129,11 +145,10 @@ const GalleryManagement = () => {
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition ${
-            dragActive
-              ? "border-[#F5D26A] bg-[#F5D26A]/10"
-              : "border-white/20 hover:border-white/30"
-          }`}>
+          className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition ${dragActive
+            ? "border-[#F5D26A] bg-[#F5D26A]/10"
+            : "border-white/20 hover:border-white/30"
+            }`}>
           <input
             ref={fileInputRef}
             type="file"
@@ -145,9 +160,8 @@ const GalleryManagement = () => {
           />
           <label
             htmlFor="gallery-upload"
-            className={`cursor-pointer flex flex-col items-center gap-4 ${
-              uploading ? "opacity-50 cursor-not-allowed" : ""
-            }`}>
+            className={`cursor-pointer flex flex-col items-center gap-4 ${uploading ? "opacity-50 cursor-not-allowed" : ""
+              }`}>
             {uploading ? (
               <>
                 <FaSpinner className="text-4xl sm:text-5xl text-[#F5D26A] animate-spin" />
@@ -176,6 +190,13 @@ const GalleryManagement = () => {
           </label>
         </div>
       </motion.div>
+
+      <UploadProgress
+        isUploading={uploading}
+        progress={uploadProgress}
+        fileName={uploadingFileName}
+        error={uploadError}
+      />
 
       {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

@@ -55,12 +55,13 @@ export const updateAdminCourse = async (courseId, updates) => {
  * Create ebook (super admin)
  * Supports both FormData (with PDF file) and JSON payload
  */
-export const createEbook = async (payload, isFormData = false) => {
+export const createEbook = async (payload, isFormData = false, onProgress) => {
   if (isFormData) {
     // Use FormData for file upload via apiRequest for consistent timeout and CSRF handling
     return apiRequest("/admin/ebooks", {
       method: "POST",
       body: payload, // payload is already FormData
+      onUploadProgress: onProgress,
     });
   } else {
     // Use regular JSON API request
@@ -74,13 +75,14 @@ export const createEbook = async (payload, isFormData = false) => {
 /**
  * Upload course brochure PDF (super admin)
  */
-export const uploadAdminCourseBrochure = async (courseId, file) => {
+export const uploadAdminCourseBrochure = async (courseId, file, onProgress) => {
   const formData = new FormData();
   formData.append("brochure", file);
 
   const response = await apiRequest(`/admin/courses/${courseId}/brochure`, {
     method: "POST",
     body: formData,
+    onUploadProgress: onProgress,
     // Don't set headers - baseClient will handle FormData correctly
   });
 
