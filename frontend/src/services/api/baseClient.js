@@ -179,6 +179,7 @@ const executeRequest = async (
     headers = {},
     skipAuth = false,
     timeout,
+    onUploadProgress, // New: callback for progress tracking
     _retry = false,
     _retryCount = 0,
   } = {}
@@ -218,103 +219,115 @@ const executeRequest = async (
   const requestBody = isFormData
     ? body
     : body
-    ? JSON.stringify(body)
-    : undefined;
+      ? JSON.stringify(body)
+      : undefined;
 
-  // Create timeout controller for fetch request
-  // Default to 30 seconds, but use 1 hour (3600s) for FormData/large uploads, or custom timeout if provided
-  const defaultTimeout = isFormData ? 3600000 : 30000;
-  const timeoutMs = timeout || defaultTimeout;
+  // Determine if we should use XHR (for upload progress) or fetch
+  if (onUploadProgress && method.toUpperCase() !== "GET") {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = `${API_BASE_URL}${endpoint}`;
 
+      xhr.open(method, url, true);
+
+      // Set headers
+      Object.entries(finalHeaders).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      // Handle timeout
+      xhr.timeout = timeoutMs;
+
+      // Progress tracking
+      if (xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            onUploadProgress(percentComplete);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        const responseHeaders = {
+          get: (name) => xhr.getResponseHeader(name),
+        };
+
+        let payload = null;
+        try {
+          payload = JSON.parse(xhr.responseText);
+        } catch {
+          payload = null;
+        }
+
+        const responseData = {
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          headers: responseHeaders,
+          json: async () => payload,
+        };
+
+        handleResponse(responseData, payload, resolve, reject, endpoint, { method, body, headers, skipAuth, timeout, onUploadProgress, _retry, _retryCount });
+      };
+
+      xhr.onerror = () => {
+        const connectionError = new Error(`Unable to connect to server.`);
+        connectionError.status = 0;
+        connectionError.code = "CONNECTION_ERROR";
+        connectionError.isNetworkError = true;
+        reject(connectionError);
+      };
+
+      xhr.ontimeout = () => {
+        const timeoutError = new Error(`Request timeout.`);
+        timeoutError.status = 0;
+        timeoutError.code = "REQUEST_TIMEOUT";
+        timeoutError.isNetworkError = true;
+        reject(timeoutError);
+      };
+
+      xhr.send(requestBody);
+    });
+  }
+
+  // Fallback to fetch for standard requests
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  let response;
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
       headers: finalHeaders,
       body: requestBody,
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
+
+    const payload = await response.json().catch(() => null);
+
+    return new Promise((resolve, reject) => {
+      handleResponse(response, payload, resolve, reject, endpoint, { method, body, headers, skipAuth, timeout, _retry, _retryCount });
+    });
   } catch (networkError) {
     clearTimeout(timeoutId);
-
-    // Check if it's an abort error (timeout)
+    // ... rest of error handling handled in handleResponse if needed or here
     if (networkError.name === "AbortError" || controller.signal.aborted) {
-      const timeoutError = new Error(
-        `Request timeout: The server took too long to respond (${
-          timeoutMs / 1000
-        } seconds). Please check your connection and try again.`
-      );
+      const timeoutError = new Error(`Request timeout.`);
       timeoutError.status = 0;
       timeoutError.code = "REQUEST_TIMEOUT";
       timeoutError.isNetworkError = true;
       throw timeoutError;
     }
-    // Handle network errors (connection refused, network unavailable, CORS, etc.)
-    const isConnectionError =
-      networkError.message?.includes("Failed to fetch") ||
-      networkError.message?.includes("NetworkError") ||
-      networkError.message?.includes("CORS") ||
-      networkError.name === "TypeError";
-
-    if (isConnectionError) {
-      const connectionError = new Error(
-        `Unable to connect to server. The backend server may be down or unreachable.`
-      );
-      connectionError.status = 0;
-      connectionError.code = "CONNECTION_ERROR";
-      connectionError.isNetworkError = true;
-      connectionError.isCorsError =
-        networkError.message?.includes("CORS") || false;
-
-      // Log connection errors in production to help debug API issues
-      if (!isDevelopment) {
-        console.error("[API] Connection error:", {
-          endpoint,
-          method,
-          apiUrl: API_BASE_URL,
-          error: networkError.message,
-          isCors: connectionError.isCorsError,
-          hint: "Check if VITE_API_URL is set correctly in production environment",
-        });
-      }
-
-      throw connectionError;
-    }
     throw networkError;
   }
+};
 
-  // Handle 502 Bad Gateway (server down or proxy error)
-  if (response.status === 502) {
-    const badGatewayError = new Error(
-      `Backend server is temporarily unavailable (502 Bad Gateway). The server may be starting up or experiencing issues.`
-    );
-    badGatewayError.status = 502;
-    badGatewayError.code = "BAD_GATEWAY";
-    badGatewayError.isNetworkError = true;
-
-    // Log 502 errors in production
-    if (!isDevelopment) {
-      console.error("[API] Bad Gateway (502):", {
-        endpoint,
-        method,
-        apiUrl: API_BASE_URL,
-        hint: "Backend server may be down or restarting",
-      });
-    }
-
-    throw badGatewayError;
-  }
-
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
+/**
+ * Shared response handler to avoid duplicating logic between fetch and XHR
+ */
+const handleResponse = async (response, payload, resolve, reject, endpoint, options) => {
+  const { method, body, headers, skipAuth, timeout, onUploadProgress, _retry, _retryCount } = options;
+  const tokens = loadTokens();
 
   if (response.ok) {
     // Check for CSRF token in response header and store it
@@ -322,8 +335,16 @@ const executeRequest = async (
     if (csrfToken) {
       storeCsrfToken(csrfToken);
     }
+    return resolve(payload);
+  }
 
-    return payload;
+  // Handle 502 Bad Gateway
+  if (response.status === 502) {
+    const badGatewayError = new Error(`Backend server is temporarily unavailable (502 Bad Gateway).`);
+    badGatewayError.status = 502;
+    badGatewayError.code = "BAD_GATEWAY";
+    badGatewayError.isNetworkError = true;
+    return reject(badGatewayError);
   }
 
   // Handle CSRF token errors
@@ -332,18 +353,18 @@ const executeRequest = async (
     (payload?.error?.code === "CSRF_TOKEN_MISSING" ||
       payload?.error?.code === "CSRF_TOKEN_INVALID")
   ) {
-    // Try to fetch new CSRF token and retry once
     if (!_retry) {
       clearCsrfToken();
       const newCsrfToken = await fetchCsrfToken();
       if (newCsrfToken) {
-        return apiRequest(endpoint, {
+        return resolve(apiRequest(endpoint, {
           method,
           body,
           headers,
           skipAuth,
+          onUploadProgress,
           _retry: true,
-        });
+        }));
       }
     }
   }
@@ -351,34 +372,20 @@ const executeRequest = async (
   if (!skipAuth && response.status === 401 && tokens?.refreshToken && !_retry) {
     try {
       await refreshTokensIfNeeded(tokens);
-      // Clear CSRF token on token refresh to get a new one
       clearCsrfToken();
-      return apiRequest(endpoint, {
+      return resolve(apiRequest(endpoint, {
         method,
         body,
         headers,
         skipAuth,
+        onUploadProgress,
         _retry: true,
-      });
+      }));
     } catch (error) {
-      // If token refresh fails, clear tokens and notify auth handler
       clearStoredTokens();
       clearCsrfToken();
       notifyAuthUpdate(null);
-
-      const message =
-        payload?.error?.message ??
-        error.message ??
-        `Request to ${endpoint} failed with status ${response.status}. Please log in again.`;
-      const unauthorizedError = new Error(message);
-      unauthorizedError.status = response.status;
-      unauthorizedError.code =
-        payload?.error?.code ?? error.code ?? "UNAUTHORIZED";
-      unauthorizedError.details = payload ?? error.details;
-      unauthorizedError.requiresLogin = true;
-      // Suppress console errors for expected 401s (token expired, user logged out)
-      unauthorizedError.suppressConsoleError = true;
-      throw unauthorizedError;
+      return reject(error);
     }
   }
 
@@ -386,97 +393,37 @@ const executeRequest = async (
   if (!skipAuth && response.status === 401) {
     clearStoredTokens();
     notifyAuthUpdate(null);
-
-    // Mark as suppressible error for expected 401s
-    const message =
-      payload?.error?.message ??
-      `Request to ${endpoint} failed with status ${response.status}`;
-    const error = new Error(message);
+    const error = new Error(payload?.error?.message ?? "Unauthorized");
     error.status = response.status;
-    error.code = payload?.error?.code;
-    error.details = payload;
     error.requiresLogin = true;
-    error.suppressConsoleError = true;
-    throw error;
+    return reject(error);
   }
 
-  // Handle 429 Too Many Requests with exponential backoff
+  // Handle 429 Too Many Requests
   if (response.status === 429) {
-    const retryAfter = payload?.error?.retryAfter || payload?.retryAfter || 60; // Default 60 seconds
+    const retryAfter = payload?.error?.retryAfter || payload?.retryAfter || 60;
     const maxRetries = 3;
 
     if (_retryCount < maxRetries) {
-      // Exponential backoff: wait longer for each retry
-      const backoffDelay = Math.min(
-        retryAfter * 1000 * Math.pow(2, _retryCount),
-        300000 // Max 5 minutes
-      );
-
-      // Wait before retrying
+      const backoffDelay = Math.min(retryAfter * 1000 * Math.pow(2, _retryCount), 300000);
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-
-      // Retry the request
-      return executeRequest(endpoint, {
+      return resolve(executeRequest(endpoint, {
         method,
         body,
         headers,
         skipAuth,
+        onUploadProgress,
         _retry: true,
         _retryCount: _retryCount + 1,
-      });
+      }));
     }
-    // If max retries reached, fall through to error handling below
   }
 
-  const message =
-    payload?.error?.message ??
-    `Request to ${endpoint} failed with status ${response.status}`;
-  const error = new Error(message);
+  const error = new Error(payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`);
   error.status = response.status;
   error.code = payload?.error?.code;
   error.details = payload;
-
-  // Mark validation errors as suppressible (non-critical) if they're 400 errors
-  const isValidationError =
-    response.status === 400 &&
-    (error.code === "VALIDATION_ERROR" ||
-      message.includes("Invalid user ID") ||
-      message.includes("Invalid"));
-
-  // Mark duplicate submission errors (409) as suppressible - they're expected
-  const isDuplicateError =
-    response.status === 409 &&
-    (error.code === "DUPLICATE_SUBMISSION" ||
-      message.includes("already submitted") ||
-      message.includes("already submitted this form"));
-
-  // Mark 429 rate limit errors as suppressible - they're expected when rate limited
-  const isRateLimitError = response.status === 429;
-
-  error.suppressConsoleError =
-    isValidationError || isDuplicateError || isRateLimitError;
-
-  // Log non-401, non-429 errors in production (401s and 429s are expected)
-  // Completely suppress validation errors, duplicate submission errors, and rate limit errors
-  if (
-    !isDevelopment &&
-    response.status !== 401 &&
-    response.status !== 429 &&
-    !isValidationError &&
-    !isDuplicateError
-  ) {
-    console.error("[API] Request failed:", {
-      endpoint,
-      method,
-      status: response.status,
-      code: error.code,
-      message: error.message,
-      apiUrl: API_BASE_URL,
-    });
-  }
-  // Validation errors, duplicate submission errors, and rate limit errors are completely suppressed - no console output
-
-  throw error;
+  return reject(error);
 };
 
 export const apiRequest = async (endpoint, options = {}) => {

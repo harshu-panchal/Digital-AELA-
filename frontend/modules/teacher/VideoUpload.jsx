@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { uploadCourseVideo } from "../../src/services/courseVideos";
 import { FaUpload, FaTimes, FaSpinner, FaVideo } from "react-icons/fa";
+import UploadProgress from "../../src/components/UploadProgress";
 
 const VideoUpload = ({
   courseId,
@@ -11,6 +12,7 @@ const VideoUpload = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -60,23 +62,12 @@ const VideoUpload = ({
 
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadError(null);
 
     try {
-      // Simulate progress (actual progress would require XMLHttpRequest)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 500);
-
-      await uploadCourseVideo(courseId, selectedFile, formData);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      await uploadCourseVideo(courseId, selectedFile, formData, (progress) => {
+        setUploadProgress(progress);
+      });
 
       toast.success("Video uploaded successfully!");
       setSelectedFile(null);
@@ -93,10 +84,15 @@ const VideoUpload = ({
         onVideoUploaded();
       }
     } catch (error) {
+      setUploadError(error.message);
       toast.error(error.message || "Failed to upload video");
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+      // Delay hiding progress bar to show 100% completion
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadError(null);
+      }, 1500);
     }
   };
 
@@ -221,21 +217,7 @@ const VideoUpload = ({
           </div>
         </div>
 
-        {isUploading && (
-          <div className="space-y-2">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-              <motion.div
-                className="h-full bg-[#D4AF37]"
-                initial={{ width: 0 }}
-                animate={{ width: `${uploadProgress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-            <p className="text-xs text-slate-400">
-              Uploading... {uploadProgress}%
-            </p>
-          </div>
-        )}
+        {/* Standard UI progress bar removed in favor of floating UploadProgress */}
 
         <button
           type="submit"
@@ -254,6 +236,13 @@ const VideoUpload = ({
           )}
         </button>
       </form>
+
+      <UploadProgress
+        isUploading={isUploading}
+        progress={uploadProgress}
+        fileName={selectedFile?.name}
+        error={uploadError}
+      />
     </motion.div>
   );
 };

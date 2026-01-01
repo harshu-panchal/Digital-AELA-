@@ -35,8 +35,11 @@ export const getTeacherEbookById = async (ebookId) => {
 /**
  * Create a new ebook (teacher only - creates with isPublic: false)
  * Supports both FormData (with PDF file) and JSON payload
+ * @param {Object} payload - Ebook metadata
+ * @param {File} pdfFile - Optional PDF file
+ * @param {Function} onProgress - Optional progress callback
  */
-export const createTeacherEbook = async (payload, pdfFile = null) => {
+export const createTeacherEbook = async (payload, pdfFile = null, onProgress) => {
   let response;
   if (pdfFile) {
     console.log("📤 Preparing to upload PDF:", {
@@ -46,10 +49,10 @@ export const createTeacherEbook = async (payload, pdfFile = null) => {
     });
     // Use FormData for file upload via apiRequest for consistent timeout and CSRF handling
     const formData = new FormData();
-    
+
     // Append PDF file
     formData.append("pdf", pdfFile);
-    
+
     // Append other fields
     Object.keys(payload).forEach((key) => {
       if (payload[key] !== null && payload[key] !== undefined) {
@@ -64,6 +67,7 @@ export const createTeacherEbook = async (payload, pdfFile = null) => {
     response = await apiRequest("/teacher/ebooks", {
       method: "POST",
       body: formData,
+      onUploadProgress: onProgress,
     });
   } else {
     // Use regular JSON API request

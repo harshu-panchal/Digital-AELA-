@@ -5,9 +5,10 @@ import { apiRequest } from "./api/baseClient";
  * @param {string} courseId - The course ID
  * @param {File} videoFile - The video file to upload
  * @param {Object} videoData - Video metadata (title, description, order, isPreview)
+ * @param {Function} onProgress - Optional progress callback
  * @returns {Promise<Object>} - The uploaded video response
  */
-export const uploadCourseVideo = async (courseId, videoFile, videoData) => {
+export const uploadCourseVideo = async (courseId, videoFile, videoData, onProgress) => {
   const formData = new FormData();
   formData.append("video", videoFile);
   formData.append("title", videoData.title || "");
@@ -18,6 +19,7 @@ export const uploadCourseVideo = async (courseId, videoFile, videoData) => {
   const response = await apiRequest(`/courses/${courseId}/videos`, {
     method: "POST",
     body: formData,
+    onUploadProgress: onProgress,
     // Note: Don't set Content-Type header - browser will set it with boundary
   });
 

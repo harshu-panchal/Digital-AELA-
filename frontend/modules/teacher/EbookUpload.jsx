@@ -7,6 +7,7 @@ import { createTeacherEbook } from "../../src/services/teacherEbooks";
 import { fetchCategories } from "../../src/services/api/categories";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
+import UploadProgress from "../../src/components/UploadProgress";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -37,6 +38,10 @@ const EbookUpload = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadingFileName, setUploadingFileName] = useState("");
+
   const [categories, setCategories] = useState([
     "English Language",
     "Digital Marketing",
@@ -197,10 +202,15 @@ const EbookUpload = () => {
     };
 
     setIsSubmitting(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    setUploadingFileName(pdfFile ? pdfFile.name : "Ebook Metadata");
+
     try {
       // Upload PDF file along with metadata only for e-books
-      const pdfFile = formData.bookType === "ebook" ? formData.file : null;
-      const created = await createTeacherEbook(payload, pdfFile);
+      const created = await createTeacherEbook(payload, pdfFile, (progress) => {
+        setUploadProgress(progress);
+      });
       toast.success(
         "E-book submitted for approval. It will be reviewed by admin before being published."
       );
@@ -210,12 +220,18 @@ const EbookUpload = () => {
         state: { highlightEbooks: true, ebookId: created.id },
       });
     } catch (error) {
+      setUploadError(error.message);
       const message =
         (error?.details?.error?.message || error?.message) ??
         "Unable to save e-book. Please try again.";
       toast.error(message);
     } finally {
-      setIsSubmitting(false);
+      // Delay hiding progress bar to show 100% completion
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setUploadProgress(0);
+        setUploadError(null);
+      }, 1500);
     }
   };
 
@@ -578,6 +594,12 @@ const EbookUpload = () => {
           </motion.form>
         </section>
       </main>
+      <UploadProgress
+        isUploading={isSubmitting}
+        progress={uploadProgress}
+        fileName={uploadingFileName}
+        error={uploadError}
+      />
     </div>
   );
 };

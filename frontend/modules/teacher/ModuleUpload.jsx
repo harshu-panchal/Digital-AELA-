@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { createModule } from "../../src/services/courseModules";
 import { FaUpload, FaTimes, FaSpinner, FaFile } from "react-icons/fa";
+import UploadProgress from "../../src/components/UploadProgress";
 
 const ModuleUpload = ({ courseId, onModuleUploaded }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -12,6 +13,9 @@ const ModuleUpload = ({ courseId, onModuleUploaded }) => {
   });
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadingFileName, setUploadingFileName] = useState("");
 
   // Allowed file types
   const allowedFileTypes = [
@@ -99,9 +103,14 @@ const ModuleUpload = ({ courseId, onModuleUploaded }) => {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    setUploadingFileName(selectedFiles.length > 1 ? `${selectedFiles.length} files` : selectedFiles[0]?.name || "Module files");
 
     try {
-      await createModule(courseId, formData, selectedFiles);
+      await createModule(courseId, formData, selectedFiles, (progress) => {
+        setUploadProgress(progress);
+      });
 
       toast.success("Module created successfully!");
       setSelectedFiles([]);
@@ -116,9 +125,15 @@ const ModuleUpload = ({ courseId, onModuleUploaded }) => {
         onModuleUploaded();
       }
     } catch (error) {
+      setUploadError(error.message);
       toast.error(error.message || "Failed to create module");
     } finally {
-      setIsUploading(false);
+      // Delay hiding progress bar to show 100% completion
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadError(null);
+      }, 1500);
     }
   };
 
@@ -237,6 +252,13 @@ const ModuleUpload = ({ courseId, onModuleUploaded }) => {
           )}
         </button>
       </form>
+
+      <UploadProgress
+        isUploading={isUploading}
+        progress={uploadProgress}
+        fileName={uploadingFileName}
+        error={uploadError}
+      />
     </motion.div>
   );
 };

@@ -10,6 +10,7 @@ import {
 } from "../../../src/services/api/categories";
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
 import { FaPlus, FaTrash, FaEdit, FaChevronDown, FaUpload, FaImage } from "react-icons/fa";
+import UploadProgress from "../../../src/components/UploadProgress";
 
 const AdminCategoryManagement = () => {
     const [categories, setCategories] = useState([]);
@@ -18,6 +19,9 @@ const AdminCategoryManagement = () => {
     const [isEditing, setIsEditing] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadError, setUploadError] = useState(null);
+
 
     const [formData, setFormData] = useState({
         name: "",
@@ -60,13 +64,22 @@ const AdminCategoryManagement = () => {
 
         try {
             setIsUploading(true);
-            const url = await uploadImageToCloudinary(file, "digital-aela/categories/banners");
+            setUploadProgress(0);
+            setUploadError(null);
+            const url = await uploadImageToCloudinary(file, "digital-aela/categories/banners", (progress) => {
+                setUploadProgress(progress);
+            });
             setFormData((prev) => ({ ...prev, bannerUrl: url }));
             toast.success("Banner uploaded successfully");
         } catch (error) {
+            setUploadError(error.message);
             toast.error("Failed to upload banner");
         } finally {
-            setIsUploading(false);
+            setTimeout(() => {
+                setIsUploading(false);
+                setUploadProgress(0);
+                setUploadError(null);
+            }, 1500);
         }
     };
 
@@ -360,6 +373,13 @@ const AdminCategoryManagement = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            <UploadProgress
+                isUploading={isUploading}
+                progress={uploadProgress}
+                fileName="Category Banner"
+                error={uploadError}
+            />
         </div>
     );
 };

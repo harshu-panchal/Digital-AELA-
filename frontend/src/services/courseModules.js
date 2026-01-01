@@ -5,30 +5,32 @@ import { apiRequest } from "./api/baseClient";
  * @param {string} courseId - Course ID
  * @param {Object} moduleData - Module data (title, description)
  * @param {File[]} files - Array of files to upload
+ * @param {Function} onProgress - Optional progress callback
  * @returns {Promise<Object>} Created module
  */
-export const createModule = async (courseId, moduleData, files = []) => {
+export const createModule = async (courseId, moduleData, files = [], onProgress) => {
   const formData = new FormData();
-  
+
   // Add module data
   formData.append("title", moduleData.title || "");
   if (moduleData.description) {
     formData.append("description", moduleData.description);
   }
-  
+
   // Add files
   if (files && files.length > 0) {
     files.forEach((file) => {
       formData.append("files", file);
     });
   }
-  
+
   const response = await apiRequest(`/courses/${courseId}/modules`, {
     method: "POST",
     body: formData,
+    onUploadProgress: onProgress,
     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
-  
+
   return response.module;
 };
 
@@ -41,7 +43,7 @@ export const getCourseModules = async (courseId) => {
   const response = await apiRequest(`/courses/${courseId}/modules`, {
     method: "GET",
   });
-  
+
   return {
     modules: response.modules || [],
     hasAccess: response.hasAccess || false,
@@ -57,7 +59,7 @@ export const getModule = async (moduleId) => {
   const response = await apiRequest(`/modules/${moduleId}`, {
     method: "GET",
   });
-  
+
   return response.module;
 };
 
@@ -72,7 +74,7 @@ export const updateModule = async (moduleId, updates) => {
     method: "PUT",
     body: updates,
   });
-  
+
   return response.module;
 };
 
@@ -91,26 +93,28 @@ export const deleteModule = async (moduleId) => {
  * Add files to an existing module
  * @param {string} moduleId - Module ID
  * @param {File[]} files - Array of files to upload
+ * @param {Function} onProgress - Optional progress callback
  * @returns {Promise<Object>} Updated module
  */
-export const addFilesToModule = async (moduleId, files) => {
+export const addFilesToModule = async (moduleId, files, onProgress) => {
   if (!files || files.length === 0) {
     throw new Error("No files provided");
   }
-  
+
   const formData = new FormData();
-  
+
   // Add files
   files.forEach((file) => {
     formData.append("files", file);
   });
-  
+
   const response = await apiRequest(`/modules/${moduleId}/files`, {
     method: "POST",
     body: formData,
+    onUploadProgress: onProgress,
     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
-  
+
   return response.module;
 };
 
@@ -124,7 +128,7 @@ export const removeFileFromModule = async (moduleId, fileIndex) => {
   const response = await apiRequest(`/modules/${moduleId}/files/${fileIndex}`, {
     method: "DELETE",
   });
-  
+
   return response.module;
 };
 
