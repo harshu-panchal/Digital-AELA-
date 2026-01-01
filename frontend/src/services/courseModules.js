@@ -28,7 +28,7 @@ export const createModule = async (courseId, moduleData, files = [], onProgress)
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
-    timeout: 3600000, // 1 hour timeout for large uploads
+    timeout: 10800000, // 3 hours timeout for large uploads
     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
 
@@ -113,7 +113,7 @@ export const addFilesToModule = async (moduleId, files, onProgress) => {
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
-    timeout: 3600000, // 1 hour timeout for large uploads
+    timeout: 10800000, // 3 hours timeout for large uploads
     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
 

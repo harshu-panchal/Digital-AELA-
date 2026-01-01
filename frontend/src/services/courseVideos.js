@@ -20,7 +20,7 @@ export const uploadCourseVideo = async (courseId, videoFile, videoData, onProgre
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
-    timeout: 3600000, // 1 hour timeout for large uploads
+    timeout: 10800000, // 3 hours timeout for large uploads
     // Note: Don't set Content-Type header - browser will set it with boundary
   });
 
