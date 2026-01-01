@@ -236,7 +236,7 @@ const executeRequest = async (
       });
 
       // Handle timeout
-      xhr.timeout = timeoutMs;
+      xhr.timeout = timeout || 30000;
 
       // Progress tracking
       if (xhr.upload) {
@@ -292,7 +292,7 @@ const executeRequest = async (
 
   // Fallback to fetch for standard requests
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), timeout || 30000);
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
