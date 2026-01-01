@@ -23,6 +23,7 @@ export const uploadImageToCloudinary = async (file, folder = "digital-aela", onP
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
+    timeout: 300000, // 5 minutes timeout for image uploads
   });
 
   // Return the image URL
