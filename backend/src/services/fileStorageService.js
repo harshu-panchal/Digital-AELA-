@@ -236,11 +236,21 @@ export const saveImageToLocal = async (
     if (Buffer.isBuffer(fileInput)) {
       await fs.writeFile(filePath, fileInput);
     } else {
-      await fs.copyFile(fileInput, filePath);
+      // If it's a file path (from multer diskStorage), try to move it
       try {
-        await fs.unlink(fileInput);
+        await fs.rename(fileInput, filePath);
       } catch (err) {
-        console.warn("[FileStorage] Failed to delete temp file:", err);
+        // If rename fails (e.g., across partitions EXDEV), fall back to copy + unlink
+        if (err.code === 'EXDEV') {
+          await fs.copyFile(fileInput, filePath);
+          try {
+            await fs.unlink(fileInput);
+          } catch (unlinkErr) {
+            console.warn("[FileStorage] Failed to delete temp file:", unlinkErr);
+          }
+        } else {
+          throw err;
+        }
       }
     }
 
@@ -322,14 +332,21 @@ export const saveVideoToLocal = async (
     if (Buffer.isBuffer(fileInput)) {
       await fs.writeFile(filePath, fileInput);
     } else {
-      // If it's a file path (from multer diskStorage), move/copy it
-      // Using copyFile + unlink instead of rename to handle cross-device moves if temp is on different partition
-      await fs.copyFile(fileInput, filePath);
-      // Clean up temp file
+      // If it's a file path (from multer diskStorage), try to move it
       try {
-        await fs.unlink(fileInput);
+        await fs.rename(fileInput, filePath);
       } catch (err) {
-        console.warn("[FileStorage] Failed to delete temp file:", err);
+        // If rename fails (e.g., across partitions EXDEV), fall back to copy + unlink
+        if (err.code === 'EXDEV') {
+          await fs.copyFile(fileInput, filePath);
+          try {
+            await fs.unlink(fileInput);
+          } catch (unlinkErr) {
+            console.warn("[FileStorage] Failed to delete temp file:", unlinkErr);
+          }
+        } else {
+          throw err;
+        }
       }
     }
 
