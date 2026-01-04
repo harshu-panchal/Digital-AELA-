@@ -31,8 +31,7 @@ export const sanitizeObjectForPayment = (obj) => {
             sanitized[key] = value;
         }
     }
-}
-return sanitized;
+    return sanitized;
 };
 
 /**
