@@ -9,8 +9,9 @@ import {
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
 import { AnimatePresence, motion } from "framer-motion";
-// Import worker file from pdfjs-dist
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+// Use CDN for PDF worker to avoid resolution issues on cloud platforms like Vercel
+// The version should match the one in package.json
+const pdfjsWorker = "https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.mjs";
 import {
   FaArrowLeft,
   FaArrowRight,
