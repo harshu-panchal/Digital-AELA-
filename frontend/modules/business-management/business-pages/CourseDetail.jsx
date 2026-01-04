@@ -175,6 +175,7 @@ const CourseDetail = () => {
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isLoadingCourse, setIsLoadingCourse] = useState(true);
+  const [activeModule, setActiveModule] = useState(0);
 
   // Translation hooks
   const { language } = useLanguage();
@@ -399,6 +400,7 @@ const CourseDetail = () => {
     detailedSyllabus,
     tags = [],
     modules = [],
+    isPremium = false,
   } = displayCourse || course;
 
   // Get the actual numeric price - use originalPrice if available, otherwise extract from display string
@@ -883,28 +885,61 @@ const CourseDetail = () => {
                 <h2 className="text-2xl font-bold text-white font-display">
                   Program Modules
                 </h2>
-                <div className="grid gap-4">
-                  {modules.map((mod, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
-                      <div className="p-5 flex items-start gap-4">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
-                          <span className="text-[#F5D26A] font-bold">
-                            {idx + 1}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white mb-2">
-                            {mod.title}
-                          </h3>
-                          <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                            {mod.content || mod.description}
+                <div className="space-y-3">
+                  {modules.map((mod, idx) => {
+                    const isOpen = activeModule === idx;
+                    return (
+                      <motion.div
+                        key={idx}
+                        className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+                        <button
+                          type="button"
+                          onClick={() => setActiveModule(isOpen ? -1 : idx)}
+                          className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-[#D4AF37]/5 transition-colors duration-200">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
+                              <span className="text-[#F5D26A] font-bold">
+                                {idx + 1}
+                              </span>
+                            </div>
+                            <h3 className="text-base md:text-lg font-bold text-white leading-snug">
+                              {mod.title}
+                            </h3>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          <span
+                            className={`flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
+                                ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                                : "bg-transparent text-[#D4AF37]"
+                              }`}>
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                          </span>
+                        </button>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="px-5 pb-5 overflow-hidden">
+                            <div className="pl-14 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                              {mod.content || mod.description}
+                            </div>
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -6,6 +6,7 @@ import {
   HiOutlineArrowUturnLeft,
   HiOutlineDocumentText,
   HiOutlineSparkles,
+  HiOutlinePlus,
 } from "react-icons/hi2";
 import { FaVideo, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
