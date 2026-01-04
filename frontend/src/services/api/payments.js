@@ -145,3 +145,14 @@ export const verifyPaymentStatus = async (paymentId) => {
   });
 };
 
+/**
+ * Verify Razorpay Payment Callback (Immediate)
+ * POST /api/v1/payments/:paymentId/verify-razorpay-callback
+ */
+export const verifyWithRazorpayCallback = async (paymentId, razorpayPaymentId) => {
+  return apiRequest(`/payments/${paymentId}/verify-razorpay-callback`, {
+    method: "POST",
+    body: { razorpay_payment_id: razorpayPaymentId }
+  });
+};
+

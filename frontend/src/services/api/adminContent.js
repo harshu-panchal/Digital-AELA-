@@ -83,6 +83,7 @@ export const uploadAdminCourseBrochure = async (courseId, file, onProgress) => {
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
+    timeout: 10800000, // 3 hours timeout for large PDF files
     // Don't set headers - baseClient will handle FormData correctly
   });
 
@@ -104,6 +105,7 @@ export const uploadAdminCourseIntroVideo = async (courseId, file, onProgress) =>
     method: "POST",
     body: formData,
     onUploadProgress: onProgress,
+    timeout: 10800000, // 3 hours timeout for large video files
   });
 
   return {

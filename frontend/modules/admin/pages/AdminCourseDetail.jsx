@@ -556,15 +556,59 @@ const AdminCourseDetail = () => {
 
       // Handle async uploads if files are selected
       if (formData.introVideoFile) {
-        toast.info("Uploading intro video...");
-        await uploadAdminCourseIntroVideo(courseId, formData.introVideoFile);
-        toast.success("Intro video uploaded!");
+        try {
+          setIsUploading(true);
+          setUploadProgress(0);
+          setUploadError(null);
+          setUploadingFileName(formData.introVideoFile.name);
+          toast.info("Uploading intro video...");
+          await uploadAdminCourseIntroVideo(
+            courseId,
+            formData.introVideoFile,
+            (progress) => setUploadProgress(progress)
+          );
+          toast.success("Intro video uploaded!");
+          setFormData((prev) => ({ ...prev, introVideoFile: null }));
+        } catch (videoError) {
+          console.error("Video upload failed:", videoError);
+          const msg = videoError.message || "Failed to upload intro video";
+          setUploadError(msg);
+          toast.error(msg);
+        } finally {
+          setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+            setUploadError(null);
+          }, 1500);
+        }
       }
 
       if (formData.brochureFile) {
-        toast.info("Uploading brochure...");
-        await uploadAdminCourseBrochure(courseId, formData.brochureFile);
-        toast.success("Brochure uploaded!");
+        try {
+          setIsUploading(true);
+          setUploadProgress(0);
+          setUploadError(null);
+          setUploadingFileName(formData.brochureFile.name);
+          toast.info("Uploading brochure...");
+          await uploadAdminCourseBrochure(
+            courseId,
+            formData.brochureFile,
+            (progress) => setUploadProgress(progress)
+          );
+          toast.success("Brochure uploaded!");
+          setFormData((prev) => ({ ...prev, brochureFile: null }));
+        } catch (brochureError) {
+          console.error("Brochure upload failed:", brochureError);
+          const msg = brochureError.message || "Failed to upload brochure";
+          setUploadError(msg);
+          toast.error(msg);
+        } finally {
+          setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+            setUploadError(null);
+          }, 1500);
+        }
       }
     } catch (error) {
       const message =
