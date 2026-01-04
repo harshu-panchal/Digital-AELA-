@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
-import { createCourse } from "../../../src/services/api/adminContent";
+import {
+  createCourse,
+  uploadAdminCourseBrochure,
+  uploadAdminCourseIntroVideo,
+} from "../../../src/services/api/adminContent";
 import { getPremiumCourseCount } from "../../../src/services/api/courses";
 import { fetchCategories } from "../../../src/services/api/categories";
 import {
@@ -16,7 +20,7 @@ import UploadProgress from "../../../src/components/UploadProgress";
 const initialFormState = {
   title: "",
   subtitle: "",
-  category: "",
+  category: "English Language",
   difficulty: "Intermediate",
   price: "",
   discountPrice: "",
@@ -25,14 +29,19 @@ const initialFormState = {
   duration: "",
   lessonCount: "",
   description: "",
+  longDescription: "",
   learningOutcomes: "",
   requirements: "",
   coverImage: "",
   coverImageFile: null,
   coverImagePreview: null,
   introVideoUrl: "",
+  introVideoFile: null,
+  brochureUrl: "",
+  brochureFile: null,
   syllabus: "",
   tags: "",
+  modules: [{ title: "", content: "" }],
   publishImmediately: false,
   isPremium: false,
 };
@@ -174,6 +183,19 @@ const AdminCourseCreate = () => {
           return;
         }
 
+        // Handle intro video file selection
+        if (name === "introVideoFile") {
+          if (!file.type.startsWith("video/")) {
+            toast.error("Please upload a video file");
+            return;
+          }
+          setFormData((prev) => ({
+            ...prev,
+            introVideoFile: file,
+          }));
+          return;
+        }
+
         // Handle PDF brochure file
         if (name === "brochureFile") {
           // Validate PDF file
@@ -208,6 +230,28 @@ const AdminCourseCreate = () => {
     },
     [premiumCount, maxPremium]
   );
+
+  const handleModuleChange = (index, field, value) => {
+    const newModules = [...formData.modules];
+    newModules[index][field] = value;
+    setFormData((prev) => ({ ...prev, modules: newModules }));
+  };
+
+  const addModule = () => {
+    setFormData((prev) => ({
+      ...prev,
+      modules: [...prev.modules, { title: "", content: "" }],
+    }));
+  };
+
+  const removeModule = (index) => {
+    if (formData.modules.length <= 1) {
+      toast.warn("At least one module is required");
+      return;
+    }
+    const newModules = formData.modules.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, modules: newModules }));
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -264,6 +308,7 @@ const AdminCourseCreate = () => {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      modules: formData.modules,
       status: formData.publishImmediately ? "published" : "draft",
       isPremium: formData.isPremium || false,
     };
@@ -271,38 +316,58 @@ const AdminCourseCreate = () => {
     setIsSubmitting(true);
     try {
       const created = await createCourse(payload);
+      const courseId = created.course._id || created.id;
 
-      // Upload brochure if provided
-      if (formData.brochureFile) {
-        try {
-          setIsUploading(true);
-          setUploadProgress(0);
-          setUploadError(null);
-          setUploadingFileName(formData.brochureFile.name);
+      // Parallel uploads
+      const uploadTasks = [];
 
-          await uploadAdminCourseBrochure(
-            created.course._id,
-            formData.brochureFile,
-            (progress) => {
-              setUploadProgress(progress);
+      // 1. Upload Intro Video if selected
+      if (formData.introVideoFile) {
+        uploadTasks.push(
+          (async () => {
+            try {
+              setIsUploading(true);
+              setUploadProgress(0);
+              setUploadError(null);
+              setUploadingFileName(formData.introVideoFile.name);
+              await uploadAdminCourseIntroVideo(
+                courseId,
+                formData.introVideoFile,
+                (progress) => setUploadProgress(progress)
+              );
+            } catch (videoError) {
+              console.error("Video upload failed:", videoError);
+              toast.warning("Course saved, but video upload failed.");
             }
-          );
-          toast.success("Course and brochure uploaded successfully!");
-        } catch (brochureError) {
-          console.error("Failed to upload brochure:", brochureError);
-          const msg =
-            brochureError.message || "Course saved but brochure upload failed.";
-          setUploadError(msg);
-          toast.warning(
-            "Course saved but brochure upload failed. You can upload it later."
-          );
-        } finally {
-          setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
-            setUploadError(null);
-          }, 1500);
-        }
+          })()
+        );
+      }
+
+      // 2. Upload Brochure if selected
+      if (formData.brochureFile) {
+        uploadTasks.push(
+          (async () => {
+            try {
+              setIsUploading(true);
+              setUploadProgress(0);
+              setUploadError(null);
+              setUploadingFileName(formData.brochureFile.name);
+              await uploadAdminCourseBrochure(
+                courseId,
+                formData.brochureFile,
+                (progress) => setUploadProgress(progress)
+              );
+            } catch (brochureError) {
+              console.error("Brochure upload failed:", brochureError);
+              toast.warning("Course saved, but brochure upload failed.");
+            }
+          })()
+        );
+      }
+
+      if (uploadTasks.length > 0) {
+        await Promise.all(uploadTasks);
+        toast.success("Course and media uploaded successfully!");
       } else {
         toast.success("Course created successfully.");
       }
@@ -700,21 +765,96 @@ const AdminCourseCreate = () => {
                 </p>
               </div>
 
+              <div className="space-y-3 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Course Modules*
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addModule}
+                    className="rounded-lg bg-[#F5D26A]/20 px-3 py-1 text-[10px] font-bold uppercase text-[#F5D26A] transition hover:bg-[#F5D26A]/30">
+                    + Add Module
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {formData.modules.map((module, index) => (
+                    <div
+                      key={index}
+                      className="relative space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          Module {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeModule(index)}
+                          className="text-red-400 hover:text-red-300">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Module Title (e.g., Introduction to Frameworks)"
+                        value={module.title}
+                        onChange={(e) =>
+                          handleModuleChange(index, "title", e.target.value)
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none"
+                        required
+                      />
+                      <textarea
+                        placeholder="Module Content / Outcomes..."
+                        value={module.content}
+                        onChange={(e) =>
+                          handleModuleChange(index, "content", e.target.value)
+                        }
+                        rows={3}
+                        className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-1.5 md:col-span-2">
                 <label
-                  htmlFor="introVideoUrl"
+                  htmlFor="introVideoFile"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Intro video URL
+                  Intro video
                 </label>
                 <input
-                  id="introVideoUrl"
-                  name="introVideoUrl"
-                  type="url"
-                  value={formData.introVideoUrl}
+                  id="introVideoFile"
+                  name="introVideoFile"
+                  type="file"
+                  accept="video/*"
                   onChange={handleChange}
-                  placeholder="https://player.vimeo.com/..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
+                <p className="text-[11px] text-slate-400">
+                  Upload an intro video for your course. Maximum file size: 1GB.
+                </p>
+                {formData.introVideoFile && (
+                  <p className="text-[11px] text-[#F5D26A]">
+                    Selected: {formData.introVideoFile.name}
+                  </p>
+                )}
+                {formData.introVideoUrl && !formData.introVideoFile && (
+                  <p className="text-[11px] text-slate-400">
+                    Current video: {formData.introVideoUrl}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
@@ -798,11 +938,10 @@ const AdminCourseCreate = () => {
               </label>
 
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
-                  premiumCount >= maxPremium && !formData.isPremium
-                    ? "opacity-60"
-                    : ""
-                }`}>
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${premiumCount >= maxPremium && !formData.isPremium
+                  ? "opacity-60"
+                  : ""
+                  }`}>
                 <input
                   type="checkbox"
                   name="isPremium"

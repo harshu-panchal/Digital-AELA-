@@ -7,10 +7,12 @@ import {
   updateTeacherCourse,
   deleteTeacherCourse,
   uploadCourseBrochure,
+  uploadCourseIntroVideo,
   bulkCourseOperations,
 } from "../controllers/teacherCourseController.js";
 import {
   uploadSinglePdf,
+  uploadSingleVideo,
   handleUploadError,
 } from "../middleware/uploadMiddleware.js";
 import { getTeacherDashboard } from "../controllers/teacherDashboardController.js";
@@ -60,6 +62,15 @@ router.post(
   uploadSinglePdf("brochure"),
   handleUploadError,
   uploadCourseBrochure
+);
+
+// Upload course intro video
+router.post(
+  "/courses/:courseId/intro-video",
+  requireAuth(),
+  uploadSingleVideo("video"),
+  handleUploadError,
+  uploadCourseIntroVideo
 );
 
 // Teacher Analytics endpoints

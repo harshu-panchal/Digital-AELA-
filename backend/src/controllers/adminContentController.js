@@ -4,7 +4,7 @@ import EbookResource from "../models/EbookResource.js";
 import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import RecruiterBlog from "../models/RecruiterBlog.js";
-import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
+import { uploadPdfToCloudinary, uploadVideoToCloudinary } from "../middleware/uploadMiddleware.js";
 import { normalizeUrl } from "../utils/urlNormalizer.js";
 
 /**
@@ -309,9 +309,8 @@ export const toggleCourseVisibility = async (req, res, next) => {
 
     return res.json({
       course,
-      message: `Course ${
-        course.status === "published" ? "shown" : "hidden"
-      } successfully`,
+      message: `Course ${course.status === "published" ? "shown" : "hidden"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -479,9 +478,8 @@ export const approveCourse = async (req, res, next) => {
 
     return res.json({
       course,
-      message: `Course ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Course ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -592,9 +590,8 @@ export const approveEbook = async (req, res, next) => {
 
     return res.json({
       ebook,
-      message: `Ebook ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Ebook ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -734,9 +731,8 @@ export const approveJob = async (req, res, next) => {
 
     return res.json({
       job,
-      message: `Job post ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Job post ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -837,9 +833,8 @@ export const approveTeacher = async (req, res, next) => {
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Teacher ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Teacher ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -940,9 +935,8 @@ export const approveStudent = async (req, res, next) => {
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Student ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Student ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -1043,9 +1037,8 @@ export const approveRecruiter = async (req, res, next) => {
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Recruiter ${
-        action === "approve" ? "approved" : "rejected"
-      } successfully`,
+      message: `Recruiter ${action === "approve" ? "approved" : "rejected"
+        } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -1087,6 +1080,7 @@ export const createCourse = async (req, res, next) => {
       syllabus,
       tags,
       thumbnailUrl,
+      modules,
       currency = "INR",
       status = "published",
       isPremium = false,
@@ -1163,6 +1157,8 @@ export const createCourse = async (req, res, next) => {
       thumbnailUrl: normalizedThumbnailUrl,
       status,
       instructor: userId, // Super admin as instructor
+      isPremium: isPremium === true || isPremium === "true",
+      modules: Array.isArray(modules) ? modules : [],
       metadata: {
         subtitle: subtitle || "",
         difficulty: difficulty || "Intermediate",
@@ -1178,11 +1174,10 @@ export const createCourse = async (req, res, next) => {
           ? Array.isArray(tags)
             ? tags
             : tags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
           : [],
-        isPremium: isPremium === true || isPremium === "true",
       },
     });
 
@@ -1335,6 +1330,7 @@ export const updateAdminCourse = async (req, res, next) => {
       tags,
       status,
       isPremium,
+      modules,
     } = req.body;
 
     if (title) course.title = title;
@@ -1348,6 +1344,8 @@ export const updateAdminCourse = async (req, res, next) => {
       course.brochureUrl =
         normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
     if (status !== undefined) course.status = status;
+    if (modules !== undefined) course.modules = Array.isArray(modules) ? modules : [];
+    if (introVideoUrl !== undefined) course.introVideoUrl = normalizeUrl(introVideoUrl) || introVideoUrl;
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
@@ -1371,9 +1369,9 @@ export const updateAdminCourse = async (req, res, next) => {
       course.metadata.tags = Array.isArray(tags)
         ? tags
         : tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean);
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
     }
     if (isPremium !== undefined) {
       const isPremiumValue = isPremium === true || isPremium === "true";
@@ -1381,7 +1379,7 @@ export const updateAdminCourse = async (req, res, next) => {
       // Check premium course limit (max 6) only if setting to premium
       if (isPremiumValue) {
         const premiumCount = await Course.countDocuments({
-          "metadata.isPremium": true,
+          isPremium: true,
           status: "published",
           _id: { $ne: course._id }, // Exclude current course
         });
@@ -1397,7 +1395,7 @@ export const updateAdminCourse = async (req, res, next) => {
         }
       }
 
-      course.metadata.isPremium = isPremiumValue;
+      course.isPremium = isPremiumValue;
     }
 
     await course.save();
@@ -1497,6 +1495,84 @@ export const uploadAdminCourseBrochure = async (req, res, next) => {
       message: "Brochure uploaded successfully",
       course: populatedCourse,
       brochureUrl: uploadResult.url,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const uploadAdminCourseIntroVideo = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can upload intro videos",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: {
+          code: "FILE_REQUIRED",
+          message: "No video file uploaded",
+        },
+      });
+    }
+
+    // Save video to local storage
+    const uploadResult = await uploadVideoToCloudinary(
+      req.file.buffer,
+      `digital-aela/courses/${courseId}/intro-videos`,
+      req.file.originalname
+    );
+
+    // Update course with intro video URL
+    course.introVideoUrl = uploadResult.url;
+    await course.save();
+
+    const populatedCourse = await Course.findById(course._id)
+      .populate("instructor", "fullName email")
+      .lean();
+
+    return res.status(200).json({
+      message: "Intro video uploaded successfully",
+      course: populatedCourse,
+      introVideoUrl: uploadResult.url,
     });
   } catch (error) {
     return next(error);
@@ -1692,9 +1768,9 @@ export const createEbook = async (req, res, next) => {
           ? Array.isArray(tags)
             ? tags
             : tags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
           : [],
         isFeatured: isFeaturedValue,
       },

@@ -11,7 +11,7 @@ import { uploadImageToCloudinary } from "../../src/utils/imageUpload";
 const initialFormState = {
   title: "",
   subtitle: "",
-  category: "",
+  category: "English Language",
   difficulty: "Intermediate",
   price: "",
   discountPrice: "",
@@ -20,15 +20,21 @@ const initialFormState = {
   duration: "",
   lessonCount: "",
   description: "",
+  longDescription: "",
   learningOutcomes: "",
   requirements: "",
   coverImage: "",
   coverImageFile: null,
   coverImagePreview: null,
   introVideoUrl: "",
+  introVideoFile: null,
+  brochureUrl: "",
+  brochureFile: null,
   syllabus: "",
   tags: "",
+  modules: [{ title: "", content: "" }],
   publishImmediately: false,
+  isPremium: false,
 };
 
 const CourseCreate = () => {
@@ -124,6 +130,19 @@ const CourseCreate = () => {
         return;
       }
 
+      // Handle intro video file selection
+      if (name === "introVideoFile") {
+        if (!file.type.startsWith("video/")) {
+          toast.error("Please upload a video file");
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          introVideoFile: file,
+        }));
+        return;
+      }
+
       // Handle PDF brochure file
       if (name === "brochureFile") {
         // Validate PDF file
@@ -144,6 +163,28 @@ const CourseCreate = () => {
       }));
     }
   }, []);
+
+  const handleModuleChange = (index, field, value) => {
+    const newModules = [...formData.modules];
+    newModules[index][field] = value;
+    setFormData((prev) => ({ ...prev, modules: newModules }));
+  };
+
+  const addModule = () => {
+    setFormData((prev) => ({
+      ...prev,
+      modules: [...prev.modules, { title: "", content: "" }],
+    }));
+  };
+
+  const removeModule = (index) => {
+    if (formData.modules.length <= 1) {
+      toast.warn("At least one module is required");
+      return;
+    }
+    const newModules = formData.modules.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, modules: newModules }));
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -200,12 +241,26 @@ const CourseCreate = () => {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      modules: formData.modules.filter((m) => m.title.trim()),
       publishImmediately: formData.publishImmediately,
     };
 
     setIsSubmitting(true);
     try {
       const created = await createTeacherCourse(payload);
+
+      // Upload intro video if provided
+      if (formData.introVideoFile) {
+        try {
+          const { uploadCourseIntroVideo } = await import(
+            "../../src/services/teacherCourses"
+          );
+          await uploadCourseIntroVideo(created.id, formData.introVideoFile);
+        } catch (videoError) {
+          console.error("Failed to upload intro video:", videoError);
+          toast.warning("Course saved but intro video upload failed.");
+        }
+      }
 
       // Upload brochure if provided
       if (formData.brochureFile) {
@@ -214,7 +269,7 @@ const CourseCreate = () => {
             "../../src/services/teacherCourses"
           );
           await uploadCourseBrochure(created.id, formData.brochureFile);
-          toast.success("Course and brochure uploaded successfully!");
+          toast.success("Course, modules and attachments uploaded successfully!");
         } catch (brochureError) {
           console.error("Failed to upload brochure:", brochureError);
           toast.warning(
@@ -620,21 +675,96 @@ const CourseCreate = () => {
                 </p>
               </div>
 
+              <div className="space-y-3 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Course Modules*
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addModule}
+                    className="rounded-lg bg-[#F5D26A]/20 px-3 py-1 text-[10px] font-bold uppercase text-[#F5D26A] transition hover:bg-[#F5D26A]/30">
+                    + Add Module
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {formData.modules.map((module, index) => (
+                    <div
+                      key={index}
+                      className="relative space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          Module {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeModule(index)}
+                          className="text-red-400 hover:text-red-300">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Module Title (e.g., Introduction to Frameworks)"
+                        value={module.title}
+                        onChange={(e) =>
+                          handleModuleChange(index, "title", e.target.value)
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none"
+                        required
+                      />
+                      <textarea
+                        placeholder="Module Content / Outcomes..."
+                        value={module.content}
+                        onChange={(e) =>
+                          handleModuleChange(index, "content", e.target.value)
+                        }
+                        rows={3}
+                        className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-1.5 md:col-span-2">
                 <label
-                  htmlFor="introVideoUrl"
+                  htmlFor="introVideoFile"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Intro video URL
+                  Intro video
                 </label>
                 <input
-                  id="introVideoUrl"
-                  name="introVideoUrl"
-                  type="url"
-                  value={formData.introVideoUrl}
+                  id="introVideoFile"
+                  name="introVideoFile"
+                  type="file"
+                  accept="video/*"
                   onChange={handleChange}
-                  placeholder="https://player.vimeo.com/..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
+                <p className="text-[11px] text-slate-400">
+                  Upload an intro video for your course. Maximum file size: 1GB.
+                </p>
+                {formData.introVideoFile && (
+                  <p className="text-[11px] text-[#F5D26A]">
+                    Selected: {formData.introVideoFile.name}
+                  </p>
+                )}
+                {formData.introVideoUrl && !formData.introVideoFile && (
+                  <p className="text-[11px] text-slate-400">
+                    Current video: {formData.introVideoUrl}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5 md:col-span-2">

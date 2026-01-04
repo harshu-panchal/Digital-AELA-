@@ -12,6 +12,8 @@ import SEO from "../../../src/components/SEO";
 import {
   getAdminCourseById,
   updateAdminCourse,
+  uploadAdminCourseBrochure,
+  uploadAdminCourseIntroVideo,
 } from "../../../src/services/api/adminContent";
 import { getPremiumCourseCount } from "../../../src/services/api/courses";
 import {
@@ -88,6 +90,9 @@ const AdminCourseDetail = () => {
     tags: "",
     status: "draft",
     isPremium: false,
+    modules: [{ title: "", content: "" }],
+    introVideoFile: null,
+    brochureFile: null,
   });
 
   // Fetch premium course count on mount
@@ -252,7 +257,10 @@ const AdminCourseDetail = () => {
             ? existing.metadata.tags.join(", ")
             : safeString(existing.metadata?.tags),
           status: existing.status || "draft",
-          isPremium: existing.metadata?.isPremium || false,
+          isPremium: existing.isPremium || existing.metadata?.isPremium || false,
+          modules: (existing.modules && existing.modules.length > 0) ? existing.modules : [{ title: "", content: "" }],
+          introVideoFile: null,
+          brochureFile: null,
         });
         fetchVideos();
         fetchModules();
@@ -400,10 +408,35 @@ const AdminCourseDetail = () => {
       }
     } else if (type === "checkbox") {
       setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else if (type === "file") {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   }, []);
+
+  const handleModuleChange = (index, field, value) => {
+    setFormData((prev) => {
+      const newModules = [...prev.modules];
+      newModules[index] = { ...newModules[index], [field]: value };
+      return { ...prev, modules: newModules };
+    });
+  };
+
+  const addModule = () => {
+    setFormData((prev) => ({
+      ...prev,
+      modules: [...prev.modules, { title: "", content: "" }],
+    }));
+  };
+
+  const removeModule = (index) => {
+    setFormData((prev) => {
+      const newModules = prev.modules.filter((_, i) => i !== index);
+      if (newModules.length === 0) newModules.push({ title: "", content: "" });
+      return { ...prev, modules: newModules };
+    });
+  };
 
   const handleImageUpload = async () => {
     if (!formData.coverImageFile) {
@@ -492,6 +525,7 @@ const AdminCourseDetail = () => {
         .filter(Boolean),
       status: formData.status,
       isPremium: formData.isPremium || false,
+      modules: formData.modules.filter(m => m.title.trim()),
     };
 
     setIsSaving(true);
@@ -517,6 +551,19 @@ const AdminCourseDetail = () => {
           coverImage: freshCourse.thumbnailUrl || prev.coverImage,
           coverImagePreview: freshCourse.thumbnailUrl || prev.coverImagePreview,
         }));
+      }
+
+      // Handle async uploads if files are selected
+      if (formData.introVideoFile) {
+        toast.info("Uploading intro video...");
+        await uploadAdminCourseIntroVideo(courseId, formData.introVideoFile);
+        toast.success("Intro video uploaded!");
+      }
+
+      if (formData.brochureFile) {
+        toast.info("Uploading brochure...");
+        await uploadAdminCourseBrochure(courseId, formData.brochureFile);
+        toast.success("Brochure uploaded!");
       }
     } catch (error) {
       const message =
@@ -936,19 +983,41 @@ const AdminCourseDetail = () => {
 
               <div className="space-y-1.5">
                 <label
-                  htmlFor="introVideoUrl"
+                  htmlFor="introVideoFile"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Intro Video URL
+                  Intro Video File
                 </label>
                 <input
-                  id="introVideoUrl"
-                  name="introVideoUrl"
-                  type="url"
-                  value={formData.introVideoUrl}
+                  id="introVideoFile"
+                  name="introVideoFile"
+                  type="file"
+                  accept="video/*"
                   onChange={handleChange}
-                  placeholder="https://youtube.com/watch?v=..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] hover:file:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">Recommended: 1080p MP4, less than 50MB</p>
+                {formData.introVideoUrl && (
+                  <p className="text-[10px] text-green-400 mt-1">✓ Video currently uploaded</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="brochureFile"
+                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                  Course Brochure (PDF)
+                </label>
+                <input
+                  id="brochureFile"
+                  name="brochureFile"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] hover:file:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                />
+                {formData.brochureUrl && (
+                  <p className="text-[10px] text-green-400 mt-1">✓ Brochure currently uploaded</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -975,11 +1044,71 @@ const AdminCourseDetail = () => {
                 </select>
               </div>
 
+              <div className="space-y-4 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Course Modules
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addModule}
+                    className="flex items-center gap-2 rounded-lg bg-[#F5D26A]/10 px-3 py-1.5 text-xs font-bold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition border border-[#F5D26A]/20">
+                    <HiOutlinePlus className="h-4 w-4" />
+                    Add Module
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {formData.modules.map((module, idx) => (
+                    <div
+                      key={idx}
+                      className="relative space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+                      {formData.modules.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeModule(idx)}
+                          className="absolute right-4 top-4 text-slate-500 hover:text-red-400 transition">
+                          <FaTrash className="h-4 w-4" />
+                        </button>
+                      )}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          Module {idx + 1} Title
+                        </label>
+                        <input
+                          type="text"
+                          value={module.title}
+                          onChange={(e) =>
+                            handleModuleChange(idx, "title", e.target.value)
+                          }
+                          placeholder="Introduction to Digital Strategy"
+                          className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white focus:border-[#F5D26A]/50 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                          Module {idx + 1} Content/Description
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={module.content}
+                          onChange={(e) =>
+                            handleModuleChange(idx, "content", e.target.value)
+                          }
+                          placeholder="Overview of core concepts and methodologies..."
+                          className="w-full resize-none rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white focus:border-[#F5D26A]/50 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-1.5 md:col-span-2">
                 <label
                   htmlFor="syllabus"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Syllabus
+                  Syllabus (Plain Text)
                 </label>
                 <textarea
                   id="syllabus"
@@ -1324,13 +1453,12 @@ const AdminCourseDetail = () => {
                           <td className="px-3 py-3 text-xs">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${
-                                  student.status === "completed"
-                                    ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                                    : student.status === "active"
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${student.status === "completed"
+                                  ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                                  : student.status === "active"
                                     ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
                                     : "border-sky-400/40 bg-sky-500/10 text-sky-200"
-                                }`}>
+                                  }`}>
                                 {student.status}
                               </span>
                               {student.status !== "completed" && (

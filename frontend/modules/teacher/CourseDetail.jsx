@@ -16,6 +16,8 @@ import {
   moveCourseModule,
   removeLessonFromModule,
   moveLessonWithinModule,
+  uploadCourseBrochure,
+  uploadCourseIntroVideo,
 } from "../../src/services/teacherCourses";
 import { getTeacherQuizzes, createTeacherQuiz } from "../../src/services/teacherQuizzes";
 import { safeString, sanitizeUrl } from "../../src/utils/registrationHelpers";
@@ -54,6 +56,8 @@ const CourseDetail = () => {
     introVideoUrl: "",
     description: "",
     tags: "",
+    introVideoFile: null,
+    brochureFile: null,
   });
   const [moduleForm, setModuleForm] = useState({
     title: "",
@@ -218,6 +222,8 @@ const CourseDetail = () => {
           introVideoUrl: existing.introVideoUrl ?? "",
           description: existing.description ?? "",
           tags: Array.isArray(existing.tags) ? existing.tags.join(", ") : safeString(existing.tags),
+          introVideoFile: null,
+          brochureFile: null,
         });
         fetchVideos();
         fetchModules();
@@ -346,11 +352,14 @@ const CourseDetail = () => {
   }, [availableQuizzes, course]);
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, type, checked, files } = event.target;
+    if (type === "checkbox") {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else if (type === "file") {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleModuleFormChange = (event) => {
@@ -430,13 +439,13 @@ const CourseDetail = () => {
     const lessonTitle = safeString(moduleForm.lessonTitle);
     const lessons = lessonTitle
       ? [
-          {
-            title: lessonTitle,
-            contentType: moduleForm.lessonType,
-            contentUrl: sanitizeUrl(moduleForm.lessonUrl),
-            durationMinutes: moduleForm.lessonDuration ? Number(moduleForm.lessonDuration) : null,
-          },
-        ]
+        {
+          title: lessonTitle,
+          contentType: moduleForm.lessonType,
+          contentUrl: sanitizeUrl(moduleForm.lessonUrl),
+          durationMinutes: moduleForm.lessonDuration ? Number(moduleForm.lessonDuration) : null,
+        },
+      ]
       : [];
 
     setIsModuleSaving(true);
@@ -683,24 +692,24 @@ const CourseDetail = () => {
         toast.success("Quiz created and linked to course!");
       } else {
         // Link existing quiz (existing code path)
-      const updated = await linkCourseQuiz(course.id, {
-        title,
-        rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
-        questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
-        availableUntil:
-          quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
-        status: "draft",
-      });
-      setCourse(updated);
-      setQuizForm({
-        title: "",
+        const updated = await linkCourseQuiz(course.id, {
+          title,
+          rewardCoins: quizForm.rewardCoins ? Number(quizForm.rewardCoins) : 0,
+          questionsCount: quizForm.questionsCount ? Number(quizForm.questionsCount) : 0,
+          availableUntil:
+            quizForm.availableUntil ? new Date(quizForm.availableUntil).toISOString() : null,
+          status: "draft",
+        });
+        setCourse(updated);
+        setQuizForm({
+          title: "",
           description: "",
-        rewardCoins: "",
-        questionsCount: "",
-        availableUntil: "",
+          rewardCoins: "",
+          questionsCount: "",
+          availableUntil: "",
           timeLimitMinutes: "",
-      });
-      toast.success("Quiz linked to course.");
+        });
+        toast.success("Quiz linked to course.");
       }
     } catch (error) {
       toast.error(error?.message ?? "Unable to link quiz right now.");
@@ -765,6 +774,19 @@ const CourseDetail = () => {
       const updated = await updateTeacherCourse(course.id, payload);
       setCourse(updated);
       toast.success("Course details updated.");
+
+      // Handle async uploads if files are selected
+      if (formData.introVideoFile) {
+        toast.info("Uploading intro video...");
+        await uploadCourseIntroVideo(course.id, formData.introVideoFile);
+        toast.success("Intro video uploaded!");
+      }
+
+      if (formData.brochureFile) {
+        toast.info("Uploading brochure...");
+        await uploadCourseBrochure(course.id, formData.brochureFile);
+        toast.success("Brochure uploaded!");
+      }
     } catch (error) {
       toast.error(error?.message ?? "Unable to update course. Please try again.");
     } finally {
@@ -776,7 +798,7 @@ const CourseDetail = () => {
     if (!course) return;
 
     const courseTitle = course.title || formData.title || "this course";
-    
+
     if (!window.confirm(`Are you sure you want to delete "${courseTitle}"? This action cannot be undone.`)) {
       return;
     }
@@ -831,11 +853,10 @@ const CourseDetail = () => {
 
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <span
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 ${
-                  formData.status === "published"
-                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
-                    : "border-slate-500/40 bg-slate-500/10 text-slate-200"
-                }`}>
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 ${formData.status === "published"
+                  ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
+                  : "border-slate-500/40 bg-slate-500/10 text-slate-200"
+                  }`}>
                 Status · {formData.status}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-slate-200">
@@ -949,8 +970,21 @@ const CourseDetail = () => {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <label htmlFor="introVideoFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Intro Video File
+                  </label>
+                  <input
+                    id="introVideoFile"
+                    name="introVideoFile"
+                    type="file"
+                    accept="video/*"
+                    onChange={handleInputChange}
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] hover:file:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <label htmlFor="introVideoUrl" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                    Intro video URL
+                    Intro video URL (Optional fallback)
                   </label>
                   <input
                     id="introVideoUrl"
@@ -959,6 +993,19 @@ const CourseDetail = () => {
                     value={formData.introVideoUrl}
                     onChange={handleInputChange}
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="brochureFile" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Course Brochure (PDF)
+                  </label>
+                  <input
+                    id="brochureFile"
+                    name="brochureFile"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleInputChange}
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] hover:file:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                   />
                 </div>
               </div>
@@ -1458,8 +1505,8 @@ const CourseDetail = () => {
                           ? "Creating..."
                           : "Linking..."
                         : quizLinkMode === "new"
-                        ? "Create & Link Quiz"
-                        : "Link quiz"}
+                          ? "Create & Link Quiz"
+                          : "Link quiz"}
                     </motion.button>
                   </form>
 
@@ -1782,13 +1829,12 @@ const CourseDetail = () => {
                           <td className="px-3 py-3 text-xs">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${
-                                  student.status === "completed"
-                                    ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                                    : student.status === "active"
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${student.status === "completed"
+                                  ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                                  : student.status === "active"
                                     ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
                                     : "border-sky-400/40 bg-sky-500/10 text-sky-200"
-                                }`}>
+                                  }`}>
                                 {student.status}
                               </span>
                               {student.status !== "completed" && (

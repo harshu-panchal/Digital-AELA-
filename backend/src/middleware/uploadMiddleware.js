@@ -30,6 +30,19 @@ const pdfFileFilter = (req, file, cb) => {
   }
 };
 
+// File filter for Videos
+const videoFileFilter = (req, file, cb) => {
+  // Accept common video formats
+  if (file.mimetype.startsWith("video/")) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Invalid file type. Only video files are allowed."),
+      false
+    );
+  }
+};
+
 // Configure multer with memory storage
 export const upload = multer({
   storage: storage,
@@ -58,6 +71,21 @@ export const uploadPdfToCloudinary = async (buffer, folder = "digital-aela/cours
   return await savePdfToLocal(buffer, folder, originalName);
 };
 
+// Configure multer for Video uploads
+export const videoUpload = multer({
+  storage: storage,
+  fileFilter: videoFileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // 1GB limit for Videos
+  },
+});
+
+// Helper function to save Video to local storage
+const { saveVideoToLocal } = await import("../services/fileStorageService.js");
+export const uploadVideoToCloudinary = async (buffer, folder = "digital-aela/course-videos", originalName = null) => {
+  return await saveVideoToLocal(buffer, folder, originalName);
+};
+
 // Single PDF upload middleware
 export const uploadSinglePdf = (fieldName = "brochure") => {
   return pdfUpload.single(fieldName);
@@ -66,6 +94,11 @@ export const uploadSinglePdf = (fieldName = "brochure") => {
 // Single file upload middleware
 export const uploadSingle = (fieldName = "image") => {
   return upload.single(fieldName);
+};
+
+// Single video upload middleware
+export const uploadSingleVideo = (fieldName = "video") => {
+  return videoUpload.single(fieldName);
 };
 
 // Multiple files upload middleware
@@ -113,6 +146,15 @@ export const handleUploadError = (err, req, res, next) => {
   }
 
   if (err.message === "Invalid file type. Only PDF files are allowed.") {
+    return res.status(400).json({
+      error: {
+        code: "INVALID_FILE_TYPE",
+        message: err.message,
+      },
+    });
+  }
+
+  if (err.message === "Invalid file type. Only video files are allowed.") {
     return res.status(400).json({
       error: {
         code: "INVALID_FILE_TYPE",

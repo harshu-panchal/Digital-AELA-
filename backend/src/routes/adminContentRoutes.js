@@ -19,6 +19,7 @@ import {
   deleteBook,
   toggleCourseVisibility,
   toggleBookVisibility,
+  uploadAdminCourseIntroVideo,
 } from "../controllers/adminContentController.js";
 import {
   getPendingCourses,
@@ -48,7 +49,7 @@ import {
   deleteLiveRoom,
 } from "../controllers/adminLiveRoomController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { uploadSinglePdf, handleUploadError } from "../middleware/uploadMiddleware.js";
+import { uploadSinglePdf, uploadSingleVideo, handleUploadError } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
 
@@ -104,6 +105,14 @@ router.post(
   uploadSinglePdf("brochure"),
   handleUploadError,
   uploadAdminCourseBrochure
+);
+
+// Upload course intro video
+router.post(
+  "/courses/:courseId/intro-video",
+  uploadSingleVideo("video"),
+  handleUploadError,
+  uploadAdminCourseIntroVideo
 );
 
 // Live Room Moderation routes

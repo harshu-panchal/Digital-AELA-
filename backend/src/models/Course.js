@@ -39,6 +39,24 @@ const courseSchema = new mongoose.Schema(
     },
     thumbnailUrl: String,
     brochureUrl: String,
+    introVideoUrl: String,
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    modules: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        content: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

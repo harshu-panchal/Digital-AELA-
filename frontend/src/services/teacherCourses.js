@@ -8,7 +8,7 @@ export const createTeacherCourse = async (payload) => {
     method: "POST",
     body: payload,
   });
-  
+
   // Extract modules and quizzes from metadata.syllabus if they exist
   let modules = [];
   let quizzes = [];
@@ -34,7 +34,7 @@ export const createTeacherCourse = async (payload) => {
     // If parsing fails, use empty arrays
     // Silently handle - syllabus might be plain text, not JSON
   }
-  
+
   // Transform backend response to match frontend expectations
   return {
     id: response.course._id,
@@ -80,7 +80,7 @@ export const getTeacherCourses = async () => {
       // If parsing fails, use empty arrays
       // Silently handle - syllabus might be plain text, not JSON
     }
-    
+
     return {
       id: course._id,
       ...course,
@@ -100,7 +100,7 @@ export const getTeacherCourseById = async (courseId) => {
     const response = await apiRequest(`/teacher/courses/${courseId}`, {
       method: "GET",
     });
-    
+
     // Extract modules and quizzes from metadata.syllabus if they exist
     let modules = [];
     let quizzes = [];
@@ -126,7 +126,7 @@ export const getTeacherCourseById = async (courseId) => {
       // If parsing fails, use empty arrays
       // Silently handle - syllabus might be plain text, not JSON
     }
-    
+
     // Transform backend response to match frontend expectations
     return {
       id: response.course._id,
@@ -149,7 +149,7 @@ export const updateTeacherCourse = async (courseId, updates) => {
     method: "PUT",
     body: updates,
   });
-  
+
   // Extract modules and quizzes from metadata.syllabus if they exist
   let modules = [];
   let quizzes = [];
@@ -175,7 +175,7 @@ export const updateTeacherCourse = async (courseId, updates) => {
     // If parsing fails, use empty arrays
     // Silently handle - syllabus might be plain text, not JSON
   }
-  
+
   // Transform backend response to match frontend expectations
   return {
     id: response.course._id,
@@ -214,6 +214,25 @@ export const uploadCourseBrochure = async (courseId, file) => {
     id: response.course._id,
     ...response.course,
     brochureUrl: response.brochureUrl,
+  };
+};
+
+/**
+ * Upload course intro video
+ */
+export const uploadCourseIntroVideo = async (courseId, file) => {
+  const formData = new FormData();
+  formData.append("video", file);
+
+  const response = await apiRequest(`/teacher/courses/${courseId}/intro-video`, {
+    method: "POST",
+    body: formData,
+  });
+
+  return {
+    id: response.course._id,
+    ...response.course,
+    introVideoUrl: response.introVideoUrl,
   };
 };
 
@@ -264,7 +283,7 @@ const commitCourseChange = async (courseId, mutator) => {
 
   // Update the course via backend API
   const updated = await updateTeacherCourse(courseId, updatePayload);
-  
+
   // Parse modules and quizzes from metadata.syllabus if they exist, otherwise use empty arrays
   let modules = [];
   let quizzes = [];
@@ -290,7 +309,7 @@ const commitCourseChange = async (courseId, mutator) => {
     // If parsing fails, use empty arrays
     // Silently handle - syllabus might be plain text, not JSON
   }
-  
+
   // Return the updated course with modules/lessons/quizzes preserved
   return {
     ...updated,

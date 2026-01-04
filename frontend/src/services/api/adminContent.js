@@ -94,6 +94,26 @@ export const uploadAdminCourseBrochure = async (courseId, file, onProgress) => {
 };
 
 /**
+ * Upload course intro video (super admin)
+ */
+export const uploadAdminCourseIntroVideo = async (courseId, file, onProgress) => {
+  const formData = new FormData();
+  formData.append("video", file);
+
+  const response = await apiRequest(`/admin/courses/${courseId}/intro-video`, {
+    method: "POST",
+    body: formData,
+    onUploadProgress: onProgress,
+  });
+
+  return {
+    id: response.course._id,
+    ...response.course,
+    introVideoUrl: response.introVideoUrl,
+  };
+};
+
+/**
  * Create blog (super admin)
  */
 export const createBlog = (payload) =>

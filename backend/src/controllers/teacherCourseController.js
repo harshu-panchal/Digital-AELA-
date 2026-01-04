@@ -1,6 +1,6 @@
 import Course from "../models/Course.js";
 import mongoose from "mongoose";
-import { uploadPdfToCloudinary } from "../middleware/uploadMiddleware.js";
+import { uploadPdfToCloudinary, uploadVideoToCloudinary } from "../middleware/uploadMiddleware.js";
 import { invalidateCourseCache } from "../utils/cacheInvalidator.js";
 
 /**
@@ -46,6 +46,8 @@ export const createTeacherCourse = async (req, res, next) => {
       introVideoUrl,
       syllabus,
       tags,
+      isPremium,
+      modules,
     } = req.body;
 
     if (!title) {
@@ -104,6 +106,8 @@ export const createTeacherCourse = async (req, res, next) => {
       brochureUrl: "", // Will be set if brochure is uploaded
       status: "draft", // Always draft for teacher-created courses
       instructor: instructorObjectId,
+      isPremium: isPremium === true || isPremium === "true",
+      modules: Array.isArray(modules) ? modules : [],
       metadata: {
         subtitle: subtitle || "",
         difficulty: difficulty || "Intermediate",
@@ -362,6 +366,8 @@ export const updateTeacherCourse = async (req, res, next) => {
       introVideoUrl,
       syllabus,
       tags,
+      isPremium,
+      modules,
     } = req.body;
 
     // Import URL normalizer
@@ -385,6 +391,9 @@ export const updateTeacherCourse = async (req, res, next) => {
     if (price !== undefined) course.price = Number(price);
     if (coverImage !== undefined) course.thumbnailUrl = safeNormalizeUrl(coverImage);
     if (req.body.brochureUrl !== undefined) course.brochureUrl = safeNormalizeUrl(req.body.brochureUrl);
+    if (introVideoUrl !== undefined) course.introVideoUrl = safeNormalizeUrl(introVideoUrl);
+    if (isPremium !== undefined) course.isPremium = isPremium === true || isPremium === "true";
+    if (modules !== undefined) course.modules = Array.isArray(modules) ? modules : [];
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
@@ -746,6 +755,91 @@ export const uploadCourseBrochure = async (req, res, next) => {
       message: "Brochure uploaded successfully",
       course: populatedCourse,
       brochureUrl: uploadResult.url,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const uploadCourseIntroVideo = async (req, res, next) => {
+  try {
+    const { userId, userRole } = req.auth || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    if (userRole !== "teacher") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only teachers can upload intro videos",
+        },
+      });
+    }
+
+    const { courseId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid course ID",
+        },
+      });
+    }
+
+    const instructorObjectId = mongoose.isValidObjectId(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : null;
+
+    const course = await Course.findOne({
+      _id: courseId,
+      instructor: instructorObjectId,
+    });
+
+    if (!course) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Course not found",
+        },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: {
+          code: "FILE_REQUIRED",
+          message: "No video file uploaded",
+        },
+      });
+    }
+
+    // Save video to local storage
+    const uploadResult = await uploadVideoToCloudinary(
+      req.file.buffer,
+      `digital-aela/courses/${courseId}/intro-videos`,
+      req.file.originalname
+    );
+
+    // Update course with intro video URL
+    course.introVideoUrl = uploadResult.url;
+    await course.save();
+
+    const populatedCourse = await Course.findById(course._id)
+      .populate("instructor", "fullName email")
+      .lean();
+
+    return res.status(200).json({
+      message: "Intro video uploaded successfully",
+      course: populatedCourse,
+      introVideoUrl: uploadResult.url,
     });
   } catch (error) {
     return next(error);

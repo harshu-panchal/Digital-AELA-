@@ -68,28 +68,28 @@ const normalizeCourseData = (backendCourse) => {
       courseData.price === 0
         ? "Free"
         : courseData.price
-        ? formatCurrency(courseData.price)
-        : "On Request",
+          ? formatCurrency(courseData.price)
+          : "On Request",
     priceLabel:
       courseData.priceLabel ||
       (courseData.price === 0
         ? "Free"
         : courseData.price
-        ? formatCurrency(courseData.price)
-        : "On Request"),
+          ? formatCurrency(courseData.price)
+          : "On Request"),
     // Preserve original numeric price for payment processing
     rawPrice:
       courseData.rawPrice !== undefined && courseData.rawPrice !== null
         ? courseData.rawPrice // Use existing rawPrice if available
         : typeof courseData.price === "string"
-        ? parseFloat(courseData.price.replace(/[^0-9.]/g, ""))
-        : courseData.price, // Store original numeric price for GiftButton
+          ? parseFloat(courseData.price.replace(/[^0-9.]/g, ""))
+          : courseData.price, // Store original numeric price for GiftButton
     originalPrice:
       typeof courseData.price === "number"
         ? courseData.price
         : courseData.price
-        ? parseFloat(courseData.price)
-        : null,
+          ? parseFloat(courseData.price)
+          : null,
     discountPrice: courseData.discountPrice || metadata.discountPrice || null,
     format:
       courseData.format ||
@@ -131,6 +131,28 @@ const normalizeCourseData = (backendCourse) => {
       courseData.instructor?.fullName ||
       courseData.instructorName ||
       "Digital AELA",
+    modules: (() => {
+      if (courseData.modules && courseData.modules.length > 0)
+        return courseData.modules;
+      if (metadata.syllabus) {
+        try {
+          if (
+            typeof metadata.syllabus === "string" &&
+            (metadata.syllabus.startsWith("{") ||
+              metadata.syllabus.startsWith("["))
+          ) {
+            const parsed = JSON.parse(metadata.syllabus);
+            return parsed.modules || [];
+          } else if (typeof metadata.syllabus === "object") {
+            return metadata.syllabus.modules || [];
+          }
+        } catch (e) {
+          console.error("Failed to parse syllabus modules:", e);
+        }
+      }
+      return [];
+    })(),
+    isPremium: courseData.isPremium || metadata.isPremium || false,
   };
 };
 
@@ -376,6 +398,7 @@ const CourseDetail = () => {
     features = [],
     detailedSyllabus,
     tags = [],
+    modules = [],
   } = displayCourse || course;
 
   // Get the actual numeric price - use originalPrice if available, otherwise extract from display string
@@ -586,6 +609,11 @@ const CourseDetail = () => {
                 {category}
               </span>
             )}
+            {isPremium && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500/40 bg-yellow-500/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.35em] text-yellow-500 ml-2">
+                Premium
+              </span>
+            )}
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
               {title}
             </h1>
@@ -720,10 +748,10 @@ const CourseDetail = () => {
                   {isEnrolling
                     ? "Enrolling..."
                     : isFreeCourse
-                    ? "Enroll for Free"
-                    : priceValue > 0
-                    ? "Enroll Now"
-                    : "Connect for Pricing"}
+                      ? "Enroll for Free"
+                      : priceValue > 0
+                        ? "Enroll Now"
+                        : "Connect for Pricing"}
                 </motion.button>
               )}
               {(course.brochureUrl || course.metadata?.brochureUrl) && (
@@ -788,14 +816,37 @@ const CourseDetail = () => {
                   Course Introduction Video
                 </h2>
                 <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-[#D4AF37]/20">
-                  <video
-                    src={getMediaUrl(introVideoUrl)}
-                    controls
-                    className="h-full w-full"
-                    poster={getMediaUrl(coverImage || image)}
-                    preload="none">
-                    Your browser does not support the video tag.
-                  </video>
+                  {(() => {
+                    const url = introVideoUrl;
+                    const youtubeMatch = url.match(
+                      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+                    );
+
+                    if (youtubeMatch) {
+                      const videoId = youtubeMatch[1];
+                      return (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          className="h-full w-full outline-none"
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      );
+                    }
+
+                    return (
+                      <video
+                        src={getMediaUrl(url)}
+                        controls
+                        className="h-full w-full"
+                        poster={getMediaUrl(coverImage || image)}
+                        preload="none">
+                        Your browser does not support the video tag.
+                      </video>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -823,6 +874,38 @@ const CourseDetail = () => {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Modules Section */}
+            {modules && modules.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-white font-display">
+                  Program Modules
+                </h2>
+                <div className="grid gap-4">
+                  {modules.map((mod, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
+                      <div className="p-5 flex items-start gap-4">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
+                          <span className="text-[#F5D26A] font-bold">
+                            {idx + 1}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-2">
+                            {mod.title}
+                          </h3>
+                          <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            {mod.content || mod.description}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {detailedSyllabus && (
@@ -1412,7 +1495,7 @@ const CourseDetail = () => {
                         📈 Daily & Weekly Routines
                       </h2>
                       {typeof detailedSyllabus.dailyWeeklyRoutines[0] ===
-                      "string" ? (
+                        "string" ? (
                         <ul className="space-y-3">
                           {detailedSyllabus.dailyWeeklyRoutines.map(
                             (routine, idx) => (
@@ -1675,136 +1758,136 @@ const CourseDetail = () => {
               requirements ||
               syllabus ||
               (tags && tags.length > 0)) && (
-              <div className="border-t border-[#D4AF37]/20 pt-8 space-y-6">
-                {subtitle && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-3">
-                      About This Course
-                    </h3>
-                    <p className="text-base text-gray-300 leading-relaxed">
-                      {subtitle}
-                    </p>
-                  </div>
-                )}
-
-                {(category ||
-                  difficulty ||
-                  language ||
-                  deliveryMode ||
-                  lessonCount) && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">
-                      Course Details
-                    </h3>
-                    <div className="grid gap-3 text-sm text-gray-300 sm:grid-cols-2">
-                      {category && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <div>
-                            <span className="text-gray-400">Category:</span>{" "}
-                            <span className="text-white">{category}</span>
-                          </div>
-                        </div>
-                      )}
-                      {difficulty && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <div>
-                            <span className="text-gray-400">Difficulty:</span>{" "}
-                            <span className="text-white">{difficulty}</span>
-                          </div>
-                        </div>
-                      )}
-                      {language && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <div>
-                            <span className="text-gray-400">Language:</span>{" "}
-                            <span className="text-white">{language}</span>
-                          </div>
-                        </div>
-                      )}
-                      {deliveryMode && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <div>
-                            <span className="text-gray-400">
-                              Delivery Mode:
-                            </span>{" "}
-                            <span className="text-white">{deliveryMode}</span>
-                          </div>
-                        </div>
-                      )}
-                      {lessonCount && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <div>
-                            <span className="text-gray-400">Lessons:</span>{" "}
-                            <span className="text-white">{lessonCount}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {learningOutcomes && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">
-                      Learning Outcomes
-                    </h3>
-                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">
-                        {learningOutcomes}
+                <div className="border-t border-[#D4AF37]/20 pt-8 space-y-6">
+                  {subtitle && (
+                    <div>
+                      <h3 className="text-xl font-bold text-white font-display mb-3">
+                        About This Course
+                      </h3>
+                      <p className="text-base text-gray-300 leading-relaxed">
+                        {subtitle}
                       </p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {requirements && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">
-                      Requirements
-                    </h3>
-                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">
-                        {requirements}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  {(category ||
+                    difficulty ||
+                    language ||
+                    deliveryMode ||
+                    lessonCount) && (
+                      <div>
+                        <h3 className="text-xl font-bold text-white font-display mb-4">
+                          Course Details
+                        </h3>
+                        <div className="grid gap-3 text-sm text-gray-300 sm:grid-cols-2">
+                          {category && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <div>
+                                <span className="text-gray-400">Category:</span>{" "}
+                                <span className="text-white">{category}</span>
+                              </div>
+                            </div>
+                          )}
+                          {difficulty && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <div>
+                                <span className="text-gray-400">Difficulty:</span>{" "}
+                                <span className="text-white">{difficulty}</span>
+                              </div>
+                            </div>
+                          )}
+                          {language && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <div>
+                                <span className="text-gray-400">Language:</span>{" "}
+                                <span className="text-white">{language}</span>
+                              </div>
+                            </div>
+                          )}
+                          {deliveryMode && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <div>
+                                <span className="text-gray-400">
+                                  Delivery Mode:
+                                </span>{" "}
+                                <span className="text-white">{deliveryMode}</span>
+                              </div>
+                            </div>
+                          )}
+                          {lessonCount && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <div>
+                                <span className="text-gray-400">Lessons:</span>{" "}
+                                <span className="text-white">{lessonCount}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                {syllabus && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">
-                      Syllabus
-                    </h3>
-                    <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">
-                        {syllabus}
-                      </p>
+                  {learningOutcomes && (
+                    <div>
+                      <h3 className="text-xl font-bold text-white font-display mb-4">
+                        Learning Outcomes
+                      </h3>
+                      <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                        <p className="text-sm text-gray-200 whitespace-pre-line">
+                          {learningOutcomes}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {tags && Array.isArray(tags) && tags.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">
-                      Tags
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#F5D26A]">
-                          {tag}
-                        </span>
-                      ))}
+                  {requirements && (
+                    <div>
+                      <h3 className="text-xl font-bold text-white font-display mb-4">
+                        Requirements
+                      </h3>
+                      <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                        <p className="text-sm text-gray-200 whitespace-pre-line">
+                          {requirements}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {syllabus && (
+                    <div>
+                      <h3 className="text-xl font-bold text-white font-display mb-4">
+                        Syllabus
+                      </h3>
+                      <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                        <p className="text-sm text-gray-200 whitespace-pre-line">
+                          {syllabus}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {tags && Array.isArray(tags) && tags.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-white font-display mb-4">
+                        Tags
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#F5D26A]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </section>
