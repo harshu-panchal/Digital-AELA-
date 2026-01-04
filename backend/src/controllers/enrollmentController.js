@@ -182,6 +182,14 @@ export const getEnrollmentStatus = async (req, res, next) => {
       return res.status(200).json({
         enrolled: false,
         enrollment: null,
+        debug: {
+          userId,
+          courseId,
+          userType: typeof userId,
+          courseType: typeof courseId,
+          hasAnyUserEnrollment: !!anyEnrollment,
+          hasAnyCourseEnrollment: !!courseEnrollment
+        }
       });
     }
 

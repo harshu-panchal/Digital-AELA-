@@ -172,3 +172,5 @@ start().catch((error) => {
   console.error("[Server] Failed to start:", error);
   process.exit(1);
 });
+
+// Force restart for debug
