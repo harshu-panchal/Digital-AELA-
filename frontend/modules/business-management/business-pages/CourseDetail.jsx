@@ -291,11 +291,15 @@ const CourseDetail = () => {
         return;
       }
 
+      console.log("[CourseDetail] Checking enrollment...", { isAuthenticated, hasUser: !!user, hasToken: !!tokens?.accessToken, courseId: course?._id });
+
       setIsCheckingEnrollment(true);
       try {
         const status = await getEnrollmentStatus(course._id);
+        console.log("[CourseDetail] Enrollment status result:", status);
         setEnrollmentStatus(status);
       } catch (error) {
+        console.error("[CourseDetail] Enrollment check failed:", error);
         // Handle errors gracefully
         if (error.status === 401) {
           // Unauthorized - token expired or invalid, silently handle
