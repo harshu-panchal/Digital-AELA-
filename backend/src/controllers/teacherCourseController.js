@@ -2,6 +2,7 @@ import Course from "../models/Course.js";
 import mongoose from "mongoose";
 import { uploadPdfToCloudinary, uploadVideoToCloudinary } from "../middleware/uploadMiddleware.js";
 import { invalidateCourseCache } from "../utils/cacheInvalidator.js";
+import { slugify } from "../utils/stringUtils.js";
 
 /**
  * Teacher: Create Course (with draft status)
@@ -95,8 +96,10 @@ export const createTeacherCourse = async (req, res, next) => {
     const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
 
     // Create course with draft status (requires admin approval)
+    const slug = slugify(title) + "-" + Date.now().toString().slice(-4); // Ensure uniqueness
     const course = await Course.create({
       title,
+      slug,
       description,
       category: category || "Uncategorised",
       duration: duration ? parseFloat(duration) : 0,
@@ -384,7 +387,14 @@ export const updateTeacherCourse = async (req, res, next) => {
       }
     };
 
-    if (title) course.title = title;
+    if (title) {
+      course.title = title;
+      // Only update slug if it doesn't exist, or if title changed significantly (optional, keeping it stable is usually better)
+      // For now, let's keep slug stable unless explicitly requested or if it's missing
+      if (!course.slug) {
+        course.slug = slugify(title) + "-" + Date.now().toString().slice(-4);
+      }
+    }
     if (description) course.description = description;
     if (category) course.category = category;
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;

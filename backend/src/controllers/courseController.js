@@ -7,7 +7,7 @@ import mongoose from "mongoose";
  */
 const normalizeCourseUrls = async (course) => {
   const { normalizeUrl } = await import("../utils/urlNormalizer.js");
-  
+
   if (course.thumbnailUrl) {
     course.thumbnailUrl = normalizeUrl(course.thumbnailUrl) || course.thumbnailUrl;
   }
@@ -17,7 +17,7 @@ const normalizeCourseUrls = async (course) => {
   if (course.metadata?.introVideoUrl) {
     course.metadata.introVideoUrl = normalizeUrl(course.metadata.introVideoUrl) || course.metadata.introVideoUrl;
   }
-  
+
   return course;
 };
 
@@ -26,7 +26,7 @@ const normalizeCourseUrls = async (course) => {
  */
 const normalizeCoursesUrls = async (courses) => {
   const { normalizeUrl } = await import("../utils/urlNormalizer.js");
-  
+
   return courses.map(course => {
     if (course.thumbnailUrl) {
       course.thumbnailUrl = normalizeUrl(course.thumbnailUrl) || course.thumbnailUrl;
@@ -52,15 +52,15 @@ export const getPublishedCourses = async (req, res, next) => {
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Max 100 per page
     const skip = (pageNum - 1) * limitNum;
-    
+
     // Build query - always filter for published courses only
     const query = { status: "published" };
-    
+
     // If premium=true, filter for premium courses
     if (premium === "true" || premium === true) {
       query["metadata.isPremium"] = true;
     }
-    
+
     // Fetch courses and total count in parallel
     const [courses, total] = await Promise.all([
       Course.find(query)
@@ -100,7 +100,7 @@ export const getPremiumCourseCount = async (req, res, next) => {
       "metadata.isPremium": true,
       status: "published",
     });
-    
+
     return res.status(200).json({ count, maxAllowed: 6 });
   } catch (error) {
     return next(error);
@@ -115,16 +115,16 @@ export const getCourseById = async (req, res, next) => {
   try {
     const { courseId } = req.params;
 
-    if (!mongoose.isValidObjectId(courseId)) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid course ID",
-        },
-      });
+    let query;
+
+    if (mongoose.isValidObjectId(courseId)) {
+      query = { _id: courseId, status: "published" };
+    } else {
+      // Try to find by slug
+      query = { slug: courseId, status: "published" };
     }
 
-    const course = await Course.findOne({ _id: courseId, status: "published" })
+    const course = await Course.findOne(query)
       .populate("instructor", "fullName email")
       .lean();
 

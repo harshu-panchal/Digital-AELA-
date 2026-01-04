@@ -238,30 +238,26 @@ const CourseDetail = () => {
           }
         }
 
-        // Priority 3: If slug looks like a MongoDB ObjectId, try to fetch by ID
-        if (slug && slug.length === 24 && /^[0-9a-fA-F]{24}$/.test(slug)) {
+        // Priority 3: If slug is present (and not an ID), try to fetch from backend by slug
+        // The backend now supports fetching by slug via the same ID endpoint
+        if (slug) {
           try {
+            // We use fetchCourseById because we updated the backend to accept slug as ID
             const response = await fetchCourseById(slug);
             const backendCourse = normalizeCourseData(response);
-            setCourse({
-              ...backendCourse,
-              slug: slug, // Preserve slug for navigation
-            });
-            setIsLoadingCourse(false);
-            return;
-          } catch (error) {
-            // Fallback to catalog course
-            const fallbackCourse = { ...catalogCourse, ...stateCourse };
-            setCourse(fallbackCourse);
-            setIsLoadingCourse(false);
-            // Only redirect if we have no course data at all
-            if (
-              !fallbackCourse ||
-              (!fallbackCourse.title && !fallbackCourse._id)
-            ) {
-              navigate("/", { replace: true });
+
+            // If we got a result, use it
+            if (backendCourse && backendCourse._id) {
+              setCourse({
+                ...backendCourse,
+                slug: slug, // Preserve slug for URL
+              });
+              setIsLoadingCourse(false);
+              return;
             }
-            return;
+          } catch (error) {
+            console.log("Failed to fetch course by slug, falling back to catalog:", error);
+            // Contiue to fallback
           }
         }
 
@@ -908,8 +904,8 @@ const CourseDetail = () => {
                           </div>
                           <span
                             className={`flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
-                                ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
-                                : "bg-transparent text-[#D4AF37]"
+                              ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                              : "bg-transparent text-[#D4AF37]"
                               }`}>
                             <svg
                               className="w-3 h-3"
