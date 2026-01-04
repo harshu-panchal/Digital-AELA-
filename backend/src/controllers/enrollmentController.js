@@ -157,6 +157,8 @@ export const getEnrollmentStatus = async (req, res, next) => {
       });
     }
 
+    console.log(`[EnrollmentDebug] Checking enrollment for User: ${userId} (${typeof userId}) Course: ${courseId} (${typeof courseId})`);
+
     const enrollment = await Enrollment.findOne({
       student: userId,
       course: courseId,
@@ -164,120 +166,132 @@ export const getEnrollmentStatus = async (req, res, next) => {
       .populate("course", "title description instructor category duration price thumbnailUrl")
       .lean();
 
+    console.log(`[EnrollmentDebug] Found enrollment:`, enrollment ? enrollment._id : "null");
+
     if (!enrollment) {
-      // Return 200 with enrolled: false instead of 404
-      // This is more RESTful and prevents console errors for expected cases
+      // Debug: Check if ANY enrollment exists for this student
+      const anyEnrollment = await Enrollment.findOne({ student: userId }).lean();
+      console.log(`[EnrollmentDebug] Any enrollment for user?`, anyEnrollment ? "Yes" : "No");
+
+      // Debug: Check if enrollment exists for this course (any student)
+      const courseEnrollment = await Enrollment.findOne({ course: courseId }).lean();
+      console.log(`[EnrollmentDebug] Any enrollment for course?`, courseEnrollment ? "Yes" : "No");
+
+
+      if (!enrollment) {
+        // Return 200 with enrolled: false instead of 404
+        // This is more RESTful and prevents console errors for expected cases
+        return res.status(200).json({
+          enrolled: false,
+          enrollment: null,
+        });
+      }
+
       return res.status(200).json({
-        enrolled: false,
-        enrollment: null,
+        enrolled: true,
+        enrollment,
       });
+    } catch (error) {
+      return next(error);
     }
+  };
 
-    return res.status(200).json({
-      enrolled: true,
-      enrollment,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
+  /**
+   * Unenroll from a course
+   * DELETE /api/v1/courses/:courseId/enroll
+   */
+  export const unenrollFromCourse = async (req, res, next) => {
+    try {
+      const { courseId } = req.params;
+      const { userId } = req.auth;
 
-/**
- * Unenroll from a course
- * DELETE /api/v1/courses/:courseId/enroll
- */
-export const unenrollFromCourse = async (req, res, next) => {
-  try {
-    const { courseId } = req.params;
-    const { userId } = req.auth;
+      if (!mongoose.isValidObjectId(courseId)) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid course ID",
+          },
+        });
+      }
 
-    if (!mongoose.isValidObjectId(courseId)) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid course ID",
+      const enrollment = await Enrollment.findOneAndDelete({
+        student: userId,
+        course: courseId,
+      });
+
+      if (!enrollment) {
+        return res.status(404).json({
+          error: {
+            code: "NOT_ENROLLED",
+            message: "You are not enrolled in this course",
+          },
+        });
+      }
+
+      return res.status(200).json({
+        message: "Successfully unenrolled from course",
+      });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * Update enrollment status (e.g., pause, resume)
+   * PATCH /api/v1/courses/:courseId/enrollment
+   */
+  export const updateEnrollmentStatus = async (req, res, next) => {
+    try {
+      const { courseId } = req.params;
+      const { userId } = req.auth;
+      const { status } = req.body;
+
+      if (!mongoose.isValidObjectId(courseId)) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid course ID",
+          },
+        });
+      }
+
+      const validStatuses = ["active", "completed", "dropped", "paused"];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `Status must be one of: ${validStatuses.join(", ")}`,
+          },
+        });
+      }
+
+      const enrollment = await Enrollment.findOneAndUpdate(
+        { student: userId, course: courseId },
+        {
+          ...(status && { status }),
+          ...(status === "completed" && { completedAt: new Date() }),
+          lastAccessedAt: new Date(),
         },
+        { new: true }
+      )
+        .populate("course", "title description instructor category duration price thumbnailUrl")
+        .lean();
+
+      if (!enrollment) {
+        return res.status(404).json({
+          error: {
+            code: "NOT_ENROLLED",
+            message: "You are not enrolled in this course",
+          },
+        });
+      }
+
+      return res.status(200).json({
+        message: "Enrollment status updated successfully",
+        enrollment,
       });
+    } catch (error) {
+      return next(error);
     }
-
-    const enrollment = await Enrollment.findOneAndDelete({
-      student: userId,
-      course: courseId,
-    });
-
-    if (!enrollment) {
-      return res.status(404).json({
-        error: {
-          code: "NOT_ENROLLED",
-          message: "You are not enrolled in this course",
-        },
-      });
-    }
-
-    return res.status(200).json({
-      message: "Successfully unenrolled from course",
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-/**
- * Update enrollment status (e.g., pause, resume)
- * PATCH /api/v1/courses/:courseId/enrollment
- */
-export const updateEnrollmentStatus = async (req, res, next) => {
-  try {
-    const { courseId } = req.params;
-    const { userId } = req.auth;
-    const { status } = req.body;
-
-    if (!mongoose.isValidObjectId(courseId)) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid course ID",
-        },
-      });
-    }
-
-    const validStatuses = ["active", "completed", "dropped", "paused"];
-    if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: `Status must be one of: ${validStatuses.join(", ")}`,
-        },
-      });
-    }
-
-    const enrollment = await Enrollment.findOneAndUpdate(
-      { student: userId, course: courseId },
-      {
-        ...(status && { status }),
-        ...(status === "completed" && { completedAt: new Date() }),
-        lastAccessedAt: new Date(),
-      },
-      { new: true }
-    )
-      .populate("course", "title description instructor category duration price thumbnailUrl")
-      .lean();
-
-    if (!enrollment) {
-      return res.status(404).json({
-        error: {
-          code: "NOT_ENROLLED",
-          message: "You are not enrolled in this course",
-        },
-      });
-    }
-
-    return res.status(200).json({
-      message: "Enrollment status updated successfully",
-      enrollment,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
+  };
 
