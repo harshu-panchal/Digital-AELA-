@@ -2,10 +2,17 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { HiOutlineArrowUturnLeft, HiOutlineDocumentText, HiOutlineSparkles } from "react-icons/hi2";
+import {
+  HiOutlineArrowUturnLeft,
+  HiOutlineDocumentText,
+  HiOutlineSparkles,
+} from "react-icons/hi2";
 import { FaVideo, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
-import { getAdminCourseById, updateAdminCourse } from "../../../src/services/api/adminContent";
+import {
+  getAdminCourseById,
+  updateAdminCourse,
+} from "../../../src/services/api/adminContent";
 import { getPremiumCourseCount } from "../../../src/services/api/courses";
 import {
   safeString,
@@ -16,9 +23,16 @@ import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import VideoUpload from "../../teacher/VideoUpload";
 import ModuleUpload from "../../teacher/ModuleUpload";
 import ModuleList from "../../teacher/ModuleList";
-import { getCourseVideos, deleteVideo, updateVideo } from "../../../src/services/courseVideos";
+import {
+  getCourseVideos,
+  deleteVideo,
+  updateVideo,
+} from "../../../src/services/courseVideos";
 import { getCourseModules } from "../../../src/services/courseModules";
-import { fetchCourseStudents, updateStudentEnrollmentStatus } from "../../../src/services/api/teacher";
+import {
+  fetchCourseStudents,
+  updateStudentEnrollmentStatus,
+} from "../../../src/services/api/teacher";
 import { generateCertificate } from "../../../src/services/api/certificates";
 
 const categories = [
@@ -114,18 +128,21 @@ const AdminCourseDetail = () => {
     fetchVideos();
   }, [fetchVideos]);
 
-  const handleDeleteVideo = useCallback(async (videoId) => {
-    if (!window.confirm("Are you sure you want to delete this video?")) {
-      return;
-    }
-    try {
-      await deleteVideo(videoId);
-      toast.success("Video deleted successfully");
-      fetchVideos();
-    } catch (error) {
-      toast.error(error.message || "Failed to delete video");
-    }
-  }, [fetchVideos]);
+  const handleDeleteVideo = useCallback(
+    async (videoId) => {
+      if (!window.confirm("Are you sure you want to delete this video?")) {
+        return;
+      }
+      try {
+        await deleteVideo(videoId);
+        toast.success("Video deleted successfully");
+        fetchVideos();
+      } catch (error) {
+        toast.error(error.message || "Failed to delete video");
+      }
+    },
+    [fetchVideos]
+  );
 
   const handleEditVideo = useCallback((video) => {
     setEditingVideoId(video._id);
@@ -198,13 +215,15 @@ const AdminCourseDetail = () => {
   useEffect(() => {
     const loadCourse = async () => {
       if (!courseId) return;
-      
+
       try {
         setIsLoading(true);
         const existing = await getAdminCourseById(courseId);
 
         if (!existing) {
-          toast.error("Course not found or you don't have permission to edit it.");
+          toast.error(
+            "Course not found or you don't have permission to edit it."
+          );
           navigate("/super-admin", { replace: true });
           return;
         }
@@ -229,8 +248,8 @@ const AdminCourseDetail = () => {
           coverImagePreview: existing.thumbnailUrl || null,
           introVideoUrl: existing.metadata?.introVideoUrl || "",
           syllabus: existing.metadata?.syllabus || "",
-          tags: Array.isArray(existing.metadata?.tags) 
-            ? existing.metadata.tags.join(", ") 
+          tags: Array.isArray(existing.metadata?.tags)
+            ? existing.metadata.tags.join(", ")
             : safeString(existing.metadata?.tags),
           status: existing.status || "draft",
           isPremium: existing.metadata?.isPremium || false,
@@ -263,7 +282,11 @@ const AdminCourseDetail = () => {
 
     setMarkingCompleteFor(student.studentId);
     try {
-      await updateStudentEnrollmentStatus(courseId, student.studentId, "completed");
+      await updateStudentEnrollmentStatus(
+        courseId,
+        student.studentId,
+        "completed"
+      );
       toast.success(`${student.studentName} marked as completed`);
       // Refresh students list to update status
       await fetchEnrolledStudents();
@@ -282,8 +305,13 @@ const AdminCourseDetail = () => {
     }
 
     // Check eligibility: status must be "completed" AND progress must be 100%
-    if (student.status !== "completed" || student.courseProgressPercentage !== 100) {
-      toast.error("Student must have completed the course (100% progress) to receive a certificate");
+    if (
+      student.status !== "completed" ||
+      student.courseProgressPercentage !== 100
+    ) {
+      toast.error(
+        "Student must have completed the course (100% progress) to receive a certificate"
+      );
       return;
     }
 
@@ -301,7 +329,9 @@ const AdminCourseDetail = () => {
         enrollmentId: student.enrollmentId,
         issuedType: "manual",
       });
-      toast.success(`Certificate issued successfully for ${student.studentName}`);
+      toast.success(
+        `Certificate issued successfully for ${student.studentName}`
+      );
       // Refresh students list to update hasCertificate status
       await fetchEnrolledStudents();
     } catch (error) {
@@ -314,69 +344,66 @@ const AdminCourseDetail = () => {
 
   const priceHelper = useMemo(
     () => ({
-      price: "Enter price in AED. You can offer discounts later.",
+      price: "Enter price in INR. You can offer discounts later.",
       discount: "Optional. Leave blank if you don't want to run a promo.",
     }),
     []
   );
 
-  const handleChange = useCallback(
-    (event) => {
-      const { name, value, type, checked, files } = event.target;
-      if (type === "file" && files && files[0]) {
-        const file = files[0];
-        
-        // Handle cover image upload
-        if (name === "coverImageFile") {
-          // Validate image file
-          if (!file.type.startsWith("image/")) {
-            toast.error("Please upload an image file");
-            return;
-          }
-          
-          // Create preview
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setFormData((prev) => ({
-              ...prev,
-              coverImageFile: file,
-              coverImagePreview: reader.result,
-            }));
-          };
-          reader.readAsDataURL(file);
-          
-          // Upload image automatically
-          setIsUploadingImage(true);
-          uploadImageToCloudinary(file, "digital-aela/courses/covers")
-            .then((url) => {
-              setFormData((prev) => ({
-                ...prev,
-                coverImage: url,
-                coverImagePreview: url,
-              }));
-              toast.success("Cover image uploaded successfully");
-            })
-            .catch((error) => {
-              toast.error(error.message || "Failed to upload image");
-              setFormData((prev) => ({
-                ...prev,
-                coverImageFile: null,
-                coverImagePreview: prev.coverImage || null,
-              }));
-            })
-            .finally(() => {
-              setIsUploadingImage(false);
-            });
+  const handleChange = useCallback((event) => {
+    const { name, value, type, checked, files } = event.target;
+    if (type === "file" && files && files[0]) {
+      const file = files[0];
+
+      // Handle cover image upload
+      if (name === "coverImageFile") {
+        // Validate image file
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please upload an image file");
           return;
         }
-      } else if (type === "checkbox") {
-        setFormData((prev) => ({ ...prev, [name]: checked }));
-      } else {
-        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            coverImageFile: file,
+            coverImagePreview: reader.result,
+          }));
+        };
+        reader.readAsDataURL(file);
+
+        // Upload image automatically
+        setIsUploadingImage(true);
+        uploadImageToCloudinary(file, "digital-aela/courses/covers")
+          .then((url) => {
+            setFormData((prev) => ({
+              ...prev,
+              coverImage: url,
+              coverImagePreview: url,
+            }));
+            toast.success("Cover image uploaded successfully");
+          })
+          .catch((error) => {
+            toast.error(error.message || "Failed to upload image");
+            setFormData((prev) => ({
+              ...prev,
+              coverImageFile: null,
+              coverImagePreview: prev.coverImage || null,
+            }));
+          })
+          .finally(() => {
+            setIsUploadingImage(false);
+          });
+        return;
       }
-    },
-    []
-  );
+    } else if (type === "checkbox") {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  }, []);
 
   const handleImageUpload = async () => {
     if (!formData.coverImageFile) {
@@ -386,7 +413,10 @@ const AdminCourseDetail = () => {
 
     setIsUploadingImage(true);
     try {
-      const imageUrl = await uploadImageToCloudinary(formData.coverImageFile, "digital-aela/courses/covers");
+      const imageUrl = await uploadImageToCloudinary(
+        formData.coverImageFile,
+        "digital-aela/courses/covers"
+      );
       setFormData((prev) => ({
         ...prev,
         coverImage: imageUrl,
@@ -428,7 +458,9 @@ const AdminCourseDetail = () => {
     if (formData.isPremium) {
       const currentIsPremium = course.metadata?.isPremium || false;
       if (!currentIsPremium && premiumCount >= maxPremium) {
-        toast.error(`Maximum of ${maxPremium} premium courses allowed. Please unmark another premium course first.`);
+        toast.error(
+          `Maximum of ${maxPremium} premium courses allowed. Please unmark another premium course first.`
+        );
         return;
       }
     }
@@ -466,16 +498,16 @@ const AdminCourseDetail = () => {
     try {
       const updated = await updateAdminCourse(courseId, payload);
       setCourse(updated);
-      
+
       // Update formData with the updated course data
       setFormData((prev) => ({
         ...prev,
         coverImage: updated.thumbnailUrl || prev.coverImage,
         coverImagePreview: updated.thumbnailUrl || prev.coverImagePreview,
       }));
-      
+
       toast.success("Course updated successfully.");
-      
+
       // Reload the course data fresh from backend to ensure all fields are updated
       const freshCourse = await getAdminCourseById(courseId);
       if (freshCourse) {
@@ -542,7 +574,8 @@ const AdminCourseDetail = () => {
               </p>
             )}
             <p className="text-sm text-slate-300/80 md:max-w-2xl">
-              Update course details, outcomes, and media. Changes are saved immediately.
+              Update course details, outcomes, and media. Changes are saved
+              immediately.
             </p>
           </header>
 
@@ -629,13 +662,19 @@ const AdminCourseDetail = () => {
                     onChange={handleChange}
                     className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                     style={{ backgroundColor: "#000000" }}>
-                    <option value="Beginner" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Beginner"
+                      style={{ backgroundColor: "#000000" }}>
                       Beginner
                     </option>
-                    <option value="Intermediate" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Intermediate"
+                      style={{ backgroundColor: "#000000" }}>
                       Intermediate
                     </option>
-                    <option value="Advanced" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Advanced"
+                      style={{ backgroundColor: "#000000" }}>
                       Advanced
                     </option>
                   </select>
@@ -653,19 +692,27 @@ const AdminCourseDetail = () => {
                     onChange={handleChange}
                     className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                     style={{ backgroundColor: "#000000" }}>
-                    <option value="English" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="English"
+                      style={{ backgroundColor: "#000000" }}>
                       English
                     </option>
-                    <option value="Arabic" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Arabic"
+                      style={{ backgroundColor: "#000000" }}>
                       Arabic
                     </option>
-                    <option value="Hindi" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Hindi"
+                      style={{ backgroundColor: "#000000" }}>
                       Hindi
                     </option>
                     <option value="Urdu" style={{ backgroundColor: "#000000" }}>
                       Urdu
                     </option>
-                    <option value="Other" style={{ backgroundColor: "#000000" }}>
+                    <option
+                      value="Other"
+                      style={{ backgroundColor: "#000000" }}>
                       Other
                     </option>
                   </select>
@@ -729,7 +776,7 @@ const AdminCourseDetail = () => {
                   <label
                     htmlFor="price"
                     className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                    Price (AED)*
+                    Price (INR)*
                   </label>
                   <input
                     id="price"
@@ -818,16 +865,22 @@ const AdminCourseDetail = () => {
                   onChange={handleChange}
                   className="w-full appearance-none rounded-xl border border-white/15 bg-black px-4 py-3 text-sm text-white focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="Live cohort" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="Live cohort"
+                    style={{ backgroundColor: "#000000" }}>
                     Live cohort
                   </option>
-                  <option value="Self-paced video" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="Self-paced video"
+                    style={{ backgroundColor: "#000000" }}>
                     Self-paced video
                   </option>
                   <option value="Hybrid" style={{ backgroundColor: "#000000" }}>
                     Hybrid
                   </option>
-                  <option value="Learn & Earn challenge" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="Learn & Earn challenge"
+                    style={{ backgroundColor: "#000000" }}>
                     Learn & Earn challenge
                   </option>
                 </select>
@@ -862,8 +915,8 @@ const AdminCourseDetail = () => {
                   <div className="mt-3">
                     <img
                       src={
-                        formData.coverImagePreview.startsWith("data:") 
-                          ? formData.coverImagePreview 
+                        formData.coverImagePreview.startsWith("data:")
+                          ? formData.coverImagePreview
                           : getMediaUrl(formData.coverImagePreview)
                       }
                       alt="Cover preview"
@@ -914,7 +967,9 @@ const AdminCourseDetail = () => {
                   <option value="draft" style={{ backgroundColor: "#000000" }}>
                     Draft
                   </option>
-                  <option value="published" style={{ backgroundColor: "#000000" }}>
+                  <option
+                    value="published"
+                    style={{ backgroundColor: "#000000" }}>
                     Published
                   </option>
                 </select>
@@ -963,9 +1018,7 @@ const AdminCourseDetail = () => {
                   onChange={handleChange}
                   className="h-4 w-4 rounded border-white/20 bg-white/5 text-[#F5D26A] focus:ring-2 focus:ring-[#F5D26A]/30"
                 />
-                <label
-                  htmlFor="isPremium"
-                  className="text-sm text-white">
+                <label htmlFor="isPremium" className="text-sm text-white">
                   Mark as Premium Course
                   {formData.isPremium && (
                     <span className="ml-2 text-xs text-slate-400">
@@ -998,9 +1051,12 @@ const AdminCourseDetail = () => {
             transition={{ duration: 0.45, ease: "easeOut", delay: 0.1 }}
             className="mt-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
             <header className="mb-6">
-              <h2 className="text-lg font-semibold text-white">Course Videos</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Course Videos
+              </h2>
               <p className="mt-1 text-xs text-slate-400">
-                Upload and manage course videos. Students can access videos after enrollment.
+                Upload and manage course videos. Students can access videos
+                after enrollment.
               </p>
             </header>
 
@@ -1012,14 +1068,17 @@ const AdminCourseDetail = () => {
               />
 
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-white">Uploaded Videos</h3>
+                <h3 className="text-sm font-semibold text-white">
+                  Uploaded Videos
+                </h3>
                 {isLoadingVideos ? (
                   <div className="flex items-center justify-center py-8">
                     <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
                   </div>
                 ) : videos.length === 0 ? (
                   <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-300">
-                    No videos uploaded yet. Use the form above to upload your first video.
+                    No videos uploaded yet. Use the form above to upload your
+                    first video.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1055,7 +1114,9 @@ const AdminCourseDetail = () => {
                             />
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-2">
-                                <label className="text-xs text-slate-300">Order:</label>
+                                <label className="text-xs text-slate-300">
+                                  Order:
+                                </label>
                                 <input
                                   type="number"
                                   value={editVideoForm.order}
@@ -1104,7 +1165,9 @@ const AdminCourseDetail = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <FaVideo className="h-4 w-4 text-[#F5D26A]" />
-                                <h4 className="font-semibold text-white">{video.title}</h4>
+                                <h4 className="font-semibold text-white">
+                                  {video.title}
+                                </h4>
                                 {video.isPreview && (
                                   <span className="rounded-full bg-[#D4AF37]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#D4AF37]">
                                     Preview
@@ -1112,13 +1175,18 @@ const AdminCourseDetail = () => {
                                 )}
                               </div>
                               {video.description && (
-                                <p className="mt-1 text-xs text-slate-400">{video.description}</p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                  {video.description}
+                                </p>
                               )}
                               <div className="mt-2 flex items-center gap-4 text-[11px] text-slate-500">
                                 {video.duration > 0 && (
                                   <span>
                                     {Math.floor(video.duration / 60)}:
-                                    {String(video.duration % 60).padStart(2, "0")}
+                                    {String(video.duration % 60).padStart(
+                                      2,
+                                      "0"
+                                    )}
                                   </span>
                                 )}
                                 <span>Order: {video.order}</span>
@@ -1155,9 +1223,13 @@ const AdminCourseDetail = () => {
             transition={{ duration: 0.45, ease: "easeOut", delay: 0.15 }}
             className="mt-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
             <header className="mb-6">
-              <h2 className="text-lg font-semibold text-white">Course Modules</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Course Modules
+              </h2>
               <p className="mt-1 text-xs text-slate-400">
-                Create modules with multiple files (PDF, images, audio, documents, videos). Students can access modules after enrollment.
+                Create modules with multiple files (PDF, images, audio,
+                documents, videos). Students can access modules after
+                enrollment.
               </p>
             </header>
 
@@ -1168,7 +1240,9 @@ const AdminCourseDetail = () => {
               />
 
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-white">Created Modules</h3>
+                <h3 className="text-sm font-semibold text-white">
+                  Created Modules
+                </h3>
                 {isLoadingModules ? (
                   <div className="flex items-center justify-center py-8">
                     <FaSpinner className="h-6 w-6 animate-spin text-[#F5D26A]" />
@@ -1192,7 +1266,9 @@ const AdminCourseDetail = () => {
             className="mt-8 rounded-3xl border border-white/10 bg-[#090D19]/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
             <header className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">Enrolled Students</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  Enrolled Students
+                </h2>
                 <p className="text-xs text-slate-400">
                   Monitor learner progress, contact details, and activity.
                 </p>
@@ -1239,8 +1315,12 @@ const AdminCourseDetail = () => {
                         <tr
                           key={student.studentId}
                           className="border-b border-white/5 last:border-b-0">
-                          <td className="px-3 py-3 font-semibold text-white">{student.studentName}</td>
-                          <td className="px-3 py-3 text-xs text-slate-300/90">{student.studentEmail}</td>
+                          <td className="px-3 py-3 font-semibold text-white">
+                            {student.studentName}
+                          </td>
+                          <td className="px-3 py-3 text-xs text-slate-300/90">
+                            {student.studentEmail}
+                          </td>
                           <td className="px-3 py-3 text-xs">
                             <div className="flex items-center gap-2">
                               <span
@@ -1257,7 +1337,9 @@ const AdminCourseDetail = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleMarkAsCompleted(student)}
-                                  disabled={markingCompleteFor === student.studentId}
+                                  disabled={
+                                    markingCompleteFor === student.studentId
+                                  }
                                   className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                                   title="Mark as completed">
                                   {markingCompleteFor === student.studentId ? (
@@ -1280,7 +1362,12 @@ const AdminCourseDetail = () => {
                               <div className="h-2 rounded-full bg-white/10">
                                 <div
                                   className="h-2 rounded-full bg-gradient-to-r from-[#F5D26A] to-[#facc15]"
-                                  style={{ width: `${Math.min(student.courseProgressPercentage || 0, 100)}%` }}
+                                  style={{
+                                    width: `${Math.min(
+                                      student.courseProgressPercentage || 0,
+                                      100
+                                    )}%`,
+                                  }}
                                 />
                               </div>
                               <span className="mt-1 block text-[11px] text-slate-400">
@@ -1288,7 +1375,9 @@ const AdminCourseDetail = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-xs text-slate-300/80">{lastActive}</td>
+                          <td className="px-3 py-3 text-xs text-slate-300/80">
+                            {lastActive}
+                          </td>
                           <td className="px-3 py-3 text-xs">
                             {student.hasCertificate ? (
                               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-emerald-200">
@@ -1299,7 +1388,9 @@ const AdminCourseDetail = () => {
                               <button
                                 type="button"
                                 onClick={() => handleIssueCertificate(student)}
-                                disabled={issuingCertificateFor === student.studentId}
+                                disabled={
+                                  issuingCertificateFor === student.studentId
+                                }
                                 className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-3 py-1 text-[11px] font-semibold text-[#F5D26A] transition hover:border-[#F5D26A]/70 hover:bg-[#F5D26A]/20 disabled:cursor-not-allowed disabled:opacity-50">
                                 {issuingCertificateFor === student.studentId ? (
                                   <>
@@ -1314,7 +1405,9 @@ const AdminCourseDetail = () => {
                                 )}
                               </button>
                             ) : (
-                              <span className="text-[11px] text-slate-500">Not eligible</span>
+                              <span className="text-[11px] text-slate-500">
+                                Not eligible
+                              </span>
                             )}
                           </td>
                         </tr>

@@ -14,7 +14,20 @@ import { getBackupStats } from "../../src/services/api/backups";
 import { getTeacherAssignments } from "../../src/services/api/assignments";
 import { fetchTeacherStudents } from "../../src/services/api/teacher";
 import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
-import { HiOutlineUserGroup, HiOutlineClock, HiOutlineCheckCircle, HiOutlineCurrencyDollar, HiOutlineChartBar, HiOutlineMegaphone, HiOutlineComputerDesktop, HiOutlineServer, HiOutlineDocumentText, HiOutlineAcademicCap, HiOutlineQuestionMarkCircle } from "react-icons/hi2";
+import { formatCurrency } from "../../src/utils/currencyUtils";
+import {
+  HiOutlineUserGroup,
+  HiOutlineClock,
+  HiOutlineCheckCircle,
+  HiOutlineCurrencyDollar,
+  HiOutlineChartBar,
+  HiOutlineMegaphone,
+  HiOutlineComputerDesktop,
+  HiOutlineServer,
+  HiOutlineDocumentText,
+  HiOutlineAcademicCap,
+  HiOutlineQuestionMarkCircle,
+} from "react-icons/hi2";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -160,16 +173,18 @@ const SuperAdminDashboard = () => {
     try {
       const response = await getTeacherAssignments({ page: 1, pageSize: 5 });
       setAssignments(response.assignments || []);
-      
+
       // Calculate stats
       const total = response.pagination?.total || 0;
-      const pendingCount = response.assignments?.reduce((sum, a) => {
-        return sum + (a.submissionStats?.pending || 0);
-      }, 0) || 0;
-      const gradedCount = response.assignments?.reduce((sum, a) => {
-        return sum + (a.submissionStats?.graded || 0);
-      }, 0) || 0;
-      
+      const pendingCount =
+        response.assignments?.reduce((sum, a) => {
+          return sum + (a.submissionStats?.pending || 0);
+        }, 0) || 0;
+      const gradedCount =
+        response.assignments?.reduce((sum, a) => {
+          return sum + (a.submissionStats?.graded || 0);
+        }, 0) || 0;
+
       setAssignmentStats({
         total,
         pendingToGrade: pendingCount,
@@ -190,16 +205,18 @@ const SuperAdminDashboard = () => {
     try {
       const response = await fetchTeacherStudents({ page: 1, pageSize: 5 });
       setStudents(response.students || []);
-      
+
       // Calculate stats
       const total = response.pagination?.total || 0;
-      const activeCount = response.students?.reduce((sum, s) => {
-        return sum + (s.activeEnrollments || 0);
-      }, 0) || 0;
-      const completedCount = response.students?.reduce((sum, s) => {
-        return sum + (s.completedEnrollments || 0);
-      }, 0) || 0;
-      
+      const activeCount =
+        response.students?.reduce((sum, s) => {
+          return sum + (s.activeEnrollments || 0);
+        }, 0) || 0;
+      const completedCount =
+        response.students?.reduce((sum, s) => {
+          return sum + (s.completedEnrollments || 0);
+        }, 0) || 0;
+
       setStudentStats({
         total,
         active: activeCount,
@@ -278,7 +295,7 @@ const SuperAdminDashboard = () => {
               {
                 id: "revenue",
                 label: "Monthly Revenue",
-                value: loading ? "..." : "AED 0",
+                value: loading ? "..." : formatCurrency(0),
                 delta: "Loading...",
               },
               {
@@ -530,7 +547,9 @@ const SuperAdminDashboard = () => {
                         ))}
                       </ul>
                       <Link
-                        to={column.href || `/super-admin/approvals/${column.id}`}
+                        to={
+                          column.href || `/super-admin/approvals/${column.id}`
+                        }
                         className="mt-3 inline-block text-[11px] font-semibold text-[#F5D26A] hover:text-[#FFE28A] transition-colors">
                         {column.cta} →
                       </Link>
@@ -615,19 +634,27 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total Leads</p>
-                  <p className="text-2xl font-semibold text-white">{crmStats.total || 0}</p>
+                  <p className="text-2xl font-semibold text-white">
+                    {crmStats.total || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">New</p>
-                  <p className="text-2xl font-semibold text-blue-400">{crmStats.new || 0}</p>
+                  <p className="text-2xl font-semibold text-blue-400">
+                    {crmStats.new || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Qualified</p>
-                  <p className="text-2xl font-semibold text-purple-400">{crmStats.qualified || 0}</p>
+                  <p className="text-2xl font-semibold text-purple-400">
+                    {crmStats.qualified || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Converted</p>
-                  <p className="text-2xl font-semibold text-emerald-400">{crmStats.converted || 0}</p>
+                  <p className="text-2xl font-semibold text-emerald-400">
+                    {crmStats.converted || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -668,36 +695,34 @@ const SuperAdminDashboard = () => {
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Income</p>
                   <p className="text-xl font-semibold text-emerald-400">
-                    {financialData.summary?.currency || "AED"}{" "}
-                    {financialData.summary?.totalIncome?.toFixed(2) || "0.00"}
+                    {formatCurrency(financialData.summary?.totalIncome || 0)}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Expenses</p>
                   <p className="text-xl font-semibold text-red-400">
-                    {financialData.summary?.currency || "AED"}{" "}
-                    {financialData.summary?.totalExpenses?.toFixed(2) || "0.00"}
+                    {formatCurrency(financialData.summary?.totalExpenses || 0)}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Net Profit</p>
                   <p
                     className={`text-xl font-semibold ${
-                      financialData.summary?.netProfit >= 0 ? "text-emerald-400" : "text-red-400"
+                      financialData.summary?.netProfit >= 0
+                        ? "text-emerald-400"
+                        : "text-red-400"
                     }`}>
-                    {financialData.summary?.currency || "AED"}{" "}
-                    {financialData.summary?.netProfit?.toFixed(2) || "0.00"}
+                    {formatCurrency(financialData.summary?.netProfit || 0)}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Available Fund</p>
                   <p className="text-xl font-semibold text-blue-400">
-                    {financialData.summary?.currency || "AED"}{" "}
-                    {(
+                    {formatCurrency(
                       (financialData.summary?.totalIncome || 0) -
-                      (financialData.summary?.totalExpenses || 0) -
-                      (financialData.summary?.totalPayouts || 0)
-                    ).toFixed(2)}
+                        (financialData.summary?.totalExpenses || 0) -
+                        (financialData.summary?.totalPayouts || 0)
+                    )}
                   </p>
                 </div>
               </div>
@@ -745,19 +770,27 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total</p>
-                  <p className="text-xl font-semibold text-white">{announcementStats.total || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {announcementStats.total || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Published</p>
-                  <p className="text-xl font-semibold text-emerald-400">{announcementStats.published || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {announcementStats.published || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Draft</p>
-                  <p className="text-xl font-semibold text-slate-400">{announcementStats.draft || 0}</p>
+                  <p className="text-xl font-semibold text-slate-400">
+                    {announcementStats.draft || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Scheduled</p>
-                  <p className="text-xl font-semibold text-blue-400">{announcementStats.scheduled || 0}</p>
+                  <p className="text-xl font-semibold text-blue-400">
+                    {announcementStats.scheduled || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -804,19 +837,27 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Active Now</p>
-                  <p className="text-xl font-semibold text-emerald-400">{sessionStats.active || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {sessionStats.active || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Today</p>
-                  <p className="text-xl font-semibold text-white">{sessionStats.today || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {sessionStats.today || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">This Week</p>
-                  <p className="text-xl font-semibold text-blue-400">{sessionStats.thisWeek || 0}</p>
+                  <p className="text-xl font-semibold text-blue-400">
+                    {sessionStats.thisWeek || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">This Month</p>
-                  <p className="text-xl font-semibold text-purple-400">{sessionStats.thisMonth || 0}</p>
+                  <p className="text-xl font-semibold text-purple-400">
+                    {sessionStats.thisMonth || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -863,19 +904,27 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total</p>
-                  <p className="text-xl font-semibold text-white">{backupStats.total || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {backupStats.total || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Completed</p>
-                  <p className="text-xl font-semibold text-emerald-400">{backupStats.completed || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {backupStats.completed || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Failed</p>
-                  <p className="text-xl font-semibold text-red-400">{backupStats.failed || 0}</p>
+                  <p className="text-xl font-semibold text-red-400">
+                    {backupStats.failed || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total Size</p>
-                  <p className="text-xl font-semibold text-blue-400">{backupStats.totalSizeFormatted || "0 Bytes"}</p>
+                  <p className="text-xl font-semibold text-blue-400">
+                    {backupStats.totalSizeFormatted || "0 Bytes"}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -926,15 +975,23 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total</p>
-                  <p className="text-xl font-semibold text-white">{assignmentStats.total || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {assignmentStats.total || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">Pending to Grade</p>
-                  <p className="text-xl font-semibold text-yellow-400">{assignmentStats.pendingToGrade || 0}</p>
+                  <p className="text-xs text-slate-400 mb-1">
+                    Pending to Grade
+                  </p>
+                  <p className="text-xl font-semibold text-yellow-400">
+                    {assignmentStats.pendingToGrade || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Graded</p>
-                  <p className="text-xl font-semibold text-emerald-400">{assignmentStats.graded || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {assignmentStats.graded || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -985,15 +1042,23 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total Students</p>
-                  <p className="text-xl font-semibold text-white">{studentStats.total || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {studentStats.total || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-400 mb-1">Active Enrollments</p>
-                  <p className="text-xl font-semibold text-blue-400">{studentStats.active || 0}</p>
+                  <p className="text-xs text-slate-400 mb-1">
+                    Active Enrollments
+                  </p>
+                  <p className="text-xl font-semibold text-blue-400">
+                    {studentStats.active || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Completed</p>
-                  <p className="text-xl font-semibold text-emerald-400">{studentStats.completed || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {studentStats.completed || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1037,19 +1102,27 @@ const SuperAdminDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Open</p>
-                  <p className="text-xl font-semibold text-blue-400">{doubtTicketStats.open || 0}</p>
+                  <p className="text-xl font-semibold text-blue-400">
+                    {doubtTicketStats.open || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">In Progress</p>
-                  <p className="text-xl font-semibold text-yellow-400">{doubtTicketStats.inProgress || 0}</p>
+                  <p className="text-xl font-semibold text-yellow-400">
+                    {doubtTicketStats.inProgress || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Resolved</p>
-                  <p className="text-xl font-semibold text-emerald-400">{doubtTicketStats.resolved || 0}</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {doubtTicketStats.resolved || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Total</p>
-                  <p className="text-xl font-semibold text-white">{doubtTicketStats.total || 0}</p>
+                  <p className="text-xl font-semibold text-white">
+                    {doubtTicketStats.total || 0}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1103,3 +1176,4 @@ const SuperAdminDashboard = () => {
 };
 
 export default SuperAdminDashboard;
+

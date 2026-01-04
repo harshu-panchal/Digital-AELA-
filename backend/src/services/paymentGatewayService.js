@@ -18,11 +18,16 @@ const initializeRazorpay = async () => {
       "payment.gateway.razorpay.keySecret",
     ]);
 
-    const keyId = settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID;
-    const keySecret = settings["payment.gateway.razorpay.keySecret"] || process.env.RAZORPAY_KEY_SECRET;
+    const keyId =
+      settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID;
+    const keySecret =
+      settings["payment.gateway.razorpay.keySecret"] ||
+      process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
-      throw new Error("Razorpay credentials not configured. Please configure Razorpay in settings.");
+      throw new Error(
+        "Razorpay credentials not configured. Please configure Razorpay in settings."
+      );
     }
 
     razorpayInstance = new Razorpay({
@@ -43,7 +48,10 @@ const initializeRazorpay = async () => {
 export const isRazorpayEnabled = async () => {
   try {
     const settings = await getSettings(["payment.gateway.razorpay.enabled"]);
-    return settings["payment.gateway.razorpay.enabled"] === true || settings["payment.gateway.razorpay.enabled"] === "true";
+    return (
+      settings["payment.gateway.razorpay.enabled"] === true ||
+      settings["payment.gateway.razorpay.enabled"] === "true"
+    );
   } catch (error) {
     console.error("[Payment Gateway] Error checking if enabled:", error);
     return false;
@@ -56,7 +64,11 @@ export const isRazorpayEnabled = async () => {
 export const getRazorpayKeyId = async () => {
   try {
     const settings = await getSettings(["payment.gateway.razorpay.keyId"]);
-    return settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID || null;
+    return (
+      settings["payment.gateway.razorpay.keyId"] ||
+      process.env.RAZORPAY_KEY_ID ||
+      null
+    );
   } catch (error) {
     console.error("[Payment Gateway] Error getting key ID:", error);
     return null;
@@ -67,7 +79,7 @@ export const getRazorpayKeyId = async () => {
  * Create a Razorpay Payment Link
  * @param {Object} options - Payment link options
  * @param {number} options.amount - Amount in currency units (will be converted to smallest unit)
- * @param {string} options.currency - Currency code (default: AED)
+ * @param {string} options.currency - Currency code (default: INR)
  * @param {string} options.receipt - Receipt ID (usually payment ID)
  * @param {string} options.description - Payment description
  * @param {string} options.customerName - Customer name
@@ -81,7 +93,7 @@ export const createPaymentLink = async (options) => {
   try {
     const {
       amount,
-      currency = "AED",
+      currency = "INR",
       receipt,
       description,
       customerName,
@@ -110,68 +122,18 @@ export const createPaymentLink = async (options) => {
 
     const razorpay = await initializeRazorpay();
 
-    // Get all settings including key ID to detect test keys
-    const allSettings = await getSettings([
-      "payment.currency.convertAEDtoINR",
-      "payment.currency.aedToInrRate",
-      "payment.gateway.razorpay.keyId",
-    ]);
-    
-    // Detect if using test keys (test keys have more restrictions)
-    const keyId = allSettings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID || "";
-    const isTestKey = keyId.startsWith("rzp_test_");
+    // Use INR as default currency
+    const finalCurrency = "INR";
+    const finalAmount = amount;
 
-    // Handle currency conversion for Razorpay compatibility
-    // Most Razorpay accounts (including test) support INR by default
-    // AED requires international payments to be enabled in Razorpay dashboard
-    const razorpayCurrency = currency.toUpperCase();
-    
-    // Get exchange rate
-    const aedToInrRate = parseFloat(allSettings["payment.currency.aedToInrRate"] || "22.5"); // Default: 1 AED = 22.5 INR
-    
-    let finalCurrency = razorpayCurrency;
-    let finalAmount = amount;
-    
-    // FOR TEST KEYS: ALWAYS convert AED to INR (test accounts NEVER support international/AED)
-    // FOR LIVE KEYS: Convert by default (can be disabled if international payments enabled)
-    if (razorpayCurrency === "AED") {
-      if (isTestKey) {
-        // Test keys MUST use INR - no exceptions
-        finalCurrency = "INR";
-        finalAmount = Math.round(amount * aedToInrRate * 100) / 100; // Round to 2 decimal places
-        console.log(`[Payment Gateway] TEST KEY DETECTED: Forcing conversion from ${amount} AED to ${finalAmount} INR (rate: ${aedToInrRate})`);
-        console.log(`[Payment Gateway] Test accounts do not support AED/international cards - conversion is mandatory`);
-      } else {
-        // Live keys: Convert by default (unless explicitly disabled)
-        const convertToINR = allSettings["payment.currency.convertAEDtoINR"] !== false && 
-                             allSettings["payment.currency.convertAEDtoINR"] !== "false";
-        
-        if (convertToINR) {
-          finalCurrency = "INR";
-          finalAmount = Math.round(amount * aedToInrRate * 100) / 100;
-          console.log(`[Payment Gateway] Converting ${amount} AED to ${finalAmount} INR (rate: ${aedToInrRate})`);
-        }
-      }
-      
-      if (finalCurrency === "INR") {
-        console.log(`[Payment Gateway] Payment will be processed in INR to avoid international card issues`);
-      }
-    }
-
-    // Safety check: Ensure test keys NEVER use AED
-    if (isTestKey && finalCurrency === "AED") {
-      throw new Error(
-        "Test Razorpay keys do not support AED currency. " +
-        "Currency conversion failed. Please check configuration or use INR currency directly."
-      );
-    }
-
-    // Convert amount to smallest currency unit (fils for AED, paise for INR)
-    // AED: 1 AED = 100 fils, INR: 1 INR = 100 paise
+    // Convert amount to smallest currency unit (paise for INR)
+    // INR: 1 INR = 100 paise
     const amountInSmallestUnit = Math.round(finalAmount * 100);
-    
+
     // Log final currency for debugging
-    console.log(`[Payment Gateway] Final payment currency: ${finalCurrency}, amount: ${finalAmount} (${amountInSmallestUnit} in smallest unit)`);
+    console.log(
+      `[Payment Gateway] Final payment currency: ${finalCurrency}, amount: ${finalAmount} (${amountInSmallestUnit} in smallest unit)`
+    );
 
     // Payment link options with currency handling
     const paymentLinkOptions = {
@@ -194,8 +156,6 @@ export const createPaymentLink = async (options) => {
         receipt: receipt,
         original_currency: currency.toUpperCase(),
         original_amount: amount,
-        converted_currency: finalCurrency,
-        converted_amount: finalAmount,
         ...notes,
       },
       // Configure payment methods - restrict to Indian payment methods for INR
@@ -223,21 +183,23 @@ export const createPaymentLink = async (options) => {
     };
   } catch (error) {
     console.error("[Payment Gateway] Error creating payment link:", error);
-    
+
     // Handle specific error cases
     const errorDescription = error.error?.description || error.message || "";
-    
+
     // Check for international card/currency issues
-    if (errorDescription.toLowerCase().includes("international") || 
-        errorDescription.toLowerCase().includes("not supported") ||
-        errorDescription.toLowerCase().includes("invalid currency")) {
+    if (
+      errorDescription.toLowerCase().includes("international") ||
+      errorDescription.toLowerCase().includes("not supported") ||
+      errorDescription.toLowerCase().includes("invalid currency")
+    ) {
       throw new Error(
-        "International cards or AED currency are not supported. " +
-        "Please enable international payments in Razorpay dashboard or use currency conversion. " +
-        "Contact support for assistance."
+        "International cards are not supported. " +
+          "Please use an Indian card or payment method. " +
+          "Contact support for assistance."
       );
     }
-    
+
     if (error.error?.description) {
       throw new Error(`Payment gateway error: ${error.error.description}`);
     }
@@ -259,7 +221,9 @@ export const fetchPayment = async (paymentId) => {
     const razorpay = await initializeRazorpay();
     const payment = await razorpay.payments.fetch(paymentId);
 
-    console.log(`[Payment Gateway] Payment fetched: ${paymentId}, status: ${payment.status}`);
+    console.log(
+      `[Payment Gateway] Payment fetched: ${paymentId}, status: ${payment.status}`
+    );
 
     return payment;
   } catch (error) {
@@ -285,7 +249,9 @@ export const fetchPaymentLink = async (paymentLinkId) => {
     const razorpay = await initializeRazorpay();
     const paymentLink = await razorpay.paymentLink.fetch(paymentLinkId);
 
-    console.log(`[Payment Gateway] Payment link fetched: ${paymentLinkId}, status: ${paymentLink.status}`);
+    console.log(
+      `[Payment Gateway] Payment link fetched: ${paymentLinkId}, status: ${paymentLink.status}`
+    );
 
     return paymentLink;
   } catch (error) {
@@ -303,13 +269,14 @@ export const fetchPaymentLink = async (paymentLinkId) => {
  * @param {string} paymentId - Razorpay payment ID
  * @param {string} signature - Payment signature from Razorpay
  * @returns {Promise<boolean>} True if signature is valid
- * 
+ *
  * NOTE: Payment signature verification is disabled - always returns true
  * This allows payments to complete immediately without signature verification
  */
 export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
   // Payment signature verification disabled - always return true
-  console.log("[Payment Gateway] Payment signature verification skipped (disabled)");
+  console.log(
+    "[Payment Gateway] Payment signature verification skipped (disabled)"
+  );
   return true;
 };
-

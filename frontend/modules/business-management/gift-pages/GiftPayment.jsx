@@ -4,7 +4,14 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
-import { createPayment, createRazorpayPaymentLink } from "../../../src/services/api/payments";
+import {
+  createPayment,
+  createRazorpayPaymentLink,
+} from "../../../src/services/api/payments";
+import {
+  formatCurrency,
+  getCurrencySymbol,
+} from "../../../src/utils/currencyUtils";
 
 const externalGiftUrl = "https://digitalaela.com/gift";
 
@@ -27,7 +34,7 @@ const GiftPayment = () => {
   };
 
   const initialAmount = Number(query.get("amount")) || 0;
-  const initialCurrency = query.get("currency") || "AED";
+  const initialCurrency = query.get("currency") || "INR";
   const itemName = query.get("itemName") || "contribution";
 
   const initialQuantity = Number(query.get("quantity")) || 1;
@@ -49,11 +56,6 @@ const GiftPayment = () => {
     formData.quantity && formData.quantity > 0 ? formData.quantity : 1;
   const totalAmount = giftAmount * quantity;
 
-  // Helper for display currency symbol
-  const getCurrencySymbol = (curr) => {
-    return curr === "AED" ? "AED " : "₹";
-  };
-
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({
@@ -62,8 +64,8 @@ const GiftPayment = () => {
         name === "amount"
           ? Number(value) || 0
           : name === "quantity"
-            ? Math.max(1, parseInt(value, 10) || 1)
-            : value,
+          ? Math.max(1, parseInt(value, 10) || 1)
+          : value,
     }));
   };
 
@@ -81,7 +83,11 @@ const GiftPayment = () => {
       const paymentResponse = await createPayment({
         amount: totalAmount,
         currency: formData.currency, // Use dynamic currency
-        description: `Gift payment ${itemName ? `- ${itemName}` : ""} - ${type === "near" ? `For ${nearOneDetails.fullName || "recipient"}` : "Open contribution"}`,
+        description: `Gift payment ${itemName ? `- ${itemName}` : ""} - ${
+          type === "near"
+            ? `For ${nearOneDetails.fullName || "recipient"}`
+            : "Open contribution"
+        }`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
       });
@@ -104,7 +110,9 @@ const GiftPayment = () => {
       window.location.href = linkResponse.paymentLink.url;
     } catch (error) {
       console.error("[Payment] Error processing payment:", error);
-      toast.error(error.message || "Failed to process payment. Please try again.");
+      toast.error(
+        error.message || "Failed to process payment. Please try again."
+      );
       setIsProcessing(false);
     }
   };
@@ -204,7 +212,7 @@ const GiftPayment = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Gift Amount</span>
                     <span className="text-white font-semibold">
-                      {getCurrencySymbol(formData.currency)}{giftAmount}
+                      {formatCurrency(giftAmount)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -214,7 +222,7 @@ const GiftPayment = () => {
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      {getCurrencySymbol(formData.currency)}{totalAmount}
+                      {formatCurrency(totalAmount)}
                     </span>
                   </div>
                 </div>
@@ -282,7 +290,7 @@ const GiftPayment = () => {
                       </div>
                       <div>
                         <label className="block text-sm text-gray-300 mb-2">
-                          Gift Amount ({getCurrencySymbol(formData.currency).trim()}) *
+                          Gift Amount ({getCurrencySymbol(formData.currency)}) *
                         </label>
                         <input
                           type="number"
@@ -382,7 +390,7 @@ const GiftPayment = () => {
                         Processing...
                       </>
                     ) : (
-                      `Gift ${getCurrencySymbol(formData.currency)}${totalAmount} Securely`
+                      `Gift ${formatCurrency(totalAmount)} Securely`
                     )}
                   </motion.button>
 
@@ -400,3 +408,4 @@ const GiftPayment = () => {
 };
 
 export default GiftPayment;
+

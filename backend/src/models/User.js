@@ -14,6 +14,15 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    passwordHistory: {
+      type: [String],
+      default: [],
+      select: false,
+    },
+    lastPasswordChange: {
+      type: Date,
+      default: null,
+    },
     fullName: {
       type: String,
       required: true,
@@ -62,4 +71,3 @@ userSchema.index({ role: 1, createdAt: -1 }); // Compound for analytics
 const User = mongoose.model("User", userSchema);
 
 export default User;
-

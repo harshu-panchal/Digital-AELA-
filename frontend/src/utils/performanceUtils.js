@@ -110,11 +110,12 @@ export function throttle(func, limit = 100) {
 /**
  * Format price with currency (memoized)
  */
-export const formatPrice = (price, currency = 'AED') => {
+export const formatPrice = (price, currency = 'INR') => {
     if (typeof price !== 'number') {
         price = parseFloat(price) || 0;
     }
-    return `${currency} ${price.toLocaleString('en-AE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    const symbol = currency === 'INR' ? '₹' : currency;
+    return `${symbol} ${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 /**

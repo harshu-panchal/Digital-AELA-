@@ -355,7 +355,7 @@ export const generateInvoicePDF = async (invoiceData) => {
         });
 
       const amount = invoiceData.payment?.amount || invoiceData.amount || 0;
-      const currency = invoiceData.payment?.currency || invoiceData.currency || "AED";
+      const currency = invoiceData.payment?.currency || invoiceData.currency || "INR";
       const formattedAmount = `${currency} ${amount.toFixed(2)}`;
 
       doc

@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { FinancialAuthProvider } from "./contexts/FinancialAuthContext";
 import { API_BASE_URL } from "./config/api.js";
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -96,23 +97,25 @@ if (typeof window !== "undefined") {
 }
 
 const AppContent = (
-  <BrowserRouter>
-    <LanguageProvider>
-      <AuthProvider>
-        <FinancialAuthProvider>
-          <SidebarProvider>
-            <PointsProvider>
-              <UserProvider>
-                <BlogProvider>
-                  <App />
-                </BlogProvider>
-              </UserProvider>
-            </PointsProvider>
-          </SidebarProvider>
-        </FinancialAuthProvider>
-      </AuthProvider>
-    </LanguageProvider>
-  </BrowserRouter>
+  <ErrorBoundary>
+    <BrowserRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <FinancialAuthProvider>
+            <SidebarProvider>
+              <PointsProvider>
+                <UserProvider>
+                  <BlogProvider>
+                    <App />
+                  </BlogProvider>
+                </UserProvider>
+              </PointsProvider>
+            </SidebarProvider>
+          </FinancialAuthProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </BrowserRouter>
+  </ErrorBoundary>
 );
 
 // Only use StrictMode in development

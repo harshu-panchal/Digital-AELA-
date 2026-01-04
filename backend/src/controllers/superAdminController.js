@@ -7,6 +7,7 @@ import Enrollment from "../models/Enrollment.js";
 import JobApplication from "../models/JobApplication.js";
 import LessonCompletion from "../models/LessonCompletion.js";
 import RecruiterBlog from "../models/RecruiterBlog.js";
+import { formatCurrency } from "../utils/currencyUtils.js";
 
 /**
  * Get super admin dashboard statistics
@@ -32,26 +33,30 @@ export const getDashboardStats = async (req, res, next) => {
 
     // Count active learners (students with enrollments or activity in last 30 days)
     // Parallelize all count queries
-    const [activeLearners, learnersLastWeek, learnersLastMonth] = await Promise.all([
-      User.countDocuments({
-        role: "student",
-        isActive: true,
-      }),
-      User.countDocuments({
-        role: "student",
-        isActive: true,
-        createdAt: { $gte: lastWeek },
-      }),
-      User.countDocuments({
-        role: "student",
-        isActive: true,
-        createdAt: { $gte: lastMonth },
-      }),
-    ]);
+    const [activeLearners, learnersLastWeek, learnersLastMonth] =
+      await Promise.all([
+        User.countDocuments({
+          role: "student",
+          isActive: true,
+        }),
+        User.countDocuments({
+          role: "student",
+          isActive: true,
+          createdAt: { $gte: lastWeek },
+        }),
+        User.countDocuments({
+          role: "student",
+          isActive: true,
+          createdAt: { $gte: lastMonth },
+        }),
+      ]);
 
-    const learnersDelta = learnersLastMonth > 0
-      ? `+${((learnersLastWeek / learnersLastMonth) * 100).toFixed(1)}% vs last week`
-      : `${learnersLastWeek} new this week`;
+    const learnersDelta =
+      learnersLastMonth > 0
+        ? `+${((learnersLastWeek / learnersLastMonth) * 100).toFixed(
+            1
+          )}% vs last week`
+        : `${learnersLastWeek} new this week`;
 
     // Count verified teachers - parallelize
     const [verifiedTeachers, pendingTeachers] = await Promise.all([
@@ -82,22 +87,25 @@ export const getDashboardStats = async (req, res, next) => {
     enrollmentsThisMonth.forEach((enrollment) => {
       if (enrollment.course && enrollment.course.price) {
         const price = enrollment.course.price;
-        const currency = enrollment.course.currency || "AED";
+        const currency = enrollment.course.currency || "INR";
         monthlyRevenue += price;
-        revenueByCurrency[currency] = (revenueByCurrency[currency] || 0) + price;
+        revenueByCurrency[currency] =
+          (revenueByCurrency[currency] || 0) + price;
       }
     });
 
-    // Format revenue (use most common currency or AED)
-    const primaryCurrency = Object.keys(revenueByCurrency).length > 0
-      ? Object.keys(revenueByCurrency).reduce((a, b) =>
-          revenueByCurrency[a] > revenueByCurrency[b] ? a : b
-        )
-      : "AED";
+    // Format revenue (use most common currency or INR)
+    const primaryCurrency =
+      Object.keys(revenueByCurrency).length > 0
+        ? Object.keys(revenueByCurrency).reduce((a, b) =>
+            revenueByCurrency[a] > revenueByCurrency[b] ? a : b
+          )
+        : "INR";
 
-    const revenueFormatted = monthlyRevenue >= 1000
-      ? `${primaryCurrency} ${(monthlyRevenue / 1000).toFixed(1)}K`
-      : `${primaryCurrency} ${Math.round(monthlyRevenue)}`;
+    const revenueFormatted =
+      monthlyRevenue >= 1000
+        ? `${primaryCurrency} ${(monthlyRevenue / 1000).toFixed(1)}K`
+        : `${primaryCurrency} ${Math.round(monthlyRevenue)}`;
 
     // Calculate revenue growth (compare with last month)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -105,9 +113,13 @@ export const getDashboardStats = async (req, res, next) => {
       createdAt: { $gte: lastMonthStart, $lt: thisMonthStart },
     });
 
-    const revenueDelta = enrollmentsLastMonth > 0
-      ? `+${((enrollmentsThisMonth.length / enrollmentsLastMonth) * 100).toFixed(0)}% vs last month`
-      : "New this month";
+    const revenueDelta =
+      enrollmentsLastMonth > 0
+        ? `+${(
+            (enrollmentsThisMonth.length / enrollmentsLastMonth) *
+            100
+          ).toFixed(0)}% vs last month`
+        : "New this month";
 
     // Count open jobs - parallelize
     const [openJobs, newJobsThisWeek] = await Promise.all([
@@ -134,7 +146,10 @@ export const getDashboardStats = async (req, res, next) => {
           id: "teachers",
           label: "Verified Teachers",
           value: verifiedTeachers.toString(),
-          delta: pendingTeachers > 0 ? `${pendingTeachers} pending approvals` : "All verified",
+          delta:
+            pendingTeachers > 0
+              ? `${pendingTeachers} pending approvals`
+              : "All verified",
         },
         {
           id: "revenue",
@@ -208,7 +223,8 @@ export const getPendingApprovals = async (req, res, next) => {
 
       if (diffMins < 1) return "Just now";
       if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+      if (diffHours < 24)
+        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
       if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       return new Date(date).toLocaleDateString();
@@ -286,7 +302,9 @@ export const getRecentActivity = async (req, res, next) => {
       activities.push({
         icon: "🎓",
         title: "New course enrollment",
-        description: `${enrollment.student?.fullName || "Student"} enrolled in ${enrollment.course?.title || "Course"}`,
+        description: `${
+          enrollment.student?.fullName || "Student"
+        } enrolled in ${enrollment.course?.title || "Course"}`,
         time: enrollment.createdAt,
         type: "enrollment",
       });
@@ -306,12 +324,18 @@ export const getRecentActivity = async (req, res, next) => {
     ]);
 
     for (const completion of recentCompletions) {
-      const student = await User.findById(completion._id).select("fullName").lean();
-      const course = await Course.findById(completion.courseId).select("title").lean();
+      const student = await User.findById(completion._id)
+        .select("fullName")
+        .lean();
+      const course = await Course.findById(completion.courseId)
+        .select("title")
+        .lean();
       activities.push({
         icon: "✅",
         title: "Course completion",
-        description: `${student?.fullName || "Student"} completed ${course?.title || "course"}`,
+        description: `${student?.fullName || "Student"} completed ${
+          course?.title || "course"
+        }`,
         time: completion.lastCompleted,
         type: "completion",
       });
@@ -329,7 +353,11 @@ export const getRecentActivity = async (req, res, next) => {
       activities.push({
         icon: "💼",
         title: "New job application",
-        description: `${application.applicant?.fullName || "Applicant"} applied for ${application.job?.title || "position"} at ${application.job?.company || "company"}`,
+        description: `${
+          application.applicant?.fullName || "Applicant"
+        } applied for ${application.job?.title || "position"} at ${
+          application.job?.company || "company"
+        }`,
         time: application.createdAt,
         type: "application",
       });
@@ -346,7 +374,9 @@ export const getRecentActivity = async (req, res, next) => {
       activities.push({
         icon: "📝",
         title: "New blog published",
-        description: `${blog.author?.fullName || "Author"} published "${blog.title}"`,
+        description: `${blog.author?.fullName || "Author"} published "${
+          blog.title
+        }"`,
         time: blog.publishedAt || blog.createdAt,
         type: "blog",
       });
@@ -366,10 +396,23 @@ export const getRecentActivity = async (req, res, next) => {
 
       if (diffMins < 1) return "Just now";
       if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-      if (diffDays === 0) return "Today, " + new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      if (diffHours < 24)
+        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+      if (diffDays === 0)
+        return (
+          "Today, " +
+          new Date(date).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
       if (diffDays === 1) return "Yesterday";
-      return new Date(date).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      return new Date(date).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     };
 
     return res.json({
@@ -439,29 +482,151 @@ export const getDashboardData = async (req, res, next) => {
       recentApplications,
       recentBlogs,
     ] = await Promise.all([
-      safeQuery(() => User.countDocuments({ role: "student", isActive: true }), 0),
-      safeQuery(() => User.countDocuments({ role: "student", isActive: true, createdAt: { $gte: lastWeek } }), 0),
-      safeQuery(() => User.countDocuments({ role: "student", isActive: true, createdAt: { $gte: lastMonth } }), 0),
-      safeQuery(() => User.countDocuments({ role: "teacher", isActive: true }), 0),
-      safeQuery(() => User.countDocuments({ role: "teacher", isActive: false }), 0),
-      safeQuery(() => User.countDocuments({ role: "student", isActive: false }), 0),
-      safeQuery(() => Enrollment.find({ createdAt: { $gte: thisMonthStart } }).populate("course", "price currency").lean(), []),
-      safeQuery(() => Enrollment.countDocuments({ createdAt: { $gte: lastMonthStart, $lt: thisMonthStart } }), 0),
+      safeQuery(
+        () => User.countDocuments({ role: "student", isActive: true }),
+        0
+      ),
+      safeQuery(
+        () =>
+          User.countDocuments({
+            role: "student",
+            isActive: true,
+            createdAt: { $gte: lastWeek },
+          }),
+        0
+      ),
+      safeQuery(
+        () =>
+          User.countDocuments({
+            role: "student",
+            isActive: true,
+            createdAt: { $gte: lastMonth },
+          }),
+        0
+      ),
+      safeQuery(
+        () => User.countDocuments({ role: "teacher", isActive: true }),
+        0
+      ),
+      safeQuery(
+        () => User.countDocuments({ role: "teacher", isActive: false }),
+        0
+      ),
+      safeQuery(
+        () => User.countDocuments({ role: "student", isActive: false }),
+        0
+      ),
+      safeQuery(
+        () =>
+          Enrollment.find({ createdAt: { $gte: thisMonthStart } })
+            .populate("course", "price currency")
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          Enrollment.countDocuments({
+            createdAt: { $gte: lastMonthStart, $lt: thisMonthStart },
+          }),
+        0
+      ),
       safeQuery(() => JobPost.countDocuments({ status: "published" }), 0),
-      safeQuery(() => JobPost.countDocuments({ status: "published", createdAt: { $gte: lastWeek } }), 0),
-      safeQuery(() => Course.find({ status: "draft" }).populate("instructor", "fullName").sort({ createdAt: -1 }).limit(10).lean(), []),
-      safeQuery(() => EbookResource.find({ isPublic: false }).sort({ createdAt: -1 }).limit(10).lean(), []),
-      safeQuery(() => JobPost.find({ status: "draft" }).populate("owner", "fullName").sort({ createdAt: -1 }).limit(10).lean(), []),
-      safeQuery(() => User.find({ role: "teacher", isActive: false }).select("-passwordHash").sort({ createdAt: -1 }).limit(10).lean(), []),
-      safeQuery(() => User.find({ role: "student", isActive: false }).select("-passwordHash").sort({ createdAt: -1 }).limit(10).lean(), []),
-      safeQuery(() => Enrollment.find().populate("student", "fullName").populate("course", "title").sort({ createdAt: -1 }).limit(5).lean(), []),
-      safeQuery(() => LessonCompletion.aggregate([
-        { $group: { _id: "$student", lastCompleted: { $max: "$completedAt" }, courseId: { $first: "$course" } } },
-        { $sort: { lastCompleted: -1 } },
-        { $limit: 5 },
-      ]), []),
-      safeQuery(() => JobApplication.find().populate("applicant", "fullName").populate("job", "title company").sort({ createdAt: -1 }).limit(5).lean(), []),
-      safeQuery(() => RecruiterBlog.find({ status: "published" }).populate("author", "fullName").sort({ publishedAt: -1 }).limit(3).lean(), []),
+      safeQuery(
+        () =>
+          JobPost.countDocuments({
+            status: "published",
+            createdAt: { $gte: lastWeek },
+          }),
+        0
+      ),
+      safeQuery(
+        () =>
+          Course.find({ status: "draft" })
+            .populate("instructor", "fullName")
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          EbookResource.find({ isPublic: false })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          JobPost.find({ status: "draft" })
+            .populate("owner", "fullName")
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          User.find({ role: "teacher", isActive: false })
+            .select("-passwordHash")
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          User.find({ role: "student", isActive: false })
+            .select("-passwordHash")
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          Enrollment.find()
+            .populate("student", "fullName")
+            .populate("course", "title")
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          LessonCompletion.aggregate([
+            {
+              $group: {
+                _id: "$student",
+                lastCompleted: { $max: "$completedAt" },
+                courseId: { $first: "$course" },
+              },
+            },
+            { $sort: { lastCompleted: -1 } },
+            { $limit: 5 },
+          ]),
+        []
+      ),
+      safeQuery(
+        () =>
+          JobApplication.find()
+            .populate("applicant", "fullName")
+            .populate("job", "title company")
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean(),
+        []
+      ),
+      safeQuery(
+        () =>
+          RecruiterBlog.find({ status: "published" })
+            .populate("author", "fullName")
+            .sort({ publishedAt: -1 })
+            .limit(3)
+            .lean(),
+        []
+      ),
     ]);
 
     // Calculate revenue
@@ -470,27 +635,36 @@ export const getDashboardData = async (req, res, next) => {
     enrollmentsThisMonth.forEach((enrollment) => {
       if (enrollment.course && enrollment.course.price) {
         const price = enrollment.course.price;
-        const currency = enrollment.course.currency || "AED";
+        const currency = enrollment.course.currency || "INR";
         monthlyRevenue += price;
-        revenueByCurrency[currency] = (revenueByCurrency[currency] || 0) + price;
+        revenueByCurrency[currency] =
+          (revenueByCurrency[currency] || 0) + price;
       }
     });
 
-    const primaryCurrency = Object.keys(revenueByCurrency).length > 0
-      ? Object.keys(revenueByCurrency).reduce((a, b) => revenueByCurrency[a] > revenueByCurrency[b] ? a : b)
-      : "AED";
+    const primaryCurrency =
+      Object.keys(revenueByCurrency).length > 0
+        ? Object.keys(revenueByCurrency).reduce((a, b) =>
+            revenueByCurrency[a] > revenueByCurrency[b] ? a : b
+          )
+        : "INR";
 
-    const revenueFormatted = monthlyRevenue >= 1000
-      ? `${primaryCurrency} ${(monthlyRevenue / 1000).toFixed(1)}K`
-      : `${primaryCurrency} ${Math.round(monthlyRevenue)}`;
+    const revenueFormatted = formatCurrency(monthlyRevenue);
 
-    const learnersDelta = learnersLastMonth > 0
-      ? `+${((learnersLastWeek / learnersLastMonth) * 100).toFixed(1)}% vs last week`
-      : `${learnersLastWeek} new this week`;
+    const learnersDelta =
+      learnersLastMonth > 0
+        ? `+${((learnersLastWeek / learnersLastMonth) * 100).toFixed(
+            1
+          )}% vs last week`
+        : `${learnersLastWeek} new this week`;
 
-    const revenueDelta = enrollmentsLastMonth > 0
-      ? `+${((enrollmentsThisMonth.length / enrollmentsLastMonth) * 100).toFixed(0)}% vs last month`
-      : "New this month";
+    const revenueDelta =
+      enrollmentsLastMonth > 0
+        ? `+${(
+            (enrollmentsThisMonth.length / enrollmentsLastMonth) *
+            100
+          ).toFixed(0)}% vs last month`
+        : "New this month";
 
     const formatTimeAgo = (date) => {
       const diffMs = now - new Date(date);
@@ -499,7 +673,8 @@ export const getDashboardData = async (req, res, next) => {
       const diffDays = Math.floor(diffMs / 86400000);
       if (diffMins < 1) return "Just now";
       if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+      if (diffHours < 24)
+        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
       if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       return new Date(date).toLocaleDateString();
@@ -512,20 +687,35 @@ export const getDashboardData = async (req, res, next) => {
       const diffDays = Math.floor(diffMs / 86400000);
       if (diffMins < 1) return "Just now";
       if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-      if (diffDays === 0) return "Today, " + new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      if (diffHours < 24)
+        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+      if (diffDays === 0)
+        return (
+          "Today, " +
+          new Date(date).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
       if (diffDays === 1) return "Yesterday";
-      return new Date(date).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      return new Date(date).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     };
 
     // Build activities with timestamps for sorting
     const activities = [];
-    
+
     recentEnrollments.forEach((enrollment) => {
       activities.push({
         icon: "🎓",
         title: "New course enrollment",
-        description: `${enrollment.student?.fullName || "Student"} enrolled in ${enrollment.course?.title || "Course"}`,
+        description: `${
+          enrollment.student?.fullName || "Student"
+        } enrolled in ${enrollment.course?.title || "Course"}`,
         time: formatTime(enrollment.createdAt),
         timestamp: enrollment.createdAt,
         type: "enrollment",
@@ -534,13 +724,19 @@ export const getDashboardData = async (req, res, next) => {
 
     for (const completion of recentCompletions || []) {
       try {
-        const student = await User.findById(completion._id).select("fullName").lean();
-        const course = await Course.findById(completion.courseId).select("title").lean();
+        const student = await User.findById(completion._id)
+          .select("fullName")
+          .lean();
+        const course = await Course.findById(completion.courseId)
+          .select("title")
+          .lean();
         if (completion.lastCompleted) {
           activities.push({
             icon: "✅",
             title: "Course completion",
-            description: `${student?.fullName || "Student"} completed ${course?.title || "course"}`,
+            description: `${student?.fullName || "Student"} completed ${
+              course?.title || "course"
+            }`,
             time: formatTime(completion.lastCompleted),
             timestamp: completion.lastCompleted,
             type: "completion",
@@ -548,7 +744,10 @@ export const getDashboardData = async (req, res, next) => {
         }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("[SuperAdmin] Error processing completion:", error.message);
+        console.error(
+          "[SuperAdmin] Error processing completion:",
+          error.message
+        );
         // Skip this completion
       }
     }
@@ -557,7 +756,11 @@ export const getDashboardData = async (req, res, next) => {
       activities.push({
         icon: "💼",
         title: "New job application",
-        description: `${application.applicant?.fullName || "Applicant"} applied for ${application.job?.title || "position"} at ${application.job?.company || "company"}`,
+        description: `${
+          application.applicant?.fullName || "Applicant"
+        } applied for ${application.job?.title || "position"} at ${
+          application.job?.company || "company"
+        }`,
         time: formatTime(application.createdAt),
         timestamp: application.createdAt,
         type: "application",
@@ -568,7 +771,9 @@ export const getDashboardData = async (req, res, next) => {
       activities.push({
         icon: "📝",
         title: "New blog published",
-        description: `${blog.author?.fullName || "Author"} published "${blog.title}"`,
+        description: `${blog.author?.fullName || "Author"} published "${
+          blog.title
+        }"`,
         time: formatTime(blog.publishedAt || blog.createdAt),
         timestamp: blog.publishedAt || blog.createdAt,
         type: "blog",
@@ -585,14 +790,16 @@ export const getDashboardData = async (req, res, next) => {
     const pendingCoursesCount = (pendingCourses || []).length;
     const pendingEbooksCount = (pendingEbooks || []).length;
     const totalPendingSubmissions = pendingCoursesCount + pendingEbooksCount;
-    
+
     // For franchise leads, we'll use 0 as placeholder (no franchise model exists yet)
     const franchiseLeadsCount = 0;
-    
+
     // Calculate system health (simple uptime check based on MongoDB connection)
     const isMongoConnected = mongoose.connection.readyState === 1;
     const uptimePercentage = isMongoConnected ? "99.97%" : "0%";
-    const systemStatus = isMongoConnected ? "All services operational" : "Service disruption detected";
+    const systemStatus = isMongoConnected
+      ? "All services operational"
+      : "Service disruption detected";
 
     const responseData = {
       stats: [
@@ -606,7 +813,10 @@ export const getDashboardData = async (req, res, next) => {
           id: "teachers",
           label: "Verified Teachers",
           value: (verifiedTeachers || 0).toString(),
-          delta: (pendingTeachers || 0) > 0 ? `${pendingTeachers} pending approvals` : "All verified",
+          delta:
+            (pendingTeachers || 0) > 0
+              ? `${pendingTeachers} pending approvals`
+              : "All verified",
         },
         {
           id: "revenue",
@@ -687,30 +897,34 @@ export const getDashboardData = async (req, res, next) => {
       quickActions: [
         {
           label: "Approve teachers",
-          description: pendingTeachersCount > 0 
-            ? `${pendingTeachersCount} awaiting verification` 
-            : "All teachers verified",
+          description:
+            pendingTeachersCount > 0
+              ? `${pendingTeachersCount} awaiting verification`
+              : "All teachers verified",
           href: "/super-admin/approvals/teachers",
         },
         {
           label: "Approve students",
-          description: pendingStudentsCount > 0 
-            ? `${pendingStudentsCount} awaiting verification` 
-            : "All students verified",
+          description:
+            pendingStudentsCount > 0
+              ? `${pendingStudentsCount} awaiting verification`
+              : "All students verified",
           href: "/super-admin/approvals/students",
         },
         {
           label: "Moderate course catalog",
-          description: totalPendingSubmissions > 0 
-            ? `${totalPendingSubmissions} new submissions` 
-            : "No pending submissions",
+          description:
+            totalPendingSubmissions > 0
+              ? `${totalPendingSubmissions} new submissions`
+              : "No pending submissions",
           href: "/super-admin/approvals/courses",
         },
         {
           label: "Review franchise leads",
-          description: franchiseLeadsCount > 0 
-            ? `${franchiseLeadsCount} warm opportunities` 
-            : "No franchise leads",
+          description:
+            franchiseLeadsCount > 0
+              ? `${franchiseLeadsCount} warm opportunities`
+              : "No franchise leads",
           href: "/super-admin/franchise",
         },
         {
@@ -749,7 +963,7 @@ export const getSystemHealth = async (req, res, next) => {
 
     const now = new Date();
     const startTime = process.uptime();
-    
+
     // Check MongoDB connection
     const mongoState = mongoose.connection.readyState;
     const mongoStates = {
@@ -776,10 +990,14 @@ export const getSystemHealth = async (req, res, next) => {
     // Get collection counts
     let collectionCounts = {};
     try {
-      const collections = await mongoose.connection.db.listCollections().toArray();
+      const collections = await mongoose.connection.db
+        .listCollections()
+        .toArray();
       for (const collection of collections.slice(0, 10)) {
         try {
-          const count = await mongoose.connection.db.collection(collection.name).countDocuments();
+          const count = await mongoose.connection.db
+            .collection(collection.name)
+            .countDocuments();
           collectionCounts[collection.name] = count;
         } catch (error) {
           // Skip collections that can't be counted
@@ -812,11 +1030,12 @@ export const getSystemHealth = async (req, res, next) => {
     const uptimeDays = Math.floor(uptimeSeconds / 86400);
     const uptimeHours = Math.floor((uptimeSeconds % 86400) / 3600);
     const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
-    const uptimeFormatted = uptimeDays > 0
-      ? `${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m`
-      : uptimeHours > 0
-      ? `${uptimeHours}h ${uptimeMinutes}m`
-      : `${uptimeMinutes}m`;
+    const uptimeFormatted =
+      uptimeDays > 0
+        ? `${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m`
+        : uptimeHours > 0
+        ? `${uptimeHours}h ${uptimeMinutes}m`
+        : `${uptimeMinutes}m`;
 
     // Calculate uptime percentage (simplified - assuming 99.97% if connected)
     const uptimePercentage = isMongoConnected ? "99.97%" : "0%";
@@ -848,13 +1067,18 @@ export const getSystemHealth = async (req, res, next) => {
         status: mongoStatus,
         connected: isMongoConnected,
         collections: Object.keys(collectionCounts).length,
-        totalDocuments: Object.values(collectionCounts).reduce((a, b) => a + b, 0),
+        totalDocuments: Object.values(collectionCounts).reduce(
+          (a, b) => a + b,
+          0
+        ),
         collectionCounts: collectionCounts,
-        stats: dbStats ? {
-          dataSize: Math.round((dbStats.dataSize || 0) / 1024 / 1024),
-          storageSize: Math.round((dbStats.storageSize || 0) / 1024 / 1024),
-          indexes: dbStats.indexes || 0,
-        } : null,
+        stats: dbStats
+          ? {
+              dataSize: Math.round((dbStats.dataSize || 0) / 1024 / 1024),
+              storageSize: Math.round((dbStats.storageSize || 0) / 1024 / 1024),
+              indexes: dbStats.indexes || 0,
+            }
+          : null,
       },
       api: apiHealth,
       users: {
@@ -876,4 +1100,3 @@ export const getSystemHealth = async (req, res, next) => {
     return next(error);
   }
 };
-

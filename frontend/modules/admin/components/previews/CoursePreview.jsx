@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FaPlay, FaTimes } from "react-icons/fa";
 import { getMediaUrl } from "../../../../src/utils/mediaUrl";
+import { formatCurrency } from "../../../../utils/currencyUtils";
 
 const CoursePreview = ({ course }) => {
   const [previewingVideo, setPreviewingVideo] = useState(null);
@@ -32,9 +33,13 @@ const CoursePreview = ({ course }) => {
           </div>
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+            {course.title}
+          </h1>
           {metadata.subtitle && (
-            <p className="mt-2 text-lg text-[#D4AF37] font-semibold">{metadata.subtitle}</p>
+            <p className="mt-2 text-lg text-[#D4AF37] font-semibold">
+              {metadata.subtitle}
+            </p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
@@ -44,7 +49,9 @@ const CoursePreview = ({ course }) => {
             </span>
           )}
           {course.duration && (
-            <span className="text-gray-300">Duration: {course.duration} hours</span>
+            <span className="text-gray-300">
+              Duration: {course.duration} hours
+            </span>
           )}
           {metadata.difficulty && (
             <span className="text-gray-300">Level: {metadata.difficulty}</span>
@@ -54,7 +61,7 @@ const CoursePreview = ({ course }) => {
           )}
           {course.price !== undefined && (
             <span className="text-[#F5D26A] font-semibold">
-              {course.price === 0 ? "Free" : `${course.currency || "AED"} ${course.price}`}
+              {course.price === 0 ? "Free" : formatCurrency(course.price)}
             </span>
           )}
         </div>
@@ -63,8 +70,12 @@ const CoursePreview = ({ course }) => {
       {/* Description */}
       {course.description && (
         <div className="rounded-xl border border-white/10 bg-[#050505]/80 p-4">
-          <h3 className="mb-2 text-lg font-semibold text-white">Course Description</h3>
-          <p className="text-base text-gray-300 leading-relaxed">{course.description}</p>
+          <h3 className="mb-2 text-lg font-semibold text-white">
+            Course Description
+          </h3>
+          <p className="text-base text-gray-300 leading-relaxed">
+            {course.description}
+          </p>
         </div>
       )}
 
@@ -78,7 +89,9 @@ const CoursePreview = ({ course }) => {
             {course.instructor.fullName || "Unknown"}
           </p>
           {course.instructor.email && (
-            <p className="mt-1 text-sm text-gray-400">{course.instructor.email}</p>
+            <p className="mt-1 text-sm text-gray-400">
+              {course.instructor.email}
+            </p>
           )}
         </div>
       )}
@@ -86,7 +99,9 @@ const CoursePreview = ({ course }) => {
       {/* Learning Outcomes */}
       {metadata.learningOutcomes && (
         <div className="rounded-xl border border-white/10 bg-[#050505]/80 p-4">
-          <h3 className="mb-3 text-lg font-semibold text-white">Learning Outcomes</h3>
+          <h3 className="mb-3 text-lg font-semibold text-white">
+            Learning Outcomes
+          </h3>
           <div
             className="prose prose-invert max-w-none text-sm text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:my-1"
             dangerouslySetInnerHTML={{ __html: metadata.learningOutcomes }}
@@ -97,7 +112,9 @@ const CoursePreview = ({ course }) => {
       {/* Requirements */}
       {metadata.requirements && (
         <div className="rounded-xl border border-white/10 bg-[#050505]/80 p-4">
-          <h3 className="mb-3 text-lg font-semibold text-white">Requirements</h3>
+          <h3 className="mb-3 text-lg font-semibold text-white">
+            Requirements
+          </h3>
           <div
             className="prose prose-invert max-w-none text-sm text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:my-1"
             dangerouslySetInnerHTML={{ __html: metadata.requirements }}
@@ -108,7 +125,9 @@ const CoursePreview = ({ course }) => {
       {/* Syllabus */}
       {metadata.syllabus && (
         <div className="rounded-xl border border-white/10 bg-[#050505]/80 p-4">
-          <h3 className="mb-3 text-lg font-semibold text-white">Course Syllabus</h3>
+          <h3 className="mb-3 text-lg font-semibold text-white">
+            Course Syllabus
+          </h3>
           <div
             className="prose prose-invert max-w-none text-sm text-gray-300 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:my-1"
             dangerouslySetInnerHTML={{ __html: metadata.syllabus }}
@@ -131,7 +150,9 @@ const CoursePreview = ({ course }) => {
                   {idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-base font-semibold text-white">{video.title}</h4>
+                  <h4 className="text-base font-semibold text-white">
+                    {video.title}
+                  </h4>
                   {video.description && (
                     <p className="mt-1 text-sm text-gray-400 line-clamp-2">
                       {video.description}
@@ -189,9 +210,13 @@ const CoursePreview = ({ course }) => {
               </video>
             </div>
             <div className="mt-4 rounded-lg border border-white/10 bg-[#0a0a0a]/80 p-4">
-              <h4 className="text-lg font-semibold text-white">{previewingVideo.title}</h4>
+              <h4 className="text-lg font-semibold text-white">
+                {previewingVideo.title}
+              </h4>
               {previewingVideo.description && (
-                <p className="mt-2 text-sm text-gray-300">{previewingVideo.description}</p>
+                <p className="mt-2 text-sm text-gray-300">
+                  {previewingVideo.description}
+                </p>
               )}
             </div>
           </div>
@@ -222,4 +247,3 @@ const CoursePreview = ({ course }) => {
 };
 
 export default CoursePreview;
-

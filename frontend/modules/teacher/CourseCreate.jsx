@@ -70,7 +70,7 @@ const CourseCreate = () => {
 
   const priceHelper = useMemo(
     () => ({
-      price: "Enter price in AED. You can offer discounts later.",
+      price: "Enter price in INR. You can offer discounts later.",
       discount: "Optional. Leave blank if you don't want to run a promo.",
     }),
     []
@@ -170,7 +170,7 @@ const CourseCreate = () => {
       Number.isNaN(Number(trimmedPrice))
     ) {
       toast.error(
-        "Please enter a valid course price in AED (use 0 for free courses)."
+        "Please enter a valid course price in INR (use 0 for free courses)."
       );
       return;
     }
@@ -461,7 +461,7 @@ const CourseCreate = () => {
                   <label
                     htmlFor="price"
                     className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                    Price (AED)*
+                    Price (INR)*
                   </label>
                   <input
                     id="price"

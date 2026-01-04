@@ -112,6 +112,15 @@
   font-family: var(--font-accent);
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @keyframes slideDown {
   0% {
     opacity: 0;

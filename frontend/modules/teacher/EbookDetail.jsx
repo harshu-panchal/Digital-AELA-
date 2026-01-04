@@ -232,7 +232,7 @@ const EbookDetail = () => {
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="price" className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Price (AED)
+                  Price (INR)
                 </label>
                 <input
                   id="price"

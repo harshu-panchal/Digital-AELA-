@@ -12,7 +12,12 @@ import {
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { getFinancialDashboard, getExpensesByCategory, getMonthlyExpenses } from "../../src/services/api/expenses";
+import {
+  getFinancialDashboard,
+  getExpensesByCategory,
+  getMonthlyExpenses,
+} from "../../src/services/api/expenses";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const FinancialDashboard = () => {
   const { user } = useAuth();
@@ -35,7 +40,13 @@ const FinancialDashboard = () => {
     } else if (activeTab === "monthly") {
       loadMonthlyExpenses();
     }
-  }, [activeTab, filters.month, filters.year, filters.startDate, filters.endDate]);
+  }, [
+    activeTab,
+    filters.month,
+    filters.year,
+    filters.startDate,
+    filters.endDate,
+  ]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);
@@ -97,17 +108,25 @@ const FinancialDashboard = () => {
   };
 
   const formatMonth = (month, year) => {
-    return new Date(year, month - 1).toLocaleString("default", { month: "long", year: "numeric" });
+    return new Date(year, month - 1).toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
   };
 
   return (
     <div className="min-h-screen text-white">
-      <SEO title="Financial Dashboard | Digital AELA" description="View financial overview and analytics" />
+      <SEO
+        title="Financial Dashboard | Digital AELA"
+        description="View financial overview and analytics"
+      />
 
       <div className="space-y-10">
         <div>
           <h1 className="text-3xl font-semibold mb-2">Financial Dashboard</h1>
-          <p className="text-slate-400">Track income, expenses, and financial health</p>
+          <p className="text-slate-400">
+            Track income, expenses, and financial health
+          </p>
         </div>
 
         <div className="mb-6 flex gap-2 border-b border-white/10">
@@ -144,26 +163,41 @@ const FinancialDashboard = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Month</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Month
+                </label>
                 <select
                   value={filters.month}
-                  onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, month: e.target.value })
+                  }
                   className="w-full rounded-xl border border-white/10 bg-black px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>All Months</option>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    All Months
+                  </option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month} style={{ backgroundColor: "#000000" }}>
-                      {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
+                    <option
+                      key={month}
+                      value={month}
+                      style={{ backgroundColor: "#000000" }}>
+                      {new Date(2000, month - 1).toLocaleString("default", {
+                        month: "long",
+                      })}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Year</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Year
+                </label>
                 <input
                   type="number"
                   value={filters.year}
-                  onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, year: e.target.value })
+                  }
                   className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
                 />
               </div>
@@ -182,8 +216,7 @@ const FinancialDashboard = () => {
                       <p className="text-sm text-slate-400">Total Income</p>
                     </div>
                     <p className="text-3xl font-semibold text-white">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.totalIncome?.toFixed(2) || "0.00"}
+                      {formatCurrency(dashboardData.summary?.totalIncome || 0)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
@@ -192,8 +225,9 @@ const FinancialDashboard = () => {
                       <p className="text-sm text-slate-400">Total Expenses</p>
                     </div>
                     <p className="text-3xl font-semibold text-white">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.totalExpenses?.toFixed(2) || "0.00"}
+                      {formatCurrency(
+                        dashboardData.summary?.totalExpenses || 0
+                      )}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
@@ -207,10 +241,11 @@ const FinancialDashboard = () => {
                     </div>
                     <p
                       className={`text-3xl font-semibold ${
-                        dashboardData.summary?.netProfit >= 0 ? "text-emerald-400" : "text-red-400"
+                        dashboardData.summary?.netProfit >= 0
+                          ? "text-emerald-400"
+                          : "text-red-400"
                       }`}>
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.netProfit?.toFixed(2) || "0.00"}
+                      {formatCurrency(dashboardData.summary?.netProfit || 0)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
@@ -219,8 +254,9 @@ const FinancialDashboard = () => {
                       <p className="text-sm text-slate-400">Pending Expenses</p>
                     </div>
                     <p className="text-3xl font-semibold text-white">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.totalPendingExpenses?.toFixed(2) || "0.00"}
+                      {formatCurrency(
+                        dashboardData.summary?.totalPendingExpenses || 0
+                      )}
                     </p>
                   </div>
                 </div>
@@ -229,65 +265,81 @@ const FinancialDashboard = () => {
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
                     <p className="text-sm text-slate-400 mb-1">Refunds</p>
                     <p className="text-2xl font-semibold text-red-400">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {dashboardData.summary?.totalRefunds?.toFixed(2) || "0.00"}
+                      {formatCurrency(dashboardData.summary?.totalRefunds || 0)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
-                    <p className="text-sm text-slate-400 mb-1">Available Fund</p>
+                    <p className="text-sm text-slate-400 mb-1">
+                      Available Fund
+                    </p>
                     <p className="text-2xl font-semibold text-emerald-400">
-                      {dashboardData.summary?.currency || "AED"}{" "}
-                      {(
+                      {formatCurrency(
                         (dashboardData.summary?.totalIncome || 0) -
-                        (dashboardData.summary?.totalExpenses || 0) -
-                        (dashboardData.summary?.totalPayouts || 0)
-                      ).toFixed(2)}
+                          (dashboardData.summary?.totalExpenses || 0) -
+                          (dashboardData.summary?.totalPayouts || 0)
+                      )}
                     </p>
                   </div>
                 </div>
 
-                {dashboardData.expensesByCategory && dashboardData.expensesByCategory.length > 0 && (
-                  <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Expenses by Category</h2>
-                    <div className="space-y-3">
-                      {dashboardData.expensesByCategory
-                        .sort((a, b) => b.total - a.total)
-                        .map((category) => (
-                          <div key={category.category} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <HiOutlineTag className="h-5 w-5 text-slate-400" />
-                              <span className="text-white">{getCategoryLabel(category.category)}</span>
-                              <span className="text-xs text-slate-400">({category.count} items)</span>
+                {dashboardData.expensesByCategory &&
+                  dashboardData.expensesByCategory.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
+                      <h2 className="text-xl font-semibold text-white mb-4">
+                        Expenses by Category
+                      </h2>
+                      <div className="space-y-3">
+                        {dashboardData.expensesByCategory
+                          .sort((a, b) => b.total - a.total)
+                          .map((category) => (
+                            <div
+                              key={category.category}
+                              className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <HiOutlineTag className="h-5 w-5 text-slate-400" />
+                                <span className="text-white">
+                                  {getCategoryLabel(category.category)}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  ({category.count} items)
+                                </span>
+                              </div>
+                              <span className="text-lg font-semibold text-white">
+                                {formatCurrency(category.total)}
+                              </span>
                             </div>
-                            <span className="text-lg font-semibold text-white">
-                              {dashboardData.summary?.currency || "AED"} {category.total.toFixed(2)}
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                {dashboardData.pendingExpenses &&
+                  dashboardData.pendingExpenses.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
+                      <h2 className="text-xl font-semibold text-white mb-4">
+                        Pending Expenses
+                      </h2>
+                      <div className="space-y-2">
+                        {dashboardData.pendingExpenses.map((expense) => (
+                          <div
+                            key={expense._id}
+                            className="flex items-center justify-between rounded-xl border border-white/10 bg-[#111] px-4 py-3">
+                            <div>
+                              <p className="font-semibold text-white">
+                                {expense.title}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {getCategoryLabel(expense.category)}
+                              </p>
+                            </div>
+                            <span className="text-lg font-semibold text-yellow-400">
+                              {formatCurrency(expense.amount)}
                             </span>
                           </div>
                         ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {dashboardData.pendingExpenses && dashboardData.pendingExpenses.length > 0 && (
-                  <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Pending Expenses</h2>
-                    <div className="space-y-2">
-                      {dashboardData.pendingExpenses.map((expense) => (
-                        <div
-                          key={expense._id}
-                          className="flex items-center justify-between rounded-xl border border-white/10 bg-[#111] px-4 py-3">
-                          <div>
-                            <p className="font-semibold text-white">{expense.title}</p>
-                            <p className="text-xs text-slate-400">{getCategoryLabel(expense.category)}</p>
-                          </div>
-                          <span className="text-lg font-semibold text-yellow-400">
-                            {expense.currency} {expense.amount.toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  )}
               </>
             ) : (
               <div className="text-center py-12 rounded-3xl border border-white/10 bg-[#060A17]/90">
@@ -301,26 +353,41 @@ const FinancialDashboard = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Month</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Month
+                </label>
                 <select
                   value={filters.month}
-                  onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, month: e.target.value })
+                  }
                   className="w-full rounded-xl border border-white/10 bg-black px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
                   style={{ backgroundColor: "#000000" }}>
-                  <option value="" style={{ backgroundColor: "#000000" }}>All Months</option>
+                  <option value="" style={{ backgroundColor: "#000000" }}>
+                    All Months
+                  </option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month} style={{ backgroundColor: "#000000" }}>
-                      {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
+                    <option
+                      key={month}
+                      value={month}
+                      style={{ backgroundColor: "#000000" }}>
+                      {new Date(2000, month - 1).toLocaleString("default", {
+                        month: "long",
+                      })}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Year</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Year
+                </label>
                 <input
                   type="number"
                   value={filters.year}
-                  onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, year: e.target.value })
+                  }
                   className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
                 />
               </div>
@@ -345,10 +412,12 @@ const FinancialDashboard = () => {
                           <h3 className="text-xl font-semibold text-white">
                             {getCategoryLabel(category.category)}
                           </h3>
-                          <p className="text-sm text-slate-400">{category.count} expenses</p>
+                          <p className="text-sm text-slate-400">
+                            {category.count} expenses
+                          </p>
                         </div>
                         <p className="text-3xl font-semibold text-red-400">
-                          AED {category.total.toFixed(2)}
+                          {formatCurrency(category.total)}
                         </p>
                       </div>
                     </motion.div>
@@ -361,11 +430,15 @@ const FinancialDashboard = () => {
         {activeTab === "monthly" && (
           <>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Year</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Year
+              </label>
               <input
                 type="number"
                 value={filters.year}
-                onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, year: e.target.value })
+                }
                 className="w-full max-w-xs rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
               />
             </div>
@@ -387,10 +460,12 @@ const FinancialDashboard = () => {
                         <h3 className="text-xl font-semibold text-white">
                           {formatMonth(month.month, month.year)}
                         </h3>
-                        <p className="text-sm text-slate-400">{month.count} expenses</p>
+                        <p className="text-sm text-slate-400">
+                          {month.count} expenses
+                        </p>
                       </div>
                       <p className="text-3xl font-semibold text-red-400">
-                        AED {month.total.toFixed(2)}
+                        {formatCurrency(month.total)}
                       </p>
                     </div>
                   </motion.div>

@@ -19,7 +19,7 @@ const paymentSchema = new mongoose.Schema(
     },
     currency: {
       type: String,
-      default: "AED",
+      default: "INR",
       uppercase: true,
     },
     status: {

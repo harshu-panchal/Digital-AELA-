@@ -159,7 +159,7 @@ const JoinInfluencer = () => {
           name: "rateExpectation",
           label: "Rate Expectation (Specify currency)",
           type: "text",
-          placeholder: "AED 120 / hour",
+          placeholder: "₹ 2500 / hour",
           required: false,
         },
         {

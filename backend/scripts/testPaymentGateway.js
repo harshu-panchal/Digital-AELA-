@@ -32,8 +32,8 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, "..", ".env") });
 
 // Test configuration
-const TEST_AMOUNT = 100; // AED
-const TEST_CURRENCY = "AED";
+const TEST_AMOUNT = 100; // INR
+const TEST_CURRENCY = "INR";
 
 // Colors for console output
 const colors = {

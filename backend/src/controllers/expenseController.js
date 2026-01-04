@@ -475,7 +475,7 @@ export const getFinancialDashboard = async (req, res, next) => {
         totalPayouts,
         netProfit,
         totalPendingExpenses,
-        currency: "AED",
+        currency: "INR",
       },
       expensesByCategory: Object.values(expensesByCategory),
       monthlyExpenses,

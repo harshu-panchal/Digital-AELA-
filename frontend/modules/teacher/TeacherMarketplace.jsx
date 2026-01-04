@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import SEO from "../../src/components/SEO";
 import { fetchEbooks } from "../../src/services/api/resources";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const TeacherMarketplace = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const TeacherMarketplace = () => {
       title: "Leadership Storytelling Masterclass",
       mentor: "Sarah Thomas",
       type: "course",
-      price: "AED 799",
+      price: formatCurrency(799),
       reason: "Great addition to your corporate communication bundle",
       image: "https://via.placeholder.com/300x200?text=Course",
     },
@@ -37,7 +38,7 @@ const TeacherMarketplace = () => {
       title: "Advanced Public Speaking",
       mentor: "John Smith",
       type: "course",
-      price: "AED 649",
+      price: formatCurrency(649),
       reason: "Perfect for enhancing your teaching portfolio",
       image: "https://via.placeholder.com/300x200?text=Course",
     },
@@ -49,7 +50,7 @@ const TeacherMarketplace = () => {
       title: "Advanced Debate Challenges",
       mentor: "Mohammed Ali",
       type: "quiz",
-      price: "AED 299",
+      price: formatCurrency(299),
       reason: "Boost Learn & Earn engagement",
       image: "https://via.placeholder.com/300x200?text=Quiz",
     },
@@ -58,7 +59,7 @@ const TeacherMarketplace = () => {
       title: "Grammar Mastery Pack",
       mentor: "Emma Wilson",
       type: "quiz",
-      price: "AED 199",
+      price: formatCurrency(199),
       reason: "Comprehensive grammar assessment tools",
       image: "https://via.placeholder.com/300x200?text=Quiz",
     },
@@ -70,15 +71,22 @@ const TeacherMarketplace = () => {
         setLoading(true);
         const response = await fetchEbooks({ page: 1, pageSize: 50 });
         const ebooksFromApi = (response.data || []).map((ebook) => {
-          const price = ebook.metadata?.price !== undefined && ebook.metadata.price !== null && ebook.metadata.price !== "" ? Number(ebook.metadata.price) : 0;
+          const price =
+            ebook.metadata?.price !== undefined &&
+            ebook.metadata.price !== null &&
+            ebook.metadata.price !== ""
+              ? Number(ebook.metadata.price)
+              : 0;
           return {
             id: ebook._id,
             title: ebook.title,
             mentor: ebook.metadata?.author || "Digital AELA",
             type: "ebook",
-            price: price > 0 ? `AED ${price}` : "Free",
+            price: price > 0 ? formatCurrency(price) : "Free",
             reason: "Enhance your teaching resources",
-            image: ebook.metadata?.coverImage || "https://via.placeholder.com/300x200?text=E-Book",
+            image:
+              ebook.metadata?.coverImage ||
+              "https://via.placeholder.com/300x200?text=E-Book",
           };
         });
         setEbooks(ebooksFromApi);
@@ -146,13 +154,10 @@ const TeacherMarketplace = () => {
       />
 
       {/* Header */}
-      <motion.section
-        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
+      <motion.section className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
-        <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
-        <motion.div
-          className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+        <motion.div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
+        <motion.div className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <Link
@@ -162,19 +167,16 @@ const TeacherMarketplace = () => {
             <span>Back to Dashboard</span>
           </Link>
 
-          <motion.h1
-            className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight">
+          <motion.h1 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight">
             Teacher <span className="text-[#D4AF37]">Marketplace</span>
           </motion.h1>
-          <motion.p
-            className="text-base text-gray-300 max-w-2xl mb-8">
+          <motion.p className="text-base text-gray-300 max-w-2xl mb-8">
             Discover premium courses, e-books, and quiz packs from top mentors.
             Enhance your teaching resources and grow your impact.
           </motion.p>
 
           {/* Search and Filters */}
-          <motion.div
-            className="flex flex-col md:flex-row gap-4">
+          <motion.div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -207,10 +209,10 @@ const TeacherMarketplace = () => {
       <section className="py-12 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results Count */}
-          <motion.div
-            className="mb-8">
+          <motion.div className="mb-8">
             <p className="text-gray-300 text-sm">
-              {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} found
+              {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""}{" "}
+              found
               {searchQuery && ` for "${searchQuery}"`}
               {selectedType !== "all" && ` in ${getTypeLabel(selectedType)}s`}
             </p>
@@ -290,8 +292,7 @@ const TeacherMarketplace = () => {
               ))}
             </div>
           ) : !loading ? (
-            <motion.div
-              className="text-center py-20">
+            <motion.div className="text-center py-20">
               <div className="text-6xl mb-4">🛒</div>
               <h3 className="text-2xl font-bold text-white mb-2 font-display">
                 No items found

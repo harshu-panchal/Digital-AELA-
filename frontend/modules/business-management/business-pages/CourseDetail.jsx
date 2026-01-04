@@ -6,7 +6,10 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
-import { buildCoursePaymentLink, extractNumericPrice } from "../utils/paymentLinks";
+import {
+  buildCoursePaymentLink,
+  extractNumericPrice,
+} from "../utils/paymentLinks";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { redirectToCustomCoursePayment } from "../utils/customPaymentRedirect";
 import { getCourseBySlug } from "../data/courseCatalog";
@@ -21,6 +24,7 @@ import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation"
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const categoryPaths = {
   "English Language": "/courses/english-language",
@@ -46,34 +50,76 @@ const normalizeCourseData = (backendCourse) => {
     ...courseData,
     // Basic fields
     title: courseData.title || "",
-    description: courseData.description || metadata.subtitle || metadata.description || "",
-    longDescription: courseData.longDescription || courseData.description || metadata.longDescription || metadata.subtitle || "",
+    description:
+      courseData.description || metadata.subtitle || metadata.description || "",
+    longDescription:
+      courseData.longDescription ||
+      courseData.description ||
+      metadata.longDescription ||
+      metadata.subtitle ||
+      "",
     category: courseData.category || metadata.category || "General",
     difficulty: courseData.difficulty || metadata.difficulty || "",
     language: courseData.language || metadata.language || "",
-    duration: courseData.duration ? `${courseData.duration} hours` : metadata.duration || "",
-    price: courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request",
-    priceLabel: courseData.priceLabel || (courseData.price === 0 ? "Free" : courseData.price ? `AED ${courseData.price}` : "On Request"),
+    duration: courseData.duration
+      ? `${courseData.duration} hours`
+      : metadata.duration || "",
+    price:
+      courseData.price === 0
+        ? "Free"
+        : courseData.price
+        ? formatCurrency(courseData.price)
+        : "On Request",
+    priceLabel:
+      courseData.priceLabel ||
+      (courseData.price === 0
+        ? "Free"
+        : courseData.price
+        ? formatCurrency(courseData.price)
+        : "On Request"),
     // Preserve original numeric price for payment processing
-    rawPrice: courseData.rawPrice !== undefined && courseData.rawPrice !== null
-      ? courseData.rawPrice // Use existing rawPrice if available
-      : typeof courseData.price === 'string'
-        ? parseFloat(courseData.price.replace(/[^0-9.]/g, ''))
+    rawPrice:
+      courseData.rawPrice !== undefined && courseData.rawPrice !== null
+        ? courseData.rawPrice // Use existing rawPrice if available
+        : typeof courseData.price === "string"
+        ? parseFloat(courseData.price.replace(/[^0-9.]/g, ""))
         : courseData.price, // Store original numeric price for GiftButton
-    originalPrice: typeof courseData.price === 'number' ? courseData.price : (courseData.price ? parseFloat(courseData.price) : null),
+    originalPrice:
+      typeof courseData.price === "number"
+        ? courseData.price
+        : courseData.price
+        ? parseFloat(courseData.price)
+        : null,
     discountPrice: courseData.discountPrice || metadata.discountPrice || null,
-    format: courseData.format || metadata.deliveryMode || courseData.deliveryMode || "",
+    format:
+      courseData.format ||
+      metadata.deliveryMode ||
+      courseData.deliveryMode ||
+      "",
     deliveryMode: courseData.deliveryMode || metadata.deliveryMode || "",
     // Media fields
-    image: courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.thumbnailUrl || "",
-    coverImage: courseData.coverImage || courseData.thumbnailUrl || courseData.thumbnail || courseData.image || metadata.coverImage || "",
+    image:
+      courseData.thumbnailUrl ||
+      courseData.thumbnail ||
+      courseData.image ||
+      metadata.thumbnailUrl ||
+      "",
+    coverImage:
+      courseData.coverImage ||
+      courseData.thumbnailUrl ||
+      courseData.thumbnail ||
+      courseData.image ||
+      metadata.coverImage ||
+      "",
     introVideoUrl: courseData.introVideoUrl || metadata.introVideoUrl || "",
     brochureUrl: courseData.brochureUrl || metadata.brochureUrl || "",
     // Content fields
-    learningOutcomes: courseData.learningOutcomes || metadata.learningOutcomes || "",
+    learningOutcomes:
+      courseData.learningOutcomes || metadata.learningOutcomes || "",
     requirements: courseData.requirements || metadata.requirements || "",
     syllabus: courseData.syllabus || metadata.syllabus || "",
-    detailedSyllabus: courseData.detailedSyllabus || metadata.detailedSyllabus || null,
+    detailedSyllabus:
+      courseData.detailedSyllabus || metadata.detailedSyllabus || null,
     // Feature fields
     features: courseData.features || metadata.tags || courseData.tags || [],
     highlights: courseData.highlights || metadata.tags || courseData.tags || [],
@@ -81,7 +127,10 @@ const normalizeCourseData = (backendCourse) => {
     // Other fields
     lessonCount: courseData.lessonCount || metadata.lessonCount || null,
     subtitle: courseData.subtitle || metadata.subtitle || "",
-    instructor: courseData.instructor?.fullName || courseData.instructorName || "Digital AELA",
+    instructor:
+      courseData.instructor?.fullName ||
+      courseData.instructorName ||
+      "Digital AELA",
   };
 };
 
@@ -138,13 +187,15 @@ const CourseDetail = () => {
             const response = await fetchCourseById(stateCourse._id);
             const backendCourse = normalizeCourseData(response);
             // Preserve detailedSyllabus from catalog/state course if backend doesn't have it
-            const preservedSyllabus = (catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus);
+            const preservedSyllabus =
+              catalogCourse?.detailedSyllabus || stateCourse?.detailedSyllabus;
             setCourse({
               ...catalogCourse,
               ...stateCourse,
               ...backendCourse,
               // Preserve detailedSyllabus from catalog if backend doesn't provide it
-              detailedSyllabus: backendCourse.detailedSyllabus || preservedSyllabus
+              detailedSyllabus:
+                backendCourse.detailedSyllabus || preservedSyllabus,
             });
             setIsLoadingCourse(false);
             return;
@@ -154,7 +205,10 @@ const CourseDetail = () => {
             setCourse(fallbackCourse);
             setIsLoadingCourse(false);
             // Only redirect if we have no course data at all
-            if (!fallbackCourse || (!fallbackCourse.title && !fallbackCourse._id)) {
+            if (
+              !fallbackCourse ||
+              (!fallbackCourse.title && !fallbackCourse._id)
+            ) {
               navigate("/", { replace: true });
             }
             return;
@@ -178,7 +232,10 @@ const CourseDetail = () => {
             setCourse(fallbackCourse);
             setIsLoadingCourse(false);
             // Only redirect if we have no course data at all
-            if (!fallbackCourse || (!fallbackCourse.title && !fallbackCourse._id)) {
+            if (
+              !fallbackCourse ||
+              (!fallbackCourse.title && !fallbackCourse._id)
+            ) {
               navigate("/", { replace: true });
             }
             return;
@@ -190,7 +247,10 @@ const CourseDetail = () => {
         setCourse(finalCourse);
         setIsLoadingCourse(false);
         // Only redirect if we have no course data at all
-        if (!finalCourse || (!finalCourse.title && !finalCourse._id && !finalCourse.slug)) {
+        if (
+          !finalCourse ||
+          (!finalCourse.title && !finalCourse._id && !finalCourse.slug)
+        ) {
           navigate("/", { replace: true });
         }
       } catch (error) {
@@ -324,9 +384,9 @@ const CourseDetail = () => {
   let priceValue = 0;
 
   // First try to use the preserved original numeric price
-  if (typeof originalPrice === 'number' && originalPrice > 0) {
+  if (typeof originalPrice === "number" && originalPrice > 0) {
     priceValue = originalPrice;
-  } else if (typeof course.price === 'number' && course.price > 0) {
+  } else if (typeof course.price === "number" && course.price > 0) {
     // Fallback to course.price if it's still a number
     priceValue = course.price;
   } else {
@@ -334,7 +394,10 @@ const CourseDetail = () => {
     priceValue = extractNumericPrice(priceDisplay);
   }
 
-  const isFreeCourse = priceValue === 0 || originalPrice === 0 || (typeof originalPrice === 'number' && originalPrice === 0);
+  const isFreeCourse =
+    priceValue === 0 ||
+    originalPrice === 0 ||
+    (typeof originalPrice === "number" && originalPrice === 0);
   const categoryPath = categoryPaths[category] ?? "/courses";
   const summaryText = longDescription || description || fallbackSummary;
 
@@ -355,11 +418,17 @@ const CourseDetail = () => {
         setIsEnrolling(true);
         try {
           const result = await enrollInCourse(course._id);
-          setEnrollmentStatus({ enrolled: true, enrollment: result.enrollment });
+          setEnrollmentStatus({
+            enrolled: true,
+            enrollment: result.enrollment,
+          });
           toast.success("Successfully enrolled in course!");
         } catch (error) {
           if (error.code === "ALREADY_ENROLLED") {
-            setEnrollmentStatus({ enrolled: true, enrollment: error.enrollment });
+            setEnrollmentStatus({
+              enrolled: true,
+              enrollment: error.enrollment,
+            });
             toast.info("You are already enrolled in this course");
           } else {
             toast.error(error.message || "Failed to enroll. Please try again.");
@@ -371,7 +440,9 @@ const CourseDetail = () => {
         // Paid course - redirect to custom payment confirmation page (guest-friendly)
         // Validate price before proceeding
         if (!priceValue || priceValue <= 0) {
-          toast.error("This course price is not available. Please contact support.");
+          toast.error(
+            "This course price is not available. Please contact support."
+          );
           return;
         }
 
@@ -381,14 +452,18 @@ const CourseDetail = () => {
       // For catalog courses without _id, check if it's free
       if (isFreeCourse) {
         // Free catalog course - show message that enrollment requires backend course
-        toast.info("This free course requires backend setup. Please contact support.");
+        toast.info(
+          "This free course requires backend setup. Please contact support."
+        );
         return;
       }
 
       // Paid catalog course - redirect to custom payment confirmation page (guest-friendly)
       // Validate price before proceeding
       if (!priceValue || priceValue <= 0) {
-        toast.error("This course price is not available. Please contact support.");
+        toast.error(
+          "This course price is not available. Please contact support."
+        );
         return;
       }
 
@@ -428,13 +503,22 @@ const CourseDetail = () => {
       const response = await fetch(absoluteUrl);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch brochure: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch brochure: ${response.status} ${response.statusText}`
+        );
       }
 
       // Validate Content-Type header to ensure it's a PDF
       const contentType = response.headers.get("Content-Type");
-      if (contentType && !contentType.includes("application/pdf") && !contentType.includes("application/octet-stream")) {
-        console.warn("[Brochure Download] Unexpected Content-Type:", contentType);
+      if (
+        contentType &&
+        !contentType.includes("application/pdf") &&
+        !contentType.includes("application/octet-stream")
+      ) {
+        console.warn(
+          "[Brochure Download] Unexpected Content-Type:",
+          contentType
+        );
       }
 
       // Convert response to arrayBuffer first to preserve binary data
@@ -444,19 +528,23 @@ const CourseDetail = () => {
         throw new Error("Received empty file");
       }
 
-      console.log("[Brochure Download] Received file size:", arrayBuffer.byteLength, "bytes");
+      console.log(
+        "[Brochure Download] Received file size:",
+        arrayBuffer.byteLength,
+        "bytes"
+      );
 
       // Create a blob with explicit PDF MIME type
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
 
       // Create a blob URL
       const blobUrl = window.URL.createObjectURL(blob);
 
       // Create download link
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${title.replace(/\s+/g, '-')}-Brochure.pdf`;
-      link.style.display = 'none';
+      link.download = `${title.replace(/\s+/g, "-")}-Brochure.pdf`;
+      link.style.display = "none";
       document.body.appendChild(link);
 
       // Trigger download
@@ -594,7 +682,7 @@ const CourseDetail = () => {
                   </span>
                   {discountPrice && (
                     <span className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-green-400 font-semibold">
-                      Discount: AED {discountPrice}
+                      Discount: {formatCurrency(discountPrice)}
                     </span>
                   )}
                 </>
@@ -617,8 +705,7 @@ const CourseDetail = () => {
                     <FaPlayCircle className="h-4 w-4" />
                     Continue Learning
                   </motion.button>
-                  <motion.div
-                    className="inline-flex items-center gap-2 rounded-full border border-[#27ae60]/40 bg-[#27ae60]/15 px-4 py-2 text-sm font-semibold text-[#27ae60]">
+                  <motion.div className="inline-flex items-center gap-2 rounded-full border border-[#27ae60]/40 bg-[#27ae60]/15 px-4 py-2 text-sm font-semibold text-[#27ae60]">
                     <FaCheckCircle className="h-4 w-4" />
                     Enrolled
                   </motion.div>
@@ -633,10 +720,10 @@ const CourseDetail = () => {
                   {isEnrolling
                     ? "Enrolling..."
                     : isFreeCourse
-                      ? "Enroll for Free"
-                      : priceValue > 0
-                        ? "Enroll Now"
-                        : "Connect for Pricing"}
+                    ? "Enroll for Free"
+                    : priceValue > 0
+                    ? "Enroll Now"
+                    : "Connect for Pricing"}
                 </motion.button>
               )}
               {(course.brochureUrl || course.metadata?.brochureUrl) && (
@@ -756,148 +843,204 @@ const CourseDetail = () => {
                   </p>
                   {detailedSyllabus.courseObjectives && (
                     <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">Course Objectives:</h3>
+                      <h3 className="text-lg font-semibold text-white mb-4">
+                        Course Objectives:
+                      </h3>
                       <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                        {detailedSyllabus.courseObjectives.map((objective, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                            <span>✅ {objective}</span>
-                          </li>
-                        ))}
+                        {detailedSyllabus.courseObjectives.map(
+                          (objective, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span>✅ {objective}</span>
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   )}
                   <div className="grid gap-4 md:grid-cols-2 mt-6">
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                       <p className="text-sm text-gray-400 mb-1">Duration</p>
-                      <p className="text-lg font-semibold text-[#F5D26A]">{duration}</p>
+                      <p className="text-lg font-semibold text-[#F5D26A]">
+                        {duration}
+                      </p>
                     </div>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                       <p className="text-sm text-gray-400 mb-1">Mode</p>
-                      <p className="text-lg font-semibold text-[#F5D26A]">{format}</p>
+                      <p className="text-lg font-semibold text-[#F5D26A]">
+                        {format}
+                      </p>
                     </div>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                       <p className="text-sm text-gray-400 mb-1">Language</p>
-                      <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.language}</p>
+                      <p className="text-lg font-semibold text-[#F5D26A]">
+                        {detailedSyllabus.language}
+                      </p>
                     </div>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                       <p className="text-sm text-gray-400 mb-1">Structure</p>
-                      <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.structure}</p>
+                      <p className="text-lg font-semibold text-[#F5D26A]">
+                        {detailedSyllabus.structure}
+                      </p>
                     </div>
                     {detailedSyllabus.classFrequency && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
-                        <p className="text-sm text-gray-400 mb-1">Class Frequency</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.classFrequency}</p>
+                        <p className="text-sm text-gray-400 mb-1">
+                          Class Frequency
+                        </p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.classFrequency}
+                        </p>
                       </div>
                     )}
                     {detailedSyllabus.classDuration && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
-                        <p className="text-sm text-gray-400 mb-1">Class Duration</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.classDuration}</p>
+                        <p className="text-sm text-gray-400 mb-1">
+                          Class Duration
+                        </p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.classDuration}
+                        </p>
                       </div>
                     )}
                     {detailedSyllabus.assessment && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                         <p className="text-sm text-gray-400 mb-1">Assessment</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.assessment}</p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.assessment}
+                        </p>
                       </div>
                     )}
                     {detailedSyllabus.level && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
                         <p className="text-sm text-gray-400 mb-1">Level</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.level}</p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.level}
+                        </p>
                       </div>
                     )}
                     {detailedSyllabus.certification && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4">
-                        <p className="text-sm text-gray-400 mb-1">Certification</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.certification}</p>
+                        <p className="text-sm text-gray-400 mb-1">
+                          Certification
+                        </p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.certification}
+                        </p>
                       </div>
                     )}
                     {detailedSyllabus.trainer && (
                       <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-4 md:col-span-2">
                         <p className="text-sm text-gray-400 mb-1">Trainer</p>
-                        <p className="text-lg font-semibold text-[#F5D26A]">{detailedSyllabus.trainer}</p>
+                        <p className="text-lg font-semibold text-[#F5D26A]">
+                          {detailedSyllabus.trainer}
+                        </p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {detailedSyllabus.courseVision && detailedSyllabus.courseVision.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🌟 Course Vision
-                    </h2>
-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
-                      By the end of this program, every learner will:
-                    </p>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.courseVision.map((vision, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">✅ {vision}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {detailedSyllabus.courseVision &&
+                  detailedSyllabus.courseVision.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🌟 Course Vision
+                      </h2>
+                      <p className="text-base text-gray-300 leading-relaxed mb-4">
+                        By the end of this program, every learner will:
+                      </p>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.courseVision.map((vision, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span className="text-sm text-gray-200">
+                              ✅ {vision}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                {detailedSyllabus.phases && detailedSyllabus.phases.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧭 Course Structure Overview
-                    </h2>
-                    <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-[#D4AF37]/10">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Phase</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Duration</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Focus Area</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Key Outcome</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#D4AF37]/10">
-                            {detailedSyllabus.phases.map((phase, idx) => (
-                              <tr key={idx} className="hover:bg-[#D4AF37]/5 transition-colors">
-                                <td className="px-6 py-4 text-sm font-semibold text-white">Phase {phase.phase}</td>
-                                <td className="px-6 py-4 text-sm text-gray-300">{phase.duration}</td>
-                                <td className="px-6 py-4 text-sm text-gray-300">{phase.focusArea}</td>
-                                <td className="px-6 py-4 text-sm text-gray-300">{phase.keyOutcome}</td>
+                {detailedSyllabus.phases &&
+                  detailedSyllabus.phases.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧭 Course Structure Overview
+                      </h2>
+                      <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-[#D4AF37]/10">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Phase
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Duration
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Focus Area
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Key Outcome
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-[#D4AF37]/10">
+                              {detailedSyllabus.phases.map((phase, idx) => (
+                                <tr
+                                  key={idx}
+                                  className="hover:bg-[#D4AF37]/5 transition-colors">
+                                  <td className="px-6 py-4 text-sm font-semibold text-white">
+                                    Phase {phase.phase}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-300">
+                                    {phase.duration}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-300">
+                                    {phase.focusArea}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-300">
+                                    {phase.keyOutcome}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {detailedSyllabus.courseOverview && detailedSyllabus.courseOverview.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      👩‍🏫 Course Overview
-                    </h2>
-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
-                      This course adapts to the learner's background and goals:
-                    </p>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.courseOverview.map((item, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {detailedSyllabus.courseOverview &&
+                  detailedSyllabus.courseOverview.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        👩‍🏫 Course Overview
+                      </h2>
+                      <p className="text-base text-gray-300 leading-relaxed mb-4">
+                        This course adapts to the learner's background and
+                        goals:
+                      </p>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.courseOverview.map((item, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span className="text-sm text-gray-200">
+                              {item}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                 <div className="border-t border-[#D4AF37]/20 pt-8">
                   <h2 className="text-2xl font-bold text-white font-display mb-6">
@@ -910,32 +1053,48 @@ const CourseDetail = () => {
                         className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6">
                         <div className="flex items-start gap-4 mb-4">
                           <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
-                            <span className="text-[#F5D26A] font-bold text-lg">{module.number}</span>
+                            <span className="text-[#F5D26A] font-bold text-lg">
+                              {module.number}
+                            </span>
                           </div>
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-white font-display mb-1">
                               MODULE {module.number}: {module.title}
                             </h3>
-                            <p className="text-sm text-[#D4AF37] font-semibold">{module.days || module.duration}</p>
+                            <p className="text-sm text-[#D4AF37] font-semibold">
+                              {module.days || module.duration}
+                            </p>
                             {module.objective && (
-                              <p className="text-sm text-gray-400 mt-2 italic">Objective: {module.objective}</p>
+                              <p className="text-sm text-gray-400 mt-2 italic">
+                                Objective: {module.objective}
+                              </p>
                             )}
                             {module.goal && (
-                              <p className="text-sm text-gray-400 mt-2 italic">Goal: {module.goal}</p>
+                              <p className="text-sm text-gray-400 mt-2 italic">
+                                Goal: {module.goal}
+                              </p>
                             )}
                             {module.note && (
-                              <p className="text-sm text-[#F5D26A] mt-2 font-semibold">{module.note}</p>
+                              <p className="text-sm text-[#F5D26A] mt-2 font-semibold">
+                                {module.note}
+                              </p>
                             )}
                           </div>
                         </div>
 
                         <div className="ml-16 space-y-4">
                           <div>
-                            <h4 className="text-base font-semibold text-white mb-2">Topics:</h4>
+                            <h4 className="text-base font-semibold text-white mb-2">
+                              Topics:
+                            </h4>
                             <ul className="space-y-1 text-sm text-gray-300">
                               {module.topics.map((topic, idx) => (
-                                <li key={idx} className="flex items-start gap-2">
-                                  <span className="text-[#D4AF37] mt-1.5">●</span>
+                                <li
+                                  key={idx}
+                                  className="flex items-start gap-2">
+                                  <span className="text-[#D4AF37] mt-1.5">
+                                    ●
+                                  </span>
                                   <span>{topic}</span>
                                 </li>
                               ))}
@@ -943,92 +1102,144 @@ const CourseDetail = () => {
                           </div>
 
                           <div>
-                            <h4 className="text-base font-semibold text-white mb-2">Activities:</h4>
+                            <h4 className="text-base font-semibold text-white mb-2">
+                              Activities:
+                            </h4>
                             <ul className="space-y-1 text-sm text-gray-300">
                               {module.activities.map((activity, idx) => (
-                                <li key={idx} className="flex items-start gap-2">
-                                  <span className="text-[#D4AF37] mt-1.5">🎯</span>
+                                <li
+                                  key={idx}
+                                  className="flex items-start gap-2">
+                                  <span className="text-[#D4AF37] mt-1.5">
+                                    🎯
+                                  </span>
                                   <span>{activity}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
 
-                          {module.homePractice && module.homePractice.length > 0 && (
-                            <div>
-                              <h4 className="text-base font-semibold text-white mb-2">Home Practice:</h4>
-                              <ul className="space-y-1 text-sm text-gray-300">
-                                {module.homePractice.map((practice, idx) => (
-                                  <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-[#D4AF37] mt-1.5">●</span>
-                                    <span>{practice}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {module.tipsAndTricks && module.tipsAndTricks.length > 0 && (
-                            <div>
-                              <h4 className="text-base font-semibold text-white mb-2">Tips & Tricks:</h4>
-                              <ul className="space-y-1 text-sm text-gray-300">
-                                {module.tipsAndTricks.map((tip, idx) => (
-                                  <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-[#D4AF37] mt-1.5">💡</span>
-                                    <span>{tip}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {module.confidenceBuilding && module.confidenceBuilding.length > 0 && (
-                            <div>
-                              <h4 className="text-base font-semibold text-white mb-2">Confidence Building:</h4>
-                              <ul className="space-y-1 text-sm text-gray-300">
-                                {module.confidenceBuilding.map((item, idx) => (
-                                  <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-[#D4AF37] mt-1.5">🌟</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {module.homePractice &&
+                            module.homePractice.length > 0 && (
+                              <div>
+                                <h4 className="text-base font-semibold text-white mb-2">
+                                  Home Practice:
+                                </h4>
+                                <ul className="space-y-1 text-sm text-gray-300">
+                                  {module.homePractice.map((practice, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="flex items-start gap-2">
+                                      <span className="text-[#D4AF37] mt-1.5">
+                                        ●
+                                      </span>
+                                      <span>{practice}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          {module.tipsAndTricks &&
+                            module.tipsAndTricks.length > 0 && (
+                              <div>
+                                <h4 className="text-base font-semibold text-white mb-2">
+                                  Tips & Tricks:
+                                </h4>
+                                <ul className="space-y-1 text-sm text-gray-300">
+                                  {module.tipsAndTricks.map((tip, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="flex items-start gap-2">
+                                      <span className="text-[#D4AF37] mt-1.5">
+                                        💡
+                                      </span>
+                                      <span>{tip}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          {module.confidenceBuilding &&
+                            module.confidenceBuilding.length > 0 && (
+                              <div>
+                                <h4 className="text-base font-semibold text-white mb-2">
+                                  Confidence Building:
+                                </h4>
+                                <ul className="space-y-1 text-sm text-gray-300">
+                                  {module.confidenceBuilding.map(
+                                    (item, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="flex items-start gap-2">
+                                        <span className="text-[#D4AF37] mt-1.5">
+                                          🌟
+                                        </span>
+                                        <span>{item}</span>
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
                           {module.proTips && module.proTips.length > 0 && (
                             <div className="mt-4 p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                              <p className="text-sm text-gray-400 mb-2 font-semibold">Pro Tips:</p>
+                              <p className="text-sm text-gray-400 mb-2 font-semibold">
+                                Pro Tips:
+                              </p>
                               {module.proTips.map((tip, idx) => (
-                                <p key={idx} className="text-sm text-[#F5D26A] italic">{tip}</p>
+                                <p
+                                  key={idx}
+                                  className="text-sm text-[#F5D26A] italic">
+                                  {tip}
+                                </p>
                               ))}
                             </div>
                           )}
                           {module.bonusTip && (
                             <div className="mt-4 p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                              <p className="text-sm text-gray-400 mb-1 font-semibold">Bonus Tip:</p>
-                              <p className="text-sm text-[#F5D26A] italic">{module.bonusTip}</p>
+                              <p className="text-sm text-gray-400 mb-1 font-semibold">
+                                Bonus Tip:
+                              </p>
+                              <p className="text-sm text-[#F5D26A] italic">
+                                {module.bonusTip}
+                              </p>
                             </div>
                           )}
-                          {module.bonusAddOns && module.bonusAddOns.length > 0 && (
-                            <div className="mt-4">
-                              <h4 className="text-base font-semibold text-white mb-2">Bonus Add-ons:</h4>
-                              <ul className="space-y-1 text-sm text-gray-300">
-                                {module.bonusAddOns.map((addon, idx) => (
-                                  <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-[#D4AF37] mt-1.5">●</span>
-                                    <span>{addon}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {module.bonusAddOns &&
+                            module.bonusAddOns.length > 0 && (
+                              <div className="mt-4">
+                                <h4 className="text-base font-semibold text-white mb-2">
+                                  Bonus Add-ons:
+                                </h4>
+                                <ul className="space-y-1 text-sm text-gray-300">
+                                  {module.bonusAddOns.map((addon, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="flex items-start gap-2">
+                                      <span className="text-[#D4AF37] mt-1.5">
+                                        ●
+                                      </span>
+                                      <span>{addon}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           {module.outcome && (
                             <div className="mt-4 p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                              <p className="text-sm text-gray-400 mb-1">Outcome:</p>
-                              <p className="text-base font-semibold text-[#F5D26A]">👉 {module.outcome}</p>
+                              <p className="text-sm text-gray-400 mb-1">
+                                Outcome:
+                              </p>
+                              <p className="text-base font-semibold text-[#F5D26A]">
+                                👉 {module.outcome}
+                              </p>
                             </div>
                           )}
                           {module.certification && (
                             <div className="mt-4 p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30">
-                              <p className="text-base font-semibold text-[#F5D26A]">{module.certification}</p>
+                              <p className="text-base font-semibold text-[#F5D26A]">
+                                {module.certification}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -1037,41 +1248,47 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                {detailedSyllabus.bonusModules && detailedSyllabus.bonusModules.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🎬 Bonus Practical Modules
-                    </h2>
-                    <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                      {detailedSyllabus.bonusModules.map((module, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span>{module}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {detailedSyllabus.bonusModules &&
+                  detailedSyllabus.bonusModules.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🎬 Bonus Practical Modules
+                      </h2>
+                      <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
+                        {detailedSyllabus.bonusModules.map((module, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span>{module}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                {detailedSyllabus.toolsAndResources && detailedSyllabus.toolsAndResources.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧠 Tools & Resources Provided
-                    </h2>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.toolsAndResources.map((resource, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">{resource}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {detailedSyllabus.toolsAndResources &&
+                  detailedSyllabus.toolsAndResources.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧠 Tools & Resources Provided
+                      </h2>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.toolsAndResources.map(
+                          (resource, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span className="text-sm text-gray-200">
+                                {resource}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
 
                 {detailedSyllabus.finalCertification && (
                   <div className="border-t border-[#D4AF37]/20 pt-8">
@@ -1084,276 +1301,349 @@ const CourseDetail = () => {
                       </h3>
                       <p className="text-sm text-gray-400 mb-4">Includes:</p>
                       <ul className="space-y-2">
-                        {detailedSyllabus.finalCertification.includes.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
-                            <span className="text-[#D4AF37] mt-1.5">●</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
+                        {detailedSyllabus.finalCertification.includes.map(
+                          (item, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-2 text-sm text-gray-300">
+                              <span className="text-[#D4AF37] mt-1.5">●</span>
+                              <span>{item}</span>
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   </div>
                 )}
 
-                {detailedSyllabus.careerPaths && detailedSyllabus.careerPaths.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      💡 Expected Career Paths
-                    </h2>
-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
-                      After completion, participants can work as:
-                    </p>
-                    <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                      {detailedSyllabus.careerPaths.map((path, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span>✅ {path}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.realLifeProjects && detailedSyllabus.realLifeProjects.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      📈 Real-Life Projects
-                    </h2>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.realLifeProjects.map((project, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">{project}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.teachingApproach && detailedSyllabus.teachingApproach.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧭 Teaching Approach
-                    </h2>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.teachingApproach.map((approach, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">{approach}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.specialAddOnModules && detailedSyllabus.specialAddOnModules.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧩 Special Add-On Modules
-                    </h2>
-                    <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                      {detailedSyllabus.specialAddOnModules.map((module, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span>{module}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.dailyWeeklyRoutines && detailedSyllabus.dailyWeeklyRoutines.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      📈 Daily & Weekly Routines
-                    </h2>
-                    {typeof detailedSyllabus.dailyWeeklyRoutines[0] === 'string' ? (
-                      <ul className="space-y-3">
-                        {detailedSyllabus.dailyWeeklyRoutines.map((routine, idx) => (
+                {detailedSyllabus.careerPaths &&
+                  detailedSyllabus.careerPaths.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        💡 Expected Career Paths
+                      </h2>
+                      <p className="text-base text-gray-300 leading-relaxed mb-4">
+                        After completion, participants can work as:
+                      </p>
+                      <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
+                        {detailedSyllabus.careerPaths.map((path, idx) => (
                           <li
                             key={idx}
                             className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                             <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                            <span className="text-sm text-gray-200">{routine}</span>
+                            <span>✅ {path}</span>
                           </li>
                         ))}
                       </ul>
-                    ) : (
+                    </div>
+                  )}
+
+                {detailedSyllabus.realLifeProjects &&
+                  detailedSyllabus.realLifeProjects.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        📈 Real-Life Projects
+                      </h2>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.realLifeProjects.map(
+                          (project, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span className="text-sm text-gray-200">
+                                {project}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.teachingApproach &&
+                  detailedSyllabus.teachingApproach.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧭 Teaching Approach
+                      </h2>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.teachingApproach.map(
+                          (approach, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span className="text-sm text-gray-200">
+                                {approach}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.specialAddOnModules &&
+                  detailedSyllabus.specialAddOnModules.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧩 Special Add-On Modules
+                      </h2>
+                      <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
+                        {detailedSyllabus.specialAddOnModules.map(
+                          (module, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span>{module}</span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.dailyWeeklyRoutines &&
+                  detailedSyllabus.dailyWeeklyRoutines.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        📈 Daily & Weekly Routines
+                      </h2>
+                      {typeof detailedSyllabus.dailyWeeklyRoutines[0] ===
+                      "string" ? (
+                        <ul className="space-y-3">
+                          {detailedSyllabus.dailyWeeklyRoutines.map(
+                            (routine, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                                <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                                <span className="text-sm text-gray-200">
+                                  {routine}
+                                </span>
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      ) : (
+                        <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="bg-[#D4AF37]/10">
+                                <tr>
+                                  <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                    Type
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                    Activity
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                    Duration
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#D4AF37]/10">
+                                {detailedSyllabus.dailyWeeklyRoutines.map(
+                                  (routine, idx) => (
+                                    <tr
+                                      key={idx}
+                                      className="hover:bg-[#D4AF37]/5 transition-colors">
+                                      <td className="px-6 py-4 text-sm font-semibold text-white">
+                                        {routine.type}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-300">
+                                        {routine.activity}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-300">
+                                        {routine.duration}
+                                      </td>
+                                    </tr>
+                                  )
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                {detailedSyllabus.finalOutcomes &&
+                  detailedSyllabus.finalOutcomes.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🏅 Final Outcomes
+                      </h2>
+                      <p className="text-base text-gray-300 leading-relaxed mb-4">
+                        By the end of the course, learners will be able to:
+                      </p>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.finalOutcomes.map((outcome, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span className="text-sm text-gray-200">
+                              ✅ {outcome}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.bonusTools &&
+                  detailedSyllabus.bonusTools.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧠 Bonus Tools
+                      </h2>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.bonusTools.map((tool, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span className="text-sm text-gray-200">
+                              {tool}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.finalOutput &&
+                  detailedSyllabus.finalOutput.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🎯 Final Output
+                      </h2>
+                      <p className="text-base text-gray-300 leading-relaxed mb-4">
+                        After completing the course, you'll:
+                      </p>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.finalOutput.map((output, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                            <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                            <span className="text-sm text-gray-200">
+                              ✅ {output}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.specialBonusModules &&
+                  detailedSyllabus.specialBonusModules.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🏆 Special Bonus Modules
+                      </h2>
+                      <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
+                        {detailedSyllabus.specialBonusModules.map(
+                          (module, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span>{module}</span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.additionalHighlights &&
+                  detailedSyllabus.additionalHighlights.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🧩 Additional Program Highlights
+                      </h2>
+                      <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
+                        {detailedSyllabus.additionalHighlights.map(
+                          (highlight, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span>✅ {highlight}</span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                {detailedSyllabus.dailyPracticeRoutine &&
+                  detailedSyllabus.dailyPracticeRoutine.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        🏡 Daily Home Practice Routine
+                      </h2>
                       <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead className="bg-[#D4AF37]/10">
                               <tr>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Type</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Activity</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Duration</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Time
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">
+                                  Task
+                                </th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#D4AF37]/10">
-                              {detailedSyllabus.dailyWeeklyRoutines.map((routine, idx) => (
-                                <tr key={idx} className="hover:bg-[#D4AF37]/5 transition-colors">
-                                  <td className="px-6 py-4 text-sm font-semibold text-white">{routine.type}</td>
-                                  <td className="px-6 py-4 text-sm text-gray-300">{routine.activity}</td>
-                                  <td className="px-6 py-4 text-sm text-gray-300">{routine.duration}</td>
-                                </tr>
-                              ))}
+                              {detailedSyllabus.dailyPracticeRoutine.map(
+                                (routine, idx) => (
+                                  <tr
+                                    key={idx}
+                                    className="hover:bg-[#D4AF37]/5 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-semibold text-white">
+                                      {routine.time}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-300">
+                                      {routine.task}
+                                    </td>
+                                  </tr>
+                                )
+                              )}
                             </tbody>
                           </table>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {detailedSyllabus.finalOutcomes && detailedSyllabus.finalOutcomes.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🏅 Final Outcomes
-                    </h2>
-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
-                      By the end of the course, learners will be able to:
-                    </p>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.finalOutcomes.map((outcome, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">✅ {outcome}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.bonusTools && detailedSyllabus.bonusTools.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧠 Bonus Tools
-                    </h2>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.bonusTools.map((tool, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">{tool}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.finalOutput && detailedSyllabus.finalOutput.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🎯 Final Output
-                    </h2>
-                    <p className="text-base text-gray-300 leading-relaxed mb-4">
-                      After completing the course, you'll:
-                    </p>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.finalOutput.map((output, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">✅ {output}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.specialBonusModules && detailedSyllabus.specialBonusModules.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🏆 Special Bonus Modules
-                    </h2>
-                    <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                      {detailedSyllabus.specialBonusModules.map((module, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span>{module}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.additionalHighlights && detailedSyllabus.additionalHighlights.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🧩 Additional Program Highlights
-                    </h2>
-                    <ul className="grid gap-3 text-sm text-gray-200 sm:grid-cols-2">
-                      {detailedSyllabus.additionalHighlights.map((highlight, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span>✅ {highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {detailedSyllabus.dailyPracticeRoutine && detailedSyllabus.dailyPracticeRoutine.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      🏡 Daily Home Practice Routine
-                    </h2>
-                    <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#0a0a0a] overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-[#D4AF37]/10">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Time</th>
-                              <th className="px-6 py-3 text-left text-sm font-semibold text-[#F5D26A]">Task</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#D4AF37]/10">
-                            {detailedSyllabus.dailyPracticeRoutine.map((routine, idx) => (
-                              <tr key={idx} className="hover:bg-[#D4AF37]/5 transition-colors">
-                                <td className="px-6 py-4 text-sm font-semibold text-white">{routine.time}</td>
-                                <td className="px-6 py-4 text-sm text-gray-300">{routine.task}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {detailedSyllabus.expectedOutcomes && detailedSyllabus.expectedOutcomes.length > 0 && (
-                  <div className="border-t border-[#D4AF37]/20 pt-8">
-                    <h2 className="text-2xl font-bold text-white font-display mb-6">
-                      💬 Expected Outcome After 90 Days
-                    </h2>
-                    <ul className="space-y-3">
-                      {detailedSyllabus.expectedOutcomes.map((outcome, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                          <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-                          <span className="text-sm text-gray-200">✅ {outcome}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {detailedSyllabus.expectedOutcomes &&
+                  detailedSyllabus.expectedOutcomes.length > 0 && (
+                    <div className="border-t border-[#D4AF37]/20 pt-8">
+                      <h2 className="text-2xl font-bold text-white font-display mb-6">
+                        💬 Expected Outcome After 90 Days
+                      </h2>
+                      <ul className="space-y-3">
+                        {detailedSyllabus.expectedOutcomes.map(
+                          (outcome, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
+                              <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                              <span className="text-sm text-gray-200">
+                                ✅ {outcome}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
               </div>
             )}
 
@@ -1375,24 +1665,44 @@ const CourseDetail = () => {
             )}
 
             {/* Additional Course Information */}
-            {(subtitle || category || difficulty || language || deliveryMode || lessonCount || learningOutcomes || requirements || syllabus || (tags && tags.length > 0)) && (
+            {(subtitle ||
+              category ||
+              difficulty ||
+              language ||
+              deliveryMode ||
+              lessonCount ||
+              learningOutcomes ||
+              requirements ||
+              syllabus ||
+              (tags && tags.length > 0)) && (
               <div className="border-t border-[#D4AF37]/20 pt-8 space-y-6">
                 {subtitle && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-3">About This Course</h3>
-                    <p className="text-base text-gray-300 leading-relaxed">{subtitle}</p>
+                    <h3 className="text-xl font-bold text-white font-display mb-3">
+                      About This Course
+                    </h3>
+                    <p className="text-base text-gray-300 leading-relaxed">
+                      {subtitle}
+                    </p>
                   </div>
                 )}
 
-                {(category || difficulty || language || deliveryMode || lessonCount) && (
+                {(category ||
+                  difficulty ||
+                  language ||
+                  deliveryMode ||
+                  lessonCount) && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">Course Details</h3>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">
+                      Course Details
+                    </h3>
                     <div className="grid gap-3 text-sm text-gray-300 sm:grid-cols-2">
                       {category && (
                         <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                           <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
                           <div>
-                            <span className="text-gray-400">Category:</span> <span className="text-white">{category}</span>
+                            <span className="text-gray-400">Category:</span>{" "}
+                            <span className="text-white">{category}</span>
                           </div>
                         </div>
                       )}
@@ -1400,7 +1710,8 @@ const CourseDetail = () => {
                         <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                           <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
                           <div>
-                            <span className="text-gray-400">Difficulty:</span> <span className="text-white">{difficulty}</span>
+                            <span className="text-gray-400">Difficulty:</span>{" "}
+                            <span className="text-white">{difficulty}</span>
                           </div>
                         </div>
                       )}
@@ -1408,7 +1719,8 @@ const CourseDetail = () => {
                         <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                           <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
                           <div>
-                            <span className="text-gray-400">Language:</span> <span className="text-white">{language}</span>
+                            <span className="text-gray-400">Language:</span>{" "}
+                            <span className="text-white">{language}</span>
                           </div>
                         </div>
                       )}
@@ -1416,7 +1728,10 @@ const CourseDetail = () => {
                         <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                           <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
                           <div>
-                            <span className="text-gray-400">Delivery Mode:</span> <span className="text-white">{deliveryMode}</span>
+                            <span className="text-gray-400">
+                              Delivery Mode:
+                            </span>{" "}
+                            <span className="text-white">{deliveryMode}</span>
                           </div>
                         </div>
                       )}
@@ -1424,7 +1739,8 @@ const CourseDetail = () => {
                         <div className="flex items-start gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
                           <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
                           <div>
-                            <span className="text-gray-400">Lessons:</span> <span className="text-white">{lessonCount}</span>
+                            <span className="text-gray-400">Lessons:</span>{" "}
+                            <span className="text-white">{lessonCount}</span>
                           </div>
                         </div>
                       )}
@@ -1434,34 +1750,48 @@ const CourseDetail = () => {
 
                 {learningOutcomes && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">Learning Outcomes</h3>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">
+                      Learning Outcomes
+                    </h3>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">{learningOutcomes}</p>
+                      <p className="text-sm text-gray-200 whitespace-pre-line">
+                        {learningOutcomes}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {requirements && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">Requirements</h3>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">
+                      Requirements
+                    </h3>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">{requirements}</p>
+                      <p className="text-sm text-gray-200 whitespace-pre-line">
+                        {requirements}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {syllabus && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">Syllabus</h3>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">
+                      Syllabus
+                    </h3>
                     <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] px-4 py-3">
-                      <p className="text-sm text-gray-200 whitespace-pre-line">{syllabus}</p>
+                      <p className="text-sm text-gray-200 whitespace-pre-line">
+                        {syllabus}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {tags && Array.isArray(tags) && tags.length > 0 && (
                   <div>
-                    <h3 className="text-xl font-bold text-white font-display mb-4">Tags</h3>
+                    <h3 className="text-xl font-bold text-white font-display mb-4">
+                      Tags
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, idx) => (
                         <span

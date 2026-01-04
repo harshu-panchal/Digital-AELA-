@@ -27,11 +27,12 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import {
   redirectToCustomCoursePayment,
-  redirectToCustomBookPayment
+  redirectToCustomBookPayment,
 } from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getGalleryImages } from "../../../src/services/api/gallery";
+import { fetchHomeData } from "../../../src/services/api/home";
 import { getTestimonialsBySection } from "../../../src/services/api/testimonials";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
@@ -39,6 +40,7 @@ import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const MotionLink = motion.create(Link);
 
@@ -125,211 +127,139 @@ const Home = () => {
     }
   };
 
-  // Rate limiting refs
-  const isLoadingCoursesRef = useRef(false);
-  const isLoadingBooksRef = useRef(false);
-  const isLoadingGalleryRef = useRef(false);
-  const lastLoadTimeRef = useRef({ courses: 0, books: 0, gallery: 0 });
-  const MIN_LOAD_INTERVAL = 10000; // 10 seconds minimum between loads
+  // Rate limiting and loading state management
+  const isInitialLoadRef = useRef(true);
+  const isLoadingRef = useRef(false);
+  const lastLoadTimeRef = useRef(0);
+  const MIN_LOAD_INTERVAL = 30000; // 30 seconds minimum between full data refreshes
 
-  // Fetch premium courses from backend
+  // Unified data fetching for home page
   useEffect(() => {
-    const loadPremiumCourses = async () => {
+    const loadHomeData = async () => {
       // Prevent duplicate concurrent requests
-      if (isLoadingCoursesRef.current) {
-        return;
-      }
+      if (isLoadingRef.current) return;
 
-      // Prevent requests too close together
+      // Prevent requests too close together, except for the very first load
       const now = Date.now();
-      if (now - lastLoadTimeRef.current.courses < MIN_LOAD_INTERVAL) {
+      if (
+        !isInitialLoadRef.current &&
+        now - lastLoadTimeRef.current < MIN_LOAD_INTERVAL
+      ) {
         return;
       }
 
       try {
-        isLoadingCoursesRef.current = true;
+        isLoadingRef.current = true;
         setLoadingCourses(true);
-        const response = await fetchPublishedCourses({ premium: true });
-
-        if (!response || !response.courses) {
-          console.warn("No premium courses data received from API");
-          setPremiumCourses([]);
-          return;
-        }
-
-        // Transform backend courses to match expected format
-        const transformedCourses = (response.courses || [])
-          .map((course) => ({
-            ...course,
-            id: course._id,
-            slug: course._id,
-            title: course.title || "Untitled Course",
-            description:
-              course.description ||
-              course.metadata?.subtitle ||
-              course.subtitle ||
-              "",
-            image:
-              course.thumbnailUrl ||
-              course.thumbnail ||
-              course.image ||
-              course.coverImage ||
-              "",
-            rawPrice: course.price, // Store original numeric price for payment logic
-            price:
-              course.price === 0
-                ? "Free"
-                : course.price
-                  ? `AED ${course.price}`
-                  : "On Request",
-            duration: course.duration
-              ? `${course.duration} hours`
-              : course.metadata?.duration || "",
-            format:
-              course.metadata?.deliveryMode ||
-              course.deliveryMode ||
-              course.format ||
-              "",
-            features: course.metadata?.tags || course.tags || [],
-            category: course.category || course.metadata?.category || "General",
-          }))
-          .slice(0, 6); // Limit to 6 courses for home page
-
-        setPremiumCourses(transformedCourses);
-        lastLoadTimeRef.current.courses = Date.now();
-      } catch (error) {
-        // Suppress 429 rate limit errors
-        if (error?.status !== 429) {
-          console.error("Failed to load premium courses:", error);
-        }
-        setPremiumCourses([]);
-      } finally {
-        isLoadingCoursesRef.current = false;
-        setLoadingCourses(false);
-      }
-    };
-
-    loadPremiumCourses();
-  }, []);
-
-  // Fetch featured books from backend
-  useEffect(() => {
-    const loadFeaturedBooks = async () => {
-      // Prevent duplicate concurrent requests
-      if (isLoadingBooksRef.current) {
-        return;
-      }
-
-      // Prevent requests too close together
-      const now = Date.now();
-      if (now - lastLoadTimeRef.current.books < MIN_LOAD_INTERVAL) {
-        return;
-      }
-
-      try {
-        isLoadingBooksRef.current = true;
         setLoadingBooks(true);
-        const response = await fetchEbooks({ featured: true, pageSize: 4 });
+        setLoadingGallery(true);
 
-        if (!response || !response.data) {
-          console.warn("No featured books data received from API");
-          setFeaturedBooks([]);
+        const response = await fetchHomeData();
+
+        if (!response) {
+          console.warn("No home page data received from API");
           return;
         }
 
-        // Transform backend books to match expected format
-        const transformedBooks = (response.data || [])
-          .slice(0, 4) // Limit to 4 books
-          .map((book) => {
-            const price =
-              book.metadata?.price !== undefined &&
+        // 1. Handle Courses
+        if (response.courses) {
+          const transformedCourses = (response.courses || [])
+            .map((course) => ({
+              ...course,
+              id: course._id,
+              slug: course._id,
+              title: course.title || "Untitled Course",
+              description:
+                course.description ||
+                course.metadata?.subtitle ||
+                course.subtitle ||
+                "",
+              image:
+                course.thumbnailUrl ||
+                course.thumbnail ||
+                course.image ||
+                course.coverImage ||
+                "",
+              rawPrice: course.price,
+              price:
+                course.price === 0
+                  ? "Free"
+                  : course.price
+                  ? formatCurrency(course.price)
+                  : "On Request",
+              duration: course.duration
+                ? `${course.duration} hours`
+                : course.metadata?.duration || "",
+              format:
+                course.metadata?.deliveryMode ||
+                course.deliveryMode ||
+                course.format ||
+                "",
+              features: course.metadata?.tags || course.tags || [],
+              category:
+                course.category || course.metadata?.category || "General",
+            }))
+            .slice(0, 6);
+          setPremiumCourses(transformedCourses);
+        }
+
+        // 2. Handle Books
+        if (response.books) {
+          const transformedBooks = (response.books || [])
+            .slice(0, 4)
+            .map((book) => {
+              const price =
+                book.metadata?.price !== undefined &&
                 book.metadata.price !== null &&
                 book.metadata.price !== ""
-                ? Number(book.metadata.price)
-                : 0;
-            const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
+                  ? Number(book.metadata.price)
+                  : 0;
+              const originalPrice = price > 0 ? Math.round(price * 1.4) : 0;
 
-            return {
-              id: book._id,
-              title: book.title || "Untitled Book",
-              author: book.metadata?.author || "Digital AELA",
-              price: price,
-              rawPrice: price, // Store original numeric price
-              originalPrice: originalPrice,
-              rating: 4.5, // Default rating
-              reviews: 0,
-              category:
-                book.categories?.[0] || book.metadata?.category || "General",
-              badge: "E-Book", // Can be determined from metadata if needed
-              image: book.metadata?.coverImage || book.coverImage || "",
-              imageAlt: `${book.title || "Book"} cover`,
-              description: book.description || "",
-            };
-          });
-
-        setFeaturedBooks(transformedBooks);
-        lastLoadTimeRef.current.books = Date.now();
-      } catch (error) {
-        // Suppress 429 rate limit errors
-        if (error?.status !== 429) {
-          console.error("Failed to load featured books:", error);
+              return {
+                id: book._id,
+                title: book.title || "Untitled Book",
+                author: book.metadata?.author || "Digital AELA",
+                price: price,
+                rawPrice: price,
+                originalPrice: originalPrice,
+                rating: 4.5,
+                reviews: 0,
+                category:
+                  book.categories?.[0] || book.metadata?.category || "General",
+                badge: "E-Book",
+                image: book.metadata?.coverImage || book.coverImage || "",
+                imageAlt: `${book.title || "Book"} cover`,
+                description: book.description || "",
+              };
+            });
+          setFeaturedBooks(transformedBooks);
         }
-        setFeaturedBooks([]);
+
+        // 3. Handle Gallery
+        if (response.gallery) {
+          const transformedImages = (response.gallery || []).map((img) => ({
+            id: img._id || img.id,
+            image: img.image || img.url || "",
+          }));
+          setGalleryItems(transformedImages);
+        }
+
+        lastLoadTimeRef.current = Date.now();
+        isInitialLoadRef.current = false;
+      } catch (error) {
+        if (error?.status !== 429) {
+          console.error("Failed to load home page data:", error);
+        }
       } finally {
-        isLoadingBooksRef.current = false;
+        isLoadingRef.current = false;
+        setLoadingCourses(false);
         setLoadingBooks(false);
-      }
-    };
-
-    loadFeaturedBooks();
-  }, []);
-
-  // Fetch gallery images from backend
-  useEffect(() => {
-    const loadGalleryImages = async () => {
-      // Prevent duplicate concurrent requests
-      if (isLoadingGalleryRef.current) {
-        return;
-      }
-
-      // Prevent requests too close together
-      const now = Date.now();
-      if (now - lastLoadTimeRef.current.gallery < MIN_LOAD_INTERVAL) {
-        return;
-      }
-
-      try {
-        isLoadingGalleryRef.current = true;
-        setLoadingGallery(true);
-        const response = await getGalleryImages();
-
-        if (!response || !response.data) {
-          console.warn("No gallery images data received from API");
-          setGalleryItems([]);
-          return;
-        }
-
-        // Transform backend images to match expected format
-        const transformedImages = (response.data || []).map((img) => ({
-          id: img.id,
-          image: img.image,
-        }));
-
-        setGalleryItems(transformedImages);
-        lastLoadTimeRef.current.gallery = Date.now();
-      } catch (error) {
-        // Suppress 429 rate limit errors
-        if (error?.status !== 429) {
-          console.error("Failed to load gallery images:", error);
-        }
-        setGalleryItems([]);
-      } finally {
-        isLoadingGalleryRef.current = false;
         setLoadingGallery(false);
       }
     };
 
-    loadGalleryImages();
+    loadHomeData();
   }, []);
 
   // Translate courses when language changes
@@ -1321,10 +1251,11 @@ const Home = () => {
                   key={slide.id}
                   type="button"
                   onClick={() => setActiveHeroSlide(index)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${index === activeHeroSlide
-                    ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
-                    : "w-6 bg-white/25 hover:bg-white/45"
-                    }`}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    index === activeHeroSlide
+                      ? "w-10 bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                      : "w-6 bg-white/25 hover:bg-white/45"
+                  }`}
                 />
               ))}
             </div>
@@ -2077,15 +2008,17 @@ const Home = () => {
                 const discountPercent =
                   book.originalPrice > 0
                     ? Math.round(
-                      ((book.originalPrice - book.price) /
-                        book.originalPrice) *
-                      100
-                    )
+                        ((book.originalPrice - book.price) /
+                          book.originalPrice) *
+                          100
+                      )
                     : 0;
                 const displayPrice =
-                  book.price > 0 ? `AED ${book.price}` : "Free";
+                  book.price > 0 ? formatCurrency(book.price) : "Free";
                 const displayOriginalPrice =
-                  book.originalPrice > 0 ? `AED ${book.originalPrice}` : "";
+                  book.originalPrice > 0
+                    ? formatCurrency(book.originalPrice)
+                    : "";
 
                 return (
                   <motion.div
@@ -2148,10 +2081,11 @@ const Home = () => {
                             {[...Array(5)].map((_, i) => (
                               <FaStar
                                 key={i}
-                                className={`w-3 h-3 ${i < Math.floor(book.rating || 4.5)
-                                  ? "text-[#D4AF37] fill-current"
-                                  : "text-gray-600"
-                                  }`}
+                                className={`w-3 h-3 ${
+                                  i < Math.floor(book.rating || 4.5)
+                                    ? "text-[#D4AF37] fill-current"
+                                    : "text-gray-600"
+                                }`}
                               />
                             ))}
                           </div>
@@ -2743,10 +2677,11 @@ const Home = () => {
                       {index + 1}. {item.question}
                     </span>
                     <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${isOpen
-                        ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
-                        : "bg-transparent text-[#D4AF37]"
-                        }`}>
+                      className={`flex h-7 w-7 items-center justify-center rounded-full border border-[#D4AF37]/35 transition-all duration-150 ${
+                        isOpen
+                          ? "bg-[#D4AF37]/15 text-[#D4AF37] rotate-45"
+                          : "bg-transparent text-[#D4AF37]"
+                      }`}>
                       <svg
                         className="w-3 h-3"
                         fill="none"

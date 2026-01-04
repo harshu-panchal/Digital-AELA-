@@ -3,197 +3,108 @@
 ## The Problem
 
 You're using Razorpay **test keys** (`rzp_test_...`) and getting:
+
 > "Payment could not be completed - International cards are not supported"
 
 ## Why This Happens
 
 **Razorpay test accounts have strict limitations:**
-1. ✅ Support **INR currency only** (not AED)
+
+1. ✅ Support **INR currency only**
 2. ✅ Support **Indian payment methods only**
    - Indian Credit/Debit Cards
    - UPI (PhonePe, Google Pay)
    - Net Banking (Indian banks)
    - Indian Wallets
 3. ❌ **Do NOT support international cards** (even with INR currency)
-4. ❌ **Do NOT support AED currency**
 
 ## The Fix
 
-The payment gateway has been updated to:
-- ✅ **Automatically detect test keys**
-- ✅ **Automatically convert AED → INR** for test keys
-- ✅ **Force INR currency** for all test key payments
+The platform has been systematically updated to:
+
+- ✅ **Use INR as the default currency** for all transactions
+- ✅ **Remove all legacy currency conversion logic** to ensure consistency
+- ✅ **Support all Razorpay accounts** (Test and Live) natively
 
 ### What Changed
 
-1. **Automatic Currency Conversion:**
-   - Test keys: AED is automatically converted to INR (mandatory)
-   - Example: 100 AED → 2,250 INR (at 22.5 rate)
+1. **Native INR Support:**
 
-2. **Test Key Detection:**
-   - System detects if key starts with `rzp_test_`
-   - Forces conversion for test keys (no exceptions)
+   - All courses, ebooks, and payments are now natively priced and processed in INR.
+   - This eliminates the need for currency conversion and avoids "international cards not supported" errors caused by multi-currency transactions in test mode.
 
-3. **Safety Checks:**
-   - Prevents AED from being sent to Razorpay with test keys
-   - Logs conversion details for debugging
+2. **Simplified Payment Flow:**
 
-## Quick Verification
+   - No more automatic conversion.
+   - What you see is what you pay: prices are listed in ₹ (INR).
 
-Run this to verify currency conversion is working:
-
-```bash
-npm run verify-currency-conversion
-```
-
-This will:
-- ✅ Detect if you're using test keys
-- ✅ Test currency conversion
-- ✅ Create a test payment link
-- ✅ Show you the converted amount
+3. **Universal Compatibility:**
+   - Works seamlessly with both `rzp_test_` and `rzp_live_` keys.
+   - No special handling required for test accounts.
 
 ## How to Test Payments
 
-### ✅ Use Indian Test Cards Only
+### ✅ Use Indian Test Cards
 
 **Success Card:**
+
 - Card Number: `4111 1111 1111 1111`
 - CVV: `123`
 - Expiry: `12/25` (any future date)
 - Name: Any name
 
-**This is an INDIAN test card - it will work with test keys.**
+**This is an INDIAN test card - it works perfectly with INR payments.**
 
-### ❌ Don't Use International Cards
+### ❌ International Cards in Test Mode
 
-Even if the payment is in INR, Razorpay test environment will reject:
+Even with INR currency, Razorpay test environment will reject:
+
 - International Visa cards
 - International Mastercard
 - Cards from outside India
-
-## Step-by-Step Testing
-
-1. **Create a payment:**
-   - Amount: 100 AED
-   - System converts to 2,250 INR automatically
-
-2. **Check backend logs:**
-   ```
-   [Payment Gateway] TEST KEY DETECTED: Forcing conversion from 100 AED to 2250 INR
-   [Payment Gateway] Test accounts do not support AED/international cards - conversion is mandatory
-   ```
-
-3. **Open payment link:**
-   - Should show INR (₹) currency, not AED
-   - If it shows AED, conversion didn't work
-
-4. **Pay with Indian test card:**
-   - Use: `4111 1111 1111 1111`
-   - CVV: `123`
-   - Expiry: Future date
-
-5. **Payment should succeed!**
 
 ## Troubleshooting
 
 ### Still Getting "International cards not supported"?
 
 **Check 1: Are you using an Indian test card?**
+
 - ✅ Use: `4111 1111 1111 1111` (Indian card)
 - ❌ Don't use: International cards
 
-**Check 2: Is currency conversion happening?**
-- Look for log: `TEST KEY DETECTED: Forcing conversion`
-- If not present, conversion might not be working
+**Check 2: Is currency INR?**
+
+- All payments should now be natively in INR.
+- If you see anything other than INR (₹) during checkout, it means the systematic conversion missed a spot.
 
 **Check 3: What currency does the payment page show?**
+
 - Should show INR (₹) or "Rupees"
-- If shows AED, conversion failed
+- If it shows any other currency, something is wrong.
 
 **Check 4: Verify your test key:**
+
 ```bash
 echo $RAZORPAY_KEY_ID
 # Should start with: rzp_test_
 ```
 
-### Currency Conversion Not Working?
+### Payment Link Shows Unexpected Currency?
 
-1. **Check backend logs** for conversion messages
-2. **Verify test key** is detected (starts with `rzp_test_`)
-3. **Restart backend server** if needed
-4. **Run verification script:**
-   ```bash
-   npm run verify-currency-conversion
-   ```
+If the payment link shows a currency other than INR, it means the database or the request still has the old currency. Since we have updated all models to default to INR, this shouldn't happen for new payments.
 
-### Payment Link Shows AED Instead of INR?
+For existing payments that were created before the conversion, they might still show the old currency. We recommend creating a new payment to test the INR flow.
 
-This means conversion didn't happen. Check:
-1. Backend logs for errors
-2. Test key is properly detected
-3. Settings are not blocking conversion
+## Live Account: How to Accept International Payments
 
-## Configuration
+To accept international cards (Visa/Mastercard from outside India) on your **Live** account:
 
-### Exchange Rate (Optional)
+1. **Enable International Payments:**
 
-Default: 1 AED = 22.5 INR
+   - Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/).
+   - Go to **Account & Settings** > **Payment Methods**.
+   - Request activation for **International Payments**.
 
-To update:
-- Settings → Payment Settings
-- Update `payment.currency.aedToInrRate`
-- Or leave default if acceptable
-
-### Disable Conversion (Only for Live Keys)
-
-**Don't disable for test keys** - they require INR.
-
-For live keys (if international payments enabled):
-- Settings → Payment Settings
-- Set `payment.currency.convertAEDtoINR` = `false`
-
-## Important Notes
-
-1. **Test Keys = INR Only (No Exceptions)**
-   - Cannot use AED directly
-   - Cannot accept international cards
-   - Conversion is automatic and mandatory
-
-2. **Use Indian Cards Only**
-   - Even with INR, must use Indian cards
-   - International cards will fail in test environment
-
-3. **Live Keys = Different Rules**
-   - Can enable international payments
-   - Can use AED directly (after approval)
-   - Requires Razorpay dashboard configuration
-
-## Summary
-
-✅ **Solution Applied:**
-- Automatic currency conversion for test keys
-- AED → INR conversion (mandatory)
-- Safety checks to prevent errors
-
-✅ **What You Need to Do:**
-1. Use Indian test card: `4111 1111 1111 1111`
-2. Verify payment page shows INR (₹)
-3. Complete payment with Indian card
-
-✅ **Result:**
-- No more "international cards" error
-- Payments work with test keys
-- Conversion happens automatically
-
-## Still Having Issues?
-
-1. Run verification: `npm run verify-currency-conversion`
-2. Check backend logs for conversion messages
-3. Verify using Indian test card
-4. Check payment page shows INR currency
-
-If still not working, check:
-- Backend logs for errors
-- Razorpay dashboard for payment details
-- Test key format (must start with `rzp_test_`)
-
+2. **Currency Note:**
+   - Even if you accept international cards, the platform will process them in **INR**.
+   - Razorpay will handle the conversion from the customer's local currency to INR.

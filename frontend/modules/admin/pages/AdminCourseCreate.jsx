@@ -101,7 +101,7 @@ const AdminCourseCreate = () => {
 
   const priceHelper = useMemo(
     () => ({
-      price: "Enter price in AED. You can offer discounts later.",
+      price: "Enter price in INR. You can offer discounts later.",
       discount: "Optional. Leave blank if you don't want to run a promo.",
     }),
     []
@@ -139,9 +139,13 @@ const AdminCourseCreate = () => {
           setUploadError(null);
           setUploadingFileName(file.name);
 
-          uploadImageToCloudinary(file, "digital-aela/courses/covers", (progress) => {
-            setUploadProgress(progress);
-          })
+          uploadImageToCloudinary(
+            file,
+            "digital-aela/courses/covers",
+            (progress) => {
+              setUploadProgress(progress);
+            }
+          )
             .then((url) => {
               setFormData((prev) => ({
                 ...prev,
@@ -230,7 +234,7 @@ const AdminCourseCreate = () => {
       Number.isNaN(Number(trimmedPrice))
     ) {
       toast.error(
-        "Please enter a valid course price in AED (use 0 for free courses)."
+        "Please enter a valid course price in INR (use 0 for free courses)."
       );
       return;
     }
@@ -537,7 +541,7 @@ const AdminCourseCreate = () => {
                   <label
                     htmlFor="price"
                     className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                    Price (AED)*
+                    Price (INR)*
                   </label>
                   <input
                     id="price"
@@ -794,10 +798,11 @@ const AdminCourseCreate = () => {
               </label>
 
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${premiumCount >= maxPremium && !formData.isPremium
-                  ? "opacity-60"
-                  : ""
-                  }`}>
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
+                  premiumCount >= maxPremium && !formData.isPremium
+                    ? "opacity-60"
+                    : ""
+                }`}>
                 <input
                   type="checkbox"
                   name="isPremium"

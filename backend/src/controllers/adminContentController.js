@@ -24,32 +24,30 @@ export const getContentManagementStats = async (req, res, next) => {
     }
 
     // Get all super admin users
-    const superAdmins = await User.find({ role: "super-admin" }).select("_id").lean();
+    const superAdmins = await User.find({ role: "super-admin" })
+      .select("_id")
+      .lean();
     const superAdminIds = superAdmins.map((admin) => admin._id);
 
     // Get statistics
-    const [
-      totalBooks,
-      booksByAdmin,
-      totalCourses,
-      coursesByAdmin,
-    ] = await Promise.all([
-      // Total books
-      EbookResource.countDocuments({}),
-      // Books uploaded by super admin
-      EbookResource.countDocuments({
-        $or: [
-          { "metadata.uploadedBy": { $in: superAdminIds } },
-          { "metadata.author": "Digital AELA" },
-        ],
-      }),
-      // Total courses
-      Course.countDocuments({}),
-      // Courses created by super admin
-      Course.countDocuments({
-        instructor: { $in: superAdminIds },
-      }),
-    ]);
+    const [totalBooks, booksByAdmin, totalCourses, coursesByAdmin] =
+      await Promise.all([
+        // Total books
+        EbookResource.countDocuments({}),
+        // Books uploaded by super admin
+        EbookResource.countDocuments({
+          $or: [
+            { "metadata.uploadedBy": { $in: superAdminIds } },
+            { "metadata.author": "Digital AELA" },
+          ],
+        }),
+        // Total courses
+        Course.countDocuments({}),
+        // Courses created by super admin
+        Course.countDocuments({
+          instructor: { $in: superAdminIds },
+        }),
+      ]);
 
     return res.json({
       stats: {
@@ -311,7 +309,9 @@ export const toggleCourseVisibility = async (req, res, next) => {
 
     return res.json({
       course,
-      message: `Course ${course.status === "published" ? "shown" : "hidden"} successfully`,
+      message: `Course ${
+        course.status === "published" ? "shown" : "hidden"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -431,12 +431,13 @@ export const approveCourse = async (req, res, next) => {
           status: "published",
           _id: { $ne: courseId },
         });
-        
+
         if (premiumCount >= 6) {
           return res.status(422).json({
             error: {
               code: "VALIDATION_ERROR",
-              message: "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
+              message:
+                "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
             },
           });
         }
@@ -451,7 +452,9 @@ export const approveCourse = async (req, res, next) => {
     // Create notification for course instructor (if exists)
     if (course.instructor) {
       try {
-        const { createNotification } = await import("../utils/notificationHelper.js");
+        const { createNotification } = await import(
+          "../utils/notificationHelper.js"
+        );
         await createNotification(
           course.instructor,
           action === "approve" ? "Course Approved" : "Course Rejected",
@@ -467,13 +470,18 @@ export const approveCourse = async (req, res, next) => {
         );
       } catch (notifError) {
         // eslint-disable-next-line no-console
-        console.error("[CourseApproval] Error creating notification:", notifError);
+        console.error(
+          "[CourseApproval] Error creating notification:",
+          notifError
+        );
       }
     }
 
     return res.json({
       course,
-      message: `Course ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Course ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -557,7 +565,9 @@ export const approveEbook = async (req, res, next) => {
     // Create notification for ebook author (if exists)
     if (ebook.createdBy) {
       try {
-        const { createNotification } = await import("../utils/notificationHelper.js");
+        const { createNotification } = await import(
+          "../utils/notificationHelper.js"
+        );
         await createNotification(
           ebook.createdBy,
           action === "approve" ? "Ebook Approved" : "Ebook Rejected",
@@ -573,13 +583,18 @@ export const approveEbook = async (req, res, next) => {
         );
       } catch (notifError) {
         // eslint-disable-next-line no-console
-        console.error("[EbookApproval] Error creating notification:", notifError);
+        console.error(
+          "[EbookApproval] Error creating notification:",
+          notifError
+        );
       }
     }
 
     return res.json({
       ebook,
-      message: `Ebook ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Ebook ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -636,12 +651,14 @@ export const approveJob = async (req, res, next) => {
     if (action === "approve") {
       job.status = "published";
       job.publishedAt = new Date();
-      
+
       // Calculate expiration date if not set
       if (!job.expirationDate) {
         const expiresInDays = 30;
         job.expirationDate = new Date();
-        job.expirationDate.setDate(job.expirationDate.getDate() + expiresInDays);
+        job.expirationDate.setDate(
+          job.expirationDate.getDate() + expiresInDays
+        );
       }
     } else {
       job.status = "archived";
@@ -652,7 +669,9 @@ export const approveJob = async (req, res, next) => {
     // Create notification for job owner
     if (job.owner) {
       try {
-        const { createNotification } = await import("../utils/notificationHelper.js");
+        const { createNotification } = await import(
+          "../utils/notificationHelper.js"
+        );
         await createNotification(
           job.owner,
           action === "approve" ? "Job Post Approved" : "Job Post Rejected",
@@ -676,18 +695,20 @@ export const approveJob = async (req, res, next) => {
     if (action === "approve") {
       try {
         const User = (await import("../models/User.js")).default;
-        const { createBulkNotifications } = await import("../utils/notificationHelper.js");
-        
+        const { createBulkNotifications } = await import(
+          "../utils/notificationHelper.js"
+        );
+
         // Get all active students
         const students = await User.find({ role: "student", isActive: true })
           .select("_id")
           .lean();
-        
+
         if (students.length > 0) {
           const studentIds = students.map((s) => s._id);
           const jobTitle = job.title;
           const companyName = job.company || "A company";
-          
+
           await createBulkNotifications(
             studentIds,
             "New Job Post Available",
@@ -703,14 +724,19 @@ export const approveJob = async (req, res, next) => {
         }
       } catch (notifError) {
         // eslint-disable-next-line no-console
-        console.error("[JobApproval] Error creating student notifications:", notifError);
+        console.error(
+          "[JobApproval] Error creating student notifications:",
+          notifError
+        );
         // Don't fail approval if notification fails
       }
     }
 
     return res.json({
       job,
-      message: `Job post ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Job post ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -783,10 +809,14 @@ export const approveTeacher = async (req, res, next) => {
 
     // Create notification for teacher
     try {
-      const { createNotification } = await import("../utils/notificationHelper.js");
+      const { createNotification } = await import(
+        "../utils/notificationHelper.js"
+      );
       await createNotification(
         userId,
-        action === "approve" ? "Teacher Application Approved" : "Teacher Application Rejected",
+        action === "approve"
+          ? "Teacher Application Approved"
+          : "Teacher Application Rejected",
         action === "approve"
           ? "Your teacher application has been approved. You can now access the teacher dashboard."
           : "Your teacher application has been rejected.",
@@ -799,12 +829,17 @@ export const approveTeacher = async (req, res, next) => {
       );
     } catch (notifError) {
       // eslint-disable-next-line no-console
-      console.error("[TeacherApproval] Error creating notification:", notifError);
+      console.error(
+        "[TeacherApproval] Error creating notification:",
+        notifError
+      );
     }
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Teacher ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Teacher ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -877,10 +912,14 @@ export const approveStudent = async (req, res, next) => {
 
     // Create notification for student
     try {
-      const { createNotification } = await import("../utils/notificationHelper.js");
+      const { createNotification } = await import(
+        "../utils/notificationHelper.js"
+      );
       await createNotification(
         userId,
-        action === "approve" ? "Student Application Approved" : "Student Application Rejected",
+        action === "approve"
+          ? "Student Application Approved"
+          : "Student Application Rejected",
         action === "approve"
           ? "Your student application has been approved. You can now access all student features."
           : "Your student application has been rejected.",
@@ -893,12 +932,17 @@ export const approveStudent = async (req, res, next) => {
       );
     } catch (notifError) {
       // eslint-disable-next-line no-console
-      console.error("[StudentApproval] Error creating notification:", notifError);
+      console.error(
+        "[StudentApproval] Error creating notification:",
+        notifError
+      );
     }
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Student ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Student ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -971,10 +1015,14 @@ export const approveRecruiter = async (req, res, next) => {
 
     // Create notification for recruiter
     try {
-      const { createNotification } = await import("../utils/notificationHelper.js");
+      const { createNotification } = await import(
+        "../utils/notificationHelper.js"
+      );
       await createNotification(
         userId,
-        action === "approve" ? "Recruiter Application Approved" : "Recruiter Application Rejected",
+        action === "approve"
+          ? "Recruiter Application Approved"
+          : "Recruiter Application Rejected",
         action === "approve"
           ? "Your recruiter application has been approved. You can now access the recruiter dashboard."
           : "Your recruiter application has been rejected.",
@@ -987,12 +1035,17 @@ export const approveRecruiter = async (req, res, next) => {
       );
     } catch (notifError) {
       // eslint-disable-next-line no-console
-      console.error("[RecruiterApproval] Error creating notification:", notifError);
+      console.error(
+        "[RecruiterApproval] Error creating notification:",
+        notifError
+      );
     }
 
     return res.json({
       user: await User.findById(userId).select("-passwordHash").lean(),
-      message: `Recruiter ${action === "approve" ? "approved" : "rejected"} successfully`,
+      message: `Recruiter ${
+        action === "approve" ? "approved" : "rejected"
+      } successfully`,
     });
   } catch (error) {
     return next(error);
@@ -1034,7 +1087,7 @@ export const createCourse = async (req, res, next) => {
       syllabus,
       tags,
       thumbnailUrl,
-      currency = "AED",
+      currency = "INR",
       status = "published",
       isPremium = false,
     } = req.body;
@@ -1058,7 +1111,12 @@ export const createCourse = async (req, res, next) => {
     }
 
     // Allow price to be 0 for free courses
-    if (price === undefined || price === null || price === "" || isNaN(Number(price))) {
+    if (
+      price === undefined ||
+      price === null ||
+      price === "" ||
+      isNaN(Number(price))
+    ) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
@@ -1074,20 +1132,26 @@ export const createCourse = async (req, res, next) => {
         "metadata.isPremium": true,
         status: "published",
       });
-      
+
       if (premiumCount >= 6) {
         return res.status(422).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
+            message:
+              "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
           },
         });
       }
     }
 
     // Normalize URLs before storing
-    const normalizedThumbnailUrl = normalizeUrl(coverImage || thumbnailUrl || "") || coverImage || thumbnailUrl || "";
-    const normalizedIntroVideoUrl = normalizeUrl(introVideoUrl || "") || introVideoUrl || "";
+    const normalizedThumbnailUrl =
+      normalizeUrl(coverImage || thumbnailUrl || "") ||
+      coverImage ||
+      thumbnailUrl ||
+      "";
+    const normalizedIntroVideoUrl =
+      normalizeUrl(introVideoUrl || "") || introVideoUrl || "";
 
     const course = await Course.create({
       title,
@@ -1095,7 +1159,7 @@ export const createCourse = async (req, res, next) => {
       category: category || "Uncategorised",
       duration: duration ? parseFloat(duration) : 0,
       price: Number(price),
-      currency: currency || "AED",
+      currency: currency || "INR",
       thumbnailUrl: normalizedThumbnailUrl,
       status,
       instructor: userId, // Super admin as instructor
@@ -1110,7 +1174,14 @@ export const createCourse = async (req, res, next) => {
         requirements: requirements || "",
         introVideoUrl: normalizedIntroVideoUrl,
         syllabus: syllabus || "",
-        tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean)) : [],
+        tags: tags
+          ? Array.isArray(tags)
+            ? tags
+            : tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+          : [],
         isPremium: isPremium === true || isPremium === "true",
       },
     });
@@ -1271,28 +1342,42 @@ export const updateAdminCourse = async (req, res, next) => {
     if (category) course.category = category;
     if (duration !== undefined) course.duration = parseFloat(duration) || 0;
     if (price !== undefined) course.price = Number(price);
-    if (coverImage !== undefined) course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
-    if (req.body.brochureUrl !== undefined) course.brochureUrl = normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
+    if (coverImage !== undefined)
+      course.thumbnailUrl = normalizeUrl(coverImage) || coverImage;
+    if (req.body.brochureUrl !== undefined)
+      course.brochureUrl =
+        normalizeUrl(req.body.brochureUrl) || req.body.brochureUrl;
     if (status !== undefined) course.status = status;
 
     // Update metadata
     if (!course.metadata) course.metadata = {};
     if (subtitle !== undefined) course.metadata.subtitle = subtitle;
     if (difficulty !== undefined) course.metadata.difficulty = difficulty;
-    if (discountPrice !== undefined) course.metadata.discountPrice = discountPrice ? Number(discountPrice) : null;
+    if (discountPrice !== undefined)
+      course.metadata.discountPrice = discountPrice
+        ? Number(discountPrice)
+        : null;
     if (language !== undefined) course.metadata.language = language;
     if (deliveryMode !== undefined) course.metadata.deliveryMode = deliveryMode;
     if (lessonCount !== undefined) course.metadata.lessonCount = lessonCount;
-    if (learningOutcomes !== undefined) course.metadata.learningOutcomes = learningOutcomes;
+    if (learningOutcomes !== undefined)
+      course.metadata.learningOutcomes = learningOutcomes;
     if (requirements !== undefined) course.metadata.requirements = requirements;
-    if (introVideoUrl !== undefined) course.metadata.introVideoUrl = normalizeUrl(introVideoUrl) || introVideoUrl;
+    if (introVideoUrl !== undefined)
+      course.metadata.introVideoUrl =
+        normalizeUrl(introVideoUrl) || introVideoUrl;
     if (syllabus !== undefined) course.metadata.syllabus = syllabus;
     if (tags !== undefined) {
-      course.metadata.tags = Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()).filter(Boolean);
+      course.metadata.tags = Array.isArray(tags)
+        ? tags
+        : tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
     }
     if (isPremium !== undefined) {
       const isPremiumValue = isPremium === true || isPremium === "true";
-      
+
       // Check premium course limit (max 6) only if setting to premium
       if (isPremiumValue) {
         const premiumCount = await Course.countDocuments({
@@ -1300,17 +1385,18 @@ export const updateAdminCourse = async (req, res, next) => {
           status: "published",
           _id: { $ne: course._id }, // Exclude current course
         });
-        
+
         if (premiumCount >= 6) {
           return res.status(422).json({
             error: {
               code: "VALIDATION_ERROR",
-              message: "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
+              message:
+                "Maximum of 6 premium courses allowed. Please unmark another premium course first.",
             },
           });
         }
       }
-      
+
       course.metadata.isPremium = isPremiumValue;
     }
 
@@ -1479,9 +1565,13 @@ export const createEbook = async (req, res, next) => {
 
     // Determine book type (default to "ebook" for backward compatibility)
     // Handle both string and boolean comparisons, and check req.body directly as fallback
-    const receivedBookType = (bookType || req.body?.bookType || "").toString().trim().toLowerCase();
-    const isPhysicalBook = receivedBookType === "physical" || receivedBookType === "physical-book";
-    
+    const receivedBookType = (bookType || req.body?.bookType || "")
+      .toString()
+      .trim()
+      .toLowerCase();
+    const isPhysicalBook =
+      receivedBookType === "physical" || receivedBookType === "physical-book";
+
     // Debug logging (can be removed in production)
     console.log("[createEbook] Book type check:", {
       bookType,
@@ -1514,26 +1604,29 @@ export const createEbook = async (req, res, next) => {
       if (!isPhysicalBook) {
         // Validate that downloadUrl is a PDF, not an image
         const urlLower = downloadUrl.toLowerCase();
-        const urlPath = urlLower.split('?')[0].split('#')[0];
-        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-        const isImageUrl = imageExtensions.some(ext => urlPath.endsWith(ext));
-        const isCoverImagePath = urlLower.includes('/books/covers/') || urlLower.includes('/covers/');
-        
+        const urlPath = urlLower.split("?")[0].split("#")[0];
+        const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+        const isImageUrl = imageExtensions.some((ext) => urlPath.endsWith(ext));
+        const isCoverImagePath =
+          urlLower.includes("/books/covers/") || urlLower.includes("/covers/");
+
         if (isImageUrl || isCoverImagePath) {
           return res.status(422).json({
             error: {
               code: "VALIDATION_ERROR",
-              message: "Download URL must point to a PDF file, not an image. Please provide a valid PDF URL or upload a PDF file.",
+              message:
+                "Download URL must point to a PDF file, not an image. Please provide a valid PDF URL or upload a PDF file.",
             },
           });
         }
-        
+
         // Check if URL ends with .pdf or is a Cloudinary raw resource
-        if (!urlPath.endsWith('.pdf') && !urlLower.includes('/raw/upload/')) {
+        if (!urlPath.endsWith(".pdf") && !urlLower.includes("/raw/upload/")) {
           return res.status(422).json({
             error: {
               code: "VALIDATION_ERROR",
-              message: "Download URL must point to a PDF file. Please provide a valid PDF URL or upload a PDF file.",
+              message:
+                "Download URL must point to a PDF file. Please provide a valid PDF URL or upload a PDF file.",
             },
           });
         }
@@ -1564,12 +1657,13 @@ export const createEbook = async (req, res, next) => {
         "metadata.isFeatured": true,
         isPublic: true,
       });
-      
+
       if (featuredCount >= 4) {
         return res.status(422).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Maximum of 4 featured books allowed. Please unmark another featured book first.",
+            message:
+              "Maximum of 4 featured books allowed. Please unmark another featured book first.",
           },
         });
       }
@@ -1597,7 +1691,10 @@ export const createEbook = async (req, res, next) => {
         tags: tags
           ? Array.isArray(tags)
             ? tags
-            : tags.split(",").map((t) => t.trim()).filter(Boolean)
+            : tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
           : [],
         isFeatured: isFeaturedValue,
       },
@@ -1625,7 +1722,13 @@ export const createBlog = async (req, res, next) => {
       });
     }
 
-    const { title, excerpt, content, coverImage, status = "published" } = req.body;
+    const {
+      title,
+      excerpt,
+      content,
+      coverImage,
+      status = "published",
+    } = req.body;
 
     if (!title || !content) {
       return res.status(422).json({
@@ -1655,4 +1758,3 @@ export const createBlog = async (req, res, next) => {
     return next(error);
   }
 };
-

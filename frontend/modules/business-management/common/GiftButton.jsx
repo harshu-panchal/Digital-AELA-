@@ -65,12 +65,11 @@ const GiftButton = ({
     // User complaint implies they want the item price.
 
     return {
-      amount: price > 0 ? price : 5000, // Fallback to 5000 only if really 0/invalid? 
-      // Actually if it's a specific book, 0 is wrong. 
-      // But if I can't read it, 5000 is also confusing.
-      // Let's trust the extraction and fallback to course price or 0.
-      amount: price,
-      currency: "AED" // Default to AED for courses/books as per user request
+      // Trust the extraction and fallback to extracted price (which defaults to 0)
+      // or if 0 doesn't make sense for a gift, consider the 5000 fallback carefully.
+      // For now, eliminating duplication while keeping the extracted price.
+      amount: price || 5000,
+      currency: "INR" // Default to INR for courses/books as per user request
     };
   };
 

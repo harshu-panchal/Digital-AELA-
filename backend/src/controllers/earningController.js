@@ -768,7 +768,7 @@ export const getReferralEarnings = async (req, res, next) => {
       summary: {
         totalEarnings: totalReferralEarnings,
         count: earnings.length,
-        currency: "AED",
+        currency: "INR",
       },
     });
   } catch (error) {

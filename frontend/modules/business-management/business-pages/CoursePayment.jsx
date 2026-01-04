@@ -5,16 +5,13 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
 import { extractNumericPrice } from "../utils/paymentLinks";
-import { createPayment, createRazorpayPaymentLink } from "../../../src/services/api/payments";
+import {
+  createPayment,
+  createRazorpayPaymentLink,
+} from "../../../src/services/api/payments";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const externalCourseGatewayUrl = "https://digitalaela.com/course-payment";
-
-const formatCurrency = (value) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const CoursePayment = () => {
   const location = useLocation();
@@ -54,15 +51,7 @@ const CoursePayment = () => {
   const initialQuantity =
     Number(stateCourse.quantity ?? query.get("quantity")) || 1;
 
-  const currency = stateCourse.currency ?? query.get("currency") ?? "AED";
-
-  // Use dynamic currency formatting
-  const formatCurrency = (value, currencyCode) =>
-    new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: currencyCode || "AED",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const currency = "INR";
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -84,9 +73,7 @@ const CoursePayment = () => {
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "quantity"
-          ? Math.max(1, parseInt(value, 10) || 1)
-          : value,
+        name === "quantity" ? Math.max(1, parseInt(value, 10) || 1) : value,
     }));
   };
 
@@ -128,7 +115,9 @@ const CoursePayment = () => {
       window.location.href = linkResponse.paymentLink.url;
     } catch (error) {
       console.error("[Payment] Error processing payment:", error);
-      toast.error(error.message || "Failed to process payment. Please try again.");
+      toast.error(
+        error.message || "Failed to process payment. Please try again."
+      );
       setIsProcessing(false);
     }
   };
@@ -146,14 +135,12 @@ const CoursePayment = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden"
-      >
+        className="relative pt-[140px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-black" />
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4"
-          >
+            className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4">
             <FaArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>
           </Link>
@@ -167,8 +154,7 @@ const CoursePayment = () => {
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="lg:col-span-1"
-            >
+              className="lg:col-span-1">
               <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20 sticky top-24">
                 <h2 className="text-xl font-bold text-white mb-6 font-display">
                   Course Summary
@@ -225,8 +211,8 @@ const CoursePayment = () => {
                     <p className="text-gray-400 text-sm mb-1">Impact</p>
                     <p className="text-gray-300 text-sm leading-relaxed">
                       Your enrolment unlocks guided cohorts, mentor feedback,
-                      and project workspaces built to accelerate learner
-                      careers across the Digital AELA network.
+                      and project workspaces built to accelerate learner careers
+                      across the Digital AELA network.
                     </p>
                   </div>
                 </div>
@@ -234,12 +220,14 @@ const CoursePayment = () => {
                 <div className="border-t border-gray-700 pt-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Quantity</span>
-                    <span className="text-white font-semibold">× {quantity}</span>
+                    <span className="text-white font-semibold">
+                      × {quantity}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Course Fee</span>
                     <span className="text-white font-semibold">
-                      {formatCurrency(basePrice, currency)}
+                      {formatCurrency(basePrice)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -249,7 +237,7 @@ const CoursePayment = () => {
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      {formatCurrency(totalAmount, currency)}
+                      {formatCurrency(totalAmount)}
                     </span>
                   </div>
                 </div>
@@ -260,8 +248,7 @@ const CoursePayment = () => {
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-              className="lg:col-span-2"
-            >
+              className="lg:col-span-2">
               <div className="bg-[#1a1a1a] rounded-xl p-6 md:p-8 border border-[#D4AF37]/20">
                 <div className="flex items-center gap-3 mb-6">
                   <FaLock className="w-5 h-5 text-[#D4AF37]" />
@@ -397,15 +384,14 @@ const CoursePayment = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    disabled={totalAmount <= 0 || isProcessing}
-                  >
+                    disabled={totalAmount <= 0 || isProcessing}>
                     {isProcessing ? (
                       <>
                         <FaSpinner className="animate-spin" />
                         Processing...
                       </>
                     ) : (
-                      `Pay ${formatCurrency(totalAmount, currency)}`
+                      `Pay ${formatCurrency(totalAmount)}`
                     )}
                   </motion.button>
 
@@ -424,4 +410,3 @@ const CoursePayment = () => {
 };
 
 export default CoursePayment;
-

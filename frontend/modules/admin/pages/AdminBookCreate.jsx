@@ -75,7 +75,7 @@ const AdminBookCreate = () => {
 
   const priceHelper = useMemo(
     () => ({
-      price: "Set in AED. Leave blank to offer for free (0).",
+      price: "Set in INR. Leave blank to offer for free (0).",
     }),
     []
   );
@@ -83,7 +83,7 @@ const AdminBookCreate = () => {
   const handleInputChange = useCallback(
     (event) => {
       const { name, value, type, checked, files } = event.target;
-      
+
       if (name === "coverImageFile" && files && files[0]) {
         const file = files[0];
         // Validate image file
@@ -91,7 +91,7 @@ const AdminBookCreate = () => {
           toast.error("Please upload an image file");
           return;
         }
-        
+
         // Create preview
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -102,7 +102,7 @@ const AdminBookCreate = () => {
           }));
         };
         reader.readAsDataURL(file);
-        
+
         // Upload image
         setIsUploadingImage(true);
         uploadImageToCloudinary(file, "digital-aela/books/covers")
@@ -126,7 +126,7 @@ const AdminBookCreate = () => {
           });
         return;
       }
-      
+
       if (name === "file") {
         const file = files?.[0];
         setFormData((prev) => ({
@@ -135,7 +135,7 @@ const AdminBookCreate = () => {
         }));
         return;
       }
-      
+
       // Clear file when switching from ebook to physical book
       if (name === "bookType" && value === "physical") {
         setFormData((prev) => ({
@@ -183,17 +183,17 @@ const AdminBookCreate = () => {
 
     // For e-books, downloadUrl is required (can be provided directly or from previewUrl/coverImage)
     if (formData.bookType === "ebook") {
-    const downloadUrl =
-      sanitizeUrl(formData.downloadUrl) ||
-      sanitizeUrl(formData.previewUrl) ||
-      sanitizeUrl(formData.coverImage) ||
-      "";
+      const downloadUrl =
+        sanitizeUrl(formData.downloadUrl) ||
+        sanitizeUrl(formData.previewUrl) ||
+        sanitizeUrl(formData.coverImage) ||
+        "";
 
-    if (!downloadUrl) {
-      toast.error(
-        "Please provide a download URL, preview URL, or cover image URL for the ebook file."
-      );
-      return;
+      if (!downloadUrl) {
+        toast.error(
+          "Please provide a download URL, preview URL, or cover image URL for the ebook file."
+        );
+        return;
       }
     }
 
@@ -313,8 +313,7 @@ const AdminBookCreate = () => {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label
-                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
                   Book Type*
                 </label>
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -342,7 +341,8 @@ const AdminBookCreate = () => {
                   </label>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Select whether this is an e-book (requires PDF upload) or a physical book (no PDF needed).
+                  Select whether this is an e-book (requires PDF upload) or a
+                  physical book (no PDF needed).
                 </p>
               </div>
 
@@ -377,7 +377,7 @@ const AdminBookCreate = () => {
                 <label
                   htmlFor="price"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Price (AED)
+                  Price (INR)
                 </label>
                 <input
                   id="price"
@@ -453,7 +453,9 @@ const AdminBookCreate = () => {
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#F5D26A]/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#F5D26A] file:hover:bg-[#F5D26A]/30 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {isUploadingImage && (
-                    <p className="text-[11px] text-[#F5D26A]">Uploading image...</p>
+                    <p className="text-[11px] text-[#F5D26A]">
+                      Uploading image...
+                    </p>
                   )}
                   {formData.coverImagePreview && (
                     <div className="relative w-full max-w-md">
@@ -472,8 +474,7 @@ const AdminBookCreate = () => {
                             coverImage: "",
                           }));
                         }}
-                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs"
-                      >
+                        className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 text-white p-1.5 text-xs">
                         Remove
                       </button>
                     </div>
@@ -505,26 +506,26 @@ const AdminBookCreate = () => {
               </div>
 
               {formData.bookType === "ebook" && (
-              <div className="space-y-1.5 md:col-span-2">
-                <label
-                  htmlFor="downloadUrl"
-                  className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Download URL*
-                </label>
-                <input
-                  id="downloadUrl"
-                  name="downloadUrl"
-                  type="url"
-                  value={formData.downloadUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                />
-                <p className="text-[11px] text-slate-400">
-                  Required: Direct URL to the PDF file. Can also use preview URL
-                  or cover image URL if they point to the PDF.
-                </p>
-              </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label
+                    htmlFor="downloadUrl"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Download URL*
+                  </label>
+                  <input
+                    id="downloadUrl"
+                    name="downloadUrl"
+                    type="url"
+                    value={formData.downloadUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Required: Direct URL to the PDF file. Can also use preview
+                    URL or cover image URL if they point to the PDF.
+                  </p>
+                </div>
               )}
 
               <div className="space-y-1.5 md:col-span-2">
@@ -550,53 +551,61 @@ const AdminBookCreate = () => {
             </section>
 
             {formData.bookType === "ebook" && (
-            <section className="space-y-4">
-              <header>
-                <h2 className="text-lg font-semibold text-white">Attach PDF</h2>
-                <p className="text-xs text-slate-400">
-                  Upload the final PDF. Actual storage will connect to backend
-                  later; we keep metadata for now.
-                </p>
-              </header>
-
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
-                <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Drop PDF here or click to browse
-                </span>
-                <input
-                  type="file"
-                  name="file"
-                  accept=".pdf"
-                  onChange={handleInputChange}
-                  className="hidden"
-                />
-                {formData.file ? (
-                  <div className="text-xs text-slate-300">
-                    Selected:{" "}
-                    <span className="font-semibold text-white">
-                      {formData.file.name}
-                    </span>{" "}
-                    ({Math.round(formData.file.size / 1024)} KB)
-                  </div>
-                ) : (
+              <section className="space-y-4">
+                <header>
+                  <h2 className="text-lg font-semibold text-white">
+                    Attach PDF
+                  </h2>
                   <p className="text-xs text-slate-400">
-                    Upload a PDF up to 1GB.
+                    Upload the final PDF. Actual storage will connect to backend
+                    later; we keep metadata for now.
                   </p>
-                )}
-              </label>
+                </header>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                Note: The PDF is not permanently uploaded yet. We store its name
-                and size so the backend can request the actual file later.
-              </div>
-            </section>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center text-sm text-slate-300 hover:border-[#F5D26A]/50 hover:text-white">
+                  <span className="text-xs uppercase tracking-[0.3em] text-[#F5D26A]/80">
+                    Drop PDF here or click to browse
+                  </span>
+                  <input
+                    type="file"
+                    name="file"
+                    accept=".pdf"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+                  {formData.file ? (
+                    <div className="text-xs text-slate-300">
+                      Selected:{" "}
+                      <span className="font-semibold text-white">
+                        {formData.file.name}
+                      </span>{" "}
+                      ({Math.round(formData.file.size / 1024)} KB)
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">
+                      Upload a PDF up to 1GB.
+                    </p>
+                  )}
+                </label>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
+                  Note: The PDF is not permanently uploaded yet. We store its
+                  name and size so the backend can request the actual file
+                  later.
+                </div>
+              </section>
             )}
 
             {formData.bookType === "physical" && (
               <section className="space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300">
-                  <p className="font-semibold text-[#F5D26A] mb-1">Physical Book Selected</p>
-                  <p>No PDF upload is required for physical books. The book will be available for physical purchase or distribution.</p>
+                  <p className="font-semibold text-[#F5D26A] mb-1">
+                    Physical Book Selected
+                  </p>
+                  <p>
+                    No PDF upload is required for physical books. The book will
+                    be available for physical purchase or distribution.
+                  </p>
                 </div>
               </section>
             )}

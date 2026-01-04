@@ -99,7 +99,7 @@ export const createTeacherCourse = async (req, res, next) => {
       category: category || "Uncategorised",
       duration: duration ? parseFloat(duration) : 0,
       price: Number(price),
-      currency: "AED",
+      currency: "INR",
       thumbnailUrl: coverImage ? (normalizeUrl(coverImage) || coverImage) : "",
       brochureUrl: "", // Will be set if brochure is uploaded
       status: "draft", // Always draft for teacher-created courses

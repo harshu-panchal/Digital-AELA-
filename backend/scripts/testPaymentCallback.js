@@ -1,7 +1,7 @@
 /**
  * Payment Callback Test Script
  * Tests the Razorpay payment callback handler with correct parameter names
- * 
+ *
  * Usage:
  *   node scripts/testPaymentCallback.js
  *   BACKEND_URL=http://localhost:5000 node scripts/testPaymentCallback.js
@@ -24,18 +24,19 @@ const __dirname = dirname(__filename);
 // Load environment variables
 dotenv.config({ path: join(__dirname, "..", ".env") });
 
-const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+const BACKEND_URL =
+  process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
 const API_BASE = `${BACKEND_URL}/api/v1`;
 
 // Colors for console output
 const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  green: "\x1b[32m",
+  red: "\x1b[31m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  cyan: "\x1b[36m",
 };
 
 const log = {
@@ -44,7 +45,12 @@ const log = {
   warning: (msg) => console.log(`${colors.yellow}⚠️${colors.reset}  ${msg}`),
   info: (msg) => console.log(`${colors.blue}ℹ️${colors.reset}  ${msg}`),
   test: (msg) => console.log(`${colors.cyan}🧪${colors.reset} ${msg}`),
-  section: (msg) => console.log(`\n${colors.bright}${colors.cyan}${'='.repeat(60)}${colors.reset}\n${colors.bright}${msg}${colors.reset}\n${'='.repeat(60)}\n`),
+  section: (msg) =>
+    console.log(
+      `\n${colors.bright}${colors.cyan}${"=".repeat(60)}${colors.reset}\n${
+        colors.bright
+      }${msg}${colors.reset}\n${"=".repeat(60)}\n`
+    ),
 };
 
 let testUser = null;
@@ -57,16 +63,16 @@ let testPayment = null;
 const testCallback = async (queryParams) => {
   const queryString = new URLSearchParams(queryParams).toString();
   const url = `${API_BASE}/payments/razorpay/callback?${queryString}`;
-  
+
   try {
     log.info(`Testing callback URL: ${url}`);
-    
+
     const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'manual', // Don't follow redirects automatically
+      method: "GET",
+      redirect: "manual", // Don't follow redirects automatically
     });
 
-    const location = response.headers.get('location');
+    const location = response.headers.get("location");
     const status = response.status;
 
     return {
@@ -75,7 +81,10 @@ const testCallback = async (queryParams) => {
       redirected: status >= 300 && status < 400,
     };
   } catch (error) {
-    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch failed')) {
+    if (
+      error.code === "ECONNREFUSED" ||
+      error.message.includes("fetch failed")
+    ) {
       log.error(`Cannot connect to server at ${BACKEND_URL}`);
       log.warning("Make sure the backend server is running!");
       return {
@@ -99,7 +108,10 @@ const testCallback = async (queryParams) => {
 const cleanup = async () => {
   try {
     if (testPayment) {
-      await Enrollment.deleteMany({ course: testCourse?._id, student: testUser?._id });
+      await Enrollment.deleteMany({
+        course: testCourse?._id,
+        student: testUser?._id,
+      });
       await Payment.deleteOne({ _id: testPayment._id });
       log.info("Test payment deleted");
     }
@@ -147,7 +159,7 @@ const runTests = async () => {
         title: "Test Course for Callback",
         description: "Test course for payment callback testing",
         price: 100,
-        currency: "AED",
+        currency: "INR",
         status: "published",
         instructor: testUser._id,
       });
@@ -162,7 +174,7 @@ const runTests = async () => {
       user: testUser._id,
       course: testCourse._id,
       amount: 100,
-      currency: "AED",
+      currency: "INR",
       status: "pending",
       gateway: "razorpay",
       description: "Test payment for callback testing",
@@ -170,8 +182,10 @@ const runTests = async () => {
     log.success(`Test payment created: ${testPayment._id}`);
 
     // Test 1: Successful payment callback with correct parameter names
-    log.section("Test 1: Successful Payment Callback (razorpay_payment_link_status=paid)");
-    
+    log.section(
+      "Test 1: Successful Payment Callback (razorpay_payment_link_status=paid)"
+    );
+
     const successParams = {
       paymentId: testPayment._id.toString(),
       razorpay_payment_id: "pay_test_success_12345",
@@ -182,18 +196,18 @@ const runTests = async () => {
 
     log.test("Sending callback request with success parameters...");
     const successResult = await testCallback(successParams);
-    
+
     if (successResult.connectionError) {
       log.error("Cannot proceed with HTTP tests - server not running");
       log.warning("Please start the backend server and run the test again");
       log.info("You can still verify database operations below");
       return;
     }
-    
+
     if (successResult.redirected && successResult.location) {
       log.success("Callback redirected successfully");
       log.info(`Redirect location: ${successResult.location}`);
-      
+
       // Check if redirect URL contains status=success
       if (successResult.location.includes("status=success")) {
         log.success("✓ Redirect URL contains status=success");
@@ -213,20 +227,26 @@ const runTests = async () => {
     const updatedPayment = await Payment.findById(testPayment._id);
     log.info(`Payment status: ${updatedPayment.status}`);
     log.info(`Gateway transaction ID: ${updatedPayment.gatewayTransactionId}`);
-    
+
     if (updatedPayment.status === "completed") {
       log.success("✓ Payment status updated to 'completed'");
     } else {
-      log.warning(`⚠ Payment status is '${updatedPayment.status}' (expected 'completed')`);
-      log.info("Note: This might be expected if Razorpay API call fails in test environment");
+      log.warning(
+        `⚠ Payment status is '${updatedPayment.status}' (expected 'completed')`
+      );
+      log.info(
+        "Note: This might be expected if Razorpay API call fails in test environment"
+      );
     }
 
     // Test 2: Failed payment callback
-    log.section("Test 2: Failed Payment Callback (razorpay_payment_link_status=failed)");
-    
+    log.section(
+      "Test 2: Failed Payment Callback (razorpay_payment_link_status=failed)"
+    );
+
     // Reset payment status for this test
     await Payment.findByIdAndUpdate(testPayment._id, { status: "pending" });
-    
+
     const failedParams = {
       paymentId: testPayment._id.toString(),
       razorpay_payment_id: "pay_test_failed_12345",
@@ -237,11 +257,11 @@ const runTests = async () => {
 
     log.test("Sending callback request with failed parameters...");
     const failedResult = await testCallback(failedParams);
-    
+
     if (failedResult.redirected && failedResult.location) {
       log.success("Callback redirected successfully");
       log.info(`Redirect location: ${failedResult.location}`);
-      
+
       // Check if redirect URL contains status=failed
       if (failedResult.location.includes("status=failed")) {
         log.success("✓ Redirect URL contains status=failed");
@@ -253,7 +273,7 @@ const runTests = async () => {
 
     // Test 3: Missing paymentId
     log.section("Test 3: Missing Payment ID");
-    
+
     const missingPaymentIdParams = {
       razorpay_payment_id: "pay_test_12345",
       razorpay_payment_link_status: "paid",
@@ -261,17 +281,20 @@ const runTests = async () => {
 
     log.test("Sending callback request without paymentId...");
     const missingIdResult = await testCallback(missingPaymentIdParams);
-    
+
     if (missingIdResult.redirected) {
       log.info("Callback still redirected (expected behavior)");
-      if (missingIdResult.location?.includes("status=error") || missingIdResult.location?.includes("status=unknown")) {
+      if (
+        missingIdResult.location?.includes("status=error") ||
+        missingIdResult.location?.includes("status=unknown")
+      ) {
         log.success("✓ Handles missing paymentId gracefully");
       }
     }
 
     // Test 4: Verify parameter name handling (old vs new)
     log.section("Test 4: Parameter Name Comparison");
-    
+
     log.test("Testing with OLD parameter names (should not work)...");
     const oldParams = {
       paymentId: testPayment._id.toString(),
@@ -279,10 +302,10 @@ const runTests = async () => {
       payment_link_id: "plink_old_format",
       status: "paid",
     };
-    
+
     const oldResult = await testCallback(oldParams);
     log.info(`Old format redirect: ${oldResult.location || "No redirect"}`);
-    
+
     log.test("Testing with NEW parameter names (should work)...");
     const newParams = {
       paymentId: testPayment._id.toString(),
@@ -290,11 +313,14 @@ const runTests = async () => {
       razorpay_payment_link_id: "plink_new_format",
       razorpay_payment_link_status: "paid",
     };
-    
+
     const newResult = await testCallback(newParams);
     log.info(`New format redirect: ${newResult.location || "No redirect"}`);
-    
-    if (newResult.location?.includes("status=success") && !oldResult.location?.includes("status=success")) {
+
+    if (
+      newResult.location?.includes("status=success") &&
+      !oldResult.location?.includes("status=success")
+    ) {
       log.success("✓ New parameter names work correctly");
     } else {
       log.warning("⚠ Parameter name handling may need review");
@@ -302,55 +328,62 @@ const runTests = async () => {
 
     // Test 5: Check enrollment creation (if payment is completed)
     log.section("Test 5: Enrollment Creation Check");
-    
+
     // Reset and complete payment again
-    await Payment.findByIdAndUpdate(testPayment._id, { 
+    await Payment.findByIdAndUpdate(testPayment._id, {
       status: "pending",
       "metadata.enrollmentCreated": false,
     });
-    
+
     // Delete any existing enrollment
-    await Enrollment.deleteMany({ 
-      course: testCourse._id, 
-      student: testUser._id 
+    await Enrollment.deleteMany({
+      course: testCourse._id,
+      student: testUser._id,
     });
-    
+
     log.test("Triggering callback to create enrollment...");
     await testCallback({
       paymentId: testPayment._id.toString(),
       razorpay_payment_id: "pay_test_enrollment_12345",
       razorpay_payment_link_status: "paid",
     });
-    
+
     // Wait a bit for async operations
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const enrollment = await Enrollment.findOne({
       course: testCourse._id,
       student: testUser._id,
     });
-    
+
     if (enrollment) {
       log.success("✓ Enrollment created successfully");
       log.info(`Enrollment ID: ${enrollment._id}`);
     } else {
-      log.warning("⚠ Enrollment not created (might be expected if Razorpay API call fails)");
+      log.warning(
+        "⚠ Enrollment not created (might be expected if Razorpay API call fails)"
+      );
     }
 
     // Summary
     log.section("Test Summary");
     log.success("All callback tests completed!");
     log.info("\nKey Points Verified:");
-    log.info("1. ✓ Correct parameter names (razorpay_payment_id, razorpay_payment_link_status)");
+    log.info(
+      "1. ✓ Correct parameter names (razorpay_payment_id, razorpay_payment_link_status)"
+    );
     log.info("2. ✓ Status mapping (paid → success)");
     log.info("3. ✓ Payment status update in database");
     log.info("4. ✓ Redirect URL format");
     log.info("5. ✓ Error handling for missing parameters");
-    
-    log.warning("\nNote: Some tests may show warnings if Razorpay API calls fail.");
-    log.warning("This is expected in test environments without valid Razorpay credentials.");
-    log.warning("The callback handler logic is still verified.");
 
+    log.warning(
+      "\nNote: Some tests may show warnings if Razorpay API calls fail."
+    );
+    log.warning(
+      "This is expected in test environments without valid Razorpay credentials."
+    );
+    log.warning("The callback handler logic is still verified.");
   } catch (error) {
     log.error(`Test failed: ${error.message}`);
     console.error(error.stack);
@@ -368,4 +401,3 @@ runTests().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

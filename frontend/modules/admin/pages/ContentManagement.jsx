@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { apiRequest } from "../../../src/services/api/baseClient";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const ContentManagement = () => {
   const { user } = useAuth();
@@ -60,20 +61,18 @@ const ContentManagement = () => {
       });
       const allCoursesData = response.courses || [];
       setAllCourses(allCoursesData);
-      
+
       // Filter courses based on courseTypeFilter
       let filtered = allCoursesData;
       if (courseTypeFilter === "my-courses" && user?.id) {
         // Show only courses created by current admin
-        filtered = allCoursesData.filter(
-          (course) => {
-            const instructorId = course.instructor?._id || course.instructor?.id;
-            const instructorIdStr = instructorId?.toString();
-            const userIdStr = user.id?.toString();
-            // Match by ID (handles both ObjectId and string formats)
-            return instructorIdStr === userIdStr || instructorId === user.id;
-          }
-        );
+        filtered = allCoursesData.filter((course) => {
+          const instructorId = course.instructor?._id || course.instructor?.id;
+          const instructorIdStr = instructorId?.toString();
+          const userIdStr = user.id?.toString();
+          // Match by ID (handles both ObjectId and string formats)
+          return instructorIdStr === userIdStr || instructorId === user.id;
+        });
       } else if (courseTypeFilter === "teacher-courses") {
         // Show only courses created by teachers
         filtered = allCoursesData.filter(
@@ -97,7 +96,10 @@ const ContentManagement = () => {
       });
       if (searchQuery) params.append("search", searchQuery);
       if (visibilityFilter !== "all") {
-        params.append("isPublic", visibilityFilter === "visible" ? "true" : "false");
+        params.append(
+          "isPublic",
+          visibilityFilter === "visible" ? "true" : "false"
+        );
       }
 
       const response = await apiRequest(`/admin/content/books?${params}`, {
@@ -128,11 +130,22 @@ const ContentManagement = () => {
       }
     };
     loadData();
-  }, [activeTab, searchQuery, statusFilter, visibilityFilter, courseTypeFilter, user]);
+  }, [
+    activeTab,
+    searchQuery,
+    statusFilter,
+    visibilityFilter,
+    courseTypeFilter,
+    user,
+  ]);
 
   // Delete course
   const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this course? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -150,7 +163,11 @@ const ContentManagement = () => {
 
   // Delete book
   const handleDeleteBook = async (bookId) => {
-    if (!window.confirm("Are you sure you want to delete this book? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this book? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -176,7 +193,9 @@ const ContentManagement = () => {
         method: "PATCH",
         body: { isVisible: newVisibility },
       });
-      toast.success(`Course ${newVisibility ? "shown" : "hidden"} successfully`);
+      toast.success(
+        `Course ${newVisibility ? "shown" : "hidden"} successfully`
+      );
       fetchCourses();
     } catch (error) {
       toast.error("Failed to update course visibility");
@@ -231,7 +250,9 @@ const ContentManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Content Management</h1>
-          <p className="text-gray-400 mt-2">Manage courses and books on the website</p>
+          <p className="text-gray-400 mt-2">
+            Manage courses and books on the website
+          </p>
         </div>
       </div>
 
@@ -246,8 +267,12 @@ const ContentManagement = () => {
             className={`bg-gradient-to-br ${stat.color} rounded-xl p-6 shadow-lg`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/80 text-sm font-medium">{stat.label}</p>
-                <p className="text-white text-3xl font-bold mt-2">{stat.value}</p>
+                <p className="text-white/80 text-sm font-medium">
+                  {stat.label}
+                </p>
+                <p className="text-white text-3xl font-bold mt-2">
+                  {stat.value}
+                </p>
               </div>
               <stat.icon className="text-white/20 text-4xl" />
             </div>
@@ -267,7 +292,8 @@ const ContentManagement = () => {
                   ? "bg-[#F5D26A]/20 text-[#F5D26A]"
                   : "text-gray-400 hover:text-white"
               }`}>
-              Courses ({courseTypeFilter === "all" ? allCourses.length : courses.length})
+              Courses (
+              {courseTypeFilter === "all" ? allCourses.length : courses.length})
             </button>
             <button
               onClick={() => setActiveTab("books")}
@@ -300,18 +326,36 @@ const ContentManagement = () => {
                 onChange={(e) => setCourseTypeFilter(e.target.value)}
                 className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
                 style={{ backgroundColor: "#000000" }}>
-                <option value="all" style={{ backgroundColor: "#000000" }}>All Courses</option>
-                <option value="my-courses" style={{ backgroundColor: "#000000" }}>My Courses (Editable)</option>
-                <option value="teacher-courses" style={{ backgroundColor: "#000000" }}>Teacher Courses</option>
+                <option value="all" style={{ backgroundColor: "#000000" }}>
+                  All Courses
+                </option>
+                <option
+                  value="my-courses"
+                  style={{ backgroundColor: "#000000" }}>
+                  My Courses (Editable)
+                </option>
+                <option
+                  value="teacher-courses"
+                  style={{ backgroundColor: "#000000" }}>
+                  Teacher Courses
+                </option>
               </select>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
                 style={{ backgroundColor: "#000000" }}>
-                <option value="all" style={{ backgroundColor: "#000000" }}>All Status</option>
-                <option value="published" style={{ backgroundColor: "#000000" }}>Published</option>
-                <option value="archived" style={{ backgroundColor: "#000000" }}>Archived</option>
+                <option value="all" style={{ backgroundColor: "#000000" }}>
+                  All Status
+                </option>
+                <option
+                  value="published"
+                  style={{ backgroundColor: "#000000" }}>
+                  Published
+                </option>
+                <option value="archived" style={{ backgroundColor: "#000000" }}>
+                  Archived
+                </option>
               </select>
             </div>
           ) : (
@@ -320,9 +364,15 @@ const ContentManagement = () => {
               onChange={(e) => setVisibilityFilter(e.target.value)}
               className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#F5D26A]/50"
               style={{ backgroundColor: "#000000" }}>
-              <option value="all" style={{ backgroundColor: "#000000" }}>All Visibility</option>
-              <option value="visible" style={{ backgroundColor: "#000000" }}>Visible</option>
-              <option value="hidden" style={{ backgroundColor: "#000000" }}>Hidden</option>
+              <option value="all" style={{ backgroundColor: "#000000" }}>
+                All Visibility
+              </option>
+              <option value="visible" style={{ backgroundColor: "#000000" }}>
+                Visible
+              </option>
+              <option value="hidden" style={{ backgroundColor: "#000000" }}>
+                Hidden
+              </option>
             </select>
           )}
         </div>
@@ -335,7 +385,9 @@ const ContentManagement = () => {
         ) : activeTab === "courses" ? (
           <div className="space-y-4">
             {courses.length === 0 ? (
-              <p className="text-center text-gray-400 py-10">No courses found</p>
+              <p className="text-center text-gray-400 py-10">
+                No courses found
+              </p>
             ) : (
               courses.map((course) => (
                 <motion.div
@@ -345,9 +397,12 @@ const ContentManagement = () => {
                   className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold">{course.title}</h3>
+                      <h3 className="text-white font-semibold">
+                        {course.title}
+                      </h3>
                       <p className="text-gray-400 text-sm mt-1">
-                        By: {course.instructor?.fullName || "Unknown"} ({course.instructor?.role || "N/A"})
+                        By: {course.instructor?.fullName || "Unknown"} (
+                        {course.instructor?.role || "N/A"})
                       </p>
                       <div className="flex gap-2 mt-2 flex-wrap">
                         <span
@@ -359,14 +414,17 @@ const ContentManagement = () => {
                           {course.status}
                         </span>
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-500/20 text-blue-400">
-                          {course.price || 0} AED
+                          {formatCurrency(course.price || 0)}
                         </span>
                         {/* Show editable badge for admin's own courses */}
                         {(() => {
-                          const instructorId = course.instructor?._id || course.instructor?.id;
+                          const instructorId =
+                            course.instructor?._id || course.instructor?.id;
                           const instructorIdStr = instructorId?.toString();
                           const userIdStr = user?.id?.toString();
-                          const isMyCourse = instructorIdStr === userIdStr || instructorId === user?.id;
+                          const isMyCourse =
+                            instructorIdStr === userIdStr ||
+                            instructorId === user?.id;
                           return isMyCourse ? (
                             <span className="px-2 py-1 rounded text-xs font-semibold bg-[#F5D26A]/20 text-[#F5D26A]">
                               Editable
@@ -378,10 +436,13 @@ const ContentManagement = () => {
                     <div className="flex gap-2 ml-4">
                       {/* Show Edit button only for courses created by current admin */}
                       {(() => {
-                        const instructorId = course.instructor?._id || course.instructor?.id;
+                        const instructorId =
+                          course.instructor?._id || course.instructor?.id;
                         const instructorIdStr = instructorId?.toString();
                         const userIdStr = user?.id?.toString();
-                        const isMyCourse = instructorIdStr === userIdStr || instructorId === user?.id;
+                        const isMyCourse =
+                          instructorIdStr === userIdStr ||
+                          instructorId === user?.id;
                         return isMyCourse ? (
                           <Link
                             to={`/super-admin/courses/${course._id}`}
@@ -392,7 +453,12 @@ const ContentManagement = () => {
                         ) : null;
                       })()}
                       <button
-                        onClick={() => handleToggleCourseVisibility(course._id, course.status)}
+                        onClick={() =>
+                          handleToggleCourseVisibility(
+                            course._id,
+                            course.status
+                          )
+                        }
                         className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
                         title={course.status === "published" ? "Hide" : "Show"}>
                         {course.status === "published" ? (
@@ -427,7 +493,8 @@ const ContentManagement = () => {
                     <div className="flex-1">
                       <h3 className="text-white font-semibold">{book.title}</h3>
                       <p className="text-gray-400 text-sm mt-1">
-                        Author: {book.metadata?.author || "Digital AELA"} | Pages: {book.pages || 0}
+                        Author: {book.metadata?.author || "Digital AELA"} |
+                        Pages: {book.pages || 0}
                       </p>
                       <div className="flex gap-2 mt-2">
                         <span
@@ -439,13 +506,15 @@ const ContentManagement = () => {
                           {book.isPublic ? "Visible" : "Hidden"}
                         </span>
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-500/20 text-blue-400">
-                          {book.metadata?.price || 0} AED
+                          {formatCurrency(book.metadata?.price || 0)}
                         </span>
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
-                        onClick={() => handleToggleBookVisibility(book._id, book.isPublic)}
+                        onClick={() =>
+                          handleToggleBookVisibility(book._id, book.isPublic)
+                        }
                         className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
                         title={book.isPublic ? "Hide" : "Show"}>
                         {book.isPublic ? (

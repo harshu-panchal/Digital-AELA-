@@ -9,8 +9,14 @@ import {
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { getEarningsSummary, getMonthlyEarnings, getCourseEarnings, getReferralEarnings } from "../../src/services/api/earnings";
+import {
+  getEarningsSummary,
+  getMonthlyEarnings,
+  getCourseEarnings,
+  getReferralEarnings,
+} from "../../src/services/api/earnings";
 import { getTeacherCourses } from "../../src/services/teacherCourses";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const TeacherEarnings = () => {
   const { user } = useAuth();
@@ -41,7 +47,14 @@ const TeacherEarnings = () => {
     } else if (activeTab === "referrals") {
       loadReferralEarnings();
     }
-  }, [activeTab, filters.startDate, filters.endDate, filters.courseId, filters.month, filters.year]);
+  }, [
+    activeTab,
+    filters.startDate,
+    filters.endDate,
+    filters.courseId,
+    filters.month,
+    filters.year,
+  ]);
 
   const loadCourses = async () => {
     try {
@@ -128,12 +141,17 @@ const TeacherEarnings = () => {
 
   return (
     <div className="min-h-screen bg-[#03040B] text-white">
-      <SEO title="Earnings | Digital AELA" description="View your course earnings" />
+      <SEO
+        title="Earnings | Digital AELA"
+        description="View your course earnings"
+      />
 
       <div className="layout-container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-semibold mb-2">Earnings</h1>
-          <p className="text-slate-400">Track your course revenue and earnings</p>
+          <p className="text-slate-400">
+            Track your course revenue and earnings
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -143,8 +161,7 @@ const TeacherEarnings = () => {
               <p className="text-sm text-slate-400">Total Earnings</p>
             </div>
             <p className="text-3xl font-semibold text-white">
-              {summary?.currency || "AED"}{" "}
-              {summary?.totalEarnings?.toFixed(2) || "0.00"}
+              {formatCurrency(summary?.totalEarnings || 0)}
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
@@ -152,14 +169,18 @@ const TeacherEarnings = () => {
               <HiOutlineChartBar className="h-6 w-6 text-emerald-400" />
               <p className="text-sm text-slate-400">Total Payments</p>
             </div>
-            <p className="text-3xl font-semibold text-white">{summary?.totalPayments || 0}</p>
+            <p className="text-3xl font-semibold text-white">
+              {summary?.totalPayments || 0}
+            </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6">
             <div className="flex items-center gap-3 mb-2">
               <HiOutlineDocumentText className="h-6 w-6 text-sky-400" />
               <p className="text-sm text-slate-400">Active Courses</p>
             </div>
-            <p className="text-3xl font-semibold text-white">{earnings.length}</p>
+            <p className="text-3xl font-semibold text-white">
+              {earnings.length}
+            </p>
           </div>
         </div>
 
@@ -205,37 +226,53 @@ const TeacherEarnings = () => {
         {activeTab === "summary" && (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Month</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Month
+              </label>
               <select
                 value={filters.month}
-                onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, month: e.target.value })
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none">
                 <option value="">All Months</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                   <option key={month} value={month}>
-                    {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
+                    {new Date(2000, month - 1).toLocaleString("default", {
+                      month: "long",
+                    })}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Year</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Year
+              </label>
               <input
                 type="number"
                 value={filters.year}
-                onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, year: e.target.value })
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Course</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Course
+              </label>
               <select
                 value={filters.courseId}
-                onChange={(e) => setFilters({ ...filters, courseId: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, courseId: e.target.value })
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none">
                 <option value="">All Courses</option>
                 {courses.map((course) => (
-                  <option key={course._id || course.id} value={course._id || course.id}>
+                  <option
+                    key={course._id || course.id}
+                    value={course._id || course.id}>
                     {course.title}
                   </option>
                 ))}
@@ -246,7 +283,9 @@ const TeacherEarnings = () => {
 
         {activeTab === "monthly" && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-300 mb-2">Year</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Year
+            </label>
             <input
               type="number"
               value={filters.year}
@@ -259,20 +298,28 @@ const TeacherEarnings = () => {
         {(activeTab === "courses" || activeTab === "referrals") && (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Start Date</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Start Date
+              </label>
               <input
                 type="date"
                 value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, startDate: e.target.value })
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">End Date</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                End Date
+              </label>
               <input
                 type="date"
                 value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                onChange={(e) =>
+                  setFilters({ ...filters, endDate: e.target.value })
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2 text-white focus:border-sky-400/50 focus:outline-none"
               />
             </div>
@@ -290,27 +337,29 @@ const TeacherEarnings = () => {
                 {summary && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-4">
-                      <p className="text-sm text-slate-400 mb-1">Total Earnings</p>
+                      <p className="text-sm text-slate-400 mb-1">
+                        Total Earnings
+                      </p>
                       <p className="text-2xl font-semibold text-white">
-                        AED {summary.totalEarnings?.toFixed(2) || "0.00"}
+                        {formatCurrency(summary.totalEarnings || 0)}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-4">
                       <p className="text-sm text-slate-400 mb-1">Available</p>
                       <p className="text-2xl font-semibold text-emerald-400">
-                        AED {summary.availableEarnings?.toFixed(2) || "0.00"}
+                        {formatCurrency(summary.availableEarnings || 0)}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-4">
                       <p className="text-sm text-slate-400 mb-1">Pending</p>
                       <p className="text-2xl font-semibold text-yellow-400">
-                        AED {summary.pendingEarnings?.toFixed(2) || "0.00"}
+                        {formatCurrency(summary.pendingEarnings || 0)}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-4">
                       <p className="text-sm text-slate-400 mb-1">Paid</p>
                       <p className="text-2xl font-semibold text-blue-400">
-                        AED {summary.paidEarnings?.toFixed(2) || "0.00"}
+                        {formatCurrency(summary.paidEarnings || 0)}
                       </p>
                     </div>
                   </div>
@@ -330,14 +379,18 @@ const TeacherEarnings = () => {
                             </h3>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
                               <div>
-                                <span className="text-slate-500">Earnings: </span>
-                                <span className="text-white font-semibold">{course.count}</span>
+                                <span className="text-slate-500">
+                                  Earnings:{" "}
+                                </span>
+                                <span className="text-white font-semibold">
+                                  {course.count}
+                                </span>
                               </div>
                             </div>
                           </div>
                           <div className="ml-6 text-right">
                             <p className="text-2xl font-semibold text-[#F5D26A]">
-                              AED {course.earnings.toFixed(2)}
+                              {formatCurrency(course.earnings)}
                             </p>
                           </div>
                         </div>
@@ -352,7 +405,9 @@ const TeacherEarnings = () => {
               <div className="space-y-4">
                 {monthlyEarnings.length === 0 ? (
                   <div className="text-center py-12 rounded-3xl border border-white/10 bg-[#060A17]/90">
-                    <p className="text-slate-400">No monthly earnings data found</p>
+                    <p className="text-slate-400">
+                      No monthly earnings data found
+                    </p>
                   </div>
                 ) : (
                   monthlyEarnings.map((month) => (
@@ -364,32 +419,39 @@ const TeacherEarnings = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="text-xl font-semibold text-white mb-2">
-                            {new Date(2000, month.month - 1).toLocaleString("default", {
-                              month: "long",
-                            })}{" "}
+                            {new Date(2000, month.month - 1).toLocaleString(
+                              "default",
+                              {
+                                month: "long",
+                              }
+                            )}{" "}
                             {month.year}
                           </h3>
                           <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
                             <div>
                               <span className="text-slate-500">Total: </span>
                               <span className="text-white font-semibold">
-                                AED {month.totalEarnings.toFixed(2)}
+                                {formatCurrency(month.totalEarnings)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-slate-500">Available: </span>
+                              <span className="text-slate-500">
+                                Available:{" "}
+                              </span>
                               <span className="text-emerald-400">
-                                AED {month.availableEarnings.toFixed(2)}
+                                {formatCurrency(month.availableEarnings)}
                               </span>
                             </div>
                             <div>
                               <span className="text-slate-500">Paid: </span>
                               <span className="text-blue-400">
-                                AED {month.paidEarnings.toFixed(2)}
+                                {formatCurrency(month.paidEarnings)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-slate-500">Transactions: </span>
+                              <span className="text-slate-500">
+                                Transactions:{" "}
+                              </span>
                               <span className="text-white">{month.count}</span>
                             </div>
                           </div>
@@ -405,7 +467,9 @@ const TeacherEarnings = () => {
               <div className="space-y-4">
                 {courseEarnings.length === 0 ? (
                   <div className="text-center py-12 rounded-3xl border border-white/10 bg-[#060A17]/90">
-                    <p className="text-slate-400">No course earnings data found</p>
+                    <p className="text-slate-400">
+                      No course earnings data found
+                    </p>
                   </div>
                 ) : (
                   courseEarnings.map((course) => (
@@ -423,30 +487,34 @@ const TeacherEarnings = () => {
                             <div>
                               <span className="text-slate-500">Total: </span>
                               <span className="text-white font-semibold">
-                                AED {course.totalEarnings.toFixed(2)}
+                                {formatCurrency(course.totalEarnings)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-slate-500">Available: </span>
+                              <span className="text-slate-500">
+                                Available:{" "}
+                              </span>
                               <span className="text-emerald-400">
-                                AED {course.availableEarnings.toFixed(2)}
+                                {formatCurrency(course.availableEarnings)}
                               </span>
                             </div>
                             <div>
                               <span className="text-slate-500">Paid: </span>
                               <span className="text-blue-400">
-                                AED {course.paidEarnings.toFixed(2)}
+                                {formatCurrency(course.paidEarnings)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-slate-500">Transactions: </span>
+                              <span className="text-slate-500">
+                                Transactions:{" "}
+                              </span>
                               <span className="text-white">{course.count}</span>
                             </div>
                           </div>
                         </div>
                         <div className="ml-6 text-right">
                           <p className="text-2xl font-semibold text-[#F5D26A]">
-                            AED {course.totalEarnings.toFixed(2)}
+                            {formatCurrency(course.totalEarnings)}
                           </p>
                         </div>
                       </div>
@@ -463,13 +531,19 @@ const TeacherEarnings = () => {
                     <div className="rounded-2xl border border-white/10 bg-[#060A17]/90 p-6 mb-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-slate-400 mb-1">Total Referral Earnings</p>
+                          <p className="text-sm text-slate-400 mb-1">
+                            Total Referral Earnings
+                          </p>
                           <p className="text-3xl font-semibold text-white">
-                            AED {referralEarnings.summary?.totalEarnings?.toFixed(2) || "0.00"}
+                            {formatCurrency(
+                              referralEarnings.summary?.totalEarnings || 0
+                            )}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-slate-400 mb-1">Total Referrals</p>
+                          <p className="text-sm text-slate-400 mb-1">
+                            Total Referrals
+                          </p>
                           <p className="text-2xl font-semibold text-white">
                             {referralEarnings.summary?.count || 0}
                           </p>
@@ -490,7 +564,9 @@ const TeacherEarnings = () => {
                                   Referral Bonus
                                 </h3>
                                 <div className="text-sm text-slate-300">
-                                  {earning.description || earning.referralCode || "Referral earning"}
+                                  {earning.description ||
+                                    earning.referralCode ||
+                                    "Referral earning"}
                                 </div>
                                 <div className="text-xs text-slate-400 mt-2">
                                   {formatDate(earning.createdAt)}
@@ -498,9 +574,11 @@ const TeacherEarnings = () => {
                               </div>
                               <div className="ml-6 text-right">
                                 <p className="text-xl font-semibold text-[#F5D26A]">
-                                  AED {earning.amount.toFixed(2)}
+                                  {formatCurrency(earning.amount)}
                                 </p>
-                                <p className="text-xs text-slate-400 mt-1">{earning.status}</p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  {earning.status}
+                                </p>
                               </div>
                             </div>
                           </motion.div>
@@ -508,13 +586,17 @@ const TeacherEarnings = () => {
                       </div>
                     ) : (
                       <div className="text-center py-12 rounded-3xl border border-white/10 bg-[#060A17]/90">
-                        <p className="text-slate-400">No referral earnings found</p>
+                        <p className="text-slate-400">
+                          No referral earnings found
+                        </p>
                       </div>
                     )}
                   </>
                 ) : (
                   <div className="text-center py-12 rounded-3xl border border-white/10 bg-[#060A17]/90">
-                    <p className="text-slate-400">No referral earnings data found</p>
+                    <p className="text-slate-400">
+                      No referral earnings data found
+                    </p>
                   </div>
                 )}
               </div>

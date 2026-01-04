@@ -3,8 +3,21 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaStar, FaBook, FaDownload, FaArrowLeft, FaCheck, FaSpinner, FaBookmark, FaBookOpen } from "react-icons/fa";
-import { HiOutlineHeart, HiOutlineLightBulb, HiOutlineHandThumbUp } from "react-icons/hi2";
+import {
+  FaStar,
+  FaBook,
+  FaDownload,
+  FaArrowLeft,
+  FaCheck,
+  FaSpinner,
+  FaBookmark,
+  FaBookOpen,
+} from "react-icons/fa";
+import {
+  HiOutlineHeart,
+  HiOutlineLightBulb,
+  HiOutlineHandThumbUp,
+} from "react-icons/hi2";
 import SEO from "../../../src/components/SEO";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
@@ -18,6 +31,7 @@ import GiftButton from "../common/GiftButton";
 import { useAuth } from "../../../src/contexts/AuthContext";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { redirectToCustomBookPayment } from "../utils/customPaymentRedirect";
 import {
@@ -237,20 +251,25 @@ const BookDetail = () => {
               author: ebook.metadata?.author || "Digital AELA", // Teacher's name
               price: ebook.metadata?.price || 0,
               rawPrice: ebook.metadata?.price || 0, // Store original numeric price for GiftButton
-              originalPrice: ebook.metadata?.price ? ebook.metadata.price * 1.4 : 0,
+              originalPrice: ebook.metadata?.price
+                ? ebook.metadata.price * 1.4
+                : 0,
               image: ebook.metadata?.coverImage || bookGrammarImg,
               imageAlt: `${ebook.title} cover`,
               rating: 4.5,
               reviews: 0,
               format: "ebook",
               description: ebook.description || "",
-              fullDescription: ebook.description || ebook.metadata?.subtitle || "",
+              fullDescription:
+                ebook.description || ebook.metadata?.subtitle || "",
               category: ebook.categories?.[0] || "General",
               pages: ebook.pages && ebook.pages > 0 ? ebook.pages : undefined, // Only set if > 0
               language: "English",
               isbn: ebook._id || id,
               publisher: ebook.metadata?.author || "Digital AELA Publications", // Use teacher's name as publisher
-              publishedDate: ebook.publishedAt ? new Date(ebook.publishedAt).getFullYear().toString() : "2024",
+              publishedDate: ebook.publishedAt
+                ? new Date(ebook.publishedAt).getFullYear().toString()
+                : "2024",
               features: ebook.metadata?.tags || [
                 "Expert-authored content",
                 "Comprehensive coverage",
@@ -297,7 +316,9 @@ const BookDetail = () => {
         // Fallback to static data if API fails or book not found
         // Try to match by numeric ID first (for static books)
         const numericId = parseInt(id, 10);
-        const staticBook = staticBooksData.find((b) => b.id === numericId || b.id.toString() === id);
+        const staticBook = staticBooksData.find(
+          (b) => b.id === numericId || b.id.toString() === id
+        );
         if (staticBook) {
           setBook(staticBook);
         } else {
@@ -321,7 +342,9 @@ const BookDetail = () => {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <FaSpinner className="h-12 w-12 animate-spin text-[#D4AF37] mx-auto mb-4" />
-          <p className="text-white"><TranslatedText>Loading book details...</TranslatedText></p>
+          <p className="text-white">
+            <TranslatedText>Loading book details...</TranslatedText>
+          </p>
         </div>
       </div>
     );
@@ -349,9 +372,11 @@ const BookDetail = () => {
       <SEO
         title={`${book.title} by ${book.author} | Digital AELA Book Store`}
         description={book.description}
-        keywords={`${book.title}, ${book.author}, ${book.category
-          } book, English learning, ${book.format === "ebook" ? "e-book" : "physical book"
-          }, Digital AELA`}
+        keywords={`${book.title}, ${book.author}, ${
+          book.category
+        } book, English learning, ${
+          book.format === "ebook" ? "e-book" : "physical book"
+        }, Digital AELA`}
         url={`https://digitalaela.com/books/${book.id}`}
       />
 
@@ -367,7 +392,9 @@ const BookDetail = () => {
             to="/books"
             className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#E5C158] transition-colors duration-200 mb-4">
             <FaArrowLeft className="w-4 h-4" />
-            <span><TranslatedText>Back to Books</TranslatedText></span>
+            <span>
+              <TranslatedText>Back to Books</TranslatedText>
+            </span>
           </Link>
         </div>
       </motion.section>
@@ -384,7 +411,10 @@ const BookDetail = () => {
               className="lg:sticky lg:top-24 lg:self-start">
               <div className="relative overflow-hidden rounded-xl border border-[#D4AF37]/20 shadow-[0_30px_120px_rgba(10,10,10,0.55)]">
                 <LazyImage
-                  src={getMediaUrl(book.image) || "https://via.placeholder.com/400x600?text=Book"}
+                  src={
+                    getMediaUrl(book.image) ||
+                    "https://via.placeholder.com/400x600?text=Book"
+                  }
                   alt={book.imageAlt || `${book.title} cover`}
                   className="h-full w-full object-cover"
                   fallbackSrc="https://via.placeholder.com/400x600?text=Book"
@@ -409,7 +439,7 @@ const BookDetail = () => {
                   <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">
                     {Math.round(
                       ((book.originalPrice - book.price) / book.originalPrice) *
-                      100
+                        100
                     )}
                     % <TranslatedText>OFF</TranslatedText>
                   </div>
@@ -433,7 +463,10 @@ const BookDetail = () => {
               </h1>
 
               {/* Author */}
-              <p className="text-lg text-gray-300 mb-4"><TranslatedText>by</TranslatedText> <TranslatedText>{book.author}</TranslatedText></p>
+              <p className="text-lg text-gray-300 mb-4">
+                <TranslatedText>by</TranslatedText>{" "}
+                <TranslatedText>{book.author}</TranslatedText>
+              </p>
 
               {/* Rating */}
               <div className="flex items-center gap-3 mb-6">
@@ -441,10 +474,11 @@ const BookDetail = () => {
                   {[...Array(5)].map((_, i) => (
                     <FaStar
                       key={i}
-                      className={`w-5 h-5 ${i < Math.floor(book.rating)
-                        ? "text-[#D4AF37] fill-current"
-                        : "text-gray-600"
-                        }`}
+                      className={`w-5 h-5 ${
+                        i < Math.floor(book.rating)
+                          ? "text-[#D4AF37] fill-current"
+                          : "text-gray-600"
+                      }`}
                     />
                   ))}
                 </div>
@@ -464,28 +498,39 @@ const BookDetail = () => {
               </div>
 
               {/* Reading Progress (if authenticated and ebook) */}
-              {isAuthenticated && book.format === "ebook" && readingProgress && (
-                <div className="mb-6 bg-[#1a1a1a] rounded-xl p-4 border border-[#D4AF37]/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-white"><TranslatedText>Reading Progress</TranslatedText></h3>
-                    <span className="text-sm text-[#D4AF37] font-semibold">
-                      {readingProgress.progressPercentage}%
-                    </span>
+              {isAuthenticated &&
+                book.format === "ebook" &&
+                readingProgress && (
+                  <div className="mb-6 bg-[#1a1a1a] rounded-xl p-4 border border-[#D4AF37]/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-white">
+                        <TranslatedText>Reading Progress</TranslatedText>
+                      </h3>
+                      <span className="text-sm text-[#D4AF37] font-semibold">
+                        {readingProgress.progressPercentage}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                      <div
+                        className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${readingProgress.progressPercentage}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      <TranslatedText>Page</TranslatedText>{" "}
+                      {readingProgress.currentPage}{" "}
+                      <TranslatedText>of</TranslatedText>{" "}
+                      {readingProgress.totalPages}
+                      {readingProgress.isCompleted && (
+                        <span className="ml-2 text-green-400">
+                          ✓ <TranslatedText>Completed</TranslatedText>
+                        </span>
+                      )}
+                    </p>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                    <div
-                      className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${readingProgress.progressPercentage}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    <TranslatedText>Page</TranslatedText> {readingProgress.currentPage} <TranslatedText>of</TranslatedText> {readingProgress.totalPages}
-                    {readingProgress.isCompleted && (
-                      <span className="ml-2 text-green-400">✓ <TranslatedText>Completed</TranslatedText></span>
-                    )}
-                  </p>
-                </div>
-              )}
+                )}
 
               {/* Price */}
               <div className="flex items-center gap-4 mb-6">
@@ -501,15 +546,18 @@ const BookDetail = () => {
                   return (
                     <>
                       <span className="text-4xl font-bold text-[#D4AF37] font-display">
-                        AED {book.price}
+                        {formatCurrency(book.price)}
                       </span>
                       {book.originalPrice > book.price && (
                         <>
                           <span className="text-xl text-gray-500 line-through">
-                            AED {book.originalPrice}
+                            {formatCurrency(book.originalPrice)}
                           </span>
                           <span className="text-sm text-[#D4AF37] font-semibold">
-                            <TranslatedText>Save</TranslatedText> AED {Math.round(book.originalPrice - book.price)}
+                            <TranslatedText>Save</TranslatedText>{" "}
+                            {formatCurrency(
+                              Math.round(book.originalPrice - book.price)
+                            )}
                           </span>
                         </>
                       )}
@@ -524,7 +572,9 @@ const BookDetail = () => {
                   <TranslatedText>Description</TranslatedText>
                 </h2>
                 <p className="text-gray-300 leading-relaxed">
-                  <TranslatedText>{book.fullDescription || book.description}</TranslatedText>
+                  <TranslatedText>
+                    {book.fullDescription || book.description}
+                  </TranslatedText>
                 </p>
               </div>
 
@@ -536,36 +586,54 @@ const BookDetail = () => {
                 <div className="grid grid-cols-2 gap-4">
                   {book.pages && book.pages > 0 && (
                     <div>
-                      <span className="text-sm text-gray-400"><TranslatedText>Pages:</TranslatedText></span>
+                      <span className="text-sm text-gray-400">
+                        <TranslatedText>Pages:</TranslatedText>
+                      </span>
                       <p className="text-white font-semibold">{book.pages}</p>
                     </div>
                   )}
                   <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>Language:</TranslatedText></span>
-                    <p className="text-white font-semibold"><TranslatedText>{book.language}</TranslatedText></p>
+                    <span className="text-sm text-gray-400">
+                      <TranslatedText>Language:</TranslatedText>
+                    </span>
+                    <p className="text-white font-semibold">
+                      <TranslatedText>{book.language}</TranslatedText>
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>ISBN:</TranslatedText></span>
+                    <span className="text-sm text-gray-400">
+                      <TranslatedText>ISBN:</TranslatedText>
+                    </span>
                     <p className="text-white font-semibold text-sm">
                       {book.isbn}
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>Publisher:</TranslatedText></span>
+                    <span className="text-sm text-gray-400">
+                      <TranslatedText>Publisher:</TranslatedText>
+                    </span>
                     <p className="text-white font-semibold text-sm">
                       <TranslatedText>{book.publisher}</TranslatedText>
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>Published:</TranslatedText></span>
+                    <span className="text-sm text-gray-400">
+                      <TranslatedText>Published:</TranslatedText>
+                    </span>
                     <p className="text-white font-semibold">
                       {book.publishedDate}
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-400"><TranslatedText>Format:</TranslatedText></span>
+                    <span className="text-sm text-gray-400">
+                      <TranslatedText>Format:</TranslatedText>
+                    </span>
                     <p className="text-white font-semibold capitalize">
-                      {book.format === "ebook" ? <TranslatedText>E-Book</TranslatedText> : <TranslatedText>Physical Book</TranslatedText>}
+                      {book.format === "ebook" ? (
+                        <TranslatedText>E-Book</TranslatedText>
+                      ) : (
+                        <TranslatedText>Physical Book</TranslatedText>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -583,7 +651,9 @@ const BookDetail = () => {
                         key={index}
                         className="flex items-start gap-3 text-gray-300">
                         <FaCheck className="w-5 h-5 text-[#D4AF37] mt-0.5 shrink-0" />
-                        <span><TranslatedText>{feature}</TranslatedText></span>
+                        <span>
+                          <TranslatedText>{feature}</TranslatedText>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -592,7 +662,10 @@ const BookDetail = () => {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
                 {(() => {
-                  const isFreeBook = book.price === 0 || book.price === "Free" || (book.format === "ebook" && book.price === 0);
+                  const isFreeBook =
+                    book.price === 0 ||
+                    book.price === "Free" ||
+                    (book.format === "ebook" && book.price === 0);
 
                   if (isFreeBook && book.format === "ebook") {
                     // Free ebook - allow direct access to reading
@@ -616,7 +689,9 @@ const BookDetail = () => {
                         whileTap={{ scale: 0.98 }}
                         disabled
                         className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg opacity-80 cursor-not-allowed">
-                        <TranslatedText>Free - Contact for Delivery</TranslatedText>
+                        <TranslatedText>
+                          Free - Contact for Delivery
+                        </TranslatedText>
                       </motion.button>
                     );
                   } else {
@@ -628,16 +703,22 @@ const BookDetail = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={async () => {
                             // Validate price
-                            const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                            const bookPrice =
+                              typeof book.price === "number"
+                                ? book.price
+                                : parseFloat(book.price) || 0;
                             if (!bookPrice || bookPrice <= 0) {
-                              toast.error("This book price is not available. Please contact support."); // Toast message
+                              toast.error(
+                                "This book price is not available. Please contact support."
+                              ); // Toast message
                               return;
                             }
 
                             redirectToCustomBookPayment(book);
                           }}
                           className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
-                          <TranslatedText>Buy Now</TranslatedText> - AED {book.price}
+                          <TranslatedText>Buy Now</TranslatedText> -{" "}
+                          {formatCurrency(book.price)}
                         </motion.button>
                         <GiftButton
                           course={book}
@@ -678,7 +759,11 @@ const BookDetail = () => {
                     disabled={isDownloading}
                     className="flex-1 flex items-center justify-center gap-2 border border-[#D4AF37]/60 text-[#F5D26A] py-3 rounded-lg font-semibold hover:bg-[#D4AF37] hover:text-black transition-colors disabled:opacity-50">
                     <FaDownload className="w-4 h-4" />
-                    {isDownloading ? <TranslatedText>Downloading...</TranslatedText> : <TranslatedText>Download</TranslatedText>}
+                    {isDownloading ? (
+                      <TranslatedText>Downloading...</TranslatedText>
+                    ) : (
+                      <TranslatedText>Download</TranslatedText>
+                    )}
                   </motion.button>
                   {isAuthenticated && (
                     <motion.button
@@ -686,7 +771,10 @@ const BookDetail = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={async () => {
                         try {
-                          await addEbookBookmark(id, { page: currentPage, note: "" });
+                          await addEbookBookmark(id, {
+                            page: currentPage,
+                            note: "",
+                          });
                           toast.success("Bookmark added!"); // Toast message
                         } catch (err) {
                           toast.error(err.message || "Failed to add bookmark"); // Toast message
@@ -704,13 +792,27 @@ const BookDetail = () => {
                 {(() => {
                   const isFreeBook = book.price === 0 || book.price === "Free";
                   if (isFreeBook && book.format === "ebook") {
-                    return <TranslatedText>Free ebook - Start reading immediately</TranslatedText>;
+                    return (
+                      <TranslatedText>
+                        Free ebook - Start reading immediately
+                      </TranslatedText>
+                    );
                   } else if (isFreeBook) {
-                    return <TranslatedText>Free - Contact us for delivery options</TranslatedText>;
+                    return (
+                      <TranslatedText>
+                        Free - Contact us for delivery options
+                      </TranslatedText>
+                    );
                   } else if (book.format === "ebook") {
-                    return <TranslatedText>Instant download after payment</TranslatedText>;
+                    return (
+                      <TranslatedText>
+                        Instant download after payment
+                      </TranslatedText>
+                    );
                   } else {
-                    return <TranslatedText>Free shipping available</TranslatedText>;
+                    return (
+                      <TranslatedText>Free shipping available</TranslatedText>
+                    );
                   }
                 })()}
               </p>
@@ -723,7 +825,9 @@ const BookDetail = () => {
       {ratings && (
         <section className="py-8 bg-[#141414]">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
-            <h2 className="text-2xl font-bold text-white mb-6 font-display"><TranslatedText>Ratings & Reviews</TranslatedText></h2>
+            <h2 className="text-2xl font-bold text-white mb-6 font-display">
+              <TranslatedText>Ratings & Reviews</TranslatedText>
+            </h2>
 
             {/* Rating Statistics */}
             {ratings.statistics && (
@@ -737,30 +841,42 @@ const BookDetail = () => {
                       {[...Array(5)].map((_, i) => (
                         <FaStar
                           key={i}
-                          className={`w-4 h-4 ${i < Math.floor(ratings.statistics.averageRating)
-                            ? "text-[#D4AF37] fill-current"
-                            : "text-gray-600"
-                            }`}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(ratings.statistics.averageRating)
+                              ? "text-[#D4AF37] fill-current"
+                              : "text-gray-600"
+                          }`}
                         />
                       ))}
                     </div>
                     <div className="text-sm text-gray-400 mt-1">
-                      {ratings.statistics.totalRatings} <TranslatedText>reviews</TranslatedText>
+                      {ratings.statistics.totalRatings}{" "}
+                      <TranslatedText>reviews</TranslatedText>
                     </div>
                   </div>
                   <div className="flex-1">
                     {ratings.statistics.ratingDistribution?.map((dist, i) => (
                       <div key={i} className="flex items-center gap-2 mb-2">
-                        <span className="text-sm text-gray-400 w-12">{dist.star}★</span>
+                        <span className="text-sm text-gray-400 w-12">
+                          {dist.star}★
+                        </span>
                         <div className="flex-1 bg-gray-700 rounded-full h-2">
                           <div
                             className="bg-[#D4AF37] h-2 rounded-full"
                             style={{
-                              width: `${ratings.statistics.totalRatings > 0 ? (dist.count / ratings.statistics.totalRatings) * 100 : 0}%`,
+                              width: `${
+                                ratings.statistics.totalRatings > 0
+                                  ? (dist.count /
+                                      ratings.statistics.totalRatings) *
+                                    100
+                                  : 0
+                              }%`,
                             }}
                           />
                         </div>
-                        <span className="text-sm text-gray-400 w-12 text-right">{dist.count}</span>
+                        <span className="text-sm text-gray-400 w-12 text-right">
+                          {dist.count}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -776,13 +892,18 @@ const BookDetail = () => {
                   className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-white">{rating.user.name}</p>
+                      <p className="font-semibold text-white">
+                        {rating.user.name}
+                      </p>
                       <div className="flex items-center gap-1 mt-1">
                         {[...Array(5)].map((_, i) => (
                           <FaStar
                             key={i}
-                            className={`w-3 h-3 ${i < rating.rating ? "text-[#D4AF37] fill-current" : "text-gray-600"
-                              }`}
+                            className={`w-3 h-3 ${
+                              i < rating.rating
+                                ? "text-[#D4AF37] fill-current"
+                                : "text-gray-600"
+                            }`}
                           />
                         ))}
                       </div>
@@ -792,7 +913,9 @@ const BookDetail = () => {
                     </span>
                   </div>
                   {rating.review && (
-                    <p className="text-gray-300 text-sm mt-2"><TranslatedText>{rating.review}</TranslatedText></p>
+                    <p className="text-gray-300 text-sm mt-2">
+                      <TranslatedText>{rating.review}</TranslatedText>
+                    </p>
                   )}
                 </div>
               ))}
@@ -808,7 +931,9 @@ const BookDetail = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-[#1a1a1a] rounded-xl p-6 max-w-md w-full border border-[#D4AF37]/20">
-            <h3 className="text-xl font-bold text-white mb-4"><TranslatedText>Rate this book</TranslatedText></h3>
+            <h3 className="text-xl font-bold text-white mb-4">
+              <TranslatedText>Rate this book</TranslatedText>
+            </h3>
             <div className="flex items-center gap-2 mb-4">
               {[...Array(5)].map((_, i) => (
                 <button
@@ -816,8 +941,11 @@ const BookDetail = () => {
                   onClick={() => setRatingValue(i + 1)}
                   className="focus:outline-none">
                   <FaStar
-                    className={`w-8 h-8 ${i < ratingValue ? "text-[#D4AF37] fill-current" : "text-gray-600"
-                      }`}
+                    className={`w-8 h-8 ${
+                      i < ratingValue
+                        ? "text-[#D4AF37] fill-current"
+                        : "text-gray-600"
+                    }`}
                   />
                 </button>
               ))}
@@ -834,7 +962,10 @@ const BookDetail = () => {
                 onClick={async () => {
                   setIsSubmittingRating(true);
                   try {
-                    await rateEbook(id, { rating: ratingValue, review: reviewText });
+                    await rateEbook(id, {
+                      rating: ratingValue,
+                      review: reviewText,
+                    });
                     toast.success("Rating submitted!"); // Toast message
                     setShowRatingModal(false);
                     // Reload ratings
@@ -848,7 +979,11 @@ const BookDetail = () => {
                 }}
                 disabled={isSubmittingRating}
                 className="flex-1 bg-[#D4AF37] text-black py-2 rounded-lg font-semibold hover:bg-[#E5C158] transition-colors disabled:opacity-50">
-                {isSubmittingRating ? <TranslatedText>Submitting...</TranslatedText> : <TranslatedText>Submit</TranslatedText>}
+                {isSubmittingRating ? (
+                  <TranslatedText>Submitting...</TranslatedText>
+                ) : (
+                  <TranslatedText>Submit</TranslatedText>
+                )}
               </button>
               <button
                 onClick={() => setShowRatingModal(false)}
@@ -864,3 +999,4 @@ const BookDetail = () => {
 };
 
 export default BookDetail;
+

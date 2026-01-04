@@ -6,6 +6,7 @@ import Quiz from "../models/Quiz.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import User from "../models/User.js";
 import LessonCompletion from "../models/LessonCompletion.js";
+import { formatCurrency } from "../utils/currencyUtils.js";
 
 // Helper function to format time ago
 function formatTimeAgo(date) {
@@ -16,9 +17,12 @@ function formatTimeAgo(date) {
 
   if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
   return `${Math.floor(diffInSeconds / 2592000)} months ago`;
 }
 
@@ -57,38 +61,46 @@ export const getTeacherDashboard = async (req, res, next) => {
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Get teacher's courses
-    const teacherCourses = await Course.find({ instructor: teacherObjectId }).lean();
-    const publishedCourses = teacherCourses.filter((c) => c.status === "published");
+    const teacherCourses = await Course.find({
+      instructor: teacherObjectId,
+    }).lean();
+    const publishedCourses = teacherCourses.filter(
+      (c) => c.status === "published"
+    );
     const draftCourses = teacherCourses.filter((c) => c.status === "draft");
     const courseIds = teacherCourses.map((c) => c._id);
 
     // Get teacher's ebooks (check by uploadedBy in metadata or author name)
-    const teacher = await User.findById(teacherObjectId).select("fullName").lean();
+    const teacher = await User.findById(teacherObjectId)
+      .select("fullName")
+      .lean();
     const teacherName = teacher?.fullName || "";
-    
+
     // Build query conditions - try multiple formats to catch all ebooks
     const queryConditions = [
       { "metadata.uploadedBy": userId }, // String format
       { "metadata.uploadedBy": teacherObjectId.toString() }, // String from ObjectId
     ];
-    
+
     // Add ObjectId format if valid
     if (teacherObjectId) {
       queryConditions.push({ "metadata.uploadedBy": teacherObjectId });
     }
-    
+
     // Add author name if available
     if (teacherName) {
       queryConditions.push({ "metadata.author": teacherName });
     }
-    
+
     const teacherEbooks = await EbookResource.find({
       $or: queryConditions,
     }).lean();
-    
+
     // Debug: Log the query results
     // eslint-disable-next-line no-console
-    console.log(`[TeacherDashboard] Found ${teacherEbooks.length} ebooks for teacher ${userId} (${teacherName})`);
+    console.log(
+      `[TeacherDashboard] Found ${teacherEbooks.length} ebooks for teacher ${userId} (${teacherName})`
+    );
     const publishedEbooks = teacherEbooks.filter((e) => e.isPublic);
     const draftEbooks = teacherEbooks.filter((e) => !e.isPublic);
 
@@ -98,20 +110,24 @@ export const getTeacherDashboard = async (req, res, next) => {
       { "metadata.createdBy": userId }, // String format
       { "metadata.createdBy": teacherObjectId.toString() }, // String from ObjectId
     ];
-    
+
     // Add ObjectId format if valid
     if (teacherObjectId) {
       quizQueryConditions.push({ "metadata.createdBy": teacherObjectId });
     }
-    
+
     const teacherQuizzes = await Quiz.find({
       $or: quizQueryConditions,
     }).lean();
-    
+
     // Debug: Log the query results
     // eslint-disable-next-line no-console
-    console.log(`[TeacherDashboard] Found ${teacherQuizzes.length} quizzes for teacher ${userId}`);
-    const publishedQuizzes = teacherQuizzes.filter((q) => q.status === "published");
+    console.log(
+      `[TeacherDashboard] Found ${teacherQuizzes.length} quizzes for teacher ${userId}`
+    );
+    const publishedQuizzes = teacherQuizzes.filter(
+      (q) => q.status === "published"
+    );
 
     // Get enrollments for teacher's courses
     const courseEnrollments = await Enrollment.find({
@@ -146,7 +162,11 @@ export const getTeacherDashboard = async (req, res, next) => {
 
     const courseTrend =
       courseRevenueLastMonth > 0
-        ? `+${Math.round(((courseRevenue - courseRevenueLastMonth) / courseRevenueLastMonth) * 100)}%`
+        ? `+${Math.round(
+            ((courseRevenue - courseRevenueLastMonth) /
+              courseRevenueLastMonth) *
+              100
+          )}%`
         : courseRevenue > 0
         ? "+100%"
         : "0%";
@@ -156,7 +176,8 @@ export const getTeacherDashboard = async (req, res, next) => {
     courseEnrollmentsLast30Days.forEach((e) => {
       if (e.course && e.course._id) {
         const courseId = e.course._id.toString();
-        courseEnrollmentCounts[courseId] = (courseEnrollmentCounts[courseId] || 0) + 1;
+        courseEnrollmentCounts[courseId] =
+          (courseEnrollmentCounts[courseId] || 0) + 1;
       }
     });
     const topCourseId = Object.keys(courseEnrollmentCounts).reduce(
@@ -189,18 +210,19 @@ export const getTeacherDashboard = async (req, res, next) => {
 
     // Calculate quiz revenue (from quiz attempts - coins earned)
     const quizIds = teacherQuizzes.map((q) => q._id);
-    const allQuizAttempts = quizIds.length > 0
-      ? await QuizAttempt.find({
-          quiz: { $in: quizIds },
-        }).lean().catch(() => [])
-      : [];
+    const allQuizAttempts =
+      quizIds.length > 0
+        ? await QuizAttempt.find({
+            quiz: { $in: quizIds },
+          })
+            .lean()
+            .catch(() => [])
+        : [];
 
-    const quizAttemptsLast30Days = allQuizAttempts.filter(
-      (a) => {
-        const attemptDate = a.completedAt || a.createdAt;
-        return attemptDate && new Date(attemptDate) >= last30Days;
-      }
-    );
+    const quizAttemptsLast30Days = allQuizAttempts.filter((a) => {
+      const attemptDate = a.completedAt || a.createdAt;
+      return attemptDate && new Date(attemptDate) >= last30Days;
+    });
 
     // Estimate revenue from quiz attempts (assuming coins have value)
     // For simplicity, we'll use a conversion rate
@@ -208,7 +230,7 @@ export const getTeacherDashboard = async (req, res, next) => {
       (sum, attempt) => sum + (attempt.coinsEarned || 0),
       0
     );
-    const quizRevenue = totalCoinsEarned * 0.01; // 1 coin = 0.01 AED (example)
+    const quizRevenue = totalCoinsEarned * 0.01; // 1 coin = 0.01 INR (example)
 
     // Get top performing quiz and participant counts
     const quizAttemptCounts = {};
@@ -218,7 +240,7 @@ export const getTeacherDashboard = async (req, res, next) => {
         quizAttemptCounts[quizId] = (quizAttemptCounts[quizId] || 0) + 1;
       }
     });
-    
+
     const topQuizId = Object.keys(quizAttemptCounts).reduce(
       (a, b) => (quizAttemptCounts[a] > quizAttemptCounts[b] ? a : b),
       null
@@ -226,7 +248,7 @@ export const getTeacherDashboard = async (req, res, next) => {
     const topQuiz = topQuizId
       ? teacherQuizzes.find((q) => q._id.toString() === topQuizId)
       : null;
-    
+
     // Add participant counts to quizzes for dashboard display
     const quizzesWithParticipants = teacherQuizzes.map((quiz) => ({
       ...quiz,
@@ -237,9 +259,11 @@ export const getTeacherDashboard = async (req, res, next) => {
     // Format revenue
     const formatRevenue = (amount) => {
       if (amount >= 1000) {
-        return `AED ${(amount / 1000).toFixed(1)}K`;
+        return (
+          formatCurrency(amount / 1000, { maximumFractionDigits: 1 }) + "K"
+        );
       }
-      return `AED ${Math.round(amount)}`;
+      return formatCurrency(amount, { maximumFractionDigits: 0 });
     };
 
     // Sales breakdown
@@ -268,20 +292,18 @@ export const getTeacherDashboard = async (req, res, next) => {
     ];
 
     // Latest purchases (recent enrollments)
-    const recentPurchases = courseEnrollments
-      .slice(0, 4)
-      .map((enrollment) => {
-        const timeAgo = formatTimeAgo(enrollment.createdAt);
-        return {
-          learner: enrollment.student?.fullName || "Student",
-          item: enrollment.course?.title || "Course",
-          type: "Course",
-          time: timeAgo,
-          value: enrollment.course?.price
-            ? `AED ${enrollment.course.price}`
-            : "Free",
-        };
-      });
+    const recentPurchases = courseEnrollments.slice(0, 4).map((enrollment) => {
+      const timeAgo = formatTimeAgo(enrollment.createdAt);
+      return {
+        learner: enrollment.student?.fullName || "Student",
+        item: enrollment.course?.title || "Course",
+        type: "Course",
+        time: timeAgo,
+        value: enrollment.course?.price
+          ? formatCurrency(enrollment.course.price)
+          : "Free",
+      };
+    });
 
     // Learner spotlight (students with progress in teacher's courses)
     const studentProgress = await LessonCompletion.find({
@@ -324,7 +346,9 @@ export const getTeacherDashboard = async (req, res, next) => {
       // Model doesn't exist, skip
     }
     const studentPoints = StudentPoints
-      ? await StudentPoints.find({ student: { $in: studentIds } }).lean().catch(() => [])
+      ? await StudentPoints.find({ student: { $in: studentIds } })
+          .lean()
+          .catch(() => [])
       : [];
 
     const studentPointsMap = new Map();
@@ -343,7 +367,10 @@ export const getTeacherDashboard = async (req, res, next) => {
         const courseEntries = Array.from(data.courses.entries());
         const topCourseEntry = courseEntries[0];
         const course = topCourseEntry ? topCourseEntry[1].course : null;
-        const progress = Math.min(100, Math.round((topCourseEntry ? topCourseEntry[1].completions : 0) * 10));
+        const progress = Math.min(
+          100,
+          Math.round((topCourseEntry ? topCourseEntry[1].completions : 0) * 10)
+        );
         const coins = studentPointsMap.get(studentId) || 0;
 
         return {
@@ -381,38 +408,39 @@ export const getTeacherDashboard = async (req, res, next) => {
     );
 
     // Marketplace recommendations (other teachers' courses, ebooks, and quizzes)
-    const [marketplaceCourses, marketplaceEbooks, marketplaceQuizzes] = await Promise.all([
-      Course.find({
-        instructor: { $ne: teacherObjectId },
-        status: "published",
-      })
-        .populate("instructor", "fullName")
-        .sort({ createdAt: -1 })
-        .limit(2)
-        .lean(),
-      EbookResource.find({
-        isPublic: true,
-        $or: [
-          { "metadata.uploadedBy": { $ne: teacherObjectId.toString() } },
-          { "metadata.uploadedBy": { $ne: teacherObjectId } },
-          { "metadata.uploadedBy": { $exists: false } },
-        ],
-      })
-        .sort({ publishedAt: -1, createdAt: -1 })
-        .limit(1)
-        .lean(),
-      Quiz.find({
-        status: "published",
-        $or: [
-          { "metadata.createdBy": { $ne: teacherObjectId.toString() } },
-          { "metadata.createdBy": { $ne: teacherObjectId } },
-          { "metadata.createdBy": { $exists: false } },
-        ],
-      })
-        .sort({ createdAt: -1 })
-        .limit(1)
-        .lean(),
-    ]);
+    const [marketplaceCourses, marketplaceEbooks, marketplaceQuizzes] =
+      await Promise.all([
+        Course.find({
+          instructor: { $ne: teacherObjectId },
+          status: "published",
+        })
+          .populate("instructor", "fullName")
+          .sort({ createdAt: -1 })
+          .limit(2)
+          .lean(),
+        EbookResource.find({
+          isPublic: true,
+          $or: [
+            { "metadata.uploadedBy": { $ne: teacherObjectId.toString() } },
+            { "metadata.uploadedBy": { $ne: teacherObjectId } },
+            { "metadata.uploadedBy": { $exists: false } },
+          ],
+        })
+          .sort({ publishedAt: -1, createdAt: -1 })
+          .limit(1)
+          .lean(),
+        Quiz.find({
+          status: "published",
+          $or: [
+            { "metadata.createdBy": { $ne: teacherObjectId.toString() } },
+            { "metadata.createdBy": { $ne: teacherObjectId } },
+            { "metadata.createdBy": { $exists: false } },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .limit(1)
+          .lean(),
+      ]);
 
     const marketplace = [
       ...marketplaceCourses.map((course) => ({
@@ -420,7 +448,7 @@ export const getTeacherDashboard = async (req, res, next) => {
         title: course.title,
         mentor: course.instructor?.fullName || "Mentor",
         type: "Course",
-        price: course.price ? `AED ${course.price}` : "Free",
+        price: course.price ? formatCurrency(course.price) : "Free",
         reason: "Great addition to your teaching portfolio",
         route: `/learn-earn/courses/${course._id}`,
       })),
@@ -429,7 +457,9 @@ export const getTeacherDashboard = async (req, res, next) => {
         title: ebook.title,
         mentor: ebook.metadata?.author || "Digital AELA",
         type: "E-Book",
-        price: ebook.metadata?.price ? `AED ${ebook.metadata.price}` : "Free",
+        price: ebook.metadata?.price
+          ? formatCurrency(ebook.metadata.price)
+          : "Free",
         reason: "Pairs well with your courses",
         route: `/books/${ebook._id}/payment`,
       })),
@@ -487,47 +517,52 @@ export const getTeacherDashboard = async (req, res, next) => {
       }));
 
     // Combine all pending items and sort by creation date (newest first)
-    const allPendingItems = [...pendingCourses, ...pendingEbooks, ...pendingQuizzes].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
+    const allPendingItems = [
+      ...pendingCourses,
+      ...pendingEbooks,
+      ...pendingQuizzes,
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Format ebook library entries
-    const ebookLibrary = teacherEbooks.map((ebook) => {
-      const format = ebook.pages ? `PDF · ${ebook.pages} pages` : "PDF";
-      // Downloads can be stored in metadata.downloads or we can track via enrollments/purchases
-      // For now, use metadata.downloads or default to 0
-      const downloads = ebook.metadata?.downloads || 0;
-      const lastUpdated = formatTimeAgo(ebook.updatedAt || ebook.createdAt);
-      // Check if rejected first, then check if published
-      const status = ebook.metadata?.rejected === true 
-        ? "rejected" 
-        : ebook.isPublic 
-        ? "published" 
-        : "draft";
+    const ebookLibrary = teacherEbooks
+      .map((ebook) => {
+        const format = ebook.pages ? `PDF · ${ebook.pages} pages` : "PDF";
+        // Downloads can be stored in metadata.downloads or we can track via enrollments/purchases
+        // For now, use metadata.downloads or default to 0
+        const downloads = ebook.metadata?.downloads || 0;
+        const lastUpdated = formatTimeAgo(ebook.updatedAt || ebook.createdAt);
+        // Check if rejected first, then check if published
+        const status =
+          ebook.metadata?.rejected === true
+            ? "rejected"
+            : ebook.isPublic
+            ? "published"
+            : "draft";
 
-      return {
-        id: ebook._id.toString(),
-        title: ebook.title,
-        format: format,
-        downloads: downloads,
-        lastUpdated: lastUpdated,
-        status: status,
-        rejectionReason: ebook.metadata?.rejectionReason || null,
-        createdAt: ebook.createdAt,
-        updatedAt: ebook.updatedAt,
-      };
-    }).sort((a, b) => {
-      // Sort by status (published first, then draft, then rejected) then by updated date (newest first)
-      const statusOrder = { published: 0, draft: 1, rejected: 2 };
-      const orderA = statusOrder[a.status] ?? 3;
-      const orderB = statusOrder[b.status] ?? 3;
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      const dateA = new Date(a.updatedAt || a.createdAt);
-      const dateB = new Date(b.updatedAt || b.createdAt);
-      return dateB - dateA;
-    });
+        return {
+          id: ebook._id.toString(),
+          title: ebook.title,
+          format: format,
+          downloads: downloads,
+          lastUpdated: lastUpdated,
+          status: status,
+          rejectionReason: ebook.metadata?.rejectionReason || null,
+          createdAt: ebook.createdAt,
+          updatedAt: ebook.updatedAt,
+        };
+      })
+      .sort((a, b) => {
+        // Sort by status (published first, then draft, then rejected) then by updated date (newest first)
+        const statusOrder = { published: 0, draft: 1, rejected: 2 };
+        const orderA = statusOrder[a.status] ?? 3;
+        const orderB = statusOrder[b.status] ?? 3;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        const dateA = new Date(a.updatedAt || a.createdAt);
+        const dateB = new Date(b.updatedAt || b.createdAt);
+        return dateB - dateA;
+      });
 
     return res.json({
       headlineStats,
@@ -552,5 +587,3 @@ export const getTeacherDashboard = async (req, res, next) => {
     return next(error);
   }
 };
-
-

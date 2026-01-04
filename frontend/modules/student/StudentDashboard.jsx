@@ -21,9 +21,13 @@ import { useLanguage } from "../../src/contexts/LanguageContext";
 import { useDynamicTranslation } from "../../src/hooks/useDynamicTranslation";
 import TranslatedText from "../../src/components/TranslatedText";
 import { getStudentDashboard } from "../../src/services/studentDashboard";
-import { fetchStudentDashboard, fetchDashboardWidgets } from "../../src/services/api/student";
+import {
+  fetchStudentDashboard,
+  fetchDashboardWidgets,
+} from "../../src/services/api/student";
 import { getStudentAssignments } from "../../src/services/api/assignments";
 import { getStudentAnnouncements } from "../../src/services/api/announcements";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -47,7 +51,9 @@ const StudentDashboard = () => {
   const { profile, notifications, followers } = useUser();
   const { user: authUser, tokens } = useAuth();
   const { aelaPoints, refreshPoints } = usePoints(); // Get live coin balance
-  const { translateBatch, isTranslating } = useDynamicTranslation({ sourceLang: "en" });
+  const { translateBatch, isTranslating } = useDynamicTranslation({
+    sourceLang: "en",
+  });
 
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,26 +96,25 @@ const StudentDashboard = () => {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load dashboard from backend:", error);
-      
+
       // Extract meaningful error message
-      const errorMessage = error?.response?.data?.error?.message 
-        || error?.message 
-        || "Failed to load dashboard data";
-      const errorCode = error?.response?.data?.error?.code || error?.code || "UNKNOWN_ERROR";
-      
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        "Failed to load dashboard data";
+      const errorCode =
+        error?.response?.data?.error?.code || error?.code || "UNKNOWN_ERROR";
+
       setLoadError(`${errorCode}: ${errorMessage}`);
-      
+
       // Don't set mock data - keep it null and show error state
       setDashboardData(null);
-      
+
       // Show detailed error toast
-      toast.error(
-        `Dashboard data unavailable: ${errorMessage}`,
-        {
-          icon: "⚠️",
-          autoClose: 5000,
-        }
-      );
+      toast.error(`Dashboard data unavailable: ${errorMessage}`, {
+        icon: "⚠️",
+        autoClose: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +146,11 @@ const StudentDashboard = () => {
 
     setLoadingAssignments(true);
     try {
-      const response = await getStudentAssignments({ page: 1, pageSize: 5, status: "pending" });
+      const response = await getStudentAssignments({
+        page: 1,
+        pageSize: 5,
+        status: "pending",
+      });
       setAssignments(response.assignments || []);
     } catch (error) {
       console.error("Failed to load assignments:", error);
@@ -167,21 +176,20 @@ const StudentDashboard = () => {
     }
   }, [authUser, tokens]);
 
-
   useEffect(() => {
     // Stagger the API calls to prevent rate limiting
     const loadData = async () => {
       // Load dashboard first (most important)
       await loadDashboard();
       // Small delay between calls
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await loadWidgets();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await loadAssignments();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await loadAnnouncements();
     };
-    
+
     loadData();
 
     // Keep storage listener for backward compatibility
@@ -220,7 +228,10 @@ const StudentDashboard = () => {
         setTranslatedAnnouncements(merged);
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("[StudentDashboard] Failed to translate announcements:", error);
+        console.error(
+          "[StudentDashboard] Failed to translate announcements:",
+          error
+        );
         setTranslatedAnnouncements(announcements);
       }
     };
@@ -244,11 +255,14 @@ const StudentDashboard = () => {
     };
 
     window.addEventListener("quizCompleted", handleQuizComplete);
-    return () => window.removeEventListener("quizCompleted", handleQuizComplete);
+    return () =>
+      window.removeEventListener("quizCompleted", handleQuizComplete);
   }, [loadDashboard, refreshPoints]);
 
   const notificationsCount = useMemo(
-    () => notifications.filter((notification) => notification.type !== "archived").length,
+    () =>
+      notifications.filter((notification) => notification.type !== "archived")
+        .length,
     [notifications]
   );
 
@@ -265,7 +279,7 @@ const StudentDashboard = () => {
   const coinsToRedeem = aelaPoints ?? learnEarnProgress?.coinsToRedeem ?? 0;
   const leaderboardPosition = learnEarnProgress?.leaderboardPosition ?? 0;
   const redeemRoute = learnEarnProgress?.redeemRoute ?? "/learn-earn/wallet";
-  
+
   // Update journeyStats with live coin balance
   const updatedJourneyStats = useMemo(() => {
     return journeyStats.map((stat) => {
@@ -279,7 +293,6 @@ const StudentDashboard = () => {
     });
   }, [journeyStats, coinsToRedeem]);
 
-
   const shortcutIcons = useMemo(
     () => ({
       gift: HiOutlineGift,
@@ -291,10 +304,12 @@ const StudentDashboard = () => {
 
   if (isLoading || !dashboardData) {
     return (
-          <div className="flex min-h-screen items-center justify-center bg-[#020409] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#020409] text-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F5D26A] mx-auto mb-4"></div>
-          <p className="text-sm text-slate-300/80"><TranslatedText>Loading your dashboard...</TranslatedText></p>
+          <p className="text-sm text-slate-300/80">
+            <TranslatedText>Loading your dashboard...</TranslatedText>
+          </p>
         </div>
       </div>
     );
@@ -310,473 +325,549 @@ const StudentDashboard = () => {
       />
 
       <div className="space-y-10">
-          <motion.header
-            variants={sectionVariants}
-            initial="hidden"
-            animate="show"
-            className="space-y-4">
-            {loadError && (
-              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-                <p className="font-semibold mb-1">⚠️ Data Loading Issue</p>
-                <p className="text-xs text-amber-300/80">{loadError}</p>
-                <p className="text-xs text-amber-300/60 mt-2">
-                  Some metrics may show placeholder values. Please refresh or contact support if this persists.
-                </p>
+        <motion.header
+          variants={sectionVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-4">
+          {loadError && (
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+              <p className="font-semibold mb-1">⚠️ Data Loading Issue</p>
+              <p className="text-xs text-amber-300/80">{loadError}</p>
+              <p className="text-xs text-amber-300/60 mt-2">
+                Some metrics may show placeholder values. Please refresh or
+                contact support if this persists.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
+                Learning journey
+              </p>
+              <h1 className="text-3xl font-semibold md:text-4xl">
+                Welcome back, {profile?.name?.split(" ")[0] ?? "Learner"}
+              </h1>
+              <p className="mt-2 text-sm text-slate-300/80">
+                Your courses, coins, and community progress at a glance.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                Consistency streak ·{" "}
+                <span className="font-semibold text-sky-200">
+                  {streak} days
+                </span>
               </div>
-            )}
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">
-                  Learning journey
-                </p>
-                <h1 className="text-3xl font-semibold md:text-4xl">
-                  Welcome back, {profile?.name?.split(" ")[0] ?? "Learner"}
-                </h1>
-                <p className="mt-2 text-sm text-slate-300/80">
-                  Your courses, coins, and community progress at a glance.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Consistency streak ·{" "}
-                  <span className="font-semibold text-sky-200">{streak} days</span>
-                </div>
-                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
-                  Upcoming mentor call · <span className="font-semibold text-sky-200">Sunday</span>
-                </div>
+              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                Upcoming mentor call ·{" "}
+                <span className="font-semibold text-sky-200">Sunday</span>
               </div>
             </div>
-          </motion.header>
+          </div>
+        </motion.header>
 
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="show"
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {updatedJourneyStats.map((stat) => (
-              <motion.div
-                key={stat.id}
-                variants={cardVariants}
-                className="rounded-3xl border border-sky-400/20 bg-[#060A17]/90 p-5 shadow-[0_24px_80px_rgba(20,30,60,0.4)]">
-                <p className="text-xs uppercase tracking-[0.3em] text-sky-200/70">
-                  {stat.label}
-                </p>
-                <p className="mt-3 text-2xl font-semibold text-white">{stat.value}</p>
-                <p className="mt-2 text-xs text-slate-300/80">{stat.delta}</p>
-              </motion.div>
-            ))}
-          </motion.section>
-
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="show"
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {actionShortcuts.map((shortcut) => {
-              const Icon = shortcutIcons[shortcut.icon] ?? HiOutlineSparkles;
-              return (
-                <motion.div key={shortcut.id} variants={cardVariants}>
-                  <Link
-                    to={shortcut.to}
-                    className={`group block rounded-3xl border bg-[#060A17]/95 p-5 shadow-[0_24px_80px_rgba(20,30,60,0.35)] transition ${shortcut.tone}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-base font-semibold text-white">{shortcut.title}</p>
-                        <p className="mt-2 text-xs text-slate-200/80">{shortcut.description}</p>
-                      </div>
-                      <Icon className="h-6 w-6 opacity-80" />
-                    </div>
-                    <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:text-white">
-                      Go to action <HiOutlineArrowRight className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.section>
-
-          <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          animate="show"
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {updatedJourneyStats.map((stat) => (
             <motion.div
+              key={stat.id}
               variants={cardVariants}
-              initial="hidden"
-              animate="show"
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">In-progress courses</h2>
+              className="rounded-3xl border border-sky-400/20 bg-[#060A17]/90 p-5 shadow-[0_24px_80px_rgba(20,30,60,0.4)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-sky-200/70">
+                {stat.label}
+              </p>
+              <p className="mt-3 text-2xl font-semibold text-white">
+                {stat.value}
+              </p>
+              <p className="mt-2 text-xs text-slate-300/80">{stat.delta}</p>
+            </motion.div>
+          ))}
+        </motion.section>
+
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          animate="show"
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {actionShortcuts.map((shortcut) => {
+            const Icon = shortcutIcons[shortcut.icon] ?? HiOutlineSparkles;
+            return (
+              <motion.div key={shortcut.id} variants={cardVariants}>
                 <Link
-                  to="/student/courses"
-                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                  View all
-                </Link>
-              </header>
-              <div className="space-y-3">
-                {ongoingCourses.map((course) => (
-                  <Link
-                    key={course.title}
-                    to={course.route}
-                    className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-white">{course.title}</p>
-                        <p className="text-xs text-slate-400">Mentor · {course.mentor}</p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1">
-                          <HiOutlineCalendarDays className="text-sky-200" />
-                          {course.nextSession}
-                        </span>
-                        <span className="rounded-full border border-white/10 px-3 py-1">
-                          Progress · {course.progress}%
-                        </span>
-                        <span className="rounded-full border border-white/10 px-3 py-1">
-                          {course.access}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${course.progress}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, ease: "easeOut" }}
-                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
-                      />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              variants={cardVariants}
-              initial="hidden"
-              animate="show"
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Learn & Earn</h2>
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/student/points/history"
-                    className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                    History
-                  </Link>
-                  <Link
-                    to={redeemRoute}
-                    className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                    Redeem now
-                  </Link>
-                </div>
-              </header>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-                <p className="font-semibold text-white">Current streak</p>
-                <p className="mt-1 text-xs text-slate-300/80">
-                  {streak} days · unlock bonus at day 10
-                </p>
-              </div>
-              <div className="space-y-3">
-                {badges.map((badge) => (
-                  <div key={badge.label} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
-                    <span className="text-xl">{badge.icon}</span>
+                  to={shortcut.to}
+                  className={`group block rounded-3xl border bg-[#060A17]/95 p-5 shadow-[0_24px_80px_rgba(20,30,60,0.35)] transition ${shortcut.tone}`}>
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-white">{badge.label}</p>
-                      <p className="text-slate-300/80">{badge.description}</p>
+                      <p className="text-base font-semibold text-white">
+                        {shortcut.title}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-200/80">
+                        {shortcut.description}
+                      </p>
                     </div>
+                    <Icon className="h-6 w-6 opacity-80" />
                   </div>
-                ))}
-              </div>
-              <div className="rounded-2xl border border-[#0ea5e9]/40 bg-[#0ea5e9]/10 px-4 py-3 text-xs text-sky-100">
-                Leaderboard position · <span className="font-semibold text-white">#{leaderboardPosition}</span>
-                <br />
-                Coins available · <span className="font-semibold text-white">{coinsToRedeem}</span>
-              </div>
-            </motion.div>
-          </section>
+                  <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:text-white">
+                    Go to action <HiOutlineArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </motion.section>
 
-          <motion.section
+        <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineMegaphone className="h-5 w-5" />
-                Announcements
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                In-progress courses
               </h2>
               <Link
-                to="/student/announcements"
+                to="/student/courses"
                 className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
                 View all
               </Link>
             </header>
-            {loadingAnnouncements || isTranslating ? (
-              <div className="py-8 text-center text-sm text-slate-400">
-                <TranslatedText>Loading announcements...</TranslatedText>
-              </div>
-            ) : announcements.length === 0 ? (
-              <div className="text-center py-8 text-sm text-slate-400">
-                <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
-                <p>
-                  <TranslatedText>No announcements at the moment</TranslatedText>
-                </p>
-                <p className="mt-2 text-xs text-slate-500">
-                  <TranslatedText>Stay tuned for updates!</TranslatedText>
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {(translatedAnnouncements.length > 0
-                  ? translatedAnnouncements
-                  : announcements
-                ).map((announcement) => {
-                  const isRead = announcement.isRead || false;
-                  const publishedDate = announcement.publishedAt || announcement.createdAt;
-                  const timeAgo = publishedDate
-                    ? new Date(publishedDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Recently";
+            <div className="space-y-3">
+              {ongoingCourses.map((course) => (
+                <Link
+                  key={course.title}
+                  to={course.route}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-white">{course.title}</p>
+                      <p className="text-xs text-slate-400">
+                        Mentor · {course.mentor}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1">
+                        <HiOutlineCalendarDays className="text-sky-200" />
+                        {course.nextSession}
+                      </span>
+                      <span className="rounded-full border border-white/10 px-3 py-1">
+                        Progress · {course.progress}%
+                      </span>
+                      <span className="rounded-full border border-white/10 px-3 py-1">
+                        {course.access}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${course.progress}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
 
-                  return (
-                    <Link
-                      key={announcement._id}
-                      to={`/student/announcements/${announcement._id}`}
-                      className={`block rounded-2xl border px-4 py-3 text-sm transition ${
-                        isRead
-                          ? "border-white/5 bg-white/5 text-slate-300"
-                          : "border-sky-400/30 bg-sky-400/10 text-white hover:border-sky-400/50"
-                      }`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className={`font-semibold ${isRead ? "text-slate-200" : "text-white"}`}>
-                              {announcement.title}
-                            </p>
-                            {!isRead && (
-                              <span className="h-2 w-2 rounded-full bg-sky-400 flex-shrink-0 mt-1"></span>
-                            )}
-                          </div>
-                          <p className={`text-xs line-clamp-2 ${isRead ? "text-slate-400" : "text-slate-300"}`}>
-                            {announcement.content?.substring(0, 100)}
-                            {announcement.content?.length > 100 ? "..." : ""}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-2">{timeAgo}</p>
-                        </div>
-                        {announcement.priority === "urgent" && (
-                          <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-1 text-[10px] font-semibold text-red-400 uppercase">
-                            Urgent
-                          </span>
-                        )}
-                        {announcement.priority === "high" && (
-                          <span className="rounded-full bg-yellow-500/20 border border-yellow-500/40 px-2 py-1 text-[10px] font-semibold text-yellow-400 uppercase">
-                            High
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </motion.section>
-
-          <motion.section
+          <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="show"
-            className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-            <header className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HiOutlineDocumentText className="h-5 w-5" />
-                <TranslatedText>Due Assignments</TranslatedText>
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Learn & Earn</h2>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/student/points/history"
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  History
+                </Link>
+                <Link
+                  to={redeemRoute}
+                  className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+                  Redeem now
+                </Link>
+              </div>
+            </header>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+              <p className="font-semibold text-white">Current streak</p>
+              <p className="mt-1 text-xs text-slate-300/80">
+                {streak} days · unlock bonus at day 10
+              </p>
+            </div>
+            <div className="space-y-3">
+              {badges.map((badge) => (
+                <div
+                  key={badge.label}
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200">
+                  <span className="text-xl">{badge.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {badge.label}
+                    </p>
+                    <p className="text-slate-300/80">{badge.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-[#0ea5e9]/40 bg-[#0ea5e9]/10 px-4 py-3 text-xs text-sky-100">
+              Leaderboard position ·{" "}
+              <span className="font-semibold text-white">
+                #{leaderboardPosition}
+              </span>
+              <br />
+              Coins available ·{" "}
+              <span className="font-semibold text-white">{coinsToRedeem}</span>
+            </div>
+          </motion.div>
+        </section>
+
+        <motion.section
+          variants={cardVariants}
+          initial="hidden"
+          animate="show"
+          className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+          <header className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <HiOutlineMegaphone className="h-5 w-5" />
+              Announcements
+            </h2>
+            <Link
+              to="/student/announcements"
+              className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+              View all
+            </Link>
+          </header>
+          {loadingAnnouncements || isTranslating ? (
+            <div className="py-8 text-center text-sm text-slate-400">
+              <TranslatedText>Loading announcements...</TranslatedText>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="text-center py-8 text-sm text-slate-400">
+              <HiOutlineMegaphone className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+              <p>
+                <TranslatedText>No announcements at the moment</TranslatedText>
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                <TranslatedText>Stay tuned for updates!</TranslatedText>
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {(translatedAnnouncements.length > 0
+                ? translatedAnnouncements
+                : announcements
+              ).map((announcement) => {
+                const isRead = announcement.isRead || false;
+                const publishedDate =
+                  announcement.publishedAt || announcement.createdAt;
+                const timeAgo = publishedDate
+                  ? new Date(publishedDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Recently";
+
+                return (
+                  <Link
+                    key={announcement._id}
+                    to={`/student/announcements/${announcement._id}`}
+                    className={`block rounded-2xl border px-4 py-3 text-sm transition ${
+                      isRead
+                        ? "border-white/5 bg-white/5 text-slate-300"
+                        : "border-sky-400/30 bg-sky-400/10 text-white hover:border-sky-400/50"
+                    }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p
+                            className={`font-semibold ${
+                              isRead ? "text-slate-200" : "text-white"
+                            }`}>
+                            {announcement.title}
+                          </p>
+                          {!isRead && (
+                            <span className="h-2 w-2 rounded-full bg-sky-400 flex-shrink-0 mt-1"></span>
+                          )}
+                        </div>
+                        <p
+                          className={`text-xs line-clamp-2 ${
+                            isRead ? "text-slate-400" : "text-slate-300"
+                          }`}>
+                          {announcement.content?.substring(0, 100)}
+                          {announcement.content?.length > 100 ? "..." : ""}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">{timeAgo}</p>
+                      </div>
+                      {announcement.priority === "urgent" && (
+                        <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-1 text-[10px] font-semibold text-red-400 uppercase">
+                          Urgent
+                        </span>
+                      )}
+                      {announcement.priority === "high" && (
+                        <span className="rounded-full bg-yellow-500/20 border border-yellow-500/40 px-2 py-1 text-[10px] font-semibold text-yellow-400 uppercase">
+                          High
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </motion.section>
+
+        <motion.section
+          variants={cardVariants}
+          initial="hidden"
+          animate="show"
+          className="rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+          <header className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <HiOutlineDocumentText className="h-5 w-5" />
+              <TranslatedText>Due Assignments</TranslatedText>
+            </h2>
+            <Link
+              to="/student/assignments"
+              className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
+              <TranslatedText>View all</TranslatedText>
+            </Link>
+          </header>
+          {loadingAssignments ? (
+            <div className="py-8 text-center text-sm text-slate-400">
+              Loading...
+            </div>
+          ) : assignments.length === 0 ? (
+            <div className="py-8 text-center text-sm text-slate-400">
+              No pending assignments
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {assignments.slice(0, 3).map((assignment) => {
+                const isOverdue = new Date(assignment.dueDate) < new Date();
+                return (
+                  <Link
+                    key={assignment._id}
+                    to={`/student/assignments/${assignment._id}`}
+                    className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-white">
+                          {assignment.title}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {assignment.course?.title || "Course"}
+                        </p>
+                        <p
+                          className={`text-xs mt-1 flex items-center gap-1 ${
+                            isOverdue ? "text-red-400" : "text-slate-300"
+                          }`}>
+                          <HiOutlineCalendarDays className="h-3 w-3" />
+                          Due:{" "}
+                          {new Date(assignment.dueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {isOverdue && (
+                        <HiOutlineExclamationTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </motion.section>
+
+        {/* Enhanced Dashboard Widgets Section */}
+        <motion.section
+          variants={sectionVariants}
+          initial="hidden"
+          animate="show"
+          className="grid gap-6 lg:grid-cols-2">
+          {/* Recent Activity Widget */}
+          <motion.div
+            variants={cardVariants}
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                Recent Activity
+              </h2>
+            </header>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {loadingWidgets ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  Loading...
+                </div>
+              ) : widgetsData.recentActivity.length === 0 ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  No recent activity
+                </div>
+              ) : (
+                widgetsData.recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+                    <span className="text-lg">{activity.icon}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-white">
+                        {activity.title}
+                      </p>
+                      <p className="mt-1 text-slate-400">{activity.timeAgo}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+
+          {/* Weekly Progress Widget */}
+          <motion.div
+            variants={cardVariants}
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                Weekly Progress
+              </h2>
+            </header>
+            <div className="space-y-2">
+              {loadingWidgets ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  Loading...
+                </div>
+              ) : widgetsData.weeklyProgress.length === 0 ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  No progress data
+                </div>
+              ) : (
+                widgetsData.weeklyProgress.map((day, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-12 text-xs text-slate-400">{day.day}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-300">
+                          {day.hours}h
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {day.lessons} lessons
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(day.hours / 2) * 100}%` }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+
+          {/* Learning Goals Widget */}
+          <motion.div
+            variants={cardVariants}
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                Learning Goals
+              </h2>
+            </header>
+            <div className="space-y-4">
+              {loadingWidgets ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  Loading...
+                </div>
+              ) : !widgetsData.learningGoals ||
+                Object.keys(widgetsData.learningGoals).length === 0 ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  No goals set
+                </div>
+              ) : (
+                Object.entries(widgetsData.learningGoals).map(([key, goal]) => {
+                  const percentage = Math.min(
+                    (goal.current / goal.target) * 100,
+                    100
+                  );
+                  return (
+                    <div key={key} className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300 capitalize">
+                          {key.replace(/([A-Z])/g, " $1").trim()}
+                        </span>
+                        <span className="text-slate-400">
+                          {goal.current} / {goal.target} {goal.unit}
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ duration: 0.6 }}
+                          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+
+          {/* Course Recommendations Widget */}
+          <motion.div
+            variants={cardVariants}
+            className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
+            <header className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                Recommended Courses
               </h2>
               <Link
-                to="/student/assignments"
-                className="flex items-center gap-2 rounded-full border border-sky-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-sky-200 transition hover:border-sky-300/70 hover:text-sky-100">
-                <TranslatedText>View all</TranslatedText>
+                to="/learn-earn/courses"
+                className="text-xs text-sky-200 hover:text-sky-100 transition">
+                View all
               </Link>
             </header>
-            {loadingAssignments ? (
-              <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-            ) : assignments.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-400">No pending assignments</div>
-            ) : (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {assignments.slice(0, 3).map((assignment) => {
-                  const isOverdue = new Date(assignment.dueDate) < new Date();
-                  return (
-                    <Link
-                      key={assignment._id}
-                      to={`/student/assignments/${assignment._id}`}
-                      className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-sky-400/50">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold text-white">{assignment.title}</p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {assignment.course?.title || "Course"}
-                          </p>
-                          <p
-                            className={`text-xs mt-1 flex items-center gap-1 ${
-                              isOverdue ? "text-red-400" : "text-slate-300"
-                            }`}>
-                            <HiOutlineCalendarDays className="h-3 w-3" />
-                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                        {isOverdue && (
-                          <HiOutlineExclamationTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </motion.section>
-
-          {/* Enhanced Dashboard Widgets Section */}
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="show"
-            className="grid gap-6 lg:grid-cols-2">
-            {/* Recent Activity Widget */}
-            <motion.div
-              variants={cardVariants}
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-              </header>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {loadingWidgets ? (
-                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-                ) : widgetsData.recentActivity.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-slate-400">No recent activity</div>
-                ) : (
-                  widgetsData.recentActivity.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
-                      <span className="text-lg">{activity.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">{activity.title}</p>
-                        <p className="mt-1 text-slate-400">{activity.timeAgo}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-
-            {/* Weekly Progress Widget */}
-            <motion.div
-              variants={cardVariants}
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Weekly Progress</h2>
-              </header>
-              <div className="space-y-2">
-                {loadingWidgets ? (
-                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-                ) : widgetsData.weeklyProgress.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-slate-400">No progress data</div>
-                ) : (
-                  widgetsData.weeklyProgress.map((day, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-12 text-xs text-slate-400">{day.day}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-slate-300">{day.hours}h</span>
-                          <span className="text-xs text-slate-400">{day.lessons} lessons</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(day.hours / 2) * 100}%` }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-
-            {/* Learning Goals Widget */}
-            <motion.div
-              variants={cardVariants}
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Learning Goals</h2>
-              </header>
-              <div className="space-y-4">
-                {loadingWidgets ? (
-                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-                ) : !widgetsData.learningGoals || Object.keys(widgetsData.learningGoals).length === 0 ? (
-                  <div className="py-8 text-center text-sm text-slate-400">No goals set</div>
-                ) : (
-                  Object.entries(widgetsData.learningGoals).map(([key, goal]) => {
-                    const percentage = Math.min((goal.current / goal.target) * 100, 100);
-                    return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-300 capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
-                          <span className="text-slate-400">
-                            {goal.current} / {goal.target} {goal.unit}
-                          </span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${percentage}%` }}
-                            transition={{ duration: 0.6 }}
-                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-
-            {/* Course Recommendations Widget */}
-            <motion.div
-              variants={cardVariants}
-              className="space-y-4 rounded-3xl border border-white/10 bg-[#060A17]/90 p-6">
-              <header className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Recommended Courses</h2>
-                <Link
-                  to="/learn-earn/courses"
-                  className="text-xs text-sky-200 hover:text-sky-100 transition">
-                  View all
-                </Link>
-              </header>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {loadingWidgets ? (
-                  <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-                ) : widgetsData.recommendations.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-slate-400">No recommendations</div>
-                ) : (
-                  widgetsData.recommendations.map((course) => (
-                    <Link
-                      key={course.id}
-                      to={course.route}
-                      className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm transition hover:border-sky-400/50">
-                      <p className="font-semibold text-white">{course.title}</p>
-                      <p className="mt-1 text-xs text-slate-400">by {course.instructor}</p>
-                      <p className="mt-1 text-xs text-sky-200">
-                        {course.price === 0 ? "Free" : `AED ${course.price}`}
-                      </p>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </motion.section>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {loadingWidgets ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  Loading...
+                </div>
+              ) : widgetsData.recommendations.length === 0 ? (
+                <div className="py-8 text-center text-sm text-slate-400">
+                  No recommendations
+                </div>
+              ) : (
+                widgetsData.recommendations.map((course) => (
+                  <Link
+                    key={course.id}
+                    to={course.route}
+                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm transition hover:border-sky-400/50">
+                    <p className="font-semibold text-white">{course.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      by {course.instructor}
+                    </p>
+                    <p className="mt-1 text-xs text-sky-200">
+                      {course.price === 0
+                        ? "Free"
+                        : formatCurrency(course.price)}
+                    </p>
+                  </Link>
+                ))
+              )}
+            </div>
+          </motion.div>
+        </motion.section>
 
         <motion.section
           variants={cardVariants}

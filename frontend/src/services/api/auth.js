@@ -86,6 +86,17 @@ export const resetPassword = async (token, newPassword) => {
   });
 };
 
+/**
+ * Change password (authenticated user)
+ * POST /api/v1/auth/change-password
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+  return apiRequest("/auth/change-password", {
+    method: "POST",
+    body: { currentPassword, newPassword },
+  });
+};
+
 // ==================== Email Verification Functions ====================
 
 /**

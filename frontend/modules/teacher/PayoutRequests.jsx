@@ -11,8 +11,12 @@ import {
 } from "react-icons/hi2";
 import SEO from "../../src/components/SEO";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { createPayoutRequest, getPayoutRequests } from "../../src/services/api/earnings";
+import {
+  createPayoutRequest,
+  getPayoutRequests,
+} from "../../src/services/api/earnings";
 import { getEarningsSummary } from "../../src/services/api/earnings";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const PayoutRequests = () => {
   const { user } = useAuth();
@@ -74,12 +78,19 @@ const PayoutRequests = () => {
     }
 
     if (Number(requestData.amount) > availableEarnings) {
-      toast.error(`Amount exceeds available earnings (AED ${availableEarnings.toFixed(2)})`);
+      toast.error(
+        `Amount exceeds available earnings (${formatCurrency(
+          availableEarnings
+        )})`
+      );
       return;
     }
 
     if (requestData.paymentMethod === "bank_transfer") {
-      if (!requestData.paymentDetails.accountName || !requestData.paymentDetails.accountNumber) {
+      if (
+        !requestData.paymentDetails.accountName ||
+        !requestData.paymentDetails.accountNumber
+      ) {
         toast.error("Please fill in bank account details");
         return;
       }
@@ -153,13 +164,18 @@ const PayoutRequests = () => {
 
   return (
     <div className="min-h-screen text-white">
-      <SEO title="Payout Requests | Digital AELA" description="Manage your payout requests" />
+      <SEO
+        title="Payout Requests | Digital AELA"
+        description="Manage your payout requests"
+      />
 
       <div className="space-y-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold mb-2">Payout Requests</h1>
-            <p className="text-slate-400">Request payouts for your available earnings</p>
+            <p className="text-slate-400">
+              Request payouts for your available earnings
+            </p>
           </div>
           <button
             onClick={() => setShowRequestModal(true)}
@@ -176,7 +192,7 @@ const PayoutRequests = () => {
             <p className="text-sm text-slate-400">Available Earnings</p>
           </div>
           <p className="text-3xl font-semibold text-white">
-            AED {availableEarnings.toFixed(2)}
+            {formatCurrency(availableEarnings)}
           </p>
           <p className="text-xs text-slate-400 mt-1">Ready for payout</p>
         </div>
@@ -232,12 +248,14 @@ const PayoutRequests = () => {
                       <div>
                         <span className="text-slate-500">Amount: </span>
                         <span className="text-white font-semibold">
-                          {request.currency} {request.amount.toFixed(2)}
+                          {formatCurrency(request.amount)}
                         </span>
                       </div>
                       <div>
                         <span className="text-slate-500">Method: </span>
-                        <span className="text-white">{request.paymentMethod}</span>
+                        <span className="text-white">
+                          {request.paymentMethod}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-500">Requested: </span>
@@ -256,7 +274,9 @@ const PayoutRequests = () => {
                       </div>
                     )}
                     {request.notes && (
-                      <div className="mt-2 text-sm text-slate-400">Notes: {request.notes}</div>
+                      <div className="mt-2 text-sm text-slate-400">
+                        Notes: {request.notes}
+                      </div>
                     )}
                   </div>
                   <div className="ml-6 text-right">
@@ -276,7 +296,9 @@ const PayoutRequests = () => {
         {pagination.totalPages > 1 && (
           <div className="mt-8 flex items-center justify-center gap-4">
             <button
-              onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+              onClick={() =>
+                setPagination({ ...pagination, page: pagination.page - 1 })
+              }
               disabled={pagination.page === 1}
               className="px-4 py-2 rounded-xl border border-white/10 bg-[#111] text-white hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed">
               Previous
@@ -285,7 +307,9 @@ const PayoutRequests = () => {
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <button
-              onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+              onClick={() =>
+                setPagination({ ...pagination, page: pagination.page + 1 })
+              }
               disabled={pagination.page >= pagination.totalPages}
               className="px-4 py-2 rounded-xl border border-white/10 bg-[#111] text-white hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed">
               Next
@@ -300,11 +324,13 @@ const PayoutRequests = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F1E] p-6 max-h-[90vh] overflow-y-auto">
-              <h3 className="text-xl font-semibold text-white mb-4">Request Payout</h3>
+              <h3 className="text-xl font-semibold text-white mb-4">
+                Request Payout
+              </h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Amount (Available: AED {availableEarnings.toFixed(2)})
+                    Amount (Available: {formatCurrency(availableEarnings)})
                   </label>
                   <input
                     type="number"
@@ -326,7 +352,10 @@ const PayoutRequests = () => {
                   <select
                     value={requestData.paymentMethod}
                     onChange={(e) =>
-                      setRequestData({ ...requestData, paymentMethod: e.target.value })
+                      setRequestData({
+                        ...requestData,
+                        paymentMethod: e.target.value,
+                      })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none">
                     <option value="bank_transfer">Bank Transfer</option>
@@ -398,7 +427,9 @@ const PayoutRequests = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">IBAN</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        IBAN
+                      </label>
                       <input
                         type="text"
                         value={requestData.paymentDetails.iban}
@@ -440,10 +471,14 @@ const PayoutRequests = () => {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Notes
+                  </label>
                   <textarea
                     value={requestData.notes}
-                    onChange={(e) => setRequestData({ ...requestData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setRequestData({ ...requestData, notes: e.target.value })
+                    }
                     rows={3}
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white placeholder:text-slate-500 focus:border-[#D4AF37]/50 focus:outline-none resize-none"
                     placeholder="Optional notes"

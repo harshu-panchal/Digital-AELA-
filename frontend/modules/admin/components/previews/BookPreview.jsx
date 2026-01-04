@@ -1,3 +1,5 @@
+import { formatCurrency } from "../../../../utils/currencyUtils";
+
 const BookPreview = ({ ebook }) => {
   if (!ebook) return null;
 
@@ -18,9 +20,13 @@ const BookPreview = ({ ebook }) => {
           </div>
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">{ebook.title}</h1>
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+            {ebook.title}
+          </h1>
           {metadata.subtitle && (
-            <p className="mt-2 text-lg text-[#D4AF37] font-semibold">{metadata.subtitle}</p>
+            <p className="mt-2 text-lg text-[#D4AF37] font-semibold">
+              {metadata.subtitle}
+            </p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
@@ -45,7 +51,7 @@ const BookPreview = ({ ebook }) => {
             <span className="text-[#F5D26A] font-semibold">
               {metadata.isFree || metadata.price === 0
                 ? "Free"
-                : `Price: ${metadata.price} ${ebook.currency || "AED"}`}
+                : `Price: ${formatCurrency(metadata.price)}`}
             </span>
           )}
         </div>
@@ -88,7 +94,9 @@ const BookPreview = ({ ebook }) => {
           {ebook.downloadUrl && (
             <div>
               <p className="text-gray-400">Download URL:</p>
-              <p className="mt-1 break-all text-gray-300">{ebook.downloadUrl}</p>
+              <p className="mt-1 break-all text-gray-300">
+                {ebook.downloadUrl}
+              </p>
             </div>
           )}
           {ebook.pages && (
@@ -107,7 +115,9 @@ const BookPreview = ({ ebook }) => {
           )}
           <div>
             <p className="text-gray-400">Visibility:</p>
-            <p className="mt-1 text-white">{ebook.isPublic ? "Public" : "Private (Pending Approval)"}</p>
+            <p className="mt-1 text-white">
+              {ebook.isPublic ? "Public" : "Private (Pending Approval)"}
+            </p>
           </div>
         </div>
       </div>
@@ -134,4 +144,3 @@ const BookPreview = ({ ebook }) => {
 };
 
 export default BookPreview;
-

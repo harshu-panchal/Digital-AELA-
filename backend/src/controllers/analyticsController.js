@@ -478,7 +478,7 @@ export const getRevenueAnalytics = async (req, res, next) => {
     enrollments.forEach((enrollment) => {
       if (enrollment.course && enrollment.course.price) {
         const price = enrollment.course.price;
-        const currency = enrollment.course.currency || "AED";
+        const currency = enrollment.course.currency || "INR";
         const dateKey = new Date(enrollment.createdAt).toISOString().split("T")[0];
 
         if (groupBy === "week") {

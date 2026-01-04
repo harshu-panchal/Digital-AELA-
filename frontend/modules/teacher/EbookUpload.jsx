@@ -77,7 +77,7 @@ const EbookUpload = () => {
 
   const priceHelper = useMemo(
     () => ({
-      price: "Set in AED. Leave blank to offer for free (0).",
+      price: "Set in INR. Leave blank to offer for free (0).",
     }),
     []
   );
@@ -368,7 +368,7 @@ const EbookUpload = () => {
                 <label
                   htmlFor="price"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                  Price (AED)
+                  Price (INR)
                 </label>
                 <input
                   id="price"

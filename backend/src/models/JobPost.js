@@ -2,7 +2,10 @@ import mongoose from "mongoose";
 
 const salarySchema = new mongoose.Schema(
   {
-    currency: String,
+    currency: {
+      type: String,
+      default: "INR",
+    },
     range: String,
   },
   { _id: false }

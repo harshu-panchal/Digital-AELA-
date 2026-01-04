@@ -3,7 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaSearch, FaStar, FaBook, FaDownload, FaSpinner } from "react-icons/fa";
+import {
+  FaSearch,
+  FaStar,
+  FaBook,
+  FaDownload,
+  FaSpinner,
+} from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { fetchEbooks } from "../../../src/services/api/resources";
@@ -15,6 +21,7 @@ import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 import LazyImage from "../../../src/components/LazyImage";
 import bookAdvancedEnglishImg from "../../../src/assets/images/books/advanced english.png";
 import bookConfidenceBuildingImg from "../../../src/assets/images/books/confidence building.png";
@@ -136,7 +143,8 @@ const staticBooks = [
 ];
 
 const BOOKS_STORAGE_KEY = "aela.books.cache";
-const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+const isDevelopment =
+  import.meta.env.DEV || import.meta.env.MODE === "development";
 
 const Books = () => {
   const navigate = useNavigate();
@@ -174,8 +182,17 @@ const Books = () => {
         const ebooksFromApi = (response.data || []).map((ebook) => {
           // Debug: log the ebook to see what we're getting
           // eslint-disable-next-line no-console
-          console.log("Ebook from API:", { id: ebook._id, title: ebook.title, metadata: ebook.metadata });
-          const price = ebook.metadata?.price !== undefined && ebook.metadata.price !== null && ebook.metadata.price !== "" ? Number(ebook.metadata.price) : 0;
+          console.log("Ebook from API:", {
+            id: ebook._id,
+            title: ebook.title,
+            metadata: ebook.metadata,
+          });
+          const price =
+            ebook.metadata?.price !== undefined &&
+            ebook.metadata.price !== null &&
+            ebook.metadata.price !== ""
+              ? Number(ebook.metadata.price)
+              : 0;
           return {
             id: ebook._id,
             title: ebook.title,
@@ -204,7 +221,10 @@ const Books = () => {
           // Ignore storage errors
         }
       } catch (error) {
-        const isNetworkError = error?.isNetworkError || error?.code === "CONNECTION_ERROR" || error?.status === 0;
+        const isNetworkError =
+          error?.isNetworkError ||
+          error?.code === "CONNECTION_ERROR" ||
+          error?.status === 0;
 
         // Log errors appropriately
         if (isNetworkError && !isDevelopment) {
@@ -220,7 +240,9 @@ const Books = () => {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed) && parsed.length > 0) {
               setBooks(parsed);
-              toast.warning("Using cached data. Please refresh if books are outdated.");
+              toast.warning(
+                "Using cached data. Please refresh if books are outdated."
+              );
               return;
             }
           }
@@ -230,7 +252,9 @@ const Books = () => {
 
         // Show empty state on error - no dummy data
         setBooks([]);
-        toast.error("Failed to load books. Please check your connection and try again.");
+        toast.error(
+          "Failed to load books. Please check your connection and try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -258,7 +282,11 @@ const Books = () => {
           books.map(async (book) => {
             try {
               const translated = await translateObject(
-                { title: book.title, description: book.description, author: book.author },
+                {
+                  title: book.title,
+                  description: book.description,
+                  author: book.author,
+                },
                 ["title", "description", "author"]
               );
               return {
@@ -308,25 +336,26 @@ const Books = () => {
       />
 
       {/* Hero Section */}
-      <motion.section
-        className="relative pt-[110px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
+      <motion.section className="relative pt-[110px] pb-12 md:pt-[150px] md:pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
-        <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
+        <motion.div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
-          <motion.h1
-            className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
-            <TranslatedText>Our</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Book Store</TranslatedText></span>
+          <motion.h1 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
+            <TranslatedText>Our</TranslatedText>{" "}
+            <span className="text-[#D4AF37]">
+              <TranslatedText>Book Store</TranslatedText>
+            </span>
           </motion.h1>
-          <motion.p
-            className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
-            <TranslatedText>Discover expert-authored books on English Grammar, Vocabulary, Self Help, and more. Available in physical and e-book formats.</TranslatedText>
+          <motion.p className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
+            <TranslatedText>
+              Discover expert-authored books on English Grammar, Vocabulary,
+              Self Help, and more. Available in physical and e-book formats.
+            </TranslatedText>
           </motion.p>
 
           {/* Search Bar */}
-          <motion.div
-            className="max-w-2xl mx-auto">
+          <motion.div className="max-w-2xl mx-auto">
             <div className="relative">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -346,11 +375,14 @@ const Books = () => {
       <section className="py-12 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results Count */}
-          <motion.div
-            className="mb-8">
+          <motion.div className="mb-8">
             <p className="text-gray-300 text-sm">
-              {filteredBooks.length} <TranslatedText>book{filteredBooks.length !== 1 ? "s" : ""} found</TranslatedText>
-              {searchQuery && ` ${<TranslatedText>for</TranslatedText>} "${searchQuery}"`}
+              {filteredBooks.length}{" "}
+              <TranslatedText>
+                book{filteredBooks.length !== 1 ? "s" : ""} found
+              </TranslatedText>
+              {searchQuery &&
+                ` ${(<TranslatedText>for</TranslatedText>)} "${searchQuery}"`}
             </p>
           </motion.div>
 
@@ -361,7 +393,9 @@ const Books = () => {
                 <motion.div
                   key={book.id}
                   className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_0_8px_rgba(212,175,55,0.15)] transition-all duration-300 group cursor-pointer flex flex-col h-full">
-                  <Link to={`/books/${book.id}`} className="flex flex-col h-full">
+                  <Link
+                    to={`/books/${book.id}`}
+                    className="flex flex-col h-full">
                     {/* Book Image */}
                     <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
                       <LazyImage
@@ -391,7 +425,7 @@ const Books = () => {
                           {Math.round(
                             ((book.originalPrice - book.price) /
                               book.originalPrice) *
-                            100
+                              100
                           )}
                           % <TranslatedText>OFF</TranslatedText>
                         </div>
@@ -421,10 +455,11 @@ const Books = () => {
                           {[...Array(5)].map((_, i) => (
                             <FaStar
                               key={i}
-                              className={`w-3 h-3 ${i < Math.floor(book.rating)
-                                ? "text-[#D4AF37] fill-current"
-                                : "text-gray-600"
-                                }`}
+                              className={`w-3 h-3 ${
+                                i < Math.floor(book.rating)
+                                  ? "text-[#D4AF37] fill-current"
+                                  : "text-gray-600"
+                              }`}
                             />
                           ))}
                         </div>
@@ -439,11 +474,15 @@ const Books = () => {
                       {/* Price */}
                       <div className="flex-shrink-0 flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-[#D4AF37] font-display">
-                          {book.price > 0 ? `AED ${book.price}` : <TranslatedText>Free</TranslatedText>}
+                          {book.price > 0 ? (
+                            formatCurrency(book.price)
+                          ) : (
+                            <TranslatedText>Free</TranslatedText>
+                          )}
                         </span>
                         {book.originalPrice > book.price && (
-                          <span className="text-xs text-gray-500 line-through">
-                            AED {book.originalPrice}
+                          <span className="text-sm text-gray-500 line-through">
+                            {formatCurrency(book.originalPrice)}
                           </span>
                         )}
                       </div>
@@ -453,23 +492,35 @@ const Books = () => {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            const isFreeBook = book.price === 0 || book.price === "Free" || book.price === null;
-                            const isEbook = book.format === "ebook" || book.badge === "E-Book";
+                            const isFreeBook =
+                              book.price === 0 ||
+                              book.price === "Free" ||
+                              book.price === null;
+                            const isEbook =
+                              book.format === "ebook" ||
+                              book.badge === "E-Book";
 
                             if (isFreeBook && isEbook) {
                               // Free ebook - redirect to free library reader
                               navigate(`/free-library/ebook/${book.id}/read`);
                             } else if (isFreeBook) {
                               // Free physical book - show message
-                              toast.info("Free physical books require contact for delivery. Please visit the book detail page."); // Toast message
+                              toast.info(
+                                "Free physical books require contact for delivery. Please visit the book detail page."
+                              ); // Toast message
                               navigate(`/books/${book.id}`);
                             } else {
                               // Paid book - redirect directly to Custom Payment confirmation
                               // Redundant auth check removed here - handled in CustomPaymentCheck
                               // Validate price
-                              const bookPrice = typeof book.price === 'number' ? book.price : parseFloat(book.price) || 0;
+                              const bookPrice =
+                                typeof book.price === "number"
+                                  ? book.price
+                                  : parseFloat(book.price) || 0;
                               if (!bookPrice || bookPrice <= 0) {
-                                toast.error("This book price is not available. Please contact support."); // Toast message
+                                toast.error(
+                                  "This book price is not available. Please contact support."
+                                ); // Toast message
                                 return;
                               }
 
@@ -478,7 +529,11 @@ const Books = () => {
                             }
                           }}
                           className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                          {book.price > 0 ? <TranslatedText>Buy Now</TranslatedText> : <TranslatedText>Get Free</TranslatedText>}
+                          {book.price > 0 ? (
+                            <TranslatedText>Buy Now</TranslatedText>
+                          ) : (
+                            <TranslatedText>Get Free</TranslatedText>
+                          )}
                         </motion.button>
                         <GiftButton
                           course={book} // Pass the book object
@@ -493,8 +548,7 @@ const Books = () => {
               ))}
             </div>
           ) : (
-            <motion.div
-              className="text-center py-20">
+            <motion.div className="text-center py-20">
               <div className="text-6xl mb-4">📚</div>
               <h3 className="text-2xl font-bold text-white mb-2 font-display">
                 <TranslatedText>No books found</TranslatedText>
@@ -516,3 +570,4 @@ const Books = () => {
 };
 
 export default Books;
+

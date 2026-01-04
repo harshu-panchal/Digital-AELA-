@@ -15,6 +15,9 @@ import {
   FaLock,
   FaCheckCircle,
   FaExclamationCircle,
+  FaEye,
+  FaEyeSlash,
+  FaShieldAlt,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
@@ -25,6 +28,7 @@ import {
   initializeDefaultSettings,
   requestFinancialPasswordReset,
 } from "../../../src/services/api/superAdmin";
+import { changePassword } from "../../../src/services/api/auth";
 
 const SystemSettings = () => {
   const [activeCategory, setActiveCategory] = useState("general");
@@ -36,8 +40,32 @@ const SystemSettings = () => {
   const [financialPasswordExists, setFinancialPasswordExists] = useState(false);
   const [requestingReset, setRequestingReset] = useState(false);
 
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: "",
+    requirements: {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false,
+      special: false,
+    },
+  });
+
   const categories = [
     { id: "general", label: "General", icon: FaCog },
+    { id: "security", label: "Security", icon: FaLock },
     { id: "email", label: "Email", icon: FaEnvelope },
     { id: "payment", label: "Payment", icon: FaCreditCard },
     { id: "features", label: "Features", icon: FaToggleOn },
@@ -61,7 +89,7 @@ const SystemSettings = () => {
       if (response && response.settings) {
         setSettings(response.settings);
         setOriginalSettings(JSON.parse(JSON.stringify(response.settings)));
-        
+
         // Check if financial password exists
         const generalSettings = response.settings.general || [];
         const financialPasswordSetting = generalSettings.find(
@@ -200,13 +228,102 @@ const SystemSettings = () => {
       setRequestingReset(true);
       const response = await requestFinancialPasswordReset();
       if (response && response.success) {
-        toast.success(response.message || "Verification email sent to info.digitalaela@gmail.com");
+        toast.success(
+          response.message ||
+            "Verification email sent to info.digitalaela@gmail.com"
+        );
       }
     } catch (error) {
       console.error("Failed to request financial password reset:", error);
       toast.error(error.message || "Failed to send verification email");
     } finally {
       setRequestingReset(false);
+    }
+  };
+
+  const validatePassword = (password) => {
+    const requirements = {
+      length: password.length >= 12,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[@$!%*?&]/.test(password),
+    };
+
+    let score = 0;
+    if (requirements.length) score += 20;
+    if (requirements.uppercase) score += 20;
+    if (requirements.lowercase) score += 20;
+    if (requirements.number) score += 20;
+    if (requirements.special) score += 20;
+
+    let feedback = "";
+    if (score < 40) feedback = "Weak";
+    else if (score < 80) feedback = "Fair";
+    else if (score < 100) feedback = "Good";
+    else feedback = "Strong";
+
+    setPasswordStrength({ score, feedback, requirements });
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+    if (name === "newPassword") {
+      validatePassword(value);
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const onPasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!passwordData.currentPassword) {
+      toast.error("Current password is required");
+      return;
+    }
+
+    if (passwordStrength.score < 100) {
+      toast.error("New password does not meet security requirements");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
+      toast.success("Password updated successfully");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordStrength({
+        score: 0,
+        feedback: "",
+        requirements: {
+          length: false,
+          uppercase: false,
+          lowercase: false,
+          number: false,
+          special: false,
+        },
+      });
+    } catch (error) {
+      console.error("Password change failed:", error);
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -388,7 +505,9 @@ const SystemSettings = () => {
                     {financialPasswordExists ? (
                       <>
                         <FaCheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-green-500">Password Set</span>
+                        <span className="text-xs text-green-500">
+                          Password Set
+                        </span>
                       </>
                     ) : (
                       <>
@@ -420,9 +539,14 @@ const SystemSettings = () => {
             </div>
             <div className="mt-4 rounded-lg bg-black/40 p-4">
               <p className="text-xs text-gray-400">
-                <strong className="text-gray-300">How it works:</strong> Click the button above to request a verification email. 
-                The email will be sent to <strong className="text-[#D4AF37]">info.digitalaela@gmail.com</strong>. 
-                Click the link in the email to verify and set your new financial password.
+                <strong className="text-gray-300">How it works:</strong> Click
+                the button above to request a verification email. The email will
+                be sent to{" "}
+                <strong className="text-[#D4AF37]">
+                  info.digitalaela@gmail.com
+                </strong>
+                . Click the link in the email to verify and set your new
+                financial password.
               </p>
             </div>
           </div>
@@ -450,9 +574,11 @@ const SystemSettings = () => {
                       }`}>
                       <Icon className="h-4 w-4" />
                       <span>{category.label}</span>
-                      <span className="ml-auto text-xs text-gray-500">
-                        ({categorySettings.length})
-                      </span>
+                      {category.id !== "security" && (
+                        <span className="ml-auto text-xs text-gray-500">
+                          ({categorySettings.length})
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -468,7 +594,199 @@ const SystemSettings = () => {
                 Settings
               </h2>
 
-              {getCategorySettings().length === 0 ? (
+              {activeCategory === "security" ? (
+                <div className="space-y-8">
+                  <div className="rounded-xl border border-white/5 bg-white/5 p-6">
+                    <h3 className="mb-6 flex items-center gap-2 text-lg font-semibold text-white">
+                      <FaShieldAlt className="text-[#D4AF37]" />
+                      Change Account Password
+                    </h3>
+
+                    <form
+                      onSubmit={onPasswordSubmit}
+                      className="max-w-xl space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">
+                          Current Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.current ? "text" : "password"}
+                            name="currentPassword"
+                            value={passwordData.currentPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                            placeholder="Enter current password"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("current")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                            {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.new ? "text" : "password"}
+                            name="newPassword"
+                            value={passwordData.newPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                            placeholder="Enter new password"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("new")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                            {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+
+                        {/* Password Strength Indicator */}
+                        {passwordData.newPassword && (
+                          <div className="mt-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400">
+                                Strength:
+                              </span>
+                              <span
+                                className={`text-xs font-bold ${
+                                  passwordStrength.score < 40
+                                    ? "text-red-500"
+                                    : passwordStrength.score < 80
+                                    ? "text-yellow-500"
+                                    : "text-green-500"
+                                }`}>
+                                {passwordStrength.feedback}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                              <div
+                                className={`h-full transition-all duration-300 ${
+                                  passwordStrength.score < 40
+                                    ? "bg-red-500"
+                                    : passwordStrength.score < 80
+                                    ? "bg-yellow-500"
+                                    : "bg-green-500"
+                                }`}
+                                style={{ width: `${passwordStrength.score}%` }}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              {Object.entries({
+                                "Min 12 characters":
+                                  passwordStrength.requirements.length,
+                                "Uppercase letter":
+                                  passwordStrength.requirements.uppercase,
+                                "Lowercase letter":
+                                  passwordStrength.requirements.lowercase,
+                                Number: passwordStrength.requirements.number,
+                                "Special character":
+                                  passwordStrength.requirements.special,
+                              }).map(([label, met]) => (
+                                <div
+                                  key={label}
+                                  className="flex items-center gap-2">
+                                  {met ? (
+                                    <FaCheckCircle className="text-green-500 h-3 w-3" />
+                                  ) : (
+                                    <div className="h-3 w-3 rounded-full border border-gray-600" />
+                                  )}
+                                  <span
+                                    className={`text-[11px] ${
+                                      met ? "text-gray-300" : "text-gray-500"
+                                    }`}>
+                                    {label}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">
+                          Confirm New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswords.confirm ? "text" : "password"}
+                            name="confirmPassword"
+                            value={passwordData.confirmPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-[#D4AF37] focus:outline-none"
+                            placeholder="Confirm new password"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility("confirm")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                            {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <button
+                          type="submit"
+                          disabled={
+                            saving ||
+                            passwordStrength.score < 100 ||
+                            passwordData.newPassword !==
+                              passwordData.confirmPassword
+                          }
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4AF37] py-4 text-sm font-bold text-black transition hover:bg-[#F5D26A] disabled:opacity-50">
+                          {saving ? (
+                            <>
+                              <FaSpinner className="h-4 w-4 animate-spin" />
+                              Updating Password...
+                            </>
+                          ) : (
+                            <>
+                              <FaSave className="h-4 w-4" />
+                              Update Password
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+                    <h4 className="flex items-center gap-2 font-semibold text-yellow-500">
+                      <FaExclamationCircle />
+                      Security Best Practices
+                    </h4>
+                    <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-gray-400">
+                      <li>
+                        Use a unique password that you don't use elsewhere.
+                      </li>
+                      <li>
+                        Enable Two-Factor Authentication (2FA) for extra
+                        security.
+                      </li>
+                      <li>
+                        Change your password periodically (every 90 days
+                        recommended).
+                      </li>
+                      <li>
+                        Avoid using personal information like names, birthdays,
+                        or common words.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : getCategorySettings().length === 0 ? (
                 <div className="py-12 text-center">
                   <p className="text-gray-400">
                     No settings found for this category.

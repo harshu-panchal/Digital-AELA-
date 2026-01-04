@@ -1,3 +1,5 @@
+import { formatCurrency } from "../../utils/currencyUtils";
+
 const STORAGE_KEY = "aela.student.dashboard";
 
 const defaultDashboard = {
@@ -62,8 +64,16 @@ const defaultDashboard = {
     coinsToRedeem: 520,
     redeemRoute: "/learn-earn/wallet",
     badges: [
-      { label: "Daily Speaker", description: "Completed 7-day speaking streak", icon: "🔥" },
-      { label: "Quiz Champion", description: "Top 5% in Vocabulary Blitz", icon: "🏆" },
+      {
+        label: "Daily Speaker",
+        description: "Completed 7-day speaking streak",
+        icon: "🔥",
+      },
+      {
+        label: "Quiz Champion",
+        description: "Top 5% in Vocabulary Blitz",
+        icon: "🏆",
+      },
       { label: "Community Mentor", description: "Helped 12 peers", icon: "🤝" },
     ],
   },
@@ -99,7 +109,7 @@ const defaultDashboard = {
       title: "Executive Presence Playbook",
       type: "Course",
       mentor: "David Mathews",
-      price: "AED 899",
+      price: formatCurrency(899),
       to: "/business/courses/executive-presence",
       tag: "Best Seller",
     },
@@ -108,7 +118,7 @@ const defaultDashboard = {
       title: "Confidence Blueprint (PDF)",
       type: "E-Book",
       mentor: "Lina Joseph",
-      price: "AED 149",
+      price: formatCurrency(149),
       to: "/free-library/confidence-blueprint",
       tag: "Top Rated",
     },
@@ -117,7 +127,7 @@ const defaultDashboard = {
       title: "IELTS Fast Track Bundle",
       type: "Bundle",
       mentor: "Priya Sharma",
-      price: "AED 999",
+      price: formatCurrency(999),
       to: "/learn-earn/bundles/ielts-fast-track",
       tag: "Save 25%",
     },
@@ -293,5 +303,3 @@ export const updateStudentDashboard = (updates) => {
   persistDashboard(merged);
   return merged;
 };
-
-

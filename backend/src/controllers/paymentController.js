@@ -23,7 +23,8 @@ import { fetchPaymentLink } from "../services/paymentGatewayService.js";
 export const createPayment = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
-    const { courseId, amount, currency, description, paymentMethod, gateway } = req.body;
+    const { courseId, amount, currency, description, paymentMethod, gateway } =
+      req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -91,7 +92,7 @@ export const createPayment = async (req, res, next) => {
       user: userObjectId,
       course: courseObjectId,
       amount: Number(amount),
-      currency: currency || "AED",
+      currency: currency || "INR",
       description: description || (courseId ? "Course enrollment" : "Payment"),
       paymentMethod: paymentMethod || "card",
       gateway: gateway || "manual",
@@ -120,8 +121,13 @@ export const updatePayment = async (req, res, next) => {
   try {
     const { paymentId } = req.params;
     const { userId, userRole } = req.auth || {};
-    const { status, gatewayTransactionId, gatewayPaymentIntentId, failureReason, invoiceUrl } =
-      req.body;
+    const {
+      status,
+      gatewayTransactionId,
+      gatewayPaymentIntentId,
+      failureReason,
+      invoiceUrl,
+    } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -156,7 +162,10 @@ export const updatePayment = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    if (userRole !== "super-admin" && payment.user.toString() !== userObjectId.toString()) {
+    if (
+      userRole !== "super-admin" &&
+      payment.user.toString() !== userObjectId.toString()
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -167,13 +176,19 @@ export const updatePayment = async (req, res, next) => {
 
     const updateData = {};
     if (status) updateData.status = status;
-    if (gatewayTransactionId) updateData.gatewayTransactionId = gatewayTransactionId;
-    if (gatewayPaymentIntentId) updateData.gatewayPaymentIntentId = gatewayPaymentIntentId;
+    if (gatewayTransactionId)
+      updateData.gatewayTransactionId = gatewayTransactionId;
+    if (gatewayPaymentIntentId)
+      updateData.gatewayPaymentIntentId = gatewayPaymentIntentId;
     if (failureReason) updateData.failureReason = failureReason;
     if (invoiceUrl) updateData.invoiceUrl = invoiceUrl;
 
     // If status is completed and course exists, create enrollment
-    if (status === "completed" && payment.course && !payment.metadata?.enrollmentCreated) {
+    if (
+      status === "completed" &&
+      payment.course &&
+      !payment.metadata?.enrollmentCreated
+    ) {
       try {
         const existingEnrollment = await Enrollment.findOne({
           student: payment.user,
@@ -199,16 +214,26 @@ export const updatePayment = async (req, res, next) => {
       }
     }
 
-    const updatedPayment = await Payment.findByIdAndUpdate(paymentId, updateData, { new: true })
+    const updatedPayment = await Payment.findByIdAndUpdate(
+      paymentId,
+      updateData,
+      { new: true }
+    )
       .populate("user", "fullName email")
       .populate("course", "title thumbnailUrl price")
       .lean();
 
     // Generate invoice PDF when payment is completed (if not already generated)
-    if (status === "completed" && !payment.invoiceUrl && !updateData.invoiceUrl) {
+    if (
+      status === "completed" &&
+      !payment.invoiceUrl &&
+      !updateData.invoiceUrl
+    ) {
       try {
         const invoiceData = {
-          invoiceNumber: updatedPayment.invoiceNumber || `INV-${updatedPayment._id.toString().slice(-8)}`,
+          invoiceNumber:
+            updatedPayment.invoiceNumber ||
+            `INV-${updatedPayment._id.toString().slice(-8)}`,
           date: updatedPayment.createdAt,
           amount: updatedPayment.amount,
           currency: updatedPayment.currency,
@@ -255,9 +280,15 @@ export const updatePayment = async (req, res, next) => {
     }
 
     // Create notification when payment is completed
-    if (status === "completed" && updatedPayment.user && !payment.metadata?.notificationSent) {
+    if (
+      status === "completed" &&
+      updatedPayment.user &&
+      !payment.metadata?.notificationSent
+    ) {
       try {
-        const { createNotification } = await import("../utils/notificationHelper.js");
+        const { createNotification } = await import(
+          "../utils/notificationHelper.js"
+        );
         const courseTitle = updatedPayment.course?.title || "course";
         await createNotification(
           updatedPayment.user._id || updatedPayment.user,
@@ -270,15 +301,19 @@ export const updatePayment = async (req, res, next) => {
             currency: updatedPayment.currency,
             courseId: updatedPayment.course?._id?.toString() || null,
           },
-          updatedPayment.course ? `/courses/${updatedPayment.course._id}` : "/student/payments"
+          updatedPayment.course
+            ? `/courses/${updatedPayment.course._id}`
+            : "/student/payments"
         );
-        
+
         // Mark notification as sent in metadata
         if (!updateData.metadata) {
           updateData.metadata = { ...payment.metadata };
         }
         updateData.metadata.notificationSent = true;
-        await Payment.findByIdAndUpdate(paymentId, { metadata: updateData.metadata });
+        await Payment.findByIdAndUpdate(paymentId, {
+          metadata: updateData.metadata,
+        });
       } catch (notifError) {
         // eslint-disable-next-line no-console
         console.error("[Payment] Error creating notification:", notifError);
@@ -302,7 +337,14 @@ export const updatePayment = async (req, res, next) => {
 export const getPaymentHistory = async (req, res, next) => {
   try {
     const { userId, userRole } = req.auth || {};
-    const { page = 1, pageSize = 20, status, courseId, startDate, endDate } = req.query;
+    const {
+      page = 1,
+      pageSize = 20,
+      status,
+      courseId,
+      startDate,
+      endDate,
+    } = req.query;
 
     if (!userId) {
       return res.status(401).json({
@@ -354,7 +396,10 @@ export const getPaymentHistory = async (req, res, next) => {
     // Calculate summary stats
     const totalAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
     const completedPayments = payments.filter((p) => p.status === "completed");
-    const completedAmount = completedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const completedAmount = completedPayments.reduce(
+      (sum, p) => sum + (p.amount || 0),
+      0
+    );
 
     return res.json({
       payments,
@@ -423,7 +468,10 @@ export const getPaymentDetails = async (req, res, next) => {
     }
 
     // Check permissions
-    if (userRole !== "super-admin" && payment.user._id.toString() !== userObjectId.toString()) {
+    if (
+      userRole !== "super-admin" &&
+      payment.user._id.toString() !== userObjectId.toString()
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -496,7 +544,9 @@ export const processRefund = async (req, res, next) => {
       });
     }
 
-    const refundAmountValue = refundAmount ? Number(refundAmount) : payment.amount;
+    const refundAmountValue = refundAmount
+      ? Number(refundAmount)
+      : payment.amount;
     if (refundAmountValue <= 0 || refundAmountValue > payment.amount) {
       return res.status(422).json({
         error: {
@@ -525,10 +575,15 @@ export const processRefund = async (req, res, next) => {
       refundReason: refundReason || payment.refundReason || "",
       refundedAt: new Date(),
       refundedBy: userObjectId,
-      status: totalRefunded >= payment.amount ? "refunded" : "partially_refunded",
+      status:
+        totalRefunded >= payment.amount ? "refunded" : "partially_refunded",
     };
 
-    const updatedPayment = await Payment.findByIdAndUpdate(paymentId, updateData, { new: true })
+    const updatedPayment = await Payment.findByIdAndUpdate(
+      paymentId,
+      updateData,
+      { new: true }
+    )
       .populate("user", "fullName email")
       .populate("course", "title")
       .populate("refundedBy", "fullName")
@@ -589,7 +644,10 @@ export const getInvoice = async (req, res, next) => {
     }
 
     // Check permissions
-    if (userRole !== "super-admin" && payment.user._id.toString() !== userObjectId.toString()) {
+    if (
+      userRole !== "super-admin" &&
+      payment.user._id.toString() !== userObjectId.toString()
+    ) {
       return res.status(403).json({
         error: {
           code: "FORBIDDEN",
@@ -609,7 +667,8 @@ export const getInvoice = async (req, res, next) => {
 
     // Generate invoice data
     const invoiceData = {
-      invoiceNumber: payment.invoiceNumber || `INV-${payment._id.toString().slice(-8)}`,
+      invoiceNumber:
+        payment.invoiceNumber || `INV-${payment._id.toString().slice(-8)}`,
       date: payment.createdAt,
       amount: payment.amount,
       currency: payment.currency,
@@ -640,7 +699,7 @@ export const getInvoice = async (req, res, next) => {
     if (payment.invoiceUrl) {
       // Return existing invoice URL or generate on-demand
       const format = req.query.format || "json"; // 'json' or 'pdf'
-      
+
       if (format === "pdf") {
         // Generate PDF on-demand
         try {
@@ -661,12 +720,13 @@ export const getInvoice = async (req, res, next) => {
           return res.status(500).json({
             error: {
               code: "PDF_GENERATION_ERROR",
-              message: "Failed to generate invoice PDF. Please try again later.",
+              message:
+                "Failed to generate invoice PDF. Please try again later.",
             },
           });
         }
       }
-      
+
       // Return JSON with invoice URL
       return res.json({
         invoice: invoiceData,
@@ -817,7 +877,9 @@ export const getTeacherEarnings = async (req, res, next) => {
       : null;
 
     // Get teacher's courses
-    const teacherCourses = await Course.find({ instructor: teacherObjectId }).select("_id").lean();
+    const teacherCourses = await Course.find({ instructor: teacherObjectId })
+      .select("_id")
+      .lean();
     const courseIds = teacherCourses.map((c) => c._id);
 
     if (courseIds.length === 0) {
@@ -826,7 +888,7 @@ export const getTeacherEarnings = async (req, res, next) => {
         summary: {
           totalEarnings: 0,
           totalPayments: 0,
-          currency: "AED",
+          currency: "INR",
         },
       });
     }
@@ -878,7 +940,7 @@ export const getTeacherEarnings = async (req, res, next) => {
       summary: {
         totalEarnings,
         totalPayments: payments.length,
-        currency: "AED",
+        currency: "INR",
       },
     });
   } catch (error) {
@@ -1009,20 +1071,21 @@ export const createRazorpayOrder = async (req, res, next) => {
       },
       message: "Razorpay order created successfully",
     });
-    } catch (error) {
-      console.error("[Payment] Error creating Razorpay order:", {
-        error: error.message,
-        paymentId,
-        userId,
-        stack: error.stack,
-      });
-      return res.status(500).json({
-        error: {
-          code: "ORDER_CREATION_FAILED",
-          message: error.message || "Failed to create Razorpay order. Please try again.",
-        },
-      });
-    }
+  } catch (error) {
+    console.error("[Payment] Error creating Razorpay order:", {
+      error: error.message,
+      paymentId,
+      userId,
+      stack: error.stack,
+    });
+    return res.status(500).json({
+      error: {
+        code: "ORDER_CREATION_FAILED",
+        message:
+          error.message || "Failed to create Razorpay order. Please try again.",
+      },
+    });
+  }
 };
 
 /**
@@ -1112,24 +1175,50 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
 
     // Build callback URL if not provided
     // For Razorpay, we need to use the backend callback endpoint which then redirects to frontend
-    const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+    const backendUrl =
+      process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
     // Validate production URLs
-    if (process.env.NODE_ENV === 'production' || !backendUrl.includes('localhost')) {
-      if (!backendUrl || backendUrl.includes('localhost') || backendUrl === 'http://localhost:5000') {
-        console.error("[Payment] ❌ CRITICAL: BACKEND_URL not set correctly in production!");
+    if (
+      process.env.NODE_ENV === "production" ||
+      !backendUrl.includes("localhost")
+    ) {
+      if (
+        !backendUrl ||
+        backendUrl.includes("localhost") ||
+        backendUrl === "http://localhost:5000"
+      ) {
+        console.error(
+          "[Payment] ❌ CRITICAL: BACKEND_URL not set correctly in production!"
+        );
         console.error("[Payment] Current BACKEND_URL:", backendUrl);
-        console.error("[Payment] This will cause callback URL whitelisting issues in Razorpay");
-        console.error("[Payment] FIX: Set BACKEND_URL to your production backend URL");
-        console.error("[Payment] Example: BACKEND_URL=https://api.digitalaela.com");
+        console.error(
+          "[Payment] This will cause callback URL whitelisting issues in Razorpay"
+        );
+        console.error(
+          "[Payment] FIX: Set BACKEND_URL to your production backend URL"
+        );
+        console.error(
+          "[Payment] Example: BACKEND_URL=https://api.digitalaela.com"
+        );
       }
-      if (!frontendUrl || frontendUrl.includes('localhost') || frontendUrl === 'http://localhost:5173') {
-        console.error("[Payment] ❌ WARNING: FRONTEND_URL not set correctly in production!");
+      if (
+        !frontendUrl ||
+        frontendUrl.includes("localhost") ||
+        frontendUrl === "http://localhost:5173"
+      ) {
+        console.error(
+          "[Payment] ❌ WARNING: FRONTEND_URL not set correctly in production!"
+        );
         console.error("[Payment] Current FRONTEND_URL:", frontendUrl);
         console.error("[Payment] This may cause redirect issues after payment");
-        console.error("[Payment] FIX: Set FRONTEND_URL to your production frontend URL");
-        console.error("[Payment] Example: FRONTEND_URL=https://digitalaela.com");
+        console.error(
+          "[Payment] FIX: Set FRONTEND_URL to your production frontend URL"
+        );
+        console.error(
+          "[Payment] Example: FRONTEND_URL=https://digitalaela.com"
+        );
       }
     }
 
@@ -1141,9 +1230,15 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     console.log("[Payment] Backend URL:", backendUrl);
     console.log("[Payment] Frontend URL:", frontendUrl);
     console.log("[Payment] Payment ID:", paymentId);
-    console.log("[Payment] 🚨 CRITICAL: Ensure this callback URL is whitelisted in Razorpay Dashboard:");
-    console.log(`[Payment] 🚨 WHITELIST URL: ${backendUrl}/api/v1/payments/razorpay/callback`);
-    console.log("[Payment] 🚨 Go to Razorpay Dashboard → Settings → Payment Links → Allowed Redirect URLs");
+    console.log(
+      "[Payment] 🚨 CRITICAL: Ensure this callback URL is whitelisted in Razorpay Dashboard:"
+    );
+    console.log(
+      `[Payment] 🚨 WHITELIST URL: ${backendUrl}/api/v1/payments/razorpay/callback`
+    );
+    console.log(
+      "[Payment] 🚨 Go to Razorpay Dashboard → Settings → Payment Links → Allowed Redirect URLs"
+    );
 
     // Create payment link
     const receipt = payment._id.toString();
@@ -1163,7 +1258,8 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "User email is required for Razorpay payment. Please update your profile with an email address.",
+          message:
+            "User email is required for Razorpay payment. Please update your profile with an email address.",
         },
       });
     }
@@ -1172,7 +1268,8 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
       payment.amount,
       payment.currency,
       receipt,
-      payment.description || (payment.course ? `Payment for ${payment.course.title}` : "Payment"),
+      payment.description ||
+        (payment.course ? `Payment for ${payment.course.title}` : "Payment"),
       payment.user.fullName || payment.user.email.split("@")[0] || "Customer",
       payment.user.email,
       payment.user.phone || "",
@@ -1214,7 +1311,9 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     return res.status(500).json({
       error: {
         code: "PAYMENT_LINK_CREATION_FAILED",
-        message: error.message || "Failed to create Razorpay payment link. Please try again.",
+        message:
+          error.message ||
+          "Failed to create Razorpay payment link. Please try again.",
       },
     });
   }
@@ -1223,7 +1322,7 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
 /**
  * Handle Razorpay Payment Callback (UX Redirect Only)
  * GET /api/v1/payments/razorpay/callback
- * 
+ *
  * This endpoint is ONLY for UX redirect. Payment confirmation is handled by webhook.
  */
 export const handleRazorpayCallback = async (req, res, next) => {
@@ -1234,7 +1333,9 @@ export const handleRazorpayCallback = async (req, res, next) => {
     const paymentId = req.query.paymentId;
 
     console.log("==========================================");
-    console.log("[Payment Callback] Razorpay callback received (UX redirect only)");
+    console.log(
+      "[Payment Callback] Razorpay callback received (UX redirect only)"
+    );
     console.log("Query params:", {
       paymentId,
       razorpayPaymentId: razorpayPaymentId ? "present" : "missing",
@@ -1244,28 +1345,28 @@ export const handleRazorpayCallback = async (req, res, next) => {
 
     // Redirect to frontend callback page
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    
+
     // Determine status from URL parameters (for UX display only)
     // Webhook will handle actual payment confirmation
     let finalStatus = "processing"; // Default to processing - webhook will confirm
-    
+
     if (razorpayPaymentLinkStatus === "paid") {
       finalStatus = "processing"; // Still processing until webhook confirms
     } else if (razorpayPaymentLinkStatus === "failed") {
       finalStatus = "failed";
     }
-    
+
     // Build redirect URL with query parameters
     const params = new URLSearchParams();
     if (paymentId) params.append("paymentId", paymentId);
     params.append("status", finalStatus);
     if (razorpayPaymentId) params.append("payment_id", razorpayPaymentId);
-    
+
     const redirectUrl = `${frontendUrl}/payment/callback?${params.toString()}`;
-    
+
     console.log("[Payment Callback] Redirecting to frontend:", redirectUrl);
     console.log("==========================================");
-    
+
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("[Payment Callback] Error handling Razorpay callback:", {
@@ -1274,7 +1375,11 @@ export const handleRazorpayCallback = async (req, res, next) => {
       query: req.query,
     });
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    return res.redirect(`${frontendUrl}/payment/callback?status=error&error=${encodeURIComponent(error.message)}`);
+    return res.redirect(
+      `${frontendUrl}/payment/callback?status=error&error=${encodeURIComponent(
+        error.message
+      )}`
+    );
   }
 };
 
@@ -1285,7 +1390,8 @@ export const handleRazorpayCallback = async (req, res, next) => {
 export const verifyRazorpayPayment = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
-    const { paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+    const { paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature } =
+      req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -1296,11 +1402,17 @@ export const verifyRazorpayPayment = async (req, res, next) => {
       });
     }
 
-    if (!paymentId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    if (
+      !paymentId ||
+      !razorpayOrderId ||
+      !razorpayPaymentId ||
+      !razorpaySignature
+    ) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Missing required fields: paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature",
+          message:
+            "Missing required fields: paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature",
         },
       });
     }
@@ -1342,14 +1454,17 @@ export const verifyRazorpayPayment = async (req, res, next) => {
     // Payment signature verification disabled - skip checks
     // This allows payments to complete immediately without signature verification
     console.log("[Payment] Payment signature verification skipped (disabled)");
-    
+
     // Continue with payment verification without signature check
 
     // Fetch payment details from Razorpay to confirm
     try {
       const razorpayPayment = await fetchPayment(razorpayPaymentId);
 
-      if (razorpayPayment.status === "captured" || razorpayPayment.status === "authorized") {
+      if (
+        razorpayPayment.status === "captured" ||
+        razorpayPayment.status === "authorized"
+      ) {
         // Update payment status
         const updateData = {
           status: "completed",
@@ -1379,12 +1494,19 @@ export const verifyRazorpayPayment = async (req, res, next) => {
               };
             }
           } catch (enrollmentError) {
-            console.error("[Payment] Error creating enrollment:", enrollmentError);
+            console.error(
+              "[Payment] Error creating enrollment:",
+              enrollmentError
+            );
             // Continue with payment update even if enrollment fails
           }
         }
 
-        const updatedPayment = await Payment.findByIdAndUpdate(paymentId, updateData, { new: true })
+        const updatedPayment = await Payment.findByIdAndUpdate(
+          paymentId,
+          updateData,
+          { new: true }
+        )
           .populate("user", "fullName email")
           .populate("course", "title thumbnailUrl price")
           .lean();
@@ -1393,7 +1515,9 @@ export const verifyRazorpayPayment = async (req, res, next) => {
         if (!payment.invoiceUrl) {
           try {
             const invoiceData = {
-              invoiceNumber: updatedPayment.invoiceNumber || `INV-${updatedPayment._id.toString().slice(-8)}`,
+              invoiceNumber:
+                updatedPayment.invoiceNumber ||
+                `INV-${updatedPayment._id.toString().slice(-8)}`,
               date: updatedPayment.createdAt,
               amount: updatedPayment.amount,
               currency: updatedPayment.currency,
@@ -1432,14 +1556,19 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             });
             updatedPayment.invoiceUrl = uploadResult.url;
           } catch (invoiceError) {
-            console.error("[Payment] Error generating invoice PDF:", invoiceError);
+            console.error(
+              "[Payment] Error generating invoice PDF:",
+              invoiceError
+            );
           }
         }
 
         // Create notification when payment is completed
         if (!payment.metadata?.notificationSent) {
           try {
-            const { createNotification } = await import("../utils/notificationHelper.js");
+            const { createNotification } = await import(
+              "../utils/notificationHelper.js"
+            );
             const courseTitle = updatedPayment.course?.title || "course";
             await createNotification(
               updatedPayment.user._id || updatedPayment.user,
@@ -1452,7 +1581,9 @@ export const verifyRazorpayPayment = async (req, res, next) => {
                 currency: updatedPayment.currency,
                 courseId: updatedPayment.course?._id?.toString() || null,
               },
-              updatedPayment.course ? `/courses/${updatedPayment.course._id}` : "/student/payments"
+              updatedPayment.course
+                ? `/courses/${updatedPayment.course._id}`
+                : "/student/payments"
             );
 
             await Payment.findByIdAndUpdate(paymentId, {
@@ -1484,7 +1615,10 @@ export const verifyRazorpayPayment = async (req, res, next) => {
         });
       }
     } catch (razorpayError) {
-      console.error("[Payment] Error fetching Razorpay payment:", razorpayError);
+      console.error(
+        "[Payment] Error fetching Razorpay payment:",
+        razorpayError
+      );
       return res.status(500).json({
         error: {
           code: "RAZORPAY_ERROR",
@@ -1492,20 +1626,21 @@ export const verifyRazorpayPayment = async (req, res, next) => {
         },
       });
     }
-    } catch (error) {
-      console.error("[Payment] Error verifying Razorpay payment:", {
-        error: error.message,
-        paymentId,
-        userId,
-        stack: error.stack,
-      });
-      return res.status(500).json({
-        error: {
-          code: "PAYMENT_VERIFICATION_ERROR",
-          message: error.message || "Failed to verify payment. Please contact support.",
-        },
-      });
-    }
+  } catch (error) {
+    console.error("[Payment] Error verifying Razorpay payment:", {
+      error: error.message,
+      paymentId,
+      userId,
+      stack: error.stack,
+    });
+    return res.status(500).json({
+      error: {
+        code: "PAYMENT_VERIFICATION_ERROR",
+        message:
+          error.message || "Failed to verify payment. Please contact support.",
+      },
+    });
+  }
 };
 
 // Webhook handling removed - using callback-based verification only
@@ -1516,7 +1651,8 @@ export const verifyRazorpayPayment = async (req, res, next) => {
  */
 export const testCallbackUrl = async (req, res, next) => {
   try {
-    const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
+    const backendUrl =
+      process.env.BACKEND_URL || process.env.API_URL || "http://localhost:5000";
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
     const testUrl = `${backendUrl}/api/v1/payments/razorpay/callback?paymentId=test123`;
@@ -1530,8 +1666,8 @@ export const testCallbackUrl = async (req, res, next) => {
         "1. Copy the callbackUrl above",
         "2. Go to Razorpay Dashboard → Settings → Payment Links",
         "3. Add it to 'Allowed Redirect URLs'",
-        "4. Test a payment - you should see razorpay_payment_id in the callback logs"
-      ]
+        "4. Test a payment - you should see razorpay_payment_id in the callback logs",
+      ],
     });
   } catch (error) {
     console.error("[Payment] Error in test callback:", error);
@@ -1615,27 +1751,46 @@ export const verifyPaymentStatus = async (req, res, next) => {
     // If payment has gatewayPaymentIntentId (payment link ID), fetch from Razorpay
     if (payment.gatewayPaymentIntentId && payment.gateway === "razorpay") {
       try {
-        console.log("[Payment Verify] Fetching payment link from Razorpay:", payment.gatewayPaymentIntentId);
-        const paymentLink = await fetchPaymentLink(payment.gatewayPaymentIntentId);
+        console.log(
+          "[Payment Verify] Fetching payment link from Razorpay:",
+          payment.gatewayPaymentIntentId
+        );
+        const paymentLink = await fetchPaymentLink(
+          payment.gatewayPaymentIntentId
+        );
 
         console.log("[Payment Verify] Payment link status:", {
           paymentLinkId: paymentLink.id,
           status: paymentLink.status,
           paymentsCount: paymentLink.payments?.length || 0,
-          payments: paymentLink.payments?.map(p => ({ id: p.id, status: p.status })) || [],
+          payments:
+            paymentLink.payments?.map((p) => ({
+              id: p.id,
+              status: p.status,
+            })) || [],
         });
 
         // If payment link is paid, check for payments
-        if (paymentLink.status === "paid" && paymentLink.payments && paymentLink.payments.length > 0) {
+        if (
+          paymentLink.status === "paid" &&
+          paymentLink.payments &&
+          paymentLink.payments.length > 0
+        ) {
           const firstPayment = paymentLink.payments[0];
           const razorpayPaymentId = firstPayment.id;
 
-          console.log("[Payment Verify] Payment link is paid, fetching payment details:", razorpayPaymentId);
+          console.log(
+            "[Payment Verify] Payment link is paid, fetching payment details:",
+            razorpayPaymentId
+          );
 
           try {
             const paymentFromRazorpay = await fetchPayment(razorpayPaymentId);
 
-            if (paymentFromRazorpay.status === "captured" || paymentFromRazorpay.status === "authorized") {
+            if (
+              paymentFromRazorpay.status === "captured" ||
+              paymentFromRazorpay.status === "authorized"
+            ) {
               // Update payment status
               const updateData = {
                 status: "completed",
@@ -1644,7 +1799,11 @@ export const verifyPaymentStatus = async (req, res, next) => {
 
               const paymentDoc = await Payment.findById(paymentId).lean();
 
-              if (paymentDoc && paymentDoc.course && !paymentDoc.metadata?.enrollmentCreated) {
+              if (
+                paymentDoc &&
+                paymentDoc.course &&
+                !paymentDoc.metadata?.enrollmentCreated
+              ) {
                 try {
                   const existingEnrollment = await Enrollment.findOne({
                     student: paymentDoc.user,
@@ -1652,7 +1811,10 @@ export const verifyPaymentStatus = async (req, res, next) => {
                   }).lean();
 
                   if (!existingEnrollment) {
-                    console.log("[Payment Verify] Creating enrollment for course:", paymentDoc.course);
+                    console.log(
+                      "[Payment Verify] Creating enrollment for course:",
+                      paymentDoc.course
+                    );
                     await Enrollment.create({
                       student: paymentDoc.user,
                       course: paymentDoc.course,
@@ -1664,10 +1826,15 @@ export const verifyPaymentStatus = async (req, res, next) => {
                       enrollmentCreated: true,
                       enrollmentCreatedAt: new Date(),
                     };
-                    console.log("[Payment Verify] Enrollment created successfully");
+                    console.log(
+                      "[Payment Verify] Enrollment created successfully"
+                    );
                   }
                 } catch (enrollmentError) {
-                  console.error("[Payment Verify] Error creating enrollment:", enrollmentError);
+                  console.error(
+                    "[Payment Verify] Error creating enrollment:",
+                    enrollmentError
+                  );
                 }
               }
 
@@ -1699,15 +1866,20 @@ export const verifyPaymentStatus = async (req, res, next) => {
               });
             }
           } catch (paymentFetchError) {
-            console.error("[Payment Verify] Error fetching payment from Razorpay:", paymentFetchError);
+            console.error(
+              "[Payment Verify] Error fetching payment from Razorpay:",
+              paymentFetchError
+            );
             // Don't return 500 - allow fallthrough to try other verification methods
             // or return current status gracefully
           }
         } else if (paymentLink.status === "paid") {
           // Payment link is paid - mark as completed even if payments array is empty
           // The webhook will eventually populate the gatewayTransactionId
-          console.log("[Payment Verify] Payment link is paid, marking payment as completed");
-          
+          console.log(
+            "[Payment Verify] Payment link is paid, marking payment as completed"
+          );
+
           const updateData = {
             status: "completed",
           };
@@ -1715,7 +1887,11 @@ export const verifyPaymentStatus = async (req, res, next) => {
           const paymentDoc = await Payment.findById(paymentId).lean();
 
           // Create enrollment if payment is for a course
-          if (paymentDoc && paymentDoc.course && !paymentDoc.metadata?.enrollmentCreated) {
+          if (
+            paymentDoc &&
+            paymentDoc.course &&
+            !paymentDoc.metadata?.enrollmentCreated
+          ) {
             try {
               const existingEnrollment = await Enrollment.findOne({
                 student: paymentDoc.user,
@@ -1723,7 +1899,10 @@ export const verifyPaymentStatus = async (req, res, next) => {
               }).lean();
 
               if (!existingEnrollment) {
-                console.log("[Payment Verify] Creating enrollment for course:", paymentDoc.course);
+                console.log(
+                  "[Payment Verify] Creating enrollment for course:",
+                  paymentDoc.course
+                );
                 await Enrollment.create({
                   student: paymentDoc.user,
                   course: paymentDoc.course,
@@ -1738,7 +1917,10 @@ export const verifyPaymentStatus = async (req, res, next) => {
                 console.log("[Payment Verify] Enrollment created successfully");
               }
             } catch (enrollmentError) {
-              console.error("[Payment Verify] Error creating enrollment:", enrollmentError);
+              console.error(
+                "[Payment Verify] Error creating enrollment:",
+                enrollmentError
+              );
             }
           }
 
@@ -1752,9 +1934,13 @@ export const verifyPaymentStatus = async (req, res, next) => {
           return res.json({
             payment: updatedPayment,
             verified: true,
-            message: "Payment verified and updated to completed based on payment link status",
+            message:
+              "Payment verified and updated to completed based on payment link status",
           });
-        } else if (paymentLink.status === "cancelled" || paymentLink.status === "expired") {
+        } else if (
+          paymentLink.status === "cancelled" ||
+          paymentLink.status === "expired"
+        ) {
           await Payment.findByIdAndUpdate(paymentId, {
             status: "failed",
             failureReason: `Payment link ${paymentLink.status}`,
@@ -1767,7 +1953,10 @@ export const verifyPaymentStatus = async (req, res, next) => {
           });
         }
       } catch (linkFetchError) {
-        console.error("[Payment Verify] Error fetching payment link:", linkFetchError);
+        console.error(
+          "[Payment Verify] Error fetching payment link:",
+          linkFetchError
+        );
         // Don't return 500 - allow fallthrough to try other verification methods
         // or return current status gracefully
       }
@@ -1776,17 +1965,22 @@ export const verifyPaymentStatus = async (req, res, next) => {
     // If we have gatewayTransactionId, try to fetch directly
     if (payment.gatewayTransactionId && payment.gateway === "razorpay") {
       try {
-        const paymentFromRazorpay = await fetchPayment(payment.gatewayTransactionId);
+        const paymentFromRazorpay = await fetchPayment(
+          payment.gatewayTransactionId
+        );
 
-        if (paymentFromRazorpay.status === "captured" || paymentFromRazorpay.status === "authorized") {
+        if (
+          paymentFromRazorpay.status === "captured" ||
+          paymentFromRazorpay.status === "authorized"
+        ) {
           await Payment.findByIdAndUpdate(paymentId, {
             status: "completed",
           });
 
           const updatedPayment = await Payment.findById(paymentId)
-                .populate("user", "fullName email")
-                .populate("course", "title thumbnailUrl price")
-                .lean();
+            .populate("user", "fullName email")
+            .populate("course", "title thumbnailUrl price")
+            .lean();
 
           return res.json({
             payment: updatedPayment,
@@ -1806,7 +2000,10 @@ export const verifyPaymentStatus = async (req, res, next) => {
           });
         }
       } catch (paymentFetchError) {
-        console.error("[Payment Verify] Error fetching payment:", paymentFetchError);
+        console.error(
+          "[Payment Verify] Error fetching payment:",
+          paymentFetchError
+        );
         // Log the error but continue to return current status
       }
     }
@@ -1821,7 +2018,8 @@ export const verifyPaymentStatus = async (req, res, next) => {
     return res.json({
       payment: currentPayment,
       verified: false,
-      message: "Could not verify payment status. Payment may still be processing.",
+      message:
+        "Could not verify payment status. Payment may still be processing.",
     });
   } catch (error) {
     console.error("[Payment Verify] Error:", error);
@@ -1832,7 +2030,7 @@ export const verifyPaymentStatus = async (req, res, next) => {
 /**
  * Handle Razorpay Webhook (FINAL payment confirmation)
  * POST /api/v1/payments/razorpay/webhook
- * 
+ *
  * This is the ONLY source of truth for payment confirmation.
  * Callback is only for UX redirect.
  */
@@ -1841,7 +2039,9 @@ export const handleRazorpayWebhook = async (req, res, next) => {
     console.log("==========================================");
     console.log("[Payment Webhook] Razorpay webhook received");
     console.log("Headers:", {
-      "x-razorpay-signature": req.headers["x-razorpay-signature"] ? "present" : "missing",
+      "x-razorpay-signature": req.headers["x-razorpay-signature"]
+        ? "present"
+        : "missing",
       "x-razorpay-event-id": req.headers["x-razorpay-event-id"] || "missing",
     });
     console.log("==========================================");
@@ -1855,7 +2055,10 @@ export const handleRazorpayWebhook = async (req, res, next) => {
     try {
       event = JSON.parse(rawBody);
     } catch (parseError) {
-      console.error("[Payment Webhook] Error parsing webhook body:", parseError);
+      console.error(
+        "[Payment Webhook] Error parsing webhook body:",
+        parseError
+      );
       return res.status(400).json({
         error: {
           code: "INVALID_PAYLOAD",
@@ -1879,7 +2082,10 @@ export const handleRazorpayWebhook = async (req, res, next) => {
     const eventType = event.event;
 
     console.log("[Payment Webhook] Event type:", eventType);
-    console.log("[Payment Webhook] Event data:", JSON.stringify(event, null, 2));
+    console.log(
+      "[Payment Webhook] Event data:",
+      JSON.stringify(event, null, 2)
+    );
 
     // Only process payment.captured events (successful payments)
     if (eventType === "payment.captured") {
@@ -1909,7 +2115,7 @@ export const handleRazorpayWebhook = async (req, res, next) => {
 
       // Find payment by gatewayTransactionId or gatewayPaymentIntentId (order_id)
       let payment = null;
-      
+
       if (razorpayOrderId) {
         // Try to find by order ID first (for checkout-based payments)
         payment = await Payment.findOne({
@@ -1934,7 +2140,10 @@ export const handleRazorpayWebhook = async (req, res, next) => {
           const order = await fetchOrder(razorpayOrderId);
           const paymentIdFromNotes = order.notes?.payment_id;
 
-          if (paymentIdFromNotes && mongoose.isValidObjectId(paymentIdFromNotes)) {
+          if (
+            paymentIdFromNotes &&
+            mongoose.isValidObjectId(paymentIdFromNotes)
+          ) {
             payment = await Payment.findById(paymentIdFromNotes).lean();
           }
         } catch (orderError) {
@@ -1956,7 +2165,9 @@ export const handleRazorpayWebhook = async (req, res, next) => {
 
       // Check if payment is already completed
       if (payment.status === "completed") {
-        console.log("[Payment Webhook] Payment already completed, skipping update");
+        console.log(
+          "[Payment Webhook] Payment already completed, skipping update"
+        );
         return res.status(200).json({
           message: "Payment already completed",
         });
@@ -1982,7 +2193,10 @@ export const handleRazorpayWebhook = async (req, res, next) => {
           }).lean();
 
           if (!existingEnrollment) {
-            console.log("[Payment Webhook] Creating enrollment for course:", payment.course);
+            console.log(
+              "[Payment Webhook] Creating enrollment for course:",
+              payment.course
+            );
             await Enrollment.create({
               student: payment.user,
               course: payment.course,
@@ -1997,7 +2211,10 @@ export const handleRazorpayWebhook = async (req, res, next) => {
             console.log("[Payment Webhook] Enrollment created successfully");
           }
         } catch (enrollmentError) {
-          console.error("[Payment Webhook] Error creating enrollment:", enrollmentError);
+          console.error(
+            "[Payment Webhook] Error creating enrollment:",
+            enrollmentError
+          );
           // Continue with payment update even if enrollment fails
         }
       }
@@ -2011,7 +2228,9 @@ export const handleRazorpayWebhook = async (req, res, next) => {
             .lean();
 
           const invoicePDF = await generateInvoicePDF({
-            invoiceNumber: payment.invoiceNumber || `INV-${payment._id.toString().slice(-8)}`,
+            invoiceNumber:
+              payment.invoiceNumber ||
+              `INV-${payment._id.toString().slice(-8)}`,
             date: payment.createdAt,
             amount: payment.amount,
             currency: payment.currency,
@@ -2036,11 +2255,17 @@ export const handleRazorpayWebhook = async (req, res, next) => {
               : null,
           });
 
-          const invoiceUrl = await uploadPdfToCloudinary(invoicePDF, `invoices/${payment._id}.pdf`);
+          const invoiceUrl = await uploadPdfToCloudinary(
+            invoicePDF,
+            `invoices/${payment._id}.pdf`
+          );
           updateData.invoiceUrl = invoiceUrl;
           console.log("[Payment Webhook] Invoice generated and uploaded");
         } catch (invoiceError) {
-          console.error("[Payment Webhook] Error generating invoice:", invoiceError);
+          console.error(
+            "[Payment Webhook] Error generating invoice:",
+            invoiceError
+          );
           // Continue with payment update even if invoice generation fails
         }
       }
@@ -2070,7 +2295,7 @@ export const handleRazorpayWebhook = async (req, res, next) => {
 
       // Find payment similar to captured event
       let payment = null;
-      
+
       if (razorpayOrderId) {
         payment = await Payment.findOne({
           gatewayPaymentIntentId: razorpayOrderId,
@@ -2088,11 +2313,16 @@ export const handleRazorpayWebhook = async (req, res, next) => {
       if (payment && payment.status !== "failed") {
         await Payment.findByIdAndUpdate(payment._id, {
           status: "failed",
-          failureReason: event.payload?.payment?.entity?.error_description || "Payment failed",
+          failureReason:
+            event.payload?.payment?.entity?.error_description ||
+            "Payment failed",
           gatewayTransactionId: razorpayPaymentId,
         });
 
-        console.log("[Payment Webhook] Payment marked as failed:", payment._id.toString());
+        console.log(
+          "[Payment Webhook] Payment marked as failed:",
+          payment._id.toString()
+        );
       }
 
       return res.status(200).json({
@@ -2120,4 +2350,3 @@ export const handleRazorpayWebhook = async (req, res, next) => {
     });
   }
 };
-

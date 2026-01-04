@@ -25,11 +25,12 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import {
   redirectToCustomCoursePayment,
-  redirectToCustomBookPayment
+  redirectToCustomBookPayment,
 } from "../utils/customPaymentRedirect";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const JoinBuildAfterLife = () => {
   const navigate = useNavigate();
@@ -69,28 +70,69 @@ const JoinBuildAfterLife = () => {
             id: course._id,
             slug: course._id,
             title: cleanText(course.title || "Untitled Course"),
-            description: cleanText(course.description || course.metadata?.subtitle || course.subtitle || ""),
-            longDescription: course.longDescription || course.description || course.metadata?.subtitle || course.subtitle || "",
-            image: course.thumbnailUrl || course.thumbnail || course.image || "",
-            coverImage: course.coverImage || course.thumbnailUrl || course.thumbnail || course.image || "",
+            description: cleanText(
+              course.description ||
+                course.metadata?.subtitle ||
+                course.subtitle ||
+                ""
+            ),
+            longDescription:
+              course.longDescription ||
+              course.description ||
+              course.metadata?.subtitle ||
+              course.subtitle ||
+              "",
+            image:
+              course.thumbnailUrl || course.thumbnail || course.image || "",
+            coverImage:
+              course.coverImage ||
+              course.thumbnailUrl ||
+              course.thumbnail ||
+              course.image ||
+              "",
             rawPrice: course.price, // Store original numeric price
-            price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
-            priceLabel: course.priceLabel || (course.price ? `AED ${course.price}` : "On Request"),
-            discountPrice: course.discountPrice || course.metadata?.discountPrice || null,
-            duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
-            format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
+            price:
+              course.price === 0
+                ? "Free"
+                : course.price
+                ? formatCurrency(course.price)
+                : "On Request",
+            priceLabel:
+              course.priceLabel ||
+              (course.price ? formatCurrency(course.price) : "On Request"),
+            discountPrice:
+              course.discountPrice || course.metadata?.discountPrice || null,
+            duration: course.duration
+              ? `${course.duration} hours`
+              : course.metadata?.duration || "",
+            format:
+              course.metadata?.deliveryMode ||
+              course.deliveryMode ||
+              course.format ||
+              "",
             features: course.metadata?.tags || course.tags || [],
             highlights: course.metadata?.tags || course.tags || [],
             category: course.category || course.metadata?.category || "General",
             difficulty: course.metadata?.difficulty || course.difficulty || "",
             language: course.language || course.metadata?.language || "",
-            learningOutcomes: course.learningOutcomes || course.metadata?.learningOutcomes || "",
-            requirements: course.requirements || course.metadata?.requirements || "",
+            learningOutcomes:
+              course.learningOutcomes ||
+              course.metadata?.learningOutcomes ||
+              "",
+            requirements:
+              course.requirements || course.metadata?.requirements || "",
             syllabus: course.syllabus || course.metadata?.syllabus || "",
-            detailedSyllabus: course.detailedSyllabus || course.metadata?.detailedSyllabus || null,
-            introVideoUrl: course.introVideoUrl || course.metadata?.introVideoUrl || "",
+            detailedSyllabus:
+              course.detailedSyllabus ||
+              course.metadata?.detailedSyllabus ||
+              null,
+            introVideoUrl:
+              course.introVideoUrl || course.metadata?.introVideoUrl || "",
             tags: course.tags || course.metadata?.tags || [],
-            instructor: course.instructor?.fullName || course.instructorName || "Digital AELA",
+            instructor:
+              course.instructor?.fullName ||
+              course.instructorName ||
+              "Digital AELA",
             type: "course",
           }));
 
@@ -128,11 +170,12 @@ const JoinBuildAfterLife = () => {
         const booksFromApi = (response.data || [])
           .filter((ebook) => ebook.isPublic === true) // Extra safety check
           .map((ebook) => {
-            const price = ebook.metadata?.price !== undefined &&
+            const price =
+              ebook.metadata?.price !== undefined &&
               ebook.metadata.price !== null &&
               ebook.metadata.price !== ""
-              ? Number(ebook.metadata.price)
-              : 0;
+                ? Number(ebook.metadata.price)
+                : 0;
 
             return {
               id: ebook._id,
@@ -145,7 +188,10 @@ const JoinBuildAfterLife = () => {
               reviews: 0,
               category: ebook.categories?.[0] || ebook.category || "General",
               badge: "E-Book",
-              image: ebook.metadata?.coverImage || ebook.coverImage || bookAdvancedEnglishImg,
+              image:
+                ebook.metadata?.coverImage ||
+                ebook.coverImage ||
+                bookAdvancedEnglishImg,
               imageAlt: `${ebook.title || "Book"} cover`,
               description: ebook.description || "",
               type: "book",
@@ -170,18 +216,18 @@ const JoinBuildAfterLife = () => {
   }, []);
 
   // Combine all items - only from backend, no static fallback
-  const allItems = [
-    ...afterLifeCourses,
-    ...afterLifeBooks,
-  ];
+  const allItems = [...afterLifeCourses, ...afterLifeBooks];
 
   // Filter items
   const filteredItems = allItems.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.author && item.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()));
+      (item.author &&
+        item.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.description &&
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.category &&
+        item.category.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesType = selectedType === "all" || item.type === selectedType;
     return matchesSearch && matchesType;
   });
@@ -189,20 +235,21 @@ const JoinBuildAfterLife = () => {
   // Helper function to check if course is free
   const isFreeCourse = (course) => {
     if (!course) return false;
-    const price = course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
+    const price =
+      course.rawPrice !== undefined ? course.rawPrice : course.price; // Check rawPrice first
 
     // Check various formats
     // 1. Direct numeric check
-    if (price === 0 || (typeof price === 'number' && price === 0)) return true;
+    if (price === 0 || (typeof price === "number" && price === 0)) return true;
 
-    // 2. String checks (after transformation, price becomes "Free" or "AED ${price}")
-    if (typeof price === 'string') {
+    // 2. String checks (after transformation, price becomes "Free" or "₹ ${price}")
+    if (typeof price === "string") {
       const lowerPrice = price.toLowerCase();
-      if (lowerPrice === 'free' || lowerPrice.includes('free')) return true;
+      if (lowerPrice === "free" || lowerPrice.includes("free")) return true;
 
-      // Extract numeric value from strings like "AED 100" or "On Request"
-      if (lowerPrice === 'on request') return false; // "On Request" means price not set, not free
-      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+      // Extract numeric value from strings like "₹ 100" or "On Request"
+      if (lowerPrice === "on request") return false; // "On Request" means price not set, not free
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
       if (isNaN(numericPrice) || numericPrice === 0) return true;
     }
 
@@ -217,8 +264,9 @@ const JoinBuildAfterLife = () => {
     // Check various formats
     if (price === 0 || price === null || price === undefined) return true;
     if (price === "Free" || price === "free") return true;
-    if (typeof price === 'number' && price === 0) return true;
-    if (typeof price === 'string' && price.toLowerCase().includes('free')) return true;
+    if (typeof price === "number" && price === 0) return true;
+    if (typeof price === "string" && price.toLowerCase().includes("free"))
+      return true;
 
     return false;
   };
@@ -267,7 +315,9 @@ const JoinBuildAfterLife = () => {
       });
     } else {
       console.error("Course missing both _id and slug/id:", course);
-      toast.error("Unable to navigate to course. Course information is missing.");
+      toast.error(
+        "Unable to navigate to course. Course information is missing."
+      );
     }
   };
 
@@ -283,25 +333,27 @@ const JoinBuildAfterLife = () => {
       />
 
       {/* Header */}
-      <motion.section
-        className="relative pt-[110px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
+      <motion.section className="relative pt-[110px] pb-10 md:pt-[150px] md:pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-black"></div>
-        <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
+        <motion.div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-xl"></motion.div>
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
-          <motion.h1
-            className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
-            <TranslatedText>Build Your</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Afterlife</TranslatedText></span>
+          <motion.h1 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight text-center">
+            <TranslatedText>Build Your</TranslatedText>{" "}
+            <span className="text-[#D4AF37]">
+              <TranslatedText>Afterlife</TranslatedText>
+            </span>
           </motion.h1>
-          <motion.p
-            className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
-            <TranslatedText>Craft lifelong learning hubs powered by Digital AELA courses & books. Explore every course track and book collection in one immersive space.</TranslatedText>
+          <motion.p className="text-base text-gray-300 max-w-2xl mx-auto text-center mb-8">
+            <TranslatedText>
+              Craft lifelong learning hubs powered by Digital AELA courses &
+              books. Explore every course track and book collection in one
+              immersive space.
+            </TranslatedText>
           </motion.p>
 
           {/* Search and Filters */}
-          <motion.div
-            className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
+          <motion.div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -317,11 +369,18 @@ const JoinBuildAfterLife = () => {
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200 capitalize ${selectedType === type
-                    ? "bg-[#D4AF37] text-black"
-                    : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
-                    }`}>
-                  {type === "all" ? <TranslatedText>All</TranslatedText> : type === "course" ? <TranslatedText>Courses</TranslatedText> : <TranslatedText>Books</TranslatedText>}
+                  className={`px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200 capitalize ${
+                    selectedType === type
+                      ? "bg-[#D4AF37] text-black"
+                      : "bg-[#1a1a1a] border border-[#D4AF37]/30 text-white hover:border-[#D4AF37]"
+                  }`}>
+                  {type === "all" ? (
+                    <TranslatedText>All</TranslatedText>
+                  ) : type === "course" ? (
+                    <TranslatedText>Courses</TranslatedText>
+                  ) : (
+                    <TranslatedText>Books</TranslatedText>
+                  )}
                 </button>
               ))}
             </div>
@@ -333,12 +392,22 @@ const JoinBuildAfterLife = () => {
       <section className="py-12 bg-[#141414] relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           {/* Results Count */}
-          <motion.div
-            className="mb-8">
+          <motion.div className="mb-8">
             <p className="text-gray-300 text-sm">
-              {filteredItems.length} <TranslatedText>item{filteredItems.length !== 1 ? "s" : ""} found</TranslatedText>
-              {searchQuery && ` ${<TranslatedText>for</TranslatedText>} "${searchQuery}"`}
-              {selectedType !== "all" && ` ${<TranslatedText>in</TranslatedText>} ${selectedType === "course" ? <TranslatedText>Courses</TranslatedText> : <TranslatedText>Books</TranslatedText>}`}
+              {filteredItems.length}{" "}
+              <TranslatedText>
+                item{filteredItems.length !== 1 ? "s" : ""} found
+              </TranslatedText>
+              {searchQuery &&
+                ` ${(<TranslatedText>for</TranslatedText>)} "${searchQuery}"`}
+              {selectedType !== "all" &&
+                ` ${(<TranslatedText>in</TranslatedText>)} ${
+                  selectedType === "course" ? (
+                    <TranslatedText>Courses</TranslatedText>
+                  ) : (
+                    <TranslatedText>Books</TranslatedText>
+                  )
+                }`}
             </p>
           </motion.div>
 
@@ -363,7 +432,10 @@ const JoinBuildAfterLife = () => {
                         onClick={() => handleViewCourse(item)}
                         className="relative h-48 w-full overflow-hidden flex-shrink-0">
                         <img
-                          src={getMediaUrl(item.image) || "https://via.placeholder.com/300x200?text=Course"}
+                          src={
+                            getMediaUrl(item.image) ||
+                            "https://via.placeholder.com/300x200?text=Course"
+                          }
                           alt={item.title}
                           loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
@@ -382,7 +454,13 @@ const JoinBuildAfterLife = () => {
                           <TranslatedText>{item.title}</TranslatedText>
                         </h3>
                         <p className="text-xs text-gray-400 mb-2 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
-                          {item.description ? <TranslatedText>{item.description}</TranslatedText> : <TranslatedText>No description available</TranslatedText>}
+                          {item.description ? (
+                            <TranslatedText>{item.description}</TranslatedText>
+                          ) : (
+                            <TranslatedText>
+                              No description available
+                            </TranslatedText>
+                          )}
                         </p>
 
                         {highlights.length > 0 ? (
@@ -392,20 +470,30 @@ const JoinBuildAfterLife = () => {
                             </p>
                             <ul className="space-y-1">
                               {highlights.slice(0, 2).map((feature, idx) => (
-                                <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-300">
+                                <li
+                                  key={idx}
+                                  className="flex items-center gap-1.5 text-xs text-gray-300">
                                   <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                                  <span className="line-clamp-1"><TranslatedText>{cleanText(feature)}</TranslatedText></span>
+                                  <span className="line-clamp-1">
+                                    <TranslatedText>
+                                      {cleanText(feature)}
+                                    </TranslatedText>
+                                  </span>
                                 </li>
                               ))}
                             </ul>
                           </div>
                         ) : (
-                          <div className="mb-3 flex-shrink-0" style={{ minHeight: '0px' }}></div>
+                          <div
+                            className="mb-3 flex-shrink-0"
+                            style={{ minHeight: "0px" }}></div>
                         )}
 
                         <div className="flex items-center justify-between mb-3 pt-3 border-t border-gray-700 mt-auto flex-shrink-0">
                           <span className="text-lg font-bold text-[#D4AF37] font-display">
-                            {item.price || <TranslatedText>On Request</TranslatedText>}
+                            {item.price || (
+                              <TranslatedText>On Request</TranslatedText>
+                            )}
                           </span>
                         </div>
 
@@ -424,7 +512,11 @@ const JoinBuildAfterLife = () => {
                               handleBuyCourse(item);
                             }}
                             className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                            {isFreeCourse(item) ? <TranslatedText>Enroll Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
+                            {isFreeCourse(item) ? (
+                              <TranslatedText>Enroll Free</TranslatedText>
+                            ) : (
+                              <TranslatedText>Buy Now</TranslatedText>
+                            )}
                           </motion.button>
                           <div
                             onClick={(e) => e.stopPropagation()}
@@ -468,7 +560,9 @@ const JoinBuildAfterLife = () => {
                           {item.originalPrice > item.price && (
                             <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
                               {Math.round(
-                                ((item.originalPrice - item.price) / item.originalPrice) * 100
+                                ((item.originalPrice - item.price) /
+                                  item.originalPrice) *
+                                  100
                               )}
                               % OFF
                             </div>
@@ -484,17 +578,20 @@ const JoinBuildAfterLife = () => {
                             <TranslatedText>{item.title}</TranslatedText>
                           </h3>
 
-                          <p className="text-xs text-gray-400 mb-2"><TranslatedText>by</TranslatedText> {item.author}</p>
+                          <p className="text-xs text-gray-400 mb-2">
+                            <TranslatedText>by</TranslatedText> {item.author}
+                          </p>
 
                           <div className="flex items-center gap-1.5 mb-3">
                             <div className="flex items-center gap-0.5">
                               {[...Array(5)].map((_, i) => (
                                 <FaStar
                                   key={i}
-                                  className={`w-3 h-3 ${i < Math.floor(item.rating || 4.5)
-                                    ? "text-[#D4AF37] fill-current"
-                                    : "text-gray-600"
-                                    }`}
+                                  className={`w-3 h-3 ${
+                                    i < Math.floor(item.rating || 4.5)
+                                      ? "text-[#D4AF37] fill-current"
+                                      : "text-gray-600"
+                                  }`}
                                 />
                               ))}
                             </div>
@@ -508,11 +605,15 @@ const JoinBuildAfterLife = () => {
 
                           <div className="flex items-center gap-2 mb-3">
                             <span className="text-lg font-bold text-[#D4AF37] font-display">
-                              {item.price > 0 ? `AED ${item.price}` : <TranslatedText>Free</TranslatedText>}
+                              {item.price > 0 ? (
+                                formatCurrency(item.price)
+                              ) : (
+                                <TranslatedText>Free</TranslatedText>
+                              )}
                             </span>
                             {item.originalPrice > item.price && (
                               <span className="text-xs text-gray-500 line-through">
-                                AED {item.originalPrice}
+                                {formatCurrency(item.originalPrice)}
                               </span>
                             )}
                           </div>
@@ -525,11 +626,15 @@ const JoinBuildAfterLife = () => {
 
                                 // Check if book is free
                                 if (isFreeBook(item)) {
-                                  const isEbook = item.badge === "E-Book" || item.format === "ebook";
+                                  const isEbook =
+                                    item.badge === "E-Book" ||
+                                    item.format === "ebook";
 
                                   if (isEbook) {
                                     // Free ebook - redirect to free library reader
-                                    navigate(`/free-library/ebook/${item.id}/read`);
+                                    navigate(
+                                      `/free-library/ebook/${item.id}/read`
+                                    );
                                   } else {
                                     // Free physical book - redirect to book detail page
                                     navigate(`/books/${item.id}`);
@@ -537,14 +642,21 @@ const JoinBuildAfterLife = () => {
                                 } else {
                                   // Paid book - redirect directly to Razorpay
                                   if (!isAuthenticated) {
-                                    toast.info("Please log in to purchase this book");
+                                    toast.info(
+                                      "Please log in to purchase this book"
+                                    );
                                     navigate("/login/student");
                                     return;
                                   }
                                   // Validate price
-                                  const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+                                  const itemPrice =
+                                    typeof item.price === "number"
+                                      ? item.price
+                                      : parseFloat(item.price) || 0;
                                   if (!itemPrice || itemPrice <= 0) {
-                                    toast.error("This book price is not available. Please contact support.");
+                                    toast.error(
+                                      "This book price is not available. Please contact support."
+                                    );
                                     return;
                                   }
 
@@ -553,7 +665,11 @@ const JoinBuildAfterLife = () => {
                                 }
                               }}
                               className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
-                              {isFreeBook(item) ? <TranslatedText>Get Free</TranslatedText> : <TranslatedText>Buy Now</TranslatedText>}
+                              {isFreeBook(item) ? (
+                                <TranslatedText>Get Free</TranslatedText>
+                              ) : (
+                                <TranslatedText>Buy Now</TranslatedText>
+                              )}
                             </motion.button>
                             <GiftButton
                               course={item}
@@ -570,16 +686,20 @@ const JoinBuildAfterLife = () => {
               })}
             </div>
           ) : !isLoading ? (
-            <motion.div
-              className="text-center py-20">
+            <motion.div className="text-center py-20">
               {allItems.length === 0 ? (
                 <>
                   <div className="text-6xl mb-4">📚</div>
                   <h3 className="text-2xl font-bold text-white mb-2 font-display">
-                    <TranslatedText>No courses or books available yet</TranslatedText>
+                    <TranslatedText>
+                      No courses or books available yet
+                    </TranslatedText>
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    <TranslatedText>Approved courses and books will appear here once they are published.</TranslatedText>
+                    <TranslatedText>
+                      Approved courses and books will appear here once they are
+                      published.
+                    </TranslatedText>
                   </p>
                 </>
               ) : (
@@ -589,7 +709,9 @@ const JoinBuildAfterLife = () => {
                     <TranslatedText>No items found</TranslatedText>
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    <TranslatedText>Try adjusting your search or filter criteria</TranslatedText>
+                    <TranslatedText>
+                      Try adjusting your search or filter criteria
+                    </TranslatedText>
                   </p>
                   <button
                     onClick={() => {
@@ -610,3 +732,4 @@ const JoinBuildAfterLife = () => {
 };
 
 export default JoinBuildAfterLife;
+

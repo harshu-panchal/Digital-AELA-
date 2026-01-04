@@ -20,6 +20,7 @@ import {
   updateExpense,
   deleteExpense,
 } from "../../src/services/api/expenses";
+import { formatCurrency } from "../../src/utils/currencyUtils";
 
 const ExpenseManagement = () => {
   const { user } = useAuth();
@@ -32,7 +33,7 @@ const ExpenseManagement = () => {
     description: "",
     category: "other",
     amount: "",
-    currency: "AED",
+    currency: "INR",
     date: new Date().toISOString().split("T")[0],
     paymentMethod: "bank_transfer",
     vendor: "",
@@ -54,7 +55,14 @@ const ExpenseManagement = () => {
 
   useEffect(() => {
     loadExpenses();
-  }, [filters.category, filters.status, filters.month, filters.year, filters.search, pagination.page]);
+  }, [
+    filters.category,
+    filters.status,
+    filters.month,
+    filters.year,
+    filters.search,
+    pagination.page,
+  ]);
 
   const loadExpenses = async () => {
     setIsLoading(true);
@@ -75,7 +83,11 @@ const ExpenseManagement = () => {
   };
 
   const handleCreateExpense = async () => {
-    if (!newExpense.title || !newExpense.amount || Number(newExpense.amount) <= 0) {
+    if (
+      !newExpense.title ||
+      !newExpense.amount ||
+      Number(newExpense.amount) <= 0
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -89,7 +101,7 @@ const ExpenseManagement = () => {
         description: "",
         category: "other",
         amount: "",
-        currency: "AED",
+        currency: "INR",
         date: new Date().toISOString().split("T")[0],
         paymentMethod: "bank_transfer",
         vendor: "",
@@ -170,13 +182,18 @@ const ExpenseManagement = () => {
 
   return (
     <div className="min-h-screen text-white">
-      <SEO title="Expense Management | Digital AELA" description="Manage platform expenses" />
+      <SEO
+        title="Expense Management | Digital AELA"
+        description="Manage platform expenses"
+      />
 
       <div className="space-y-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold mb-2">Expense Management</h1>
-            <p className="text-slate-400">Track and manage all platform expenses</p>
+            <p className="text-slate-400">
+              Track and manage all platform expenses
+            </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -213,7 +230,9 @@ const ExpenseManagement = () => {
               <option value="advertising">Advertising</option>
               <option value="office_expenses">Office Expenses</option>
               <option value="refunds">Refunds</option>
-              <option value="software_subscriptions">Software Subscriptions</option>
+              <option value="software_subscriptions">
+                Software Subscriptions
+              </option>
               <option value="hosting">Hosting</option>
               <option value="utilities">Utilities</option>
               <option value="marketing">Marketing</option>
@@ -247,7 +266,9 @@ const ExpenseManagement = () => {
               <option value="">All Months</option>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                 <option key={month} value={month}>
-                  {new Date(2000, month - 1).toLocaleString("default", { month: "long" })}
+                  {new Date(2000, month - 1).toLocaleString("default", {
+                    month: "long",
+                  })}
                 </option>
               ))}
             </select>
@@ -273,7 +294,9 @@ const ExpenseManagement = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-white">{expense.title}</h3>
+                      <h3 className="text-xl font-semibold text-white">
+                        {expense.title}
+                      </h3>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
                           expense.status
@@ -288,7 +311,7 @@ const ExpenseManagement = () => {
                       <div className="flex items-center gap-2">
                         <HiOutlineCurrencyDollar className="h-4 w-4" />
                         <span className="text-lg font-semibold text-white">
-                          {expense.currency} {expense.amount.toFixed(2)}
+                          {formatCurrency(expense.amount)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -303,7 +326,9 @@ const ExpenseManagement = () => {
                       )}
                     </div>
                     {expense.description && (
-                      <p className="text-sm text-slate-400 mb-2">{expense.description}</p>
+                      <p className="text-sm text-slate-400 mb-2">
+                        {expense.description}
+                      </p>
                     )}
                   </div>
                   <div className="ml-6 flex flex-col gap-2">
@@ -314,14 +339,20 @@ const ExpenseManagement = () => {
                     </button>
                     {expense.status === "pending" && (
                       <button
-                        onClick={() => handleUpdateExpense(expense._id, { status: "approved" })}
+                        onClick={() =>
+                          handleUpdateExpense(expense._id, {
+                            status: "approved",
+                          })
+                        }
                         className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-300 text-sm font-semibold hover:bg-blue-500/30 transition">
                         Approve
                       </button>
                     )}
                     {expense.status === "approved" && (
                       <button
-                        onClick={() => handleUpdateExpense(expense._id, { status: "paid" })}
+                        onClick={() =>
+                          handleUpdateExpense(expense._id, { status: "paid" })
+                        }
                         className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/30 transition">
                         Mark Paid
                       </button>
@@ -341,7 +372,9 @@ const ExpenseManagement = () => {
         {pagination.totalPages > 1 && (
           <div className="mt-8 flex items-center justify-center gap-4">
             <button
-              onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+              onClick={() =>
+                setPagination({ ...pagination, page: pagination.page - 1 })
+              }
               disabled={pagination.page === 1}
               className="px-4 py-2 rounded-xl border border-white/10 bg-[#111] text-white hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed">
               Previous
@@ -350,7 +383,9 @@ const ExpenseManagement = () => {
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <button
-              onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+              onClick={() =>
+                setPagination({ ...pagination, page: pagination.page + 1 })
+              }
               disabled={pagination.page >= pagination.totalPages}
               className="px-4 py-2 rounded-xl border border-white/10 bg-[#111] text-white hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-not-allowed">
               Next
@@ -370,21 +405,31 @@ const ExpenseManagement = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Title *</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Title *
+                  </label>
                   <input
                     type="text"
                     value={editingExpense?.title || newExpense.title}
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, title: e.target.value })
-                        : setNewExpense({ ...newExpense, title: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            title: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            title: e.target.value,
+                          })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none"
                     placeholder="Enter expense title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Amount *</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Amount *
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -392,21 +437,35 @@ const ExpenseManagement = () => {
                     value={editingExpense?.amount || newExpense.amount}
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, amount: e.target.value })
-                        : setNewExpense({ ...newExpense, amount: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            amount: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            amount: e.target.value,
+                          })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none"
                     placeholder="Enter amount"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Category
+                  </label>
                   <select
                     value={editingExpense?.category || newExpense.category}
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, category: e.target.value })
-                        : setNewExpense({ ...newExpense, category: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            category: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            category: e.target.value,
+                          })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none">
                     <option value="teacher_salary">Teacher Salary</option>
@@ -414,7 +473,9 @@ const ExpenseManagement = () => {
                     <option value="advertising">Advertising</option>
                     <option value="office_expenses">Office Expenses</option>
                     <option value="refunds">Refunds</option>
-                    <option value="software_subscriptions">Software Subscriptions</option>
+                    <option value="software_subscriptions">
+                      Software Subscriptions
+                    </option>
                     <option value="hosting">Hosting</option>
                     <option value="utilities">Utilities</option>
                     <option value="marketing">Marketing</option>
@@ -423,17 +484,24 @@ const ExpenseManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Date *</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Date *
+                  </label>
                   <input
                     type="date"
                     value={
                       editingExpense?.date
-                        ? new Date(editingExpense.date).toISOString().split("T")[0]
+                        ? new Date(editingExpense.date)
+                            .toISOString()
+                            .split("T")[0]
                         : newExpense.date
                     }
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, date: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            date: e.target.value,
+                          })
                         : setNewExpense({ ...newExpense, date: e.target.value })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none"
@@ -444,11 +512,19 @@ const ExpenseManagement = () => {
                     Payment Method
                   </label>
                   <select
-                    value={editingExpense?.paymentMethod || newExpense.paymentMethod}
+                    value={
+                      editingExpense?.paymentMethod || newExpense.paymentMethod
+                    }
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, paymentMethod: e.target.value })
-                        : setNewExpense({ ...newExpense, paymentMethod: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            paymentMethod: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            paymentMethod: e.target.value,
+                          })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none">
                     <option value="cash">Cash</option>
@@ -459,14 +535,22 @@ const ExpenseManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Vendor</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Vendor
+                  </label>
                   <input
                     type="text"
                     value={editingExpense?.vendor || newExpense.vendor}
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, vendor: e.target.value })
-                        : setNewExpense({ ...newExpense, vendor: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            vendor: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            vendor: e.target.value,
+                          })
                     }
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none"
                     placeholder="Enter vendor name"
@@ -477,11 +561,19 @@ const ExpenseManagement = () => {
                     Description
                   </label>
                   <textarea
-                    value={editingExpense?.description || newExpense.description}
+                    value={
+                      editingExpense?.description || newExpense.description
+                    }
                     onChange={(e) =>
                       editingExpense
-                        ? setEditingExpense({ ...editingExpense, description: e.target.value })
-                        : setNewExpense({ ...newExpense, description: e.target.value })
+                        ? setEditingExpense({
+                            ...editingExpense,
+                            description: e.target.value,
+                          })
+                        : setNewExpense({
+                            ...newExpense,
+                            description: e.target.value,
+                          })
                     }
                     rows={3}
                     className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white placeholder:text-slate-500 focus:border-[#D4AF37]/50 focus:outline-none resize-none"
@@ -490,11 +582,16 @@ const ExpenseManagement = () => {
                 </div>
                 {editingExpense && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Status</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Status
+                    </label>
                     <select
                       value={editingExpense.status}
                       onChange={(e) =>
-                        setEditingExpense({ ...editingExpense, status: e.target.value })
+                        setEditingExpense({
+                          ...editingExpense,
+                          status: e.target.value,
+                        })
                       }
                       className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 text-white focus:border-[#D4AF37]/50 focus:outline-none">
                       <option value="pending">Pending</option>
@@ -515,7 +612,7 @@ const ExpenseManagement = () => {
                       description: "",
                       category: "other",
                       amount: "",
-                      currency: "AED",
+                      currency: "INR",
                       date: new Date().toISOString().split("T")[0],
                       paymentMethod: "bank_transfer",
                       vendor: "",

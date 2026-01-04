@@ -11,6 +11,7 @@ import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
 import Batch from "../models/Batch.js";
+import { formatCurrency } from "../utils/currencyUtils.js";
 
 export const getStudentDashboard = async (req, res, next) => {
   try {
@@ -43,31 +44,36 @@ export const getStudentDashboard = async (req, res, next) => {
     let activeEnrollments = [];
     let studentPoints = null;
     let latestAssessment = null;
-    
+
     try {
-      [lessonCompletions, activeEnrollments, studentPoints, latestAssessment] = await Promise.all([
-        LessonCompletion.find({ student: studentObjectId }).lean().catch(() => []),
-        Enrollment.find({
-          student: studentObjectId,
-          status: "active",
-        })
-          .populate({
-            path: "course",
-            select: "title instructor",
-            populate: {
-              path: "instructor",
-              select: "fullName",
-            },
+      [lessonCompletions, activeEnrollments, studentPoints, latestAssessment] =
+        await Promise.all([
+          LessonCompletion.find({ student: studentObjectId })
+            .lean()
+            .catch(() => []),
+          Enrollment.find({
+            student: studentObjectId,
+            status: "active",
           })
-          .sort({ lastAccessedAt: -1, enrolledAt: -1 })
-          .lean()
-          .catch(() => []),
-        StudentPoints.findOne({ student: studentObjectId }).lean().catch(() => null),
-        SpeakingAssessment.findOne({ student: studentObjectId })
-          .sort({ createdAt: -1 })
-          .lean()
-          .catch(() => null),
-      ]);
+            .populate({
+              path: "course",
+              select: "title instructor",
+              populate: {
+                path: "instructor",
+                select: "fullName",
+              },
+            })
+            .sort({ lastAccessedAt: -1, enrolledAt: -1 })
+            .lean()
+            .catch(() => []),
+          StudentPoints.findOne({ student: studentObjectId })
+            .lean()
+            .catch(() => null),
+          SpeakingAssessment.findOne({ student: studentObjectId })
+            .sort({ createdAt: -1 })
+            .lean()
+            .catch(() => null),
+        ]);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error fetching dashboard data:", error);
@@ -76,7 +82,7 @@ export const getStudentDashboard = async (req, res, next) => {
       studentPoints = null;
       latestAssessment = null;
     }
-    
+
     const totalLearningHours = lessonCompletions.reduce((total, completion) => {
       return total + (completion.duration || 0) / 60; // Convert minutes to hours
     }, 0);
@@ -99,7 +105,7 @@ export const getStudentDashboard = async (req, res, next) => {
     try {
       const now = new Date();
       const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
+
       // Find batches where:
       // 1. Student is enrolled (in students array)
       // 2. Batch is active or upcoming
@@ -110,7 +116,7 @@ export const getStudentDashboard = async (req, res, next) => {
         startDate: { $lte: nextWeek },
         endDate: { $gte: now },
       }).lean();
-      
+
       liveCohortsThisWeek = batchesThisWeek.length;
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -148,7 +154,10 @@ export const getStudentDashboard = async (req, res, next) => {
 
     // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
     let totalEarned = 0;
-    if (studentPoints.transactions && Array.isArray(studentPoints.transactions)) {
+    if (
+      studentPoints.transactions &&
+      Array.isArray(studentPoints.transactions)
+    ) {
       totalEarned = studentPoints.transactions
         .filter((txn) => txn.type === "earned" || txn.type === "bonus")
         .reduce((sum, txn) => sum + (txn.amount || 0), 0);
@@ -165,25 +174,39 @@ export const getStudentDashboard = async (req, res, next) => {
         id: "learningHours",
         label: "Learning Hours",
         value: totalLearningHours.toFixed(1),
-        delta: hoursThisMonth > 0 ? `+${hoursThisMonth.toFixed(1)} hours this month` : "No activity this month",
+        delta:
+          hoursThisMonth > 0
+            ? `+${hoursThisMonth.toFixed(1)} hours this month`
+            : "No activity this month",
       },
       {
         id: "activeCourses",
         label: "Active Courses",
         value: activeCoursesCount.toString(),
-        delta: liveCohortsThisWeek > 0 ? `${liveCohortsThisWeek} live cohorts this week` : "No live sessions",
+        delta:
+          liveCohortsThisWeek > 0
+            ? `${liveCohortsThisWeek} live cohorts this week`
+            : "No live sessions",
       },
       {
         id: "aelaCoins",
         label: "AELA Coins",
         value: availableCoins.toString(),
-        delta: pendingCoins > 0 ? `+${pendingCoins} coins pending redemption` : "All coins available",
+        delta:
+          pendingCoins > 0
+            ? `+${pendingCoins} coins pending redemption`
+            : "All coins available",
       },
       {
         id: "speakingScore",
         label: "Speaking Score",
-        value: speakingScore ? `${speakingScore.toFixed(1)} / 10` : "Not assessed",
-        delta: streak > 0 ? "Consistent streak · Keep it up!" : "Start your learning journey",
+        value: speakingScore
+          ? `${speakingScore.toFixed(1)} / 10`
+          : "Not assessed",
+        delta:
+          streak > 0
+            ? "Consistent streak · Keep it up!"
+            : "Start your learning journey",
       },
     ];
 
@@ -191,9 +214,9 @@ export const getStudentDashboard = async (req, res, next) => {
     // Batch fetch all course completions and batches to avoid N+1 queries
     const courseIds = activeEnrollments
       .slice(0, 5)
-      .map(e => e.course?._id)
+      .map((e) => e.course?._id)
       .filter(Boolean);
-    
+
     const [allCourseCompletions, allBatches] = await Promise.all([
       courseIds.length > 0
         ? LessonCompletion.find({
@@ -212,15 +235,18 @@ export const getStudentDashboard = async (req, res, next) => {
             .lean()
         : Promise.resolve([]),
     ]);
-    
+
     // Group completions by course
-    const completionsByCourse = allCourseCompletions.reduce((acc, completion) => {
-      const courseId = completion.course.toString();
-      if (!acc[courseId]) acc[courseId] = [];
-      acc[courseId].push(completion);
-      return acc;
-    }, {});
-    
+    const completionsByCourse = allCourseCompletions.reduce(
+      (acc, completion) => {
+        const courseId = completion.course.toString();
+        if (!acc[courseId]) acc[courseId] = [];
+        acc[courseId].push(completion);
+        return acc;
+      },
+      {}
+    );
+
     // Group batches by course
     const batchesByCourse = allBatches.reduce((acc, batch) => {
       const courseId = batch.course.toString();
@@ -228,20 +254,26 @@ export const getStudentDashboard = async (req, res, next) => {
       acc[courseId].push(batch);
       return acc;
     }, {});
-    
-    const ongoingCourses = activeEnrollments.slice(0, 5).map((enrollment) => {
-      const course = enrollment.course;
-      if (!course || !course._id) return null;
 
-      // Get completions for this course from pre-fetched data
-      const courseCompletions = completionsByCourse[course._id.toString()] || [];
-      // This is simplified - you'd need total lessons in course for real progress
-      const progress = enrollment.progress || 0;
+    const ongoingCourses = activeEnrollments
+      .slice(0, 5)
+      .map((enrollment) => {
+        const course = enrollment.course;
+        if (!course || !course._id) return null;
+
+        // Get completions for this course from pre-fetched data
+        const courseCompletions =
+          completionsByCourse[course._id.toString()] || [];
+        // This is simplified - you'd need total lessons in course for real progress
+        const progress = enrollment.progress || 0;
 
         // Get instructor name if available
         let instructorName = "Instructor";
         if (course.instructor) {
-          if (typeof course.instructor === "object" && course.instructor.fullName) {
+          if (
+            typeof course.instructor === "object" &&
+            course.instructor.fullName
+          ) {
             instructorName = course.instructor.fullName;
           } else if (typeof course.instructor === "string") {
             // If instructor is just an ID, we'd need to populate it
@@ -252,29 +284,36 @@ export const getStudentDashboard = async (req, res, next) => {
         // Get next session from pre-fetched batches
         let nextSession = "Check schedule";
         const batches = batchesByCourse[course._id.toString()] || [];
-        
+
         if (batches.length > 0) {
           // Sort and get the first one (already sorted by startDate)
           const batch = batches[0];
-            const startDate = new Date(batch.startDate);
-            const now = new Date();
-            const daysUntil = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntil === 0) {
-              nextSession = "Today";
-            } else if (daysUntil === 1) {
-              nextSession = "Tomorrow";
-            } else if (daysUntil < 7) {
-              nextSession = startDate.toLocaleDateString("en-US", { weekday: "long" });
-            } else {
-              nextSession = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            }
-            
-            // Add time if available
-            if (batch.schedule?.time?.start) {
-              nextSession += ` · ${batch.schedule.time.start}`;
-            }
+          const startDate = new Date(batch.startDate);
+          const now = new Date();
+          const daysUntil = Math.ceil(
+            (startDate - now) / (1000 * 60 * 60 * 24)
+          );
+
+          if (daysUntil === 0) {
+            nextSession = "Today";
+          } else if (daysUntil === 1) {
+            nextSession = "Tomorrow";
+          } else if (daysUntil < 7) {
+            nextSession = startDate.toLocaleDateString("en-US", {
+              weekday: "long",
+            });
+          } else {
+            nextSession = startDate.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            });
           }
+
+          // Add time if available
+          if (batch.schedule?.time?.start) {
+            nextSession += ` · ${batch.schedule.time.start}`;
+          }
+        }
 
         return {
           id: course._id.toString(),
@@ -282,7 +321,10 @@ export const getStudentDashboard = async (req, res, next) => {
           mentor: instructorName,
           progress: Math.round(progress),
           nextSession,
-          access: enrollment.status === "active" ? "Active enrollment" : enrollment.status,
+          access:
+            enrollment.status === "active"
+              ? "Active enrollment"
+              : enrollment.status,
           route: `/student/courses/${course._id}`,
         };
       })
@@ -298,7 +340,9 @@ export const getStudentDashboard = async (req, res, next) => {
       totalRedeemed: redeemedCoins,
       redeemRoute: "/learn-earn/wallet",
       badges: (studentPoints.badges || []).map((badge) => ({
-        label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        label: badge
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase()),
         description: `Earned ${badge} badge`,
         icon: "🏆",
       })),
@@ -311,7 +355,7 @@ export const getStudentDashboard = async (req, res, next) => {
         .sort({ createdAt: -1 })
         .limit(3)
         .lean();
-      
+
       quizChallenges = quizzes.map((quiz) => {
         const difficultyMap = {
           beginner: "Beginner",
@@ -319,12 +363,14 @@ export const getStudentDashboard = async (req, res, next) => {
           advanced: "Advanced",
           "all-levels": "All Levels",
         };
-        
+
         return {
           id: quiz._id.toString(),
           title: quiz.title,
           reward: `+${quiz.rewardCoins || 0} coins`,
-          closing: quiz.difficulty ? `${difficultyMap[quiz.difficulty] || quiz.difficulty} challenge` : "Daily challenge",
+          closing: quiz.difficulty
+            ? `${difficultyMap[quiz.difficulty] || quiz.difficulty} challenge`
+            : "Daily challenge",
           playRoute: `/learn-earn/quiz/${quiz._id}`,
         };
       });
@@ -355,7 +401,7 @@ export const getStudentDashboard = async (req, res, next) => {
         tag: "Best Seller",
         title: course.title,
         mentor: course.instructor?.fullName || "Instructor",
-        price: `AED ${course.price || 0}`,
+        price: formatCurrency(course.price || 0),
         to: `/learn-earn/courses/${course._id}`,
       }));
 
@@ -365,7 +411,9 @@ export const getStudentDashboard = async (req, res, next) => {
         tag: "Top Rated",
         title: ebook.title,
         mentor: ebook.metadata?.author || "Digital AELA",
-        price: ebook.metadata?.price ? `AED ${ebook.metadata.price}` : "Free",
+        price: ebook.metadata?.price
+          ? formatCurrency(ebook.metadata.price)
+          : "Free",
         to: `/books/${ebook._id}/payment`,
       }));
 
@@ -383,7 +431,7 @@ export const getStudentDashboard = async (req, res, next) => {
         .sort({ publishedAt: -1, createdAt: -1 })
         .limit(3)
         .lean();
-      
+
       ebookShelf = ebooks.map((ebook) => ({
         id: ebook._id.toString(),
         title: ebook.title,
@@ -405,11 +453,11 @@ export const getStudentDashboard = async (req, res, next) => {
         .limit(3)
         .lean()
         .lean();
-      
+
       blogFeed = blogs.map((blog) => {
         const publishedDate = blog.publishedAt || blog.createdAt;
         const timeAgo = formatTimeAgo(publishedDate);
-        
+
         return {
           id: blog._id.toString(),
           title: blog.title,
@@ -431,18 +479,22 @@ export const getStudentDashboard = async (req, res, next) => {
         .sort({ publishedAt: -1, createdAt: -1 })
         .limit(3)
         .lean();
-      
+
       jobsBoard = jobs.map((job) => {
         const publishedDate = job.publishedAt || job.createdAt;
         const timeAgo = formatTimeAgo(publishedDate);
         const employmentType = job.employmentType || "full-time";
-        const location = job.isRemote ? "Remote" : job.location || "Location TBD";
-        
+        const location = job.isRemote
+          ? "Remote"
+          : job.location || "Location TBD";
+
         return {
           id: job._id.toString(),
           title: job.title,
           company: job.company,
-          type: employmentType.charAt(0).toUpperCase() + employmentType.slice(1).replace("-", " "),
+          type:
+            employmentType.charAt(0).toUpperCase() +
+            employmentType.slice(1).replace("-", " "),
           posted: timeAgo,
           to: `/explore-jobs/jobs/${job._id}`,
         };
@@ -460,9 +512,15 @@ export const getStudentDashboard = async (req, res, next) => {
         .select("fullName")
         .limit(3)
         .lean();
-      
+
       studentProfiles = students.map((student, index) => {
-        const focuses = ["IELTS Scholar", "Debate Captain", "Blog Creator", "Speaking Champion", "Grammar Master"];
+        const focuses = [
+          "IELTS Scholar",
+          "Debate Captain",
+          "Blog Creator",
+          "Speaking Champion",
+          "Grammar Master",
+        ];
         return {
           id: student._id.toString(),
           name: student.fullName,
@@ -483,7 +541,7 @@ export const getStudentDashboard = async (req, res, next) => {
         .select("fullName metadata")
         .limit(2)
         .lean();
-      
+
       teacherSpotlight = teachers.map((teacher) => ({
         id: teacher._id.toString(),
         name: teacher.fullName,
@@ -503,7 +561,7 @@ export const getStudentDashboard = async (req, res, next) => {
         .select("fullName metadata")
         .limit(2)
         .lean();
-      
+
       recruiterSpotlight = recruiters.map((recruiter) => ({
         id: recruiter._id.toString(),
         name: recruiter.fullName,
@@ -562,7 +620,9 @@ export const getPublicUserStats = async (req, res, next) => {
     }
 
     // Get user basic info
-    const user = await User.findById(studentObjectId).select("fullName email metadata").lean();
+    const user = await User.findById(studentObjectId)
+      .select("fullName email metadata")
+      .lean();
     if (!user) {
       return res.status(404).json({
         error: {
@@ -588,7 +648,10 @@ export const getPublicUserStats = async (req, res, next) => {
 
     // Calculate totalEarned from transactions (sum of all earned and bonus transactions)
     let totalEarned = 0;
-    if (studentPoints?.transactions && Array.isArray(studentPoints.transactions)) {
+    if (
+      studentPoints?.transactions &&
+      Array.isArray(studentPoints.transactions)
+    ) {
       totalEarned = studentPoints.transactions
         .filter((txn) => txn.type === "earned" || txn.type === "bonus")
         .reduce((sum, txn) => sum + (txn.amount || 0), 0);
@@ -600,12 +663,14 @@ export const getPublicUserStats = async (req, res, next) => {
     // Calculate Learning Hours (public stat)
     let lessonCompletions = [];
     try {
-      lessonCompletions = await LessonCompletion.find({ student: studentObjectId });
+      lessonCompletions = await LessonCompletion.find({
+        student: studentObjectId,
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error fetching lesson completions:", error);
     }
-    
+
     const totalLearningHours = lessonCompletions.reduce((total, completion) => {
       return total + (completion.duration || 0) / 60; // Convert minutes to hours
     }, 0);
@@ -627,8 +692,9 @@ export const getPublicUserStats = async (req, res, next) => {
     // Get Speaking Score (latest assessment) - public stat
     let latestAssessment = null;
     try {
-      latestAssessment = await SpeakingAssessment.findOne({ student: studentObjectId })
-        .sort({ createdAt: -1 });
+      latestAssessment = await SpeakingAssessment.findOne({
+        student: studentObjectId,
+      }).sort({ createdAt: -1 });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error fetching speaking assessment:", error);
@@ -652,7 +718,9 @@ export const getPublicUserStats = async (req, res, next) => {
         learningHours: parseFloat(totalLearningHours.toFixed(1)),
         activeCourses: activeCoursesCount,
         streak,
-        speakingScore: speakingScore ? parseFloat(speakingScore.toFixed(1)) : null,
+        speakingScore: speakingScore
+          ? parseFloat(speakingScore.toFixed(1))
+          : null,
       },
     });
   } catch (error) {
@@ -698,19 +766,20 @@ export const getDashboardWidgets = async (req, res, next) => {
     // Recent Activity Widget - Get last 7 days of activity
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const recentActivities = [];
-    
+
     // Get recent enrollments
     const recentEnrollments = await Enrollment.find({
       student: studentObjectId,
       enrolledAt: { $gte: sevenDaysAgo },
-    }).lean()
+    })
+      .lean()
       .populate("course", "title")
       .sort({ enrolledAt: -1 })
       .limit(5)
       .lean();
-    
+
     recentEnrollments.forEach((enrollment) => {
       recentActivities.push({
         id: enrollment._id.toString(),
@@ -725,12 +794,13 @@ export const getDashboardWidgets = async (req, res, next) => {
     const recentCompletions = await LessonCompletion.find({
       student: studentObjectId,
       completedAt: { $gte: sevenDaysAgo },
-    }).lean()
+    })
+      .lean()
       .populate("course", "title")
       .sort({ completedAt: -1 })
       .limit(5)
       .lean();
-    
+
     recentCompletions.forEach((completion) => {
       recentActivities.push({
         id: completion._id.toString(),
@@ -742,7 +812,9 @@ export const getDashboardWidgets = async (req, res, next) => {
     });
 
     // Sort by timestamp and get top 10
-    recentActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    recentActivities.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
     const recentActivity = recentActivities.slice(0, 10).map((activity) => ({
       ...activity,
       timeAgo: formatTimeAgo(activity.timestamp),
@@ -784,7 +856,9 @@ export const getDashboardWidgets = async (req, res, next) => {
     }
 
     // Learning Goals Widget
-    const totalLearningHours = await LessonCompletion.find({ student: studentObjectId })
+    const totalLearningHours = await LessonCompletion.find({
+      student: studentObjectId,
+    })
       .lean()
       .then((completions) => {
         return completions.reduce((total, completion) => {
@@ -819,7 +893,9 @@ export const getDashboardWidgets = async (req, res, next) => {
     };
 
     // Course Recommendations Widget
-    const enrolledCourseIds = await Enrollment.find({ student: studentObjectId })
+    const enrolledCourseIds = await Enrollment.find({
+      student: studentObjectId,
+    })
       .select("course")
       .lean()
       .then((enrollments) => enrollments.map((e) => e.course));
@@ -827,7 +903,8 @@ export const getDashboardWidgets = async (req, res, next) => {
     const recommendations = await Course.find({
       _id: { $nin: enrolledCourseIds },
       status: "published",
-    }).lean()
+    })
+      .lean()
       .populate("instructor", "fullName")
       .sort({ createdAt: -1 })
       .limit(3)
@@ -933,7 +1010,9 @@ export const getEnhancedProfile = async (req, res, next) => {
     }));
 
     // Get achievements
-    const studentPoints = await StudentPoints.findOne({ student: studentObjectId }).lean();
+    const studentPoints = await StudentPoints.findOne({
+      student: studentObjectId,
+    }).lean();
     const achievements = (studentPoints?.badges || []).map((badge) => ({
       id: badge,
       label: badge.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -958,7 +1037,9 @@ export const getEnhancedProfile = async (req, res, next) => {
     }));
 
     // Get course completions
-    const completions = await LessonCompletion.find({ student: studentObjectId })
+    const completions = await LessonCompletion.find({
+      student: studentObjectId,
+    })
       .populate("course", "title")
       .sort({ completedAt: -1 })
       .limit(10)
@@ -1024,12 +1105,14 @@ function formatTimeAgo(date) {
   const now = new Date();
   const past = new Date(date);
   const diffInSeconds = Math.floor((now - past) / 1000);
-  
+
   if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
   return `${Math.floor(diffInSeconds / 2592000)} months ago`;
 }
-

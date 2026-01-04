@@ -40,7 +40,7 @@ router.post("/forgot-password", passwordResetRateLimiter, forgotPassword);
 router.post("/reset-password", strictRateLimiter, resetPassword);
 
 // Change password endpoint (authentication required, state-changing - requires CSRF)
-router.post("/change-password", requireAuth([]), validateCsrfToken, changePassword);
+router.post("/change-password", requireAuth([]), strictRateLimiter, validateCsrfToken, changePassword);
 
 // Update user profile/metadata endpoint (authentication required, state-changing - requires CSRF)
 router.patch("/profile", requireAuth([]), validateCsrfToken, updateUserProfile);

@@ -12,6 +12,7 @@ import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const EnglishLanguageCourses = () => {
   // WhatsApp integration
@@ -48,12 +49,32 @@ const EnglishLanguageCourses = () => {
             id: course._id,
             slug: course._id,
             title: course.title || "Untitled Course", // Dynamic content from API
-            description: course.description || course.metadata?.subtitle || course.subtitle || "",
-            image: course.thumbnailUrl || course.thumbnail || course.image || course.coverImage || "",
+            description:
+              course.description ||
+              course.metadata?.subtitle ||
+              course.subtitle ||
+              "",
+            image:
+              course.thumbnailUrl ||
+              course.thumbnail ||
+              course.image ||
+              course.coverImage ||
+              "",
             rawPrice: course.price, // Store original numeric price
-            price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request", // Price formatting
-            duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
-            format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
+            price:
+              course.price === 0
+                ? "Free"
+                : course.price
+                ? formatCurrency(course.price)
+                : "On Request", // Price formatting
+            duration: course.duration
+              ? `${course.duration} hours`
+              : course.metadata?.duration || "",
+            format:
+              course.metadata?.deliveryMode ||
+              course.deliveryMode ||
+              course.format ||
+              "",
             features: course.metadata?.tags || course.tags || [],
           }));
 
@@ -80,14 +101,20 @@ const EnglishLanguageCourses = () => {
 
     // Check if course is free
     // Prioritize rawPrice lookup
-    const priceValue = (course.rawPrice !== undefined && course.rawPrice !== null)
-      ? (parseFloat(course.rawPrice) || 0)
-      : (typeof course.price === 'number' ? course.price :
-        (typeof course.price === 'string' && course.price.toLowerCase() === 'free') ? 0 :
-          (typeof course.price === 'string' && course.price.includes('Free')) ? 0 :
-            parseFloat(course.price) || 0);
+    const priceValue =
+      course.rawPrice !== undefined && course.rawPrice !== null
+        ? parseFloat(course.rawPrice) || 0
+        : typeof course.price === "number"
+        ? course.price
+        : typeof course.price === "string" &&
+          course.price.toLowerCase() === "free"
+        ? 0
+        : typeof course.price === "string" && course.price.includes("Free")
+        ? 0
+        : parseFloat(course.price) || 0;
 
-    const isFreeCourse = priceValue === 0 || course.price === 0 || course.price === "Free";
+    const isFreeCourse =
+      priceValue === 0 || course.price === 0 || course.price === "Free";
 
     if (isFreeCourse) {
       // Free course - navigate to course detail page for enrollment
@@ -100,7 +127,9 @@ const EnglishLanguageCourses = () => {
           state: { course: payload },
         });
       } else {
-        toast.info("Please view the course details to enroll in this free course."); // Toast message
+        toast.info(
+          "Please view the course details to enroll in this free course."
+        ); // Toast message
         handleViewCourse(course);
       }
     } else {
@@ -138,32 +167,30 @@ const EnglishLanguageCourses = () => {
         url="https://digitalaela.com/courses/english-language"
       />
       {/* Hero Section */}
-      <motion.section
-        className="relative overflow-hidden bg-black pt-[90px] pb-20 md:pt-[140px] md:pb-28">
+      <motion.section className="relative overflow-hidden bg-black pt-[90px] pb-20 md:pt-[140px] md:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-[10%] h-104 w-104 rounded-full bg-[#D4AF37]/15 blur-[180px]" />
           <div className="absolute bottom-[-25%] right-[12%] h-112 w-md rounded-full bg-[#6A8BFF]/12 blur-[200px]" />
         </div>
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-6 text-left">
-            <motion.span
-              className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
+            <motion.span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               <TranslatedText>English Language Mastery</TranslatedText>
             </motion.span>
-            <motion.h1
-              className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+            <motion.h1 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
               <TranslatedText>Master English</TranslatedText>
             </motion.h1>
-            <motion.h2
-              className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
+            <motion.h2 className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               <TranslatedText>From Basics to Fluency</TranslatedText>
             </motion.h2>
-            <motion.p
-              className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
-              <TranslatedText>Comprehensive English language courses from beginner to advanced levels. Learn grammar, vocabulary, speaking, and writing skills with expert guidance and personalized support.</TranslatedText>
+            <motion.p className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
+              <TranslatedText>
+                Comprehensive English language courses from beginner to advanced
+                levels. Learn grammar, vocabulary, speaking, and writing skills
+                with expert guidance and personalized support.
+              </TranslatedText>
             </motion.p>
-            <motion.div
-              className="flex flex-col gap-4 sm:flex-row">
+            <motion.div className="flex flex-col gap-4 sm:flex-row">
               <motion.a
                 href={whatsappUrl}
                 target="_blank"
@@ -178,8 +205,7 @@ const EnglishLanguageCourses = () => {
               </motion.a>
             </motion.div>
           </div>
-          <motion.div
-            className="relative mx-auto flex-1 max-w-[420px]">
+          <motion.div className="relative mx-auto flex-1 max-w-[420px]">
             <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-gradient-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
             <img
               src="https://images.unsplash.com/photo-1544531586-fde5298cdd40?w=1200&auto=format&fit=crop&q=80"
@@ -194,21 +220,27 @@ const EnglishLanguageCourses = () => {
       {/* Courses Section */}
       <section id="courses" className="py-20 bg-[#141414] relative">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
               <TranslatedText>Our English Language</TranslatedText>{" "}
-              <span className="text-[#D4AF37]"><TranslatedText>Courses</TranslatedText></span>
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Courses</TranslatedText>
+              </span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Comprehensive training programs from basic to advanced levels, including exam preparation and specialized courses</TranslatedText>
+              <TranslatedText>
+                Comprehensive training programs from basic to advanced levels,
+                including exam preparation and specialized courses
+              </TranslatedText>
             </p>
           </motion.div>
 
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="text-[#D4AF37] text-lg"><TranslatedText>Loading courses...</TranslatedText></div>
+              <div className="text-[#D4AF37] text-lg">
+                <TranslatedText>Loading courses...</TranslatedText>
+              </div>
             </div>
           )}
 
@@ -230,7 +262,10 @@ const EnglishLanguageCourses = () => {
                   }}>
                   <div className="h-40 w-full overflow-hidden">
                     <LazyImage
-                      src={getMediaUrl(course.image) || "https://via.placeholder.com/300x200?text=Course"}
+                      src={
+                        getMediaUrl(course.image) ||
+                        "https://via.placeholder.com/300x200?text=Course"
+                      }
                       alt={course.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       fallbackSrc="https://via.placeholder.com/300x200?text=Course"
@@ -288,7 +323,9 @@ const EnglishLanguageCourses = () => {
                           {course.features.slice(0, 3).map((feature, idx) => (
                             <li key={idx} className="flex items-center gap-2">
                               <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                              <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
+                              <span className="line-clamp-1">
+                                <TranslatedText>{feature}</TranslatedText>
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -334,13 +371,16 @@ const EnglishLanguageCourses = () => {
           {/* No Courses Message */}
           {!loading && englishCourses.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-gray-300 text-lg"><TranslatedText>No English Language courses available yet.</TranslatedText></p>
+              <p className="text-gray-300 text-lg">
+                <TranslatedText>
+                  No English Language courses available yet.
+                </TranslatedText>
+              </p>
             </div>
           )}
 
           {/* CTA Button */}
-          <motion.div
-            className="flex justify-center">
+          <motion.div className="flex justify-center">
             <motion.a
               href={whatsappUrl}
               target="_blank"
@@ -356,3 +396,4 @@ const EnglishLanguageCourses = () => {
 };
 
 export default EnglishLanguageCourses;
+

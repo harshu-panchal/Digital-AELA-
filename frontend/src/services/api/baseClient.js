@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../config/api.js";
+import { isTokenExpired } from "../../utils/jwt.js";
 
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
 const CSRF_TOKEN_STORAGE_KEY = "aela.csrf.token";
@@ -184,7 +185,23 @@ const executeRequest = async (
     _retryCount = 0,
   } = {}
 ) => {
-  const tokens = loadTokens();
+  let tokens = loadTokens();
+
+  // Proactively refresh tokens if they are about to expire (within 2 minutes)
+  // This prevents 401 errors and unnecessary retries
+  if (!skipAuth && tokens?.accessToken && tokens?.refreshToken && !_retry) {
+    if (isTokenExpired(tokens.accessToken, 2)) {
+      try {
+        await refreshTokensIfNeeded(tokens);
+        // Reload tokens after refresh
+        tokens = loadTokens();
+      } catch (refreshError) {
+        // If refresh fails, we'll continue and let the request fail with 401
+        // which will trigger the standard error handling
+        console.warn("[API] Proactive token refresh failed:", refreshError);
+      }
+    }
+  }
 
   // Check if body is FormData
   const isFormData =
@@ -219,8 +236,8 @@ const executeRequest = async (
   const requestBody = isFormData
     ? body
     : body
-      ? JSON.stringify(body)
-      : undefined;
+    ? JSON.stringify(body)
+    : undefined;
 
   // Determine if we should use XHR (for upload progress) or fetch
   if (onUploadProgress && method.toUpperCase() !== "GET") {
@@ -267,7 +284,16 @@ const executeRequest = async (
           json: async () => payload,
         };
 
-        handleResponse(responseData, payload, resolve, reject, endpoint, { method, body, headers, skipAuth, timeout, onUploadProgress, _retry, _retryCount });
+        handleResponse(responseData, payload, resolve, reject, endpoint, {
+          method,
+          body,
+          headers,
+          skipAuth,
+          timeout,
+          onUploadProgress,
+          _retry,
+          _retryCount,
+        });
       };
 
       xhr.onerror = () => {
@@ -306,7 +332,15 @@ const executeRequest = async (
     const payload = await response.json().catch(() => null);
 
     return new Promise((resolve, reject) => {
-      handleResponse(response, payload, resolve, reject, endpoint, { method, body, headers, skipAuth, timeout, _retry, _retryCount });
+      handleResponse(response, payload, resolve, reject, endpoint, {
+        method,
+        body,
+        headers,
+        skipAuth,
+        timeout,
+        _retry,
+        _retryCount,
+      });
     });
   } catch (networkError) {
     clearTimeout(timeoutId);
@@ -325,8 +359,24 @@ const executeRequest = async (
 /**
  * Shared response handler to avoid duplicating logic between fetch and XHR
  */
-const handleResponse = async (response, payload, resolve, reject, endpoint, options) => {
-  const { method, body, headers, skipAuth, timeout, onUploadProgress, _retry, _retryCount } = options;
+const handleResponse = async (
+  response,
+  payload,
+  resolve,
+  reject,
+  endpoint,
+  options
+) => {
+  const {
+    method,
+    body,
+    headers,
+    skipAuth,
+    timeout,
+    onUploadProgress,
+    _retry,
+    _retryCount,
+  } = options;
   const tokens = loadTokens();
 
   if (response.ok) {
@@ -340,7 +390,9 @@ const handleResponse = async (response, payload, resolve, reject, endpoint, opti
 
   // Handle 502 Bad Gateway
   if (response.status === 502) {
-    const badGatewayError = new Error(`Backend server is temporarily unavailable (502 Bad Gateway).`);
+    const badGatewayError = new Error(
+      `Backend server is temporarily unavailable (502 Bad Gateway).`
+    );
     badGatewayError.status = 502;
     badGatewayError.code = "BAD_GATEWAY";
     badGatewayError.isNetworkError = true;
@@ -357,14 +409,16 @@ const handleResponse = async (response, payload, resolve, reject, endpoint, opti
       clearCsrfToken();
       const newCsrfToken = await fetchCsrfToken();
       if (newCsrfToken) {
-        return resolve(apiRequest(endpoint, {
-          method,
-          body,
-          headers,
-          skipAuth,
-          onUploadProgress,
-          _retry: true,
-        }));
+        return resolve(
+          apiRequest(endpoint, {
+            method,
+            body,
+            headers,
+            skipAuth,
+            onUploadProgress,
+            _retry: true,
+          })
+        );
       }
     }
   }
@@ -373,14 +427,16 @@ const handleResponse = async (response, payload, resolve, reject, endpoint, opti
     try {
       await refreshTokensIfNeeded(tokens);
       clearCsrfToken();
-      return resolve(apiRequest(endpoint, {
-        method,
-        body,
-        headers,
-        skipAuth,
-        onUploadProgress,
-        _retry: true,
-      }));
+      return resolve(
+        apiRequest(endpoint, {
+          method,
+          body,
+          headers,
+          skipAuth,
+          onUploadProgress,
+          _retry: true,
+        })
+      );
     } catch (error) {
       clearStoredTokens();
       clearCsrfToken();
@@ -405,21 +461,29 @@ const handleResponse = async (response, payload, resolve, reject, endpoint, opti
     const maxRetries = 3;
 
     if (_retryCount < maxRetries) {
-      const backoffDelay = Math.min(retryAfter * 1000 * Math.pow(2, _retryCount), 300000);
+      const backoffDelay = Math.min(
+        retryAfter * 1000 * Math.pow(2, _retryCount),
+        300000
+      );
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-      return resolve(executeRequest(endpoint, {
-        method,
-        body,
-        headers,
-        skipAuth,
-        onUploadProgress,
-        _retry: true,
-        _retryCount: _retryCount + 1,
-      }));
+      return resolve(
+        executeRequest(endpoint, {
+          method,
+          body,
+          headers,
+          skipAuth,
+          onUploadProgress,
+          _retry: true,
+          _retryCount: _retryCount + 1,
+        })
+      );
     }
   }
 
-  const error = new Error(payload?.error?.message ?? `Request to ${endpoint} failed with status ${response.status}`);
+  const error = new Error(
+    payload?.error?.message ??
+      `Request to ${endpoint} failed with status ${response.status}`
+  );
   error.status = response.status;
   error.code = payload?.error?.code;
   error.details = payload;

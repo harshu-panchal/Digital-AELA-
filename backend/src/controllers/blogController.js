@@ -78,17 +78,17 @@ export const createBlog = async (req, res, next) => {
     if (finalStatus === "pending") {
       try {
         const { createBulkNotifications } = await import("../utils/notificationHelper.js");
-        
+
         // Get all super-admin users
         const superAdmins = await User.find({ role: "super-admin", isActive: true })
           .select("_id")
           .lean();
-        
+
         if (superAdmins.length > 0) {
           const adminIds = superAdmins.map((admin) => admin._id);
           const author = await User.findById(userId).select("fullName").lean();
           const authorName = author?.fullName || "A recruiter";
-          
+
           await createBulkNotifications(
             adminIds,
             "New Blog Pending Approval",
@@ -120,7 +120,7 @@ export const createBlog = async (req, res, next) => {
     const authorId = populatedBlog.author?._id
       ? populatedBlog.author._id.toString()
       : populatedBlog.author?.id;
-    
+
     // Fetch profile for author to get avatarUrl (prioritize profile over metadata)
     let authorProfile = null;
     if (authorId) {
@@ -134,7 +134,7 @@ export const createBlog = async (req, res, next) => {
           .lean();
       }
     }
-    
+
     const userAvatarUrl = populatedBlog.author?.metadata?.avatarUrl || null;
     const profileAvatarUrl = authorProfile?.avatarUrl || null;
     const finalAvatarUrl = profileAvatarUrl || userAvatarUrl;
@@ -155,13 +155,13 @@ export const createBlog = async (req, res, next) => {
       createdAt: populatedBlog.createdAt,
       author: populatedBlog.author
         ? {
-            id: authorId,
-            _id: authorId,
-            fullName: populatedBlog.author.fullName,
-            role: populatedBlog.author.role,
-            email: populatedBlog.author.email,
-            avatarUrl: finalAvatarUrl,
-          }
+          id: authorId,
+          _id: authorId,
+          fullName: populatedBlog.author.fullName,
+          role: populatedBlog.author.role,
+          email: populatedBlog.author.email,
+          avatarUrl: finalAvatarUrl,
+        }
         : null,
     };
 
@@ -263,13 +263,13 @@ export const listPublishedBlogs = async (req, res, next) => {
     const [recruiterProfiles, studentProfiles] = await Promise.all([
       authorIds.length
         ? RecruiterProfile.find({ user: { $in: authorIds } })
-            .select(["company", "headline", "avatarUrl", "stats", "socials", "user"])
-            .lean()
+          .select(["company", "headline", "avatarUrl", "stats", "socials", "user"])
+          .lean()
         : [],
       authorIds.length
         ? StudentProfile.find({ user: { $in: authorIds } })
-            .select(["headline", "avatarUrl", "user"])
-            .lean()
+          .select(["headline", "avatarUrl", "user"])
+          .lean()
         : [],
     ]);
 
@@ -300,18 +300,18 @@ export const listPublishedBlogs = async (req, res, next) => {
     const [commentAuthors, commentRecruiterProfiles, commentStudentProfiles] = await Promise.all([
       commentAuthorIds.size
         ? User.find({ _id: { $in: Array.from(commentAuthorIds) } })
-            .select(["fullName", "email", "metadata"])
-            .lean()
+          .select(["fullName", "email", "metadata"])
+          .lean()
         : [],
       commentAuthorIds.size
         ? RecruiterProfile.find({ user: { $in: Array.from(commentAuthorIds) } })
-            .select(["avatarUrl", "user"])
-            .lean()
+          .select(["avatarUrl", "user"])
+          .lean()
         : [],
       commentAuthorIds.size
         ? StudentProfile.find({ user: { $in: Array.from(commentAuthorIds) } })
-            .select(["avatarUrl", "user"])
-            .lean()
+          .select(["avatarUrl", "user"])
+          .lean()
         : [],
     ]);
 
@@ -341,19 +341,7 @@ export const listPublishedBlogs = async (req, res, next) => {
       const userAvatarUrl = blog.author?.metadata?.avatarUrl || null;
       // Prioritize profile avatarUrl over user metadata avatarUrl
       const profileAvatarUrl = authorProfile?.avatarUrl || null;
-      const finalAvatarUrl = profileAvatarUrl || userAvatarUrl;
-      
-      // Debug logging to trace avatarUrl issues (can be removed in production)
-      if (!finalAvatarUrl && authorId) {
-        // eslint-disable-next-line no-console
-        console.log(`[BlogController] No avatarUrl found for author ${authorId}:`, {
-          hasProfile: !!authorProfile,
-          profileAvatarUrl,
-          userAvatarUrl,
-          authorHasMetadata: !!blog.author?.metadata,
-          metadataKeys: blog.author?.metadata ? Object.keys(blog.author.metadata) : [],
-        });
-      }
+      const finalAvatarUrl = profileAvatarUrl || userAvatarUrl || "https://i.pravatar.cc/150?img=11";
 
       // Format comments with author info
       const formattedComments = (blog.comments || []).map((comment) => {
@@ -364,27 +352,27 @@ export const listPublishedBlogs = async (req, res, next) => {
         const commentAuthorProfile = commentAuthorId
           ? commentAuthorProfileMap[commentAuthorId]
           : null;
-        
+
         // Get avatarUrl with priority: profile avatarUrl > user metadata avatarUrl > default
         const commentUserAvatarUrl = commentAuthor?.metadata?.avatarUrl || null;
         const commentProfileAvatarUrl = commentAuthorProfile?.avatarUrl || null;
         const commentFinalAvatarUrl = commentProfileAvatarUrl || commentUserAvatarUrl || "https://i.pravatar.cc/150?img=11";
-        
+
         return {
           id: comment._id ? comment._id.toString() : crypto.randomUUID(),
           message: comment.message,
           createdAt: comment.createdAt || new Date().toISOString(),
           author: commentAuthor
             ? {
-                id: commentAuthorId,
-                name: commentAuthor.fullName || "User",
-                avatar: commentFinalAvatarUrl,
-              }
+              id: commentAuthorId,
+              name: commentAuthor.fullName || "User",
+              avatar: commentFinalAvatarUrl,
+            }
             : {
-                id: commentAuthorId || "unknown",
-                name: "User",
-                avatar: "https://i.pravatar.cc/150?img=11",
-              },
+              id: commentAuthorId || "unknown",
+              name: "User",
+              avatar: "https://i.pravatar.cc/150?img=11",
+            },
         };
       });
 
@@ -404,21 +392,21 @@ export const listPublishedBlogs = async (req, res, next) => {
         commentCount: formattedComments.length,
         author: blog.author
           ? {
-              id: authorId,
-              fullName: blog.author.fullName,
-              role: blog.author.role,
-              email: blog.author.email,
-              avatarUrl: finalAvatarUrl, // Prioritize profile avatarUrl, then user metadata avatarUrl
-            }
+            id: authorId,
+            fullName: blog.author.fullName,
+            role: blog.author.role,
+            email: blog.author.email,
+            avatarUrl: finalAvatarUrl, // Prioritize profile avatarUrl, then user metadata avatarUrl
+          }
           : null,
         recruiterProfile: authorProfile && authorProfile.company
           ? {
-              company: authorProfile.company,
-              headline: authorProfile.headline,
-              avatarUrl: finalAvatarUrl,
-              socials: authorProfile.socials,
-              stats: authorProfile.stats,
-            }
+            company: authorProfile.company,
+            headline: authorProfile.headline,
+            avatarUrl: finalAvatarUrl,
+            socials: authorProfile.socials,
+            stats: authorProfile.stats,
+          }
           : null,
       };
     });

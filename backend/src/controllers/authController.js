@@ -573,6 +573,8 @@ export const changePassword = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
     const { currentPassword, newPassword } = req.body;
+    const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+    const userAgent = req.headers["user-agent"];
 
     if (!userId) {
       return res.status(401).json({
@@ -592,18 +594,20 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    // Validate password strength (minimum 6 characters)
-    if (newPassword.length < 6) {
+    // 1. Password Strength Validation
+    // Minimum 12 characters, uppercase, lowercase, numbers, special characters
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(newPassword)) {
       return res.status(422).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Password must be at least 6 characters long",
+          message: "Password must be at least 12 characters long and include uppercase, lowercase, numbers, and special characters.",
         },
       });
     }
 
-    // Find user (explicitly select passwordHash since it has select: false)
-    const user = await User.findById(userId).select("+passwordHash");
+    // Find user (explicitly select passwordHash and passwordHistory since they have select: false)
+    const user = await User.findById(userId).select("+passwordHash +passwordHistory");
     if (!user) {
       return res.status(404).json({
         error: {
@@ -613,7 +617,7 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    // Check if user has a passwordHash (for users who might not have set a password yet)
+    // Check if user has a passwordHash
     if (!user.passwordHash) {
       return res.status(400).json({
         error: {
@@ -623,9 +627,26 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    // Verify current password
+    // 2. Verify Current Password
     const passwordMatch = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!passwordMatch) {
+      // Log failed attempt
+      try {
+        const AuditLog = (await import("../models/AuditLog.js")).default;
+        await AuditLog.create({
+          user: userId,
+          action: "password_change_attempt",
+          entity: "User",
+          entityId: userId,
+          status: "failure",
+          details: { reason: "Incorrect current password" },
+          ipAddress,
+          userAgent,
+        });
+      } catch (logError) {
+        console.error("Failed to create audit log:", logError);
+      }
+
       return res.status(401).json({
         error: {
           code: "UNAUTHORIZED",
@@ -634,13 +655,56 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
+    // 3. Password History Check (prevent reuse of last 5 passwords)
+    const isRecentlyUsed = await Promise.all(
+      (user.passwordHistory || []).map((hash) => bcrypt.compare(newPassword, hash))
+    );
+
+    if (isRecentlyUsed.some((match) => match)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "You cannot reuse any of your last 5 passwords.",
+        },
+      });
+    }
+
     // Hash new password
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    // Update user password
+    // Update user password and history
+    const updatedHistory = [user.passwordHash, ...(user.passwordHistory || [])].slice(0, 5);
+    
     await User.findByIdAndUpdate(userId, {
       passwordHash,
+      passwordHistory: updatedHistory,
+      lastPasswordChange: new Date(),
     });
+
+    // 4. Audit Logging
+    try {
+      const AuditLog = (await import("../models/AuditLog.js")).default;
+      await AuditLog.create({
+        user: userId,
+        action: "password_change",
+        entity: "User",
+        entityId: userId,
+        status: "success",
+        details: { message: "Password changed successfully" },
+        ipAddress,
+        userAgent,
+      });
+    } catch (logError) {
+      console.error("Failed to create audit log:", logError);
+    }
+
+    // 5. Notify user via email
+    try {
+      const { sendPasswordResetSuccessEmail } = await import("../utils/emailService.js");
+      await sendPasswordResetSuccessEmail(user.email, user.fullName);
+    } catch (emailError) {
+      console.error("Failed to send password change notification email:", emailError);
+    }
 
     return res.status(200).json({
       message: "Password has been successfully changed.",

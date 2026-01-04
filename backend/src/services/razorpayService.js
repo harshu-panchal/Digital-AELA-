@@ -1,7 +1,10 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { getSettings } from "../utils/settingsHelper.js";
-import { removeEmojis, sanitizeObjectForPayment } from "../utils/stringUtils.js";
+import {
+  removeEmojis,
+  sanitizeObjectForPayment,
+} from "../utils/stringUtils.js";
 
 let razorpayInstance = null;
 
@@ -20,11 +23,16 @@ const initializeRazorpay = async () => {
       "payment.gateway.razorpay.keySecret",
     ]);
 
-    const keyId = settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID;
-    const keySecret = settings["payment.gateway.razorpay.keySecret"] || process.env.RAZORPAY_KEY_SECRET;
+    const keyId =
+      settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID;
+    const keySecret =
+      settings["payment.gateway.razorpay.keySecret"] ||
+      process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
-      throw new Error("Razorpay credentials not configured. Please set keyId and keySecret in settings or environment variables.");
+      throw new Error(
+        "Razorpay credentials not configured. Please set keyId and keySecret in settings or environment variables."
+      );
     }
 
     razorpayInstance = new Razorpay({
@@ -45,7 +53,11 @@ const initializeRazorpay = async () => {
 export const getRazorpayKeyId = async () => {
   try {
     const settings = await getSettings(["payment.gateway.razorpay.keyId"]);
-    return settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID || null;
+    return (
+      settings["payment.gateway.razorpay.keyId"] ||
+      process.env.RAZORPAY_KEY_ID ||
+      null
+    );
   } catch (error) {
     console.error("[Razorpay] Error getting key ID:", error);
     return null;
@@ -58,7 +70,10 @@ export const getRazorpayKeyId = async () => {
 export const isRazorpayEnabled = async () => {
   try {
     const settings = await getSettings(["payment.gateway.razorpay.enabled"]);
-    return settings["payment.gateway.razorpay.enabled"] === true || settings["payment.gateway.razorpay.enabled"] === "true";
+    return (
+      settings["payment.gateway.razorpay.enabled"] === true ||
+      settings["payment.gateway.razorpay.enabled"] === "true"
+    );
   } catch (error) {
     console.error("[Razorpay] Error checking if enabled:", error);
     return false;
@@ -66,113 +81,42 @@ export const isRazorpayEnabled = async () => {
 };
 
 /**
- * Create a Razorpay order
- * @param {number} amount - Amount in currency units (e.g. 100 AED)
- * @param {string} currency - Currency code (INR, AED, etc.)
- * @param {string} receipt - Receipt ID (usually payment ID)
+ * Create Razorpay Order
+ * @param {number} amount - Amount in currency units (e.g. 100 INR)
+ * @param {string} currency - Currency code (default: INR)
+ * @param {string} receipt - Receipt ID
  * @param {Object} notes - Additional notes/metadata
- * @returns {Promise<Object>} Razorpay order object
+ * @returns {Promise<Object>} Order object
  */
 export const createOrder = async (amount, currency, receipt, notes = {}) => {
   try {
     const razorpay = await initializeRazorpay();
 
-    // Get settings to check for conversion
-    const settings = await getSettings([
-      "payment.currency.convertAEDtoINR",
-      "payment.currency.aedToInrRate",
-      "payment.gateway.razorpay.keyId"
-    ]);
-
-    // Detect if using test keys
-    const keyId = settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID || "";
-    const isTestKey = keyId.startsWith("rzp_test_");
-
-    // Handle currency conversion
-    let finalCurrency = currency || "INR";
-    let finalAmount = amount;
-    const originalAmount = amount;
-    const originalCurrency = currency;
-
-    const exchangeRate = parseFloat(settings["payment.currency.aedToInrRate"] || "22.5");
-
-    // Logic:
-    // 1. If currency is AED
-    // 2. AND (Test Key detected OR Conversion Enabled in settings)
-    // 3. THEN -> Convert to INR
-    if (finalCurrency === "AED") {
-      const shouldConvert = isTestKey || (
-        settings["payment.currency.convertAEDtoINR"] !== false &&
-        settings["payment.currency.convertAEDtoINR"] !== "false"
-      );
-
-      if (shouldConvert) {
-        finalCurrency = "INR";
-        finalAmount = Math.round(amount * exchangeRate * 100) / 100;
-
-        console.log(`[Razorpay] Currency Conversion Applied:`);
-        console.log(`- Original: ${amount} AED`);
-        console.log(`- Rate: ${exchangeRate}`);
-        console.log(`- Converted: ${finalAmount} INR`);
-
-        if (isTestKey) {
-          console.log(`[Razorpay] NOTE: Conversion enforced due to Test Key usage.`);
-        }
-      }
-    }
-
-    // Safety check: Test keys cannot accept AED
-    if (isTestKey && finalCurrency === "AED") {
-      throw new Error("Razorpay Test Keys do not support AED. Please enable currency conversion to INR.");
-    }
+    // Use INR as default currency
+    const finalCurrency = "INR";
+    const finalAmount = amount;
 
     // Razorpay expects amount in smallest currency unit
-    // For INR: paise (amount * 100)
-    // For AED: fils (amount * 100)
     const amountInSmallestUnit = Math.round(finalAmount * 100);
-
-    // Sanitize notes (remove emojis)
-    const sanitizedNotes = sanitizeObjectForPayment({
-      ...notes,
-      original_amount: originalAmount,
-      original_currency: originalCurrency,
-      exchange_rate: exchangeRate
-    });
 
     const orderOptions = {
       amount: amountInSmallestUnit,
       currency: finalCurrency,
       receipt: receipt,
-      notes: sanitizedNotes,
+      notes: {
+        original_amount: amount,
+        original_currency: currency,
+        ...notes,
+      },
     };
 
     const order = await razorpay.orders.create(orderOptions);
 
-    console.log(`[Razorpay] Order created successfully: ${order.id} for amount ${order.amount} ${order.currency}`);
+    console.log(`[Razorpay] Order created successfully: ${order.id}`);
 
-    return {
-      id: order.id,
-      entity: order.entity,
-      amount: order.amount,
-      amount_paid: order.amount_paid,
-      amount_due: order.amount_due,
-      currency: order.currency,
-      receipt: order.receipt,
-      status: order.status,
-      attempts: order.attempts,
-      notes: order.notes,
-      created_at: order.created_at,
-    };
+    return order;
   } catch (error) {
-    console.error("[Razorpay] Error creating order:", {
-      error: error.message,
-      stack: error.stack,
-      amount,
-      currency,
-      receipt,
-    });
-
-    // Provide more specific error messages
+    console.error("[Razorpay] Error creating order:", error);
     if (error.error?.description) {
       throw new Error(`Razorpay error: ${error.error.description}`);
     }
@@ -186,7 +130,7 @@ export const createOrder = async (amount, currency, receipt, notes = {}) => {
  * @param {string} paymentId - Razorpay payment ID
  * @param {string} signature - Payment signature from Razorpay
  * @returns {boolean} True if signature is valid
- * 
+ *
  * NOTE: Payment signature verification is disabled - always returns true
  * This allows payments to complete immediately without signature verification
  */
@@ -210,11 +154,17 @@ export const verifyWebhookSignature = async (payload, signature) => {
     }
 
     // Get webhook secret from settings or environment
-    const settings = await getSettings(["payment.gateway.razorpay.webhookSecret"]);
-    const webhookSecret = settings["payment.gateway.razorpay.webhookSecret"] || process.env.RAZORPAY_WEBHOOK_SECRET;
+    const settings = await getSettings([
+      "payment.gateway.razorpay.webhookSecret",
+    ]);
+    const webhookSecret =
+      settings["payment.gateway.razorpay.webhookSecret"] ||
+      process.env.RAZORPAY_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.warn("[Razorpay] Webhook secret not configured - signature verification skipped");
+      console.warn(
+        "[Razorpay] Webhook secret not configured - signature verification skipped"
+      );
       // In development, allow webhooks without secret if not configured
       if (process.env.NODE_ENV === "development") {
         return true;
@@ -258,7 +208,9 @@ export const fetchPayment = async (paymentId) => {
   try {
     const razorpay = await initializeRazorpay();
     const payment = await razorpay.payments.fetch(paymentId);
-    console.log(`[Razorpay] Payment fetched: ${paymentId}, status: ${payment.status}`);
+    console.log(
+      `[Razorpay] Payment fetched: ${paymentId}, status: ${payment.status}`
+    );
     return payment;
   } catch (error) {
     console.error("[Razorpay] Error fetching payment:", {
@@ -318,10 +270,10 @@ export const fetchOrder = async (orderId) => {
 };
 
 /**
- * Create a Razorpay Payment Link for redirect-based payment
- * @param {number} amount - Amount in currency units (e.g. 100 AED)
- * @param {string} currency - Currency code (INR, AED, etc.)
- * @param {string} receipt - Receipt ID (usually payment ID)
+ * Create Razorpay Payment Link
+ * @param {number} amount - Amount in currency units (e.g. 100 INR)
+ * @param {string} currency - Currency code (default: INR)
+ * @param {string} receipt - Receipt ID
  * @param {string} description - Payment description
  * @param {string} customerName - Customer name
  * @param {string} customerEmail - Customer email
@@ -344,39 +296,9 @@ export const createPaymentLink = async (
   try {
     const razorpay = await initializeRazorpay();
 
-    // Get settings for conversion
-    const settings = await getSettings([
-      "payment.currency.convertAEDtoINR",
-      "payment.currency.aedToInrRate",
-      "payment.gateway.razorpay.keyId"
-    ]);
-
-    // Detect test keys
-    const keyId = settings["payment.gateway.razorpay.keyId"] || process.env.RAZORPAY_KEY_ID || "";
-    const isTestKey = keyId.startsWith("rzp_test_");
-
-    // Handle currency conversion
-    let finalCurrency = currency || "INR";
-    let finalAmount = amount;
-    const originalAmount = amount;
-    const originalCurrency = currency;
-    const exchangeRate = parseFloat(settings["payment.currency.aedToInrRate"] || "22.5");
-
-    if (finalCurrency === "AED") {
-      const shouldConvert = isTestKey || (
-        settings["payment.currency.convertAEDtoINR"] !== false &&
-        settings["payment.currency.convertAEDtoINR"] !== "false"
-      );
-
-      if (shouldConvert) {
-        finalCurrency = "INR";
-        finalAmount = Math.round(amount * exchangeRate * 100) / 100;
-
-        console.log(`[Razorpay-Link] Currency Conversion Applied:`);
-        console.log(`- Original: ${amount} AED`);
-        console.log(`- Converted: ${finalAmount} INR`);
-      }
-    }
+    // Use INR as default currency
+    const finalCurrency = "INR";
+    const finalAmount = amount;
 
     // Razorpay expects amount in smallest currency unit
     const amountInSmallestUnit = Math.round(finalAmount * 100);
@@ -387,7 +309,8 @@ export const createPaymentLink = async (
     }
 
     // Ensure customer name is not empty
-    const validCustomerName = customerName && customerName.trim() ? customerName.trim() : "Customer";
+    const validCustomerName =
+      customerName && customerName.trim() ? customerName.trim() : "Customer";
 
     // Validate callback URL format
     try {
@@ -401,8 +324,8 @@ export const createPaymentLink = async (
     const sanitizedCustomerName = removeEmojis(validCustomerName);
     const sanitizedNotes = sanitizeObjectForPayment({
       receipt: receipt,
-      original_amount: originalAmount,
-      original_currency: originalCurrency,
+      original_amount: amount,
+      original_currency: currency,
       ...notes,
     });
 
@@ -427,7 +350,9 @@ export const createPaymentLink = async (
 
     const paymentLink = await razorpay.paymentLink.create(paymentLinkOptions);
 
-    console.log(`[Razorpay] Payment link created successfully: ${paymentLink.id} - ${paymentLink.short_url}`);
+    console.log(
+      `[Razorpay] Payment link created successfully: ${paymentLink.id} - ${paymentLink.short_url}`
+    );
 
     return {
       id: paymentLink.id,
@@ -453,4 +378,3 @@ export const createPaymentLink = async (
     throw new Error(`Failed to create Razorpay payment link: ${error.message}`);
   }
 };
-

@@ -8,36 +8,32 @@ When trying to make a payment, you see the error:
 ## Root Cause
 
 This error occurs because:
-1. **Razorpay accounts by default only support INR currency and Indian payment methods**
-2. Your account is trying to accept AED currency or international cards
-3. International payments feature is not enabled in your Razorpay dashboard
+1. **Razorpay accounts by default only support INR currency and Indian payment methods.**
+2. International payments feature is not enabled in your Razorpay dashboard.
+3. Razorpay test environment strictly enforces Indian payment methods for INR transactions.
 
 ## Solutions
 
-### Solution 1: Enable Currency Conversion (Recommended - Quick Fix)
+### Solution 1: Use INR as Default Currency (Implemented)
 
-The payment gateway now automatically converts AED to INR by default. This is enabled in the settings:
+The platform has been systematically updated to use **Indian Rupees (INR)** as the default currency for all courses, ebooks, and payments. This is the most reliable way to ensure compatibility with all Razorpay accounts, including those in test mode.
 
-1. **Check Currency Conversion Settings:**
-   - Setting: `payment.currency.convertAEDtoINR` = `true` (default)
-   - Setting: `payment.currency.aedToInrRate` = `22.5` (default exchange rate)
+1. **Why INR?**
+   - Every Razorpay account supports INR by default.
+   - INR transactions work seamlessly in both test and live environments.
+   - Avoids the "international cards not supported" error for Indian customers.
 
 2. **How it works:**
-   - When a payment is made in AED, it's automatically converted to INR
-   - Example: 100 AED → 2,250 INR (at 22.5 rate)
-   - Payment is processed in INR (which all Razorpay accounts support)
+   - All prices are now set and displayed in INR.
+   - Payments are processed directly in INR.
+   - No complex currency conversion logic is required on the backend.
 
-3. **Update Exchange Rate (if needed):**
-   - Go to Settings → Payment Settings
-   - Update `payment.currency.aedToInrRate` to current exchange rate
-   - Or leave default (22.5) if acceptable
+### Solution 2: Enable International Payments in Razorpay (For Live Accounts)
 
-### Solution 2: Enable International Payments in Razorpay (Long-term Solution)
-
-To accept AED currency and international cards directly:
+If you want to accept non-Indian cards (even for INR payments) in your **Live** environment:
 
 1. **Requirements:**
-   - Complete Razorpay KYC verification
+   - Complete Razorpay KYC verification.
    - Your website must have:
      - Terms and Conditions page
      - Privacy Policy page
@@ -46,96 +42,53 @@ To accept AED currency and international cards directly:
 
 2. **Steps to Enable:**
    - Log in to Razorpay Dashboard: https://dashboard.razorpay.com
-   - Navigate to **Settings** → **Payment Methods**
-   - Under **International Payments**, click **Request**
-   - Fill out the required details and submit
-   - Wait for approval (usually 2-5 business days)
+   - Navigate to **Account & Settings** → **Payment Methods**
+   - Under **International Payments**, click **Request**.
+   - Fill out the required details and submit.
+   - Wait for approval (usually 2-5 business days).
 
 3. **After Approval:**
-   - Disable currency conversion: Set `payment.currency.convertAEDtoINR` = `false`
-   - Payments will be processed in AED directly
-   - International cards will be accepted
+   - International cards will be accepted for your INR payments.
+   - Your customers from outside India can pay using their local cards.
 
 4. **Razorpay Support:**
    - Email: support@razorpay.com
    - Dashboard: Settings → Help & Support
 
-### Solution 3: Use Indian Payment Methods Only
+### Solution 3: Use Indian Payment Methods Only (For Testing)
 
-If you're primarily targeting Indian customers:
-- Keep currency conversion enabled (AED → INR)
-- Use Indian payment methods (UPI, Net Banking, Indian Cards)
-- This avoids international card issues completely
-
-## Configuration Guide
-
-### Enable/Disable Currency Conversion
-
-**Via Settings API or Admin Panel:**
-```javascript
-// Enable conversion (default)
-payment.currency.convertAEDtoINR = true
-payment.currency.aedToInrRate = 22.5
-
-// Disable conversion (requires international payments enabled)
-payment.currency.convertAEDtoINR = false
-```
-
-**Via Environment Variables:**
-```env
-# Currency conversion (default: enabled)
-PAYMENT_CURRENCY_CONVERT_AED_TO_INR=true
-PAYMENT_CURRENCY_AED_TO_INR_RATE=22.5
-```
+While testing with Razorpay **test keys**:
+- Use Indian payment methods (UPI, Net Banking, Indian Cards).
+- Use Razorpay's Indian test cards: `4111 1111 1111 1111`.
+- This avoids international card issues completely during development.
 
 ## Testing
 
-### Test with Currency Conversion Enabled:
-1. Create a payment for 100 AED
-2. System converts to 2,250 INR automatically
+### Test with INR (Default):
+1. Create a payment for a course or ebook.
+2. The amount will be in INR (₹).
 3. Use Razorpay test cards:
    - Success: `4111 1111 1111 1111`
-   - Any CVV, future expiry date
-
-### Test with International Payments Enabled:
-1. Disable currency conversion
-2. Create payment in AED
-3. Use international test cards (if available)
-4. Verify payment processes in AED
+   - Any CVV, future expiry date.
 
 ## Important Notes
 
-1. **Currency Conversion is ON by Default:**
-   - Prevents international card errors
-   - Works with all Razorpay accounts
-   - Exchange rate can be configured
+1. **INR is the Primary Currency:**
+   - Prevents most "international cards not supported" errors.
+   - Simplified payment flow.
+   - Consistent pricing across the platform.
 
 2. **Invoice Display:**
-   - Invoice shows original amount in AED
-   - Payment notes include conversion details
-   - Customer sees AED price, pays in INR equivalent
-
-3. **Exchange Rate:**
-   - Default: 1 AED = 22.5 INR
-   - Update regularly for accurate conversion
-   - Can be set per payment if needed
+   - Invoices now show amounts in INR (₹).
+   - All financial reporting and analytics use INR.
 
 ## Troubleshooting
 
 ### Error: "International cards not supported"
-**Fix:** Enable currency conversion OR enable international payments in Razorpay
+**Fix:** Use an Indian test card (`4111 1111 1111 1111`) during testing. For production, enable international payments in your Razorpay dashboard.
 
 ### Error: "Invalid currency"
-**Fix:** Ensure currency conversion is enabled for AED → INR
-
-### Payment succeeds but wrong amount
-**Fix:** Check and update `payment.currency.aedToInrRate` setting
-
-### Want to use AED directly
-**Fix:** 
-1. Enable international payments in Razorpay dashboard
-2. Disable currency conversion setting
-3. Contact Razorpay support for approval
+**Fix:** Ensure your Razorpay account is configured to accept INR (which is the default for all Indian accounts).
 
 ## Contact Information
 
@@ -143,22 +96,9 @@ PAYMENT_CURRENCY_AED_TO_INR_RATE=22.5
 - **Razorpay Dashboard:** https://dashboard.razorpay.com
 - **International Payments Docs:** https://razorpay.com/docs/payments/international-payments/
 
-## Quick Fix Checklist
+## Quick Checklist
 
-- [ ] Verify currency conversion is enabled (default)
-- [ ] Check exchange rate is accurate
-- [ ] Test payment with INR (converted from AED)
-- [ ] Use Razorpay test cards
-- [ ] Verify callback handling works
-- [ ] Check invoice shows correct amounts
-
-## Long-term Fix Checklist
-
-- [ ] Complete Razorpay KYC verification
-- [ ] Add required legal pages to website
-- [ ] Request international payments in Razorpay dashboard
-- [ ] Wait for approval (2-5 business days)
-- [ ] Disable currency conversion after approval
-- [ ] Test payments in AED directly
-- [ ] Verify international cards work
-
+- [ ] Prices displayed in INR (₹)?
+- [ ] Payment processes in INR?
+- [ ] Using Indian test card (`4111 1111 1111 1111`)?
+- [ ] International payments requested in Razorpay (for live use)?

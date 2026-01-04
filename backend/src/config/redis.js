@@ -102,7 +102,7 @@ export const getRedisClient = () => {
 
       const now = Date.now();
       if (now - lastErrorLogTime > ERROR_LOG_INTERVAL) {
-        console.warn("[Redis] Connection error:", error.message);
+        console.warn("[Redis] Connection error:", error.message || error || "Unknown connection error");
         lastErrorLogTime = now;
       }
     });

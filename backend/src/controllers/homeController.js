@@ -25,7 +25,7 @@ export const getHomePageData = async (req, res, next) => {
       // Get featured books (limit to 6 for home page)
       EbookResource.find({ 
         isPublic: true,
-        featured: true 
+        "metadata.isFeatured": true 
       })
         .sort({ createdAt: -1 })
         .limit(6)
@@ -37,7 +37,7 @@ export const getHomePageData = async (req, res, next) => {
         .lean(),
       
       // Get testimonials
-      Testimonial.find({ isActive: true })
+      Testimonial.find({ status: "published" })
         .sort({ createdAt: -1 })
         .lean(),
     ]);

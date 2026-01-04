@@ -6,8 +6,12 @@ import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { FaArrowLeft, FaLock, FaCreditCard, FaSpinner } from "react-icons/fa";
 import { fetchEbookById } from "../../../src/services/api/resources";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 import bookGrammarImg from "../../../src/assets/images/books/grammar.png";
-import { createPayment, createRazorpayPaymentLink } from "../../../src/services/api/payments";
+import {
+  createPayment,
+  createRazorpayPaymentLink,
+} from "../../../src/services/api/payments";
 
 const BookPayment = () => {
   const { id } = useParams();
@@ -33,13 +37,18 @@ const BookPayment = () => {
         const ebook = await fetchEbookById(id);
         if (ebook) {
           // Transform backend data to frontend format
-          const price = ebook.metadata?.price !== undefined && ebook.metadata.price !== null && ebook.metadata.price !== "" ? Number(ebook.metadata.price) : 0;
+          const price =
+            ebook.metadata?.price !== undefined &&
+            ebook.metadata.price !== null &&
+            ebook.metadata.price !== ""
+              ? Number(ebook.metadata.price)
+              : 0;
           const transformedBook = {
             id: ebook._id || id,
             title: ebook.title,
             author: ebook.metadata?.author || "Digital AELA",
             price: price,
-            currency: "AED", // Default to AED
+            currency: "INR", // Default to INR
             format: "ebook", // All books from API are ebooks
             image: ebook.metadata?.coverImage || bookGrammarImg,
           };
@@ -73,7 +82,7 @@ const BookPayment = () => {
       // Step 1: Create payment record
       const paymentResponse = await createPayment({
         amount: book.price,
-        currency: book.currency || "AED",
+        currency: book.currency || "INR",
         description: `Payment for ${book.title} by ${book.author}`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
@@ -97,7 +106,9 @@ const BookPayment = () => {
       window.location.href = linkResponse.paymentLink.url;
     } catch (error) {
       console.error("[Payment] Error processing payment:", error);
-      toast.error(error.message || "Failed to process payment. Please try again.");
+      toast.error(
+        error.message || "Failed to process payment. Please try again."
+      );
       setIsProcessing(false);
     }
   };
@@ -196,7 +207,7 @@ const BookPayment = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-400">Subtotal</span>
                     <span className="text-white font-semibold">
-                      {book.currency || "AED"} {book.price}
+                      {formatCurrency(book.price)}
                     </span>
                   </div>
                   {book.format === "physical" && (
@@ -208,7 +219,7 @@ const BookPayment = () => {
                   <div className="flex justify-between items-center pt-4 border-t border-gray-700">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-2xl font-bold text-[#D4AF37] font-display">
-                      {book.currency || "AED"} {book.price}
+                      {formatCurrency(book.price)}
                     </span>
                   </div>
                 </div>
@@ -402,7 +413,7 @@ const BookPayment = () => {
                         Processing...
                       </>
                     ) : (
-                      `Pay ${book.currency || "AED"} ${book.price} - Complete Purchase`
+                      `Pay ${formatCurrency(book.price)} - Complete Purchase`
                     )}
                   </motion.button>
 

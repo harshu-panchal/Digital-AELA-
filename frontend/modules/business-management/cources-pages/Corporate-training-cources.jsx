@@ -13,6 +13,7 @@ import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import TranslatedText from "../../../src/components/TranslatedText";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
+import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const CorporateTrainingCourses = () => {
   // WhatsApp integration
@@ -49,14 +50,35 @@ const CorporateTrainingCourses = () => {
             id: course._id,
             slug: course._id,
             title: course.title || "Untitled Course",
-            description: course.description || course.metadata?.subtitle || course.subtitle || "",
-            image: course.thumbnailUrl || course.thumbnail || course.image || course.coverImage || "",
-            rawPrice: typeof course.price === 'string'
-              ? parseFloat(course.price.replace(/[^0-9.]/g, ''))
-              : course.price, // Store original numeric price, handling string formats
-            price: course.price === 0 ? "Free" : course.price ? `AED ${course.price}` : "On Request",
-            duration: course.duration ? `${course.duration} hours` : course.metadata?.duration || "",
-            format: course.metadata?.deliveryMode || course.deliveryMode || course.format || "",
+            description:
+              course.description ||
+              course.metadata?.subtitle ||
+              course.subtitle ||
+              "",
+            image:
+              course.thumbnailUrl ||
+              course.thumbnail ||
+              course.image ||
+              course.coverImage ||
+              "",
+            rawPrice:
+              typeof course.price === "string"
+                ? parseFloat(course.price.replace(/[^0-9.]/g, ""))
+                : course.price, // Store original numeric price, handling string formats
+            price:
+              course.price === 0
+                ? "Free"
+                : course.price
+                ? formatCurrency(course.price)
+                : "On Request",
+            duration: course.duration
+              ? `${course.duration} hours`
+              : course.metadata?.duration || "",
+            format:
+              course.metadata?.deliveryMode ||
+              course.deliveryMode ||
+              course.format ||
+              "",
             features: course.metadata?.tags || course.tags || [],
             isCustom: false, // Backend courses are not custom by default
           }));
@@ -92,14 +114,20 @@ const CorporateTrainingCourses = () => {
 
     // Check if course is free
     // Prioritize rawPrice lookup
-    const priceValue = (program.rawPrice !== undefined && program.rawPrice !== null)
-      ? (parseFloat(program.rawPrice) || 0)
-      : (typeof program.price === 'number' ? program.price :
-        (typeof program.price === 'string' && program.price.toLowerCase() === 'free') ? 0 :
-          (typeof program.price === 'string' && program.price.includes('Free')) ? 0 :
-            parseFloat(program.price) || 0);
+    const priceValue =
+      program.rawPrice !== undefined && program.rawPrice !== null
+        ? parseFloat(program.rawPrice) || 0
+        : typeof program.price === "number"
+        ? program.price
+        : typeof program.price === "string" &&
+          program.price.toLowerCase() === "free"
+        ? 0
+        : typeof program.price === "string" && program.price.includes("Free")
+        ? 0
+        : parseFloat(program.price) || 0;
 
-    const isFreeCourse = priceValue === 0 || program.price === 0 || program.price === "Free";
+    const isFreeCourse =
+      priceValue === 0 || program.price === 0 || program.price === "Free";
 
     if (isFreeCourse) {
       // Free course - navigate to course detail page for enrollment
@@ -112,7 +140,9 @@ const CorporateTrainingCourses = () => {
           state: { course: payload },
         });
       } else {
-        toast.info("Please view the course details to enroll in this free course.");
+        toast.info(
+          "Please view the course details to enroll in this free course."
+        );
         handleViewCourse(program);
       }
     } else {
@@ -200,38 +230,92 @@ const CorporateTrainingCourses = () => {
     switch (iconName) {
       case "clock":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         );
       case "video":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
           </svg>
         );
       case "briefcase":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
           </svg>
         );
       case "teacher":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            />
           </svg>
         );
       case "handshake":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
           </svg>
         );
       case "globe":
         return (
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className={iconClass}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         );
       default:
@@ -248,32 +332,31 @@ const CorporateTrainingCourses = () => {
         url="https://digitalaela.com/courses/corporate-training"
       />
       {/* Hero Section */}
-      <motion.section
-        className="relative overflow-hidden bg-black pt-[90px] pb-20 md:pt-[140px] md:pb-28">
+      <motion.section className="relative overflow-hidden bg-black pt-[90px] pb-20 md:pt-[140px] md:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-[12%] h-104 w-104 rounded-full bg-[#D4AF37]/18 blur-[180px]" />
           <div className="absolute bottom-[-25%] right-[20%] h-112 w-md rounded-full bg-[#6A8BFF]/12 blur-[220px]" />
         </div>
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex-1 space-y-6 text-left">
-            <motion.span
-              className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
+            <motion.span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black shadow-[0_12px_30px_rgba(212,175,55,0.25)]">
               <TranslatedText>Corporate Training Excellence</TranslatedText>
             </motion.span>
-            <motion.h1
-              className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+            <motion.h1 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
               <TranslatedText>Empower Your Team with</TranslatedText>
             </motion.h1>
-            <motion.h2
-              className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
+            <motion.h2 className="bg-linear-to-r from-[#D4AF37] via-[#E5C158] to-[#D4AF37] bg-clip-text text-2xl font-semibold text-transparent sm:text-3xl">
               <TranslatedText>Professional English</TranslatedText>
             </motion.h2>
-            <motion.p
-              className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
-              <TranslatedText>Transform your workforce with professional English training programs including Public Speaking, Communication & Accent Training, Leadership Skills, and Host/Anchor Training. Available across South Asia and Gulf regions.</TranslatedText>
+            <motion.p className="max-w-xl text-sm text-gray-300 sm:text-base lg:text-lg">
+              <TranslatedText>
+                Transform your workforce with professional English training
+                programs including Public Speaking, Communication & Accent
+                Training, Leadership Skills, and Host/Anchor Training. Available
+                across South Asia and Gulf regions.
+              </TranslatedText>
             </motion.p>
-            <motion.div
-              className="flex flex-col gap-4 sm:flex-row">
+            <motion.div className="flex flex-col gap-4 sm:flex-row">
               <motion.a
                 href={whatsappUrl}
                 target="_blank"
@@ -288,8 +371,7 @@ const CorporateTrainingCourses = () => {
               </motion.a>
             </motion.div>
           </div>
-          <motion.div
-            className="relative mx-auto flex-1 max-w-[420px]">
+          <motion.div className="relative mx-auto flex-1 max-w-[420px]">
             <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-linear-to-br from-[#D4AF37]/35 via-transparent to-[#6A8BFF]/25 blur-2xl" />
             <img
               src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&auto=format&fit=crop&q=80"
@@ -302,14 +384,14 @@ const CorporateTrainingCourses = () => {
       </motion.section>
 
       {/* Training Programs Section */}
-      <motion.section
-        id="programs"
-        className="py-20 bg-black">
+      <motion.section id="programs" className="py-20 bg-black">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              <TranslatedText>Our Training</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Programs</TranslatedText></span>
+              <TranslatedText>Our Training</TranslatedText>{" "}
+              <span className="text-[#D4AF37]">
+                <TranslatedText>Programs</TranslatedText>
+              </span>
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
               Professional training programs in Public Speaking, Communication &
@@ -321,7 +403,9 @@ const CorporateTrainingCourses = () => {
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="text-[#D4AF37] text-lg"><TranslatedText>Loading courses...</TranslatedText></div>
+              <div className="text-[#D4AF37] text-lg">
+                <TranslatedText>Loading courses...</TranslatedText>
+              </div>
             </div>
           )}
 
@@ -345,7 +429,10 @@ const CorporateTrainingCourses = () => {
                     }}>
                     <div className="h-40 w-full overflow-hidden">
                       <LazyImage
-                        src={getMediaUrl(program.image) || "https://via.placeholder.com/300x200?text=Course"}
+                        src={
+                          getMediaUrl(program.image) ||
+                          "https://via.placeholder.com/300x200?text=Course"
+                        }
                         alt={program.title}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         fallbackSrc="https://via.placeholder.com/300x200?text=Course"
@@ -400,12 +487,18 @@ const CorporateTrainingCourses = () => {
                             <TranslatedText>Key Highlights</TranslatedText>
                           </p>
                           <ul className="space-y-2 text-xs md:text-sm text-gray-300">
-                            {program.features.slice(0, 3).map((feature, idx) => (
-                              <li key={idx} className="flex items-center gap-2">
-                                <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
-                                <span className="line-clamp-1"><TranslatedText>{feature}</TranslatedText></span>
-                              </li>
-                            ))}
+                            {program.features
+                              .slice(0, 3)
+                              .map((feature, idx) => (
+                                <li
+                                  key={idx}
+                                  className="flex items-center gap-2">
+                                  <span className="h-[2px] w-2 rounded-full bg-[#D4AF37]/40 flex-shrink-0"></span>
+                                  <span className="line-clamp-1">
+                                    <TranslatedText>{feature}</TranslatedText>
+                                  </span>
+                                </li>
+                              ))}
                           </ul>
                         </div>
                       )}
@@ -447,25 +540,33 @@ const CorporateTrainingCourses = () => {
           )}
 
           {/* No Courses Message */}
-          {!loading && corporateTrainingCourses.filter((p) => !p.isCustom).length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-gray-300 text-lg"><TranslatedText>No Corporate Training courses available yet.</TranslatedText></p>
-            </div>
-          )}
+          {!loading &&
+            corporateTrainingCourses.filter((p) => !p.isCustom).length ===
+              0 && (
+              <div className="text-center py-20">
+                <p className="text-gray-300 text-lg">
+                  <TranslatedText>
+                    No Corporate Training courses available yet.
+                  </TranslatedText>
+                </p>
+              </div>
+            )}
         </div>
       </motion.section>
 
       {/* Why Choose Corporate Training Section */}
-      <motion.section
-        className="py-20 bg-[#141414]">
+      <motion.section className="py-20 bg-[#141414]">
         <div className="layout-container">
-          <motion.div
-            className="text-center mb-16">
+          <motion.div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display tracking-tight leading-none">
-              <TranslatedText>Why Choose</TranslatedText> <span className="text-[#D4AF37]">Digital AELA</span>?
+              <TranslatedText>Why Choose</TranslatedText>{" "}
+              <span className="text-[#D4AF37]">Digital AELA</span>?
             </h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-              <TranslatedText>Your partner in building a strong future with knowledge that creates income, and income that creates freedom</TranslatedText>
+              <TranslatedText>
+                Your partner in building a strong future with knowledge that
+                creates income, and income that creates freedom
+              </TranslatedText>
             </p>
           </motion.div>
 
@@ -496,8 +597,7 @@ const CorporateTrainingCourses = () => {
       </motion.section>
 
       {/* Training Methodology Section */}
-      <motion.section
-        className="py-20 bg-[#141414]">
+      <motion.section className="py-20 bg-[#141414]">
         <div className="layout-container">
           <div className="auto-grid-sm lg:grid-cols-2 lg:gap-12 items-center">
             {/* Left Side - Content */}
@@ -511,12 +611,19 @@ const CorporateTrainingCourses = () => {
 
               {/* Main Heading */}
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-display tracking-tight leading-none">
-                <TranslatedText>Proven Training</TranslatedText> <span className="text-[#D4AF37]"><TranslatedText>Approach</TranslatedText></span>
+                <TranslatedText>Proven Training</TranslatedText>{" "}
+                <span className="text-[#D4AF37]">
+                  <TranslatedText>Approach</TranslatedText>
+                </span>
               </h2>
 
               {/* Description */}
               <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                <TranslatedText>Our comprehensive training methodology combines interactive learning, real-world scenarios, and continuous assessment to ensure maximum impact and measurable results for your team.</TranslatedText>
+                <TranslatedText>
+                  Our comprehensive training methodology combines interactive
+                  learning, real-world scenarios, and continuous assessment to
+                  ensure maximum impact and measurable results for your team.
+                </TranslatedText>
               </p>
 
               {/* Methodology Points */}
@@ -543,9 +650,7 @@ const CorporateTrainingCourses = () => {
                       "Regular assessments and detailed reports to track improvement and ROI.",
                   },
                 ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="flex gap-4">
+                  <motion.div key={index} className="flex gap-4">
                     <div className="shrink-0 w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
                       <svg
                         className="w-5 h-5 text-[#D4AF37]"
@@ -574,8 +679,7 @@ const CorporateTrainingCourses = () => {
             </motion.div>
 
             {/* Right Side - Visual/Stats */}
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 { number: "500+", label: "Companies Trained" },
                 { number: "10,000+", label: "Professionals Certified" },
@@ -599,12 +703,11 @@ const CorporateTrainingCourses = () => {
       </motion.section>
 
       {/* Custom Training Request Section */}
-      <motion.section
-        className="py-20 bg-[#0b0b0b]">
+      <motion.section className="py-20 bg-[#0b0b0b]">
         <div className="layout-container">
-          {corporateTrainingCourses
-            .filter((program) => program.isCustom)
-            .length > 0 && corporateTrainingCourses
+          {corporateTrainingCourses.filter((program) => program.isCustom)
+            .length > 0 &&
+            corporateTrainingCourses
               .filter((program) => program.isCustom)
               .map((program, index) => (
                 <motion.div
@@ -645,7 +748,9 @@ const CorporateTrainingCourses = () => {
                               d="M5 13l4 4L19 7"
                             />
                           </svg>
-                          <span><TranslatedText>{feature}</TranslatedText></span>
+                          <span>
+                            <TranslatedText>{feature}</TranslatedText>
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -663,14 +768,16 @@ const CorporateTrainingCourses = () => {
                 </motion.div>
               ))}
 
-          {corporateTrainingCourses.filter((program) => program.isCustom).length === 0 && (
+          {corporateTrainingCourses.filter((program) => program.isCustom)
+            .length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-300 text-lg">Custom training programs can be requested via WhatsApp.</p>
+              <p className="text-gray-300 text-lg">
+                Custom training programs can be requested via WhatsApp.
+              </p>
             </div>
           )}
 
-          <motion.div
-            className="flex justify-center">
+          <motion.div className="flex justify-center">
             <motion.a
               href={whatsappUrl}
               target="_blank"
@@ -686,3 +793,4 @@ const CorporateTrainingCourses = () => {
 };
 
 export default CorporateTrainingCourses;
+
