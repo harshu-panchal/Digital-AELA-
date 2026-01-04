@@ -10,7 +10,7 @@ import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
 import { AnimatePresence, motion } from "framer-motion";
 // Import worker file from pdfjs-dist
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import {
   FaArrowLeft,
   FaArrowRight,

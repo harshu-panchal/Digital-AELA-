@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaPlay, FaTimes } from "react-icons/fa";
 import { getMediaUrl } from "../../../../src/utils/mediaUrl";
-import { formatCurrency } from "../../../../utils/currencyUtils";
+import { formatCurrency } from "../../../../src/utils/currencyUtils";
 
 const CoursePreview = ({ course }) => {
   const [previewingVideo, setPreviewingVideo] = useState(null);

@@ -1,4 +1,4 @@
-import { formatCurrency } from "../../utils/currencyUtils";
+import { formatCurrency } from "../utils/currencyUtils";
 
 const STORAGE_KEY = "aela.student.dashboard";
 

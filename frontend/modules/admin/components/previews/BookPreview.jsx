@@ -1,4 +1,4 @@
-import { formatCurrency } from "../../../../utils/currencyUtils";
+import { formatCurrency } from "../../../../src/utils/currencyUtils";
 
 const BookPreview = ({ ebook }) => {
   if (!ebook) return null;
