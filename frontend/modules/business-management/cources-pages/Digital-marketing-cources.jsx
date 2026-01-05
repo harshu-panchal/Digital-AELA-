@@ -30,7 +30,10 @@ const DigitalMarketingCourses = () => {
     const loadCourses = async () => {
       try {
         setLoading(true);
-        const response = await fetchPublishedCourses();
+        const response = await fetchPublishedCourses({
+          category: "Digital Marketing",
+          limit: 100,
+        });
 
         if (!response || !response.courses) {
           console.warn("No courses data received from API");

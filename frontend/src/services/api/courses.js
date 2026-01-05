@@ -11,6 +11,12 @@ export const fetchPublishedCourses = async (options = {}) => {
   if (options.premium) {
     params.set("premium", "true");
   }
+  if (options.category) {
+    params.set("category", options.category);
+  }
+  if (options.limit) {
+    params.set("limit", options.limit);
+  }
   const query = params.toString();
   return apiRequest(`/courses${query ? `?${query}` : ""}`, {
     method: "GET",

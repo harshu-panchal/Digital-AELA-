@@ -140,7 +140,9 @@ const refreshTokensIfNeeded = async (currentTokens) => {
 // Request queue to prevent too many simultaneous requests
 const requestQueue = [];
 let activeRequests = 0;
-const MAX_CONCURRENT_REQUESTS = 5; // Reduced from 10 to prevent rate limiting
+const MAX_CONCURRENT_REQUESTS = 5;
+const MAX_QUEUE_SIZE = 100; // Prevent infinite queue growth
+const QUEUE_TIMEOUT = 60000; // 60 seconds max in queue
 
 // Request deduplication cache - prevents duplicate requests within a short time window
 const requestCache = new Map();
@@ -153,22 +155,49 @@ const getRequestKey = (endpoint, method, body) => {
 };
 
 const processQueue = async () => {
-  if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) {
-    return;
-  }
-
-  const { resolve, reject, endpoint, options } = requestQueue.shift();
-  activeRequests++;
+  // Use a lock-like mechanism to prevent concurrent processQueue executions
+  if (processQueue._processing) return;
+  processQueue._processing = true;
 
   try {
-    const result = await executeRequest(endpoint, options);
-    resolve(result);
-  } catch (error) {
-    reject(error);
+    while (
+      activeRequests < MAX_CONCURRENT_REQUESTS &&
+      requestQueue.length > 0
+    ) {
+      const request = requestQueue.shift();
+
+      // Check if request has timed out while waiting in queue
+      if (Date.now() - request.queuedAt > QUEUE_TIMEOUT) {
+        const timeoutError = new Error(
+          "Request timed out while waiting in queue"
+        );
+        timeoutError.code = "QUEUE_TIMEOUT";
+        timeoutError.status = 0;
+        request.reject(timeoutError);
+        continue;
+      }
+
+      activeRequests++;
+
+      // Execute the request without blocking the queue processing
+      (async () => {
+        try {
+          const result = await executeRequest(
+            request.endpoint,
+            request.options
+          );
+          request.resolve(result);
+        } catch (error) {
+          request.reject(error);
+        } finally {
+          activeRequests--;
+          // Trigger queue processing again when a slot opens up
+          setTimeout(processQueue, 0);
+        }
+      })();
+    }
   } finally {
-    activeRequests--;
-    // Process next request in queue
-    setTimeout(processQueue, 0);
+    processQueue._processing = false;
   }
 };
 
@@ -515,8 +544,23 @@ export const apiRequest = async (endpoint, options = {}) => {
   const requestPromise = (async () => {
     // Queue request if we're at max concurrent requests
     if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+      if (requestQueue.length >= MAX_QUEUE_SIZE) {
+        const queueFullError = new Error(
+          "Request queue is full. Please try again later."
+        );
+        queueFullError.code = "QUEUE_FULL";
+        queueFullError.status = 0;
+        throw queueFullError;
+      }
+
       return new Promise((resolve, reject) => {
-        requestQueue.push({ resolve, reject, endpoint, options });
+        requestQueue.push({
+          resolve,
+          reject,
+          endpoint,
+          options,
+          queuedAt: Date.now(),
+        });
         processQueue();
       });
     }

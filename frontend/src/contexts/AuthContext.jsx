@@ -14,6 +14,8 @@ import { updateRecruiterProfile } from "../services/api/recruiter.js";
 import { isTokenExpired, getTokenExpiration } from "../utils/jwt.js";
 import { refreshRecruiterSession } from "../services/api/auth.js";
 
+import { generateUUID, generateShortId } from "../utils/uuid";
+
 const AuthContext = createContext(null);
 
 const STORAGE_KEYS = {
@@ -21,18 +23,8 @@ const STORAGE_KEYS = {
   SESSION: "aela.auth.session",
 };
 
-const fallbackId = (prefix = "user") =>
-  `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`;
-
 const generateId = (prefix) => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    try {
-      return crypto.randomUUID();
-    } catch {
-      return fallbackId(prefix);
-    }
-  }
-  return fallbackId(prefix);
+  return prefix ? generateShortId(prefix) : generateUUID();
 };
 
 export const ROLE_DETAILS = {

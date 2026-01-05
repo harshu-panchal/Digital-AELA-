@@ -13,29 +13,29 @@ export const getHomePageData = async (req, res, next) => {
     // Fetch all data in parallel
     const [courses, books, gallery, testimonials] = await Promise.all([
       // Get premium courses (limit to 6 for home page)
-      Course.find({ 
+      Course.find({
         status: "published",
-        "metadata.isPremium": true 
+        isPremium: true
       })
         .populate("instructor", "fullName email")
         .sort({ createdAt: -1 })
         .limit(6)
         .lean(),
-      
+
       // Get featured books (limit to 6 for home page)
-      EbookResource.find({ 
+      EbookResource.find({
         isPublic: true,
-        "metadata.isFeatured": true 
+        "metadata.isFeatured": true
       })
         .sort({ createdAt: -1 })
         .limit(6)
         .lean(),
-      
+
       // Get gallery images
       Gallery.find({ isActive: true })
         .sort({ createdAt: -1 })
         .lean(),
-      
+
       // Get testimonials
       Testimonial.find({ status: "published" })
         .sort({ createdAt: -1 })

@@ -128,7 +128,14 @@ app.use(compression({
 // Increase body parser limits for file uploads
 // Note: For multipart/form-data (file uploads), multer handles parsing
 // But we still need these for other content types
-app.use(express.json({ limit: "10gb" })); // Increased for large video uploads
+// Exclude Razorpay webhook from global JSON parsing to allow signature verification on raw body
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/v1/payments/razorpay/webhook") {
+    next();
+  } else {
+    express.json({ limit: "10gb" })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true, limit: "10gb" })); // Added for form data
 app.use(morgan("dev"));
 

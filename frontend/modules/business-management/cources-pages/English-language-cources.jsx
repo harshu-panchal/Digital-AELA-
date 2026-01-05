@@ -30,7 +30,10 @@ const EnglishLanguageCourses = () => {
     const loadCourses = async () => {
       try {
         setLoading(true);
-        const response = await fetchPublishedCourses();
+        const response = await fetchPublishedCourses({
+          category: "English Language",
+          limit: 100, // Fetch more if available
+        });
 
         if (!response || !response.courses) {
           console.warn("No courses data received from API");

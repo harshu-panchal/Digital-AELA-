@@ -23,10 +23,7 @@ const GenericCategoryPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [categoryData, coursesData] = await Promise.all([
-          fetchCategoryBySlug(slug),
-          fetchPublishedCourses(),
-        ]);
+        const categoryData = await fetchCategoryBySlug(slug);
 
         if (!categoryData) {
           toast.error("Category not found");
@@ -36,7 +33,12 @@ const GenericCategoryPage = () => {
 
         setCategory(categoryData);
 
-        // Filter courses by category name
+        const coursesData = await fetchPublishedCourses({
+          category: categoryData.name,
+          limit: 100,
+        });
+
+        // Filter courses by category name (as a fallback or for strictness)
         const filteredCourses = (coursesData.courses || [])
           .filter(
             (c) => c.category?.toLowerCase() === categoryData.name.toLowerCase()

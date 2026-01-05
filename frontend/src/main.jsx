@@ -15,84 +15,31 @@ import App from "./App.jsx";
 
 // Diagnostic check for production API configuration
 if (import.meta.env.PROD && typeof window !== "undefined") {
-  const apiUrl = API_BASE_URL;
-  const envUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL || "";
+  const envUrl = import.meta.env.VITE_API_URL || "";
 
   // Check if API URL is pointing to localhost in production (configuration error)
-  if (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1")) {
+  if (apiUrl && (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1"))) {
     console.error(
       "%c🚨 PRODUCTION CONFIGURATION ERROR 🚨",
       "color: red; font-size: 16px; font-weight: bold;"
     );
-    console.error(
-      "Translation and API calls will fail because VITE_API_URL is not set correctly.\n" +
-        `Current API URL: ${apiUrl}\n` +
-        `VITE_API_URL from env: ${envUrl || "NOT SET"}\n\n` +
-        "SOLUTION:\n" +
-        "1. Go to your deployment platform (Vercel/Netlify/etc.)\n" +
-        "2. Add environment variable: VITE_API_URL\n" +
-        "3. Set value to: https://your-backend-domain.com/api/v1\n" +
-        "4. Redeploy your application\n\n" +
-        "See TRANSLATION_PRODUCTION_FIX.md for detailed instructions."
-    );
   }
 }
 
-// Suppress harmless console errors (WebSocket, YouTube ads, etc.)
-if (typeof window !== "undefined") {
+// Suppress only specific, truly harmless console errors if needed, 
+// but avoid broad monkey-patching that can hide compatibility issues.
+if (typeof window !== "undefined" && import.meta.env.PROD) {
   const originalError = console.error;
-  const originalWarn = console.warn;
-
-  // Suppress console.error for harmless errors
   console.error = function (...args) {
-    const firstArg = args[0];
-    const message = firstArg?.toString() || "";
-    const stack = firstArg?.stack || "";
-    const fullMessage = args.join(" ").toLowerCase();
-
-    // Suppress Socket.IO WebSocket connection errors
-    const isSocketIOError =
-      (message.includes("WebSocket connection to") ||
-        stack.includes("WebSocket")) &&
-      (message.includes("socket.io") || message.includes("/socket.io/")) &&
-      (message.includes("closed before the connection is established") ||
-        message.includes("failed: WebSocket"));
-
-    // Suppress YouTube/Google Ads blocked errors (harmless - ad blockers)
-    const isYouTubeAdError =
-      fullMessage.includes("err_blocked_by_client") ||
-      fullMessage.includes("doubleclick.net") ||
-      fullMessage.includes("googleads.g.doubleclick.net") ||
-      fullMessage.includes("ad_status.js") ||
-      (message.includes("GET") && fullMessage.includes("doubleclick"));
-
-    if (isSocketIOError || isYouTubeAdError) {
-      // Silently ignore - these are expected and harmless
+    const message = args[0]?.toString() || "";
+    
+    // Only suppress very specific known harmless noise in production
+    if (message.includes("socket.io") && message.includes("WebSocket connection to")) {
       return;
     }
-
-    // Call original console.error for all other errors
+    
     originalError.apply(console, args);
-  };
-
-  // Suppress console.warn for the same harmless errors
-  console.warn = function (...args) {
-    const fullMessage = args.join(" ").toLowerCase();
-
-    // Suppress YouTube/Google Ads blocked warnings
-    const isYouTubeAdWarning =
-      fullMessage.includes("err_blocked_by_client") ||
-      fullMessage.includes("doubleclick.net") ||
-      fullMessage.includes("googleads.g.doubleclick.net") ||
-      fullMessage.includes("ad_status.js");
-
-    if (isYouTubeAdWarning) {
-      // Silently ignore - these are expected and harmless
-      return;
-    }
-
-    // Call original console.warn for all other warnings
-    originalWarn.apply(console, args);
   };
 }
 

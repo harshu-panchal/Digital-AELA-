@@ -21,6 +21,7 @@ import { fetchConversations } from "../services/api/messages";
 import { isNetworkError } from "../services/api/baseClient";
 import { useSmartPolling } from "../hooks/useSmartPolling";
 import { fetchNotifications } from "../services/api/notifications";
+import { generateUUID } from "../utils/uuid";
 
 const UserContext = createContext(null);
 
@@ -569,14 +570,15 @@ export const UserProvider = ({ children }) => {
       }
     } catch (error) {
       // Silently handle "Invalid user ID" errors (user might not be fully registered yet)
-      const isInvalidUserId = error.message?.includes("Invalid user ID") || 
-                              error.code === "VALIDATION_ERROR";
-      
+      const isInvalidUserId =
+        error.message?.includes("Invalid user ID") ||
+        error.code === "VALIDATION_ERROR";
+
       if (isInvalidUserId) {
         // User ID format might not match backend expectations yet, silently ignore
         return;
       }
-      
+
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load followers:", error.message);
       } else if (!isNetworkError(error) && !error.suppressConsoleError) {
@@ -605,14 +607,15 @@ export const UserProvider = ({ children }) => {
       }
     } catch (error) {
       // Silently handle "Invalid user ID" errors (user might not be fully registered yet)
-      const isInvalidUserId = error.message?.includes("Invalid user ID") || 
-                              error.code === "VALIDATION_ERROR";
-      
+      const isInvalidUserId =
+        error.message?.includes("Invalid user ID") ||
+        error.code === "VALIDATION_ERROR";
+
       if (isInvalidUserId) {
         // User ID format might not match backend expectations yet, silently ignore
         return;
       }
-      
+
       if (isNetworkError(error) && !isDevelopment) {
         console.error("[UserContext] Failed to load following:", error.message);
       } else if (!isNetworkError(error) && !error.suppressConsoleError) {
@@ -653,9 +656,9 @@ export const UserProvider = ({ children }) => {
           // Refresh counts and lists sequentially to avoid rate limiting
           // Small delay between each to spread out requests
           await loadSocialStats();
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           await reloadFollowers();
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           await reloadFollowing();
           resolve();
         } catch (error) {
@@ -1082,7 +1085,9 @@ export const UserProvider = ({ children }) => {
           return {
             id: authUser.id,
             name: authUser.fullName,
-            title: authUser.role ? `${getRoleLabel(authUser.role)} · Digital AELA` : "User",
+            title: authUser.role
+              ? `${getRoleLabel(authUser.role)} · Digital AELA`
+              : "User",
             coins: aelaPoints,
             followers: 0,
             following: 0,
@@ -1122,8 +1127,8 @@ export const UserProvider = ({ children }) => {
       if (authUser.role === "student" && authUser.id && tokens?.accessToken) {
         try {
           // Small initial delay to stagger requests and prevent rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           const { fetchStudentProfile } = await import(
             "../services/api/student"
           );
@@ -1135,7 +1140,7 @@ export const UserProvider = ({ children }) => {
           const profileData = await fetchStudentProfile(authUser.id);
 
           // Small delay between requests
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
 
           // Load dashboard data for badges
           let badgesData = [];
@@ -1182,7 +1187,8 @@ export const UserProvider = ({ children }) => {
           setProfile((prev) => {
             const baseProfile = prev || {
               id: authUser.id,
-              name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+              name:
+                authUser.fullName || authUser.email?.split("@")[0] || "User",
               coins: aelaPoints,
               followers: 0,
               following: 0,
@@ -1192,7 +1198,8 @@ export const UserProvider = ({ children }) => {
             return {
               ...baseProfile,
               id: authUser.id ?? baseProfile.id,
-              name: authUser.fullName || authUser.email?.split("@")[0] || "User",
+              name:
+                authUser.fullName || authUser.email?.split("@")[0] || "User",
               title:
                 metadata.title ??
                 (authUser.role
@@ -1241,12 +1248,12 @@ export const UserProvider = ({ children }) => {
                 [],
               avatar: avatarUrl || baseProfile.avatar || null,
               bannerGradient:
-                metadata.bannerGradient ?? baseProfile.bannerGradient ?? defaultProfile.bannerGradient,
+                metadata.bannerGradient ??
+                baseProfile.bannerGradient ??
+                defaultProfile.bannerGradient,
               coins: aelaPoints,
               badges:
-                badgesData.length > 0
-                  ? badgesData
-                  : baseProfile.badges || [],
+                badgesData.length > 0 ? badgesData : baseProfile.badges || [],
               metadata,
               role: authUser.role,
               contact: {
@@ -1281,8 +1288,7 @@ export const UserProvider = ({ children }) => {
       }
 
       // For non-students or if StudentProfile fetch failed, use metadata
-      const avatarUrl =
-        metadata.avatarUrl || metadata.avatar || null;
+      const avatarUrl = metadata.avatarUrl || metadata.avatar || null;
 
       setProfile((prev) => {
         const baseProfile = prev || {
@@ -1304,7 +1310,8 @@ export const UserProvider = ({ children }) => {
               ? `${getRoleLabel(authUser.role)} · Digital AELA`
               : baseProfile.title || "User"),
           bio: metadata.bio ?? metadata.goals ?? baseProfile.bio ?? "",
-          country: metadata.country ?? metadata.region ?? baseProfile.country ?? "",
+          country:
+            metadata.country ?? metadata.region ?? baseProfile.country ?? "",
           city: metadata.city ?? baseProfile.city ?? "",
           profession:
             metadata.profession ??
@@ -1316,7 +1323,8 @@ export const UserProvider = ({ children }) => {
             (metadata.experienceYears
               ? `${metadata.experienceYears} years of experience`
               : baseProfile.experience ?? ""),
-          maritalStatus: metadata.maritalStatus ?? baseProfile.maritalStatus ?? "",
+          maritalStatus:
+            metadata.maritalStatus ?? baseProfile.maritalStatus ?? "",
           interests:
             metadata.interests ??
             metadata.contentThemes ??
@@ -1324,7 +1332,9 @@ export const UserProvider = ({ children }) => {
             [],
           avatar: avatarUrl || baseProfile.avatar || null,
           bannerGradient:
-            metadata.bannerGradient ?? baseProfile.bannerGradient ?? defaultProfile.bannerGradient,
+            metadata.bannerGradient ??
+            baseProfile.bannerGradient ??
+            defaultProfile.bannerGradient,
           coins: aelaPoints,
           metadata,
           role: authUser.role,
@@ -1434,10 +1444,7 @@ export const UserProvider = ({ children }) => {
                   ? "Voice message sent"
                   : message.content,
               timestamp: "Now",
-              history: [
-                ...chat.history,
-                { ...message, id: crypto.randomUUID() },
-              ],
+              history: [...chat.history, { ...message, id: generateUUID() }],
             }
           : chat
       )
@@ -1447,7 +1454,7 @@ export const UserProvider = ({ children }) => {
   const addNotification = useCallback((payload) => {
     setNotifications((prev) => [
       {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         time: "Just now",
         type: payload.type || "general",
         title: payload.title,
@@ -1460,7 +1467,7 @@ export const UserProvider = ({ children }) => {
   const recordTransaction = useCallback((entry) => {
     setTransactions((prev) => [
       {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         ...entry,
       },
       ...prev,

@@ -30,7 +30,7 @@ const AnnouncementCreate = () => {
 
   const loadCourses = async () => {
     try {
-      const response = await fetchPublishedCourses();
+      const response = await fetchPublishedCourses({ limit: 100 });
       setCourses(response.courses || []);
     } catch (error) {
       console.error("Failed to load courses:", error);

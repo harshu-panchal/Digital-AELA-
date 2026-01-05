@@ -31,7 +31,10 @@ const CorporateTrainingCourses = () => {
     const loadCourses = async () => {
       try {
         setLoading(true);
-        const response = await fetchPublishedCourses();
+        const response = await fetchPublishedCourses({
+          category: "Corporate Training",
+          limit: 100,
+        });
 
         if (!response || !response.courses) {
           console.warn("No courses data received from API");

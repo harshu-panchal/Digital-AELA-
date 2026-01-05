@@ -48,7 +48,7 @@ const normalizeCoursesUrls = async (courses) => {
  */
 export const getPublishedCourses = async (req, res, next) => {
   try {
-    const { premium, page = 1, limit = 20 } = req.query;
+    const { premium, category, page = 1, limit = 20 } = req.query;
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Max 100 per page
     const skip = (pageNum - 1) * limitNum;
@@ -59,6 +59,15 @@ export const getPublishedCourses = async (req, res, next) => {
     // If premium=true, filter for premium courses
     if (premium === "true" || premium === true) {
       query["metadata.isPremium"] = true;
+    }
+
+    // Filter by category if provided
+    if (category) {
+      // Support both direct category field and metadata.category
+      query.$or = [
+        { category: { $regex: new RegExp(`^${category}$`, "i") } },
+        { "metadata.category": { $regex: new RegExp(`^${category}$`, "i") } },
+      ];
     }
 
     // Fetch courses and total count in parallel

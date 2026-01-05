@@ -24,6 +24,7 @@ import {
   fetchUserPendingBlogs,
 } from "../services/api/blogs";
 import { isNetworkError } from "../services/api/baseClient";
+import { generateUUID } from "../utils/uuid";
 
 const BlogContext = createContext(null);
 
@@ -46,7 +47,9 @@ const seededBlogs = [
       "<h2>Start with clarity</h2><p>Before you step in front of the spotlight, rehearse the first 60 seconds until it feels like breathing.\nAt Digital AELA we break every talk into 3 frames — Hook, Story, Impact.</p><blockquote><strong>Coach Insight:</strong> Confidence loves structure. Build a map, then add emotion.</blockquote><p>Use community practice rooms to receive fast feedback and track your progress after each milestone.</p>",
     likes: 264,
     views: 5940,
-    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    publishedAt: new Date(
+      now.getTime() - 1000 * 60 * 60 * 24 * 3
+    ).toISOString(),
     author: {
       id: "author-imran-khan",
       name: "Imran Khan",
@@ -66,7 +69,8 @@ const seededBlogs = [
           name: "Fatima Hassan",
           avatar: "https://i.pravatar.cc/150?img=47",
         },
-        message: "These structure prompts helped me win my last debate. Highly recommend!",
+        message:
+          "These structure prompts helped me win my last debate. Highly recommend!",
         createdAt: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
         likes: 12,
       },
@@ -98,7 +102,9 @@ const seededBlogs = [
       "<p>Aim for daily momentum, not perfection. Our AI prompts analyze tone and suggest improvements while tracking your consistency.</p><ul><li>Schedule 10 minutes each evening.</li><li>Record quick reflections.</li><li>Track growth in the analytics dashboard.</li></ul><p>Use the insights to plan your next presentation or coaching session.</p>",
     likes: 198,
     views: 3720,
-    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    publishedAt: new Date(
+      now.getTime() - 1000 * 60 * 60 * 24 * 5
+    ).toISOString(),
     author: {
       id: "author-priya-sharma",
       name: "Priya Sharma",
@@ -140,7 +146,9 @@ const seededBlogs = [
       "<p>Challenges spark accountability. Design yours with three levels, each building on the previous one.</p><p>Inside the mentor dashboard we track participation, completion, and ratings to tailor next week's theme.</p>",
     likes: 156,
     views: 2850,
-    publishedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    publishedAt: new Date(
+      now.getTime() - 1000 * 60 * 60 * 24 * 7
+    ).toISOString(),
     author: {
       id: "author-omar-al-farsi",
       name: "Omar Al Farsi",
@@ -159,21 +167,24 @@ const seededBlogs = [
 
 const formatBlog = (blog) => ({
   ...blog,
-  likeCount: blog.likeCount ?? (Array.isArray(blog.likes) ? blog.likes.length : blog.likes ?? 0),
+  likeCount:
+    blog.likeCount ??
+    (Array.isArray(blog.likes) ? blog.likes.length : blog.likes ?? 0),
   commentCount: blog.commentCount ?? blog.comments?.length ?? 0,
 });
 
 const DEFAULT_THUMBNAIL =
   "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80";
 
-const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+const isDevelopment =
+  import.meta.env.DEV || import.meta.env.MODE === "development";
 
 const mapApiBlog = (blog) => {
   const authorId = blog.author?.id ?? blog.author?._id ?? "";
   const recruiterProfile = blog.recruiterProfile ?? {};
 
   const formatted = {
-    id: blog.id ?? blog._id ?? crypto.randomUUID(),
+    id: blog.id ?? blog._id ?? generateUUID(),
     title: blog.title,
     excerpt: blog.excerpt ?? "",
     banner: blog.coverImage ?? blog.thumbnail ?? DEFAULT_THUMBNAIL,
@@ -184,9 +195,13 @@ const mapApiBlog = (blog) => {
       blog.readTime ??
       Math.max(3, Math.round(((blog.content?.length ?? 800) || 800) / 250)),
     content: blog.content ?? "",
-    likes: Array.isArray(blog.likes) ? blog.likes.length : (blog.likes ?? blog.stats?.likes ?? 0),
+    likes: Array.isArray(blog.likes)
+      ? blog.likes.length
+      : blog.likes ?? blog.stats?.likes ?? 0,
     views: blog.views ?? blog.stats?.views ?? 0,
-    likedBy: Array.isArray(blog.likes) ? blog.likes.map((id) => (id._id ? id._id.toString() : id.toString())) : [],
+    likedBy: Array.isArray(blog.likes)
+      ? blog.likes.map((id) => (id._id ? id._id.toString() : id.toString()))
+      : [],
     publishedAt: blog.publishedAt ?? blog.updatedAt ?? new Date().toISOString(),
     author: blog.author
       ? {
@@ -240,8 +255,8 @@ export const BlogProvider = ({ children }) => {
   const { user: authUser } = useAuth();
 
   // Initialize with empty array in production, seeded blogs only in development
-  const [blogs, setBlogs] = useState(() => 
-    isDevelopment 
+  const [blogs, setBlogs] = useState(() =>
+    isDevelopment
       ? seededBlogs.map((blog) => ({
           ...formatBlog(blog),
           source: "seed",
@@ -268,91 +283,95 @@ export const BlogProvider = ({ children }) => {
   const lastLoadTimeRef = useRef(0);
   const MIN_LOAD_INTERVAL = 10000; // Minimum 10 seconds between loads
 
-  const refreshBlogs = useCallback(
-    async (params = {}) => {
-      // Prevent duplicate concurrent requests
-      if (isLoadingRef.current) {
-        return;
-      }
+  const refreshBlogs = useCallback(async (params = {}) => {
+    // Prevent duplicate concurrent requests
+    if (isLoadingRef.current) {
+      return;
+    }
 
-      // Prevent requests too close together (rate limiting protection)
-      const now = Date.now();
-      if (hasLoadedRef.current && now - lastLoadTimeRef.current < MIN_LOAD_INTERVAL) {
-        return;
-      }
+    // Prevent requests too close together (rate limiting protection)
+    const now = Date.now();
+    if (
+      hasLoadedRef.current &&
+      now - lastLoadTimeRef.current < MIN_LOAD_INTERVAL
+    ) {
+      return;
+    }
 
-      try {
-        isLoadingRef.current = true;
-        setIsLoading(true);
-        const response = await fetchPublishedBlogs(params);
-        const remote = response?.data ?? [];
-        setBlogs((prev) => {
-          const localBlogs = prev.filter((blog) => blog.source === "local");
-          const remoteFormatted = remote.map(mapApiBlog);
-          
-          // Create a map of remote blog IDs for quick lookup
-          const remoteBlogIds = new Set(remoteFormatted.map((blog) => blog.id));
-          
-          // Keep backend/seed blogs that aren't in remote response yet (e.g., just created)
-          const existingBackendBlogs = prev.filter(
-            (blog) => blog.source === "backend" && !remoteBlogIds.has(blog.id)
-          );
-          
-          if (remoteFormatted.length > 0) {
-            // Merge: local blogs + existing backend blogs not in remote + remote blogs
-            // Remote blogs will override existing ones if duplicates exist
-            const allBlogs = [...localBlogs, ...existingBackendBlogs, ...remoteFormatted];
-            
-            // Deduplicate by ID, keeping remote blogs when duplicates exist
-            const blogMap = new Map();
-            
-            // First, add local and existing backend blogs
-            for (const blog of [...localBlogs, ...existingBackendBlogs]) {
-              blogMap.set(blog.id, blog);
-            }
-            
-            // Then, add/override with remote blogs (remote takes precedence)
-            for (const blog of remoteFormatted) {
-              blogMap.set(blog.id, blog);
-            }
-            
-            // Sort by publishedAt (newest first), then by createdAt as fallback
-            const sortedBlogs = Array.from(blogMap.values()).sort((a, b) => {
-              const dateA = new Date(a.publishedAt || a.createdAt || 0);
-              const dateB = new Date(b.publishedAt || b.createdAt || 0);
-              return dateB - dateA; // Descending order (newest first)
-            });
-            
-            return sortedBlogs;
+    try {
+      isLoadingRef.current = true;
+      setIsLoading(true);
+      const response = await fetchPublishedBlogs(params);
+      const remote = response?.data ?? [];
+      setBlogs((prev) => {
+        const localBlogs = prev.filter((blog) => blog.source === "local");
+        const remoteFormatted = remote.map(mapApiBlog);
+
+        // Create a map of remote blog IDs for quick lookup
+        const remoteBlogIds = new Set(remoteFormatted.map((blog) => blog.id));
+
+        // Keep backend/seed blogs that aren't in remote response yet (e.g., just created)
+        const existingBackendBlogs = prev.filter(
+          (blog) => blog.source === "backend" && !remoteBlogIds.has(blog.id)
+        );
+
+        if (remoteFormatted.length > 0) {
+          // Merge: local blogs + existing backend blogs not in remote + remote blogs
+          // Remote blogs will override existing ones if duplicates exist
+          const allBlogs = [
+            ...localBlogs,
+            ...existingBackendBlogs,
+            ...remoteFormatted,
+          ];
+
+          // Deduplicate by ID, keeping remote blogs when duplicates exist
+          const blogMap = new Map();
+
+          // First, add local and existing backend blogs
+          for (const blog of [...localBlogs, ...existingBackendBlogs]) {
+            blogMap.set(blog.id, blog);
           }
-          
-          // If no remote blogs, keep existing structure (only seeded blogs in development)
-          if (prev.length > 0) {
-            return prev;
+
+          // Then, add/override with remote blogs (remote takes precedence)
+          for (const blog of remoteFormatted) {
+            blogMap.set(blog.id, blog);
           }
-          // Only return seeded blogs in development mode
-          return isDevelopment 
-            ? seededBlogs.map((blog) => ({
-                ...formatBlog(blog),
-                source: "seed",
-              }))
-            : [];
-        });
-        setLoadError(null);
-        hasLoadedRef.current = true;
-        lastLoadTimeRef.current = Date.now();
-      } catch (error) {
-        // Don't set error for 429 rate limit errors - they're expected
-        if (error?.status !== 429) {
-          setLoadError(error);
+
+          // Sort by publishedAt (newest first), then by createdAt as fallback
+          const sortedBlogs = Array.from(blogMap.values()).sort((a, b) => {
+            const dateA = new Date(a.publishedAt || a.createdAt || 0);
+            const dateB = new Date(b.publishedAt || b.createdAt || 0);
+            return dateB - dateA; // Descending order (newest first)
+          });
+
+          return sortedBlogs;
         }
-      } finally {
-        isLoadingRef.current = false;
-        setIsLoading(false);
+
+        // If no remote blogs, keep existing structure (only seeded blogs in development)
+        if (prev.length > 0) {
+          return prev;
+        }
+        // Only return seeded blogs in development mode
+        return isDevelopment
+          ? seededBlogs.map((blog) => ({
+              ...formatBlog(blog),
+              source: "seed",
+            }))
+          : [];
+      });
+      setLoadError(null);
+      hasLoadedRef.current = true;
+      lastLoadTimeRef.current = Date.now();
+    } catch (error) {
+      // Don't set error for 429 rate limit errors - they're expected
+      if (error?.status !== 429) {
+        setLoadError(error);
       }
-    },
-    []
-  );
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
+    }
+  }, []);
 
   // Load categories and tags from API
   const isLoadingCategoriesRef = useRef(false);
@@ -367,7 +386,10 @@ export const BlogProvider = ({ children }) => {
 
     // Prevent requests too close together (rate limiting protection)
     const now = Date.now();
-    if (hasLoadedCategoriesRef.current && now - lastLoadCategoriesTimeRef.current < MIN_LOAD_INTERVAL) {
+    if (
+      hasLoadedCategoriesRef.current &&
+      now - lastLoadCategoriesTimeRef.current < MIN_LOAD_INTERVAL
+    ) {
       return;
     }
 
@@ -384,7 +406,10 @@ export const BlogProvider = ({ children }) => {
       // Suppress 429 rate limit errors - they're expected
       if (error?.status !== 429) {
         if (isNetworkError(error) && !isDevelopment) {
-          console.error("[BlogContext] Failed to load categories:", error.message);
+          console.error(
+            "[BlogContext] Failed to load categories:",
+            error.message
+          );
         } else if (!isNetworkError(error)) {
           console.warn("Failed to load categories:", error);
         }
@@ -439,7 +464,7 @@ export const BlogProvider = ({ children }) => {
       }
       return [
         {
-          id: draft.id ?? crypto.randomUUID(),
+          id: draft.id ?? generateUUID(),
           title: draft.title,
           thumbnail: draft.thumbnail,
           content: draft.content ?? "",
@@ -458,53 +483,59 @@ export const BlogProvider = ({ children }) => {
 
   const publishBlog = useCallback(
     async (blog) => {
-      const referenceId = blog.id ?? crypto.randomUUID();
+      const referenceId = blog.id ?? generateUUID();
       // Ensure we use the latest profile avatar (URL from metadata.avatarUrl)
-      const authorAvatar = 
-        authUser?.metadata?.avatarUrl || 
-        profile?.avatar || 
+      const authorAvatar =
+        authUser?.metadata?.avatarUrl ||
+        profile?.avatar ||
         "https://i.pravatar.cc/150?img=11";
-      
+
       // Check if user is super-admin (can publish directly)
       const isSuperAdmin = authUser?.role === "super-admin";
-      
+
       // Try to save to backend if user is authenticated
       let savedBlog = null;
       if (authUser) {
         try {
           const blogPayload = {
             title: blog.title,
-            excerpt: blog.excerpt ?? blog.description ?? blog.content?.slice(0, 160) ?? "",
+            excerpt:
+              blog.excerpt ??
+              blog.description ??
+              blog.content?.slice(0, 160) ??
+              "",
             content: blog.content ?? "",
             coverImage: blog.thumbnail || blog.banner || null,
             tags: blog.tags ?? [],
             status: isSuperAdmin ? "published" : "published", // Backend will handle pending for non-super-admins
           };
-          
+
           savedBlog = await createBlog(blogPayload);
-          
+
           // eslint-disable-next-line no-console
           console.log("Blog saved to backend:", savedBlog);
-          
+
           // Immediately add the new blog to state so it appears instantly
           if (savedBlog && (savedBlog._id || savedBlog.id)) {
             const backendBlog = mapApiBlog({
               ...savedBlog,
               id: savedBlog._id || savedBlog.id,
             });
-            
+
             // eslint-disable-next-line no-console
             console.log("Mapped blog for state:", backendBlog);
-            
+
             const blogStatus = savedBlog.status || backendBlog.status;
             const isPending = blogStatus === "pending";
             const isPublished = blogStatus === "published";
-            
+
             if (isPublished) {
               // Add published blog to blogs list
               setBlogs((prev) => {
                 // Check if blog already exists to avoid duplicates
-                const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
+                const existingIndex = prev.findIndex(
+                  (b) => b.id === backendBlog.id
+                );
                 if (existingIndex >= 0) {
                   // Update existing blog
                   const updated = [...prev];
@@ -517,14 +548,16 @@ export const BlogProvider = ({ children }) => {
                 console.log("Updated blogs state, new count:", newBlogs.length);
                 return newBlogs;
               });
-              
+
               toast.success("Blog published successfully!", {
                 toastId: `blog-published-${savedBlog._id || savedBlog.id}`,
               });
             } else if (isPending) {
               // Add pending blog to pending list
               setPendingBlogs((prev) => {
-                const existingIndex = prev.findIndex((b) => b.id === backendBlog.id);
+                const existingIndex = prev.findIndex(
+                  (b) => b.id === backendBlog.id
+                );
                 if (existingIndex >= 0) {
                   const updated = [...prev];
                   updated[existingIndex] = backendBlog;
@@ -532,30 +565,35 @@ export const BlogProvider = ({ children }) => {
                 }
                 return [backendBlog, ...prev];
               });
-              
-              toast.success("Blog submitted for approval. You'll be notified once it's reviewed.", {
-                toastId: `blog-pending-${savedBlog._id || savedBlog.id}`,
-              });
+
+              toast.success(
+                "Blog submitted for approval. You'll be notified once it's reviewed.",
+                {
+                  toastId: `blog-pending-${savedBlog._id || savedBlog.id}`,
+                }
+              );
             }
-            
+
             // Remove from drafts
             setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
-            
+
             // Refresh blogs list in background after a delay to ensure DB has saved
             // This ensures all users see the newly published blog when they visit the blogs page
             // Use a longer delay to ensure the database transaction has completed
             if (isPublished) {
               setTimeout(() => {
-                refreshBlogs().then(() => {
-                  // eslint-disable-next-line no-console
-                  console.log("Blogs refreshed successfully after publish");
-                }).catch((err) => {
-                  // eslint-disable-next-line no-console
-                  console.warn("Background refresh failed:", err);
-                });
+                refreshBlogs()
+                  .then(() => {
+                    // eslint-disable-next-line no-console
+                    console.log("Blogs refreshed successfully after publish");
+                  })
+                  .catch((err) => {
+                    // eslint-disable-next-line no-console
+                    console.warn("Background refresh failed:", err);
+                  });
               }, 1500); // Delay to ensure DB save completes and blog is queryable
             }
-            
+
             return backendBlog;
           } else {
             // eslint-disable-next-line no-console
@@ -575,19 +613,22 @@ export const BlogProvider = ({ children }) => {
           });
         }
       }
-      
+
       // Fallback: Save locally if backend save failed or user not authenticated
       const newBlog = formatBlog({
         id: referenceId,
         title: blog.title,
-        excerpt: blog.excerpt ?? blog.description ?? blog.content?.slice(0, 160) ?? "",
+        excerpt:
+          blog.excerpt ?? blog.description ?? blog.content?.slice(0, 160) ?? "",
         banner: blog.banner ?? blog.thumbnail,
         thumbnail:
           blog.thumbnail ??
           "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80",
         tags: blog.tags ?? [],
         category: blog.category ?? "General",
-        readTime: blog.readTime ?? Math.max(3, Math.round((blog.content?.length ?? 800) / 250)),
+        readTime:
+          blog.readTime ??
+          Math.max(3, Math.round((blog.content?.length ?? 800) / 250)),
         content: blog.content ?? "",
         likes: blog.likes ?? 0,
         views: blog.views ?? 0,
@@ -597,7 +638,9 @@ export const BlogProvider = ({ children }) => {
           name: profile?.name || authUser?.fullName || "User",
           avatar: authorAvatar,
           bio: profile?.bio || authUser?.metadata?.bio || "",
-          role: profile?.title || (authUser?.role ? `${authUser.role} · Digital AELA` : "Member"),
+          role:
+            profile?.title ||
+            (authUser?.role ? `${authUser.role} · Digital AELA` : "Member"),
           social: profile?.socialLinks?.[0],
           followers: profile?.followers || 0,
         },
@@ -607,13 +650,13 @@ export const BlogProvider = ({ children }) => {
 
       setBlogs((prev) => [newBlog, ...prev]);
       setDrafts((prev) => prev.filter((item) => item.id !== blog.id));
-      
+
       if (!savedBlog) {
         toast.success("Blog published successfully!", {
           toastId: `blog-published-${newBlog.id}`,
         });
       }
-      
+
       return newBlog;
     },
     [profile, authUser, refreshBlogs]
@@ -639,19 +682,27 @@ export const BlogProvider = ({ children }) => {
   }, []);
 
   const toggleLike = useCallback(
-    async (blogId, actorName = profile?.name || authUser?.fullName || "User") => {
+    async (
+      blogId,
+      actorName = profile?.name || authUser?.fullName || "User"
+    ) => {
       // Optimistically update UI
       const currentBlog = blogs.find((b) => b.id === blogId);
       const profileIdStr = String(profile?.id || authUser?.id || "");
-      const alreadyLiked = currentBlog?.likedBy?.some((id) => String(id) === profileIdStr);
-      
+      const alreadyLiked = currentBlog?.likedBy?.some(
+        (id) => String(id) === profileIdStr
+      );
+
       // Check if this is a seeded/local blog (not in database)
-      const isSeededBlog = currentBlog?.source === "seed" || currentBlog?.source === "local";
-      
+      const isSeededBlog =
+        currentBlog?.source === "seed" || currentBlog?.source === "local";
+
       setBlogs((prev) =>
         prev.map((blog) => {
           if (blog.id !== blogId) return blog;
-          const nextLikes = alreadyLiked ? blog.likeCount - 1 : blog.likeCount + 1;
+          const nextLikes = alreadyLiked
+            ? blog.likeCount - 1
+            : blog.likeCount + 1;
           const likedBy = alreadyLiked
             ? blog.likedBy.filter((id) => String(id) !== profileIdStr)
             : [...(blog.likedBy ?? []), profileIdStr];
@@ -683,15 +734,20 @@ export const BlogProvider = ({ children }) => {
               };
             })
           );
-          toast.success(response.isLiked ? "You liked this blog" : "Like removed", {
-            toastId: `blog-like-${blogId}`,
-          });
+          toast.success(
+            response.isLiked ? "You liked this blog" : "Like removed",
+            {
+              toastId: `blog-like-${blogId}`,
+            }
+          );
         } catch (error) {
           // Revert on error
           setBlogs((prev) =>
             prev.map((blog) => {
               if (blog.id !== blogId) return blog;
-              const revertedLikes = alreadyLiked ? blog.likeCount + 1 : blog.likeCount - 1;
+              const revertedLikes = alreadyLiked
+                ? blog.likeCount + 1
+                : blog.likeCount - 1;
               const revertedLikedBy = alreadyLiked
                 ? [...new Set([...(blog.likedBy ?? []), profileIdStr])]
                 : blog.likedBy.filter((id) => String(id) !== profileIdStr);
@@ -703,7 +759,10 @@ export const BlogProvider = ({ children }) => {
             })
           );
           if (!isNetworkError(error)) {
-            const errorMessage = error?.response?.data?.error?.message || error?.message || "Failed to update like";
+            const errorMessage =
+              error?.response?.data?.error?.message ||
+              error?.message ||
+              "Failed to update like";
             if (error?.response?.status === 404) {
               toast.error("Blog not found. It may have been deleted.", {
                 toastId: `blog-like-error-${blogId}`,
@@ -728,13 +787,14 @@ export const BlogProvider = ({ children }) => {
   const addComment = useCallback(
     async (blogId, message) => {
       if (!message?.trim()) return;
-      
+
       const currentBlog = blogs.find((b) => b.id === blogId);
       // Check if this is a seeded/local blog (not in database)
-      const isSeededBlog = currentBlog?.source === "seed" || currentBlog?.source === "local";
-      
+      const isSeededBlog =
+        currentBlog?.source === "seed" || currentBlog?.source === "local";
+
       const newComment = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         message,
         createdAt: new Date().toISOString(),
         author: {
@@ -770,7 +830,10 @@ export const BlogProvider = ({ children }) => {
               const commentsWithoutOptimistic = blog.comments.filter(
                 (c) => c.id !== newComment.id
               );
-              const updatedComments = [response.comment, ...commentsWithoutOptimistic];
+              const updatedComments = [
+                response.comment,
+                ...commentsWithoutOptimistic,
+              ];
               return {
                 ...blog,
                 comments: updatedComments,
@@ -797,7 +860,10 @@ export const BlogProvider = ({ children }) => {
             })
           );
           if (!isNetworkError(error)) {
-            const errorMessage = error?.response?.data?.error?.message || error?.message || "Failed to add comment";
+            const errorMessage =
+              error?.response?.data?.error?.message ||
+              error?.message ||
+              "Failed to add comment";
             if (error?.response?.status === 404) {
               toast.error("Blog not found. It may have been deleted.", {
                 toastId: `blog-comment-error-${blogId}`,
@@ -861,10 +927,12 @@ export const BlogProvider = ({ children }) => {
           blog.tags.some((tag) => tag.toLowerCase().includes(term));
 
         const matchesCategory =
-          activeFilters.category === "all" || blog.category === activeFilters.category;
+          activeFilters.category === "all" ||
+          blog.category === activeFilters.category;
 
         const matchesTags =
-          activeFilters.tags.length === 0 || activeFilters.tags.every((tag) => blog.tags.includes(tag));
+          activeFilters.tags.length === 0 ||
+          activeFilters.tags.every((tag) => blog.tags.includes(tag));
 
         return matchesSearch && matchesCategory && matchesTags;
       })
@@ -877,7 +945,11 @@ export const BlogProvider = ({ children }) => {
           case "views":
             return b.views - a.views;
           default:
-            return b.likeCount * 1.5 + b.views * 0.5 - (a.likeCount * 1.5 + a.views * 0.5);
+            return (
+              b.likeCount * 1.5 +
+              b.views * 0.5 -
+              (a.likeCount * 1.5 + a.views * 0.5)
+            );
         }
       });
   }, [activeFilters, blogs, searchTerm]);
@@ -906,9 +978,15 @@ export const BlogProvider = ({ children }) => {
     }
     const userId = profile?.id || authUser?.id;
     const authoredBlogs = blogs.filter((blog) => blog.author.id === userId);
-    const totalLikes = authoredBlogs.reduce((acc, blog) => acc + blog.likeCount, 0);
+    const totalLikes = authoredBlogs.reduce(
+      (acc, blog) => acc + blog.likeCount,
+      0
+    );
     const totalViews = authoredBlogs.reduce((acc, blog) => acc + blog.views, 0);
-    const totalComments = authoredBlogs.reduce((acc, blog) => acc + blog.commentCount, 0);
+    const totalComments = authoredBlogs.reduce(
+      (acc, blog) => acc + blog.commentCount,
+      0
+    );
 
     return {
       totalBlogs: authoredBlogs.length,
@@ -1017,7 +1095,7 @@ export const BlogProvider = ({ children }) => {
   // Fetch pending blogs for the current user
   const refreshPendingBlogs = useCallback(async () => {
     if (!authUser) return;
-    
+
     try {
       const response = await fetchUserPendingBlogs();
       const pending = response?.data ?? [];
@@ -1025,7 +1103,10 @@ export const BlogProvider = ({ children }) => {
       setPendingBlogs(formattedPending);
     } catch (error) {
       if (isNetworkError(error) && !isDevelopment) {
-        console.error("[BlogContext] Failed to fetch pending blogs:", error.message);
+        console.error(
+          "[BlogContext] Failed to fetch pending blogs:",
+          error.message
+        );
       } else if (!isNetworkError(error)) {
         // eslint-disable-next-line no-console
         console.warn("Failed to fetch pending blogs:", error);
@@ -1103,5 +1184,3 @@ export const BlogProvider = ({ children }) => {
 
   return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
 };
-
-
