@@ -85,6 +85,7 @@ const start = async () => {
     "https://digitalaela.com",
     "https://www.digitalaela.com",
     "https://digital-aela.vercel.app",
+    "https://digital-aela-2wrzjx1c8-harshvardhan-panchals-projects.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
