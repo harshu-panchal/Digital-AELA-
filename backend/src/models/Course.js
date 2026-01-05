@@ -15,7 +15,6 @@ const courseSchema = new mongoose.Schema(
       type: String,
       trim: true,
       lowercase: true,
-      sparse: true, // Allows null/undefined values to exist without uniqueness constraint issues
     },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
