@@ -98,11 +98,15 @@ const start = async () => {
         // Allow requests with no origin (like mobile apps or Postman)
         if (!origin) return callback(null, true);
 
-        // Allow if origin is in allowed list or if in development
+        // Regex for Vercel preview URLs
+        const vercelPreviewRegex = /^https:\/\/digital-aela-.*-harshvardhan-panchals-projects\.vercel\.app$/;
+
+        // Allow if origin is in allowed list, matches regex, or if in development
         if (
           allowedOrigins.some((allowed) =>
             origin.includes(allowed.replace(/^https?:\/\//, ""))
           ) ||
+          vercelPreviewRegex.test(origin) ||
           process.env.NODE_ENV !== "production"
         ) {
           callback(null, true);

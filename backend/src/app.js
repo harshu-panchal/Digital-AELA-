@@ -86,9 +86,13 @@ const corsOptions = {
       "http://127.0.0.1:3000",
     ].filter(Boolean); // Remove undefined values
 
-    // Allow if origin is in allowed list or if in development
+    // Regex for Vercel preview URLs
+    const vercelPreviewRegex = /^https:\/\/digital-aela-.*-harshvardhan-panchals-projects\.vercel\.app$/;
+
+    // Allow if origin is in allowed list, matches regex, or if in development
     if (
       allowedOrigins.includes(origin) ||
+      vercelPreviewRegex.test(origin) ||
       process.env.NODE_ENV !== "production"
     ) {
       callback(null, true);
