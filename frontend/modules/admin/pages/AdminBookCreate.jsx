@@ -192,30 +192,56 @@ const AdminBookCreate = () => {
       return;
     }
 
-    // downloadUrl will be auto-generated from the uploaded PDF file
-    const downloadUrl = "";
-
-    const payload = {
-      title: cleanedTitle,
-      subtitle: safeString(formData.subtitle),
-      description: cleanedDescription,
-      price: formData.price ? Number(formData.price) : 0,
-      category: safeString(formData.category) || "Uncategorised",
-      coverImage: sanitizeUrl(formData.coverImage),
-      previewUrl: sanitizeUrl(formData.previewUrl),
-      tags: safeString(formData.tags)
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      pages: Number(formData.pages),
-      downloadUrl: downloadUrl,
-      isFeatured: formData.isFeatured || false,
-      bookType: formData.bookType,
-    };
+    // Build FormData if ebook with PDF file, otherwise use JSON payload
+    const isEbookWithFile = formData.bookType === "ebook" && formData.file;
 
     setIsSubmitting(true);
     try {
-      await createEbook(payload);
+      if (isEbookWithFile) {
+        // Use FormData for file upload
+        const formDataPayload = new FormData();
+        formDataPayload.append("file", formData.file);
+        formDataPayload.append("title", cleanedTitle);
+        formDataPayload.append("subtitle", safeString(formData.subtitle));
+        formDataPayload.append("description", cleanedDescription);
+        formDataPayload.append("price", formData.price ? Number(formData.price) : 0);
+        formDataPayload.append("category", safeString(formData.category) || "Uncategorised");
+        formDataPayload.append("coverImage", sanitizeUrl(formData.coverImage) || "");
+        formDataPayload.append("previewUrl", sanitizeUrl(formData.previewUrl) || "");
+        formDataPayload.append("pages", Number(formData.pages));
+        formDataPayload.append("isFeatured", formData.isFeatured || false);
+        formDataPayload.append("bookType", formData.bookType);
+
+        // Tags as JSON array string
+        const tagsArray = safeString(formData.tags)
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        formDataPayload.append("tags", JSON.stringify(tagsArray));
+
+        await createEbook(formDataPayload, true); // true = isFormData
+      } else {
+        // Physical books or ebooks without file use JSON payload
+        const payload = {
+          title: cleanedTitle,
+          subtitle: safeString(formData.subtitle),
+          description: cleanedDescription,
+          price: formData.price ? Number(formData.price) : 0,
+          category: safeString(formData.category) || "Uncategorised",
+          coverImage: sanitizeUrl(formData.coverImage),
+          previewUrl: sanitizeUrl(formData.previewUrl),
+          tags: safeString(formData.tags)
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          pages: Number(formData.pages),
+          isFeatured: formData.isFeatured || false,
+          bookType: formData.bookType,
+        };
+
+        await createEbook(payload);
+      }
+
       toast.success("E-book created successfully.");
       setFormData(initialFormState);
       navigate("/super-admin", { replace: true });
@@ -575,8 +601,8 @@ const AdminBookCreate = () => {
             <section className="space-y-4">
               <label
                 className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${featuredCount >= maxFeatured && !formData.isFeatured
-                    ? "opacity-60"
-                    : ""
+                  ? "opacity-60"
+                  : ""
                   }`}>
                 <input
                   type="checkbox"
