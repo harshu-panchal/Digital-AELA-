@@ -59,6 +59,35 @@ const clearCsrfToken = () => {
   window.localStorage.removeItem(CSRF_TOKEN_STORAGE_KEY);
 };
 
+/**
+ * Validate stored tokens on load and clear if corrupted
+ * This prevents stuck loading states from corrupted localStorage data
+ */
+const validateStoredTokens = () => {
+  const tokens = loadTokens();
+  if (!tokens) return true; // No tokens is valid (logged out state)
+
+  // Check if tokens object has required fields and valid structure
+  if (!tokens.accessToken || typeof tokens.accessToken !== 'string') {
+    console.warn('[API] Corrupted tokens detected (missing accessToken), clearing...');
+    clearStoredTokens();
+    return false;
+  }
+
+  // Check if accessToken is a valid JWT format (3 parts separated by dots)
+  const parts = tokens.accessToken.split('.');
+  if (parts.length !== 3) {
+    console.warn('[API] Corrupted tokens detected (invalid JWT format), clearing...');
+    clearStoredTokens();
+    return false;
+  }
+
+  return true;
+};
+
+// Validate tokens on module load to prevent stuck loading states
+validateStoredTokens();
+
 // Fetch CSRF token from server
 const fetchCsrfToken = async () => {
   try {
@@ -265,8 +294,8 @@ const executeRequest = async (
   const requestBody = isFormData
     ? body
     : body
-    ? JSON.stringify(body)
-    : undefined;
+      ? JSON.stringify(body)
+      : undefined;
 
   // Determine if we should use XHR (for upload progress) or fetch
   if (onUploadProgress && method.toUpperCase() !== "GET") {
@@ -511,7 +540,7 @@ const handleResponse = async (
 
   const error = new Error(
     payload?.error?.message ??
-      `Request to ${endpoint} failed with status ${response.status}`
+    `Request to ${endpoint} failed with status ${response.status}`
   );
   error.status = response.status;
   error.code = payload?.error?.code;
@@ -577,11 +606,24 @@ export const apiRequest = async (endpoint, options = {}) => {
     }
   })();
 
-  // Cache GET requests for deduplication
+  // Cache GET requests for deduplication - but remove failed requests from cache
   if (method === "GET") {
     const requestKey = getRequestKey(endpoint, method, body);
+
+    // Wrap promise to handle cache cleanup on failure
+    // This is critical to prevent stuck loading states when requests fail
+    const cacheablePromise = requestPromise.then(
+      (result) => result, // Pass through success
+      (error) => {
+        // Remove from cache on failure - prevents cascading failures
+        // where subsequent requests return the cached error promise
+        requestCache.delete(requestKey);
+        throw error; // Re-throw the error
+      }
+    );
+
     requestCache.set(requestKey, {
-      promise: requestPromise,
+      promise: cacheablePromise,
       timestamp: Date.now(),
     });
 
@@ -589,6 +631,8 @@ export const apiRequest = async (endpoint, options = {}) => {
     setTimeout(() => {
       requestCache.delete(requestKey);
     }, CACHE_TTL);
+
+    return cacheablePromise;
   }
 
   return requestPromise;
@@ -616,4 +660,21 @@ export const isNetworkError = (error) => {
 export const apiBaseConfig = {
   API_BASE_URL,
   TOKEN_STORAGE_KEY,
+};
+
+/**
+ * Clear all cached data - use when app is stuck in loading state
+ * This clears request cache, tokens, and CSRF token
+ */
+export const clearAllLocalData = () => {
+  // Clear request cache
+  requestCache.clear();
+
+  // Clear tokens
+  clearStoredTokens();
+
+  // Clear CSRF token
+  clearCsrfToken();
+
+  console.log('[API] All local data cleared');
 };

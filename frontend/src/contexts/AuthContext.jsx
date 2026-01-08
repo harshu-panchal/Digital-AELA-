@@ -190,17 +190,17 @@ export const AuthProvider = ({ children }) => {
       try {
         // Add timeout wrapper for login request (15 seconds)
         const loginPromise = loginUserAccount({ email: normalizedEmail, password, role });
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error("Login request timed out. Please check your connection and try again.")), 15000)
         );
-        
+
         const authResult = await Promise.race([loginPromise, timeoutPromise]);
         return handleBackendAuthSuccess(authResult);
       } catch (backendError) {
         // Check if it's a timeout or network error
-        if (backendError.message?.includes("timed out") || 
-            backendError.code === "REQUEST_TIMEOUT" || 
-            backendError.isNetworkError) {
+        if (backendError.message?.includes("timed out") ||
+          backendError.code === "REQUEST_TIMEOUT" ||
+          backendError.isNetworkError) {
           // For network/timeout errors, try fallback immediately
           // eslint-disable-next-line no-console
           console.warn("Backend auth timed out or failed, falling back to mock auth:", backendError.message);
@@ -209,7 +209,7 @@ export const AuthProvider = ({ children }) => {
           // eslint-disable-next-line no-console
           console.warn("Backend auth failed, falling back to mock auth:", backendError);
         }
-        
+
         const existing = users.find((item) => item.email === normalizedEmail);
         if (!existing) {
           // Provide better error message based on error type
@@ -284,7 +284,7 @@ export const AuthProvider = ({ children }) => {
           // Email already exists - don't fall back to mock auth
           throw new Error("An account with this email already exists. Try signing in instead.");
         }
-        
+
         if (backendError.status === 422 || backendError.code === "VALIDATION_ERROR") {
           // Validation error - don't fall back to mock auth
           throw backendError;
@@ -293,7 +293,7 @@ export const AuthProvider = ({ children }) => {
         // For other errors, fall back to mock auth for backward compatibility
         // eslint-disable-next-line no-console
         console.warn("Backend registration failed, falling back to mock auth:", backendError);
-        
+
         const existing = users.find((item) => item.email === normalizedEmail);
         if (existing) {
           throw new Error("An account with this email already exists. Try signing in instead.");
@@ -326,7 +326,7 @@ export const AuthProvider = ({ children }) => {
         if (tokens?.accessToken) {
           // Set a timeout for logout request (5 seconds)
           const logoutPromise = logoutRecruiterAccount();
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error("Logout timeout")), 5000)
           );
           await Promise.race([logoutPromise, timeoutPromise]).catch(() => {
@@ -363,6 +363,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, tokens, logout]);
 
+  // Initial mount check: if token is severely expired (>24h), logout immediately
+  // This prevents stuck loading states from very old corrupted tokens
+  useEffect(() => {
+    if (!tokens?.accessToken) return;
+
+    // Check if token is expired beyond refresh capability (24 hour buffer)
+    // This catches cases where tokens were stored a long time ago
+    if (isTokenExpired(tokens.accessToken, 60 * 24)) {
+      console.warn('[Auth] Token expired beyond refresh window (>24h), logging out');
+      logout().catch(() => { });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
+
   // Proactive token refresh - refresh tokens 5 minutes before expiration
   useEffect(() => {
     if (!tokens?.accessToken || !tokens?.refreshToken) {
@@ -379,7 +393,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.warn("Failed to refresh tokens proactively:", error);
         // If refresh fails, logout the user
-        logout().catch(() => {});
+        logout().catch(() => { });
       }
     };
 
@@ -411,14 +425,14 @@ export const AuthProvider = ({ children }) => {
           setUser((prev) =>
             prev
               ? {
-                  ...prev,
-                  fullName: profile?.user?.fullName ?? updates.fullName ?? prev.fullName,
-                  metadata: {
-                    ...prev.metadata,
-                    ...updates.metadata,
-                    recruiterProfile: profile,
-                  },
-                }
+                ...prev,
+                fullName: profile?.user?.fullName ?? updates.fullName ?? prev.fullName,
+                metadata: {
+                  ...prev.metadata,
+                  ...updates.metadata,
+                  recruiterProfile: profile,
+                },
+              }
               : prev
           );
           return profile;
@@ -431,26 +445,26 @@ export const AuthProvider = ({ children }) => {
         prev.map((record) =>
           record.id === user.id
             ? {
-                ...record,
-                fullName: updates.fullName ?? record.fullName,
-                metadata: {
-                  ...record.metadata,
-                  ...updates.metadata,
-                },
-              }
+              ...record,
+              fullName: updates.fullName ?? record.fullName,
+              metadata: {
+                ...record.metadata,
+                ...updates.metadata,
+              },
+            }
             : record
         )
       );
       setUser((prev) =>
         prev
           ? {
-              ...prev,
-              fullName: updates.fullName ?? prev.fullName,
-              metadata: {
-                ...prev.metadata,
-                ...updates.metadata,
-              },
-            }
+            ...prev,
+            fullName: updates.fullName ?? prev.fullName,
+            metadata: {
+              ...prev.metadata,
+              ...updates.metadata,
+            },
+          }
           : prev
       );
       return null;
