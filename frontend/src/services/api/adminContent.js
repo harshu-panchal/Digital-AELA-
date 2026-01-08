@@ -57,11 +57,12 @@ export const updateAdminCourse = async (courseId, updates) => {
  */
 export const createEbook = async (payload, isFormData = false, onProgress) => {
   if (isFormData) {
-    // Use FormData for file upload via apiRequest for consistent timeout and CSRF handling
+    // Use FormData for file upload with extended timeout for large PDFs
     return apiRequest("/admin/ebooks", {
       method: "POST",
       body: payload, // payload is already FormData
       onUploadProgress: onProgress,
+      timeout: 7200000, // 2 hours timeout for large PDF files
     });
   } else {
     // Use regular JSON API request
