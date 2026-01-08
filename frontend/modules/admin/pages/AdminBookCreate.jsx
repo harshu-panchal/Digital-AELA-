@@ -10,6 +10,7 @@ import {
   sanitizeUrl,
 } from "../../../src/utils/registrationHelpers";
 import { uploadImageToCloudinary } from "../../../src/utils/imageUpload";
+import UploadProgress from "../../../src/components/UploadProgress";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -54,6 +55,8 @@ const AdminBookCreate = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [featuredCount, setFeaturedCount] = useState(0);
   const [maxFeatured, setMaxFeatured] = useState(4);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
   const navigate = useNavigate();
 
   // Fetch featured book count on mount
@@ -196,6 +199,9 @@ const AdminBookCreate = () => {
     const isEbookWithFile = formData.bookType === "ebook" && formData.file;
 
     setIsSubmitting(true);
+    setUploadProgress(0);
+    setUploadError(null);
+
     try {
       if (isEbookWithFile) {
         // Use FormData for file upload
@@ -219,7 +225,13 @@ const AdminBookCreate = () => {
           .filter(Boolean);
         formDataPayload.append("tags", JSON.stringify(tagsArray));
 
-        await createEbook(formDataPayload, true); // true = isFormData
+        // Progress callback for upload tracking
+        const onProgress = (progress) => {
+          setUploadProgress(progress);
+        };
+
+        await createEbook(formDataPayload, true, onProgress); // true = isFormData, onProgress = callback
+        setUploadProgress(100); // Ensure 100% on success
       } else {
         // Physical books or ebooks without file use JSON payload
         const payload = {
@@ -244,14 +256,23 @@ const AdminBookCreate = () => {
 
       toast.success("E-book created successfully.");
       setFormData(initialFormState);
-      navigate("/super-admin", { replace: true });
+      // Delay navigation to show 100% completion
+      setTimeout(() => {
+        navigate("/super-admin", { replace: true });
+      }, 1000);
     } catch (error) {
       const message =
         (error?.details?.error?.message || error?.message) ??
         "Unable to save e-book. Please try again.";
+      setUploadError(message);
       toast.error(message);
     } finally {
-      setIsSubmitting(false);
+      // Delay hiding progress to show final state
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setUploadProgress(0);
+        setUploadError(null);
+      }, 1500);
     }
   };
 
@@ -654,6 +675,12 @@ const AdminBookCreate = () => {
           </motion.form>
         </section>
       </main>
+      <UploadProgress
+        isUploading={isSubmitting && formData.bookType === "ebook" && formData.file}
+        progress={uploadProgress}
+        fileName={formData.file?.name || "E-book PDF"}
+        error={uploadError}
+      />
     </div>
   );
 };
