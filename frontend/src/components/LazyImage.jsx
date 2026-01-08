@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getMediaUrl } from '../utils/mediaUrl';
 
 /**
  * LazyImage Component
@@ -24,7 +25,10 @@ export function LazyImage({
             return;
         }
 
-        setImageSrc(src);
+        // Use getMediaUrl to properly convert relative /static/ URLs to full URLs
+        // This prevents malformed URLs like "https://static/..." 
+        const processedSrc = getMediaUrl(src) || src;
+        setImageSrc(processedSrc);
         setIsLoading(true);
         setImageError(false);
     }, [src]);
