@@ -223,9 +223,10 @@ const SuperAdminDashboard = () => {
         completed: completedCount,
       });
     } catch (error) {
-      console.error("Failed to load students:", error);
+      // Silently handle - students loading is not critical for dashboard
+      // This can fail if no courses exist yet
       setStudents([]);
-      setStudentStats(null);
+      setStudentStats({ total: 0, active: 0, completed: 0 });
     } finally {
       setLoadingStudents(false);
     }
@@ -280,70 +281,70 @@ const SuperAdminDashboard = () => {
         dashboardData.stats.length > 0
           ? dashboardData.stats
           : [
-              {
-                id: "learners",
-                label: "Active Learners",
-                value: loading ? "..." : "0",
-                delta: "Loading...",
-              },
-              {
-                id: "teachers",
-                label: "Verified Teachers",
-                value: loading ? "..." : "0",
-                delta: "Loading...",
-              },
-              {
-                id: "revenue",
-                label: "Monthly Revenue",
-                value: loading ? "..." : formatCurrency(0),
-                delta: "Loading...",
-              },
-              {
-                id: "jobs",
-                label: "Open Jobs",
-                value: loading ? "..." : "0",
-                delta: "Loading...",
-              },
-            ];
+            {
+              id: "learners",
+              label: "Active Learners",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+            {
+              id: "teachers",
+              label: "Verified Teachers",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+            {
+              id: "revenue",
+              label: "Monthly Revenue",
+              value: loading ? "..." : formatCurrency(0),
+              delta: "Loading...",
+            },
+            {
+              id: "jobs",
+              label: "Open Jobs",
+              value: loading ? "..." : "0",
+              delta: "Loading...",
+            },
+          ];
 
       // Use backend data if available
       const approvalQueues =
         dashboardData.approvals.length > 0
           ? dashboardData.approvals
           : [
-              {
-                id: "courses",
-                title: "Courses Pending Approval",
-                items: loading
-                  ? []
-                  : [{ title: "No pending courses", owner: "", submitted: "" }],
-                cta: "Review courses",
-              },
-              {
-                id: "ebooks",
-                title: "Books & E-Books",
-                items: loading
-                  ? []
-                  : [{ title: "No pending ebooks", owner: "", submitted: "" }],
-                cta: "Moderate library",
-              },
-              {
-                id: "jobs",
-                title: "Job Posts",
-                items: loading
-                  ? []
-                  : [{ title: "No pending jobs", owner: "", submitted: "" }],
-                cta: "Moderate job board",
-              },
-            ];
+            {
+              id: "courses",
+              title: "Courses Pending Approval",
+              items: loading
+                ? []
+                : [{ title: "No pending courses", owner: "", submitted: "" }],
+              cta: "Review courses",
+            },
+            {
+              id: "ebooks",
+              title: "Books & E-Books",
+              items: loading
+                ? []
+                : [{ title: "No pending ebooks", owner: "", submitted: "" }],
+              cta: "Moderate library",
+            },
+            {
+              id: "jobs",
+              title: "Job Posts",
+              items: loading
+                ? []
+                : [{ title: "No pending jobs", owner: "", submitted: "" }],
+              cta: "Moderate job board",
+            },
+          ];
 
       // Use backend data if available
       const activity =
         dashboardData.activities.length > 0
           ? dashboardData.activities
           : loading
-          ? []
-          : [
+            ? []
+            : [
               {
                 icon: "ℹ️",
                 title: "No recent activity",
@@ -358,7 +359,7 @@ const SuperAdminDashboard = () => {
         dashboardData.quickActions.length > 0
           ? dashboardData.quickActions
           : loading
-          ? [
+            ? [
               {
                 label: "Approve teachers",
                 description: "Loading...",
@@ -375,7 +376,7 @@ const SuperAdminDashboard = () => {
                 href: "/super-admin/franchise",
               },
             ]
-          : [
+            : [
               {
                 label: "Approve teachers",
                 description: "0 awaiting verification",
@@ -707,11 +708,10 @@ const SuperAdminDashboard = () => {
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs text-slate-400 mb-1">Net Profit</p>
                   <p
-                    className={`text-xl font-semibold ${
-                      financialData.summary?.netProfit >= 0
+                    className={`text-xl font-semibold ${financialData.summary?.netProfit >= 0
                         ? "text-emerald-400"
                         : "text-red-400"
-                    }`}>
+                      }`}>
                     {formatCurrency(financialData.summary?.netProfit || 0)}
                   </p>
                 </div>
@@ -720,8 +720,8 @@ const SuperAdminDashboard = () => {
                   <p className="text-xl font-semibold text-blue-400">
                     {formatCurrency(
                       (financialData.summary?.totalIncome || 0) -
-                        (financialData.summary?.totalExpenses || 0) -
-                        (financialData.summary?.totalPayouts || 0)
+                      (financialData.summary?.totalExpenses || 0) -
+                      (financialData.summary?.totalPayouts || 0)
                     )}
                   </p>
                 </div>
