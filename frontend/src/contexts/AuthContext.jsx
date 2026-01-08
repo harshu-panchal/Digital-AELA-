@@ -363,20 +363,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, tokens, logout]);
 
-  // Initial mount check: if token is severely expired (>24h), logout immediately
-  // This prevents stuck loading states from very old corrupted tokens
-  useEffect(() => {
-    if (!tokens?.accessToken) return;
-
-    // Check if token is expired beyond refresh capability (24 hour buffer)
-    // This catches cases where tokens were stored a long time ago
-    if (isTokenExpired(tokens.accessToken, 60 * 24)) {
-      console.warn('[Auth] Token expired beyond refresh window (>24h), logging out');
-      logout().catch(() => { });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount only
-
   // Proactive token refresh - refresh tokens 5 minutes before expiration
   useEffect(() => {
     if (!tokens?.accessToken || !tokens?.refreshToken) {
