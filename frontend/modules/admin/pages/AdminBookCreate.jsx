@@ -32,7 +32,6 @@ const initialFormState = {
   previewUrl: "",
   tags: "",
   pages: "",
-  downloadUrl: "",
   file: null,
   isFeatured: false,
   bookType: "ebook",
@@ -141,7 +140,6 @@ const AdminBookCreate = () => {
         setFormData((prev) => ({
           ...prev,
           file: null,
-          downloadUrl: "",
         }));
       }
       if (type === "checkbox" && name === "isFeatured" && checked) {
@@ -181,18 +179,10 @@ const AdminBookCreate = () => {
       return;
     }
 
-    // For e-books, downloadUrl is required (can be provided directly or from previewUrl/coverImage)
+    // For e-books, PDF file is required - downloadUrl will be auto-set from the uploaded file
     if (formData.bookType === "ebook") {
-      const downloadUrl =
-        sanitizeUrl(formData.downloadUrl) ||
-        sanitizeUrl(formData.previewUrl) ||
-        sanitizeUrl(formData.coverImage) ||
-        "";
-
-      if (!downloadUrl) {
-        toast.error(
-          "Please provide a download URL, preview URL, or cover image URL for the ebook file."
-        );
+      if (!formData.file) {
+        toast.error("Please attach your PDF file.");
         return;
       }
     }
@@ -202,13 +192,8 @@ const AdminBookCreate = () => {
       return;
     }
 
-    const downloadUrl =
-      formData.bookType === "ebook"
-        ? sanitizeUrl(formData.downloadUrl) ||
-          sanitizeUrl(formData.previewUrl) ||
-          sanitizeUrl(formData.coverImage) ||
-          ""
-        : "";
+    // downloadUrl will be auto-generated from the uploaded PDF file
+    const downloadUrl = "";
 
     const payload = {
       title: cleanedTitle,
@@ -505,29 +490,6 @@ const AdminBookCreate = () => {
                 </p>
               </div>
 
-              {formData.bookType === "ebook" && (
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor="downloadUrl"
-                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F5D26A]/80">
-                    Download URL*
-                  </label>
-                  <input
-                    id="downloadUrl"
-                    name="downloadUrl"
-                    type="url"
-                    value={formData.downloadUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#F5D26A]/70 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/30"
-                  />
-                  <p className="text-[11px] text-slate-400">
-                    Required: Direct URL to the PDF file. Can also use preview
-                    URL or cover image URL if they point to the PDF.
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-1.5 md:col-span-2">
                 <label
                   htmlFor="tags"
@@ -612,11 +574,10 @@ const AdminBookCreate = () => {
 
             <section className="space-y-4">
               <label
-                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${
-                  featuredCount >= maxFeatured && !formData.isFeatured
+                className={`md:col-span-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 ${featuredCount >= maxFeatured && !formData.isFeatured
                     ? "opacity-60"
                     : ""
-                }`}>
+                  }`}>
                 <input
                   type="checkbox"
                   name="isFeatured"
