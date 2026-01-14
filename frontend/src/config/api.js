@@ -12,6 +12,8 @@
  * In production, VITE_API_URL MUST be set in the deployment platform (e.g., Vercel).
  */
 
+//comment
+
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
 
@@ -31,9 +33,9 @@ const getApiBaseUrl = () => {
   if (import.meta.env.PROD) {
     console.error(
       "[API Config] ❌ CRITICAL: VITE_API_URL is not set in production!\n" +
-        "Translation and all API calls will fail.\n" +
-        "Please set VITE_API_URL environment variable in your deployment platform (Vercel, Netlify, etc.)\n" +
-        "Example: VITE_API_URL=https://your-backend-domain.com/api/v1"
+      "Translation and all API calls will fail.\n" +
+      "Please set VITE_API_URL environment variable in your deployment platform (Vercel, Netlify, etc.)\n" +
+      "Example: VITE_API_URL=https://your-backend-domain.com/api/v1"
     );
   }
 
@@ -46,7 +48,7 @@ export const API_BASE_URL = getApiBaseUrl();
 // Export a function to get the base URL without /api/v1 suffix (for Socket.IO, etc.)
 export const getApiBaseUrlWithoutPath = () => {
   let url = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
-  
+
   // Validate the URL - ensure it's not just a protocol
   // If it's malformed (like "https://" or "http://"), try to extract domain from VITE_API_URL
   if (!url || url.trim() === "" || url === "https://" || url === "http://" || /^https?:\/\/$/.test(url)) {
@@ -65,7 +67,7 @@ export const getApiBaseUrlWithoutPath = () => {
       }
     }
   }
-  
+
   // Final validation - if still invalid, return empty string
   if (!url || url.trim() === "" || url === "https://" || url === "http://" || /^https?:\/\/$/.test(url)) {
     console.error(
@@ -74,7 +76,7 @@ export const getApiBaseUrlWithoutPath = () => {
     );
     return "";
   }
-  
+
   return url;
 };
 
