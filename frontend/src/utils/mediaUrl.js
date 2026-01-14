@@ -88,12 +88,12 @@ export const getMediaUrl = (url, options = {}) => {
     // This handles both "https://static/photos/..." and "https://static" cases
     const path = finalUrl.replace(/^https?:\/\/static\/?/i, "");
     // Ensure path starts with /static/ prefix
-    finalUrl = path.startsWith("/static/") 
-      ? path 
-      : path.startsWith("/") 
-        ? `/static${path}` 
+    finalUrl = path.startsWith("/static/")
+      ? path
+      : path.startsWith("/")
+        ? `/static${path}`
         : `/static/${path}`;
-    
+
     // Log the fix for debugging
     if (process.env.NODE_ENV === 'development') {
       console.warn(
@@ -101,7 +101,7 @@ export const getMediaUrl = (url, options = {}) => {
       );
     }
   }
-  
+
   // Also check for URLs that start with "static/" (no leading slash, no protocol)
   // These might be getting incorrectly converted to "https://static/..." somewhere
   // We should normalize them to "/static/..." before processing
@@ -116,12 +116,12 @@ export const getMediaUrl = (url, options = {}) => {
     // Extract the path part (everything after "https:///" or "http:///")
     const path = finalUrl.replace(/^https?:\/\/\//i, "");
     // Ensure path starts with /static/ prefix
-    finalUrl = path.startsWith("/static/") 
-      ? path 
-      : path.startsWith("/") 
-        ? `/static${path}` 
+    finalUrl = path.startsWith("/static/")
+      ? path
+      : path.startsWith("/")
+        ? `/static${path}`
         : `/static/${path}`;
-    
+
     // Log the fix for debugging
     if (process.env.NODE_ENV === 'development') {
       console.warn(
@@ -141,10 +141,10 @@ export const getMediaUrl = (url, options = {}) => {
       );
       // Force fix it again
       const path = finalUrl.replace(/^https?:\/\/static\/?/i, "");
-      finalUrl = path.startsWith("/static/") 
-        ? path 
-        : path.startsWith("/") 
-          ? `/static${path}` 
+      finalUrl = path.startsWith("/static/")
+        ? path
+        : path.startsWith("/")
+          ? `/static${path}`
           : `/static/${path}`;
     } else {
       // Valid full URL - return as-is
@@ -160,11 +160,17 @@ export const getMediaUrl = (url, options = {}) => {
   // Normalize the path FIRST - ensure it starts with /static/
   // This must happen before checking the base URL to handle all path formats correctly
   let normalizedPath = finalUrl;
-  
+
   // CRITICAL: Remove any duplicate /static/static/ patterns first
   // This prevents URLs like "/static/static/photos/..." from being created
   normalizedPath = normalizedPath.replace(/^\/static\/static\//, "/static/");
-  
+
+  // Custom Fix: Allow local Vite assets (starting with /src/ or /assets/) to pass through
+  // This is required for imported images in React components
+  if (normalizedPath.startsWith("/src/") || normalizedPath.startsWith("/assets/")) {
+    return normalizedPath;
+  }
+
   // If it already starts with "/static/", use as-is (no further normalization needed)
   if (normalizedPath.startsWith("/static/")) {
     // Path is already normalized, skip further processing
@@ -181,7 +187,7 @@ export const getMediaUrl = (url, options = {}) => {
 
   // Handle relative URLs (both /static/... and static/... formats)
   let baseUrl = getApiBaseUrlWithoutPath();
-  
+
   // Extract backend domain from VITE_API_URL if baseUrl is invalid
   // This handles cases where VITE_API_URL might be malformed
   const extractBackendDomain = () => {
@@ -201,7 +207,7 @@ export const getMediaUrl = (url, options = {}) => {
     }
     return null;
   };
-  
+
   // Validate and fix base URL if it's empty or invalid
   // Check for cases where baseUrl might be just "https://" or "http://" (protocol only)
   if (!baseUrl || baseUrl.trim() === "" || baseUrl === "https://" || baseUrl === "http://" || /^https?:\/\/$/.test(baseUrl)) {
@@ -232,7 +238,7 @@ export const getMediaUrl = (url, options = {}) => {
       baseUrl = "";
     }
   }
-  
+
   // Additional validation: ensure baseUrl is a valid URL with a domain
   // If baseUrl looks like just a protocol (https:// or http://), it's invalid
   if (baseUrl && /^https?:\/\/$/.test(baseUrl)) {
@@ -252,7 +258,7 @@ export const getMediaUrl = (url, options = {}) => {
       }
     }
   }
-  
+
   const cleanBaseUrl = baseUrl.replace(/\/$/, "");
 
   // Final safety check: if cleanBaseUrl is just a protocol (https:// or http://), don't use it
@@ -292,10 +298,10 @@ export const getMediaUrl = (url, options = {}) => {
     // Extract path and return as relative URL
     // Handle both "https://static/..." and "https:///static/..." patterns
     const path = finalUrl.replace(/^https?:\/\/\/?static\/?/i, "").replace(/^https?:\/\/\//i, "");
-    finalUrl = path.startsWith("/static/") 
-      ? path 
-      : path.startsWith("/") 
-        ? `/static${path}` 
+    finalUrl = path.startsWith("/static/")
+      ? path
+      : path.startsWith("/")
+        ? `/static${path}`
         : `/static/${path}`;
   }
 

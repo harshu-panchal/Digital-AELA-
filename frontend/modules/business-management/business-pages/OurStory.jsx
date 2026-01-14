@@ -5,8 +5,20 @@ import TranslatedText from "../../../src/components/TranslatedText";
 import LazyImage from "../../../src/components/LazyImage";
 import founderImage2 from "../../../src/assets/Founder2.png";
 
+import englishGrammarBook1 from "../../../src/assets/EnglishGrammarBook1.png";
+import spokenBook2 from "../../../src/assets/SpokenBook2.png";
+import dictionaryBook3 from "../../../src/assets/DictionaryBook3.png";
+import secondAcademy from "../../../src/assets/SecondAcademy.jpeg";
+import celebrationSuccess from "../../../src/assets/CelebrationSuccess.jpg";
+import dubaiRoadmap from "../../../src/assets/DubaiRoadmap.jpg";
+
+
+
+// ... imports
+
 const OurStory = () => {
   // WhatsApp integration
+
   const whatsappNumber = "+971502270625";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in learning more about Digital AELA."
@@ -30,60 +42,54 @@ const OurStory = () => {
       title: "The First Book Launch – Knowledge in Every Hand",
       content:
         "From chalk on a blackboard to words on printed pages, Imran Sir turned his lessons into a book. The first launch was not grand, but it was powerful. Students held in their hands not just a guide to English, but a weapon for self-growth. For many, this book became their first stepping stone toward career opportunities and personal success. It was proof that Digital AELA wasn't just teaching — it was creating tools for transformation.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: englishGrammarBook1,
       imageAlt:
-        "Stack of freshly printed books on a table during a small launch event",
+        "Digital AELA First Book - English Grammar Book 1",
     },
     {
       id: 3,
       title: "The Second Book – Expanding the Dream",
       content:
         "When the first book touched hearts, the second book carried the dream further. It wasn't just about grammar; it was about real-life English that opened doors to jobs, interviews, and global opportunities. Imran Sir often said, \"Education is not about passing exams, it's about passing limits.\" This book embodied that belief, giving learners the confidence to cross barriers and believe in themselves.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: spokenBook2,
       imageAlt:
-        "Author signing copies for students at a community book reading",
+        "Digital AELA Second Book - Spoken English Book",
     },
     {
       id: 4,
       title: "The Third Book – From Local to Global Readers",
       content:
         "The third book marked a turning point. Now, Digital AELA's message was not limited to one city or one country. Written with a bilingual approach, it reached learners across India and resonated with students abroad. Holding that third book in his hands, Imran Sir knew: this was no longer just his journey — it was the journey of thousands who saw Digital AELA as their pathway to success.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: dictionaryBook3,
       imageAlt:
-        "Reader flipping through pages of a newly published bilingual book",
+        "Digital AELA Third Book - Dictionary",
     },
     {
       id: 5,
       title: "The Second Branch – Building a Community",
       content:
         "With growing demand and countless success stories, the need for expansion was inevitable. The opening of the second branch was more than cutting a ribbon; it was building a community. More teachers joined hands, more students walked in with hope, and more dreams found a home. Digital AELA was no longer just one man's vision — it had become a family where educators and learners stood side by side.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: secondAcademy,
       imageAlt:
-        "Modern education center exterior with warm lighting during an opening day",
+        "Digital AELA Second Academy Branch",
     },
     {
       id: 6,
       title: "Celebrating the Success of Thousands",
       content:
         "From the first few students to thousands of success stories, Digital AELA became synonymous with achievement. Every certificate awarded, every placement secured, and every student who spoke English with confidence was a victory shared by the entire academy. We celebrated not only results but the journeys — the late nights of practice, the struggles overcome, and the transformation of fear into fluency. Each student became a living testimony: at Digital AELA, success is not an exception; it's a tradition.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: celebrationSuccess,
       imageAlt:
-        "Graduates celebrating together with certificates raised in the air",
+        "Celebrating thousands of student success stories at Digital AELA",
     },
     {
       id: 7,
       title: "The Leap to Dubai – A Global Vision",
       content:
         "The journey from a small town in India to the global city of Dubai was not easy. It was filled with sacrifices, sleepless nights, and relentless belief. But with every challenge, Imran Sir remembered the faces of his students — the trust they placed in him, and the promise he made to never stop. Dubai became the next chapter, not just as a new location, but as a global stage.",
-      imageSrc:
-        "https://images.unsplash.com/photo-1508261301921-1b811d5d4d32?auto=format&fit=crop&w=1200&q=80",
+      imageSrc: dubaiRoadmap,
       imageAlt:
-        "Dubai skyline at dusk showcasing global expansion vision",
+        "Digital AELA Dubai Roadmap - Building the World's Happiest City Vision",
     },
   ];
 

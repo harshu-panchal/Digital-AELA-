@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
 
 
+import path from "path";
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -24,47 +26,47 @@ export default defineConfig({
             ) {
               return 'vendor-react';
             }
-            
+
             // PDF viewer libraries - heavy, rarely used together
             if (id.includes('@react-pdf-viewer') || id.includes('pdfjs-dist')) {
               return 'vendor-pdf';
             }
-            
+
             // Chart.js libraries - heavy, used in analytics
             if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
               return 'vendor-charts';
             }
-            
+
             // Mediasoup and WebRTC related - heavy
             // Keep mediasoup separate to avoid CommonJS/ES module conflicts
             if (id.includes('mediasoup')) {
               return 'vendor-webrtc';
             }
-            
+
             // Socket.io - separate from mediasoup to avoid conflicts
             if (id.includes('socket.io')) {
               return 'vendor-socket';
             }
-            
+
             // TipTap editor - medium sized
             if (id.includes('@tiptap')) {
               return 'vendor-editor';
             }
-            
+
             // Framer Motion - animation library
             if (id.includes('framer-motion')) {
               return 'vendor-animations';
             }
-            
+
             // i18n libraries
             if (id.includes('i18next')) {
               return 'vendor-i18n';
             }
-            
+
             // Other vendor dependencies
             return 'vendor';
           }
-          
+
           // Split large feature modules
           if (id.includes('/modules/admin/')) {
             return 'admin';
@@ -84,7 +86,7 @@ export default defineConfig({
           if (id.includes('/modules/recruiter/')) {
             return 'recruiter';
           }
-          
+
           // Additional optimizations for lazy-loaded components
           if (id.includes('/src/components/LazyChart')) {
             return 'lazy-charts';
@@ -114,9 +116,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
-      'react-router-dom', 
+      'react',
+      'react-dom',
+      'react-router-dom',
       'framer-motion',
       'mediasoup-client',
       'socket.io-client'

@@ -1,8 +1,14 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import founderImage from "../../../src/assets/meetTheLeader.jpg";
 import TranslatedText from "../../../src/components/TranslatedText";
+import LazyImage from "../../../src/components/LazyImage";
+
+import englishGrammarBook1 from "../../../src/assets/EnglishGrammarBook1.png";
+import spokenBook2 from "../../../src/assets/SpokenBook2.png";
+import dictionaryBook3 from "../../../src/assets/DictionaryBook3.png";
 
 const MeetTheFounder = () => {
   // WhatsApp integration
@@ -190,14 +196,26 @@ const MeetTheFounder = () => {
                 transition={{ duration: 0.4, delay: 0.5 }}
                 className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20">
                 <div className="flex items-start gap-4">
-                  <span className="text-3xl">📘</span>
+                  <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden border border-[#D4AF37]/30 shadow-sm">
+                    <LazyImage
+                      src={englishGrammarBook1}
+                      alt="Master English Grammar Book"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
                       <TranslatedText>2021 — Master English Grammar (From School to Competitive)</TranslatedText>
                     </h4>
-                    <p className="text-gray-300">
+                    <p className="text-gray-300 mb-3">
                       <TranslatedText>A bestseller that strengthened grammar foundations for thousands.</TranslatedText>
                     </p>
+                    <Link
+                      to="/books/6958f19f3c96593b544ef7bc"
+                      className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
+                    >
+                      <TranslatedText>Buy Now</TranslatedText>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -208,14 +226,26 @@ const MeetTheFounder = () => {
                 transition={{ duration: 0.4, delay: 0.6 }}
                 className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20">
                 <div className="flex items-start gap-4">
-                  <span className="text-3xl">📘</span>
+                  <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden border border-[#D4AF37]/30 shadow-sm">
+                    <LazyImage
+                      src={spokenBook2}
+                      alt="5000 Advanced English Structures Book"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
                       <TranslatedText>2022 — 5000 Advanced English Structures</TranslatedText>
                     </h4>
-                    <p className="text-gray-300">
+                    <p className="text-gray-300 mb-3">
                       <TranslatedText>A breakthrough book that helped learners move from basic to advanced English fluently.</TranslatedText>
                     </p>
+                    <Link
+                      to="/books/6958ed193c96593b544eee13"
+                      className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
+                    >
+                      <TranslatedText>Buy Now</TranslatedText>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -226,14 +256,26 @@ const MeetTheFounder = () => {
                 transition={{ duration: 0.4, delay: 0.7 }}
                 className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/20">
                 <div className="flex items-start gap-4">
-                  <span className="text-3xl">📘</span>
+                  <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden border border-[#D4AF37]/30 shadow-sm">
+                    <LazyImage
+                      src={dictionaryBook3}
+                      alt="5000 Hindi to English Dictionary"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2 font-display">
                       <TranslatedText>2023 — 5000 Hindi to English Dictionary</TranslatedText>
                     </h4>
-                    <p className="text-gray-300">
+                    <p className="text-gray-300 mb-3">
                       <TranslatedText>A complete vocabulary guide designed to remove the fear of English words forever.</TranslatedText>
                     </p>
+                    <Link
+                      to="/books/6958eb8c3c96593b544eeaf9"
+                      className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
+                    >
+                      <TranslatedText>Buy Now</TranslatedText>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
