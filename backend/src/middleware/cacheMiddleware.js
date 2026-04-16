@@ -1,8 +1,18 @@
 import { getRedisClient, isRedisAvailable } from "../config/redis.js";
 import crypto from "crypto";
 
-const CACHE_ENABLED = process.env.CACHE_ENABLED !== "false";
 const DEFAULT_TTL = parseInt(process.env.REDIS_TTL_DEFAULT || "300", 10); // 5 minutes default
+const REDIS_AVAILABILITY_TTL = 30000;
+
+let redisAvailabilityCache = {
+  checkedAt: 0,
+  available: false,
+};
+
+const isCacheEnabled = () => process.env.CACHE_ENABLED !== "false";
+
+const isRedisConfigured = () =>
+  Boolean(process.env.REDIS_URL || process.env.REDIS_PASSWORD);
 
 /**
  * Generate cache key from request
@@ -32,7 +42,7 @@ const generateCacheKey = (req, prefix = "api") => {
  */
 const shouldCache = (req) => {
   // Don't cache if caching is disabled
-  if (!CACHE_ENABLED) return false;
+  if (!isCacheEnabled()) return false;
   
   // Only cache GET requests
   if (req.method !== "GET") return false;
@@ -82,9 +92,23 @@ export const cacheMiddleware = async (req, res, next) => {
   if (!shouldCache(req)) {
     return next();
   }
+
+  if (!isRedisConfigured()) {
+    return next();
+  }
   
   // Check if Redis is available
-  const redisAvailable = await isRedisAvailable();
+  const now = Date.now();
+  let redisAvailable = redisAvailabilityCache.available;
+
+  if (now - redisAvailabilityCache.checkedAt > REDIS_AVAILABILITY_TTL) {
+    redisAvailable = await isRedisAvailable();
+    redisAvailabilityCache = {
+      checkedAt: now,
+      available: redisAvailable,
+    };
+  }
+
   if (!redisAvailable) {
     // Redis not available, skip caching
     return next();
@@ -147,7 +171,7 @@ export const cacheMiddleware = async (req, res, next) => {
  * @param {string} pattern - Cache key pattern (supports wildcards)
  */
 export const invalidateCache = async (pattern) => {
-  if (!CACHE_ENABLED) return;
+  if (!isCacheEnabled() || !isRedisConfigured()) return;
   
   try {
     const redis = getRedisClient();
@@ -170,7 +194,7 @@ export const invalidateCache = async (pattern) => {
  * Clear all cache
  */
 export const clearAllCache = async () => {
-  if (!CACHE_ENABLED) return;
+  if (!isCacheEnabled() || !isRedisConfigured()) return;
   
   try {
     const redis = getRedisClient();

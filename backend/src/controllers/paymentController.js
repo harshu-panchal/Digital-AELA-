@@ -23,8 +23,15 @@ import { fetchPaymentLink } from "../services/paymentGatewayService.js";
 export const createPayment = async (req, res, next) => {
   try {
     const { userId } = req.auth || {};
-    const { courseId, amount, currency, description, paymentMethod, gateway } =
-      req.body;
+    const {
+      courseId,
+      amount,
+      currency,
+      description,
+      paymentMethod,
+      gateway,
+      metadata,
+    } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -97,6 +104,7 @@ export const createPayment = async (req, res, next) => {
       paymentMethod: paymentMethod || "card",
       gateway: gateway || "manual",
       status: "pending",
+      metadata: metadata && typeof metadata === "object" ? metadata : {},
     });
 
     const populatedPayment = await Payment.findById(payment._id)

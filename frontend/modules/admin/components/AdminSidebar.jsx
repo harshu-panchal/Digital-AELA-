@@ -178,9 +178,14 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           icon: FaUserPlus,
         },
         {
-          label: "Review Approval",
+          label: "Course Reviews",
           path: "/super-admin/reviews/moderate",
           icon: FaStar,
+        },
+        {
+          label: "Book Reviews",
+          path: "/super-admin/reviews/books",
+          icon: FaBook,
         },
       ],
     },

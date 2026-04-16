@@ -177,17 +177,29 @@ const StudentDashboard = () => {
   }, [authUser, tokens]);
 
   useEffect(() => {
-    // Stagger the API calls to prevent rate limiting
+    let cancelled = false;
+    const timers = [];
+
+    const scheduleChunk = (callback, delay) => {
+      const timer = setTimeout(() => {
+        if (!cancelled) {
+          callback();
+        }
+      }, delay);
+      timers.push(timer);
+    };
+
     const loadData = async () => {
-      // Load dashboard first (most important)
       await loadDashboard();
-      // Small delay between calls
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      await loadWidgets();
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      await loadAssignments();
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      await loadAnnouncements();
+
+      if (cancelled) {
+        return;
+      }
+
+      // Load non-critical panels after the primary dashboard is visible.
+      scheduleChunk(loadAssignments, 1000);
+      scheduleChunk(loadAnnouncements, 1800);
+      scheduleChunk(loadWidgets, 2800);
     };
 
     loadData();
@@ -199,7 +211,11 @@ const StudentDashboard = () => {
       }
     };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    return () => {
+      cancelled = true;
+      timers.forEach((timer) => clearTimeout(timer));
+      window.removeEventListener("storage", handleStorage);
+    };
   }, [loadDashboard, loadWidgets, loadAssignments, loadAnnouncements]);
 
   // Translate announcements when language changes

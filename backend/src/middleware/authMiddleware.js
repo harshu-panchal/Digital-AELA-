@@ -79,22 +79,13 @@ export const optionalAuth = async (req, res, next) => {
 
     try {
       const payload = verifyAccessToken(token);
-      const user = await User.findById(payload.sub);
-      
-      if (user) {
-        // Ensure userId is always a string
-        const userIdString = user._id ? user._id.toString() : (user.id ? user.id.toString() : null);
-        
-        if (userIdString) {
-          req.auth = {
-            userId: userIdString,
-            userRole: user.role,
-            userFullName: user.fullName,
-            email: user.email,
-          };
-        } else {
-          req.auth = null;
-        }
+
+      if (payload?.sub) {
+        req.auth = {
+          userId: payload.sub.toString(),
+          userRole: payload.role,
+          email: payload.email,
+        };
       } else {
         req.auth = null;
       }

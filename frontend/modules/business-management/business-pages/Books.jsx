@@ -9,13 +9,19 @@ import {
   FaBook,
   FaDownload,
   FaSpinner,
+  FaShoppingCart,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import GiftButton from "../common/GiftButton";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { useAuth } from "../../../src/contexts/AuthContext";
-import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { redirectToCustomBookPayment } from "../utils/customPaymentRedirect";
+import {
+  addBookToCart,
+  getBookCartTotals,
+  readBookCart,
+  subscribeToBookCart,
+} from "../utils/bookCart";
 import { useDynamicTranslation } from "../../../src/hooks/useDynamicTranslation";
 import { useLanguage } from "../../../src/contexts/LanguageContext";
 import { normalizeLanguageCode } from "../../../src/utils/languageUtils";
@@ -167,6 +173,9 @@ const Books = () => {
     return [];
   });
   const [loading, setLoading] = useState(true);
+  const [cartCount, setCartCount] = useState(
+    () => getBookCartTotals(readBookCart()).quantity
+  );
 
   // Translation hooks
   const { language } = useLanguage();
@@ -204,7 +213,11 @@ const Books = () => {
             imageAlt: `${ebook.title} cover`,
             rating: 4.5, // Default rating
             reviews: 0,
-            format: "ebook",
+            format:
+              ebook.metadata?.bookType === "physical" ||
+              ebook.downloadUrl === "physical-book"
+                ? "physical"
+                : "ebook",
             description: ebook.description || "",
             category: ebook.categories?.[0] || "General",
             pages: ebook.pages || 0,
@@ -216,7 +229,7 @@ const Books = () => {
         setBooks(ebooksFromApi);
         // Cache in sessionStorage for faster initial render on next visit
         try {
-          sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(finalBooks));
+          sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(ebooksFromApi));
         } catch (e) {
           // Ignore storage errors
         }
@@ -262,6 +275,12 @@ const Books = () => {
 
     loadBooks();
   }, []); // Empty dependency array - fetch on mount only
+
+  useEffect(() => {
+    return subscribeToBookCart((items) => {
+      setCartCount(getBookCartTotals(items).quantity);
+    });
+  }, []);
 
   // Translate books when language changes
   useEffect(() => {
@@ -368,6 +387,20 @@ const Books = () => {
               {/* Note: Placeholder text translation would require a custom input component */}
             </div>
           </motion.div>
+
+          <div className="mt-5 flex justify-center">
+            <Link
+              to="/books/cart"
+              className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-4 py-2 text-sm font-semibold text-[#F5D26A] transition hover:bg-[#D4AF37] hover:text-black">
+              <FaShoppingCart className="h-4 w-4" />
+              <TranslatedText>View Cart</TranslatedText>
+              {cartCount > 0 && (
+                <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-xs font-bold text-black">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </motion.section>
 
@@ -488,6 +521,19 @@ const Books = () => {
                       </div>
 
                       <div className="flex-shrink-0 mt-auto grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {book.price > 0 && (
+                          <motion.button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              addBookToCart(book, 1);
+                              toast.success("Book added to cart");
+                            }}
+                            className="w-full border border-[#D4AF37]/60 text-[#F5D26A] py-2 rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black transition-colors duration-200 sm:col-span-2">
+                            <FaShoppingCart className="inline mr-1.5" />
+                            <TranslatedText>Add to Cart</TranslatedText>
+                          </motion.button>
+                        )}
                         <motion.button
                           onClick={(e) => {
                             e.preventDefault();

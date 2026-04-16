@@ -4,6 +4,28 @@ import Settings from "../models/Settings.js";
 let settingsCache = null;
 let cacheTimestamp = null;
 const CACHE_TTL = 60000; // 1 minute cache
+const settingValueCache = new Map();
+
+const getCachedSettingValue = (key) => {
+  const cached = settingValueCache.get(key);
+  if (!cached) {
+    return undefined;
+  }
+
+  if (Date.now() - cached.timestamp > CACHE_TTL) {
+    settingValueCache.delete(key);
+    return undefined;
+  }
+
+  return cached.value;
+};
+
+const setCachedSettingValue = (key, value) => {
+  settingValueCache.set(key, {
+    value,
+    timestamp: Date.now(),
+  });
+};
 
 /**
  * Get a setting value by key
@@ -13,8 +35,15 @@ const CACHE_TTL = 60000; // 1 minute cache
  */
 export const getSetting = async (key, defaultValue = null) => {
   try {
+    const cached = getCachedSettingValue(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     const setting = await Settings.findOne({ key }).lean();
-    return setting ? setting.value : defaultValue;
+    const value = setting ? setting.value : defaultValue;
+    setCachedSettingValue(key, value);
+    return value;
   } catch (error) {
     console.error(`Error fetching setting ${key}:`, error);
     return defaultValue;
@@ -28,15 +57,32 @@ export const getSetting = async (key, defaultValue = null) => {
  */
 export const getSettings = async (keys) => {
   try {
-    const settings = await Settings.find({ key: { $in: keys } }).lean();
     const result = {};
+    const missingKeys = [];
+
+    keys.forEach((key) => {
+      const cached = getCachedSettingValue(key);
+      if (cached !== undefined) {
+        result[key] = cached;
+      } else {
+        missingKeys.push(key);
+      }
+    });
+
+    if (missingKeys.length === 0) {
+      return result;
+    }
+
+    const settings = await Settings.find({ key: { $in: missingKeys } }).lean();
     settings.forEach((setting) => {
       result[setting.key] = setting.value;
+      setCachedSettingValue(setting.key, setting.value);
     });
     // Fill in defaults for missing keys
     keys.forEach((key) => {
       if (!(key in result)) {
         result[key] = null;
+        setCachedSettingValue(key, null);
       }
     });
     return result;
@@ -87,6 +133,7 @@ export const getAllSettings = async (forceRefresh = false) => {
 export const clearSettingsCache = () => {
   settingsCache = null;
   cacheTimestamp = null;
+  settingValueCache.clear();
 };
 
 /**

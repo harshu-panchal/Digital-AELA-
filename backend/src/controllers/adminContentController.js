@@ -7,6 +7,61 @@ import RecruiterBlog from "../models/RecruiterBlog.js";
 import { uploadPdfToCloudinary, uploadVideoToCloudinary } from "../middleware/uploadMiddleware.js";
 import { normalizeUrl } from "../utils/urlNormalizer.js";
 
+const parseTags = (tags) => {
+  if (Array.isArray(tags)) {
+    return tags.map((tag) => tag.toString().trim()).filter(Boolean);
+  }
+
+  if (typeof tags !== "string") return [];
+
+  try {
+    const parsed = JSON.parse(tags);
+    if (Array.isArray(parsed)) {
+      return parsed.map((tag) => tag.toString().trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall through to comma-separated parsing.
+  }
+
+  return tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+};
+
+const normalizeBookType = (bookType) => {
+  const value = (bookType || "ebook").toString().trim().toLowerCase();
+  return value === "physical" || value === "physical-book"
+    ? "physical"
+    : "ebook";
+};
+
+const ensureFeaturedBookLimit = async ({ isFeatured, isPublic, bookId }) => {
+  if (!isFeatured || !isPublic) return null;
+
+  const featuredQuery = {
+    "metadata.isFeatured": true,
+    isPublic: true,
+  };
+
+  if (bookId) {
+    featuredQuery._id = { $ne: bookId };
+  }
+
+  const featuredCount = await EbookResource.countDocuments(featuredQuery);
+  if (featuredCount >= 4) {
+    return {
+      error: {
+        code: "VALIDATION_ERROR",
+        message:
+          "Maximum of 4 featured books allowed. Please unmark another featured book first.",
+      },
+    };
+  }
+
+  return null;
+};
+
 /**
  * Super Admin: Get Content Management Statistics
  */
@@ -161,6 +216,255 @@ export const getAllBooksForManagement = async (req, res, next) => {
         pageSize: Number(pageSize),
         total,
       },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Get Book by ID
+ */
+export const getAdminBookById = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { bookId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid book ID",
+        },
+      });
+    }
+
+    const book = await EbookResource.findById(bookId).lean();
+
+    if (!book) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Book not found",
+        },
+      });
+    }
+
+    return res.json({ book });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Super Admin: Update Book
+ */
+export const updateAdminBook = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can update books",
+        },
+      });
+    }
+
+    const { bookId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid book ID",
+        },
+      });
+    }
+
+    const book = await EbookResource.findById(bookId);
+
+    if (!book) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "Book not found",
+        },
+      });
+    }
+
+    const {
+      title,
+      subtitle,
+      description,
+      price,
+      category,
+      categories,
+      coverImage,
+      previewUrl,
+      downloadUrl,
+      pages,
+      isPublic,
+      isFeatured,
+      bookType,
+      author,
+      tags,
+    } = req.body;
+
+    const nextTitle = title !== undefined ? title.toString().trim() : book.title;
+    const nextDescription =
+      description !== undefined
+        ? description.toString().trim()
+        : book.description;
+    const nextPages = pages !== undefined ? Number(pages) : book.pages;
+    const nextPrice =
+      price !== undefined
+        ? price === ""
+          ? 0
+          : Number(price)
+        : Number(book.metadata?.price || 0);
+    const nextIsPublic =
+      isPublic !== undefined
+        ? isPublic === true || isPublic === "true"
+        : book.isPublic;
+    const nextIsFeatured =
+      isFeatured !== undefined
+        ? isFeatured === true || isFeatured === "true"
+        : book.metadata?.isFeatured === true;
+    const nextBookType =
+      bookType !== undefined
+        ? normalizeBookType(bookType)
+        : normalizeBookType(book.metadata?.bookType);
+    const nextDownloadUrl =
+      downloadUrl !== undefined ? downloadUrl.toString().trim() : book.downloadUrl;
+
+    if (!nextTitle) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Title is required",
+        },
+      });
+    }
+
+    if (!nextDescription || nextDescription.length < 40) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Description is required (minimum 40 characters)",
+        },
+      });
+    }
+
+    if (!nextPages || nextPages <= 0) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Number of pages is required and must be greater than 0",
+        },
+      });
+    }
+
+    if (price !== undefined && Number.isNaN(nextPrice)) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Price must be a valid number",
+        },
+      });
+    }
+
+    if (nextBookType === "ebook" && !nextDownloadUrl) {
+      return res.status(422).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Download URL is required for e-books",
+        },
+      });
+    }
+
+    const featuredLimitError = await ensureFeaturedBookLimit({
+      isFeatured: nextIsFeatured,
+      isPublic: nextIsPublic,
+      bookId,
+    });
+
+    if (featuredLimitError) {
+      return res.status(422).json(featuredLimitError);
+    }
+
+    let nextCategories = book.categories || [];
+    if (category !== undefined) {
+      const categoryValue = category.toString().trim();
+      nextCategories = categoryValue ? [categoryValue] : [];
+    } else if (categories !== undefined) {
+      nextCategories = Array.isArray(categories)
+        ? categories.map((item) => item.toString().trim()).filter(Boolean)
+        : parseTags(categories);
+    }
+
+    book.title = nextTitle;
+    book.description = nextDescription;
+    book.pages = nextPages;
+    book.categories = nextCategories;
+    book.isPublic = nextIsPublic;
+    book.downloadUrl =
+      nextBookType === "physical" && !nextDownloadUrl
+        ? "physical-book"
+        : normalizeUrl(nextDownloadUrl) || nextDownloadUrl;
+
+    if (book.isPublic && !book.publishedAt) {
+      book.publishedAt = new Date();
+    }
+
+    if (!book.isPublic) {
+      book.metadata = {
+        ...(book.metadata || {}),
+        isFeatured: false,
+      };
+    }
+
+    book.metadata = {
+      ...(book.metadata || {}),
+      subtitle: subtitle !== undefined ? subtitle.toString().trim() : book.metadata?.subtitle || "",
+      price: Math.max(0, nextPrice),
+      isFree: Math.max(0, nextPrice) === 0,
+      coverImage:
+        coverImage !== undefined
+          ? normalizeUrl(coverImage.toString().trim()) || coverImage.toString().trim()
+          : book.metadata?.coverImage || "",
+      previewUrl:
+        previewUrl !== undefined
+          ? normalizeUrl(previewUrl.toString().trim()) || previewUrl.toString().trim()
+          : book.metadata?.previewUrl || "",
+      author:
+        author !== undefined && author.toString().trim()
+          ? author.toString().trim()
+          : book.metadata?.author || "Digital AELA",
+      bookType: nextBookType,
+      tags: tags !== undefined ? parseTags(tags) : book.metadata?.tags || [],
+      isFeatured: nextIsPublic ? nextIsFeatured : false,
+    };
+
+    book.markModified("metadata");
+    await book.save();
+
+    const updatedBook = await EbookResource.findById(book._id).lean();
+
+    return res.json({
+      book: updatedBook,
+      message: "Book updated successfully",
     });
   } catch (error) {
     return next(error);

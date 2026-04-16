@@ -15,6 +15,8 @@ import {
   getContentManagementStats,
   getAllCoursesForManagement,
   getAllBooksForManagement,
+  getAdminBookById,
+  updateAdminBook,
   deleteCourse,
   deleteBook,
   toggleCourseVisibility,
@@ -124,6 +126,8 @@ router.delete("/live-rooms/:roomId", deleteLiveRoom);
 router.get("/content/stats", getContentManagementStats);
 router.get("/content/courses", getAllCoursesForManagement);
 router.get("/content/books", getAllBooksForManagement);
+router.get("/content/books/:bookId", getAdminBookById);
+router.put("/content/books/:bookId", updateAdminBook);
 router.delete("/content/courses/:courseId", deleteCourse);
 router.delete("/content/books/:bookId", deleteBook);
 router.patch("/content/courses/:courseId/visibility", toggleCourseVisibility);

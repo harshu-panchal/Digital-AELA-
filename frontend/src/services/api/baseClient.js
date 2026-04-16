@@ -4,9 +4,6 @@ import { isTokenExpired } from "../../utils/jwt.js";
 const TOKEN_STORAGE_KEY = "aela.auth.tokens";
 const CSRF_TOKEN_STORAGE_KEY = "aela.csrf.token";
 
-const isDevelopment =
-  import.meta.env.DEV || import.meta.env.MODE === "development";
-
 const loadTokens = () => {
   if (typeof window === "undefined") return null;
   try {
@@ -120,7 +117,6 @@ const fetchCsrfToken = async () => {
 
     return null;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("[CSRF] Error fetching token:", error);
     return null;
   }
@@ -240,7 +236,6 @@ const executeRequest = async (
     timeout,
     onUploadProgress, // New: callback for progress tracking
     _retry = false,
-    _retryCount = 0,
   } = {}
 ) => {
   let tokens = loadTokens();
@@ -347,10 +342,8 @@ const executeRequest = async (
           body,
           headers,
           skipAuth,
-          timeout,
           onUploadProgress,
           _retry,
-          _retryCount,
         });
       };
 
@@ -395,9 +388,7 @@ const executeRequest = async (
         body,
         headers,
         skipAuth,
-        timeout,
         _retry,
-        _retryCount,
       });
     });
   } catch (networkError) {
@@ -430,10 +421,8 @@ const handleResponse = async (
     body,
     headers,
     skipAuth,
-    timeout,
     onUploadProgress,
     _retry,
-    _retryCount,
   } = options;
   const tokens = loadTokens();
 
@@ -516,26 +505,14 @@ const handleResponse = async (
   // Handle 429 Too Many Requests
   if (response.status === 429) {
     const retryAfter = payload?.error?.retryAfter || payload?.retryAfter || 60;
-    const maxRetries = 3;
-
-    if (_retryCount < maxRetries) {
-      const backoffDelay = Math.min(
-        retryAfter * 1000 * Math.pow(2, _retryCount),
-        300000
-      );
-      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-      return resolve(
-        executeRequest(endpoint, {
-          method,
-          body,
-          headers,
-          skipAuth,
-          onUploadProgress,
-          _retry: true,
-          _retryCount: _retryCount + 1,
-        })
-      );
-    }
+    const error = new Error(
+      payload?.error?.message ?? "Too many requests. Please slow down."
+    );
+    error.status = response.status;
+    error.code = payload?.error?.code ?? "TOO_MANY_REQUESTS";
+    error.retryAfter = retryAfter;
+    error.details = payload;
+    return reject(error);
   }
 
   const error = new Error(

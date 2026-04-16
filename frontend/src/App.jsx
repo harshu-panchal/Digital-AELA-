@@ -81,6 +81,9 @@ const ApprovalPage = lazy(() => import("../modules/admin/pages/ApprovalPage"));
 const ReviewModeration = lazy(() =>
   import("../modules/admin/ReviewModeration")
 );
+const BookReviewManagement = lazy(() =>
+  import("../modules/admin/pages/BookReviewManagement")
+);
 const LiveRoomModeration = lazy(() =>
   import("../modules/admin/pages/LiveRoomModeration")
 );
@@ -104,6 +107,9 @@ const AdminCategoryManagement = lazy(() =>
 );
 const AdminBookCreate = lazy(() =>
   import("../modules/admin/pages/AdminBookCreate")
+);
+const AdminBookDetail = lazy(() =>
+  import("../modules/admin/pages/AdminBookDetail")
 );
 const AdminBlogCreate = lazy(() =>
   import("../modules/admin/pages/AdminBlogCreate")
@@ -294,6 +300,9 @@ const EnglishLanguageCourses = lazy(() =>
 );
 const Books = lazy(() =>
   import("../modules/business-management/business-pages/Books")
+);
+const BookCart = lazy(() =>
+  import("../modules/business-management/business-pages/BookCart")
 );
 const BookDetail = lazy(() =>
   import("../modules/business-management/business-pages/BookDetail")
@@ -586,6 +595,15 @@ export const App = () => {
             }
           />
           <Route
+            path="reviews/books"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading book reviews..." />}>
+                <BookReviewManagement />
+              </Suspense>
+            }
+          />
+          <Route
             path="live-rooms/moderate"
             element={
               <Suspense
@@ -662,6 +680,15 @@ export const App = () => {
                   <LoadingFallback message="Loading book creator..." />
                 }>
                 <AdminBookCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="books/:bookId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading book editor..." />}>
+                <AdminBookDetail />
               </Suspense>
             }
           />
@@ -1673,6 +1700,14 @@ export const App = () => {
           element={
             <Suspense fallback={<LoadingFallback />}>
               <Books />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/books/cart"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BookCart />
             </Suspense>
           }
         />

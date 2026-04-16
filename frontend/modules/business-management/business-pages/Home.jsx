@@ -13,6 +13,7 @@ import {
   FaPlayCircle,
   FaCertificate,
   FaGlobe,
+  FaWhatsapp,
 } from "react-icons/fa";
 import founderImage from "../../../src/assets/Founder.png";
 import slideOurMission from "../../../src/assets/images/slide-images/our mission.jpg";
@@ -823,7 +824,7 @@ const Home = () => {
   }, [ribbonInView, ribbonStats]);
 
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "971502270625";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in learning more about your English courses."
   );
@@ -1073,6 +1074,21 @@ const Home = () => {
         keywords="English courses online, Digital Marketing training, Corporate Training, Online learning India, Pakistan, Bangladesh, Nepal, Gulf countries, IELTS preparation, Career counselling, Skill development, English speaking course, Online education South Asia"
         url="https://digitalaela.com/"
       />
+      <motion.a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with Digital AELA on WhatsApp"
+        title="Chat on WhatsApp"
+        initial={{ opacity: 0, y: 18, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 0.6, duration: 0.35, ease: "easeOut" }}
+        className="group fixed bottom-32 right-6 z-50 flex items-center gap-3 rounded-full border border-white/15 bg-[#25D366] p-3 text-white shadow-[0_18px_45px_rgba(37,211,102,0.35)] transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#1ebe5d] hover:shadow-[0_22px_55px_rgba(37,211,102,0.48)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366] active:scale-95 sm:bottom-36 sm:right-3">
+        <span className="pointer-events-none absolute right-full mr-3 hidden whitespace-nowrap rounded-full border border-white/10 bg-black/85 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 sm:block sm:translate-x-3 sm:opacity-0">
+          Chat on WhatsApp
+        </span>
+        <FaWhatsapp className="h-8 w-8" aria-hidden="true" />
+      </motion.a>
       {/* Hero Section */}
       <motion.section
         className="relative min-h-screen flex items-center pt-[110px] pb-20 md:pt-[180px] md:pb-28 overflow-hidden"

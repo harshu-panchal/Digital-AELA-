@@ -1,5 +1,31 @@
 import rateLimit from "express-rate-limit";
 import { ipKeyGenerator } from "express-rate-limit";
+import { verifyAccessToken } from "../utils/token.js";
+
+const getAuthenticatedRateLimitKey = (req, prefix) => {
+  const { userId } = req.auth || {};
+  if (userId) {
+    return `${prefix}:${userId}`;
+  }
+
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : null;
+
+  if (token) {
+    try {
+      const payload = verifyAccessToken(token);
+      if (payload?.sub) {
+        return `${prefix}:${payload.sub}`;
+      }
+    } catch {
+      // Invalid or expired tokens should fall back to IP-based limiting.
+    }
+  }
+
+  return ipKeyGenerator(req);
+};
 
 /* ✅ Global Rate Limiter */
 export const globalLimiter = rateLimit({
@@ -71,11 +97,7 @@ export const paymentRateLimiter = rateLimit({
   legacyHeaders: false,
   // Use IP address or user ID as key (prefer user ID if authenticated)
   keyGenerator: (req) => {
-    const { userId } = req.auth || {};
-    if (userId) {
-      return `payment:${userId}`; // Per-user limit
-    }
-    return ipKeyGenerator(req); // Per-IP fallback
+    return getAuthenticatedRateLimitKey(req, "payment");
   },
   handler: (req, res) => {
     const retryAfterSeconds = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
@@ -107,11 +129,7 @@ export const apiRateLimiter = rateLimit({
   legacyHeaders: false,
   // Use IP address or user ID as key (prefer user ID if authenticated)
   keyGenerator: (req) => {
-    const { userId } = req.auth || {};
-    if (userId) {
-      return `api:${userId}`; // Per-user limit
-    }
-    return ipKeyGenerator(req); // Per-IP fallback
+    return getAuthenticatedRateLimitKey(req, "api");
   },
   handler: (req, res) => {
     res.status(429).json({
@@ -147,11 +165,7 @@ export const strictRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const { userId } = req.auth || {};
-    if (userId) {
-      return `strict:${userId}`;
-    }
-    return ipKeyGenerator(req);
+    return getAuthenticatedRateLimitKey(req, "strict");
   },
   handler: (req, res) => {
     res.status(429).json({

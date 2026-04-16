@@ -511,6 +511,12 @@ const ContentManagement = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
+                      <Link
+                        to={`/super-admin/books/${book._id}`}
+                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
+                        title="Edit Book">
+                        <FaEdit className="text-[#F5D26A]" />
+                      </Link>
                       <button
                         onClick={() =>
                           handleToggleBookVisibility(book._id, book.isPublic)

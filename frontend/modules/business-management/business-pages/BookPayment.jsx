@@ -49,7 +49,11 @@ const BookPayment = () => {
             author: ebook.metadata?.author || "Digital AELA",
             price: price,
             currency: "INR", // Default to INR
-            format: "ebook", // All books from API are ebooks
+            format:
+              ebook.metadata?.bookType === "physical" ||
+              ebook.downloadUrl === "physical-book"
+                ? "physical"
+                : "ebook",
             image: ebook.metadata?.coverImage || bookGrammarImg,
           };
           setBook(transformedBook);

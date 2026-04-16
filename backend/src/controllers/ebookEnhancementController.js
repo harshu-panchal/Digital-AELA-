@@ -2,7 +2,55 @@ import mongoose from "mongoose";
 import EbookResource from "../models/EbookResource.js";
 import EbookReadingProgress from "../models/EbookReadingProgress.js";
 import EbookRating from "../models/EbookRating.js";
-import User from "../models/User.js";
+
+const VISIBLE_EBOOK_REVIEW_QUERY = {
+  $or: [{ status: "approved" }, { status: { $exists: false } }],
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const serializeEbookRating = (rating) => {
+  if (!rating) return null;
+
+  const user = rating.user || {};
+  const ebook = rating.ebook || {};
+  const repliedBy = rating.adminReply?.repliedBy || {};
+
+  return {
+    id: rating._id?.toString?.() || rating.id,
+    rating: rating.rating,
+    review: rating.review || "",
+    status: rating.status || rating.effectiveStatus || "approved",
+    helpfulCount: rating.helpfulCount || 0,
+    createdAt: rating.createdAt,
+    updatedAt: rating.updatedAt,
+    user: {
+      id: user._id?.toString?.() || user.id,
+      name: user.fullName || user.name || "Anonymous",
+      email: user.email || "",
+      role: user.role || "",
+    },
+    ebook: {
+      id: ebook._id?.toString?.() || ebook.id,
+      title: ebook.title || "Unknown book",
+      author: ebook.metadata?.author || "Digital AELA",
+      coverImage: ebook.metadata?.coverImage || "",
+      category: ebook.categories?.[0] || "General",
+      isPublic: ebook.isPublic,
+    },
+    adminReply: rating.adminReply?.message
+      ? {
+          message: rating.adminReply.message,
+          repliedAt: rating.adminReply.repliedAt,
+          repliedBy: {
+            id: repliedBy._id?.toString?.() || repliedBy.id,
+            name: repliedBy.fullName || repliedBy.name || "Admin",
+            email: repliedBy.email || "",
+          },
+        }
+      : null,
+  };
+};
 
 /**
  * Update ebook reading progress
@@ -241,18 +289,27 @@ export const rateEbook = async (req, res, next) => {
     const ebookRating = await EbookRating.findOneAndUpdate(
       { user: userId, ebook: ebookId },
       {
-        user: userId,
-        ebook: ebookId,
-        rating,
-        review: review || "",
+        $set: {
+          user: userId,
+          ebook: ebookId,
+          rating,
+          review: review || "",
+          status: "approved",
+        },
+        $unset: {
+          adminReply: "",
+        },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, runValidators: true }
     )
       .populate("user", "fullName")
       .lean();
 
     // Calculate average rating
-    const ratings = await EbookRating.find({ ebook: ebookId }).lean();
+    const ratings = await EbookRating.find({
+      ebook: ebookId,
+      ...VISIBLE_EBOOK_REVIEW_QUERY,
+    }).lean();
     const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
 
     return res.json({
@@ -292,7 +349,7 @@ export const getEbookRatings = async (req, res, next) => {
       });
     }
 
-    const query = { ebook: ebookId };
+    const query = { ebook: ebookId, ...VISIBLE_EBOOK_REVIEW_QUERY };
     if (rating) {
       query.rating = Number(rating);
     }
@@ -302,6 +359,7 @@ export const getEbookRatings = async (req, res, next) => {
     const [ratings, total] = await Promise.all([
       EbookRating.find(query)
         .populate("user", "fullName")
+        .populate("adminReply.repliedBy", "fullName")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(pageSize))
@@ -310,7 +368,10 @@ export const getEbookRatings = async (req, res, next) => {
     ]);
 
     // Calculate statistics
-    const allRatings = await EbookRating.find({ ebook: ebookId }).lean();
+    const allRatings = await EbookRating.find({
+      ebook: ebookId,
+      ...VISIBLE_EBOOK_REVIEW_QUERY,
+    }).lean();
     const avgRating = allRatings.length > 0 ? allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length : 0;
     const ratingDistribution = [1, 2, 3, 4, 5].map((star) => ({
       star,
@@ -324,9 +385,19 @@ export const getEbookRatings = async (req, res, next) => {
         review: r.review,
         helpfulCount: r.helpfulCount,
         createdAt: r.createdAt,
+        adminReply: r.adminReply?.message
+          ? {
+              message: r.adminReply.message,
+              repliedAt: r.adminReply.repliedAt,
+              repliedBy: {
+                id: r.adminReply.repliedBy?._id?.toString?.(),
+                name: r.adminReply.repliedBy?.fullName || "Digital AELA",
+              },
+            }
+          : null,
         user: {
-          id: r.user._id.toString(),
-          name: r.user.fullName,
+          id: r.user?._id?.toString?.(),
+          name: r.user?.fullName || "Anonymous",
         },
       })),
       statistics: {
@@ -340,6 +411,354 @@ export const getEbookRatings = async (req, res, next) => {
         total,
         totalPages: Math.ceil(total / Number(pageSize)),
       },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get all ebook reviews for admin management
+ * GET /api/v1/resources/admin/ebook-ratings
+ */
+export const getAdminEbookRatings = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      pageSize = 20,
+      status = "all",
+      rating,
+      replyStatus = "all",
+      search = "",
+      ebookId,
+    } = req.query;
+
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(pageSize) || 20));
+    const skip = (pageNumber - 1) * limit;
+
+    const baseMatch = {};
+    if (ebookId) {
+      if (!mongoose.isValidObjectId(ebookId)) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid ebook ID",
+          },
+        });
+      }
+      baseMatch.ebook = new mongoose.Types.ObjectId(ebookId);
+    }
+
+    const ratingNumber = Number(rating);
+    if (rating && Number.isInteger(ratingNumber) && ratingNumber >= 1 && ratingNumber <= 5) {
+      baseMatch.rating = ratingNumber;
+    }
+
+    const pipeline = [
+      { $match: baseMatch },
+      {
+        $addFields: {
+          effectiveStatus: { $ifNull: ["$status", "approved"] },
+          replyMessage: { $ifNull: ["$adminReply.message", ""] },
+        },
+      },
+    ];
+
+    if (status !== "all") {
+      pipeline.push({
+        $match: {
+          effectiveStatus: status === "hidden" ? "hidden" : "approved",
+        },
+      });
+    }
+
+    if (replyStatus === "replied") {
+      pipeline.push({ $match: { replyMessage: { $ne: "" } } });
+    } else if (replyStatus === "unreplied") {
+      pipeline.push({ $match: { replyMessage: "" } });
+    }
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "ebookresources",
+          localField: "ebook",
+          foreignField: "_id",
+          as: "ebook",
+        },
+      },
+      { $unwind: { path: "$ebook", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "adminReply.repliedBy",
+          foreignField: "_id",
+          as: "adminReplyUser",
+        },
+      },
+      {
+        $unwind: {
+          path: "$adminReplyUser",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          "adminReply.repliedBy": "$adminReplyUser",
+        },
+      },
+      { $project: { adminReplyUser: 0 } }
+    );
+
+    if (search.trim()) {
+      const regex = new RegExp(escapeRegex(search.trim()), "i");
+      pipeline.push({
+        $match: {
+          $or: [
+            { review: regex },
+            { "adminReply.message": regex },
+            { "user.fullName": regex },
+            { "user.email": regex },
+            { "ebook.title": regex },
+            { "ebook.metadata.author": regex },
+          ],
+        },
+      });
+    }
+
+    const [result] = await EbookRating.aggregate([
+      ...pipeline,
+      {
+        $facet: {
+          reviews: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          totalCount: [{ $count: "total" }],
+          statusStats: [
+            {
+              $group: {
+                _id: "$effectiveStatus",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          replyStats: [
+            {
+              $group: {
+                _id: null,
+                replied: {
+                  $sum: {
+                    $cond: [{ $ne: ["$replyMessage", ""] }, 1, 0],
+                  },
+                },
+                unreplied: {
+                  $sum: {
+                    $cond: [{ $eq: ["$replyMessage", ""] }, 1, 0],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const total = result?.totalCount?.[0]?.total || 0;
+    const statusStats = (result?.statusStats || []).reduce(
+      (acc, item) => ({ ...acc, [item._id || "approved"]: item.count }),
+      { approved: 0, hidden: 0 }
+    );
+    const replyStats = result?.replyStats?.[0] || { replied: 0, unreplied: 0 };
+
+    return res.json({
+      reviews: (result?.reviews || []).map(serializeEbookRating),
+      summary: {
+        total,
+        approved: statusStats.approved || 0,
+        hidden: statusStats.hidden || 0,
+        replied: replyStats.replied || 0,
+        unreplied: replyStats.unreplied || 0,
+      },
+      pagination: {
+        page: pageNumber,
+        pageSize: limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Reply to an ebook review as an admin
+ * PATCH /api/v1/resources/admin/ebook-ratings/:ratingId/reply
+ */
+export const replyToEbookRating = async (req, res, next) => {
+  try {
+    const { ratingId } = req.params;
+    const { message } = req.body;
+    const { userId } = req.auth;
+
+    if (!mongoose.isValidObjectId(ratingId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid review ID",
+        },
+      });
+    }
+
+    const trimmedMessage = typeof message === "string" ? message.trim() : "";
+    if (!trimmedMessage || trimmedMessage.length > 2000) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Reply must be between 1 and 2000 characters",
+        },
+      });
+    }
+
+    const rating = await EbookRating.findByIdAndUpdate(
+      ratingId,
+      {
+        $set: {
+          "adminReply.message": trimmedMessage,
+          "adminReply.repliedBy": userId,
+          "adminReply.repliedAt": new Date(),
+        },
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("user", "fullName email role")
+      .populate("ebook", "title categories isPublic metadata")
+      .populate("adminReply.repliedBy", "fullName email")
+      .lean();
+
+    if (!rating) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Review not found",
+        },
+      });
+    }
+
+    return res.json({
+      message: "Reply saved successfully",
+      review: serializeEbookRating(rating),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Clear an admin reply from an ebook review
+ * DELETE /api/v1/resources/admin/ebook-ratings/:ratingId/reply
+ */
+export const clearEbookRatingReply = async (req, res, next) => {
+  try {
+    const { ratingId } = req.params;
+
+    if (!mongoose.isValidObjectId(ratingId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid review ID",
+        },
+      });
+    }
+
+    const rating = await EbookRating.findByIdAndUpdate(
+      ratingId,
+      { $unset: { adminReply: "" } },
+      { new: true, runValidators: true }
+    )
+      .populate("user", "fullName email role")
+      .populate("ebook", "title categories isPublic metadata")
+      .lean();
+
+    if (!rating) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Review not found",
+        },
+      });
+    }
+
+    return res.json({
+      message: "Reply removed successfully",
+      review: serializeEbookRating(rating),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Update ebook review visibility
+ * PATCH /api/v1/resources/admin/ebook-ratings/:ratingId/status
+ */
+export const updateEbookRatingStatus = async (req, res, next) => {
+  try {
+    const { ratingId } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.isValidObjectId(ratingId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid review ID",
+        },
+      });
+    }
+
+    if (!["approved", "hidden"].includes(status)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Status must be approved or hidden",
+        },
+      });
+    }
+
+    const rating = await EbookRating.findByIdAndUpdate(
+      ratingId,
+      { $set: { status } },
+      { new: true, runValidators: true }
+    )
+      .populate("user", "fullName email role")
+      .populate("ebook", "title categories isPublic metadata")
+      .populate("adminReply.repliedBy", "fullName email")
+      .lean();
+
+    if (!rating) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "Review not found",
+        },
+      });
+    }
+
+    return res.json({
+      message: `Review ${status === "hidden" ? "hidden" : "published"} successfully`,
+      review: serializeEbookRating(rating),
     });
   } catch (error) {
     return next(error);

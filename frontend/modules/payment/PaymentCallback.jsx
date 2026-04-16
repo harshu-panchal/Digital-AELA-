@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import { FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
 import { getPaymentDetails, verifyPaymentStatus } from "../../src/services/api/payments";
 import SEO from "../../src/components/SEO";
+import {
+  BOOK_CART_PENDING_PAYMENT_KEY,
+  clearBookCart,
+} from "../business-management/utils/bookCart";
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +20,20 @@ const PaymentCallback = () => {
   const paymentStatus = searchParams.get("status");
   const payment_id = searchParams.get("payment_id");
   const errorMessage = searchParams.get("error");
+
+  const clearBookCartIfPaid = (paymentRecord) => {
+    const pendingCartPaymentId = sessionStorage.getItem(
+      BOOK_CART_PENDING_PAYMENT_KEY
+    );
+    const isBookCartPayment =
+      paymentRecord?.metadata?.type === "book-cart" ||
+      pendingCartPaymentId === paymentId;
+
+    if (isBookCartPayment) {
+      clearBookCart();
+      sessionStorage.removeItem(BOOK_CART_PENDING_PAYMENT_KEY);
+    }
+  };
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -59,6 +77,7 @@ const PaymentCallback = () => {
               if (verifyResult.success || verifyResult.verified || verifyResult.payment?.status === "completed") {
                 setStatus("success");
                 setPayment(verifyResult.payment);
+                clearBookCartIfPaid(verifyResult.payment);
                 toast.success("Payment successful!");
 
                 setTimeout(() => {
@@ -90,6 +109,7 @@ const PaymentCallback = () => {
 
         if (currentStatus === "completed") {
           setStatus("success");
+          clearBookCartIfPaid(paymentData.payment);
           toast.success("Payment successful!");
           setTimeout(() => {
             if (paymentData.payment?.course) {
@@ -133,6 +153,7 @@ const PaymentCallback = () => {
                 if (updatedPayment.payment?.status === "completed") {
                   setStatus("success");
                   setPayment(updatedPayment.payment);
+                  clearBookCartIfPaid(updatedPayment.payment);
                   toast.success("Payment successful!");
                   setTimeout(() => {
                     if (updatedPayment.payment?.course) {

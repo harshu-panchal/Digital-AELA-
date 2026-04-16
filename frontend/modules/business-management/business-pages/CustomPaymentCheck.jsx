@@ -16,6 +16,7 @@ import {
   createRazorpayPaymentLink,
 } from "../../../src/services/api/payments";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { BOOK_CART_PENDING_PAYMENT_KEY } from "../utils/bookCart";
 
 const CustomPaymentCheck = () => {
   const navigate = useNavigate();
@@ -85,7 +86,11 @@ const CustomPaymentCheck = () => {
     setIsProcessing(true);
 
     try {
-      const { type, giftType, itemName, amount, currency } = paymentData;
+      const { type, giftType, itemName, amount } = paymentData;
+      const isBookCart = type === "book-cart";
+      const paymentTotalAmount = isBookCart
+        ? parseFloat(amount)
+        : parseFloat(amount) * (paymentData.quantity || 1);
 
       // Prepare payment description based on type
       let description = "";
@@ -93,6 +98,8 @@ const CustomPaymentCheck = () => {
         description = `Payment for course: ${itemName}`;
       } else if (type === "book") {
         description = `Payment for book: ${itemName}`;
+      } else if (type === "book-cart") {
+        description = `Payment for ${paymentData.cartItems?.length || 0} books`;
       } else if (type === "gift") {
         description = `Gift payment: ${itemName || "Digital AELA"} - ${
           giftType === "near" ? "Gift to near one" : "Gift to anyone"
@@ -103,7 +110,7 @@ const CustomPaymentCheck = () => {
       const paymentResponse = await createPayment({
         courseId:
           paymentData.type === "course" ? paymentData.itemId : undefined,
-        amount: parseFloat(amount),
+        amount: paymentTotalAmount,
         currency: "INR", // Force INR as per platform standard
         description: description,
         paymentMethod: "card", // Use valid enum value from Payment model
@@ -111,6 +118,10 @@ const CustomPaymentCheck = () => {
         metadata: {
           type: paymentData.type,
           itemId: paymentData.itemId,
+          itemName: paymentData.itemName,
+          quantity: paymentData.quantity,
+          cartItems: paymentData.cartItems || undefined,
+          totalAmount: paymentTotalAmount,
           giftType: paymentData.giftType || undefined,
         },
       });
@@ -129,6 +140,10 @@ const CustomPaymentCheck = () => {
       }
 
       // Step 3: Redirect to Razorpay's payment page
+      if (isBookCart) {
+        sessionStorage.setItem(BOOK_CART_PENDING_PAYMENT_KEY, paymentId);
+      }
+
       toast.success("Redirecting to secure payment gateway...");
       window.location.href = linkResponse.paymentLink.url;
     } catch (error) {
@@ -158,7 +173,8 @@ const CustomPaymentCheck = () => {
   }
 
   const { itemName, amount, currency, quantity = 1, type } = paymentData;
-  const totalAmount = amount * quantity;
+  const isBookCart = type === "book-cart";
+  const totalAmount = isBookCart ? amount : amount * quantity;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -212,7 +228,7 @@ const CustomPaymentCheck = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <span className="text-gray-400">
-                    <TranslatedText>Item</TranslatedText>
+                    <TranslatedText>{isBookCart ? "Items" : "Item"}</TranslatedText>
                   </span>
                   <span className="text-white font-semibold text-right max-w-[60%] flex flex-col items-end">
                     <TranslatedText>{itemName}</TranslatedText>
@@ -230,18 +246,48 @@ const CustomPaymentCheck = () => {
                     <TranslatedText>Type</TranslatedText>
                   </span>
                   <span className="text-white font-semibold capitalize">
-                    <TranslatedText>{type}</TranslatedText>
+                    <TranslatedText>
+                      {isBookCart ? "Book Cart" : type}
+                    </TranslatedText>
                   </span>
                 </div>
+                {isBookCart && paymentData.cartItems?.length > 0 && (
+                  <div className="rounded-lg border border-[#D4AF37]/10 bg-[#141414] p-3">
+                    <p className="mb-3 text-sm font-semibold text-white">
+                      <TranslatedText>Books in this order</TranslatedText>
+                    </p>
+                    <div className="space-y-3">
+                      {paymentData.cartItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex justify-between gap-4 text-sm">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatCurrency(item.price)} x {item.quantity}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-[#D4AF37]">
+                            {formatCurrency(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">
                     <TranslatedText>Quantity</TranslatedText>
                   </span>
-                  <span className="text-white font-semibold">×{quantity}</span>
+                  <span className="text-white font-semibold">x{quantity}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">
-                    <TranslatedText>Price</TranslatedText>
+                    <TranslatedText>
+                      {isBookCart ? "Subtotal" : "Price"}
+                    </TranslatedText>
                   </span>
                   <span className="text-white font-semibold">
                     {formatCurrency(amount)}

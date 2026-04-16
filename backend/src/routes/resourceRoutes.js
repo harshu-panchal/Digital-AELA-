@@ -6,12 +6,22 @@ import {
   addBookmark,
   rateEbook,
   getEbookRatings,
+  getAdminEbookRatings,
+  replyToEbookRating,
+  clearEbookRatingReply,
+  updateEbookRatingStatus,
   getEbookAnalytics,
   downloadEbook,
 } from "../controllers/ebookEnhancementController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
+
+// Admin routes
+router.get("/admin/ebook-ratings", requireAuth(["admin", "super-admin"]), getAdminEbookRatings);
+router.patch("/admin/ebook-ratings/:ratingId/reply", requireAuth(["admin", "super-admin"]), replyToEbookRating);
+router.delete("/admin/ebook-ratings/:ratingId/reply", requireAuth(["admin", "super-admin"]), clearEbookRatingReply);
+router.patch("/admin/ebook-ratings/:ratingId/status", requireAuth(["admin", "super-admin"]), updateEbookRatingStatus);
 
 // Public routes
 router.get("/ebooks", listEbooks);

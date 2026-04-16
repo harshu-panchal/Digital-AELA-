@@ -74,6 +74,35 @@ export const createEbook = async (payload, isFormData = false, onProgress) => {
 };
 
 /**
+ * Get book by ID for super-admin editing
+ */
+export const getAdminBookById = async (bookId) => {
+  const response = await apiRequest(`/admin/content/books/${bookId}`, {
+    method: "GET",
+  });
+
+  return {
+    id: response.book._id,
+    ...response.book,
+  };
+};
+
+/**
+ * Update book details from the super-admin dashboard
+ */
+export const updateAdminBook = async (bookId, updates) => {
+  const response = await apiRequest(`/admin/content/books/${bookId}`, {
+    method: "PUT",
+    body: updates,
+  });
+
+  return {
+    id: response.book._id,
+    ...response.book,
+  };
+};
+
+/**
  * Upload course brochure PDF (super admin)
  */
 export const uploadAdminCourseBrochure = async (courseId, file, onProgress) => {

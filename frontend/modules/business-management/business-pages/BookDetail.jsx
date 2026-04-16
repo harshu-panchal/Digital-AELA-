@@ -12,6 +12,9 @@ import {
   FaSpinner,
   FaBookmark,
   FaBookOpen,
+  FaMinus,
+  FaPlus,
+  FaShoppingCart,
 } from "react-icons/fa";
 import {
   HiOutlineHeart,
@@ -32,8 +35,8 @@ import { useAuth } from "../../../src/contexts/AuthContext";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
 import LazyImage from "../../../src/components/LazyImage";
 import { formatCurrency } from "../../../src/utils/currencyUtils";
-import { redirectToRazorpay } from "../utils/directRazorpayPayment";
 import { redirectToCustomBookPayment } from "../utils/customPaymentRedirect";
+import { addBookToCart } from "../utils/bookCart";
 import {
   fetchEbookById,
   fetchEbookProgress,
@@ -232,7 +235,30 @@ const BookDetail = () => {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const { translate, translateObject } = useDynamicTranslation();
+
+  const handleOpenRatingModal = () => {
+    if (!isAuthenticated) {
+      toast.info("Please log in to write a review");
+      navigate("/login/student", { state: { from: `/books/${id}` } });
+      return;
+    }
+
+    setShowRatingModal(true);
+  };
+
+  const updatePurchaseQuantity = (nextQuantity) => {
+    const parsedQuantity = parseInt(nextQuantity, 10);
+    if (!Number.isFinite(parsedQuantity) || parsedQuantity < 1) {
+      setPurchaseQuantity(1);
+      return;
+    }
+    setPurchaseQuantity(Math.min(parsedQuantity, 99));
+  };
+
+  const getBookPrice = () =>
+    typeof book.price === "number" ? book.price : parseFloat(book.price) || 0;
 
   useEffect(() => {
     const loadBook = async () => {
@@ -258,7 +284,11 @@ const BookDetail = () => {
               imageAlt: `${ebook.title} cover`,
               rating: 4.5,
               reviews: 0,
-              format: "ebook",
+              format:
+                ebook.metadata?.bookType === "physical" ||
+                ebook.downloadUrl === "physical-book"
+                  ? "physical"
+                  : "ebook",
               description: ebook.description || "",
               fullDescription:
                 ebook.description || ebook.metadata?.subtitle || "",
@@ -488,13 +518,11 @@ const BookDetail = () => {
                 <span className="text-sm text-gray-500">
                   ({book.reviews} <TranslatedText>reviews</TranslatedText>)
                 </span>
-                {isAuthenticated && (
-                  <button
-                    onClick={() => setShowRatingModal(true)}
-                    className="ml-2 text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors">
-                    <TranslatedText>Rate this book</TranslatedText>
-                  </button>
-                )}
+                <button
+                  onClick={handleOpenRatingModal}
+                  className="ml-2 text-sm text-[#D4AF37] hover:text-[#E5C158] transition-colors">
+                  <TranslatedText>Rate this book</TranslatedText>
+                </button>
               </div>
 
               {/* Reading Progress (if authenticated and ebook) */}
@@ -698,15 +726,62 @@ const BookDetail = () => {
                     // Paid book - go to payment
                     return (
                       <>
+                        <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/25 bg-[#0a0a0a] p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-white">
+                                <TranslatedText>Quantity</TranslatedText>
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                <TranslatedText>
+                                  Choose how many copies you want to purchase.
+                                </TranslatedText>
+                              </p>
+                            </div>
+                            <div className="inline-flex w-max items-center rounded-lg border border-white/10 bg-[#141414]">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updatePurchaseQuantity(purchaseQuantity - 1)
+                                }
+                                className="px-3 py-2 text-[#D4AF37] transition hover:bg-white/5">
+                                <FaMinus className="h-3 w-3" />
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={purchaseQuantity}
+                                onChange={(event) =>
+                                  updatePurchaseQuantity(event.target.value)
+                                }
+                                className="w-16 border-x border-white/10 bg-transparent py-2 text-center text-white focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updatePurchaseQuantity(purchaseQuantity + 1)
+                                }
+                                className="px-3 py-2 text-[#D4AF37] transition hover:bg-white/5">
+                                <FaPlus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-sm">
+                            <span className="text-gray-400">
+                              <TranslatedText>Total</TranslatedText>
+                            </span>
+                            <span className="font-bold text-[#D4AF37]">
+                              {formatCurrency(getBookPrice() * purchaseQuantity)}
+                            </span>
+                          </div>
+                        </div>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={async () => {
                             // Validate price
-                            const bookPrice =
-                              typeof book.price === "number"
-                                ? book.price
-                                : parseFloat(book.price) || 0;
+                            const bookPrice = getBookPrice();
                             if (!bookPrice || bookPrice <= 0) {
                               toast.error(
                                 "This book price is not available. Please contact support."
@@ -714,11 +789,22 @@ const BookDetail = () => {
                               return;
                             }
 
-                            redirectToCustomBookPayment(book);
+                            redirectToCustomBookPayment(book, purchaseQuantity);
                           }}
                           className="w-full bg-[#D4AF37] text-black py-4 rounded-lg font-bold text-lg hover:bg-[#E5C158] transition-colors duration-200">
                           <TranslatedText>Buy Now</TranslatedText> -{" "}
-                          {formatCurrency(book.price)}
+                          {formatCurrency(getBookPrice() * purchaseQuantity)}
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            addBookToCart(book, purchaseQuantity);
+                            toast.success("Book added to cart");
+                          }}
+                          className="w-full border border-[#D4AF37]/60 text-[#F5D26A] py-4 rounded-lg font-bold text-lg hover:bg-[#D4AF37] hover:text-black transition-colors duration-200">
+                          <FaShoppingCart className="inline mr-2" />
+                          <TranslatedText>Add to Cart</TranslatedText>
                         </motion.button>
                         <GiftButton
                           course={book}
@@ -916,6 +1002,18 @@ const BookDetail = () => {
                     <p className="text-gray-300 text-sm mt-2">
                       <TranslatedText>{rating.review}</TranslatedText>
                     </p>
+                  )}
+                  {rating.adminReply?.message && (
+                    <div className="mt-3 rounded-lg border border-[#D4AF37]/25 bg-[#D4AF37]/10 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">
+                        <TranslatedText>Digital AELA replied</TranslatedText>
+                      </p>
+                      <p className="mt-2 text-sm text-gray-200">
+                        <TranslatedText>
+                          {rating.adminReply.message}
+                        </TranslatedText>
+                      </p>
+                    </div>
                   )}
                 </div>
               ))}

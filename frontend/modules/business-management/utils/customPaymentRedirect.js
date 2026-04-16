@@ -57,11 +57,17 @@ export const redirectToCustomCoursePayment = (course) => {
 };
 
 // Helper for book buy now
-export const redirectToCustomBookPayment = (book) => {
+export const redirectToCustomBookPayment = (book, quantity = 1) => {
   // Extract numeric price value
   let numericAmount = 0;
+  const normalizedQuantity = Math.min(
+    Math.max(parseInt(quantity, 10) || 1, 1),
+    99
+  );
 
-  if (typeof book.price === "number") {
+  if (book.rawPrice !== undefined && book.rawPrice !== null) {
+    numericAmount = parseFloat(book.rawPrice) || 0;
+  } else if (typeof book.price === "number") {
     numericAmount = book.price;
   } else if (typeof book.price === "string") {
     // Extract number from string like "INR 50" or "50"
@@ -73,7 +79,7 @@ export const redirectToCustomBookPayment = (book) => {
     itemName: book.title,
     amount: numericAmount,
     currency: book.currency || "INR",
-    quantity: 1,
+    quantity: normalizedQuantity,
     author: book.author,
     format: book.format,
     description: truncateWords(

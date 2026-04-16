@@ -4,14 +4,9 @@ import LessonCompletion from "../models/LessonCompletion.js";
 import StudentPoints from "../models/StudentPoints.js";
 import SpeakingAssessment from "../models/SpeakingAssessment.js";
 import Course from "../models/Course.js";
-import Quiz from "../models/Quiz.js";
-import EbookResource from "../models/EbookResource.js";
-import RecruiterBlog from "../models/RecruiterBlog.js";
-import JobPost from "../models/JobPost.js";
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
 import Batch from "../models/Batch.js";
-import { formatCurrency } from "../utils/currencyUtils.js";
 
 export const getStudentDashboard = async (req, res, next) => {
   try {
@@ -40,17 +35,38 @@ export const getStudentDashboard = async (req, res, next) => {
 
     // Calculate Learning Hours (from lesson completions)
     // Parallelize all initial data fetches
-    let lessonCompletions = [];
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    let learningSummary = { totalDuration: 0, monthlyDuration: 0 };
     let activeEnrollments = [];
     let studentPoints = null;
     let latestAssessment = null;
 
     try {
-      [lessonCompletions, activeEnrollments, studentPoints, latestAssessment] =
+      [learningSummary, activeEnrollments, studentPoints, latestAssessment] =
         await Promise.all([
-          LessonCompletion.find({ student: studentObjectId })
-            .lean()
-            .catch(() => []),
+          LessonCompletion.aggregate([
+            { $match: { student: studentObjectId } },
+            {
+              $group: {
+                _id: null,
+                totalDuration: { $sum: { $ifNull: ["$duration", 0] } },
+                monthlyDuration: {
+                  $sum: {
+                    $cond: [
+                      { $gte: ["$completedAt", startOfMonth] },
+                      { $ifNull: ["$duration", 0] },
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          ])
+            .then((results) => results[0] || { totalDuration: 0, monthlyDuration: 0 })
+            .catch(() => ({ totalDuration: 0, monthlyDuration: 0 })),
           Enrollment.find({
             student: studentObjectId,
             status: "active",
@@ -77,26 +93,14 @@ export const getStudentDashboard = async (req, res, next) => {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error fetching dashboard data:", error);
-      lessonCompletions = [];
+      learningSummary = { totalDuration: 0, monthlyDuration: 0 };
       activeEnrollments = [];
       studentPoints = null;
       latestAssessment = null;
     }
 
-    const totalLearningHours = lessonCompletions.reduce((total, completion) => {
-      return total + (completion.duration || 0) / 60; // Convert minutes to hours
-    }, 0);
-
-    // Calculate hours this month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const thisMonthCompletions = lessonCompletions.filter(
-      (c) => new Date(c.completedAt) >= startOfMonth
-    );
-    const hoursThisMonth = thisMonthCompletions.reduce((total, completion) => {
-      return total + (completion.duration || 0) / 60;
-    }, 0);
+    const totalLearningHours = (learningSummary.totalDuration || 0) / 60;
+    const hoursThisMonth = (learningSummary.monthlyDuration || 0) / 60;
 
     const activeCoursesCount = activeEnrollments.length;
 
@@ -348,244 +352,10 @@ export const getStudentDashboard = async (req, res, next) => {
       })),
     };
 
-    // Get Quiz Challenges (top 3 published quizzes)
-    let quizChallenges = [];
-    try {
-      const quizzes = await Quiz.find({ status: "published" })
-        .sort({ createdAt: -1 })
-        .limit(3)
-        .lean();
-
-      quizChallenges = quizzes.map((quiz) => {
-        const difficultyMap = {
-          beginner: "Beginner",
-          intermediate: "Intermediate",
-          advanced: "Advanced",
-          "all-levels": "All Levels",
-        };
-
-        return {
-          id: quiz._id.toString(),
-          title: quiz.title,
-          reward: `+${quiz.rewardCoins || 0} coins`,
-          closing: quiz.difficulty
-            ? `${difficultyMap[quiz.difficulty] || quiz.difficulty} challenge`
-            : "Daily challenge",
-          playRoute: `/learn-earn/quiz/${quiz._id}`,
-        };
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching quizzes:", error);
-      quizChallenges = [];
-    }
-
-    // Get Marketplace Picks (top 3 published courses and ebooks)
-    let marketplaceHighlights = [];
-    try {
-      const [courses, ebooks] = await Promise.all([
-        Course.find({ status: "published" })
-          .populate("instructor", "fullName")
-          .sort({ createdAt: -1 })
-          .limit(2)
-          .lean(),
-        EbookResource.find({ isPublic: true })
-          .sort({ publishedAt: -1, createdAt: -1 })
-          .limit(1)
-          .lean(),
-      ]);
-
-      const courseItems = courses.map((course) => ({
-        id: course._id.toString(),
-        type: "Course",
-        tag: "Best Seller",
-        title: course.title,
-        mentor: course.instructor?.fullName || "Instructor",
-        price: formatCurrency(course.price || 0),
-        to: `/learn-earn/courses/${course._id}`,
-      }));
-
-      const ebookItems = ebooks.map((ebook) => ({
-        id: ebook._id.toString(),
-        type: "E-Book",
-        tag: "Top Rated",
-        title: ebook.title,
-        mentor: ebook.metadata?.author || "Digital AELA",
-        price: ebook.metadata?.price
-          ? formatCurrency(ebook.metadata.price)
-          : "Free",
-        to: `/books/${ebook._id}/payment`,
-      }));
-
-      marketplaceHighlights = [...courseItems, ...ebookItems].slice(0, 3);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching marketplace items:", error);
-      marketplaceHighlights = [];
-    }
-
-    // Get Library Picks (top 3 public ebooks)
-    let ebookShelf = [];
-    try {
-      const ebooks = await EbookResource.find({ isPublic: true })
-        .sort({ publishedAt: -1, createdAt: -1 })
-        .limit(3)
-        .lean();
-
-      ebookShelf = ebooks.map((ebook) => ({
-        id: ebook._id.toString(),
-        title: ebook.title,
-        pages: ebook.pages || 0,
-        to: `/books/${ebook._id}/payment`,
-      }));
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching library ebooks:", error);
-      ebookShelf = [];
-    }
-
-    // Get Latest Blogs (top 3 published blogs)
-    let blogFeed = [];
-    try {
-      const blogs = await RecruiterBlog.find({ status: "published" })
-        .populate("author", "fullName")
-        .sort({ publishedAt: -1, createdAt: -1 })
-        .limit(3)
-        .lean()
-        .lean();
-
-      blogFeed = blogs.map((blog) => {
-        const publishedDate = blog.publishedAt || blog.createdAt;
-        const timeAgo = formatTimeAgo(publishedDate);
-
-        return {
-          id: blog._id.toString(),
-          title: blog.title,
-          author: blog.author?.fullName || "Author",
-          time: timeAgo,
-          to: `/blogs/${blog._id}`,
-        };
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching blogs:", error);
-      blogFeed = [];
-    }
-
-    // Get Job Matches (top 3 published jobs)
-    let jobsBoard = [];
-    try {
-      const jobs = await JobPost.find({ status: "published" })
-        .sort({ publishedAt: -1, createdAt: -1 })
-        .limit(3)
-        .lean();
-
-      jobsBoard = jobs.map((job) => {
-        const publishedDate = job.publishedAt || job.createdAt;
-        const timeAgo = formatTimeAgo(publishedDate);
-        const employmentType = job.employmentType || "full-time";
-        const location = job.isRemote
-          ? "Remote"
-          : job.location || "Location TBD";
-
-        return {
-          id: job._id.toString(),
-          title: job.title,
-          company: job.company,
-          type:
-            employmentType.charAt(0).toUpperCase() +
-            employmentType.slice(1).replace("-", " "),
-          posted: timeAgo,
-          to: `/explore-jobs/jobs/${job._id}`,
-        };
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching jobs:", error);
-      jobsBoard = [];
-    }
-
-    // Get Student Profiles (top 3 students)
-    let studentProfiles = [];
-    try {
-      const students = await User.find({ role: "student", isActive: true })
-        .select("fullName")
-        .limit(3)
-        .lean();
-
-      studentProfiles = students.map((student, index) => {
-        const focuses = [
-          "IELTS Scholar",
-          "Debate Captain",
-          "Blog Creator",
-          "Speaking Champion",
-          "Grammar Master",
-        ];
-        return {
-          id: student._id.toString(),
-          name: student.fullName,
-          focus: focuses[index % focuses.length],
-          to: `/community/students/${student._id}`,
-        };
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching students:", error);
-      studentProfiles = [];
-    }
-
-    // Get Teachers (top 2 teachers)
-    let teacherSpotlight = [];
-    try {
-      const teachers = await User.find({ role: "teacher", isActive: true })
-        .select("fullName metadata")
-        .limit(2)
-        .lean();
-
-      teacherSpotlight = teachers.map((teacher) => ({
-        id: teacher._id.toString(),
-        name: teacher.fullName,
-        expertise: teacher.metadata?.expertise || "English Language",
-        to: `/community/teachers/${teacher._id}`,
-      }));
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching teachers:", error);
-      teacherSpotlight = [];
-    }
-
-    // Get Recruiters (top 2 recruiters)
-    let recruiterSpotlight = [];
-    try {
-      const recruiters = await User.find({ role: "recruiter", isActive: true })
-        .select("fullName metadata")
-        .limit(2)
-        .lean();
-
-      recruiterSpotlight = recruiters.map((recruiter) => ({
-        id: recruiter._id.toString(),
-        name: recruiter.fullName,
-        roles: recruiter.metadata?.company || "Talent Partner",
-        to: `/community/recruiters/${recruiter._id}`,
-      }));
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching recruiters:", error);
-      recruiterSpotlight = [];
-    }
-
     return res.json({
       journeyStats,
       ongoingCourses: ongoingCourses.filter(Boolean),
       learnEarnProgress,
-      quizChallenges,
-      marketplaceHighlights,
-      ebookShelf,
-      blogFeed,
-      jobsBoard,
-      studentProfiles,
-      teacherSpotlight,
-      recruiterSpotlight,
     });
   } catch (error) {
     return next(error);
@@ -754,31 +524,118 @@ export const getDashboardWidgets = async (req, res, next) => {
       });
     }
 
-    // Get student points for achievements
-    let studentPoints = null;
-    try {
-      studentPoints = await StudentPoints.findOne({ student: studentObjectId });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching student points:", error);
-    }
-
-    // Recent Activity Widget - Get last 7 days of activity
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const recentActivities = [];
+    const weeklyStart = new Date();
+    weeklyStart.setDate(weeklyStart.getDate() - 6);
+    weeklyStart.setHours(0, 0, 0, 0);
 
-    // Get recent enrollments
-    const recentEnrollments = await Enrollment.find({
-      student: studentObjectId,
-      enrolledAt: { $gte: sevenDaysAgo },
-    })
-      .lean()
-      .populate("course", "title")
-      .sort({ enrolledAt: -1 })
-      .limit(5)
-      .lean();
+    const safeQuery = async (queryFn, fallback, label) => {
+      try {
+        return await queryFn();
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`Error fetching ${label}:`, error);
+        return fallback;
+      }
+    };
+
+    const [
+      studentPoints,
+      recentEnrollments,
+      recentCompletions,
+      weeklyCompletionBuckets,
+      completedCourses,
+      enrolledCourseIds,
+    ] = await Promise.all([
+      safeQuery(
+        () => StudentPoints.findOne({ student: studentObjectId }).lean(),
+        null,
+        "student points"
+      ),
+      safeQuery(
+        () =>
+          Enrollment.find({
+            student: studentObjectId,
+            enrolledAt: { $gte: sevenDaysAgo },
+          })
+            .populate("course", "title")
+            .sort({ enrolledAt: -1 })
+            .limit(5)
+            .lean(),
+        [],
+        "recent enrollments"
+      ),
+      safeQuery(
+        () =>
+          LessonCompletion.find({
+            student: studentObjectId,
+            completedAt: { $gte: sevenDaysAgo },
+          })
+            .populate("course", "title")
+            .sort({ completedAt: -1 })
+            .limit(5)
+            .lean(),
+        [],
+        "recent completions"
+      ),
+      safeQuery(
+        () =>
+          LessonCompletion.aggregate([
+            {
+              $match: {
+                student: studentObjectId,
+                completedAt: { $gte: weeklyStart },
+              },
+            },
+            {
+              $project: {
+                day: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$completedAt",
+                  },
+                },
+                duration: { $ifNull: ["$duration", 0] },
+              },
+            },
+            {
+              $group: {
+                _id: "$day",
+                duration: { $sum: "$duration" },
+                lessons: { $sum: 1 },
+              },
+            },
+          ]),
+        [],
+        "weekly progress"
+      ),
+      safeQuery(
+        () =>
+          Enrollment.countDocuments({
+            student: studentObjectId,
+            status: "completed",
+          }),
+        0,
+        "completed courses"
+      ),
+      safeQuery(
+        () =>
+          Enrollment.find({
+            student: studentObjectId,
+          })
+            .select("course")
+            .lean()
+            .then((enrollments) =>
+              enrollments.map((e) => e.course).filter(Boolean)
+            ),
+        [],
+        "enrolled courses"
+      ),
+    ]);
+
+    const recentActivities = [];
 
     recentEnrollments.forEach((enrollment) => {
       recentActivities.push({
@@ -789,17 +646,6 @@ export const getDashboardWidgets = async (req, res, next) => {
         icon: "📚",
       });
     });
-
-    // Get recent lesson completions
-    const recentCompletions = await LessonCompletion.find({
-      student: studentObjectId,
-      completedAt: { $gte: sevenDaysAgo },
-    })
-      .lean()
-      .populate("course", "title")
-      .sort({ completedAt: -1 })
-      .limit(5)
-      .lean();
 
     recentCompletions.forEach((completion) => {
       recentActivities.push({
@@ -830,47 +676,27 @@ export const getDashboardWidgets = async (req, res, next) => {
     }));
 
     // Weekly Progress Widget - Last 7 days
+    const weeklyBucketMap = new Map(
+      weeklyCompletionBuckets.map((bucket) => [bucket._id, bucket])
+    );
     const weeklyProgress = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      const dayCompletions = await LessonCompletion.find({
-        student: studentObjectId,
-        completedAt: { $gte: date, $lt: nextDate },
-      }).lean();
-
-      const hours = dayCompletions.reduce((total, completion) => {
-        return total + (completion.duration || 0) / 60;
-      }, 0);
+      const dayKey = date.toISOString().split("T")[0];
+      const bucket = weeklyBucketMap.get(dayKey);
+      const hours = (bucket?.duration || 0) / 60;
 
       weeklyProgress.push({
-        date: date.toISOString().split("T")[0],
+        date: dayKey,
         day: date.toLocaleDateString("en-US", { weekday: "short" }),
         hours: parseFloat(hours.toFixed(1)),
-        lessons: dayCompletions.length,
+        lessons: bucket?.lessons || 0,
       });
     }
 
     // Learning Goals Widget
-    const totalLearningHours = await LessonCompletion.find({
-      student: studentObjectId,
-    })
-      .lean()
-      .then((completions) => {
-        return completions.reduce((total, completion) => {
-          return total + (completion.duration || 0) / 60;
-        }, 0);
-      });
-
-    const activeCourses = await Enrollment.countDocuments({
-      student: studentObjectId,
-      status: "active",
-    });
-
     const learningGoals = {
       weeklyHours: {
         current: weeklyProgress.reduce((sum, day) => sum + day.hours, 0),
@@ -878,10 +704,7 @@ export const getDashboardWidgets = async (req, res, next) => {
         unit: "hours",
       },
       coursesCompleted: {
-        current: await Enrollment.countDocuments({
-          student: studentObjectId,
-          status: "completed",
-        }),
+        current: completedCourses,
         target: 5, // Default target
         unit: "courses",
       },
@@ -892,33 +715,29 @@ export const getDashboardWidgets = async (req, res, next) => {
       },
     };
 
-    // Course Recommendations Widget
-    const enrolledCourseIds = await Enrollment.find({
-      student: studentObjectId,
-    })
-      .select("course")
-      .lean()
-      .then((enrollments) => enrollments.map((e) => e.course));
-
-    const recommendations = await Course.find({
-      _id: { $nin: enrolledCourseIds },
-      status: "published",
-    })
-      .lean()
-      .populate("instructor", "fullName")
-      .sort({ createdAt: -1 })
-      .limit(3)
-      .lean()
-      .then((courses) =>
-        courses.map((course) => ({
-          id: course._id.toString(),
-          title: course.title,
-          instructor: course.instructor?.fullName || "Instructor",
-          price: course.price || 0,
-          thumbnail: course.thumbnail || null,
-          route: `/learn-earn/courses/${course._id}`,
-        }))
-      );
+    const recommendations = await safeQuery(
+      () =>
+        Course.find({
+          _id: { $nin: enrolledCourseIds },
+          status: "published",
+        })
+          .populate("instructor", "fullName")
+          .sort({ createdAt: -1 })
+          .limit(3)
+          .lean()
+          .then((courses) =>
+            courses.map((course) => ({
+              id: course._id.toString(),
+              title: course.title,
+              instructor: course.instructor?.fullName || "Instructor",
+              price: course.price || 0,
+              thumbnail: course.thumbnail || null,
+              route: `/learn-earn/courses/${course._id}`,
+            }))
+          ),
+      [],
+      "course recommendations"
+    );
 
     return res.json({
       recentActivity,
