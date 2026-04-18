@@ -7,6 +7,7 @@ import {
   FaPlus,
   FaShoppingCart,
   FaTrash,
+  FaGift,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import TranslatedText from "../../../src/components/TranslatedText";
@@ -25,10 +26,25 @@ import {
 const BookCart = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState(() => readBookCart());
+  const [giftSelectionOpen, setGiftSelectionOpen] = useState(false);
+  const [showNearGiftForm, setShowNearGiftForm] = useState(false);
+  const [nearGiftForm, setNearGiftForm] = useState({
+    userId: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    relation: "",
+    location: "",
+    message: "",
+  });
+  const [nearGiftErrors, setNearGiftErrors] = useState({});
 
   useEffect(() => subscribeToBookCart(setItems), []);
 
   const totals = useMemo(() => getBookCartTotals(items), [items]);
+  const hasAfterlifeItems = items.some(
+    (item) => item.origin === "join-build-afterlife"
+  );
 
   const handleQuantityChange = (bookId, quantity) => {
     setItems(updateBookCartItemQuantity(bookId, quantity));
@@ -44,22 +60,84 @@ const BookCart = () => {
     setItems([]);
   };
 
-  const handleCheckout = () => {
+  const handleNearGiftChange = (field, value) => {
+    setNearGiftForm((currentForm) => ({ ...currentForm, [field]: value }));
+    if (nearGiftErrors[field]) {
+      setNearGiftErrors((currentErrors) => ({
+        ...currentErrors,
+        [field]: undefined,
+      }));
+    }
+  };
+
+  const getCheckoutState = (extraState = {}) => ({
+    type: "book-cart",
+    itemName:
+      items.length === 1
+        ? items[0].title
+        : `${items.length} books from Digital AELA`,
+    itemId: items.map((item) => item.id).join(","),
+    amount: totals.amount,
+    currency: "INR",
+    quantity: totals.quantity,
+    description: "Multi-book cart purchase",
+    cartItems: items,
+    source:
+      hasAfterlifeItems && items.every((item) => item.origin === "join-build-afterlife")
+        ? "join-build-afterlife"
+        : hasAfterlifeItems
+        ? "mixed-afterlife-cart"
+        : "book-cart",
+    ...extraState,
+  });
+
+  const handleCheckout = (extraState = {}) => {
     if (items.length === 0 || totals.amount <= 0) return;
 
     navigate("/payment/confirm", {
-      state: {
-        type: "book-cart",
-        itemName:
-          items.length === 1
-            ? items[0].title
-            : `${items.length} books from Digital AELA`,
-        itemId: items.map((item) => item.id).join(","),
-        amount: totals.amount,
-        currency: "INR",
-        quantity: totals.quantity,
-        description: "Multi-book cart purchase",
-        cartItems: items,
+      state: getCheckoutState(extraState),
+    });
+  };
+
+  const handleGiftAll = () => {
+    setGiftSelectionOpen(true);
+    setShowNearGiftForm(false);
+  };
+
+  const handleGiftAnyone = () => {
+    handleCheckout({
+      giftType: "anyone",
+      description: "Gift all books to anyone",
+    });
+  };
+
+  const handleNearGiftSubmit = (event) => {
+    event.preventDefault();
+
+    const errors = {};
+    if (!nearGiftForm.userId.trim()) {
+      errors.userId = "User ID is required";
+    }
+    if (!nearGiftForm.fullName.trim()) {
+      errors.fullName = "Full name is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setNearGiftErrors(errors);
+      return;
+    }
+
+    handleCheckout({
+      giftType: "near",
+      description: `Gift all books to ${nearGiftForm.fullName.trim()}`,
+      recipientDetails: {
+        userId: nearGiftForm.userId.trim(),
+        fullName: nearGiftForm.fullName.trim(),
+        email: nearGiftForm.email.trim(),
+        phone: nearGiftForm.phone.trim(),
+        relation: nearGiftForm.relation.trim(),
+        location: nearGiftForm.location.trim(),
+        message: nearGiftForm.message.trim(),
       },
     });
   };
@@ -253,12 +331,155 @@ const BookCart = () => {
                 {formatCurrency(totals.amount)}
               </span>
             </div>
-            <button
-              onClick={handleCheckout}
-              disabled={items.length === 0 || totals.amount <= 0}
-              className="mt-6 w-full rounded-lg bg-[#D4AF37] px-5 py-3 font-bold text-black transition hover:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-50">
-              <TranslatedText>Checkout All Books</TranslatedText>
-            </button>
+            {hasAfterlifeItems ? (
+              <div className="mt-6 space-y-3">
+                <div className="rounded-xl border border-[#D4AF37]/20 bg-[#141414] p-4">
+                  <div className="flex items-start gap-3">
+                    <FaGift className="mt-1 h-4 w-4 text-[#D4AF37]" />
+                    <div>
+                      <p className="text-sm font-bold text-white">
+                        <TranslatedText>Afterlife Cart Checkout</TranslatedText>
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        <TranslatedText>
+                          Choose whether these books are for you or a gift.
+                        </TranslatedText>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleCheckout()}
+                  disabled={items.length === 0 || totals.amount <= 0}
+                  className="w-full rounded-lg bg-[#D4AF37] px-5 py-3 font-bold text-black transition hover:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-50">
+                  <TranslatedText>Purchase for Yourself</TranslatedText>
+                </button>
+                <button
+                  onClick={handleGiftAll}
+                  disabled={items.length === 0 || totals.amount <= 0}
+                  className="w-full rounded-lg border border-[#D4AF37]/60 px-5 py-3 font-bold text-[#F5D26A] transition hover:bg-[#D4AF37] hover:text-black disabled:cursor-not-allowed disabled:opacity-50">
+                  <TranslatedText>Gift All</TranslatedText>
+                </button>
+
+                {giftSelectionOpen && (
+                  <div className="space-y-3 rounded-xl border border-[#D4AF37]/20 bg-[#141414] p-4">
+                    <p className="text-sm font-bold text-white">
+                      <TranslatedText>Choose Gift Type</TranslatedText>
+                    </p>
+                    <button
+                      onClick={() => setShowNearGiftForm(true)}
+                      className="w-full rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-[#D4AF37] hover:text-[#D4AF37]">
+                      <TranslatedText>Gift Near One</TranslatedText>
+                    </button>
+                    <button
+                      onClick={handleGiftAnyone}
+                      className="w-full rounded-lg bg-[#D4AF37] px-4 py-2.5 text-sm font-bold text-black transition hover:bg-[#E5C158]">
+                      <TranslatedText>Gift Anyone</TranslatedText>
+                    </button>
+                  </div>
+                )}
+
+                {showNearGiftForm && (
+                  <form
+                    onSubmit={handleNearGiftSubmit}
+                    className="space-y-3 rounded-xl border border-[#D4AF37]/20 bg-[#141414] p-4">
+                    <p className="text-sm font-bold text-white">
+                      <TranslatedText>Near One Details</TranslatedText>
+                    </p>
+                    <div>
+                      <input
+                        type="text"
+                        value={nearGiftForm.userId}
+                        onChange={(event) =>
+                          handleNearGiftChange("userId", event.target.value)
+                        }
+                        placeholder="Recipient user ID"
+                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                      />
+                      {nearGiftErrors.userId && (
+                        <p className="mt-1 text-xs text-red-300">
+                          {nearGiftErrors.userId}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={nearGiftForm.fullName}
+                        onChange={(event) =>
+                          handleNearGiftChange("fullName", event.target.value)
+                        }
+                        placeholder="Recipient full name"
+                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                      />
+                      {nearGiftErrors.fullName && (
+                        <p className="mt-1 text-xs text-red-300">
+                          {nearGiftErrors.fullName}
+                        </p>
+                      )}
+                    </div>
+                    <input
+                      type="email"
+                      value={nearGiftForm.email}
+                      onChange={(event) =>
+                        handleNearGiftChange("email", event.target.value)
+                      }
+                      placeholder="Recipient email (optional)"
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                    />
+                    <input
+                      type="tel"
+                      value={nearGiftForm.phone}
+                      onChange={(event) =>
+                        handleNearGiftChange("phone", event.target.value)
+                      }
+                      placeholder="Recipient phone (optional)"
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={nearGiftForm.relation}
+                      onChange={(event) =>
+                        handleNearGiftChange("relation", event.target.value)
+                      }
+                      placeholder="Relation (optional)"
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={nearGiftForm.location}
+                      onChange={(event) =>
+                        handleNearGiftChange("location", event.target.value)
+                      }
+                      placeholder="Location (optional)"
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                    />
+                    <textarea
+                      value={nearGiftForm.message}
+                      onChange={(event) =>
+                        handleNearGiftChange("message", event.target.value)
+                      }
+                      placeholder="Gift message (optional)"
+                      rows={3}
+                      className="w-full resize-none rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#D4AF37] focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg bg-[#D4AF37] px-4 py-2.5 text-sm font-bold text-black transition hover:bg-[#E5C158]">
+                      <TranslatedText>Continue to Payment</TranslatedText>
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => handleCheckout()}
+                disabled={items.length === 0 || totals.amount <= 0}
+                className="mt-6 w-full rounded-lg bg-[#D4AF37] px-5 py-3 font-bold text-black transition hover:bg-[#E5C158] disabled:cursor-not-allowed disabled:opacity-50">
+                <TranslatedText>Checkout All Books</TranslatedText>
+              </button>
+            )}
           </aside>
         </div>
       </section>

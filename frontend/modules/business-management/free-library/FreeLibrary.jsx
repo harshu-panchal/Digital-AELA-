@@ -47,7 +47,11 @@ const FreeLibrary = () => {
   return (
     <main className="relative min-h-screen bg-[#04060F] pt-36 pb-20 text-white md:pt-40">
       {/* Lead Capture Modal */}
-      <LeadCaptureModal isOpen={showLeadModal} onSuccess={handleLeadModalSuccess} />
+      <LeadCaptureModal
+        isOpen={showLeadModal}
+        onSuccess={handleLeadModalSuccess}
+        onClose={() => setShowLeadModal(false)}
+      />
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0d1325_0%,#04060F_55%,#010205_100%)] opacity-90" />
       <div className="relative layout-container flex flex-col gap-12">

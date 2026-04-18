@@ -27,6 +27,7 @@ const normalizeBook = (book, quantity = 1) => ({
   format: book.format || book.metadata?.bookType || "ebook",
   category: book.category || book.categories?.[0] || "General",
   description: book.shortDescription || book.description || "",
+  origin: book.origin || book.source || "",
 });
 
 export const readBookCart = () => {

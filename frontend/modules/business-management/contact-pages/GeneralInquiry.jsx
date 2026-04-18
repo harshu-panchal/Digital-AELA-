@@ -3,9 +3,15 @@ import { motion } from "framer-motion";
 import SEO from "../../../src/components/SEO";
 import ContactPageLayout from "../business-components/contact/ContactPageLayout";
 import ContactForm from "../business-components/contact/ContactForm";
+import ContactInfoPanel from "../business-components/contact/ContactInfoPanel";
+import {
+  supportNote,
+  useDynamicContactDetails,
+} from "../business-components/contact/constants";
 import { submitContactLead } from "../../../src/services/contactSubmission";
 
 const GeneralInquiry = () => {
+  const { contactDetails, supportItems } = useDynamicContactDetails();
   const fields = [
     {
       name: "fullName",
@@ -110,22 +116,13 @@ const GeneralInquiry = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.45, delay: 0.15, ease: "easeOut" }}
-          className="mt-10 bg-[#0b0b0b] border border-[#D4AF37]/15 rounded-2xl p-5 md:p-6">
-          <h3 className="text-lg md:text-xl font-bold text-white font-display mb-4">
-            Useful contacts
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300 leading-relaxed">
-            <div className="space-y-2">
-              <p>• Admissions & Demo Classes: admissions@digitalaela.com</p>
-              <p>• Corporate Partnerships: corporate@digitalaela.com</p>
-              <p>• Franchise Desk: franchise@digitalaela.com</p>
-            </div>
-            <div className="space-y-2">
-              <p>• Placement & Career Services: placements@digitalaela.com</p>
-              <p>• Finance & Accounts: accounts@digitalaela.com</p>
-              <p>• Media & Press: media@digitalaela.com</p>
-            </div>
-          </div>
+          className="mt-10">
+          <ContactInfoPanel
+            title={`${contactDetails.name} Support`}
+            subtitle={contactDetails.description}
+            items={supportItems}
+            note={supportNote}
+          />
         </motion.div>
       </ContactPageLayout>
     </>

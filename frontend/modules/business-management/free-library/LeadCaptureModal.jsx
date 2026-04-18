@@ -15,7 +15,7 @@ const BOOK_PREFERENCES = [
   "Other",
 ];
 
-const LeadCaptureModal = ({ isOpen, onSuccess }) => {
+const LeadCaptureModal = ({ isOpen, onSuccess, onClose }) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -199,6 +199,12 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    if (!isSubmitting && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -221,7 +227,15 @@ const LeadCaptureModal = ({ isOpen, onSuccess }) => {
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="sticky top-0 border-b border-[#F5D26A]/20 bg-[#04060F]/95 backdrop-blur-sm px-6 py-4">
-              <h2 className="text-2xl font-bold text-[#F5D26A]"><TranslatedText>Welcome to Free Library</TranslatedText></h2>
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                aria-label="Close free library form"
+                className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl font-bold leading-none text-slate-200 transition hover:border-[#F5D26A]/60 hover:bg-[#F5D26A]/10 hover:text-[#F5D26A] disabled:cursor-not-allowed disabled:opacity-50">
+                x
+              </button>
+              <h2 className="pr-12 text-2xl font-bold text-[#F5D26A]"><TranslatedText>Welcome to Free Library</TranslatedText></h2>
               <p className="mt-2 text-sm text-slate-300">
                 <TranslatedText>Please fill in your details to access our free e-books</TranslatedText>
               </p>

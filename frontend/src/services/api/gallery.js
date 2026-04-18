@@ -1,7 +1,7 @@
 import { apiRequest } from "./baseClient";
 
 /**
- * Get all active gallery images (public)
+ * Get all active gallery media sections (public)
  */
 export const getGalleryImages = async () => {
   try {
@@ -16,13 +16,16 @@ export const getGalleryImages = async () => {
 };
 
 /**
- * Get all gallery images for admin (with pagination)
+ * Get all gallery media sections for admin (with pagination)
  */
 export const getAdminGalleryImages = async (page = 1, pageSize = 50) => {
   try {
-    const response = await apiRequest(`/admin/gallery?page=${page}&pageSize=${pageSize}`, {
-      method: "GET",
-    });
+    const response = await apiRequest(
+      `/admin/gallery?page=${page}&pageSize=${pageSize}`,
+      {
+        method: "GET",
+      }
+    );
     return response;
   } catch (error) {
     throw error;
@@ -30,12 +33,26 @@ export const getAdminGalleryImages = async (page = 1, pageSize = 50) => {
 };
 
 /**
- * Upload gallery image
+ * Upload one or more gallery media files.
  */
-export const uploadGalleryImage = async (file, onProgress) => {
+export const uploadGalleryImage = async (
+  file,
+  onProgress,
+  metadata = {}
+) => {
   try {
     const formData = new FormData();
-    formData.append("image", file);
+    const files = Array.isArray(file) ? file : file ? [file] : [];
+
+    files.forEach((mediaFile) => {
+      formData.append("media", mediaFile);
+    });
+
+    Object.entries(metadata).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
+    });
 
     const response = await apiRequest("/admin/gallery", {
       method: "POST",
@@ -48,8 +65,46 @@ export const uploadGalleryImage = async (file, onProgress) => {
   }
 };
 
+export const uploadGalleryMedia = async (
+  files = [],
+  onProgress,
+  metadata = {}
+) => {
+  return uploadGalleryImage(files, onProgress, metadata);
+};
+
+export const createGalleryLink = async (payload) => {
+  try {
+    const formData = new FormData();
+
+    Object.entries({ ...payload, sourceType: "link" }).forEach(
+      ([key, value]) => {
+        if (value === undefined || value === null) {
+          return;
+        }
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+          return;
+        }
+        formData.append(key, value);
+      }
+    );
+
+    return await apiRequest("/admin/gallery", {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createGalleryLinks = async (payload) => {
+  return createGalleryLink(payload);
+};
+
 /**
- * Delete gallery image
+ * Delete gallery media section
  */
 export const deleteGalleryImage = async (id) => {
   try {
@@ -61,4 +116,3 @@ export const deleteGalleryImage = async (id) => {
     throw error;
   }
 };
-

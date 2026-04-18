@@ -43,6 +43,18 @@ const videoFileFilter = (req, file, cb) => {
   }
 };
 
+// File filter for gallery media
+const mediaFileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Invalid file type. Only image and video files are allowed."),
+      false
+    );
+  }
+};
+
 // Configure multer with memory storage
 export const upload = multer({
   storage: storage,
@@ -80,6 +92,14 @@ export const videoUpload = multer({
   },
 });
 
+export const mediaUpload = multer({
+  storage: storage,
+  fileFilter: mediaFileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 1024,
+  },
+});
+
 // Helper function to save Video to local storage
 const { saveVideoToLocal } = await import("../services/fileStorageService.js");
 export const uploadVideoToCloudinary = async (buffer, folder = "digital-aela/course-videos", originalName = null) => {
@@ -99,6 +119,14 @@ export const uploadSingle = (fieldName = "image") => {
 // Single video upload middleware
 export const uploadSingleVideo = (fieldName = "video") => {
   return videoUpload.single(fieldName);
+};
+
+export const uploadSingleMedia = (fieldName = "media") => {
+  return mediaUpload.single(fieldName);
+};
+
+export const uploadMultipleMedia = (fieldName = "media", maxCount = 20) => {
+  return mediaUpload.array(fieldName, maxCount);
 };
 
 // Multiple files upload middleware
@@ -146,6 +174,15 @@ export const handleUploadError = (err, req, res, next) => {
   }
 
   if (err.message === "Invalid file type. Only PDF files are allowed.") {
+    return res.status(400).json({
+      error: {
+        code: "INVALID_FILE_TYPE",
+        message: err.message,
+      },
+    });
+  }
+
+  if (err.message === "Invalid file type. Only image and video files are allowed.") {
     return res.status(400).json({
       error: {
         code: "INVALID_FILE_TYPE",

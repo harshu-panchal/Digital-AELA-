@@ -7,7 +7,7 @@ import {
 } from "../controllers/galleryController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {
-  uploadSingle,
+  uploadMultipleMedia,
   handleUploadError,
 } from "../middleware/uploadMiddleware.js";
 
@@ -22,10 +22,10 @@ adminRouter.use(requireAuth(["super-admin"]));
 // Get all gallery images with pagination (admin)
 adminRouter.get("/", getGalleryImages);
 
-// Upload gallery image (admin)
+// Upload gallery media (admin)
 adminRouter.post(
   "/",
-  uploadSingle("image"),
+  uploadMultipleMedia("media", 20),
   handleUploadError,
   uploadGalleryImage
 );

@@ -10,6 +10,9 @@ import {
   FaSpinner,
   FaGraduationCap,
   FaArrowLeft,
+  FaMinus,
+  FaPlus,
+  FaShoppingCart,
 } from "react-icons/fa";
 import SEO from "../../../src/components/SEO";
 import TranslatedText from "../../../src/components/TranslatedText";
@@ -27,6 +30,12 @@ import {
   redirectToCustomCoursePayment,
   redirectToCustomBookPayment,
 } from "../utils/customPaymentRedirect";
+import {
+  addBookToCart,
+  getBookCartTotals,
+  readBookCart,
+  subscribeToBookCart,
+} from "../utils/bookCart";
 import { fetchPublishedCourses } from "../../../src/services/api/courses";
 import { fetchEbooks } from "../../../src/services/api/resources";
 import { getMediaUrl } from "../../../src/utils/mediaUrl";
@@ -41,6 +50,10 @@ const JoinBuildAfterLife = () => {
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all"); // all, course, book
+  const [bookQuantities, setBookQuantities] = useState({});
+  const [cartCount, setCartCount] = useState(
+    () => getBookCartTotals(readBookCart()).quantity
+  );
 
   // Utility function to clean text and remove extra spaces
   const cleanText = (text) => {
@@ -215,6 +228,12 @@ const JoinBuildAfterLife = () => {
     loadBooks();
   }, []);
 
+  useEffect(() => {
+    return subscribeToBookCart((items) => {
+      setCartCount(getBookCartTotals(items).quantity);
+    });
+  }, []);
+
   // Combine all items - only from backend, no static fallback
   const allItems = [...afterLifeCourses, ...afterLifeBooks];
 
@@ -269,6 +288,77 @@ const JoinBuildAfterLife = () => {
       return true;
 
     return false;
+  };
+
+  const getBookQuantity = (bookId) => bookQuantities[bookId] || 1;
+
+  const updateBookQuantity = (bookId, nextQuantity) => {
+    const parsedQuantity = parseInt(nextQuantity, 10);
+    const quantity =
+      !Number.isFinite(parsedQuantity) || parsedQuantity < 1
+        ? 1
+        : Math.min(parsedQuantity, 99);
+
+    setBookQuantities((currentQuantities) => ({
+      ...currentQuantities,
+      [bookId]: quantity,
+    }));
+  };
+
+  const getBookPrice = (book) => {
+    if (typeof book.price === "number") return book.price;
+    if (typeof book.price === "string") {
+      return parseFloat(book.price.replace(/[^0-9.]/g, "")) || 0;
+    }
+    return 0;
+  };
+
+  const handleBuyBook = (book) => {
+    if (isFreeBook(book)) {
+      const isEbook = book.badge === "E-Book" || book.format === "ebook";
+
+      if (isEbook) {
+        navigate(`/free-library/ebook/${book.id}/read`);
+      } else {
+        navigate(`/books/${book.id}`);
+      }
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.info("Please log in to purchase this book");
+      navigate("/login/student");
+      return;
+    }
+
+    const itemPrice = getBookPrice(book);
+    if (!itemPrice || itemPrice <= 0) {
+      toast.error(
+        "This book price is not available. Please contact support."
+      );
+      return;
+    }
+
+    redirectToCustomBookPayment(
+      { ...book, origin: "join-build-afterlife" },
+      getBookQuantity(book.id)
+    );
+  };
+
+  const handleAddBookToCart = (book) => {
+    const itemPrice = getBookPrice(book);
+    if (!itemPrice || itemPrice <= 0) {
+      toast.error(
+        "This book price is not available. Please contact support."
+      );
+      return;
+    }
+
+    addBookToCart(
+      { ...book, origin: "join-build-afterlife" },
+      getBookQuantity(book.id)
+    );
+    toast.success("Book added to cart");
   };
 
   const handleBuyCourse = async (course) => {
@@ -385,6 +475,19 @@ const JoinBuildAfterLife = () => {
               ))}
             </div>
           </motion.div>
+          <div className="mt-4 flex justify-center">
+            <Link
+              to="/books/cart"
+              className="relative inline-flex items-center gap-2 rounded-lg border border-[#D4AF37]/40 bg-[#1a1a1a] px-4 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-black">
+              <FaShoppingCart className="h-4 w-4" />
+              <TranslatedText>View Book Cart</TranslatedText>
+              {cartCount > 0 && (
+                <span className="ml-1 rounded-full bg-[#D4AF37] px-2 py-0.5 text-xs font-black text-black">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </motion.section>
 
@@ -618,65 +721,103 @@ const JoinBuildAfterLife = () => {
                             )}
                           </div>
 
+                          {!isFreeBook(item) && (
+                            <div
+                              className="mb-3 flex items-center justify-between rounded-lg border border-[#D4AF37]/20 bg-[#141414] p-2"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}>
+                              <span className="text-xs font-semibold text-gray-300">
+                                <TranslatedText>Qty</TranslatedText>
+                              </span>
+                              <div className="inline-flex items-center rounded-md border border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateBookQuantity(
+                                      item.id,
+                                      getBookQuantity(item.id) - 1
+                                    )
+                                  }
+                                  className="px-2 py-1.5 text-[#D4AF37] transition hover:bg-white/5">
+                                  <FaMinus className="h-2.5 w-2.5" />
+                                </button>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="99"
+                                  value={getBookQuantity(item.id)}
+                                  onChange={(event) =>
+                                    updateBookQuantity(
+                                      item.id,
+                                      event.target.value
+                                    )
+                                  }
+                                  className="w-11 border-x border-white/10 bg-transparent py-1.5 text-center text-sm text-white focus:outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateBookQuantity(
+                                      item.id,
+                                      getBookQuantity(item.id) + 1
+                                    )
+                                  }
+                                  className="px-2 py-1.5 text-[#D4AF37] transition hover:bg-white/5">
+                                  <FaPlus className="h-2.5 w-2.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {!isFreeBook(item) && (
+                              <motion.button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAddBookToCart(item);
+                                }}
+                                className="w-full border border-[#D4AF37]/60 text-[#F5D26A] py-2 rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black transition-colors duration-200 sm:col-span-2">
+                                <FaShoppingCart className="mr-1.5 inline h-3 w-3" />
+                                <TranslatedText>Add to Cart</TranslatedText>
+                              </motion.button>
+                            )}
                             <motion.button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-
-                                // Check if book is free
-                                if (isFreeBook(item)) {
-                                  const isEbook =
-                                    item.badge === "E-Book" ||
-                                    item.format === "ebook";
-
-                                  if (isEbook) {
-                                    // Free ebook - redirect to free library reader
-                                    navigate(
-                                      `/free-library/ebook/${item.id}/read`
-                                    );
-                                  } else {
-                                    // Free physical book - redirect to book detail page
-                                    navigate(`/books/${item.id}`);
-                                  }
-                                } else {
-                                  // Paid book - redirect directly to Razorpay
-                                  if (!isAuthenticated) {
-                                    toast.info(
-                                      "Please log in to purchase this book"
-                                    );
-                                    navigate("/login/student");
-                                    return;
-                                  }
-                                  // Validate price
-                                  const itemPrice =
-                                    typeof item.price === "number"
-                                      ? item.price
-                                      : parseFloat(item.price) || 0;
-                                  if (!itemPrice || itemPrice <= 0) {
-                                    toast.error(
-                                      "This book price is not available. Please contact support."
-                                    );
-                                    return;
-                                  }
-
-                                  // Redirect to custom payment confirmation flow
-                                  redirectToCustomBookPayment(item);
-                                }
+                                handleBuyBook(item);
                               }}
                               className="w-full bg-[#D4AF37] text-black py-2 rounded-lg font-bold text-xs hover:bg-[#E5C158] transition-colors duration-200">
                               {isFreeBook(item) ? (
                                 <TranslatedText>Get Free</TranslatedText>
                               ) : (
-                                <TranslatedText>Buy Now</TranslatedText>
+                                <>
+                                  <TranslatedText>Buy Now</TranslatedText>
+                                  <span className="ml-1">
+                                    {formatCurrency(
+                                      getBookPrice(item) *
+                                        getBookQuantity(item.id)
+                                    )}
+                                  </span>
+                                </>
                               )}
                             </motion.button>
-                            <GiftButton
-                              course={item}
-                              className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
-                              size="sm">
-                              Gift
-                            </GiftButton>
+                            <div
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}>
+                              <GiftButton
+                                course={item}
+                                className="w-full border border-[#D4AF37]/60 text-[#F5D26A] rounded-lg font-bold text-xs hover:bg-[#D4AF37] hover:text-black"
+                                size="sm">
+                                Gift
+                              </GiftButton>
+                            </div>
                           </div>
                         </div>
                       </Link>

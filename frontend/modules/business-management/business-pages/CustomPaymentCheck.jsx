@@ -99,7 +99,13 @@ const CustomPaymentCheck = () => {
       } else if (type === "book") {
         description = `Payment for book: ${itemName}`;
       } else if (type === "book-cart") {
-        description = `Payment for ${paymentData.cartItems?.length || 0} books`;
+        description = paymentData.giftType
+          ? `Gift payment for ${paymentData.cartItems?.length || 0} books - ${
+              paymentData.giftType === "near"
+                ? "Gift to near one"
+                : "Gift to anyone"
+            }`
+          : `Payment for ${paymentData.cartItems?.length || 0} books`;
       } else if (type === "gift") {
         description = `Gift payment: ${itemName || "Digital AELA"} - ${
           giftType === "near" ? "Gift to near one" : "Gift to anyone"
@@ -123,6 +129,8 @@ const CustomPaymentCheck = () => {
           cartItems: paymentData.cartItems || undefined,
           totalAmount: paymentTotalAmount,
           giftType: paymentData.giftType || undefined,
+          recipientDetails: paymentData.recipientDetails || undefined,
+          source: paymentData.source || undefined,
         },
       });
 
@@ -175,6 +183,7 @@ const CustomPaymentCheck = () => {
   const { itemName, amount, currency, quantity = 1, type } = paymentData;
   const isBookCart = type === "book-cart";
   const totalAmount = isBookCart ? amount : amount * quantity;
+  const isGiftCart = isBookCart && Boolean(paymentData.giftType);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -247,10 +256,44 @@ const CustomPaymentCheck = () => {
                   </span>
                   <span className="text-white font-semibold capitalize">
                     <TranslatedText>
-                      {isBookCart ? "Book Cart" : type}
+                      {isGiftCart
+                        ? "Book Cart Gift"
+                        : isBookCart
+                        ? "Book Cart"
+                        : type}
                     </TranslatedText>
                   </span>
                 </div>
+                {isGiftCart && (
+                  <div className="rounded-lg border border-[#D4AF37]/10 bg-[#141414] p-3">
+                    <p className="text-sm font-semibold text-white">
+                      <TranslatedText>
+                        {paymentData.giftType === "near"
+                          ? "Gift Near One"
+                          : "Gift Anyone"}
+                      </TranslatedText>
+                    </p>
+                    {paymentData.giftType === "near" &&
+                      paymentData.recipientDetails && (
+                        <div className="mt-2 space-y-1 text-xs text-gray-400">
+                          <p>
+                            <TranslatedText>Recipient</TranslatedText>:{" "}
+                            {paymentData.recipientDetails.fullName}
+                          </p>
+                          <p>
+                            <TranslatedText>User ID</TranslatedText>:{" "}
+                            {paymentData.recipientDetails.userId}
+                          </p>
+                          {paymentData.recipientDetails.relation && (
+                            <p>
+                              <TranslatedText>Relation</TranslatedText>:{" "}
+                              {paymentData.recipientDetails.relation}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                  </div>
+                )}
                 {isBookCart && paymentData.cartItems?.length > 0 && (
                   <div className="rounded-lg border border-[#D4AF37]/10 bg-[#141414] p-3">
                     <p className="mb-3 text-sm font-semibold text-white">

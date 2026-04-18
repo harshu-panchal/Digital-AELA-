@@ -27,11 +27,11 @@ import { useSocialMedia } from "../../../src/hooks/useSocialMedia";
 import { toast } from "react-toastify";
 import { useSocket } from "../../../src/hooks/useSocket";
 import { fetchUnreadCount } from "../../../src/services/api/notifications";
-import { fetchPublicSettings } from "../../../src/services/api/publicSettings";
 import { fetchCategories } from "../../../src/services/api/categories";
 import NotificationDropdown from "./NotificationDropdown";
 import TranslatedText from "../../../src/components/TranslatedText";
 import logo from "../../../src/assets/MainLogo.png";
+import { fetchDynamicContactDetails } from "./contact/constants";
 
 // Stubbed language hook since translation is disabled
 const useLanguage = () => ({
@@ -75,22 +75,12 @@ const Navbar = () => {
   useEffect(() => {
     const loadContactInfo = async () => {
       try {
-        const response = await fetchPublicSettings({ category: "general" });
-        if (response?.settings?.general) {
-          const generalSettings = response.settings.general;
-          const emailSetting = generalSettings.find(
-            (s) => s.key === "site.contact.email"
-          );
-          const phoneSetting = generalSettings.find(
-            (s) => s.key === "site.contact.phone"
-          );
-
-          if (emailSetting?.value) {
-            setContactEmail(emailSetting.value);
-          }
-          if (phoneSetting?.value) {
-            setContactPhone(phoneSetting.value);
-          }
+        const details = await fetchDynamicContactDetails();
+        if (details.email) {
+          setContactEmail(details.email);
+        }
+        if (details.phone) {
+          setContactPhone(details.phone);
         }
       } catch (error) {
         // eslint-disable-next-line no-console

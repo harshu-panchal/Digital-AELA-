@@ -1,17 +1,18 @@
-import cron from "node-cron";
 import LiveRoom from "../models/LiveRoom.js";
 import { cleanupRoom as cleanupMediasoup } from "../services/mediasoupService.js";
 import { cleanupRoom as cleanupWebRTC } from "../services/webrtcService.js";
 import { getSocketIO } from "../utils/socketEmitter.js";
 
+const EVERY_MINUTE_MS = 60 * 1000; // 1 minute in milliseconds
+
 /**
  * Delete expired debate rooms
- * This function can be called directly or by the cron job
+ * This function can be called directly or by the interval task
  */
 export const deleteExpiredDebates = async () => {
   try {
     const now = new Date();
-    
+
     // Find all debate rooms where scheduledEnd has passed and status is "live" or "scheduled"
     const expiredRooms = await LiveRoom.find({
       type: "debate",
@@ -85,27 +86,23 @@ export const deleteExpiredDebates = async () => {
 };
 
 /**
- * Setup cron job to delete expired debates
- * Runs every minute
+ * Setup debate expiration task using native setInterval (replaces node-cron)
+ * Runs every minute.
  */
 export const setupDebateExpirationCron = () => {
-  // Run every minute: "* * * * *"
-  cron.schedule("* * * * *", async () => {
-    // eslint-disable-next-line no-console
-    console.log("[Cron] Running debate expiration task...");
+  setInterval(async () => {
     try {
       const result = await deleteExpiredDebates();
       if (result.deleted > 0) {
         // eslint-disable-next-line no-console
-        console.log(`[Cron] Debate expiration task completed: ${result.deleted} room(s) deleted`);
+        console.log(`[DebateExpiration] Task completed: ${result.deleted} room(s) deleted`);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("[Cron] Error in debate expiration task:", error);
+      console.error("[DebateExpiration] Error in debate expiration task:", error);
     }
-  });
+  }, EVERY_MINUTE_MS);
 
   // eslint-disable-next-line no-console
-  console.log("[Cron] Debate expiration cron job scheduled (every minute)");
+  console.log("[DebateExpiration] Debate expiration task scheduled (every minute)");
 };
-
