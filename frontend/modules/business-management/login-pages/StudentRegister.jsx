@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import SEO from "../../../src/components/SEO";
 import { useAuth } from "../../../src/contexts/AuthContext";
+import { fetchPublicBranches } from "../../../src/services/api/branches";
 import {
   MIN_PASSWORD_LENGTH,
   isValidEmail,
@@ -11,6 +12,11 @@ import {
   splitLocation,
   safeString,
 } from "../../../src/utils/registrationHelpers";
+
+const MotionDiv = motion.div;
+const MotionSpan = motion.span;
+const MotionButton = motion.button;
+const MotionAnchor = motion.a;
 
 const createInitialFormState = () => ({
   fullName: "",
@@ -33,15 +39,34 @@ const createInitialFormState = () => ({
   skills: "",
   profileImage: null,
   profileImagePreview: null,
+  branchJoinType: "independent",
+  branchId: "",
 });
 
 const StudentRegister = () => {
   const [formData, setFormData] = useState(createInitialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [branches, setBranches] = useState([]);
+  const [branchSearch, setBranchSearch] = useState("");
+  const [branchesLoading, setBranchesLoading] = useState(false);
   const navigate = useNavigate();
-  const { register: registerUser, getRoleHome } = useAuth();
+  const { register: registerUser } = useAuth();
 
-  motion.div;
+  useEffect(() => {
+    setBranchesLoading(true);
+    fetchPublicBranches({ includeAll: true })
+      .then((response) => setBranches(response.branches || []))
+      .catch(() => setBranches([]))
+      .finally(() => setBranchesLoading(false));
+  }, []);
+
+  const filteredBranches = branches.filter((branch) =>
+    [branch.instituteName, branch.branchName, branch.city, branch.state, branch.country]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(branchSearch.trim().toLowerCase())
+  );
 
   const handleChange = (event) => {
     const { name, value, type, checked, files } = event.target;
@@ -66,6 +91,9 @@ const StudentRegister = () => {
       setFormData((prev) => ({
         ...prev,
         [name]: type === "checkbox" ? checked : value,
+        ...(name === "branchJoinType" && value === "independent"
+          ? { branchId: "" }
+          : {}),
       }));
     }
   };
@@ -110,6 +138,11 @@ const StudentRegister = () => {
       return;
     }
 
+    if (formData.branchJoinType === "branch" && !formData.branchId) {
+      toast.error("Please select a branch.");
+      return;
+    }
+
     const { city, country } = splitLocation(formData.country);
     if (!country) {
       toast.error("Please specify your country or city in the location field.");
@@ -144,17 +177,23 @@ const StudentRegister = () => {
         portfolioUrl: safeString(formData.portfolioUrl) || null,
         linkedinUrl: safeString(formData.linkedinUrl) || null,
         skills: skillsArray,
+        branchJoinType: formData.branchJoinType,
+        branchId: formData.branchId || null,
       };
 
-      const newUser = await registerUser({
+      await registerUser({
         email,
         password,
         role: "student",
         profile: profilePayload,
+        branchJoinType: formData.branchJoinType,
+        branchId: formData.branchJoinType === "branch" ? formData.branchId : null,
         profileImage: formData.profileImage,
       });
       toast.success(
-        "Your student account has been created successfully! Please check your email to verify your account. Your account is also pending approval from the administrator. You will receive an email notification once your account is approved and you can login."
+        formData.branchJoinType === "branch"
+          ? "Your student account has been created. Your selected branch owner will review your application."
+          : "Your student account has been created successfully! Please check your email to verify your account. Your account is also pending approval from the administrator."
       );
       setFormData(createInitialFormState());
       // Redirect to login page instead of dashboard since account needs approval
@@ -194,19 +233,19 @@ const StudentRegister = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(214,162,64,0.18),transparent_65%)]" />
 
       <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-20 mt-20">
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
           className="w-full max-w-3xl space-y-8 rounded-3xl border border-white/15 bg-white/10 p-6 shadow-[0_30px_90px_rgba(191,148,72,0.38)] backdrop-blur-xl supports-backdrop-filter:bg-white/18 sm:p-9">
           <div className="space-y-3 text-center">
-            <motion.span
+            <MotionSpan
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.35, delay: 0.1 }}
               className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/10 px-4 py-1 text-sm font-semibold uppercase tracking-[0.25em] text-[#F5D26A]">
               Join as a Student
-            </motion.span>
+            </MotionSpan>
             <h1 className="text-3xl font-semibold text-white sm:text-4xl">
               Create Your Digital AELA Account
             </h1>
@@ -312,6 +351,80 @@ const StudentRegister = () => {
               </label>
             </div>
 
+            <div className="rounded-2xl border border-[#F5D26A]/25 bg-[#F5D26A]/10 p-4">
+              <p className="text-sm font-semibold text-[#F5D26A]">
+                Registration Type
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {[
+                  ["independent", "Register as individual"],
+                  ["branch", "Join a branch"],
+                ].map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition ${
+                      formData.branchJoinType === value
+                        ? "border-[#F5D26A]/70 bg-[#F5D26A]/15 text-white"
+                        : "border-white/10 bg-white/5 text-gray-300"
+                    }`}>
+                    <input
+                      type="radio"
+                      name="branchJoinType"
+                      value={value}
+                      checked={formData.branchJoinType === value}
+                      onChange={handleChange}
+                      className="text-[#F5D26A]"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              {formData.branchJoinType === "branch" && (
+                <label className="mt-4 block space-y-2">
+                  <span className="text-sm font-semibold text-slate-100">
+                    Branch
+                  </span>
+                  <input
+                    type="search"
+                    value={branchSearch}
+                    onChange={(event) => setBranchSearch(event.target.value)}
+                    placeholder="Search by institute, branch, or city"
+                    className="w-full rounded-2xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30"
+                  />
+                  <select
+                    name="branchId"
+                    required
+                    value={formData.branchId}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-white/20 bg-black px-3.5 py-2.5 text-sm text-white transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring focus:ring-[#F5D26A]/30">
+                    <option value="">
+                      {branchesLoading ? "Loading branches..." : "Select a branch"}
+                    </option>
+                    {filteredBranches.map((branch) => (
+                      <option
+                        key={branch._id}
+                        value={branch._id}
+                        disabled={["rejected", "suspended"].includes(branch.status)}>
+                        {branch.instituteName} - {branch.branchName}
+                        {branch.city ? ` (${branch.city})` : ""}
+                        {branch.status && branch.status !== "approved"
+                          ? ` [${branch.status}]`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {filteredBranches.length === 0 && !branchesLoading && (
+                    <p className="text-xs text-slate-400">
+                      No branches are available right now.
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-400">
+                    If the branch is still pending admin approval, your application will wait until the branch goes live.
+                  </p>
+                </label>
+              )}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-slate-100">
@@ -327,13 +440,13 @@ const StudentRegister = () => {
                     Select your age group
                   </option>
                   <option value="13-17" style={{ backgroundColor: "#000000" }}>
-                    13 – 17
+                    13-17
                   </option>
                   <option value="18-24" style={{ backgroundColor: "#000000" }}>
-                    18 – 24
+                    18-24
                   </option>
                   <option value="25-34" style={{ backgroundColor: "#000000" }}>
-                    25 – 34
+                    25-34
                   </option>
                   <option value="35+" style={{ backgroundColor: "#000000" }}>
                     35+
@@ -586,26 +699,26 @@ const StudentRegister = () => {
               />
             </label>
 
-            <motion.button
+            <MotionButton
               type="submit"
               disabled={isSubmitting}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex w-full items-center justify-center rounded-full bg-linear-to-r from-[#F5D26A] via-[#E5C158] to-[#BA8D2F] px-5 py-2.5 text-sm font-semibold text-black shadow-[0_10px_32px_rgba(245,210,106,0.3)] transition focus:outline-none focus:ring focus:ring-[#F5D26A]/40 disabled:cursor-not-allowed disabled:opacity-80">
               {isSubmitting ? "Submitting..." : "Create account"}
-            </motion.button>
+            </MotionButton>
           </form>
 
           <div className="text-center text-xs text-slate-300/70">
             Already with us?{" "}
-            <motion.a
+            <MotionAnchor
               whileHover={{ x: 2 }}
               href="/login/student"
               className="text-[#F5D26A] underline-offset-2 hover:text-[#FFE28A]">
               Sign in to your account
-            </motion.a>
+            </MotionAnchor>
           </div>
-        </motion.div>
+        </MotionDiv>
       </main>
     </div>
   );

@@ -1,6 +1,30 @@
 import { verifyAccessToken } from "../utils/token.js";
 import User from "../models/User.js";
 
+export const normalizeRoleName = (role) => {
+  if (role === "branch-owner") return "branch_owner";
+  return role;
+};
+
+export const isAdminRole = (role) => {
+  const normalizedRole = normalizeRoleName(role);
+  return normalizedRole === "admin" || normalizedRole === "super-admin";
+};
+
+export const authorizeRoles = (...roles) => {
+  const allowedRoles = roles.flat().map(normalizeRoleName);
+
+  return (req, res, next) => {
+    const currentRole = normalizeRoleName(req.auth?.userRole);
+    if (!currentRole || !allowedRoles.includes(currentRole)) {
+      return res.status(403).json({
+        error: { code: "FORBIDDEN", message: "Insufficient permissions" },
+      });
+    }
+    return next();
+  };
+};
+
 export const requireAuth = (roles = []) => async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
@@ -20,7 +44,10 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
       });
     }
 
-    if (roles.length > 0 && !roles.includes(user.role)) {
+    const normalizedUserRole = normalizeRoleName(user.role);
+    const normalizedRoles = roles.map(normalizeRoleName);
+
+    if (normalizedRoles.length > 0 && !normalizedRoles.includes(normalizedUserRole)) {
       return res.status(403).json({
         error: { code: "FORBIDDEN", message: "Insufficient permissions" },
       });
@@ -37,9 +64,11 @@ export const requireAuth = (roles = []) => async (req, res, next) => {
 
     req.auth = {
       userId: userIdString,
-      userRole: user.role,
+      userRole: normalizedUserRole,
       userFullName: user.fullName,
       email: user.email,
+      branchId: user.branchId ? user.branchId.toString() : null,
+      approvalStatus: user.approvalStatus || "approved",
       token: token,
     };
 
@@ -81,10 +110,15 @@ export const optionalAuth = async (req, res, next) => {
       const payload = verifyAccessToken(token);
 
       if (payload?.sub) {
+        const user = await User.findById(payload.sub).select(
+          "role email branchId approvalStatus"
+        );
         req.auth = {
           userId: payload.sub.toString(),
-          userRole: payload.role,
-          email: payload.email,
+          userRole: normalizeRoleName(user?.role || payload.role),
+          email: user?.email || payload.email,
+          branchId: user?.branchId ? user.branchId.toString() : null,
+          approvalStatus: user?.approvalStatus || "approved",
         };
       } else {
         req.auth = null;

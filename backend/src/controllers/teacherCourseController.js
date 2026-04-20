@@ -1,4 +1,5 @@
 import Course from "../models/Course.js";
+import User from "../models/User.js";
 import mongoose from "mongoose";
 import { uploadPdfToCloudinary, uploadVideoToCloudinary } from "../middleware/uploadMiddleware.js";
 import { invalidateCourseCache } from "../utils/cacheInvalidator.js";
@@ -92,8 +93,17 @@ export const createTeacherCourse = async (req, res, next) => {
       });
     }
 
+    const teacher = await User.findById(userId)
+      .select("branchId branchJoinType")
+      .lean();
+
+    const teacherBranchId =
+      teacher?.branchJoinType === "branch" && teacher?.branchId
+        ? teacher.branchId
+        : null;
+
     // Import URL normalizer
-    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+    const { normalizeUrl } = await import("../utils/urlNormalizer.js");
 
     // Create course with draft status (requires admin approval)
     const slug = slugify(title) + "-" + Date.now().toString().slice(-4); // Ensure uniqueness
@@ -108,7 +118,9 @@ export const createTeacherCourse = async (req, res, next) => {
       thumbnailUrl: coverImage ? (normalizeUrl(coverImage) || coverImage) : "",
       brochureUrl: "", // Will be set if brochure is uploaded
       status: "draft", // Always draft for teacher-created courses
+      approvalStatus: "pending",
       instructor: instructorObjectId,
+      branchId: teacherBranchId,
       isPremium: isPremium === true || isPremium === "true",
       modules: Array.isArray(modules) ? modules : [],
       metadata: {
@@ -123,6 +135,7 @@ export const createTeacherCourse = async (req, res, next) => {
         introVideoUrl: introVideoUrl ? (normalizeUrl(introVideoUrl) || introVideoUrl) : "",
         syllabus: syllabus || "",
         tags: tags ? (Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim())) : [],
+        branchScoped: Boolean(teacherBranchId),
       },
     });
 
@@ -130,23 +143,29 @@ export const createTeacherCourse = async (req, res, next) => {
       .populate("instructor", "fullName email")
       .lean();
 
-    // Create notification for super admin when course needs approval
+    // Create notification for the reviewing owner/admin when course needs approval
     if (course.status === "draft") {
       try {
-        const User = (await import("../models/User.js")).default;
         const { createBulkNotifications } = await import("../utils/notificationHelper.js");
 
-        // Get all super-admin users
-        const superAdmins = await User.find({ role: "super-admin", isActive: true })
-          .select("_id")
-          .lean();
+        const reviewers = teacherBranchId
+          ? await User.find({
+              role: "branch_owner",
+              branchId: teacherBranchId,
+              isActive: true,
+            })
+              .select("_id")
+              .lean()
+          : await User.find({ role: "super-admin", isActive: true })
+              .select("_id")
+              .lean();
 
-        if (superAdmins.length > 0) {
-          const adminIds = superAdmins.map((admin) => admin._id);
+        if (reviewers.length > 0) {
+          const reviewerIds = reviewers.map((reviewer) => reviewer._id);
           const instructorName = populatedCourse.instructor?.fullName || "A teacher";
 
           await createBulkNotifications(
-            adminIds,
+            reviewerIds,
             "New Course Pending Approval",
             `A new course "${course.title}" has been created by ${instructorName} and requires approval.`,
             "approval",
@@ -154,10 +173,13 @@ export const createTeacherCourse = async (req, res, next) => {
               courseId: course._id.toString(),
               courseTitle: course.title,
               instructorId: userId,
-              instructorName: instructorName,
+              instructorName,
               contentType: "course",
+              branchId: teacherBranchId?.toString?.() || null,
             },
-            `/super-admin/content-management?type=course&id=${course._id}`
+            teacherBranchId
+              ? `/branch-owner/courses`
+              : `/super-admin/content-management?type=course&id=${course._id}`
           );
         }
       } catch (notifError) {
@@ -374,7 +396,7 @@ export const updateTeacherCourse = async (req, res, next) => {
     } = req.body;
 
     // Import URL normalizer
-    const { normalizeUrl } = await import("../../utils/urlNormalizer.js");
+    const { normalizeUrl } = await import("../utils/urlNormalizer.js");
 
     // Safe URL normalization wrapper - prevents course update from failing if normalization errors
     const safeNormalizeUrl = (url) => {

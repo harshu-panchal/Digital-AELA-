@@ -1,0 +1,792 @@
+You are a senior staff engineer. Implement a complete, production-grade “Branch Owner / Institute Management” module in the existing Digital-AELA codebase.
+
+Your output must be code-first, accurate, error-free, fully integrated with the current architecture, and production ready. Do not give a shallow demo implementation. Do not leave TODOs. Do not break existing roles or flows. Preserve existing functionality unless a change is required for this module.
+
+==================================================
+PRIMARY GOAL
+==================================================
+
+Build a full Branch Owner / Institute Management system with these business rules:
+
+1. Existing main roles remain:
+   - admin
+   - branch_owner
+   - teacher
+   - student
+   - recruiter
+
+2. A teacher or student can register in two ways:
+   - as an independent individual
+   - under a branch/institute
+
+3. Not every teacher/student must belong to a branch.
+   - branch-linked users: managed by branch owner
+   - independent users: remain outside branch control
+
+4. A branch owner represents and manages one institute/branch.
+   - manages branch-linked teachers and students
+   - handles their approvals
+   - manages branch-level books/courses/resources/announcements
+   - sees branch analytics and branch dashboard
+
+5. When a new branch owner registers a branch:
+   - branch is NOT live immediately
+   - admin approval is required before it becomes visible/selectable/live
+
+6. When a new teacher or student registers:
+   - they must get an option:
+     A. register as individual
+     B. join a registered branch
+   - if branch selected:
+     - only approved/live branches should appear
+     - the teacher/student becomes branch-linked
+     - branch owner is responsible for approval and management
+
+7. Admin responsibilities:
+   - approve/reject/suspend/reactivate branches
+   - oversee all branches globally
+   - maintain global control
+
+8. Branch owner responsibilities:
+   - manage only their own branch
+   - approve/reject linked teachers/students
+   - manage branch-scoped books/courses/resources
+   - create branch announcements
+   - see branch analytics
+   - manage branch profile/settings
+
+==================================================
+MANDATORY IMPLEMENTATION STANDARD
+==================================================
+
+This must be implemented in a production-grade way.
+
+Requirements:
+- clean architecture
+- no duplication
+- strong validation
+- proper middleware usage
+- RBAC + branch scoping
+- safe defaults
+- robust error handling
+- consistent API responses
+- no hardcoded hacks
+- no insecure shortcuts
+- no breaking existing modules
+- no dead code
+- no console noise in production
+- no commented-out junk
+- no placeholder mocks unless absolutely required and clearly integrated
+
+You must inspect and follow the existing project structure and coding style, but improve where needed to keep the implementation stable and maintainable.
+
+==================================================
+HIGH-LEVEL DESIGN RULES
+==================================================
+
+DO NOT create separate roles like:
+- branch_teacher
+- branch_student
+
+Instead keep roles simple and use branch linkage fields.
+
+A teacher/student can be:
+- independent
+- branch-linked
+
+Use branch-aware data design.
+
+The central data rule:
+- if user.branchId is null => independent
+- if user.branchId exists => branch-linked
+- branch owner may only manage data where branchId matches their own branch
+
+Admin bypasses branch scope.
+
+==================================================
+DATA MODEL CHANGES
+==================================================
+
+Implement the required schema/model changes safely and migrate existing code paths.
+
+1) USER MODEL
+Extend the existing User model with production-safe fields.
+
+Add / normalize fields like:
+
+- role: enum ["admin", "branch_owner", "teacher", "student", "recruiter"]
+- branchId: ObjectId ref Branch, nullable
+- branchJoinType: enum ["independent", "branch"], default "independent"
+- approvalStatus: enum ["pending", "approved", "rejected"], default based on flow
+- approvedBy: ObjectId ref User, nullable
+- approvedAt: Date nullable
+- rejectionReason: String nullable
+- isActive: Boolean
+- branchManaged: Boolean derived or explicit only if useful
+- branchOwnerStatus if needed for owner onboarding
+- status history fields only if consistent with existing patterns
+
+Rules:
+- existing users must remain compatible
+- do not corrupt existing role logic
+- preserve current login/auth flows
+- add indexes where useful
+- ensure proper defaults
+- independent teacher/student should not be forced into branch flows
+
+2) BRANCH MODEL
+Create a proper Branch model if missing, or extend existing entity if one already exists.
+
+Required fields:
+- instituteName
+- branchName
+- slug (unique, normalized)
+- ownerId (User ref, initially the branch_owner)
+- contactEmail
+- contactPhone
+- address
+- city
+- state
+- country
+- postalCode if project uses it
+- description
+- logo / banner if media is already supported in repo
+- status: enum ["pending", "approved", "rejected", "suspended"]
+- isLive: Boolean
+- approvedBy
+- approvedAt
+- rejectionReason
+- settings object if useful
+- timestamps
+
+Important rules:
+- only approved + live + non-suspended branches appear in public branch selection
+- a branch_owner should initially own one branch
+- guard against duplicate branches/slugs
+- slug generation must be robust and collision-safe
+
+3) BRANCH MEMBERSHIP / AUDIT MODEL
+If useful for maintainability and auditability, add a BranchMembership or BranchUserHistory model.
+
+Recommended fields:
+- userId
+- branchId
+- userRoleAtJoin ("teacher" | "student")
+- status ("pending" | "approved" | "rejected" | "removed")
+- joinedAt
+- approvedBy
+- approvedAt
+- rejectedBy
+- rejectedAt
+- removalReason
+- notes
+
+Use this if it improves traceability without overcomplicating the current repo.
+
+4) COURSE / BOOK / RESOURCE MODELS
+Update relevant domain models so branch-linked content can be branch-scoped.
+
+Add where appropriate:
+- branchId nullable
+- visibility enum if useful
+- approvalStatus
+- approvedBy
+- approvedAt
+- rejectedReason
+- createdBy
+
+Rules:
+- content created by branch-linked teachers should be manageable by that branch owner
+- independent content should remain independent/global according to current system design
+- do not break current content retrieval logic
+- branch owner must only see/manipulate branch data
+
+==================================================
+AUTH + RBAC + BRANCH SCOPING
+==================================================
+
+Implement this correctly and centrally.
+
+1) ROLE AUTHORIZATION
+Create or extend middleware for role authorization:
+- authorizeRoles(...roles)
+
+2) BRANCH SCOPE AUTHORIZATION
+Create middleware that ensures branch owners can only operate on their own branch’s data.
+
+Examples:
+- branch owner can only fetch users where user.branchId === req.user.branchId
+- branch owner can only approve/reject users belonging to their branch
+- branch owner can only manage branch-specific courses/books/resources for their branch
+
+Admin should bypass branch-scope restriction.
+
+3) BRANCH STATE GUARDS
+Prevent invalid access:
+- branch owner cannot fully operate if their branch is pending/rejected/suspended
+- branch-linked users under non-approved or suspended branches should behave safely according to business logic
+- branch selection API must return only approved/live branches
+
+4) APPROVAL GUARDS
+Prevent unapproved users from using features they should not access.
+Respect existing auth design in the repo.
+
+==================================================
+WORKFLOWS TO IMPLEMENT
+==================================================
+
+Implement the full end-to-end workflows.
+
+--------------------------------------------------
+WORKFLOW A: BRANCH OWNER REGISTRATION
+--------------------------------------------------
+
+User wants to register as branch owner.
+
+Flow:
+1. branch owner submits registration form with:
+   - personal details
+   - branch/institute details
+2. system creates:
+   - user with role branch_owner
+   - user approvalStatus pending (or owner-specific pending status)
+   - branch with status pending and isLive false
+3. admin reviews the branch request
+4. admin can:
+   - approve
+   - reject
+   - suspend later
+5. on approval:
+   - branch status = approved
+   - isLive = true
+   - owner approvalStatus = approved
+6. on rejection:
+   - branch stays non-live
+   - rejection reason stored
+   - user sees status in UI
+
+Must include:
+- validation
+- duplicate prevention
+- secure auth handling
+- clear status transitions
+- resilient API responses
+
+--------------------------------------------------
+WORKFLOW B: TEACHER REGISTRATION
+--------------------------------------------------
+
+Teacher registration must allow:
+1. register as individual
+2. join a branch
+
+If individual:
+- role = teacher
+- branchId = null
+- branchJoinType = independent
+- follow existing teacher onboarding/approval rules unless adjusted explicitly
+
+If branch-selected:
+- role = teacher
+- branchId = selected approved branch
+- branchJoinType = branch
+- approvalStatus = pending
+- branch owner later approves/rejects
+
+Teacher should see correct status in UI.
+
+--------------------------------------------------
+WORKFLOW C: STUDENT REGISTRATION
+--------------------------------------------------
+
+Same as teacher:
+- individual or branch-linked
+- branch-linked students go under branch owner management
+- pending approval if branch flow requires it
+
+--------------------------------------------------
+WORKFLOW D: ADMIN BRANCH REVIEW
+--------------------------------------------------
+
+Admin panel must support:
+- list all branch applications
+- filter by status
+- inspect details
+- approve
+- reject with reason
+- suspend active branches
+- reactivate suspended branches
+
+--------------------------------------------------
+WORKFLOW E: BRANCH OWNER USER APPROVALS
+--------------------------------------------------
+
+Branch owner dashboard must support:
+- list pending teachers/students of own branch
+- approve/reject each
+- optional bulk approval if consistent
+- add rejection reason
+- view approved/rejected users
+- remove/unlink users if needed without destructive data loss unless existing rules require deletion
+
+--------------------------------------------------
+WORKFLOW F: BRANCH CONTENT MANAGEMENT
+--------------------------------------------------
+
+Branch owner must be able to manage branch-scoped:
+- courses
+- books
+- resources/materials
+- announcements
+
+Branch owner can:
+- list branch content
+- review pending content submitted by branch-linked teachers
+- approve/reject/publish/archive depending on current product model
+- create branch-level announcements/resources
+
+--------------------------------------------------
+WORKFLOW G: BRANCH DASHBOARD / ANALYTICS
+--------------------------------------------------
+
+Branch owner dashboard should include:
+- total teachers
+- total students
+- pending approvals
+- total courses
+- total books/resources
+- recent activity
+- branch growth / registration metrics
+- branch profile completion if useful
+
+Admin dashboard additions should include:
+- total branches
+- pending branch requests
+- approved branches
+- suspended branches
+- total branch-linked teachers/students
+
+==================================================
+BACKEND IMPLEMENTATION REQUIREMENTS
+==================================================
+
+Create/modify backend code comprehensively.
+
+1. ROUTES
+Create clean route modules if not present.
+Examples of desired route groups:
+
+AUTH / REGISTRATION:
+- POST /auth/register/branch-owner
+- POST /auth/register/teacher
+- POST /auth/register/student
+
+PUBLIC BRANCH:
+- GET /branches/public
+- GET /branches/public/:id or /:slug
+
+BRANCH OWNER:
+- GET /branch-owner/dashboard
+- GET /branch-owner/profile
+- PATCH /branch-owner/profile
+- GET /branch-owner/teachers
+- GET /branch-owner/students
+- GET /branch-owner/users/pending
+- PATCH /branch-owner/users/:id/approve
+- PATCH /branch-owner/users/:id/reject
+- PATCH /branch-owner/users/:id/remove or unlink
+- GET /branch-owner/courses
+- PATCH /branch-owner/courses/:id/approve
+- PATCH /branch-owner/courses/:id/reject
+- GET /branch-owner/books
+- PATCH /branch-owner/books/:id/approve
+- PATCH /branch-owner/books/:id/reject
+- POST /branch-owner/announcements
+- GET /branch-owner/analytics
+- GET /branch-owner/settings
+- PATCH /branch-owner/settings
+
+ADMIN BRANCH MANAGEMENT:
+- GET /admin/branches
+- GET /admin/branches/pending
+- GET /admin/branches/:id
+- PATCH /admin/branches/:id/approve
+- PATCH /admin/branches/:id/reject
+- PATCH /admin/branches/:id/suspend
+- PATCH /admin/branches/:id/reactivate
+
+Adjust naming to current project conventions, but keep functionality complete.
+
+2. CONTROLLERS / SERVICES
+Use controller-service separation where the project allows or introduce it carefully.
+Keep business logic out of routes.
+Avoid giant unmaintainable controllers.
+
+3. VALIDATION
+Use the project’s validation strategy. If weak/inconsistent, strengthen it.
+Validate:
+- role transitions
+- branch IDs
+- registration payloads
+- duplicate institute names/slugs if required
+- approval/rejection payloads
+- branch state changes
+- permissions
+
+4. ERROR HANDLING
+Use centralized async error handling consistent with existing repo.
+No silent failures.
+No generic vague responses where precise ones are needed.
+
+5. SECURITY
+Maintain or improve:
+- authentication
+- authorization
+- CSRF handling if already used
+- rate limiting for registration / approval-sensitive endpoints
+- input sanitization
+- no privilege escalation
+- no branch owner cross-branch access
+
+6. QUERY EFFICIENCY
+Avoid N+1 patterns.
+Use indexes where helpful:
+- branchId
+- role + branchId
+- status fields
+- slug unique index
+Use pagination for list endpoints.
+Support search/filter/sort where appropriate.
+
+7. API RESPONSE SHAPE
+Keep consistent with existing API format.
+Do not introduce inconsistent response contracts unless systematically improved.
+
+8. TRANSACTIONAL INTEGRITY
+For critical flows, use transactions if the repo/database setup supports them safely.
+Examples:
+- branch owner registration creating user + branch
+- approval flows updating related records
+
+==================================================
+FRONTEND IMPLEMENTATION REQUIREMENTS
+==================================================
+
+Implement a complete frontend module integrated into the existing app.
+
+You must inspect current frontend routing/layout/state/API structure and follow it properly.
+
+Create a full branchOwner module, production-ready.
+
+--------------------------------------------------
+A. PUBLIC / AUTH PAGES
+--------------------------------------------------
+
+1. Branch Owner Registration page
+Fields:
+- owner personal details
+- institute/branch details
+- contact details
+- address details
+- password fields
+- validation
+- submission status
+- clear success/pending state
+
+2. Teacher Registration update
+Add option:
+- register as individual
+- join a branch
+If branch selected:
+- searchable dropdown/select of approved branches
+- branch info preview if useful
+- correct pending status messaging
+
+3. Student Registration update
+Same branch selection support.
+
+4. Branch application status page
+Branch owner can see:
+- pending / approved / rejected / suspended
+- rejection reason if any
+
+--------------------------------------------------
+B. BRANCH OWNER DASHBOARD
+--------------------------------------------------
+
+Create pages/components such as:
+- Dashboard
+- Branch Profile
+- Teachers Management
+- Students Management
+- Pending Approvals
+- Courses Management
+- Books/Resources Management
+- Announcements
+- Analytics
+- Settings
+
+Dashboard requirements:
+- stats cards
+- recent pending approvals
+- recent content activity
+- branch summary
+
+--------------------------------------------------
+C. BRANCH OWNER MANAGEMENT PAGES
+--------------------------------------------------
+
+1. Teachers page
+- list teachers in branch
+- search/filter/sort
+- status tabs
+- view details
+- approve/reject/remove if authorized by status
+
+2. Students page
+Same as teachers.
+
+3. Pending approvals page
+- combined teacher/student pending queue
+- action buttons
+- reject reason modal/dialog if UI pattern exists
+
+4. Courses page
+- branch courses table/cards
+- status filters
+- approve/reject if branch owner approval required
+- view course details
+
+5. Books/Resources page
+- list/manage branch resources
+- approve/reject where applicable
+
+6. Announcements page
+- create, edit, delete if allowed by system design
+- audience targeting:
+  - all branch members
+  - teachers only
+  - students only
+
+7. Analytics page
+- charts/cards/tables as consistent with current UI stack
+- no broken visualization
+- no fake analytics if real aggregation can be implemented
+
+8. Settings page
+- branch settings/profile config
+- approval preferences if business rules support it
+
+--------------------------------------------------
+D. ADMIN PANEL ADDITIONS
+--------------------------------------------------
+
+Add branch management section into existing admin UI:
+- all branches
+- pending branches
+- branch detail review
+- approve/reject/suspend/reactivate actions
+- branch analytics summary if easy to integrate cleanly
+
+--------------------------------------------------
+E. REGISTRATION UX DETAILS
+--------------------------------------------------
+
+On teacher/student signup:
+- clear role selection if current flow already has it
+- registration type selection:
+  - Individual
+  - Join a Branch
+- if “Join a Branch” selected:
+  - load approved branches only
+  - searchable dropdown
+  - handle empty results gracefully
+  - preserve form state correctly
+  - show pending approval note after successful registration
+
+==================================================
+STATE MANAGEMENT / API INTEGRATION
+==================================================
+
+Integrate with the current frontend API layer, auth store, query hooks, redux/context, or service pattern used in the repo.
+
+Requirements:
+- no duplicated API clients
+- no bypassing established auth flow
+- update role-aware navigation cleanly
+- add branch_owner role routing/guards
+- ensure post-login routing behaves correctly for branch_owner
+- update sidebar/nav/menu configuration safely
+- do not break current student/teacher/admin/recruiter paths
+
+If the app uses route guards:
+- add branch_owner-specific route protection
+- ensure pending or rejected branch_owner states are handled elegantly
+
+==================================================
+PERMISSIONS MATRIX TO ENFORCE
+==================================================
+
+Admin:
+- full access to all branches and all users
+- approve/reject/suspend/reactivate branches
+- view branch-level data globally if needed
+
+Branch Owner:
+- only own branch
+- manage only branch-linked users of own branch
+- cannot access other branches
+- cannot perform global admin actions
+
+Teacher:
+- branch-linked teacher remains teacher role, but under branch owner management
+- independent teacher remains outside branch owner control
+
+Student:
+- branch-linked student remains student role, but under branch owner management
+- independent student remains outside branch owner control
+
+Recruiter:
+- unaffected unless required by existing system
+
+==================================================
+STATUS / STATE RULES
+==================================================
+
+Implement clear, safe status transitions.
+
+Branch status:
+- pending
+- approved
+- rejected
+- suspended
+
+User approval status:
+- pending
+- approved
+- rejected
+
+Registration linkage:
+- independent
+- branch
+
+Rules:
+- only approved/live branches are visible in public branch selection
+- branch-linked teacher/student can remain pending until branch owner approves
+- rejected users should get clear status messaging
+- suspended branch should not behave as live
+- do not orphan data improperly
+
+==================================================
+MIGRATION / BACKWARD COMPATIBILITY
+==================================================
+
+This existing codebase already has users, auth, dashboards, and domain modules.
+
+You must:
+- preserve backward compatibility
+- avoid breaking old users
+- keep existing login functional
+- handle users without branch fields
+- use safe defaults
+- minimize schema breakage
+- update seed/config/enum logic where needed
+
+If the repo needs small compatibility patches elsewhere, implement them cleanly.
+
+==================================================
+TESTING / QUALITY REQUIREMENTS
+==================================================
+
+You must produce production-grade code quality.
+
+At minimum, ensure:
+- no syntax errors
+- no broken imports
+- no circular dependency traps where avoidable
+- no missing route registration
+- no undefined fields used in UI
+- no inconsistent enum values
+- no unsafe trust of client-provided branch ownership
+- no access control holes
+
+Also add or update tests if the repo has a testing pattern.
+If tests are absent, at least structure code so it is testable and stable.
+
+Verify these flows logically:
+1. branch owner registration
+2. admin approves branch
+3. teacher registers independently
+4. teacher registers under branch
+5. student registers under branch
+6. branch owner sees pending users
+7. branch owner approves/rejects users
+8. admin suspends branch
+9. branch selection only shows approved/live branches
+10. branch owner cannot access another branch’s data
+
+==================================================
+UI / UX QUALITY REQUIREMENTS
+==================================================
+
+Keep UI aligned with existing design system.
+Requirements:
+- responsive
+- clean
+- no broken layouts
+- no inconsistent naming
+- proper empty states
+- loading states
+- form validation messages
+- success/error toasts/messages if the app already uses them
+- accessible enough for production use
+
+==================================================
+IMPLEMENTATION STYLE RULES
+==================================================
+
+- Follow existing folder structure where reasonable
+- Create new files only where needed
+- Refactor carefully when necessary for cleanliness
+- Keep naming consistent
+- Use reusable helpers
+- Keep controllers lean
+- Keep validation explicit
+- Avoid giant god-files
+- Do not add unrelated features
+- Do not remove existing features unless required and replaced safely
+
+==================================================
+DELIVERABLE FORMAT
+==================================================
+
+Implement the module fully in code across backend + frontend.
+
+Also provide a final concise implementation summary including:
+1. files created
+2. files modified
+3. new routes added
+4. schema/model changes
+5. middleware added
+6. key business rules enforced
+7. any migration or compatibility notes
+
+But the main output must be the actual code changes, not just explanation.
+
+==================================================
+CRITICAL DO-NOT-MISS ITEMS
+==================================================
+
+- branch_owner role added correctly everywhere needed
+- teacher/student can register as individual or branch-linked
+- approved branches only appear in selection
+- branch owner only controls own branch
+- admin approval required before branch goes live
+- branch owner dashboard fully added
+- admin branch management fully added
+- branch-linked teacher/student approval flow implemented
+- branch-scoped content management implemented for relevant models
+- production-safe validation, auth, error handling, pagination, filtering
+- no broken existing functionality
+
+Now inspect the current codebase carefully and implement this entire module end-to-end in a clean, production-grade way.

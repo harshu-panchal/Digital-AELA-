@@ -1,5 +1,8 @@
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import User from "../models/User.js";
+import Branch from "../models/Branch.js";
+import BranchMembership from "../models/BranchMembership.js";
 import StudentProfile from "../models/StudentProfile.js";
 import {
   generateAccessToken,
@@ -8,6 +11,8 @@ import {
 } from "../utils/token.js";
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
 import { createSession } from "../middleware/sessionTracking.js";
+import { normalizeRoleName } from "../middleware/authMiddleware.js";
+import { generateUniqueBranchSlug } from "../services/branchService.js";
 
 const buildAuthResponse = (user) => {
   const userId = user._id?.toString() || user.id;
@@ -27,25 +32,101 @@ const buildAuthResponse = (user) => {
       fullName: user.fullName,
       createdAt: user.createdAt,
       isActive: user.isActive !== undefined ? user.isActive : true, // Include isActive status
+      branchId: user.branchId ? user.branchId.toString() : null,
+      branchJoinType: user.branchJoinType || "independent",
+      approvalStatus: user.approvalStatus || "approved",
+      approvedAt: user.approvedAt || null,
+      rejectionReason: user.rejectionReason || null,
       emailVerified: user.emailVerified !== undefined ? user.emailVerified : false, // Include email verification status
       metadata: user.metadata || {}, // Include metadata with avatarUrl
     },
   };
 };
 
+const parseMaybeJson = (value, fallback = {}) => {
+  if (!value || typeof value !== "string") return value || fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
+
+const getBranchRegistrationPayload = (body) => ({
+  ...(body.branch || {}),
+  ...(body.profile?.branch || {}),
+  instituteName:
+    body.instituteName ||
+    body.branch?.instituteName ||
+    body.profile?.instituteName ||
+    body.profile?.branch?.instituteName,
+  branchName:
+    body.branchName ||
+    body.branch?.branchName ||
+    body.profile?.branchName ||
+    body.profile?.branch?.branchName,
+  contactEmail:
+    body.contactEmail ||
+    body.branch?.contactEmail ||
+    body.profile?.contactEmail ||
+    body.profile?.branch?.contactEmail ||
+    body.email,
+  contactPhone:
+    body.contactPhone ||
+    body.branch?.contactPhone ||
+    body.profile?.contactPhone ||
+    body.profile?.branch?.contactPhone ||
+    body.profile?.phone,
+  address:
+    body.address ||
+    body.branch?.address ||
+    body.profile?.address ||
+    body.profile?.branch?.address,
+  city:
+    body.city ||
+    body.branch?.city ||
+    body.profile?.city ||
+    body.profile?.branch?.city,
+  state:
+    body.state ||
+    body.branch?.state ||
+    body.profile?.state ||
+    body.profile?.branch?.state,
+  country:
+    body.country ||
+    body.branch?.country ||
+    body.profile?.country ||
+    body.profile?.branch?.country,
+  postalCode:
+    body.postalCode ||
+    body.branch?.postalCode ||
+    body.profile?.postalCode ||
+    body.profile?.branch?.postalCode,
+  description:
+    body.description ||
+    body.branch?.description ||
+    body.profile?.description ||
+    body.profile?.branch?.description,
+});
+
+const normalizeBranchJoinType = (value) =>
+  value === "branch" ? "branch" : "independent";
+
+const escapeRegExp = (value) =>
+  String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const registerUser = async (req, res, next) => {
   try {
-    const { email, password, fullName, role = "student" } = req.body;
+    const { email, password, fullName } = req.body;
+    const role = normalizeRoleName(req.body.role || "student");
     
     // Parse profile if it's a JSON string (from FormData)
     if (req.body.profile && typeof req.body.profile === "string") {
-      try {
-        req.body.profile = JSON.parse(req.body.profile);
-      } catch (parseError) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to parse profile JSON:", parseError);
-        req.body.profile = {};
-      }
+      req.body.profile = parseMaybeJson(req.body.profile, {});
+    }
+
+    if (req.body.branch && typeof req.body.branch === "string") {
+      req.body.branch = parseMaybeJson(req.body.branch, {});
     }
     
     // Normalize email (lowercase and trim) to match how it's stored
@@ -62,7 +143,16 @@ export const registerUser = async (req, res, next) => {
     }
 
     // Validate role
-    const validRoles = ["student", "teacher", "recruiter", "influencer", "freelancer", "super-admin"];
+    const validRoles = [
+      "admin",
+      "branch_owner",
+      "student",
+      "teacher",
+      "recruiter",
+      "influencer",
+      "freelancer",
+      "super-admin",
+    ];
     if (!validRoles.includes(role)) {
       return res.status(422).json({
         error: {
@@ -80,6 +170,62 @@ export const registerUser = async (req, res, next) => {
           message: "An account with this email already exists",
         },
       });
+    }
+
+    let branchId = null;
+    let branchJoinType = normalizeBranchJoinType(
+      req.body.branchJoinType || req.body.profile?.branchJoinType
+    );
+
+    if (role === "branch_owner") {
+      branchJoinType = "branch";
+    }
+
+    if (["teacher", "student"].includes(role) && branchJoinType === "branch") {
+      const selectedBranchId =
+        req.body.branchId || req.body.profile?.branchId || req.body.branch?._id;
+
+      if (!selectedBranchId || !String(selectedBranchId).trim()) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Please select a branch to join",
+          },
+        });
+      }
+
+      if (!mongoose.isValidObjectId(selectedBranchId)) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid branch selected",
+          },
+        });
+      }
+
+      const branch = await Branch.findById(selectedBranchId).select(
+        "_id status isLive ownerId instituteName branchName"
+      );
+
+      if (!branch) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Selected branch is not available for registration",
+          },
+        });
+      }
+
+      if (["rejected", "suspended"].includes(branch.status)) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Selected branch is not accepting registrations right now",
+          },
+        });
+      }
+
+      branchId = branch._id;
     }
 
     // Handle profile image upload if provided
@@ -144,6 +290,15 @@ export const registerUser = async (req, res, next) => {
         },
         avatarUrl: avatarUrl || profileData.avatarUrl || "",
       };
+    } else if (role === "branch_owner" && req.body.profile) {
+      const profileData = req.body.profile;
+      metadata = {
+        phone: profileData.phone || profileData.contactPhone || "",
+        region: profileData.region || "",
+        city: profileData.city || "",
+        country: profileData.country || "",
+        avatarUrl: avatarUrl || profileData.avatarUrl || "",
+      };
     } else if (role === "recruiter" && req.body.profile) {
       const profileData = req.body.profile;
       metadata = {
@@ -168,17 +323,118 @@ export const registerUser = async (req, res, next) => {
       };
     }
     
-    // For teachers, students, and recruiters, set isActive to false by default (requires admin approval)
-    const isActive = role === "teacher" || role === "student" || role === "recruiter" ? false : true;
-    
+    const needsApproval = ["teacher", "student", "recruiter", "branch_owner"].includes(role);
+    const isActive = role === "branch_owner" ? true : !needsApproval;
+    const approvalStatus = needsApproval ? "pending" : "approved";
+
+    let branchPayload = null;
+    if (role === "branch_owner") {
+      branchPayload = getBranchRegistrationPayload(req.body);
+      const requiredBranchFields = [
+        "instituteName",
+        "branchName",
+        "contactEmail",
+        "contactPhone",
+        "city",
+        "country",
+      ];
+      const missingBranchFields = requiredBranchFields.filter(
+        (field) => !String(branchPayload[field] || "").trim()
+      );
+
+      if (missingBranchFields.length > 0) {
+        return res.status(422).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `Missing branch fields: ${missingBranchFields.join(", ")}`,
+          },
+        });
+      }
+
+      const duplicateBranch = await Branch.findOne({
+        instituteName: {
+          $regex: `^${escapeRegExp(branchPayload.instituteName.trim())}$`,
+          $options: "i",
+        },
+        branchName: {
+          $regex: `^${escapeRegExp(branchPayload.branchName.trim())}$`,
+          $options: "i",
+        },
+        city: {
+          $regex: `^${escapeRegExp(branchPayload.city.trim())}$`,
+          $options: "i",
+        },
+      }).lean();
+
+      if (duplicateBranch) {
+        return res.status(409).json({
+          error: {
+            code: "CONFLICT",
+            message: "A branch with this institute, branch name, and city already exists",
+          },
+        });
+      }
+    }
+
     const user = await User.create({
       email: normalizedEmail,
       passwordHash,
       fullName: normalizedFullName,
       role,
       isActive,
+      branchId,
+      branchJoinType,
+      approvalStatus,
       metadata,
     });
+
+    if (role === "branch_owner") {
+      try {
+        const slug = await generateUniqueBranchSlug(
+          branchPayload.instituteName,
+          branchPayload.branchName
+        );
+        const branch = await Branch.create({
+          instituteName: branchPayload.instituteName.trim(),
+          branchName: branchPayload.branchName.trim(),
+          slug,
+          ownerId: user._id,
+          contactEmail: String(branchPayload.contactEmail || normalizedEmail)
+            .trim()
+            .toLowerCase(),
+          contactPhone: String(branchPayload.contactPhone || "").trim(),
+          address: String(branchPayload.address || "").trim(),
+          city: String(branchPayload.city || "").trim(),
+          state: String(branchPayload.state || "").trim(),
+          country: String(branchPayload.country || "").trim(),
+          postalCode: String(branchPayload.postalCode || "").trim(),
+          description: String(branchPayload.description || "").trim(),
+          status: "pending",
+          isLive: false,
+          logoUrl: avatarUrl || "",
+        });
+
+        user.branchId = branch._id;
+        user.metadata = {
+          ...(user.metadata || {}),
+          branchId: branch._id.toString(),
+          branchSlug: branch.slug,
+        };
+        await user.save();
+      } catch (branchError) {
+        await User.findByIdAndDelete(user._id);
+        throw branchError;
+      }
+    }
+
+    if (["teacher", "student"].includes(role) && branchJoinType === "branch") {
+      await BranchMembership.create({
+        userId: user._id,
+        branchId,
+        userRoleAtJoin: role,
+        status: "pending",
+      });
+    }
 
     // If student role, create student profile with provided data
     if (role === "student" && req.body.profile) {
@@ -259,9 +515,25 @@ export const registerRecruiter = async (req, res, next) => {
   return registerUser(req, res, next);
 };
 
+export const registerBranchOwner = async (req, res, next) => {
+  req.body.role = "branch_owner";
+  return registerUser(req, res, next);
+};
+
+export const registerTeacher = async (req, res, next) => {
+  req.body.role = "teacher";
+  return registerUser(req, res, next);
+};
+
+export const registerStudent = async (req, res, next) => {
+  req.body.role = "student";
+  return registerUser(req, res, next);
+};
+
 export const loginUser = async (req, res, next) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
+    const role = req.body.role ? normalizeRoleName(req.body.role) : undefined;
     
     // Normalize email (lowercase and trim) to match how it's stored
     const normalizedEmail = String(email || "").trim().toLowerCase();
@@ -302,20 +574,30 @@ export const loginUser = async (req, res, next) => {
 
     // Check if teacher account is approved (isActive must be true for teachers)
     if (user.role === "teacher" && !user.isActive) {
+      const isBranchLinked = user.branchJoinType === "branch" && user.branchId;
       return res.status(403).json({
         error: {
-          code: "ACCOUNT_PENDING_APPROVAL",
-          message: "Your teacher account is pending approval from the administrator. You will be able to login once your account is approved.",
+          code: isBranchLinked
+            ? "ACCOUNT_PENDING_BRANCH_APPROVAL"
+            : "ACCOUNT_PENDING_APPROVAL",
+          message: isBranchLinked
+            ? "Your teacher account is pending approval from your branch owner. You will be able to login once your account is approved."
+            : "Your teacher account is pending approval from the administrator. You will be able to login once your account is approved.",
         },
       });
     }
 
     // Check if student account is approved (isActive must be true for students)
     if (user.role === "student" && !user.isActive) {
+      const isBranchLinked = user.branchJoinType === "branch" && user.branchId;
       return res.status(403).json({
         error: {
-          code: "ACCOUNT_PENDING_APPROVAL",
-          message: "Your student account is pending approval from the administrator. You will be able to login once your account is approved.",
+          code: isBranchLinked
+            ? "ACCOUNT_PENDING_BRANCH_APPROVAL"
+            : "ACCOUNT_PENDING_APPROVAL",
+          message: isBranchLinked
+            ? "Your student account is pending approval from your branch owner. You will be able to login once your account is approved."
+            : "Your student account is pending approval from the administrator. You will be able to login once your account is approved.",
         },
       });
     }
@@ -763,7 +1045,7 @@ export const updateUserProfile = async (req, res, next) => {
       userId,
       { $set: updateData },
       { new: true, runValidators: true }
-    ).select("fullName email role metadata isActive createdAt");
+    ).select("fullName email role metadata isActive branchId branchJoinType approvalStatus approvedAt rejectionReason createdAt");
 
     return res.status(200).json({
       message: "Profile updated successfully",
@@ -774,6 +1056,11 @@ export const updateUserProfile = async (req, res, next) => {
         fullName: updatedUser.fullName,
         createdAt: updatedUser.createdAt,
         isActive: updatedUser.isActive,
+        branchId: updatedUser.branchId ? updatedUser.branchId.toString() : null,
+        branchJoinType: updatedUser.branchJoinType || "independent",
+        approvalStatus: updatedUser.approvalStatus || "approved",
+        approvedAt: updatedUser.approvedAt || null,
+        rejectionReason: updatedUser.rejectionReason || null,
         metadata: updatedUser.metadata || {},
       },
     });

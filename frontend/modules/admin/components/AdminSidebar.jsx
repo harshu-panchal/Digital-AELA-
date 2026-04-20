@@ -24,6 +24,7 @@ import {
   FaUserPlus,
   FaImages,
   FaComments,
+  FaSchool,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -67,6 +68,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Financial Dashboard",
       path: "/super-admin/financial-dashboard",
       icon: FaChartLine,
+    },
+    {
+      label: "Branches",
+      path: "/super-admin/branches",
+      icon: FaSchool,
     },
     {
       label: "Announcements",
@@ -127,6 +133,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           icon: FaUserTie,
         },
         {
+          label: "Branch Owners",
+          path: "/super-admin/users/branch-owners",
+          icon: FaSchool,
+        },
+        {
           label: "Influencers",
           path: "/super-admin/users/influencer",
           icon: FaUserFriends,
@@ -151,6 +162,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
           label: "Jobs",
           path: "/super-admin/approvals/jobs",
           icon: FaBriefcase,
+        },
+        {
+          label: "Branch Applications",
+          path: "/super-admin/approvals/branches",
+          icon: FaSchool,
         },
         {
           label: "Teacher Applications",

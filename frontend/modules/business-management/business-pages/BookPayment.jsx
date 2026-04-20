@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
@@ -18,7 +18,6 @@ const BookPayment = () => {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -90,6 +89,14 @@ const BookPayment = () => {
         description: `Payment for ${book.title} by ${book.author}`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
+        metadata: {
+          type: "book",
+          itemId: book.id,
+          itemName: book.title,
+          quantity: 1,
+          format: book.format,
+          source: "book-payment",
+        },
       });
 
       if (!paymentResponse?.payment?._id) {

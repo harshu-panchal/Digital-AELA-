@@ -19,6 +19,12 @@ export const fetchUsersByRole = (role, params = {}) => {
 export const fetchUserById = (userId) => apiRequest(`/admin/users/id/${userId}`);
 
 /**
+ * Get user details for admin panel (includes activity like enrollments + purchases)
+ */
+export const fetchUserDetailsById = (userId) =>
+  apiRequest(`/admin/users/id/${userId}/details`);
+
+/**
  * Create a new user
  */
 export const createUser = (payload) =>

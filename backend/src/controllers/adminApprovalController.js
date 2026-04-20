@@ -165,13 +165,21 @@ export const getPendingTeachers = async (req, res, next) => {
     const limit = parseInt(pageSize);
 
     const [teachers, total] = await Promise.all([
-      User.find({ role: "teacher", isActive: false })
+      User.find({
+        role: "teacher",
+        isActive: false,
+        $or: [{ branchId: null }, { branchId: { $exists: false } }],
+      })
         .select("-passwordHash")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      User.countDocuments({ role: "teacher", isActive: false }),
+      User.countDocuments({
+        role: "teacher",
+        isActive: false,
+        $or: [{ branchId: null }, { branchId: { $exists: false } }],
+      }),
     ]);
 
     return res.json({
@@ -209,13 +217,21 @@ export const getPendingStudents = async (req, res, next) => {
     const limit = parseInt(pageSize);
 
     const [students, total] = await Promise.all([
-      User.find({ role: "student", isActive: false })
+      User.find({
+        role: "student",
+        isActive: false,
+        $or: [{ branchId: null }, { branchId: { $exists: false } }],
+      })
         .select("-passwordHash")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      User.countDocuments({ role: "student", isActive: false }),
+      User.countDocuments({
+        role: "student",
+        isActive: false,
+        $or: [{ branchId: null }, { branchId: { $exists: false } }],
+      }),
     ]);
 
     // Fetch StudentProfile for each student and merge the data

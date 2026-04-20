@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Navigate, useLocation, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaLock, FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
+
+const MotionDiv = motion.div;
 
 const LoginPrompt = ({ pathname }) => {
   const navigate = useNavigate();
@@ -21,18 +23,18 @@ const LoginPrompt = ({ pathname }) => {
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center py-12">
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="w-full max-w-md mx-auto px-4">
         <div className="bg-[#0A0E1C] rounded-3xl p-8 border border-white/10 text-center">
-          <motion.div
+          <MotionDiv
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 15 }}>
             <FaLock className="w-16 h-16 text-[#D4AF37] mx-auto mb-6" />
-          </motion.div>
+          </MotionDiv>
           <h2 className="text-2xl font-bold text-white mb-3">Login Required</h2>
           <p className="text-gray-400 mb-2">
             Please sign in to access <span className="font-semibold text-[#D4AF37]">{pageName}</span>.
@@ -55,7 +57,7 @@ const LoginPrompt = ({ pathname }) => {
             </button>
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   );
 };
@@ -63,6 +65,11 @@ const LoginPrompt = ({ pathname }) => {
 const ProtectedRoute = ({ children, roles, showLoginPrompt = false }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const normalizedUserRole = user?.role === "branch-owner" ? "branch_owner" : user?.role;
+  const normalizedRoles = useMemo(
+    () => roles?.map((role) => (role === "branch-owner" ? "branch_owner" : role)),
+    [roles]
+  );
 
   useEffect(() => {
     if (!user) {
@@ -74,12 +81,12 @@ const ProtectedRoute = ({ children, roles, showLoginPrompt = false }) => {
       return;
     }
 
-    if (roles && roles.length > 0 && !roles.includes(user.role)) {
+    if (normalizedRoles && normalizedRoles.length > 0 && !normalizedRoles.includes(normalizedUserRole)) {
       toast.error("You do not have permission to access this area.", {
         toastId: `auth-forbidden-${location.pathname}`,
       });
     }
-  }, [user, roles, location.pathname, showLoginPrompt]);
+  }, [user, normalizedRoles, normalizedUserRole, location.pathname, showLoginPrompt]);
 
   if (!user) {
     // If showLoginPrompt is true, show in-page login prompt instead of redirecting
@@ -97,7 +104,7 @@ const ProtectedRoute = ({ children, roles, showLoginPrompt = false }) => {
     );
   }
 
-  if (roles && roles.length > 0 && !roles.includes(user.role)) {
+  if (normalizedRoles && normalizedRoles.length > 0 && !normalizedRoles.includes(normalizedUserRole)) {
     return <Navigate to="/" replace />;
   }
 

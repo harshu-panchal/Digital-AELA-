@@ -7,6 +7,9 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  registerBranchOwner,
+  registerStudent,
+  registerTeacher,
   updateUserProfile,
   verifyEmail,
   resendVerificationEmail,
@@ -27,6 +30,9 @@ const router = Router();
 // Role can be passed in the request body, defaults to "student" for register
 // Add multer middleware for profile image upload (optional field)
 router.post("/register", registrationRateLimiter, uploadSingle("profileImage"), handleUploadError, registerUser);
+router.post("/register/branch-owner", registrationRateLimiter, uploadSingle("profileImage"), handleUploadError, registerBranchOwner);
+router.post("/register/teacher", registrationRateLimiter, uploadSingle("profileImage"), handleUploadError, registerTeacher);
+router.post("/register/student", registrationRateLimiter, uploadSingle("profileImage"), handleUploadError, registerStudent);
 router.post("/login", loginRateLimiter, loginUser);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);

@@ -213,7 +213,7 @@ const MeetTheFounder = () => {
                       <TranslatedText>A bestseller that strengthened grammar foundations for thousands.</TranslatedText>
                     </p>
                     <Link
-                      to="/books/6958f19f3c96593b544ef7bc"
+                      to="/books/69a043cb6577f6ac2a6df5c1"
                       className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
                     >
                       <TranslatedText>Buy Now</TranslatedText>
@@ -243,7 +243,7 @@ const MeetTheFounder = () => {
                       <TranslatedText>A breakthrough book that helped learners move from basic to advanced English fluently.</TranslatedText>
                     </p>
                     <Link
-                      to="/books/6958ed193c96593b544eee13"
+                      to="/books/69a046c46577f6ac2a6df9de"
                       className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
                     >
                       <TranslatedText>Buy Now</TranslatedText>
@@ -273,7 +273,7 @@ const MeetTheFounder = () => {
                       <TranslatedText>A complete vocabulary guide designed to remove the fear of English words forever.</TranslatedText>
                     </p>
                     <Link
-                      to="/books/6958eb8c3c96593b544eeaf9"
+                      to="/books/69a081cf6577f6ac2a6e09e6"
                       className="inline-block bg-[#D4AF37] text-black px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-[#E5C158] transition-colors duration-200"
                     >
                       <TranslatedText>Buy Now</TranslatedText>

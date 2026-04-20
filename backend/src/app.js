@@ -3,6 +3,8 @@ import morgan from "morgan";
 import cors from "cors";
 import compression from "compression";
 import authRoutes from "./routes/authRoutes.js";
+import branchRoutes from "./routes/branchRoutes.js";
+import branchOwnerRoutes from "./routes/branchOwnerRoutes.js";
 import recruiterRoutes from "./routes/recruiterRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
@@ -17,6 +19,7 @@ import learnEarnRoutes from "./routes/learnEarnRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import liveRoomRoutes from "./routes/liveRoomRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
+import adminBranchRoutes from "./routes/adminBranchRoutes.js";
 import adminUserRoutes from "./routes/adminUserRoutes.js";
 import adminContentRoutes from "./routes/adminContentRoutes.js";
 import teacherCourseRoutes from "./routes/teacherCourseRoutes.js";
@@ -207,6 +210,7 @@ app.get("/api/v1", (_req, res) => {
       blogs: "/api/v1/blogs",
       jobs: "/api/v1/jobs",
       resources: "/api/v1/resources",
+      branches: "/api/v1/branches",
       admin: "/api/v1/admin",
       upload: "/api/v1/upload",
     },
@@ -222,6 +226,9 @@ app.use("/api/v1", csrfRoutes);
 
 // Public settings routes (no authentication required)
 app.use("/api/v1/public", publicSettingsRoutes);
+
+// Public branch discovery routes (no authentication required)
+app.use("/api/v1/branches", branchRoutes);
 
 // Batch API request endpoint (for batching multiple API calls)
 // Use specific path to avoid any potential conflicts
@@ -288,8 +295,10 @@ app.use("/api/v1/live-rooms", liveRoomRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/community", communityRoutes);
 app.use("/api/v1/admin", superAdminRoutes);
+app.use("/api/v1/admin", adminBranchRoutes);
 app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/admin", adminContentRoutes);
+app.use("/api/v1/branch-owner", branchOwnerRoutes);
 app.use("/api/v1/admin/gallery", galleryAdminRouter);
 app.use("/api/v1/admin/testimonials", testimonialAdminRouter);
 app.use("/api/v1/teacher", teacherCourseRoutes);

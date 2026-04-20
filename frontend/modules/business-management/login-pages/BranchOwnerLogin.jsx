@@ -45,7 +45,7 @@ const BranchOwnerLogin = () => {
       const authenticatedUser = await login({
         email,
         password,
-        role: "branch-owner",
+        role: "branch_owner",
       });
       toast.success(
         `Welcome back${
@@ -67,10 +67,10 @@ const BranchOwnerLogin = () => {
   };
 
   useEffect(() => {
-    if (user && user.role === "branch-owner") {
+    if (user && user.role === "branch_owner") {
       const destination = redirectTo || getRoleHome(user.role);
       navigate(destination, { replace: true });
-    } else if (user && user.role !== "branch-owner") {
+    } else if (user && user.role !== "branch_owner") {
       toast.info(`You're currently signed in as ${getRoleLabel(user.role)}.`, {
         toastId: "branch-owner-login-role-info",
       });

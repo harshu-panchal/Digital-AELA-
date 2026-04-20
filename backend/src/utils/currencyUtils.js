@@ -8,11 +8,20 @@
 export const formatCurrency = (amount, options = {}) => {
   const {
     showSymbol = true,
-    minimumFractionDigits = 2,
-    maximumFractionDigits = 2,
+    minimumFractionDigits,
+    maximumFractionDigits,
   } = options;
 
   const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const normalizedMaximumFractionDigits = Number.isInteger(maximumFractionDigits)
+    ? Math.min(20, Math.max(0, maximumFractionDigits))
+    : 2;
+  const normalizedMinimumFractionDigits = Number.isInteger(minimumFractionDigits)
+    ? Math.min(
+        normalizedMaximumFractionDigits,
+        Math.max(0, minimumFractionDigits)
+      )
+    : Math.min(2, normalizedMaximumFractionDigits);
   
   if (isNaN(numericAmount)) {
     return showSymbol ? '₹ 0.00' : '0.00';
@@ -23,8 +32,8 @@ export const formatCurrency = (amount, options = {}) => {
   return new Intl.NumberFormat('en-IN', {
     style: showSymbol ? 'currency' : 'decimal',
     currency: 'INR',
-    minimumFractionDigits,
-    maximumFractionDigits,
+    minimumFractionDigits: normalizedMinimumFractionDigits,
+    maximumFractionDigits: normalizedMaximumFractionDigits,
   }).format(numericAmount);
 };
 

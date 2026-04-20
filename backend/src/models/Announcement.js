@@ -17,9 +17,23 @@ const announcementSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+    },
     targetAudience: {
       type: String,
-      enum: ["all_students", "all_teachers", "specific_course", "specific_courses", "enrolled_students"],
+      enum: [
+        "all_students",
+        "all_teachers",
+        "specific_course",
+        "specific_courses",
+        "enrolled_students",
+        "branch_all",
+        "branch_teachers",
+        "branch_students",
+      ],
       default: "all_students",
     },
     targetCourses: [
@@ -85,6 +99,7 @@ const announcementSchema = new mongoose.Schema(
 
 // Indexes for efficient queries
 announcementSchema.index({ createdBy: 1, createdAt: -1 });
+announcementSchema.index({ branchId: 1, status: 1, publishedAt: -1 });
 announcementSchema.index({ status: 1, publishedAt: -1 });
 announcementSchema.index({ targetAudience: 1 });
 announcementSchema.index({ targetCourses: 1 });

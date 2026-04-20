@@ -176,6 +176,35 @@ const ExpenseManagement = lazy(() =>
 const FinancialDashboard = lazy(() =>
   import("../modules/admin/FinancialDashboard")
 );
+const BranchManagement = lazy(() =>
+  import("../modules/admin/pages/BranchManagement")
+);
+
+// Branch owner pages - lazy loaded
+const BranchOwnerLayout = lazy(() =>
+  import("../modules/branch-owner/layout/BranchOwnerLayout")
+);
+const BranchOwnerDashboard = lazy(() =>
+  import("../modules/branch-owner/pages/Dashboard")
+);
+const BranchProfile = lazy(() =>
+  import("../modules/branch-owner/pages/BranchProfile")
+);
+const BranchUsers = lazy(() =>
+  import("../modules/branch-owner/pages/BranchUsers")
+);
+const BranchContent = lazy(() =>
+  import("../modules/branch-owner/pages/BranchContent")
+);
+const BranchAnnouncements = lazy(() =>
+  import("../modules/branch-owner/pages/BranchAnnouncements")
+);
+const BranchAnalytics = lazy(() =>
+  import("../modules/branch-owner/pages/BranchAnalytics")
+);
+const BranchSettings = lazy(() =>
+  import("../modules/branch-owner/pages/BranchSettings")
+);
 
 // Teacher pages - lazy loaded
 const TeacherDashboard = lazy(() =>
@@ -478,6 +507,7 @@ export const App = () => {
   // Check if current path is a dashboard
   const isDashboard =
     location.pathname.startsWith("/super-admin") ||
+    location.pathname.startsWith("/branch-owner") ||
     location.pathname === "/teacher/dashboard" ||
     location.pathname.startsWith("/teacher/") ||
     location.pathname.startsWith("/student/") ||
@@ -573,6 +603,15 @@ export const App = () => {
                   <LoadingFallback message="Loading user details..." />
                 }>
                 <UserDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="approvals/branches"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading branch approvals..." />}>
+                <BranchManagement approvalMode />
               </Suspense>
             }
           />
@@ -801,6 +840,15 @@ export const App = () => {
             }
           />
           <Route
+            path="branches"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading branches..." />}>
+                <BranchManagement />
+              </Suspense>
+            }
+          />
+          <Route
             path="announcements"
             element={
               <Suspense
@@ -930,6 +978,113 @@ export const App = () => {
                   <LoadingFallback message="Loading doubt ticket..." />
                 }>
                 <AdminDoubtTicketDetail />
+              </Suspense>
+            }
+          />
+        </Route>
+        <Route
+          path="/branch-owner/*"
+          element={
+            <ProtectedRoute roles={["branch_owner"]}>
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading branch owner panel..." />
+                }>
+                <BranchOwnerLayout />
+              </Suspense>
+            </ProtectedRoute>
+          }>
+          <Route
+            index
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading dashboard..." />}>
+                <BranchOwnerDashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading dashboard..." />}>
+                <BranchOwnerDashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <Suspense fallback={<LoadingFallback message="Loading profile..." />}>
+                <BranchProfile />
+              </Suspense>
+            }
+          />
+          <Route
+            path="approvals"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading approvals..." />}>
+                <BranchUsers mode="approvals" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="teachers"
+            element={
+              <Suspense fallback={<LoadingFallback message="Loading teachers..." />}>
+                <BranchUsers mode="teachers" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="students"
+            element={
+              <Suspense fallback={<LoadingFallback message="Loading students..." />}>
+                <BranchUsers mode="students" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses"
+            element={
+              <Suspense fallback={<LoadingFallback message="Loading courses..." />}>
+                <BranchContent type="courses" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="books"
+            element={
+              <Suspense fallback={<LoadingFallback message="Loading books..." />}>
+                <BranchContent type="books" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="announcements"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading announcements..." />}>
+                <BranchAnnouncements />
+              </Suspense>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading analytics..." />}>
+                <BranchAnalytics />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading settings..." />}>
+                <BranchSettings />
               </Suspense>
             }
           />

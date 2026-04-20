@@ -134,14 +134,25 @@ export const createTeacherEbook = async (req, res, next) => {
     const priceValue = price ? Number(price) : 0;
     const isFree = priceValue === 0;
 
-    // Create ebook with isPublic: false (requires admin approval)
+    const teacher = await User.findById(userId)
+      .select("fullName branchId branchJoinType")
+      .lean();
+    const teacherBranchId =
+      teacher?.branchJoinType === "branch" && teacher?.branchId
+        ? teacher.branchId
+        : null;
+
+    // Create ebook with isPublic: false (requires owner/admin approval)
     const ebook = await EbookResource.create({
       title,
       description,
       pages: Number(pages),
       downloadUrl: finalDownloadUrl,
+      createdBy: userId,
+      branchId: teacherBranchId,
       categories: category ? [category] : [],
       isPublic: false, // Always false for teacher-created ebooks - requires approval
+      approvalStatus: "pending",
       publishedAt: null, // Will be set when approved
       metadata: {
         subtitle: subtitle || "",
@@ -151,6 +162,7 @@ export const createTeacherEbook = async (req, res, next) => {
         previewUrl: previewUrl || "",
         author: userFullName || "Digital AELA", // Store teacher's name as author
         uploadedBy: userId, // Store teacher's ID for dashboard queries
+        branchScoped: Boolean(teacherBranchId),
         bookType: bookType || "ebook", // Store book type (ebook or physical)
         tags: tags
           ? Array.isArray(tags)
@@ -173,22 +185,29 @@ export const createTeacherEbook = async (req, res, next) => {
       .populate("metadata.uploadedBy", "fullName email")
       .lean();
 
-    // Create notification for super admin when ebook needs approval
+    // Create notification for the reviewing owner/admin when ebook needs approval
     if (!ebook.isPublic) {
       try {
         const { createBulkNotifications } = await import("../utils/notificationHelper.js");
         
-        // Get all super-admin users
-        const superAdmins = await User.find({ role: "super-admin", isActive: true })
-          .select("_id")
-          .lean();
+        const reviewers = teacherBranchId
+          ? await User.find({
+              role: "branch_owner",
+              branchId: teacherBranchId,
+              isActive: true,
+            })
+              .select("_id")
+              .lean()
+          : await User.find({ role: "super-admin", isActive: true })
+              .select("_id")
+              .lean();
         
-        if (superAdmins.length > 0) {
-          const adminIds = superAdmins.map((admin) => admin._id);
+        if (reviewers.length > 0) {
+          const reviewerIds = reviewers.map((reviewer) => reviewer._id);
           const authorName = userFullName || "A teacher";
           
           await createBulkNotifications(
-            adminIds,
+            reviewerIds,
             "New Ebook Pending Approval",
             `A new ebook "${ebook.title}" has been created by ${authorName} and requires approval.`,
             "approval",
@@ -198,8 +217,11 @@ export const createTeacherEbook = async (req, res, next) => {
               authorId: userId,
               authorName: authorName,
               contentType: "ebook",
+              branchId: teacherBranchId?.toString?.() || null,
             },
-            `/super-admin/content-management?type=ebook&id=${ebook._id}`
+            teacherBranchId
+              ? "/branch-owner/books"
+              : `/super-admin/content-management?type=ebook&id=${ebook._id}`
           );
         }
       } catch (notifError) {

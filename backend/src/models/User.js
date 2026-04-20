@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: [
+        "admin",
+        "branch_owner",
         "student",
         "teacher",
         "recruiter",
@@ -39,6 +41,35 @@ const userSchema = new mongoose.Schema(
         "super-admin",
       ],
       default: "student",
+    },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+    },
+    branchJoinType: {
+      type: String,
+      enum: ["independent", "branch"],
+      default: "independent",
+    },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: null,
     },
     isActive: {
       type: Boolean,
@@ -65,6 +96,9 @@ const userSchema = new mongoose.Schema(
 // Indexes for efficient queries
 // Note: email index is automatically created by unique: true, so we don't need to add it again
 userSchema.index({ role: 1, isActive: 1 }); // For role-based queries
+userSchema.index({ role: 1, branchId: 1, approvalStatus: 1 });
+userSchema.index({ branchId: 1, role: 1, isActive: 1 });
+userSchema.index({ branchJoinType: 1, approvalStatus: 1 });
 userSchema.index({ createdAt: -1 }); // For sorting by date
 userSchema.index({ role: 1, createdAt: -1 }); // Compound for analytics
 

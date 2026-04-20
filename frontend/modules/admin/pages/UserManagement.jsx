@@ -29,8 +29,18 @@ const UserManagement = () => {
     student: "Students",
     teacher: "Teachers",
     recruiter: "Recruiters",
+    "branch-owners": "Branch Owners",
+    branch_owners: "Branch Owners",
+    branch_owner: "Branch Owners",
     influencer: "Influencers",
     freelancer: "Freelancers",
+  };
+
+  const getInstituteLabel = (user) => {
+    const isBranchUser = user?.branchJoinType === "branch";
+    const instituteName = user?.branch?.instituteName;
+    if (isBranchUser && instituteName) return instituteName;
+    return "Individual";
   };
 
   const loadUsers = async () => {
@@ -182,6 +192,11 @@ const UserManagement = () => {
                           <div>
                             <p className="font-semibold text-white">{user.fullName}</p>
                             <p className="text-xs text-gray-400">{user.role}</p>
+                            {(user.role === "student" || user.role === "teacher") && (
+                              <p className="mt-0.5 text-xs text-gray-500">
+                                Institute: {getInstituteLabel(user)}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>

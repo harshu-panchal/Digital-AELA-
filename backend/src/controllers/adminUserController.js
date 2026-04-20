@@ -1,6 +1,43 @@
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import StudentProfile from "../models/StudentProfile.js";
+import Enrollment from "../models/Enrollment.js";
+import Payment from "../models/Payment.js";
+import Course from "../models/Course.js";
+import Branch from "../models/Branch.js";
+
+const toObjectIdString = (value) => {
+  if (!value) return "";
+  if (value instanceof mongoose.Types.ObjectId) return value.toString();
+  return String(value);
+};
+
+const attachBranchInfo = async (users) => {
+  if (!Array.isArray(users) || users.length === 0) return users;
+
+  const ids = [
+    ...new Set(
+      users
+        .map((u) => toObjectIdString(u.branchId))
+        .filter((id) => id && mongoose.isValidObjectId(id))
+    ),
+  ];
+
+  if (ids.length === 0) {
+    return users.map((u) => ({ ...u, branch: null }));
+  }
+
+  const branches = await Branch.find({ _id: { $in: ids } })
+    .select("instituteName branchName slug")
+    .lean();
+  const branchMap = new Map(branches.map((b) => [toObjectIdString(b._id), b]));
+
+  return users.map((u) => ({
+    ...u,
+    branch: u.branchId ? branchMap.get(toObjectIdString(u.branchId)) || null : null,
+  }));
+};
 
 /**
  * Get all users by role
@@ -26,6 +63,9 @@ export const getUsersByRole = async (req, res, next) => {
       students: "student",
       teachers: "teacher",
       recruiters: "recruiter",
+      "branch-owners": "branch_owner",
+      branch_owners: "branch_owner",
+      branchOwners: "branch_owner",
       influencers: "influencer",
       freelancers: "freelancer",
     };
@@ -35,7 +75,7 @@ export const getUsersByRole = async (req, res, next) => {
       role = roleMap[role];
     }
 
-    const validRoles = ["student", "teacher", "recruiter", "influencer", "freelancer"];
+    const validRoles = ["student", "teacher", "recruiter", "branch_owner", "influencer", "freelancer"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: {
@@ -67,7 +107,7 @@ export const getUsersByRole = async (req, res, next) => {
     ]);
 
     return res.json({
-      users,
+      users: await attachBranchInfo(users),
       pagination: {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
@@ -118,7 +158,134 @@ export const getUserById = async (req, res, next) => {
       });
     }
 
-    return res.json({ user });
+    let branch = null;
+    if (user.branchId && mongoose.isValidObjectId(user.branchId)) {
+      branch = await Branch.findById(user.branchId)
+        .select("instituteName branchName slug")
+        .lean();
+    }
+
+    return res.json({ user, branch });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get user details for admin panel (includes activity like enrollments + purchases)
+ */
+export const getUserDetails = async (req, res, next) => {
+  try {
+    const { userRole } = req.auth || {};
+
+    if (!req.auth || userRole !== "super-admin") {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only super admins can access this endpoint",
+        },
+      });
+    }
+
+    const { userId } = req.params;
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid user ID",
+        },
+      });
+    }
+
+    const user = await User.findById(userId).select("-passwordHash").lean();
+
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: "RESOURCE_NOT_FOUND",
+          message: "User not found",
+        },
+      });
+    }
+
+    let branch = null;
+    if (user.branchId && mongoose.isValidObjectId(user.branchId)) {
+      branch = await Branch.findById(user.branchId)
+        .select("instituteName branchName slug")
+        .lean();
+    }
+
+    const activity = {
+      enrollments: null,
+      payments: null,
+      bookPurchases: null,
+    };
+
+    let profile = null;
+
+    if (user.role === "student") {
+      profile = await StudentProfile.findOne({ user: user._id }).lean();
+
+      const recentEnrollments = await Enrollment.find({ student: user._id })
+        .sort({ enrolledAt: -1, createdAt: -1 })
+        .limit(25)
+        .populate("course", "title status branchId price thumbnailUrl slug")
+        .lean();
+
+      const [totalEnrollments, recentCoursePayments, recentBookPayments] =
+        await Promise.all([
+          Enrollment.countDocuments({ student: user._id }),
+          Payment.find({
+            user: user._id,
+            status: "completed",
+            course: { $ne: null },
+          })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate("course", "title thumbnailUrl price branchId")
+            .lean(),
+          Payment.find({
+            user: user._id,
+            status: "completed",
+            course: null,
+            "metadata.type": { $in: ["book", "book-cart"] },
+          })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        ]);
+
+      let branchTotal = 0;
+      if (user.branchId) {
+        const branchCourseIds = await Course.find({ branchId: user.branchId })
+          .select("_id")
+          .lean();
+        const branchCourseIdList = branchCourseIds.map((item) => item._id);
+        if (branchCourseIdList.length > 0) {
+          branchTotal = await Enrollment.countDocuments({
+            student: user._id,
+            course: { $in: branchCourseIdList },
+          });
+        }
+      }
+
+      activity.enrollments = {
+        total: totalEnrollments,
+        branchTotal,
+        recent: recentEnrollments,
+      };
+      activity.payments = { recentCoursePayments };
+      activity.bookPurchases = { recentPayments: recentBookPayments };
+    }
+
+    return res.json({
+      user,
+      branch,
+      profile,
+      teacherProfile: user.role === "teacher" ? user.metadata || {} : null,
+      activity,
+    });
   } catch (error) {
     return next(error);
   }
@@ -151,7 +318,7 @@ export const createUser = async (req, res, next) => {
       });
     }
 
-    const validRoles = ["student", "teacher", "recruiter", "influencer", "freelancer"];
+    const validRoles = ["student", "teacher", "recruiter", "branch_owner", "influencer", "freelancer"];
     if (!validRoles.includes(role)) {
       return res.status(422).json({
         error: {
@@ -246,7 +413,7 @@ export const updateUser = async (req, res, next) => {
 
     if (fullName) user.fullName = fullName.trim();
     if (role) {
-      const validRoles = ["student", "teacher", "recruiter", "influencer", "freelancer", "super-admin"];
+      const validRoles = ["student", "teacher", "recruiter", "branch_owner", "influencer", "freelancer", "super-admin", "admin"];
       if (validRoles.includes(role)) {
         user.role = role;
       }

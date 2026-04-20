@@ -60,7 +60,12 @@ export const ROLE_DETAILS = {
   },
   "branch-owner": {
     label: "Branch Owner",
-    landing: "/",
+    landing: "/branch-owner/dashboard",
+    description: "Manage local hubs and partnerships.",
+  },
+  branch_owner: {
+    label: "Branch Owner",
+    landing: "/branch-owner/dashboard",
     description: "Manage local hubs and partnerships.",
   },
 };
@@ -153,6 +158,11 @@ export const AuthProvider = ({ children }) => {
       fullName: authPayload.user.fullName,
       createdAt: authPayload.user.createdAt,
       isActive: authPayload.user.isActive !== undefined ? authPayload.user.isActive : true,
+      branchId: authPayload.user.branchId ?? null,
+      branchJoinType: authPayload.user.branchJoinType ?? "independent",
+      approvalStatus: authPayload.user.approvalStatus ?? "approved",
+      approvedAt: authPayload.user.approvedAt ?? null,
+      rejectionReason: authPayload.user.rejectionReason ?? null,
       metadata: authPayload.user.metadata ?? {},
       source: "backend",
     };
@@ -239,7 +249,16 @@ export const AuthProvider = ({ children }) => {
   );
 
   const register = useCallback(
-    async ({ email, password, role, profile, profileImage }) => {
+    async ({
+      email,
+      password,
+      role,
+      profile,
+      profileImage,
+      branchJoinType,
+      branchId,
+      branch,
+    }) => {
       const normalizedEmail = String(email || "")
         .trim()
         .toLowerCase();
@@ -264,6 +283,9 @@ export const AuthProvider = ({ children }) => {
             fullName,
             role,
             profile: profile,
+            branchJoinType,
+            branchId,
+            branch,
           });
           return handleBackendAuthSuccess(authResult);
         } else {
@@ -274,6 +296,9 @@ export const AuthProvider = ({ children }) => {
             fullName,
             role,
             profile: profile, // Include profile data for student profile creation
+            branchJoinType,
+            branchId,
+            branch,
           });
           return handleBackendAuthSuccess(authResult);
         }
@@ -307,6 +332,11 @@ export const AuthProvider = ({ children }) => {
           password,
           fullName,
           createdAt: new Date().toISOString(),
+          branchId: branchId || null,
+          branchJoinType: branchJoinType || "independent",
+          approvalStatus: ["teacher", "student", "recruiter", "branch_owner"].includes(role)
+            ? "pending"
+            : "approved",
           metadata: profile ?? {},
         };
 

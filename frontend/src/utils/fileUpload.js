@@ -20,10 +20,20 @@ export const registerWithFile = async (file, registrationData) => {
   formData.append("password", registrationData.password);
   formData.append("fullName", registrationData.fullName);
   formData.append("role", registrationData.role || "student");
+  if (registrationData.branchJoinType) {
+    formData.append("branchJoinType", registrationData.branchJoinType);
+  }
+  if (registrationData.branchId) {
+    formData.append("branchId", registrationData.branchId);
+  }
   
   // Add profile data as JSON string if provided
   if (registrationData.profile) {
     formData.append("profile", JSON.stringify(registrationData.profile));
+  }
+
+  if (registrationData.branch) {
+    formData.append("branch", JSON.stringify(registrationData.branch));
   }
 
   const payload = await apiRequest("/auth/register", {

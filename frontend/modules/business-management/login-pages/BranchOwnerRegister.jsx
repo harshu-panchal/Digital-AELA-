@@ -17,6 +17,14 @@ const createInitialFormState = () => ({
   email: "",
   phone: "",
   region: "",
+  instituteName: "",
+  branchName: "",
+  address: "",
+  city: "",
+  state: "",
+  country: "",
+  postalCode: "",
+  description: "",
   password: "",
   confirmPassword: "",
   profileImage: null,
@@ -64,6 +72,14 @@ const BranchOwnerRegister = () => {
     const trimmedName = safeString(formData.fullName);
     const trimmedPhone = safeString(formData.phone);
     const trimmedRegion = safeString(formData.region);
+    const instituteName = safeString(formData.instituteName);
+    const branchName = safeString(formData.branchName);
+    const address = safeString(formData.address);
+    const cityInput = safeString(formData.city);
+    const state = safeString(formData.state);
+    const countryInput = safeString(formData.country);
+    const postalCode = safeString(formData.postalCode);
+    const description = safeString(formData.description);
     const email = safeString(formData.email).toLowerCase();
     const password = safeString(formData.password);
     const confirmPassword = safeString(formData.confirmPassword);
@@ -94,8 +110,21 @@ const BranchOwnerRegister = () => {
     }
 
     const { city, country } = splitLocation(trimmedRegion);
-    if (!country) {
-      toast.error("Please specify your region (city and/or country).");
+    const branchCity = cityInput || city;
+    const branchCountry = countryInput || country;
+
+    if (!instituteName) {
+      toast.error("Please enter your institute name.");
+      return;
+    }
+
+    if (!branchName) {
+      toast.error("Please enter your branch name.");
+      return;
+    }
+
+    if (!branchCity || !branchCountry) {
+      toast.error("Please provide your branch city and country.");
       return;
     }
 
@@ -104,17 +133,29 @@ const BranchOwnerRegister = () => {
       const newUser = await registerUser({
         email,
         password,
-        role: "branch-owner",
+        role: "branch_owner",
         profile: {
           fullName: trimmedName,
           phone: trimmedPhone,
           region: trimmedRegion,
-          city,
-          country,
+          city: branchCity,
+          country: branchCountry,
+        },
+        branch: {
+          instituteName,
+          branchName,
+          contactEmail: email,
+          contactPhone: trimmedPhone,
+          address,
+          city: branchCity,
+          state,
+          country: branchCountry,
+          postalCode,
+          description,
         },
         profileImage: formData.profileImage,
       });
-      toast.success("Branch owner application received. Welcome aboard!");
+      toast.success("Branch application submitted for admin approval.");
       setFormData(createInitialFormState());
       navigate(getRoleHome(newUser.role), { replace: true });
     } catch (error) {
@@ -195,6 +236,37 @@ const BranchOwnerRegister = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-slate-100">
+                  Institute Name
+                </span>
+                <input
+                  type="text"
+                  name="instituteName"
+                  required
+                  value={formData.instituteName}
+                  onChange={handleChange}
+                  placeholder="Digital AELA Learning Institute"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Branch Name
+                </span>
+                <input
+                  type="text"
+                  name="branchName"
+                  required
+                  value={formData.branchName}
+                  onChange={handleChange}
+                  placeholder="Dubai Main Branch"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
                   Contact Number
                 </span>
                 <input
@@ -214,10 +286,96 @@ const BranchOwnerRegister = () => {
                 <input
                   type="text"
                   name="region"
-                  required
                   value={formData.region}
                   onChange={handleChange}
                   placeholder="Dubai, UAE"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+            </div>
+
+            <label className="block space-y-2">
+              <span className="text-sm font-semibold text-slate-100">
+                Branch Address
+              </span>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Office, street, landmark"
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+              />
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  City
+                </span>
+                <input
+                  type="text"
+                  name="city"
+                  required
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="Dubai"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  State
+                </span>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  placeholder="Dubai"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Country
+                </span>
+                <input
+                  type="text"
+                  name="country"
+                  required
+                  value={formData.country}
+                  onChange={handleChange}
+                  placeholder="UAE"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Postal Code
+                </span>
+                <input
+                  type="text"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  placeholder="00000"
+                  className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-slate-100">
+                  Branch Description
+                </span>
+                <input
+                  type="text"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Programs, audience, local focus"
                   className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 transition focus:border-[#F5D26A]/60 focus:outline-none focus:ring-2 focus:ring-[#F5D26A]/35 backdrop-blur"
                 />
               </label>

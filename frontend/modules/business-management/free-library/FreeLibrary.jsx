@@ -84,7 +84,7 @@ const FreeLibrary = () => {
               <p className="mt-2 text-sm text-slate-400"><TranslatedText>Check back later for new additions!</TranslatedText></p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [grid-auto-rows:1fr]">
               {ebooks.map((book, index) => (
                 <motion.article
                   key={book._id || book.id}
@@ -97,8 +97,8 @@ const FreeLibrary = () => {
                   }}
                   whileHover={{ y: -6, scale: 1.02 }}
                   onClick={() => handleOpenReader(book._id || book.id)}
-                  className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-white/8 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:border-[#F5D26A]/60 hover:bg-white/8">
-                  <div className="relative h-64 w-full overflow-hidden">
+                  className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-3xl border border-white/8 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:border-[#F5D26A]/60 hover:bg-white/8">
+                  <div className="relative h-72 w-full overflow-hidden bg-[#080b14]">
                     <LazyImage
                       src={book.metadata?.coverImage || book.coverImage || "/placeholder-book.png"}
                       alt={book.title}
@@ -111,27 +111,27 @@ const FreeLibrary = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-1 flex-col gap-3 px-6 py-6">
-                    <h3 className="text-xl font-semibold text-white">
+                  <div className="flex flex-1 flex-col px-6 py-6">
+                    <h3 className="min-h-[5.25rem] text-xl font-semibold leading-snug text-white line-clamp-3">
                       <TranslatedText>{book.title}</TranslatedText>
                     </h3>
-                    <p className="text-sm font-medium uppercase tracking-wider text-[#F5D26A]/80">
+                    <p className="mt-3 min-h-[1.25rem] text-sm font-medium uppercase tracking-wider text-[#F5D26A]/80 line-clamp-1">
                       {book.metadata?.author || book.author || <TranslatedText>Digital AELA</TranslatedText>}
                     </p>
-                    <p className="text-sm leading-relaxed text-slate-200/80 line-clamp-3">
+                    <p className="mt-4 min-h-[4.5rem] text-sm leading-relaxed text-slate-200/80 line-clamp-3">
                       <TranslatedText>{book.description}</TranslatedText>
                     </p>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-auto flex items-center justify-between gap-3 pt-6">
                       <button
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleOpenReader(book._id || book.id);
                         }}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/20 px-5 py-2 text-sm font-semibold text-[#F5D26A] transition-all duration-300 hover:border-[#F5D26A]/80 hover:bg-[#F5D26A]/30">
+                        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#F5D26A]/50 bg-[#F5D26A]/20 px-5 py-2 text-sm font-semibold text-[#F5D26A] transition-all duration-300 hover:border-[#F5D26A]/80 hover:bg-[#F5D26A]/30">
                         <TranslatedText>Read Now</TranslatedText>
                       </button>
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-200/75">
+                      <span className="shrink-0 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-200/75">
                         {book.pages || 0} <TranslatedText>pages</TranslatedText>
                       </span>
                     </div>

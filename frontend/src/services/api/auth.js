@@ -1,9 +1,18 @@
 import { apiRequest, persistTokens } from "./baseClient";
 
-export const registerUserAccount = async ({ email, password, fullName, role = "student", profile }) => {
+export const registerUserAccount = async ({
+  email,
+  password,
+  fullName,
+  role = "student",
+  profile,
+  branchJoinType,
+  branchId,
+  branch,
+}) => {
   const result = await apiRequest("/auth/register", {
     method: "POST",
-    body: { email, password, fullName, role, profile },
+    body: { email, password, fullName, role, profile, branchJoinType, branchId, branch },
     skipAuth: true,
   });
   persistTokens({

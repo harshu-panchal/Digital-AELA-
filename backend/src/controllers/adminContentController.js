@@ -1048,7 +1048,7 @@ export const approveJob = async (req, res, next) => {
  */
 export const approveTeacher = async (req, res, next) => {
   try {
-    const { userRole } = req.auth || {};
+    const { userRole, userId: adminUserId } = req.auth || {};
 
     if (!req.auth || userRole !== "super-admin") {
       return res.status(403).json({
@@ -1099,10 +1099,25 @@ export const approveTeacher = async (req, res, next) => {
       });
     }
 
+    if (user.branchJoinType === "branch" && user.branchId) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Branch-linked teachers must be approved by their branch owner",
+        },
+      });
+    }
+
     if (action === "approve") {
       user.isActive = true;
+      user.approvalStatus = "approved";
+      user.approvedBy = adminUserId;
+      user.approvedAt = new Date();
+      user.rejectionReason = null;
     } else {
       user.isActive = false;
+      user.approvalStatus = "rejected";
+      user.rejectionReason = req.body.rejectionReason || null;
     }
 
     await user.save();
@@ -1150,7 +1165,7 @@ export const approveTeacher = async (req, res, next) => {
  */
 export const approveStudent = async (req, res, next) => {
   try {
-    const { userRole } = req.auth || {};
+    const { userRole, userId: adminUserId } = req.auth || {};
 
     if (!req.auth || userRole !== "super-admin") {
       return res.status(403).json({
@@ -1201,10 +1216,25 @@ export const approveStudent = async (req, res, next) => {
       });
     }
 
+    if (user.branchJoinType === "branch" && user.branchId) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Branch-linked students must be approved by their branch owner",
+        },
+      });
+    }
+
     if (action === "approve") {
       user.isActive = true;
+      user.approvalStatus = "approved";
+      user.approvedBy = adminUserId;
+      user.approvedAt = new Date();
+      user.rejectionReason = null;
     } else {
       user.isActive = false;
+      user.approvalStatus = "rejected";
+      user.rejectionReason = req.body.rejectionReason || null;
     }
 
     await user.save();
@@ -1252,7 +1282,7 @@ export const approveStudent = async (req, res, next) => {
  */
 export const approveRecruiter = async (req, res, next) => {
   try {
-    const { userRole } = req.auth || {};
+    const { userRole, userId: adminUserId } = req.auth || {};
 
     if (!req.auth || userRole !== "super-admin") {
       return res.status(403).json({
@@ -1305,8 +1335,14 @@ export const approveRecruiter = async (req, res, next) => {
 
     if (action === "approve") {
       user.isActive = true;
+      user.approvalStatus = "approved";
+      user.approvedBy = adminUserId;
+      user.approvedAt = new Date();
+      user.rejectionReason = null;
     } else {
       user.isActive = false;
+      user.approvalStatus = "rejected";
+      user.rejectionReason = req.body.rejectionReason || null;
     }
 
     await user.save();

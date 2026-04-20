@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getUsersByRole,
   getUserById,
+  getUserDetails,
   createUser,
   updateUser,
   deleteUser,
@@ -18,6 +19,9 @@ router.get("/users/:role", getUsersByRole);
 
 // Get single user
 router.get("/users/id/:userId", getUserById);
+
+// Get user details (activity, purchases, etc.)
+router.get("/users/id/:userId/details", getUserDetails);
 
 // Create user
 router.post("/users", createUser);
