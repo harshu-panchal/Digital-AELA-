@@ -781,7 +781,7 @@ const CourseDetail = () => {
               )}
               {!isFreeCourse && priceValue <= 0 && (
                 <a
-                  href="https://wa.me/971502270625"
+                  href="https://wa.me/971545454982"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 px-6 py-3 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/10">

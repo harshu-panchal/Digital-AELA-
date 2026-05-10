@@ -17,9 +17,9 @@ import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const CorporateTrainingCourses = () => {
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
-    "Hello! I'm interested in Corporate Training programs for my organization."
+    "Hello! I'm interested in Corporate Training programs."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
   const navigate = useNavigate();

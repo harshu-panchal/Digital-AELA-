@@ -19,9 +19,9 @@ import dubaiRoadmap from "../../../src/assets/DubaiRoadmap.jpg";
 const OurStory = () => {
   // WhatsApp integration
 
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
-    "Hello! I'm interested in learning more about Digital AELA."
+    "Hello! I'm interested in learning more about Digital AELA's story."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

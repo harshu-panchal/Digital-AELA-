@@ -10,13 +10,11 @@ import englishGrammarBook1 from "../../../src/assets/EnglishGrammarBook1.png";
 import spokenBook2 from "../../../src/assets/SpokenBook2.png";
 import dictionaryBook3 from "../../../src/assets/DictionaryBook3.png";
 
-//fvs
-
 const MeetTheFounder = () => {
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
-    "Hello! I'm interested in learning more about Digital AELA."
+    "Hello! I'd like to connect regarding Digital AELA."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

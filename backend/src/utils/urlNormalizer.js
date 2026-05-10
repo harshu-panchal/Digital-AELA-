@@ -158,3 +158,29 @@ export const normalizeCoursesUrls = async (courses) => {
   });
 };
 
+/**
+ * Normalize URLs in gallery objects
+ * 
+ * @param {Array} gallery - Array of gallery objects
+ * @returns {Array} - Array of gallery items with normalized URLs
+ */
+export const normalizeGalleryUrls = async (gallery) => {
+  if (!Array.isArray(gallery)) {
+    return [];
+  }
+
+  return gallery.map(item => {
+    if (item.imageUrl) {
+      item.imageUrl = normalizeUrl(item.imageUrl) || item.imageUrl;
+    }
+    if (Array.isArray(item.mediaItems)) {
+      item.mediaItems = item.mediaItems.map(media => {
+        if (media.url) {
+          media.url = normalizeUrl(media.url) || media.url;
+        }
+        return media;
+      });
+    }
+    return item;
+  });
+};

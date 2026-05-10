@@ -5,9 +5,9 @@ import TranslatedText from "../../../src/components/TranslatedText";
 
 const MissionVision = () => {
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
-    "Hello! I'm interested in learning more about Digital AELA."
+    "Hello! I'm interested in learning more about Digital AELA's mission and vision."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

@@ -362,10 +362,10 @@ const PrivacyPolicy = () => {
                     <span>info@digitalaela.com</span>
                   </a>
                   <a
-                    href="tel:+971502270625"
+                    href="tel:+971545454982"
                     className="flex items-center gap-2 text-sm sm:text-base text-[#F5D26A] hover:text-[#D4AF37] transition-colors duration-200">
                     <span className="text-lg">📞</span>
-                    <span>+971 502270625</span>
+                    <span>+971 545454982</span>
                   </a>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-400 pt-4 border-t border-[#D4AF37]/20 mt-4">

@@ -43,13 +43,14 @@ export const getHomePageData = async (req, res, next) => {
     ]);
 
     // Normalize URLs in courses
-    const { normalizeCoursesUrls } = await import("../utils/urlNormalizer.js");
+    const { normalizeCoursesUrls, normalizeGalleryUrls } = await import("../utils/urlNormalizer.js");
     const normalizedCourses = await normalizeCoursesUrls(courses);
+    const normalizedGallery = await normalizeGalleryUrls(gallery);
 
     return res.status(200).json({
       courses: normalizedCourses,
       books,
-      gallery,
+      gallery: normalizedGallery,
       testimonials,
     });
   } catch (error) {

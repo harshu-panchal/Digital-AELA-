@@ -241,7 +241,7 @@ const Home = () => {
         if (response.gallery) {
           const transformedImages = (response.gallery || []).map((img) => ({
             id: img._id || img.id,
-            image: img.image || img.url || "",
+            image: img.imageUrl || img.image || img.url || "",
           }));
           setGalleryItems(transformedImages);
         }
@@ -824,7 +824,7 @@ const Home = () => {
   }, [ribbonInView, ribbonStats]);
 
   // WhatsApp integration
-  const whatsappNumber = "971502270625";
+  const whatsappNumber = "971545454982";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in learning more about your English courses."
   );

@@ -16,7 +16,7 @@ import { formatCurrency } from "../../../src/utils/currencyUtils";
 
 const DigitalMarketingCourses = () => {
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
     "Hello! I'm interested in Digital Marketing courses."
   );

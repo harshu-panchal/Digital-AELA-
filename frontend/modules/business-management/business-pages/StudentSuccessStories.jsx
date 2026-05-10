@@ -44,9 +44,9 @@ const StudentSuccessStories = () => {
   }, [translate]);
 
   // WhatsApp integration
-  const whatsappNumber = "+971502270625";
+  const whatsappNumber = "+971545454982";
   const whatsappMessage = encodeURIComponent(
-    "Hello! I'm interested in enrolling in Digital AELA courses."
+    "Hello! I'm inspired by the success stories and would like to know more about your courses."
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
