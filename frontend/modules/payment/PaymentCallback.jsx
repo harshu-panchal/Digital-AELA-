@@ -17,8 +17,11 @@ const PaymentCallback = () => {
   const [error, setError] = useState(null);
 
   const paymentId = searchParams.get("paymentId");
+  const orderId = searchParams.get("orderId");
+  const type = searchParams.get("type");
   const paymentStatus = searchParams.get("status");
-  const payment_id = searchParams.get("payment_id");
+  const payment_id = searchParams.get("payment_id"); // Used for standard payments
+  const razorpay_payment_id = searchParams.get("razorpay_payment_id"); // Used for payment links
   const errorMessage = searchParams.get("error");
 
   const clearBookCartIfPaid = (paymentRecord) => {
@@ -41,8 +44,11 @@ const PaymentCallback = () => {
       console.log("[Payment Callback Frontend] Received parameters");
       console.log("URL Search Params:", {
         paymentId,
+        orderId,
+        type,
         paymentStatus,
         payment_id,
+        razorpay_payment_id,
         errorMessage,
       });
       console.log("==========================================");
@@ -54,14 +60,41 @@ const PaymentCallback = () => {
         return;
       }
 
-      if (!paymentId) {
-        console.log("[Payment Callback Frontend] No paymentId found");
+      if (!paymentId && !orderId) {
+        console.log("[Payment Callback Frontend] No paymentId or orderId found");
         setStatus("error");
-        setError("Payment ID not found");
+        setError("Payment or Order ID not found");
         return;
       }
 
       try {
+        // --- BOOK ORDER PAYMENT VERIFICATION ---
+        if (type === "book-order" && orderId) {
+          console.log("[Payment Callback Frontend] Verifying book order:", orderId);
+          try {
+            const { verifyBookOrderPayment } = await import("../../src/services/api/bookOrders");
+            // Build the body from all query params from Razorpay
+            const callbackData = { orderId };
+            for (const [key, value] of searchParams.entries()) {
+              callbackData[key] = value;
+            }
+            const result = await verifyBookOrderPayment(callbackData);
+            
+            if (result.success && result.orderStatus !== "payment_failed") {
+              setStatus("success");
+              toast.success("Book payment verified successfully!");
+              setTimeout(() => navigate("/books"), 3000);
+            } else {
+              setStatus("failed");
+              toast.error("Book payment failed.");
+            }
+          } catch (err) {
+            console.error("[Payment Callback Frontend] Book order verification error:", err);
+            setStatus("error");
+            setError("Failed to verify book order payment.");
+          }
+          return;
+        }
         // Method 1: If we have razorpay_payment_id, try immediate verification
         if (payment_id) {
           console.log("[Payment Callback Frontend] Attempting immediate verification with ID:", payment_id);

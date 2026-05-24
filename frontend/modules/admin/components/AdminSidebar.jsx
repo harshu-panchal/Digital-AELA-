@@ -25,6 +25,7 @@ import {
   FaImages,
   FaComments,
   FaSchool,
+  FaShoppingBag,
 } from "react-icons/fa";
 
 const AdminSidebar = ({ isOpen = true, onClose }) => {
@@ -48,6 +49,11 @@ const AdminSidebar = ({ isOpen = true, onClose }) => {
       label: "Payments",
       path: "/super-admin/payments",
       icon: FaCreditCard,
+    },
+    {
+      label: "Book Orders",
+      path: "/super-admin/book-orders",
+      icon: FaShoppingBag,
     },
     {
       label: "Certificates",
