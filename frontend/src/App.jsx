@@ -165,6 +165,9 @@ const BackupManagement = lazy(() =>
 const PaymentManagement = lazy(() =>
   import("../modules/admin/PaymentManagement")
 );
+const BookOrderManagement = lazy(() =>
+  import("../modules/admin/BookOrderManagement")
+);
 const CertificateManagement = lazy(() =>
   import("../modules/admin/CertificateManagement")
 );
@@ -780,6 +783,208 @@ export const App = () => {
                 <Suspense
                   fallback={<LoadingFallback message="Loading payments..." />}>
                   <PaymentManagement />
+                </Suspense>
+              </FinancialProtectedRoute>
+            }
+          />
+          <Route
+            path="certificates"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading certificates..." />
+                }>
+                <CertificateManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="crm/leads"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading leads..." />}>
+                <LeadManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="crm/leads/:leadId"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading lead details..." />
+                }>
+                <LeadDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reviews/moderate"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading reviews..." />}>
+                <ReviewModeration />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reviews/books"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading book reviews..." />}>
+                <BookReviewManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="live-rooms/moderate"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading live rooms..." />}>
+                <LiveRoomModeration />
+              </Suspense>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading analytics..." />}>
+                <AdvancedAnalytics />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading settings..." />}>
+                <SystemSettings />
+              </Suspense>
+            }
+          />
+          <Route
+            path="system-health"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading system health..." />
+                }>
+                <SystemHealth />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/course"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading course creator..." />
+                }>
+                <AdminCourseCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="courses/:courseId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading course..." />}>
+                <AdminCourseDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="categories"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading category management..." />
+                }>
+                <AdminCategoryManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/book"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading book creator..." />
+                }>
+                <AdminBookCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="books/:bookId"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading book editor..." />}>
+                <AdminBookDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create/blog"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading blog creator..." />
+                }>
+                <AdminBlogCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="content-management"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading content management..." />
+                }>
+                <ContentManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="gallery-management"
+            element={
+              <Suspense
+                fallback={<LoadingFallback message="Loading gallery..." />}>
+                <GalleryManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="testimonials"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingFallback message="Loading testimonials..." />
+                }>
+                <TestimonialManagement />
+              </Suspense>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <FinancialProtectedRoute>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading payments..." />}>
+                  <PaymentManagement />
+                </Suspense>
+              </FinancialProtectedRoute>
+            }
+          />
+          <Route
+            path="book-orders"
+            element={
+              <FinancialProtectedRoute>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading book orders..." />}>
+                  <BookOrderManagement />
                 </Suspense>
               </FinancialProtectedRoute>
             }
@@ -1877,19 +2082,9 @@ export const App = () => {
         <Route
           path="/books/:id/payment"
           element={
-            <ProtectedRoute
-              roles={[
-                "student",
-                "teacher",
-                "recruiter",
-                "influencer",
-                "freelancer",
-                "super-admin",
-              ]}>
-              <Suspense fallback={<LoadingFallback />}>
-                <BookPayment />
-              </Suspense>
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <BookPayment />
+            </Suspense>
           }
         />
         <Route
@@ -1927,19 +2122,9 @@ export const App = () => {
         <Route
           path="/gift/payment"
           element={
-            <ProtectedRoute
-              roles={[
-                "student",
-                "teacher",
-                "recruiter",
-                "influencer",
-                "freelancer",
-                "super-admin",
-              ]}>
-              <Suspense fallback={<LoadingFallback />}>
-                <GiftPayment />
-              </Suspense>
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <GiftPayment />
+            </Suspense>
           }
         />
         <Route

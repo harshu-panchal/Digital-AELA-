@@ -25,6 +25,12 @@ const CustomPaymentCheck = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [guestInfo, setGuestInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+  });
 
   useEffect(() => {
     // Get payment data from location state or URL params
@@ -74,19 +80,18 @@ const CustomPaymentCheck = () => {
       return;
     }
 
-    // Authentication Check
+    // Guest validation
     if (!isAuthenticated) {
-      toast.info("Please log in to complete your purchase.");
-      // Store current full path (with query) in redirect state
-      const returnPath = location.pathname + location.search;
-      navigate("/login/student", { state: { from: returnPath } });
-      return;
+      if (!guestInfo.firstName || !guestInfo.email || !guestInfo.phone) {
+        toast.error("Please fill in your name, email, and phone number.");
+        return;
+      }
     }
 
     setIsProcessing(true);
 
     try {
-      const { type, giftType, itemName, amount } = paymentData;
+      const { type, giftType, itemId, itemName, amount } = paymentData;
       const isBookCart = type === "book-cart";
       const paymentTotalAmount = isBookCart
         ? parseFloat(amount)
@@ -112,10 +117,7 @@ const CustomPaymentCheck = () => {
         }`;
       }
 
-      // Step 1: Create payment record
-      const paymentResponse = await createPayment({
-        courseId:
-          paymentData.type === "course" ? paymentData.itemId : undefined,
+      const paymentPayload = {
         amount: paymentTotalAmount,
         currency: "INR", // Force INR as per platform standard
         description: description,
@@ -132,7 +134,18 @@ const CustomPaymentCheck = () => {
           recipientDetails: paymentData.recipientDetails || undefined,
           source: paymentData.source || undefined,
         },
-      });
+      };
+
+      if (!isAuthenticated) {
+        paymentPayload.metadata.guestInfo = guestInfo;
+      }
+
+      if (paymentData.type === "course") {
+        paymentPayload.courseId = paymentData.itemId;
+      }
+
+      // Step 1: Create payment record
+      const paymentResponse = await createPayment(paymentPayload);
 
       if (!paymentResponse?.payment?._id) {
         throw new Error("Failed to create payment record");
@@ -444,6 +457,63 @@ const CustomPaymentCheck = () => {
                 </span>
               </label>
             </div>
+
+            {/* Guest Checkout Form */}
+            {!isAuthenticated && (
+              <div className="bg-[#0a0a0a] rounded-lg p-6 mb-6 border border-[#D4AF37]/10">
+                <h3 className="text-lg font-bold text-white mb-4 font-display">
+                  <TranslatedText>Guest Checkout Information</TranslatedText>
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  <TranslatedText>
+                    {type === "course" 
+                      ? "We will create an account for you to access this course." 
+                      : "Please provide your details for the receipt."}
+                  </TranslatedText>
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1"><TranslatedText>First Name *</TranslatedText></label>
+                    <input
+                      type="text"
+                      value={guestInfo.firstName}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, firstName: e.target.value })}
+                      className="w-full bg-[#1a1a1a] border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] focus:outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1"><TranslatedText>Last Name</TranslatedText></label>
+                    <input
+                      type="text"
+                      value={guestInfo.lastName}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, lastName: e.target.value })}
+                      className="w-full bg-[#1a1a1a] border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1"><TranslatedText>Email *</TranslatedText></label>
+                    <input
+                      type="email"
+                      value={guestInfo.email}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, email: e.target.value })}
+                      className="w-full bg-[#1a1a1a] border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] focus:outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1"><TranslatedText>Phone *</TranslatedText></label>
+                    <input
+                      type="tel"
+                      value={guestInfo.phone}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })}
+                      className="w-full bg-[#1a1a1a] border border-gray-700 rounded p-2 text-white focus:border-[#D4AF37] focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Continue Button */}
             <motion.button

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 import Payment from "../models/Payment.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
@@ -33,13 +34,51 @@ export const createPayment = async (req, res, next) => {
       metadata,
     } = req.body;
 
+    let userObjectId = null;
+    let isGuest = false;
+    let guestInfo = null;
+
     if (!userId) {
-      return res.status(401).json({
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      });
+      // Guest Checkout Flow
+      const { guestInfo: providedGuestInfo } = metadata || {};
+      
+      if (!providedGuestInfo || !providedGuestInfo.email) {
+        return res.status(401).json({
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication or valid guest information required",
+          },
+        });
+      }
+
+      // If it's a course, we must create/find a user
+      if (courseId) {
+        let user = await User.findOne({ email: providedGuestInfo.email.toLowerCase() });
+        if (!user) {
+          const randomPassword = Math.random().toString(36).slice(-10) + "A1!";
+          const passwordHash = await bcrypt.hash(randomPassword, 12);
+          const fullName = `${providedGuestInfo.firstName || ""} ${providedGuestInfo.lastName || ""}`.trim() || "Guest User";
+          
+          user = await User.create({
+            email: providedGuestInfo.email.toLowerCase(),
+            fullName,
+            passwordHash,
+            role: "student",
+            isActive: true,
+            emailVerified: false,
+            metadata: { createdViaGuestCheckout: true, phone: providedGuestInfo.phone }
+          });
+        }
+        userObjectId = user._id;
+      } else {
+        // It's a gift or non-course payment, allow pure guest
+        isGuest = true;
+        guestInfo = providedGuestInfo;
+      }
+    } else {
+      userObjectId = mongoose.isValidObjectId(userId)
+        ? new mongoose.Types.ObjectId(userId)
+        : null;
     }
 
     if (!amount || amount <= 0) {
@@ -50,10 +89,6 @@ export const createPayment = async (req, res, next) => {
         },
       });
     }
-
-    const userObjectId = mongoose.isValidObjectId(userId)
-      ? new mongoose.Types.ObjectId(userId)
-      : null;
 
     let courseObjectId = null;
     if (courseId) {
@@ -95,8 +130,7 @@ export const createPayment = async (req, res, next) => {
       }
     }
 
-    const payment = await Payment.create({
-      user: userObjectId,
+    const paymentData = {
       course: courseObjectId,
       amount: Number(amount),
       currency: currency || "INR",
@@ -105,7 +139,16 @@ export const createPayment = async (req, res, next) => {
       gateway: gateway || "manual",
       status: "pending",
       metadata: metadata && typeof metadata === "object" ? metadata : {},
-    });
+      isGuest,
+    };
+
+    if (userObjectId) {
+      paymentData.user = userObjectId;
+    } else if (isGuest) {
+      paymentData.guestInfo = guestInfo;
+    }
+
+    const payment = await Payment.create(paymentData);
 
     const populatedPayment = await Payment.findById(payment._id)
       .populate("user", "fullName email")
@@ -965,14 +1008,7 @@ export const createRazorpayOrder = async (req, res, next) => {
     const { paymentId } = req.params;
     const { userId } = req.auth || {};
 
-    if (!userId) {
-      return res.status(401).json({
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      });
-    }
+    // Authentication is optional for guest payments, we check permissions after fetching payment
 
     // Check if Razorpay is enabled
     const enabled = await isRazorpayEnabled();
@@ -1013,13 +1049,23 @@ export const createRazorpayOrder = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    if (payment.user._id.toString() !== userObjectId.toString()) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only create orders for your own payments",
-        },
-      });
+    if (!payment.isGuest) {
+      if (!userObjectId) {
+        return res.status(401).json({
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required",
+          },
+        });
+      }
+      if (!payment.user || payment.user._id.toString() !== userObjectId.toString()) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only create orders for your own payments",
+          },
+        });
+      }
     }
 
     if (payment.gateway !== "razorpay") {
@@ -1106,14 +1152,7 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     const { userId } = req.auth || {};
     const { callbackUrl } = req.body;
 
-    if (!userId) {
-      return res.status(401).json({
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      });
-    }
+    // Authentication is optional for guest payments, we check permissions after fetching payment
 
     // Check if Razorpay is enabled
     const enabled = await isRazorpayEnabled();
@@ -1154,13 +1193,23 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
       ? new mongoose.Types.ObjectId(userId)
       : null;
 
-    if (payment.user._id.toString() !== userObjectId.toString()) {
-      return res.status(403).json({
-        error: {
-          code: "FORBIDDEN",
-          message: "You can only create payment links for your own payments",
-        },
-      });
+    if (!payment.isGuest) {
+      if (!userObjectId) {
+        return res.status(401).json({
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Authentication required",
+          },
+        });
+      }
+      if (!payment.user || payment.user._id.toString() !== userObjectId.toString()) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "You can only create payment links for your own payments",
+          },
+        });
+      }
     }
 
     if (payment.gateway !== "razorpay") {
@@ -1252,8 +1301,9 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     const receipt = payment._id.toString();
     const notes = {
       payment_id: receipt,
-      user_id: payment.user._id.toString(),
+      user_id: payment.user ? payment.user._id.toString() : "guest",
       description: payment.description || "Payment",
+      is_guest: payment.isGuest ? "true" : "false",
     };
 
     if (payment.course) {
@@ -1262,12 +1312,16 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
     }
 
     // Validate user information before creating payment link
-    if (!payment.user.email) {
+    const customerEmail = payment.user?.email || payment.guestInfo?.email;
+    const customerName = payment.user?.fullName || payment.guestInfo?.firstName ? `${payment.guestInfo?.firstName || ""} ${payment.guestInfo?.lastName || ""}`.trim() : "Customer";
+    const customerPhone = payment.user?.phone || payment.guestInfo?.phone || "";
+
+    if (!customerEmail) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
           message:
-            "User email is required for Razorpay payment. Please update your profile with an email address.",
+            "Email is required for Razorpay payment. Please provide an email address.",
         },
       });
     }
@@ -1278,9 +1332,9 @@ export const createRazorpayPaymentLink = async (req, res, next) => {
       receipt,
       payment.description ||
         (payment.course ? `Payment for ${payment.course.title}` : "Payment"),
-      payment.user.fullName || payment.user.email.split("@")[0] || "Customer",
-      payment.user.email,
-      payment.user.phone || "",
+      customerName,
+      customerEmail,
+      customerPhone,
       finalCallbackUrl,
       notes
     );

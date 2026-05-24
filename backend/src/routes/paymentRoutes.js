@@ -17,14 +17,14 @@ import {
   handleRazorpayWebhook,
 } from "../controllers/paymentController.js";
 import { verifyRazorpayCallback } from "../controllers/paymentCallbackVerify.js";
-import { authenticate } from "../middleware/authMiddleware.js";
+import { authenticate, optionalAuth } from "../middleware/authMiddleware.js";
 import { validateCsrfToken } from "../middleware/csrfMiddleware.js";
 import { paymentRateLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // Create payment (state-changing - requires CSRF and rate limiting)
-router.post("/", authenticate, paymentRateLimiter, validateCsrfToken, createPayment);
+router.post("/", optionalAuth, paymentRateLimiter, validateCsrfToken, createPayment);
 
 // Get payment history
 router.get("/history", authenticate, getPaymentHistory);
@@ -56,10 +56,10 @@ router.post("/:paymentId/refund", authenticate, validateCsrfToken, processRefund
 router.get("/:paymentId/invoice", authenticate, getInvoice);
 
 // Create Razorpay order for payment (modal-based)
-router.post("/:paymentId/razorpay/order", authenticate, paymentRateLimiter, validateCsrfToken, createRazorpayOrder);
+router.post("/:paymentId/razorpay/order", optionalAuth, paymentRateLimiter, validateCsrfToken, createRazorpayOrder);
 
 // Create Razorpay payment link (redirect-based)
-router.post("/:paymentId/razorpay/payment-link", authenticate, paymentRateLimiter, validateCsrfToken, createRazorpayPaymentLink);
+router.post("/:paymentId/razorpay/payment-link", optionalAuth, paymentRateLimiter, validateCsrfToken, createRazorpayPaymentLink);
 
 // Verify payment status manually (from Razorpay)
 router.post("/:paymentId/verify-status", authenticate, verifyPaymentStatus);
