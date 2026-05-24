@@ -325,12 +325,6 @@ const JoinBuildAfterLife = () => {
       return;
     }
 
-    if (!isAuthenticated) {
-      toast.info("Please log in to purchase this book");
-      navigate("/login/student");
-      return;
-    }
-
     const itemPrice = getBookPrice(book);
     if (!itemPrice || itemPrice <= 0) {
       toast.error(

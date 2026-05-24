@@ -5,12 +5,22 @@ const paymentSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false, // Optional for guest payments
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
       required: false, // Optional for non-course payments
+    },
+    isGuest: {
+      type: Boolean,
+      default: false,
+    },
+    guestInfo: {
+      firstName: { type: String },
+      lastName: { type: String },
+      email: { type: String },
+      phone: { type: String },
     },
     amount: {
       type: Number,
