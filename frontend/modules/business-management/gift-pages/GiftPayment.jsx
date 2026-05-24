@@ -90,6 +90,14 @@ const GiftPayment = () => {
         }`,
         paymentMethod: formData.paymentMethod,
         gateway: "razorpay",
+        metadata: {
+          guestInfo: {
+            firstName: formData.fullName || nearOneDetails.fullName || "Guest",
+            email: formData.email || "guest@digitalaela.com", // Ensure an email is passed
+            phone: formData.phone || "",
+          },
+          giftType: type,
+        },
       });
 
       if (!paymentResponse?.payment?._id) {
