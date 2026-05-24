@@ -74,17 +74,15 @@ export const redirectToCustomBookPayment = (book, quantity = 1) => {
     numericAmount = parseFloat(book.price.replace(/[^0-9.]/g, "")) || 0;
   }
 
-  redirectToCustomPayment("book", {
-    itemId: book.id || book._id,
-    itemName: book.title,
-    amount: numericAmount,
-    currency: book.currency || "INR",
-    quantity: normalizedQuantity,
-    author: book.author,
-    format: book.format,
-    description: truncateWords(
-      book.shortDescription || book.description || book.fullDescription || "",
-      100
-    ),
-  });
+  // Build URL parameters
+  const params = new URLSearchParams();
+  params.set("quantity", normalizedQuantity.toString());
+  
+  if (numericAmount > 0) {
+    params.set("amount", numericAmount.toString());
+  }
+
+  // Redirect directly to the dedicated BookPayment page
+  const bookId = book.id || book._id;
+  window.location.href = `/books/${bookId}/payment?${params.toString()}`;
 };

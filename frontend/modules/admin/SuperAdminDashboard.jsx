@@ -14,6 +14,7 @@ import { getBackupStats } from "../../src/services/api/backups";
 import { getTeacherAssignments } from "../../src/services/api/assignments";
 import { fetchTeacherStudents } from "../../src/services/api/teacher";
 import { getDoubtTicketStats } from "../../src/services/api/doubtTickets";
+import { getAdminBookOrderStats } from "../../src/services/api/bookOrders";
 import { formatCurrency } from "../../src/utils/currencyUtils";
 import {
   HiOutlineUserGroup,
@@ -27,6 +28,7 @@ import {
   HiOutlineDocumentText,
   HiOutlineAcademicCap,
   HiOutlineQuestionMarkCircle,
+  HiOutlineShoppingBag,
 } from "react-icons/hi2";
 
 const containerVariants = {
@@ -78,6 +80,8 @@ const SuperAdminDashboard = () => {
   const [studentStats, setStudentStats] = useState(null);
   const [doubtTicketStats, setDoubtTicketStats] = useState(null);
   const [loadingDoubtTickets, setLoadingDoubtTickets] = useState(false);
+  const [bookOrderStats, setBookOrderStats] = useState(null);
+  const [loadingBookOrders, setLoadingBookOrders] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -246,6 +250,20 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  // Load Book Order Stats
+  const loadBookOrderStats = async () => {
+    setLoadingBookOrders(true);
+    try {
+      const response = await getAdminBookOrderStats();
+      setBookOrderStats(response.totalStats || null);
+    } catch (error) {
+      console.error("Failed to load book order stats:", error);
+      setBookOrderStats(null);
+    } finally {
+      setLoadingBookOrders(false);
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     loadDashboardData();
@@ -257,6 +275,7 @@ const SuperAdminDashboard = () => {
     loadAssignments();
     loadStudents();
     loadDoubtTicketStats();
+    loadBookOrderStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(() => {
       loadSessionStats();
@@ -1134,6 +1153,71 @@ const SuperAdminDashboard = () => {
               to="/super-admin/doubt-tickets"
               className="block w-full rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
               Manage Doubt Tickets
+            </Link>
+          </motion.section>
+
+          {/* Book Orders Widget */}
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={cardVariants}
+            className="rounded-3xl border border-white/10 bg-[#0B0F1E]/80 p-6">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <HiOutlineShoppingBag className="h-5 w-5" />
+                  Book Orders
+                </h2>
+                <p className="text-xs text-slate-300/70">
+                  Track and fulfill physical and digital book purchases
+                </p>
+              </div>
+              <Link
+                to="/super-admin/book-orders"
+                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#F5D26A] hover:text-[#FFE28A]">
+                View all →
+              </Link>
+            </header>
+            {loadingBookOrders ? (
+              <div className="text-center py-8 text-sm text-slate-400">
+                Loading book order stats...
+              </div>
+            ) : bookOrderStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total Orders</p>
+                  <p className="text-xl font-semibold text-white">
+                    {bookOrderStats.total || 0}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Pending Fulfillment</p>
+                  <p className="text-xl font-semibold text-yellow-400">
+                    {bookOrderStats.total - (bookOrderStats.completed || 0) || 0}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Completed</p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {bookOrderStats.completed || 0}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-1">Total Revenue</p>
+                  <p className="text-xl font-semibold text-[#F5D26A]">
+                    {formatCurrency(bookOrderStats.revenue || 0)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-sm text-slate-400">
+                No book orders found
+              </div>
+            )}
+            <Link
+              to="/super-admin/book-orders"
+              className="block w-full rounded-xl border border-[#F5D26A]/40 bg-[#F5D26A]/10 px-4 py-3 text-center text-sm font-semibold text-[#F5D26A] hover:bg-[#F5D26A]/20 transition">
+              Manage Book Orders
             </Link>
           </motion.section>
 
